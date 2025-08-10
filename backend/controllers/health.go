@@ -10,7 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// HealthCheck handles health check requests
+// HealthCheck godoc
+// @Summary Health check
+// @Description Get server health status and system information
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.Response "Server health information"
+// @Router /health [get]
 func HealthCheck(c *gin.Context) {
 	// Get system info
 	var m runtime.MemStats
@@ -48,7 +55,14 @@ func HealthCheck(c *gin.Context) {
 	))
 }
 
-// AppInfo handles root endpoint requests
+// AppInfo godoc
+// @Summary Application information
+// @Description Get application information and available endpoints
+// @Tags Health
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.Response "Application information"
+// @Router / [get]
 func AppInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponse(
 		"TREESINDIA",
@@ -57,7 +71,7 @@ func AppInfo(c *gin.Context) {
 			"description":  "Unified digital platform for home services and real estate marketplace",
 			"version":      "1.0.0",
 			"environment":  config.GetEnv(),
-			"documentation": "API documentation available at /api/v1/api-docs",
+			"documentation": "API documentation available at /swagger/index.html",
 			"health":        "GET /api/v1/health",
 			
 		},
