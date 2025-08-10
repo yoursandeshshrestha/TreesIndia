@@ -25,12 +25,17 @@ func InitConfig() {
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("GIN_MODE", "debug")
 	viper.SetDefault("ENV", "development")
+	viper.SetDefault("OTP", "0000")
+	viper.SetDefault("JWT_SECRET", "your-secret-key-change-in-production")
 
 	// Bind environment variables
 	viper.BindEnv("PORT")
 	viper.BindEnv("GIN_MODE")
 	viper.BindEnv("ENV")
 	viper.BindEnv("DATABASE_URL")
+	viper.BindEnv("OTP")
+	viper.BindEnv("JWT_SECRET")
+	viper.BindEnv("CLOUDINARY_URL")
 
 	logrus.Info("Configuration initialized")
 }
@@ -66,6 +71,21 @@ func GetEnv() string {
 // IsProduction checks if the environment is production
 func IsProduction() bool {
 	return viper.GetString("ENV") == "production"
+}
+
+// GetOTP returns the OTP from environment
+func GetOTP() string {
+	return viper.GetString("OTP")
+}
+
+// GetJWTSecret returns the JWT secret from environment
+func GetJWTSecret() string {
+	return viper.GetString("JWT_SECRET")
+}
+
+// GetCloudinaryURL returns the Cloudinary URL from environment
+func GetCloudinaryURL() string {
+	return viper.GetString("CLOUDINARY_URL")
 }
 
 // getDatabaseURL returns the database connection string
