@@ -43,3 +43,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Build output and temporary directories
+tmp/
+build/
+dist/
