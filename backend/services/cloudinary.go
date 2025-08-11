@@ -21,16 +21,26 @@ type CloudinaryService struct {
 
 // NewCloudinaryService creates a new Cloudinary service instance
 func NewCloudinaryService() (*CloudinaryService, error) {
-	cloudinaryURL := config.GetCloudinaryURL()
+	appConfig := config.LoadConfig()
+	cloudinaryURL := appConfig.CloudinaryURL
+	
+	logrus.Infof("Initializing Cloudinary service...")
+	logrus.Infof("Cloudinary URL configured: %v", cloudinaryURL != "")
+	
 	if cloudinaryURL == "" {
-		return nil, fmt.Errorf("CLOUDINARY_URL not configured")
+		logrus.Error("CLOUDINARY_URL environment variable is not set")
+		logrus.Error("Please set CLOUDINARY_URL in your .env file")
+		logrus.Error("Format: cloudinary://your-cloud-name:your-api-key@your-cloud-name")
+		return nil, fmt.Errorf("CLOUDINARY_URL not configured. Please set the CLOUDINARY_URL environment variable")
 	}
 
 	cld, err := cloudinary.NewFromURL(cloudinaryURL)
 	if err != nil {
+		logrus.Errorf("Failed to initialize Cloudinary client: %v", err)
 		return nil, fmt.Errorf("failed to initialize Cloudinary: %v", err)
 	}
 
+	logrus.Info("Cloudinary service initialized successfully")
 	return &CloudinaryService{
 		cld: cld,
 	}, nil
@@ -41,6 +51,7 @@ func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder stri
 	// Open the file
 	src, err := file.Open()
 	if err != nil {
+		logrus.Errorf("Failed to open file %s: %v", file.Filename, err)
 		return "", fmt.Errorf("failed to open file: %v", err)
 	}
 	defer src.Close()
@@ -52,17 +63,18 @@ func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder stri
 
 	// Upload to Cloudinary
 	ctx := context.Background()
-	result, err := cs.cld.Upload.Upload(ctx, src, uploader.UploadParams{
-		PublicID: fmt.Sprintf("%s/%s", folder, filename),
-		Folder:   folder,
+	uploadParams := uploader.UploadParams{
+		PublicID:     fmt.Sprintf("%s/%s", folder, filename),
+		Folder:       folder,
 		ResourceType: "image",
-	})
-
+	}
+	
+	result, err := cs.cld.Upload.Upload(ctx, src, uploadParams)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload image: %v", err)
+		logrus.Errorf("Failed to upload image to Cloudinary: %v", err)
+		return "", fmt.Errorf("failed to upload image to Cloudinary: %v", err)
 	}
 
-	logrus.Infof("Image uploaded successfully: %s", result.SecureURL)
 	return result.SecureURL, nil
 }
 
