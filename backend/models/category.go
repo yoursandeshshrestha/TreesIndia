@@ -1,24 +1,64 @@
 package models
 
 import (
-	"gorm.io/gorm"
+	"time"
 )
 
-// Category represents a service category
+// Category represents a main service category
 type Category struct {
-	gorm.Model
-	Name        string `json:"name" gorm:"uniqueIndex;not null"`
-	Description string `json:"description"`
-	Image       string `json:"image"` // Image URL for category
-	IsActive    bool   `json:"is_active" gorm:"default:true"`
-	SortOrder   int    `json:"sort_order" gorm:"default:0"`
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	
-	// Relationships
-	Services    []Service `json:"services,omitempty"`
-	Skills      []Skill   `json:"skills,omitempty"`
+	// Basic Information
+	Name        string `json:"name" gorm:"not null"`
+	Slug        string `json:"slug" gorm:"uniqueIndex"` // URL-friendly name
+	Description string `json:"description"`
+	Image       string `json:"image"` // Category image URL
+	
+	// Status
+	IsActive    bool `json:"is_active" gorm:"default:true"`
+	
+	// Relationship with subcategories
+	Subcategories []Subcategory `json:"subcategories,omitempty" gorm:"foreignKey:ParentID"`
+}
+
+// Subcategory represents a subcategory that belongs to a main category
+type Subcategory struct {
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	
+	// Basic Information
+	Name        string `json:"name" gorm:"not null"`
+	Slug        string `json:"slug" gorm:"uniqueIndex"` // URL-friendly name
+	Description string `json:"description"`
+	Image       string `json:"image"` // Subcategory image URL
+	
+	// Parent relationship
+	ParentID    uint      `json:"parent_id" gorm:"not null"`
+	Parent      Category  `json:"-" gorm:"foreignKey:ParentID"` // Exclude from JSON response
+	
+	// Status
+	IsActive    bool `json:"is_active" gorm:"default:true"`
 }
 
 // TableName returns the table name for Category
 func (Category) TableName() string {
 	return "categories"
+}
+
+// TableName returns the table name for Subcategory
+func (Subcategory) TableName() string {
+	return "subcategories"
+}
+
+// HasSubcategories checks if this category has subcategories
+func (c *Category) HasSubcategories() bool {
+	return len(c.Subcategories) > 0
+}
+
+// GetSubcategoriesCount returns the number of subcategories
+func (c *Category) GetSubcategoriesCount() int {
+	return len(c.Subcategories)
 }
