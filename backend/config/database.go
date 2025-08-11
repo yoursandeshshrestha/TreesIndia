@@ -15,18 +15,9 @@ func RunMigrations(db *gorm.DB) error {
 	// Auto migrate all models
 	err := db.AutoMigrate(
 		&models.User{},
-		&models.KYC{},
 		&models.Category{},
-		&models.Skill{},
-		&models.ServiceArea{},
+		&models.Subcategory{},
 		&models.Service{},
-		&models.Rate{},
-		&models.Location{},
-		&models.Property{},
-		&models.Visit{},
-		&models.Booking{},
-		&models.Inquiry{},
-		&models.Review{},
 	)
 
 	if err != nil {
@@ -40,7 +31,7 @@ func RunMigrations(db *gorm.DB) error {
 
 // SeedInitialData seeds initial data into the database
 func SeedInitialData(db *gorm.DB) error {
-	return seed.SeedAll(db)
+	return seed.SeedAdminUser(db)
 }
 
 
