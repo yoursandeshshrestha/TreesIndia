@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"treesindia/views"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +11,10 @@ import (
 // ResponseMiddleware adds common response headers and handles errors
 func ResponseMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Add common headers
-		c.Header("Content-Type", "application/json")
+		// Add common headers (only for JSON responses)
+		if !strings.Contains(c.GetHeader("Content-Type"), "multipart/form-data") {
+			c.Header("Content-Type", "application/json")
+		}
 		c.Header("X-Powered-By", "TREESINDIA API")
 
 		// Handle panic recovery
