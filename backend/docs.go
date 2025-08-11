@@ -48,20 +48,5 @@ package main
 // @tag.name Admin
 // @tag.description Admin-only endpoints for platform management
 
-// @tag.name KYC
-// @tag.description KYC verification endpoints
-
-// @tag.name Services
-// @tag.description Service management and booking endpoints
-
-// @tag.name Properties
-// @tag.description Property listing and management endpoints
-
-// @tag.name Bookings
-// @tag.description Service booking and management endpoints
-
-// @tag.name Payments
-// @tag.description Payment processing endpoints
-
-// @tag.name AI
-// @tag.description AI assistant and recommendation endpoints
+// @tag.name Categories
+// @tag.description Category management endpoints
