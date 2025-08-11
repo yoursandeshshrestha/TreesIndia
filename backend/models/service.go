@@ -1,44 +1,52 @@
 package models
 
 import (
+	"time"
+
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
-// ServiceType represents the type of service
-type ServiceType string
-
-const (
-	ServiceTypeDirect   ServiceType = "direct"   // Fixed pricing, immediate booking
-	ServiceTypeInquiry  ServiceType = "inquiry"  // Custom quote required
-)
-
-// Service represents a service that can be booked
 type Service struct {
-	gorm.Model
-	Name          string      `json:"name" gorm:"not null"`
-	Description   string      `json:"description"`
-	ServiceType   ServiceType `json:"service_type" gorm:"not null;default:'direct'"`
-	BasePrice     float64     `json:"base_price" gorm:"default:0"`
-	Icon          string      `json:"icon"`
-	CategoryName  string      `json:"category"` // Keep for backward compatibility
-	CategoryID    *uint       `json:"category_id"` // Foreign key to Category
-	
-	// Coverage and availability
-	MaxRadius     int         `json:"max_radius" gorm:"default:10"` // in kilometers
-	CoverageAreas string      `json:"coverage_areas"` // JSON array of cities/states
-	IsActive      bool        `json:"is_active" gorm:"default:true"`
-	
-	// Inquiry-based service fields
-	InquiryDescription string `json:"inquiry_description"` // What details are needed for quote
-	
-	// Relationships
-	Category      *Category  `json:"category_details,omitempty" gorm:"foreignKey:CategoryID"`
-	Rates         []Rate     `json:"rates,omitempty" gorm:"foreignKey:ServiceID"`
-	Bookings      []Booking  `json:"bookings,omitempty" gorm:"foreignKey:ServiceID"`
-	Workers       []User     `json:"workers,omitempty" gorm:"many2many:user_services;"`
+	ID            uint           `json:"id" gorm:"primaryKey"`
+	Name          string         `json:"name" gorm:"not null"`
+	Slug          string         `json:"slug" gorm:"uniqueIndex;not null"`
+	Description   string         `json:"description"`
+	Images        pq.StringArray `json:"images" gorm:"type:text[]"`
+	PriceType     string         `json:"price_type" gorm:"not null;default:'inquiry'"` // "fixed" or "inquiry"
+	Price         *float64       `json:"price"` // Fixed price (nil if inquiry-based)
+	Duration      *string        `json:"duration"` // Optional duration
+	CategoryID    uint           `json:"category_id" gorm:"not null"`
+	SubcategoryID uint           `json:"subcategory_id" gorm:"not null"`
+	Category      Category       `json:"-" gorm:"foreignKey:CategoryID"` // Excluded from JSON response
+	Subcategory   Subcategory    `json:"-" gorm:"foreignKey:SubcategoryID"` // Excluded from JSON response
+	IsActive      bool           `json:"is_active" gorm:"default:true"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 }
 
-// TableName returns the table name for Service
-func (Service) TableName() string {
-	return "services"
+// CreateServiceRequest represents the request structure for creating a service
+type CreateServiceRequest struct {
+	Name          string   `json:"name" binding:"required"`
+	Description   string   `json:"description"`
+	PriceType     string   `json:"price_type" binding:"required,oneof=fixed inquiry"`
+	Price         *float64 `json:"price"` // Required if price_type is "fixed"
+	Duration      *string  `json:"duration"`
+	CategoryID    uint     `json:"category_id" binding:"required"`
+	SubcategoryID uint     `json:"subcategory_id" binding:"required"`
+	IsActive      *bool    `json:"is_active"`
 }
+
+// UpdateServiceRequest represents the request structure for updating a service
+type UpdateServiceRequest struct {
+	Name          string   `json:"name"`
+	Description   string   `json:"description"`
+	PriceType     string   `json:"price_type" binding:"omitempty,oneof=fixed inquiry"`
+	Price         *float64 `json:"price"`
+	Duration      *string  `json:"duration"`
+	CategoryID    *uint    `json:"category_id"`
+	SubcategoryID *uint    `json:"subcategory_id"`
+	IsActive      *bool    `json:"is_active"`
+}
+
