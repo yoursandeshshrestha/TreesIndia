@@ -27,6 +27,12 @@ func SetupRoutes(r *gin.Engine) {
 		
 		// Category routes
 		SetupCategoryRoutes(v1)
+		
+		// Subcategory routes
+		SetupSubcategoryRoutes(v1)
+		
+		// Service routes
+		SetupServiceRoutes(v1)
 	}
 }
 

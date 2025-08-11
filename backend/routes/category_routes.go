@@ -8,22 +8,34 @@ import (
 )
 
 // SetupCategoryRoutes sets up category-related routes
-func SetupCategoryRoutes(r *gin.RouterGroup) {
+func SetupCategoryRoutes(router *gin.RouterGroup) {
 	categoryController := controllers.NewCategoryController()
 
 	// Public category routes (no authentication required)
-	publicCategories := r.Group("/categories")
+	categories := router.Group("/categories")
 	{
-		publicCategories.GET("", categoryController.GetAllCategories)
+		// GET /api/v1/categories - Get all categories with optional filtering
+		categories.GET("", categoryController.GetCategories)
+		
+		// GET /api/v1/categories/:id - Get category by ID
+		categories.GET("/:id", categoryController.GetCategoryByID)
 	}
 
-	// Admin category routes (admin authentication required)
-	adminCategories := r.Group("/admin/categories")
-	adminCategories.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
+	// Admin category routes (protected by auth and admin middleware)
+	adminCategories := router.Group("/admin/categories")
+	adminCategories.Use(middleware.AuthMiddleware())
+	adminCategories.Use(middleware.AdminMiddleware())
 	{
+		// POST /api/v1/admin/categories - Create new category or subcategory
 		adminCategories.POST("", categoryController.CreateCategory)
+		
+		// PUT /api/v1/admin/categories/:id - Update existing category
 		adminCategories.PUT("/:id", categoryController.UpdateCategory)
+		
+		// DELETE /api/v1/admin/categories/:id - Delete existing category
 		adminCategories.DELETE("/:id", categoryController.DeleteCategory)
-		adminCategories.PUT("/:id/status", categoryController.ToggleCategoryStatus)
+		
+		// PATCH /api/v1/admin/categories/:id/status - Toggle category status
+		adminCategories.PATCH("/:id/status", categoryController.ToggleStatus)
 	}
 }
