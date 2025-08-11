@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"treesindia/config"
+	"treesindia/database"
 	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
@@ -39,12 +40,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		token := tokenParts[1]
 
 		// Parse and validate JWT token
+		appConfig := config.LoadConfig()
 		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 			// Validate signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte(config.GetJWTSecret()), nil
+			return []byte(appConfig.JWTSecret), nil
 		})
 
 		if err != nil {
@@ -102,7 +104,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Verify user exists and is active
 		var user models.User
-		if err := config.GetDB().First(&user, userID).Error; err != nil {
+		if err := database.GetDB().First(&user, userID).Error; err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"message": "User not found",
