@@ -7,6 +7,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import ThemeSwitcher from "@/components/theme-switcher";
+import FullscreenToggle from "@/components/fullscreen-toggle";
 
 export default function Page({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,7 @@ export default function Page({ children }: { children: React.ReactNode }) {
             <DynamicBreadcrumb />
           </div>
           <div className="ml-auto flex items-center gap-2 px-4">
+            <FullscreenToggle />
             <ThemeSwitcher />
           </div>
         </header>
