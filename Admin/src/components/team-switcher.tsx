@@ -23,7 +23,7 @@ export function TeamSwitcher({}: {
           size="lg"
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-          <div className="bg-gray-800   text-sidebar-secondary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+          <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"> 
             <TreePalm className="h-4 w-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">

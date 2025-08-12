@@ -6,6 +6,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import ThemeSwitcher from "@/components/theme-switcher";
 
 export default function Page({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,9 @@ export default function Page({ children }: { children: React.ReactNode }) {
               className="mr-2 data-[orientation=vertical]:h-4"
             />
             <DynamicBreadcrumb />
+          </div>
+          <div className="ml-auto flex items-center gap-2 px-4">
+            <ThemeSwitcher />
           </div>
         </header>
         <div className="p-4">{children}</div>
