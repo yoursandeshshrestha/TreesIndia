@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"strings"
 	"treesindia/config"
 	"treesindia/controllers"
 	"treesindia/database"
 	"treesindia/middleware"
 	"treesindia/routes"
-	"treesindia/seed"
-	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -79,16 +79,56 @@ func maskPassword(dsn string) string {
 	return dsn
 }
 
-// runMigrations runs database migrations with versioning
-func runMigrations() error {
-	migrationService := services.NewMigrationService()
+// runMigrations runs database migrations using Goose
+func runMigrations(appConfig *config.AppConfig) error {
+	// Use the same database URL as the main application
+	dsn := appConfig.GetDatabaseURL()
 	
-	if err := migrationService.RunMigrations(); err != nil {
-		return err
+	// Convert the connection string format for Goose if needed
+	// Goose expects format: postgres://user:password@host:port/dbname?sslmode=disable
+	if !strings.HasPrefix(dsn, "postgres://") && !strings.HasPrefix(dsn, "postgresql://") {
+		// If it's in the format "host=... port=... user=... password=... dbname=... sslmode=..."
+		// Convert it to the URL format
+		dsn = convertToURLFormat(dsn)
+	}
+	
+	// Run migrations using Goose
+	cmd := exec.Command("goose", "-dir", "migrations", "postgres", dsn, "up")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 	
 	logrus.Info("Database migrations completed successfully")
 	return nil
+}
+
+// convertToURLFormat converts a connection string to URL format for Goose
+func convertToURLFormat(connStr string) string {
+	// Parse the connection string format: "host=... port=... user=... password=... dbname=... sslmode=..."
+	parts := strings.Fields(connStr)
+	var host, port, user, password, dbname, sslmode string
+	
+	for _, part := range parts {
+		if strings.HasPrefix(part, "host=") {
+			host = strings.TrimPrefix(part, "host=")
+		} else if strings.HasPrefix(part, "port=") {
+			port = strings.TrimPrefix(part, "port=")
+		} else if strings.HasPrefix(part, "user=") {
+			user = strings.TrimPrefix(part, "user=")
+		} else if strings.HasPrefix(part, "password=") {
+			password = strings.TrimPrefix(part, "password=")
+		} else if strings.HasPrefix(part, "dbname=") {
+			dbname = strings.TrimPrefix(part, "dbname=")
+		} else if strings.HasPrefix(part, "sslmode=") {
+			sslmode = strings.TrimPrefix(part, "sslmode=")
+		}
+	}
+	
+	// Construct URL format
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, dbname, sslmode)
 }
 
 
@@ -100,16 +140,11 @@ func main() {
 	// Initialize database with new config
 	initDatabase(appConfig)
 	
-	// Run database migrations only in development
+			// Run database migrations only in development
 	if appConfig.IsDevelopment() {
-		log.Println("Running database migrations...")
-		if err := runMigrations(); err != nil {
+		log.Println("Running database migrations with Goose...")
+		if err := runMigrations(appConfig); err != nil {
 			log.Fatal("Failed to run migrations:", err)
-		}
-		
-		// Seed admin user
-		if err := seed.SeedAdminUser(database.GetDB()); err != nil {
-			log.Fatal("Failed to seed admin user:", err)
 		}
 	} else {
 		log.Println("Skipping database migrations in production")
