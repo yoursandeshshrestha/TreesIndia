@@ -1,14 +1,7 @@
-"use client";
+import React from "react";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export default function DashboardPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/dashboard/overview");
-  }, [router]);
-
-  return null;
+function page() {
+  return <div>page</div>;
 }
+
+export default page;
