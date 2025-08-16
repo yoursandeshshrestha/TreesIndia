@@ -130,8 +130,6 @@ func (es *EmailService) SendBrokerApplicationSubmittedEmail(user *models.User, a
 			<p><strong>Application Details:</strong></p>
 			<ul>
 				<li>Application ID: %d</li>
-				<li>Broker License: %s</li>
-				<li>Broker Agency: %s</li>
 				<li>Submitted Date: %s</li>
 				<li>Status: %s</li>
 			</ul>
@@ -141,7 +139,7 @@ func (es *EmailService) SendBrokerApplicationSubmittedEmail(user *models.User, a
 			<p>Best regards,<br>TREESINDIA Team</p>
 		</body>
 		</html>
-	`, user.Name, application.ID, user.BrokerLicense, user.BrokerAgency, application.SubmittedAt.Format("January 2, 2006"), application.Status)
+	`, user.Name, application.ID, application.SubmittedAt.Format("January 2, 2006"), application.Status)
 
 	return es.SendEmail(*user.Email, subject, body)
 }

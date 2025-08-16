@@ -1,8 +1,10 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 	"treesindia/database"
 	"treesindia/models"
@@ -35,18 +37,8 @@ func (ms *MigrationService) GetMigrations() []MigrationStep {
 	return []MigrationStep{
 		{
 			Version: "001",
-			Name:    "complete_schema_setup",
-			Up:      ms.migration001CompleteSchemaSetup,
-		},
-		{
-			Version: "002",
-			Name:    "add_role_application_tables",
-			Up:      ms.migration002AddRoleApplicationTables,
-		},
-		{
-			Version: "003",
-			Name:    "add_user_notification_settings",
-			Up:      ms.migration003AddUserNotificationSettings,
+			Name:    "complete_system_setup",
+			Up:      ms.migration001CompleteSystemSetup,
 		},
 	}
 }
@@ -171,61 +163,349 @@ func (ms *MigrationService) runMigration(migration MigrationStep) error {
 	return nil
 }
 
-// Migration implementations
-func (ms *MigrationService) migration001CompleteSchemaSetup(db *gorm.DB) error {
-	logrus.Info("Running complete schema setup migration")
+// migration001CompleteSystemSetup - Comprehensive migration that sets up the entire system
+func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
+	logrus.Info("Running complete system setup migration")
 	
-	// Create all tables with proper relationships in one go
-	// This will handle foreign keys automatically through GORM
-	// AutoMigrate will create tables if they don't exist or update them if they do
+	// ========================================
+	// STEP 1: Create all base tables in correct order
+	// ========================================
+	logrus.Info("Step 1: Creating all base tables in correct order")
+	
+	// Fast migration: Create all tables at once with constraints disabled
+	logrus.Info("Creating all tables with fast migration...")
+	
+	// Disable foreign key constraints for fast migration
+	if err := db.Exec("SET session_replication_role = replica").Error; err != nil {
+		logrus.Warnf("Could not disable foreign key constraints: %v", err)
+	}
+	
+	// Create all tables in one go
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Category{},
 		&models.Subcategory{},
 		&models.Service{},
+		&models.SubscriptionPlan{},
+		&models.AdminConfig{},
 		&models.Location{},
-	); err != nil {
-		logrus.Errorf("Failed to create/update tables: %v", err)
-		return err
-	}
-	
-	logrus.Info("Complete schema setup completed successfully")
-	return nil
-}
-
-// Migration implementations
-func (ms *MigrationService) migration002AddRoleApplicationTables(db *gorm.DB) error {
-	logrus.Info("Running role application tables migration")
-	
-	// Create the new tables for role application system
-	if err := db.AutoMigrate(
 		&models.UserDocument{},
 		&models.UserSkill{},
 		&models.RoleApplication{},
-	); err != nil {
-		logrus.Errorf("Failed to create role application tables: %v", err)
-		return err
-	}
-	
-	logrus.Info("Role application tables migration completed successfully")
-	return nil
-}
-
-// Migration implementations
-func (ms *MigrationService) migration003AddUserNotificationSettings(db *gorm.DB) error {
-	logrus.Info("Running user notification settings migration")
-	
-	// Add gender field to users table and create notification settings table
-	if err := db.AutoMigrate(
-		&models.User{},
 		&models.UserNotificationSettings{},
+		&models.UserRole{},
+		&models.UserSubscription{},
+		&models.SubscriptionWarning{},
+		&models.ServiceConfig{},
+		&models.TimeSlot{},
+		&models.Property{},
+		&models.Worker{},
+		&models.Broker{},
+
+		&models.WalletTransaction{},
+		&models.Booking{},
+		&models.WorkerAssignment{},
+		&models.BufferRequest{},
 	); err != nil {
-		logrus.Errorf("Failed to create user notification settings tables: %v", err)
+		logrus.Errorf("Failed to create tables: %v", err)
 		return err
 	}
 	
-	logrus.Info("User notification settings migration completed successfully")
+	// Re-enable foreign key constraints
+	if err := db.Exec("SET session_replication_role = DEFAULT").Error; err != nil {
+		logrus.Warnf("Could not re-enable foreign key constraints: %v", err)
+	}
+	
+	// Add foreign key constraints in batches for better performance
+	logrus.Info("Adding foreign key constraints in batches...")
+	if err := ms.addForeignKeysOptimized(db); err != nil {
+		logrus.Errorf("Failed to add foreign key constraints: %v", err)
+		return err
+	}
+	
+	logrus.Info("Base tables created successfully")
+	
+	// ========================================
+	// STEP 2: Remove credit system remnants
+	// ========================================
+	logrus.Info("Step 2: Removing credit system remnants")
+	
+	// Remove credits_remaining column from users table if it exists
+	if err := db.Exec("ALTER TABLE users DROP COLUMN IF EXISTS credits_remaining").Error; err != nil {
+		logrus.Warnf("Could not drop credits_remaining column: %v", err)
+	}
+	
+	// Remove old credit-related configs
+	if err := db.Exec("DELETE FROM admin_configs WHERE key IN ('default_user_credits', 'credit_purchase_price', 'credits_expire_days')").Error; err != nil {
+		logrus.Warnf("Could not remove old credit configs: %v", err)
+	}
+	
+	logrus.Info("Credit system remnants removed")
+	
+	// ========================================
+	// STEP 3: Setup business model configuration
+	// ========================================
+	logrus.Info("Step 3: Setting up business model configuration")
+	
+	// Add new business model configs
+	newConfigs := []models.AdminConfig{
+		{Key: "max_normal_user_properties", Value: "0", Type: "int", Category: "system", Description: "Maximum properties per normal user (0 = unlimited)"},
+		{Key: "max_broker_properties_without_subscription", Value: "1", Type: "int", Category: "system", Description: "Maximum properties broker can post without subscription"},
+		{Key: "broker_property_priority", Value: "true", Type: "bool", Category: "system", Description: "Broker properties get priority listing"},
+		{Key: "razorpay_key_id", Value: "rzp_test_R5AUjoyz0QoYmH", Type: "string", Category: "payment", Description: "Razorpay Key ID"},
+		{Key: "razorpay_secret_key", Value: "gtpRKsGGGD7ofEXWvaoKRfB4", Type: "string", Category: "payment", Description: "Razorpay Secret Key"},
+		{Key: "razorpay_webhook_secret", Value: "", Type: "string", Category: "payment", Description: "Razorpay Webhook Secret"},
+		{Key: "default_wallet_limit", Value: "100000", Type: "float", Category: "wallet", Description: "Default wallet limit in INR"},
+		{Key: "min_recharge_amount", Value: "100", Type: "float", Category: "wallet", Description: "Minimum recharge amount"},
+		{Key: "max_recharge_amount", Value: "50000", Type: "float", Category: "wallet", Description: "Maximum single recharge amount"},
+		{Key: "property_expiry_days", Value: "30", Type: "int", Category: "property", Description: "Days until property listing expires"},
+		{Key: "auto_approve_broker_properties", Value: "true", Type: "bool", Category: "property", Description: "Auto-approve broker property listings"},
+		{Key: "require_property_approval", Value: "true", Type: "bool", Category: "property", Description: "Require admin approval for normal user properties"},
+		{Key: "max_property_images", Value: "5", Type: "int", Category: "system", Description: "Maximum images per property"},
+	}
+
+	for _, config := range newConfigs {
+		// Check if config already exists
+		var existingConfig models.AdminConfig
+		if err := db.Where("key = ?", config.Key).First(&existingConfig).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Create new config
+				if err := db.Create(&config).Error; err != nil {
+					logrus.Warnf("Could not create admin config %s: %v", config.Key, err)
+				} else {
+					logrus.Infof("Created admin config: %s = %s", config.Key, config.Value)
+				}
+			} else {
+				logrus.Warnf("Could not check admin config %s: %v", config.Key, err)
+			}
+		} else {
+			// Update existing config
+			existingConfig.Value = config.Value
+			existingConfig.Type = config.Type
+			existingConfig.Category = config.Category
+			existingConfig.Description = config.Description
+			if err := db.Save(&existingConfig).Error; err != nil {
+				logrus.Warnf("Could not update admin config %s: %v", config.Key, err)
+			} else {
+				logrus.Infof("Updated admin config: %s = %s", config.Key, config.Value)
+			}
+		}
+	}
+	
+	logrus.Info("Business model configuration setup completed")
+	
+	// ========================================
+	// STEP 4: Setup property system enhancements
+	// ========================================
+	logrus.Info("Step 4: Setting up property system enhancements")
+	
+	// Drop existing view if it exists (to avoid conflicts with column type changes)
+	if err := db.Exec("DROP VIEW IF EXISTS property_listing_view").Error; err != nil {
+		logrus.Warnf("Could not drop property_listing_view: %v", err)
+	}
+	
+	// Add priority_score column to properties table for broker priority
+	if err := db.Exec("ALTER TABLE properties ADD COLUMN IF NOT EXISTS priority_score BIGINT DEFAULT 0").Error; err != nil {
+		logrus.Warnf("Could not add priority_score column: %v", err)
+	}
+	
+	// Add subscription_required column to properties table
+	if err := db.Exec("ALTER TABLE properties ADD COLUMN IF NOT EXISTS subscription_required BOOLEAN DEFAULT false").Error; err != nil {
+		logrus.Warnf("Could not add subscription_required column: %v", err)
+	}
+	
+	// Update existing properties with priority scores
+	// Broker properties get high priority (100)
+	if err := db.Exec("UPDATE properties SET priority_score = 100 WHERE broker_id IS NOT NULL").Error; err != nil {
+		logrus.Warnf("Could not update broker property priorities: %v", err)
+	}
+	
+	// Admin uploaded properties get medium priority (50)
+	if err := db.Exec("UPDATE properties SET priority_score = 50 WHERE uploaded_by_admin = true AND broker_id IS NULL").Error; err != nil {
+		logrus.Warnf("Could not update admin property priorities: %v", err)
+	}
+	
+	// Update broker properties to mark subscription requirement
+	if err := db.Exec(`
+		UPDATE properties 
+		SET subscription_required = true 
+		WHERE broker_id IS NOT NULL 
+		AND broker_id IN (
+			SELECT DISTINCT user_id 
+			FROM user_subscriptions 
+			WHERE status = 'active' 
+			AND end_date > NOW()
+		)
+	`).Error; err != nil {
+		logrus.Warnf("Could not update subscription_required for broker properties: %v", err)
+	}
+	
+	// Create index on priority_score for better performance
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_properties_priority_score ON properties(priority_score DESC)").Error; err != nil {
+		logrus.Warnf("Could not create priority_score index: %v", err)
+	}
+	
+	// Create a view for property listing with priority
+	viewSQL := `
+		CREATE OR REPLACE VIEW property_listing_view AS
+		SELECT 
+			p.*,
+			u.name as user_name,
+			u.user_type,
+			b.name as broker_name,
+			CASE 
+				WHEN p.broker_id IS NOT NULL THEN 100
+				WHEN p.uploaded_by_admin = true THEN 50
+				ELSE 0
+			END as calculated_priority_score
+		FROM properties p
+		LEFT JOIN users u ON p.user_id = u.id
+		LEFT JOIN users b ON p.broker_id = b.id
+		WHERE p.is_approved = true 
+		AND p.status = 'available'
+		AND (p.expires_at IS NULL OR p.expires_at > NOW())
+		ORDER BY calculated_priority_score DESC, p.created_at DESC
+	`
+
+	if err := db.Exec(viewSQL).Error; err != nil {
+		logrus.Warnf("Could not create property listing view: %v", err)
+	}
+	
+	logrus.Info("Property system enhancements setup completed")
+	
+	// ========================================
+	// STEP 5: Setup booking system
+	// ========================================
+	logrus.Info("Step 5: Setting up booking system")
+	
+	// Create indexes for better performance
+	indexes := []string{
+		"CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)",
+		"CREATE INDEX IF NOT EXISTS idx_bookings_service_id ON bookings(service_id)",
+		"CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)",
+		"CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_date ON bookings(scheduled_date)",
+		"CREATE INDEX IF NOT EXISTS idx_bookings_payment_status ON bookings(payment_status)",
+		"CREATE INDEX IF NOT EXISTS idx_worker_assignments_worker_id ON worker_assignments(worker_id)",
+		"CREATE INDEX IF NOT EXISTS idx_worker_assignments_status ON worker_assignments(status)",
+		"CREATE INDEX IF NOT EXISTS idx_buffer_requests_status ON buffer_requests(status)",
+		"CREATE INDEX IF NOT EXISTS idx_time_slots_service_date ON time_slots(service_id, date)",
+		"CREATE INDEX IF NOT EXISTS idx_time_slots_available ON time_slots(available_workers) WHERE available_workers > 0",
+	}
+
+	for _, indexSQL := range indexes {
+		if err := db.Exec(indexSQL).Error; err != nil {
+			logrus.Warnf("Could not create index: %v", err)
+		}
+	}
+	
+	// Create default service configurations for existing services
+	var services []models.Service
+	if err := db.Find(&services).Error; err != nil {
+		logrus.Warnf("Could not fetch existing services: %v", err)
+	} else {
+		for _, service := range services {
+			// Check if config already exists
+			var existingConfig models.ServiceConfig
+			if err := db.Where("service_id = ?", service.ID).First(&existingConfig).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					// Create default config
+					defaultConfig := models.ServiceConfig{
+						ServiceID:              service.ID,
+						StartTime:              time.Date(2000, 1, 1, 10, 0, 0, 0, time.UTC), // 10:00 AM
+						EndTime:                time.Date(2000, 1, 1, 22, 0, 0, 0, time.UTC), // 10:00 PM
+						ServiceDurationMinutes: 60, // Default 1 hour
+						BufferTimeMinutes:      30, // Default 30 minutes buffer
+						AdvanceBookingDays:     7,  // Default 7 days advance booking
+						MaxWorkersPerSlot:      10, // Default 10 workers per slot
+						IsActive:               true,
+					}
+					if err := db.Create(&defaultConfig).Error; err != nil {
+						logrus.Warnf("Could not create default config for service %d: %v", service.ID, err)
+					}
+				}
+			}
+		}
+	}
+	
+	logrus.Info("Booking system setup completed")
+	
+	// ========================================
+	// STEP 6: Final system setup
+	// ========================================
+	logrus.Info("Step 6: Final system setup")
+	
+	// Ensure all foreign key constraints are properly set (PostgreSQL)
+	if err := db.Exec("SET session_replication_role = DEFAULT").Error; err != nil {
+		logrus.Warnf("Could not reset session replication role: %v", err)
+	}
+	
+	logrus.Info("Complete system setup migration completed successfully")
 	return nil
 }
 
 
+
+// addForeignKeysOptimized adds foreign key constraints in optimized batches
+func (ms *MigrationService) addForeignKeysOptimized(db *gorm.DB) error {
+	// Batch 1: User-related foreign keys
+	userFKs := []string{
+		"ALTER TABLE user_subscriptions ADD CONSTRAINT fk_user_subscriptions_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE user_subscriptions ADD CONSTRAINT fk_user_subscriptions_plan_id FOREIGN KEY (plan_id) REFERENCES subscription_plans(id)",
+		"ALTER TABLE locations ADD CONSTRAINT fk_locations_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE user_documents ADD CONSTRAINT fk_user_documents_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE user_skills ADD CONSTRAINT fk_user_skills_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE role_applications ADD CONSTRAINT fk_role_applications_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE user_notification_settings ADD CONSTRAINT fk_user_notification_settings_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE user_roles ADD CONSTRAINT fk_user_roles_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE subscription_warnings ADD CONSTRAINT fk_subscription_warnings_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+	}
+	
+	// Batch 2: Service-related foreign keys
+	serviceFKs := []string{
+		"ALTER TABLE service_configs ADD CONSTRAINT fk_service_configs_service_id FOREIGN KEY (service_id) REFERENCES services(id)",
+		"ALTER TABLE time_slots ADD CONSTRAINT fk_time_slots_service_id FOREIGN KEY (service_id) REFERENCES services(id)",
+		"ALTER TABLE subcategories ADD CONSTRAINT fk_subcategories_parent_id FOREIGN KEY (parent_id) REFERENCES categories(id)",
+		"ALTER TABLE services ADD CONSTRAINT fk_services_category_id FOREIGN KEY (category_id) REFERENCES categories(id)",
+		"ALTER TABLE services ADD CONSTRAINT fk_services_subcategory_id FOREIGN KEY (subcategory_id) REFERENCES subcategories(id)",
+	}
+	
+	// Batch 3: Complex relationship foreign keys
+	complexFKs := []string{
+		"ALTER TABLE properties ADD CONSTRAINT fk_properties_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE properties ADD CONSTRAINT fk_properties_broker_id FOREIGN KEY (broker_id) REFERENCES users(id)",
+		"ALTER TABLE properties ADD CONSTRAINT fk_properties_approved_by FOREIGN KEY (approved_by) REFERENCES users(id)",
+		"ALTER TABLE bookings ADD CONSTRAINT fk_bookings_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_id FOREIGN KEY (service_id) REFERENCES services(id)",
+		"ALTER TABLE bookings ADD CONSTRAINT fk_bookings_time_slot_id FOREIGN KEY (time_slot_id) REFERENCES time_slots(id)",
+		"ALTER TABLE worker_assignments ADD CONSTRAINT fk_worker_assignments_booking_id FOREIGN KEY (booking_id) REFERENCES bookings(id)",
+		"ALTER TABLE worker_assignments ADD CONSTRAINT fk_worker_assignments_worker_id FOREIGN KEY (worker_id) REFERENCES users(id)",
+		"ALTER TABLE worker_assignments ADD CONSTRAINT fk_worker_assignments_assigned_by FOREIGN KEY (assigned_by) REFERENCES users(id)",
+		"ALTER TABLE buffer_requests ADD CONSTRAINT fk_buffer_requests_booking_id FOREIGN KEY (booking_id) REFERENCES bookings(id)",
+		"ALTER TABLE buffer_requests ADD CONSTRAINT fk_buffer_requests_worker_id FOREIGN KEY (worker_id) REFERENCES users(id)",
+		"ALTER TABLE buffer_requests ADD CONSTRAINT fk_buffer_requests_approved_by FOREIGN KEY (approved_by) REFERENCES users(id)",
+		"ALTER TABLE wallet_transactions ADD CONSTRAINT fk_wallet_transactions_user_id FOREIGN KEY (user_id) REFERENCES users(id)",
+		"ALTER TABLE wallet_transactions ADD CONSTRAINT fk_wallet_transactions_related_user_id FOREIGN KEY (related_user_id) REFERENCES users(id)",
+		"ALTER TABLE wallet_transactions ADD CONSTRAINT fk_wallet_transactions_service_id FOREIGN KEY (service_id) REFERENCES services(id)",
+		"ALTER TABLE wallet_transactions ADD CONSTRAINT fk_wallet_transactions_property_id FOREIGN KEY (property_id) REFERENCES properties(id)",
+		"ALTER TABLE wallet_transactions ADD CONSTRAINT fk_wallet_transactions_subscription_id FOREIGN KEY (subscription_id) REFERENCES user_subscriptions(id)",
+		"ALTER TABLE role_applications ADD CONSTRAINT fk_role_applications_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id)",
+	}
+	
+	// Execute batches with error handling
+	batches := [][]string{userFKs, serviceFKs, complexFKs}
+	batchNames := []string{"User-related", "Service-related", "Complex relationships"}
+	
+	for i, batch := range batches {
+		logrus.Infof("Adding %s foreign key constraints...", batchNames[i])
+		for _, fkSQL := range batch {
+			if err := db.Exec(fkSQL).Error; err != nil {
+				// Check if constraint already exists
+				if !strings.Contains(err.Error(), "already exists") {
+					logrus.Warnf("Could not add foreign key constraint: %v", err)
+				}
+			}
+		}
+	}
+	
+	return nil
+}
