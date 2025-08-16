@@ -196,19 +196,4 @@ func UserOrWorkerMiddleware() gin.HandlerFunc {
 	}
 }
 
-// VerifiedUserMiddleware ensures user has completed KYC verification
-func VerifiedUserMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := c.MustGet("user").(models.User)
-		
-		if user.KYCStatus != models.KYCStatusApproved && user.KYCStatus != models.KYCStatusNotNeeded {
-			c.JSON(http.StatusForbidden, gin.H{
-				"success": false,
-				"message": "KYC verification required",
-			})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
+
