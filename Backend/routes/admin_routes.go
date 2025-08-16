@@ -20,5 +20,15 @@ func SetupAdminRoutes(r *gin.RouterGroup) {
 
 		// User management
 		admin.GET("/users", adminController.GetAllUsers)
+		admin.GET("/users/:id", adminController.GetUserByID)
+		admin.PUT("/users/:id", adminController.UpdateUserByID)
+		admin.DELETE("/users/:id", adminController.DeleteUserByID)
+		admin.POST("/users/:id/activate", adminController.ToggleUserActivation)
+		
+		// Worker type toggle
+		admin.PUT("/workers/:worker_id/toggle-worker-type", adminController.ToggleWorkerType)
+		
+		// Subscription admin routes
+		SetupAdminSubscriptionRoutes(admin)
 	}
 }

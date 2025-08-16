@@ -14,8 +14,7 @@ func SetupAuthRoutes(r *gin.RouterGroup) {
 	// Public routes (no authentication required)
 	auth := r.Group("/auth")
 	{
-		auth.POST("/register", authController.Register)
-		auth.POST("/login", authController.Login)
+		auth.POST("/request-otp", authController.RequestOTP)
 		auth.POST("/verify-otp", authController.VerifyOTP)
 		auth.POST("/refresh-token", authController.RefreshToken)
 	}
