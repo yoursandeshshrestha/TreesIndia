@@ -1,69 +1,90 @@
 # TREESINDIA - Application Outline
 
-## �� **What is TREESINDIA?**
+## 🎯 **What is TREESINDIA?**
 
-TREESINDIA is a **unified digital platform** that combines **home services** and **real estate marketplace** in one comprehensive application. Think of it as "Uber for home services" + "Airbnb for real estate" with advanced privacy features and AI assistance.
+TREESINDIA is a **unified digital platform** with three main modules: **Home Services**, **Contractor**, and **Real Estate**. Users get free credits for property listings, can recharge their wallet, and brokers can buy subscriptions for unlimited posting. The platform features simplified phone+OTP authentication and credit-based property posting.
 
 ---
 
-## �� **Core Purpose**
+## 🎯 **Core Purpose**
 
 ### **The Problem We Solve**
+
 - **Fragmented Services**: Users need separate apps for home services and property search
-- **Privacy Concerns**: Direct phone number sharing between users and service providers
-- **Trust Issues**: No verification system for service providers and property sellers
-- **Complex Booking**: Difficult process for booking services and property visits
+- **Complex Authentication**: Email/password complexity creates friction
+- **Limited Property Posting**: No clear system for property listing limits
+- **Payment Complexity**: Multiple payment methods and processes
 
 ### **Our Solution**
-- **Single Platform**: One app for all home and property needs
-- **Privacy Protection**: Call masking ensures real numbers are never shared
-- **Verified Providers**: KYC verification for all service providers and sellers
-- **AI Assistance**: Smart chatbot helps with booking and property discovery
-- **Seamless Experience**: Easy booking, payment, and communication
+
+- **Three Main Modules**: Home Services, Contractor, Real Estate in one app
+- **Simplified Authentication**: Phone+OTP only for quick access
+- **Credit System**: Free credits for property posting (admin-configurable)
+- **Wallet System**: Rechargeable wallet for all transactions
+- **Subscription Model**: Brokers can buy unlimited posting subscriptions
 
 ---
 
 ## 👥 **Who Uses TREESINDIA?**
 
 ### **🏠 Homeowners & Tenants**
+
 - **Book Home Services**: Plumbing, electrical, cleaning, renovation
-- **Find Properties**: Buy, rent, or invest in real estate
-- **Get AI Help**: Ask questions about services and properties
-- **Stay Protected**: Privacy through masked calls and secure payments
+- **Find Contractors**: Direct contact with skilled professionals
+- **Discover Properties**: Buy, rent, or invest in real estate
+- **Manage Credits**: Use free credits for property listings
+- **Recharge Wallet**: Easy payment for services and credits
 
-### **👷 Service Providers (Workers)**
-- **Receive Jobs**: Get assigned service requests in their area
-- **Earn Money**: Complete jobs and receive payments
+### **👷 Contractors (Service Providers)**
+
+- **Create Profiles**: Showcase skills and experience
+- **Receive Contacts**: Direct communication with customers
 - **Build Reputation**: Get rated and reviewed by customers
-- **Manage Schedule**: Set availability and service areas
+- **Manage Availability**: Set working hours and service areas
+- **Earn Money**: Direct payment from customers
 
-### **🏘️ Property Sellers & Developers**
-- **List Properties**: Upload properties for sale or rent
+### **🏘️ Property Sellers & Brokers**
+
+- **List Properties**: Use credits or subscription for posting
 - **Manage Inquiries**: Handle buyer/renter requests
+- **Buy Subscriptions**: Unlimited posting for brokers
 - **Close Deals**: Complete property transactions
-- **Get Verified**: TREESINDIA assured tag for trust
+- **Get Verified**: Enhanced visibility for trusted sellers
 
 ### **⚙️ Platform Administrators**
-- **Manage Everything**: Oversee users, services, properties
-- **Approve Content**: Review and approve listings and bookings
-- **Handle Support**: Resolve disputes and provide assistance
+
+- **Configure System**: Set credit limits, wallet limits, subscription prices
+- **Manage Users**: Oversee users, contractors, sellers
+- **Approve Content**: Review property listings (non-subscribed users)
 - **Monitor Performance**: Track platform metrics and growth
+- **Handle Support**: Resolve disputes and provide assistance
 
 ---
 
-## ��️ **What Can You Do on TREESINDIA?**
+## 🎯 **What Can You Do on TREESINDIA?**
 
 ### **📱 For Users (Homeowners/Tenants)**
 
 #### **Home Services**
+
 - **Browse Services**: Find plumbers, electricians, cleaners, renovators
-- **Book Instantly**: Direct booking for simple services
-- **Get Quotes**: Inquiry-based booking for complex projects
+- **View Pricing**: Fixed prices for all services
+- **Book Instantly**: Direct booking with payment
 - **Track Progress**: Real-time updates on service status
 - **Pay Securely**: Razorpay integration for all payments
 - **Rate & Review**: Provide feedback after service completion
 
+#### **Contractor Services**
+
+- **Find Contractors**: Browse by profession, skills, location
+- **Filter Options**: Search by rating, experience, availability
+- **Direct Contact**: Masked calls and messaging
+- **View Profiles**: Check skills, experience, ratings
+- **Schedule Work**: Arrange timing and location
+- **Direct Payment**: Pay contractors directly
+
 #### **Real Estate**
+
 - **Discover Properties**: Browse properties for sale or rent
 - **Smart Search**: Filter by location, price, type, amenities
 - **Contact Sellers**: Masked calls and in-app chat
@@ -71,176 +92,272 @@ TREESINDIA is a **unified digital platform** that combines **home services** and
 - **Make Offers**: Negotiate prices and terms
 - **Complete Deals**: Secure payment and documentation
 
-#### **AI Assistant**
-- **Ask Questions**: "Show me 2BHK flats under 50L"
-- **Get Recommendations**: AI suggests properties and services
-- **Booking Help**: Assistance with service booking process
-- **FAQ Support**: Quick answers to common questions
+#### **Credit & Wallet System**
 
-### **👷 For Workers (Service Providers)**
+- **Free Credits**: Get 3 free credits for property posting
+- **Buy Credits**: Purchase more credits when needed
+- **Recharge Wallet**: Add money to wallet for transactions
+- **Track Usage**: Monitor credit and wallet activity
+- **Transaction History**: Complete record of all transactions
 
-#### **Job Management**
-- **Receive Jobs**: Get notified of new service requests
-- **Accept/Reject**: Choose which jobs to take
-- **Track Progress**: Update job status in real-time
-- **Navigate**: Google Maps integration for directions
-- **Complete Jobs**: OTP verification for service completion
-- **Get Paid**: Automatic payment processing
+### **👷 For Contractors (Service Providers)**
 
 #### **Profile Management**
-- **Set Skills**: Choose service categories and specialties
-- **Define Areas**: Set service coverage locations
+
+- **Create Profile**: Set up professional profile with skills
+- **Add Skills**: Choose service categories and specialties
 - **Set Rates**: Determine pricing for services
+- **Define Areas**: Set service coverage locations
+- **Manage Availability**: Set working hours and schedule
+- **Build Portfolio**: Showcase previous work
+
+#### **Customer Interaction**
+
+- **Receive Contacts**: Get customer inquiries and calls
+- **Direct Communication**: Masked calls and messaging
+- **Quote Services**: Provide estimates to customers
+- **Schedule Work**: Arrange appointments and timing
+- **Complete Jobs**: Finish work and get paid
 - **Build Reputation**: Collect ratings and reviews
-- **Track Earnings**: Monitor income and performance
+
+### **🏘️ For Property Sellers & Brokers**
+
+#### **Property Management**
+
+- **List Properties**: Use credits or subscription for posting
+- **Manage Listings**: Update property details and photos
+- **Handle Inquiries**: Respond to buyer/renter requests
+- **Schedule Viewings**: Arrange property visits
+- **Close Deals**: Complete sales and rentals
+- **Track Performance**: Monitor listing views and inquiries
+
+#### **Subscription Benefits**
+
+- **Unlimited Posting**: No credit requirement with subscription
+- **Priority Placement**: Enhanced visibility for listings
+- **Advanced Analytics**: Detailed performance metrics
+- **Dedicated Support**: Priority customer service
+- **No Admin Approval**: Direct posting capability
 
 ### **⚙️ For Admins**
 
 #### **Platform Management**
-- **User Management**: Oversee all users, workers, sellers
-- **Service Creation**: Add new services with pricing and coverage
-- **Content Approval**: Review and approve listings and bookings
+
+- **User Management**: Oversee all users, contractors, sellers
+- **System Configuration**: Set credit limits, wallet limits
+- **Subscription Management**: Create and manage subscription plans
+- **Content Approval**: Review property listings
 - **Dispute Resolution**: Handle complaints and issues
-- **Performance Monitoring**: Track platform metrics
 
 #### **Financial Management**
+
+- **Credit System**: Monitor credit usage and sales
+- **Wallet System**: Track wallet transactions and balances
+- **Subscription Revenue**: Manage subscription sales
 - **Payment Processing**: Oversee all transactions
-- **Commission Tracking**: Manage platform fees
-- **Settlement Management**: Process worker and seller payouts
 - **Revenue Analytics**: Monitor platform earnings
 
 ---
 
-## �� **How Does It Work?**
+## 🔐 **How Does It Work?**
 
-### **Service Booking Process**
+### **Simplified Authentication Process:**
 
-#### **Step 1: Find Service**
-- Open app and allow location access
-- Browse services available in your area
-- Filter by type, price, or rating
+```
+1. User enters phone number
+2. System sends OTP via SMS
+3. User enters OTP
+4. System validates and creates/logs in user
+5. Auto-assigns 3 credits and initializes wallet
+6. User accesses three main modules
+```
 
-#### **Step 2: Book Service**
-- Select service and fill booking form
-- Provide address, description, and schedule
-- Submit booking for admin approval
+### **Credit System Process:**
 
-#### **Step 3: Payment & Assignment**
-- Admin approves booking
-- Make payment through Razorpay
-- Admin assigns qualified worker
+```
+1. New users get 3 free credits
+2. 1 credit = 1 property listing
+3. Credits don't expire
+4. Users can buy more credits
+5. Brokers can buy subscriptions for unlimited posting
+```
 
-#### **Step 4: Service Execution**
-- Worker arrives and starts service
-- Track progress through real-time updates
-- Worker requests OTP upon completion
+### **Wallet System Process**
 
-#### **Step 5: Completion & Review**
-- Provide OTP to complete service
-- Rate and review the service
-- Worker receives payment automatically
+#### **Wallet Features**
 
-### **Property Discovery Process**
+- Rechargeable wallet (Razorpay integration)
+- Admin-configurable limit (default: 100,000)
+- Used for credits, subscriptions, future services
+- Transaction history
 
-#### **Step 1: Search Properties**
-- Browse properties in your preferred location
-- Apply filters for price, type, amenities
-- View detailed photos and descriptions
+#### **Wallet Usage**
 
-#### **Step 2: Contact Seller**
-- Submit inquiry through masked call or chat
-- Schedule property viewing
-- Ask questions about the property
+- Recharge wallet
+- Buy credits
+- Buy subscriptions
+- Future service payments
 
-#### **Step 3: Visit & Negotiate**
-- Visit property in person
-- Discuss price and terms with seller
-- Make offer if interested
+### **Subscription System Process**
 
-#### **Step 4: Complete Transaction**
-- Secure payment through platform
-- Complete documentation
-- Transfer property ownership
+#### **Broker Subscriptions**
+
+- Admin-configurable subscription plans
+- Unlimited property posting
+- No admin approval required
+- Subscription validation
+
+#### **Subscription Benefits**
+
+- Unlimited property listings
+- Priority listing placement
+- Advanced analytics
+- Dedicated support
+
+---
+
+## 🏠 **Three Main Modules**
+
+### **1. Home Services Module**
+
+#### **User Flow:**
+
+1. User clicks "Home Services" card on home screen
+2. Bottom sheet opens with service categories
+3. User selects category (e.g., "Plumbing")
+4. Service listings shown (e.g., "Tap Repair - ₹500")
+5. User can book service or contact provider
+
+#### **Service Categories:**
+
+- **Plumbing**: Tap repair, pipe installation, drainage
+- **Cleaning**: House cleaning, deep cleaning, carpet cleaning
+- **AC Repair**: AC installation, maintenance, repair
+- **Electrical**: Wiring, repairs, installations
+- **Carpentry**: Furniture repair, installation
+- **Painting**: Interior, exterior, wall painting
+
+#### **Service Booking Flow:**
+
+```
+1. Select service category → View service listings
+2. Choose service → View details and pricing
+3. Book service → Fill booking form
+4. Payment → Razorpay integration
+5. Service execution → Provider completes service
+6. Review → Rate and review service
+```
+
+### **2. Contractor Module**
+
+#### **User Flow:**
+
+1. User clicks "Contractor" card on home screen
+2. List of contractors shown with filtering options
+3. User can filter by profession, skills, location
+4. User can contact contractor (text/call with masking)
+5. Direct communication with contractor
+
+#### **Contractor Features:**
+
+- **Profession Filtering**: Plumber, Electrician, Carpenter, etc.
+- **Skill-based Search**: Specific skills and expertise
+- **Location-based**: Nearby contractors
+- **Rating System**: Reviews and ratings
+- **Direct Contact**: Masked calls and messaging
+
+#### **Contractor Contact Flow:**
+
+```
+1. Browse contractors → Apply filters
+2. View contractor profile → Check skills and ratings
+3. Contact contractor → Masked call or message
+4. Discuss requirements → Direct communication
+5. Schedule work → Arrange timing and location
+6. Complete work → Direct payment to contractor
+```
+
+### **3. Real Estate Module**
+
+#### **User Flow:**
+
+1. User clicks "Rental/Property" card on home screen
+2. Property listings shown with search and filter options
+3. User can search and filter properties
+4. User can contact seller/owner
+5. Property viewing and transaction
+
+#### **Property Features:**
+
+- **Credit-based Posting**: 1 credit = 1 property listing
+- **Subscription Posting**: Unlimited posting for brokers
+- **Search & Filter**: Location, price, type, amenities
+- **Contact System**: Masked calls and messaging
+- **Viewing Scheduling**: Book property viewings
+
+#### **Property Posting Flow:**
+
+```
+1. User wants to post property → Check credits/subscription
+2. If credits available → Deduct credit and post
+3. If subscription active → Post without credit deduction
+4. If no credits/subscription → Buy credits or subscription
+5. Property goes live → Visible to users
+6. Handle inquiries → Contact management
+```
 
 ---
 
 ## 🛡️ **Privacy & Security Features**
 
 ### **Call Masking**
+
 - **Real Numbers Hidden**: Your actual phone number is never shared
 - **Temporary Numbers**: Virtual numbers generated for each interaction
-- **Auto-expiry**: Numbers expire after job completion
+- **Auto-expiry**: Numbers expire after interaction
 - **Call Logging**: All calls are logged for security
 
 ### **Secure Payments**
+
 - **Razorpay Integration**: PCI-compliant payment processing
 - **Encrypted Data**: All financial information is encrypted
 - **Secure Storage**: Data stored with enterprise-grade security
 - **Fraud Protection**: Advanced fraud detection systems
 
-### **KYC Verification**
-- **Document Upload**: Aadhaar, PAN, address proof
-- **Admin Review**: Manual verification by platform admins
-- **Fraud Prevention**: Identity verification checks
-- **Compliance**: Meets regulatory requirements
+### **Credit & Wallet Security**
 
----
-
-## 🤖 **AI Features**
-
-### **Smart Chatbot**
-- **Natural Language**: Ask questions in plain English
-- **Property Recommendations**: AI suggests properties based on preferences
-- **Service Guidance**: Help with booking and service selection
-- **FAQ Handling**: Quick answers to common questions
-- **Human Escalation**: Transfer to human support when needed
-
-### **Location Intelligence**
-- **Nearby Services**: Find services available in your area
-- **Property Discovery**: Discover properties in preferred locations
-- **Distance Calculation**: Show service coverage areas
-- **Route Optimization**: Best routes for service providers
-
----
-
-## 📊 **Platform Statistics**
-
-### **Service Categories**
-- **Plumbing**: Repairs, installations, maintenance
-- **Electrical**: Wiring, repairs, installations
-- **Cleaning**: House cleaning, deep cleaning
-- **Renovation**: Home remodeling, kitchen updates
-- **Construction**: New building, repairs
-- **Property Management**: Maintenance, management
-
-### **Property Types**
-- **Residential**: Apartments, houses, villas
-- **Commercial**: Offices, shops, warehouses
-- **Land**: Plots, agricultural land
-- **Industrial**: Factories, storage units
-
-### **Coverage Areas**
-- **Cities**: Bangalore, Mumbai, Delhi, Chennai, Hyderabad
-- **States**: Karnataka, Maharashtra, Delhi, Tamil Nadu, Telangana
-- **Expansion**: Nationwide coverage planned
+- **Transaction Validation**: All transactions verified
+- **Fraud Prevention**: Suspicious activity detection
+- **Audit Trail**: Complete transaction history
+- **Secure Storage**: Encrypted financial data
 
 ---
 
 ## 💰 **Pricing & Payments**
 
-### **Service Pricing**
-- **Direct Booking**: Fixed prices for simple services
-- **Inquiry-based**: Custom quotes for complex projects
-- **Transparent Pricing**: No hidden fees or charges
-- **Commission Structure**: Platform fees clearly defined
+### **Credit System**
 
-### **Property Transactions**
-- **Listing Fees**: Small fee for property listings
-- **Commission**: Percentage on successful sales/rentals
-- **TREESINDIA Assured**: Premium verification service
-- **Secure Escrow**: Protected payments for property deals
+- **Free Credits**: 3 credits on registration (admin-configurable)
+- **Credit Purchase**: Buy more credits when needed
+- **No Expiry**: Credits don't expire
+- **Usage**: 1 credit = 1 property listing
+
+### **Wallet System**
+
+- **Rechargeable**: Add money to wallet anytime
+- **Admin Limit**: Maximum balance set by admin (default: 100,000)
+- **Multi-purpose**: Credits, subscriptions, future services
+- **Transaction History**: Complete record of all transactions
+
+### **Subscription Plans**
+
+- **Admin Configurable**: Plans and pricing set by admin
+- **Unlimited Posting**: No credit requirement
+- **Priority Features**: Enhanced listing placement
+- **Dedicated Support**: Priority customer service
 
 ### **Payment Methods**
+
 - **UPI**: Instant bank transfers
 - **Credit/Debit Cards**: Secure card payments
 - **Digital Wallets**: Paytm, Google Pay, PhonePe
@@ -248,26 +365,29 @@ TREESINDIA is a **unified digital platform** that combines **home services** and
 
 ---
 
-## �� **Technology Stack**
+## 🎨 **Technology Stack**
 
 ### **Frontend**
+
 - **Flutter**: Cross-platform mobile app (iOS & Android)
 - **Next.js**: Web-based admin panel
 - **Responsive Design**: Works on all devices
 
 ### **Backend**
+
 - **GoLang**: High-performance backend API
 - **PostgreSQL**: Reliable database storage
 - **Redis**: Fast caching and sessions
 
 ### **Integrations**
+
 - **Google Maps**: Location services and navigation
 - **Razorpay**: Payment processing
 - **Twilio/Exotel**: Call masking and SMS
 - **Firebase**: Push notifications
-- **OpenAI**: AI chatbot functionality
 
 ### **Infrastructure**
+
 - **Hostinger VPS**: Phase 1 deployment
 - **Docker**: Containerized microservices
 - **Load Balancing**: High availability setup
@@ -278,20 +398,24 @@ TREESINDIA is a **unified digital platform** that combines **home services** and
 ## 📈 **Growth & Expansion**
 
 ### **Phase 1: Core Platform**
-- **Basic Services**: Plumbing, electrical, cleaning
-- **Property Listings**: Sale and rental properties
-- **Payment Integration**: Razorpay processing
-- **Admin Panel**: Basic management features
+
+- **Three Main Modules**: Home Services, Contractor, Real Estate
+- **Credit System**: Property posting with credits
+- **Wallet System**: Rechargeable wallet
+- **Subscription System**: Broker subscriptions
+- **Admin Panel**: Configuration management
 
 ### **Phase 2: Advanced Features**
-- **AI Chatbot**: Smart assistance and recommendations
-- **Call Masking**: Privacy protection system
-- **Advanced Analytics**: Performance tracking
+
+- **Enhanced Analytics**: Performance tracking
 - **Mobile Apps**: iOS and Android applications
+- **Advanced Filtering**: Better search and discovery
+- **Performance Optimization**: Speed and scalability
 
 ### **Phase 3: Scale & Optimize**
+
 - **Nationwide Coverage**: Expand to all major cities
-- **Advanced AI**: Machine learning for better recommendations
+- **Advanced Features**: Enhanced user experience
 - **Enterprise Features**: B2B services and partnerships
 - **International Expansion**: Global market entry
 
@@ -300,72 +424,84 @@ TREESINDIA is a **unified digital platform** that combines **home services** and
 ## 🎯 **Success Metrics**
 
 ### **User Engagement**
+
 - **Daily Active Users**: Target 10,000+ daily users
-- **Booking Conversion**: 70%+ inquiry to booking ratio
-- **User Retention**: 80%+ monthly retention rate
-- **Average Session**: 15+ minutes per session
+- **Module Usage**: Three main modules adoption
+- **Credit Usage**: Property posting activity
+- **Wallet Activity**: Transaction volume
+- **Subscription Adoption**: Broker subscription rates
 
 ### **Business Performance**
-- **Revenue Growth**: 50%+ monthly growth target
-- **Service Completion**: 95%+ successful service completion
-- **Property Views**: 100,000+ monthly property views
-- **Payment Success**: 99%+ successful payment rate
+
+- **Credit Sales**: Revenue from credit purchases
+- **Subscription Revenue**: Monthly recurring revenue
+- **Property Views**: Listing visibility and engagement
+- **Service Bookings**: Home services completion rate
+- **Contractor Engagement**: Contact and booking rates
 
 ### **Quality Metrics**
-- **Worker Ratings**: 4.5+ average worker rating
-- **Customer Satisfaction**: 90%+ satisfaction score
-- **Response Time**: <2 hours average response time
-- **Dispute Resolution**: <5% dispute rate
+
+- **User Satisfaction**: Ratings and reviews
+- **Response Time**: Service and inquiry response
+- **Payment Success**: Transaction completion rate
+- **System Uptime**: Platform availability
 
 ---
 
-## �� **Why Choose TREESINDIA?**
+## 🎯 **Why Choose TREESINDIA?**
 
 ### **For Users**
-- **One-Stop Solution**: All home and property needs in one app
-- **Privacy Protection**: Your personal information stays private
-- **Verified Providers**: All service providers and sellers are verified
-- **AI Assistance**: Smart help for booking and discovery
-- **Secure Payments**: Safe and transparent payment processing
 
-### **For Workers**
-- **Steady Income**: Regular job assignments in your area
+- **One-Stop Solution**: All home and property needs in one app
+- **Simplified Access**: Phone+OTP authentication
+- **Free Credits**: Property posting without immediate cost
+- **Secure Payments**: Safe and transparent payment processing
+- **Direct Contact**: Masked calls for privacy
+
+### **For Contractors**
+
+- **Direct Business**: Connect directly with customers
 - **Flexible Schedule**: Work when and where you want
-- **Growth Opportunities**: Build reputation and increase earnings
-- **Support System**: Platform support and dispute resolution
+- **Build Reputation**: Collect ratings and reviews
+- **Earn More**: Direct payment from customers
 
 ### **For Property Sellers**
+
+- **Credit System**: Free credits for property posting
+- **Subscription Option**: Unlimited posting for brokers
 - **Wide Reach**: Access to large pool of potential buyers/renters
-- **Verified Listings**: TREESINDIA assured tag builds trust
 - **Secure Transactions**: Protected payments and documentation
-- **Marketing Support**: Platform promotion and visibility
 
 ### **For the Industry**
+
 - **Digital Transformation**: Modernizing home services and real estate
-- **Trust Building**: Verification systems create reliable marketplace
+- **Simplified Access**: Reducing friction in user onboarding
 - **Efficiency**: Streamlined processes reduce time and cost
-- **Innovation**: AI and privacy features set new standards
+- **Innovation**: Credit and wallet system sets new standards
 
 ---
 
 ## 📞 **Get Started**
 
 ### **Download the App**
+
 - **iOS**: Available on App Store
 - **Android**: Available on Google Play Store
 - **Web**: Admin panel accessible via browser
 
 ### **Contact Support**
+
 - **Email**: support@treesindia.com
 - **Phone**: +91-XXXXXXXXXX
-- **Chat**: In-app AI assistant
+- **Chat**: In-app support
 - **Hours**: 24/7 customer support
 
 ### **Join Our Team**
+
 - **Careers**: Work with cutting-edge technology
 - **Partnerships**: Collaborate with verified service providers
 - **Investors**: Be part of the digital transformation journey
 
 ---
 
-**TREESINDIA** - Your trusted partner for all home services and real estate needs. Experience the future of home and property management with privacy, security, and AI-powered assistance.
+**TREESINDIA** - Your trusted partner for all home services, contractor needs, and real estate with simplified access, credit system, and wallet management. Experience the future of home and property management with privacy, security, and seamless user experience.

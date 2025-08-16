@@ -8,25 +8,72 @@ https://api.treesindia.com/api/v1
 
 ---
 
-## 🔐 Authentication Routes
+## 🔐 **Authentication Routes**
 
-### **Public Routes**
+### **Simplified Phone + OTP Authentication:**
 
-- `POST /auth/register` – User Registration **(Public)**
-- `POST /auth/login` – User Login **(Public)**
-- `POST /auth/phone-otp` – Send Phone OTP **(Public)**
-- `POST /auth/verify-otp` – Verify Phone OTP **(Public)**
-- `POST /auth/google-login` – Google OAuth Login **(Public)**
-- `POST /auth/refresh-token` – Refresh Access Token **(Public)**
-- `POST /auth/forgot-password` – Request Password Reset **(Public)**
-- `POST /auth/reset-password` – Reset Password **(Public)**
+#### **Request OTP**
 
-### **Protected Routes**
+```
+POST /api/auth/request-otp
+Content-Type: application/json
 
-- `POST /auth/logout` – User Logout **(Authenticated)**
-- `GET /auth/profile` – Get User Profile **(Authenticated)**
-- `PUT /auth/profile` – Update User Profile **(Authenticated)**
-- `POST /auth/change-password` – Change Password **(Authenticated)**
+{
+  "phone": "+919876543210"
+}
+
+Response:
+{
+  "success": true,
+  "message": "OTP sent successfully",
+  "data": {
+    "phone": "+919876543210",
+    "expires_in": 60
+  }
+}
+```
+
+#### **Verify OTP & Login**
+
+```
+POST /api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "phone": "+919876543210",
+  "otp": "123456"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "phone": "+919876543210",
+      "name": "John Doe",
+      "role": "user",
+      "credits_remaining": 3,
+      "wallet_balance": 0.0,
+      "wallet_limit": 100000.0,
+      "subscription_id": null,
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    "token": "jwt_token_here",
+    "is_new_user": true
+  }
+}
+```
+
+### **Authentication Features:**
+
+- **Single Method**: Phone + OTP only
+- **Auto-registration**: First login creates account
+- **Auto-credits**: New users get 3 free credits
+- **Auto-wallet**: Wallet initialized with 0 balance
+- **JWT Token**: Session management
+- **Role-based**: User, Broker, Admin roles
 
 ---
 
@@ -36,47 +83,72 @@ https://api.treesindia.com/api/v1
 
 - `GET /users/profile` – Get User Profile **(User)**
 - `PUT /users/profile` – Update User Profile **(User)**
-- `POST /users/kyc` – Submit KYC Documents **(User)**
-- `GET /users/kyc-status` – Get KYC Status **(User)**
+- `GET /users/credits` – Get User Credits **(User)**
+- `POST /users/buy-credits` – Purchase Credits **(User)**
+- `GET /users/wallet` – Get Wallet Balance **(User)**
+- `POST /users/wallet/recharge` – Recharge Wallet **(User)**
+- `GET /users/wallet/transactions` – Get Wallet Transaction History **(User)**
 - `POST /users/upload-avatar` – Upload Profile Picture **(User)**
 - `GET /users/notifications` – Get User Notifications **(User)**
 - `PUT /users/notifications/settings` – Update Notification Settings **(User)**
-- `GET /users/activity` – Get User Activity History **(User)**
-
-### **Worker Routes (Authenticated)**
-
-- `GET /workers/profile` – Get Worker Profile **(Worker)**
-- `PUT /workers/profile` – Update Worker Profile **(Worker)**
-- `POST /workers/skills` – Add Worker Skills **(Worker)**
-- `PUT /workers/skills` – Update Worker Skills **(Worker)**
-- `POST /workers/service-areas` – Set Service Areas **(Worker)**
-- `PUT /workers/service-areas` – Update Service Areas **(Worker)**
-- `POST /workers/rates` – Set Service Rates **(Worker)**
-- `PUT /workers/rates` – Update Service Rates **(Worker)**
-- `POST /workers/availability` – Set Availability **(Worker)**
-- `PUT /workers/availability` – Update Availability **(Worker)**
-- `GET /workers/earnings` – Get Earnings Overview **(Worker)**
-- `GET /workers/jobs` – Get Assigned Jobs **(Worker)**
-- `GET /workers/reviews` – Get Worker Reviews **(Worker)**
-- `POST /workers/kyc` – Submit Worker KYC **(Worker)**
-- `GET /workers/kyc-status` – Get Worker KYC Status **(Worker)**
 
 ---
 
-## 🛠️ Service Management Routes
+## 💳 Credit & Wallet System Routes
+
+### **Credit Management (Authenticated)**
+
+- `GET /credits/balance` – Get Credit Balance **(User)**
+- `POST /credits/purchase` – Purchase Credits **(User)**
+- `GET /credits/history` – Get Credit Usage History **(User)**
+- `GET /credits/packages` – Get Available Credit Packages **(Public)**
+
+### **Wallet Management (Authenticated)**
+
+- `GET /wallet/balance` – Get Wallet Balance **(User)**
+- `POST /wallet/recharge` – Recharge Wallet **(User)**
+- `GET /wallet/transactions` – Get Transaction History **(User)**
+- `POST /wallet/withdraw` – Request Withdrawal **(User)**
+- `GET /wallet/limits` – Get Wallet Limits **(User)**
+
+---
+
+## 📦 Subscription System Routes
+
+### **Subscription Management (Authenticated)**
+
+- `GET /subscriptions/plans` – Get Available Subscription Plans **(Public)**
+- `POST /subscriptions/purchase` – Purchase Subscription **(User)**
+- `GET /subscriptions/my-subscription` – Get User's Current Subscription **(User)**
+- `PUT /subscriptions/cancel` – Cancel Subscription **(User)**
+- `GET /subscriptions/history` – Get Subscription History **(User)**
+- `POST /subscriptions/renew` – Renew Subscription **(User)**
+
+### **Subscription Management (Admin)**
+
+- `GET /admin/subscriptions/plans` – Get All Subscription Plans **(Admin)**
+- `POST /admin/subscriptions/plans` – Create Subscription Plan **(Admin)**
+- `PUT /admin/subscriptions/plans/:id` – Update Subscription Plan **(Admin)**
+- `DELETE /admin/subscriptions/plans/:id` – Delete Subscription Plan **(Admin)**
+- `GET /admin/subscriptions/users` – Get All User Subscriptions **(Admin)**
+- `PUT /admin/subscriptions/users/:id/status` – Update User Subscription Status **(Admin)**
+
+---
+
+## 🏠 Home Services Module Routes
 
 ### **Service Discovery (Public)**
 
-- `GET /services` – Get All Services **(Public)**
-- `GET /services/:id` – Get Service Details **(Public)**
 - `GET /services/categories` – Get Service Categories **(Public)**
-- `GET /services/nearby` – Get Services Near Location **(Public)**
+- `GET /services/subcategories/{category_id}` – Get Subcategories **(Public)**
+- `GET /services/list/{subcategory_id}` – Get Services by Subcategory **(Public)**
+- `GET /services/{id}` – Get Service Details **(Public)**
 - `GET /services/search` – Search Services **(Public)**
+- `GET /services/nearby` – Get Services Near Location **(Public)**
 
 ### **Service Booking (Authenticated)**
 
 - `POST /services/book` – Book a Service **(User)**
-- `POST /services/inquiry` – Submit Service Inquiry **(User)**
 - `GET /services/bookings` – Get User Bookings **(User)**
 - `GET /services/bookings/:id` – Get Booking Details **(User)**
 - `PUT /services/bookings/:id/cancel` – Cancel Booking **(User)**
@@ -90,80 +162,99 @@ https://api.treesindia.com/api/v1
 - `DELETE /admin/services/:id` – Delete Service **(Admin)**
 - `GET /admin/services` – Get All Services **(Admin)**
 - `PUT /admin/services/:id/status` – Update Service Status **(Admin)**
-- `POST /admin/services/:id/coverage` – Set Service Coverage **(Admin)**
 - `GET /admin/services/analytics` – Get Service Analytics **(Admin)**
 
 ---
 
-## 🏘️ Property Management Routes
+
+
+---
+
+## 🏘️ Real Estate Module Routes
 
 ### **Property Discovery (Public)**
 
 - `GET /properties` – Get All Properties **(Public)**
-- `GET /properties/:id` – Get Property Details **(Public)**
+- `GET /properties/{id}` – Get Property Details **(Public)**
 - `GET /properties/search` – Search Properties **(Public)**
 - `GET /properties/filters` – Get Property Filters **(Public)**
 - `GET /properties/nearby` – Get Properties Near Location **(Public)**
 - `GET /properties/featured` – Get Featured Properties **(Public)**
-- `GET /properties/verified` – Get TREESINDIA Assured Properties **(Public)**
+- `GET /properties/verified` – Get Verified Properties **(Public)**
 
 ### **Property Management (Authenticated)**
 
-- `POST /properties` – Create Property Listing **(User)**
-- `PUT /properties/:id` – Update Property Listing **(User)**
-- `DELETE /properties/:id` – Delete Property Listing **(User)**
+- `POST /properties` – Create Property Listing **(User - Credit Check)**
+- `PUT /properties/{id}` – Update Property Listing **(User)**
+- `DELETE /properties/{id}` – Delete Property Listing **(User)**
 - `GET /properties/my-listings` – Get User's Properties **(User)**
-- `POST /properties/:id/images` – Upload Property Images **(User)**
-- `DELETE /properties/:id/images/:imageId` – Delete Property Image **(User)**
-- `POST /properties/:id/inquiry` – Submit Property Inquiry **(User)**
+- `POST /properties/{id}/images` – Upload Property Images **(User)**
+- `DELETE /properties/{id}/images/:imageId` – Delete Property Image **(User)**
+- `POST /properties/{id}/inquiry` – Submit Property Inquiry **(User)**
 - `GET /properties/inquiries` – Get Property Inquiries **(User)**
-- `POST /properties/:id/visit` – Schedule Property Visit **(User)**
+- `POST /properties/{id}/visit` – Schedule Property Visit **(User)**
 - `GET /properties/visits` – Get Scheduled Visits **(User)**
-- `PUT /properties/visits/:id` – Update Visit Status **(User)**
+- `PUT /properties/visits/{id}` – Update Visit Status **(User)**
 
 ### **Property Management (Admin)**
 
 - `GET /admin/properties` – Get All Properties **(Admin)**
 - `GET /admin/properties/pending` – Get Pending Approvals **(Admin)**
-- `PUT /admin/properties/:id/approve` – Approve Property **(Admin)**
-- `PUT /admin/properties/:id/reject` – Reject Property **(Admin)**
-- `PUT /admin/properties/:id/verify` – Mark as TREESINDIA Assured **(Admin)**
-- `DELETE /admin/properties/:id` – Delete Property **(Admin)**
+- `PUT /admin/properties/{id}/approve` – Approve Property **(Admin)**
+- `PUT /admin/properties/{id}/reject` – Reject Property **(Admin)**
+- `PUT /admin/properties/{id}/verify` – Mark as Verified **(Admin)**
+- `DELETE /admin/properties/{id}` – Delete Property **(Admin)**
 - `GET /admin/properties/analytics` – Get Property Analytics **(Admin)**
 
 ---
 
-## 📋 Booking Management Routes
+## ⚙️ Admin Configuration Routes
 
-### **Booking Management (User)**
+### **System Configuration (Admin)**
 
-- `GET /bookings` – Get User Bookings **(User)**
-- `GET /bookings/:id` – Get Booking Details **(User)**
-- `PUT /bookings/:id/cancel` – Cancel Booking **(User)**
-- `POST /bookings/:id/complete` – Complete Service **(User)**
-- `POST /bookings/:id/review` – Review Service **(User)**
-- `GET /bookings/:id/track` – Track Service Progress **(User)**
+- `GET /admin/config` – Get System Configuration **(Admin)**
+- `PUT /admin/config` – Update System Configuration **(Admin)**
+- `GET /admin/config/credit-limits` – Get Credit Limits **(Admin)**
+- `PUT /admin/config/credit-limits` – Update Credit Limits **(Admin)**
+- `GET /admin/config/wallet-limits` – Get Wallet Limits **(Admin)**
+- `PUT /admin/config/wallet-limits` – Update Wallet Limits **(Admin)**
+- `GET /admin/config/subscription-prices` – Get Subscription Prices **(Admin)**
+- `PUT /admin/config/subscription-prices` – Update Subscription Prices **(Admin)**
 
-### **Booking Management (Worker)**
+### **User Management (Admin)**
 
-- `GET /workers/bookings` – Get Assigned Jobs **(Worker)**
-- `GET /workers/bookings/:id` – Get Job Details **(Worker)**
-- `PUT /workers/bookings/:id/accept` – Accept Job **(Worker)**
-- `PUT /workers/bookings/:id/reject` – Reject Job **(Worker)**
-- `PUT /workers/bookings/:id/start` – Start Service **(Worker)**
-- `PUT /workers/bookings/:id/update` – Update Service Progress **(Worker)**
-- `PUT /workers/bookings/:id/complete` – Complete Service **(Worker)**
-- `POST /workers/bookings/:id/request-otp` – Request Completion OTP **(Worker)**
+- `GET /admin/users` – Get All Users **(Admin)**
+- `GET /admin/users/{id}` – Get User Details **(Admin)**
+- `PUT /admin/users/{id}/credits` – Update User Credits **(Admin)**
+- `PUT /admin/users/{id}/wallet` – Update User Wallet **(Admin)**
+- `PUT /admin/users/{id}/status` – Update User Status **(Admin)**
+- `GET /admin/users/analytics` – Get User Analytics **(Admin)**
 
-### **Booking Management (Admin)**
+---
 
-- `GET /admin/bookings` – Get All Bookings **(Admin)**
-- `GET /admin/bookings/pending` – Get Pending Bookings **(Admin)**
-- `PUT /admin/bookings/:id/approve` – Approve Booking **(Admin)**
-- `PUT /admin/bookings/:id/reject` – Reject Booking **(Admin)**
-- `POST /admin/bookings/:id/assign-worker` – Assign Worker **(Admin)**
-- `PUT /admin/bookings/:id/status` – Update Booking Status **(Admin)**
-- `GET /admin/bookings/analytics` – Get Booking Analytics **(Admin)**
+## 💬 Communication Routes
+
+### **Chat & Messaging (Authenticated)**
+
+- `GET /chat/conversations` – Get Chat Conversations **(User)**
+- `GET /chat/conversations/{id}` – Get Conversation Details **(User)**
+- `POST /chat/conversations/{id}/messages` – Send Message **(User)**
+- `GET /chat/conversations/{id}/messages` – Get Messages **(User)**
+- `PUT /chat/messages/{id}/read` – Mark Message as Read **(User)**
+
+### **Call Masking (Authenticated)**
+
+- `POST /calls/create` – Create Masked Call **(User)**
+- `GET /calls/history` – Get Call History **(User)**
+- `GET /calls/{id}` – Get Call Details **(User)**
+- `POST /calls/{id}/end` – End Call **(User)**
+
+### **Notifications (Authenticated)**
+
+- `GET /notifications` – Get Notifications **(User)**
+- `PUT /notifications/{id}/read` – Mark Notification as Read **(User)**
+- `PUT /notifications/settings` – Update Notification Settings **(User)**
+- `DELETE /notifications/{id}` – Delete Notification **(User)**
 
 ---
 
@@ -175,14 +266,7 @@ https://api.treesindia.com/api/v1
 - `POST /payments/verify` – Verify Payment **(User)**
 - `POST /payments/refund` – Request Refund **(User)**
 - `GET /payments/history` – Get Payment History **(User)**
-- `GET /payments/:id` – Get Payment Details **(User)**
-
-### **Financial Management (Worker)**
-
-- `GET /workers/payments` – Get Worker Payments **(Worker)**
-- `GET /workers/payments/pending` – Get Pending Settlements **(Worker)**
-- `POST /workers/payments/withdraw` – Request Withdrawal **(Worker)**
-- `GET /workers/payments/analytics` – Get Payment Analytics **(Worker)**
+- `GET /payments/{id}` – Get Payment Details **(User)**
 
 ### **Financial Management (Admin)**
 
@@ -195,76 +279,27 @@ https://api.treesindia.com/api/v1
 
 ---
 
-## 💬 Communication Routes
-
-### **Chat & Messaging (Authenticated)**
-
-- `GET /chat/conversations` – Get Chat Conversations **(User/Worker)**
-- `GET /chat/conversations/:id` – Get Conversation Details **(User/Worker)**
-- `POST /chat/conversations/:id/messages` – Send Message **(User/Worker)**
-- `GET /chat/conversations/:id/messages` – Get Messages **(User/Worker)**
-- `PUT /chat/messages/:id/read` – Mark Message as Read **(User/Worker)**
-
-### **Call Masking (Authenticated)**
-
-- `POST /calls/create` – Create Masked Call **(User)**
-- `GET /calls/history` – Get Call History **(User)**
-- `GET /calls/:id` – Get Call Details **(User)**
-- `POST /calls/:id/end` – End Call **(User)**
-
-### **Notifications (Authenticated)**
-
-- `GET /notifications` – Get Notifications **(User/Worker)**
-- `PUT /notifications/:id/read` – Mark Notification as Read **(User/Worker)**
-- `PUT /notifications/settings` – Update Notification Settings **(User/Worker)**
-- `DELETE /notifications/:id` – Delete Notification **(User/Worker)**
-
----
-
-## 🤖 AI Assistant Routes
-
-### **AI Chatbot (Public)**
-
-- `POST /ai/chat` – Send Message to AI Assistant **(Public)**
-- `GET /ai/chat/history` – Get Chat History **(Authenticated)**
-- `POST /ai/recommendations` – Get AI Recommendations **(Authenticated)**
-- `POST /ai/search` – AI-Powered Search **(Public)**
-- `POST /ai/query` – General AI Query **(Public)**
-
-### **AI Management (Admin)**
-
-- `GET /admin/ai/analytics` – Get AI Usage Analytics **(Admin)**
-- `GET /admin/ai/queries` – Get Common Queries **(Admin)**
-- `POST /admin/ai/train` – Train AI Model **(Admin)**
-- `GET /admin/ai/performance` – Get AI Performance Metrics **(Admin)**
-
----
-
 ## 📊 Analytics & Reporting Routes
 
 ### **User Analytics (Authenticated)**
 
 - `GET /analytics/usage` – Get User Usage Analytics **(User)**
-- `GET /analytics/bookings` – Get Booking Analytics **(User)**
+- `GET /analytics/credits` – Get Credit Usage Analytics **(User)**
+- `GET /analytics/wallet` – Get Wallet Analytics **(User)**
 - `GET /analytics/properties` – Get Property Analytics **(User)**
-
-### **Worker Analytics (Authenticated)**
-
-- `GET /workers/analytics/performance` – Get Performance Analytics **(Worker)**
-- `GET /workers/analytics/earnings` – Get Earnings Analytics **(Worker)**
-- `GET /workers/analytics/ratings` – Get Rating Analytics **(Worker)**
-- `GET /workers/analytics/jobs` – Get Job Analytics **(Worker)**
 
 ### **Admin Analytics (Admin)**
 
 - `GET /admin/analytics/dashboard` – Get Dashboard Analytics **(Admin)**
 - `GET /admin/analytics/users` – Get User Analytics **(Admin)**
+- `GET /admin/analytics/credits` – Get Credit Analytics **(Admin)**
+- `GET /admin/analytics/wallet` – Get Wallet Analytics **(Admin)**
+- `GET /admin/analytics/subscriptions` – Get Subscription Analytics **(Admin)**
 - `GET /admin/analytics/services` – Get Service Analytics **(Admin)**
+
 - `GET /admin/analytics/properties` – Get Property Analytics **(Admin)**
-- `GET /admin/analytics/bookings` – Get Booking Analytics **(Admin)**
 - `GET /admin/analytics/revenue` – Get Revenue Analytics **(Admin)**
 - `GET /admin/analytics/performance` – Get Platform Performance **(Admin)**
-- `GET /admin/analytics/ai` – Get AI Analytics **(Admin)**
 
 ---
 
@@ -277,43 +312,16 @@ https://api.treesindia.com/api/v1
 - `GET /system/status` – System Status **(Admin)**
 - `GET /system/metrics` – System Metrics **(Admin)**
 
-### **Configuration Management (Admin)**
-
-- `GET /admin/config` – Get System Configuration **(Admin)**
-- `PUT /admin/config` – Update System Configuration **(Admin)**
-- `GET /admin/config/features` – Get Feature Flags **(Admin)**
-- `PUT /admin/config/features` – Update Feature Flags **(Admin)**
-
 ### **Content Management (Admin)**
 
 - `GET /admin/content/faq` – Get FAQ Content **(Admin)**
 - `POST /admin/content/faq` – Create FAQ **(Admin)**
-- `PUT /admin/content/faq/:id` – Update FAQ **(Admin)**
-- `DELETE /admin/content/faq/:id` – Delete FAQ **(Admin)**
+- `PUT /admin/content/faq/{id}` – Update FAQ **(Admin)**
+- `DELETE /admin/content/faq/{id}` – Delete FAQ **(Admin)**
 - `GET /admin/content/terms` – Get Terms & Conditions **(Admin)**
 - `PUT /admin/content/terms` – Update Terms & Conditions **(Admin)**
 - `GET /admin/content/privacy` – Get Privacy Policy **(Admin)**
 - `PUT /admin/content/privacy` – Update Privacy Policy **(Admin)**
-
----
-
-## 🛡️ Security & Verification Routes
-
-### **KYC Management (Admin)**
-
-- `GET /admin/kyc/pending` – Get Pending KYC Requests **(Admin)**
-- `PUT /admin/kyc/:id/approve` – Approve KYC **(Admin)**
-- `PUT /admin/kyc/:id/reject` – Reject KYC **(Admin)**
-- `GET /admin/kyc/:id` – Get KYC Details **(Admin)**
-- `GET /admin/kyc/analytics` – Get KYC Analytics **(Admin)**
-
-### **Security Management (Admin)**
-
-- `GET /admin/security/logs` – Get Security Logs **(Admin)**
-- `GET /admin/security/incidents` – Get Security Incidents **(Admin)**
-- `POST /admin/security/block-user` – Block User **(Admin)**
-- `POST /admin/security/unblock-user` – Unblock User **(Admin)**
-- `GET /admin/security/audit` – Get Audit Trail **(Admin)**
 
 ---
 
@@ -415,6 +423,36 @@ X-API-Key: <api_key>  // For admin endpoints
 }
 ```
 
+### **Credit Response Example**
+
+```json
+{
+  "success": true,
+  "message": "Credits retrieved successfully",
+  "data": {
+    "credits_remaining": 2,
+    "credits_used": 1,
+    "total_credits_earned": 3
+  },
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+### **Wallet Response Example**
+
+```json
+{
+  "success": true,
+  "message": "Wallet balance retrieved successfully",
+  "data": {
+    "wallet_balance": 5000.0,
+    "wallet_limit": 100000.0,
+    "currency": "INR"
+  },
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
 ---
 
 ## 🚀 API Versioning
@@ -435,4 +473,4 @@ X-API-Key: <api_key>  // For admin endpoints
 
 ---
 
-**TREESINDIA API** - Complete REST API for home services and real estate marketplace platform.
+**TREESINDIA API** - Complete REST API for unified home services and real estate platform with credit and wallet system.

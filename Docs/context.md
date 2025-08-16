@@ -2,15 +2,19 @@
 
 ## 🎯 **Project Overview**
 
-**TREESINDIA** is a unified digital platform combining home services and real estate marketplace. Think "Uber for home services" + "Airbnb for real estate" with privacy features and AI assistance.
+**TREESINDIA** is a unified digital platform with two main modules: **Home Services** and **Real Estate**. Users get free credits for property listings, can recharge their wallet, and brokers can buy subscriptions for unlimited posting. The platform features simplified phone+OTP authentication, credit-based property posting, AI assistance, and comprehensive booking management.
 
 ### **Core Vision:**
 
-- **Single Platform**: One app for all home and property needs
+- **Two Main Modules**: Home Services, Real Estate
+- **Credit System**: Free credits for property listings (admin-configurable)
+- **Wallet System**: Rechargeable wallet for all transactions
+- **Subscription Model**: Brokers can buy unlimited posting subscriptions
+- **Simplified Auth**: Phone number + OTP only
+- **AI Assistant**: Smart chatbot for user assistance
+- **Account Conversion**: Users can convert to Worker/Broker
+- **Enhanced Booking**: Fixed price and inquiry-based services
 - **Privacy Protection**: Call masking ensures real numbers are never shared
-- **Verified Providers**: KYC verification for all service providers and sellers
-- **AI Assistance**: Smart chatbot helps with booking and property discovery
-- **Seamless Experience**: Easy booking, payment, and communication
 
 ---
 
@@ -22,7 +26,9 @@
 - **Framework**: Gin (HTTP framework)
 - **Database**: PostgreSQL (via Supabase)
 - **ORM**: GORM
-- **Authentication**: JWT tokens
+- **Authentication**: JWT tokens (Phone + OTP only)
+- **Payment**: Razorpay integration
+- **AI Integration**: OpenAI GPT-4
 - **Documentation**: Swagger/OpenAPI 3.0
 
 ### **Project Structure:**
@@ -144,45 +150,82 @@ Controller → Service → Repository → Database
 
 - None currently
 
-### **📋 Planned Modules:**
+### **📋 Planned Modules (New Scope):**
 
-#### **6. Property Management** (Next Priority)
+#### **6. Credit & Wallet System** (Next Priority)
 
-- Property listings (sale/rent)
-- Property search and filtering
-- Property inquiries
-- Admin approval workflow
-- Location-based property discovery
+- Admin-configurable credit limit (default: 3)
+- Credit validation before property posting
+- Wallet system with Razorpay integration
+- Admin-configurable wallet limit (default: 100,000)
+- Wallet transaction history
 
-#### **7. Worker Management**
+#### **7. Subscription System**
 
-- Worker registration and profiles
-- KYC verification system
-- Worker skills and service areas
-- Worker availability management
-- Worker rating and review system
+- Admin-configurable subscription plans
+- Broker subscription purchase
+- Unlimited posting for subscribed brokers
+- Subscription validation and management
 
-#### **8. Booking Management**
+#### **8. AI Assistant System**
 
-- Booking creation and management
-- Payment integration (Razorpay)
-- Booking status workflow
-- Worker assignment system
-- OTP-based completion
-
-#### **9. Communication System**
-
-- Call masking integration
-- In-app messaging
-- Push notifications
-- SMS/Email notifications
-
-#### **10. AI Assistant**
-
-- OpenAI integration
-- Property recommendation engine
-- Service booking assistance
+- OpenAI GPT-4 integration
+- Smart recommendations
+- Booking assistance
 - FAQ handling
+- Human escalation
+
+#### **9. Account Conversion System**
+
+- Worker conversion with admin approval
+- Broker conversion with admin approval
+- Contractor conversion with admin approval
+- Document upload and verification
+- Role-based access control
+
+#### **10. Enhanced Booking System**
+
+- Fixed price services with instant booking
+- Inquiry-based services with custom quotes
+- Time slot management
+- Cart-based multiple service booking
+- Real-time location tracking
+- Worker assignment by admin
+
+#### **11. Three Main Modules**
+
+##### **Home Services Module**
+
+- Service listings with pricing
+- Service provider profiles
+- Booking system with time slots
+- Real-time location tracking
+- Review and rating system
+- Service categories (plumbing, cleaning, AC repair, etc.)
+
+##### **Contractor Module**
+
+- Contractor profiles with skills/professions
+- Filtering by profession, skills, location
+- Direct contact (text/call with masking)
+- Contractor rating and review system
+- Availability management
+
+##### **Real Estate Module**
+
+- Credit-based property posting
+- Property listings (rental/sale)
+- Property search and filtering
+- Instant purchase option
+- Scheduled viewing option
+- Admin approval workflow (for non-subscribed users)
+
+#### **12. Simplified Authentication**
+
+- Remove email/password complexity
+- Phone + OTP only flow
+- Auto-initialize credits on registration
+- Streamlined user onboarding
 
 ---
 
@@ -197,14 +240,22 @@ Controller → Service → Repository → Database
 5. **locations** - User locations
 6. **migrations** - Database migration tracking
 
-### **Planned Tables:**
+### **New Tables Needed:**
 
-7. **properties** - Property listings
-8. **workers** - Service provider profiles
-9. **bookings** - Service bookings
-10. **payments** - Payment transactions
-11. **messages** - In-app messages
-12. **notifications** - System notifications
+7. **admin_config** - System configuration (credit limits, wallet limits)
+8. **wallet_transactions** - Wallet recharge and usage history
+9. **subscription_plans** - Available subscription plans
+10. **user_subscriptions** - User subscription records
+11. **contractors** - Contractor profiles and skills
+12. **properties** - Property listings (updated with credit validation)
+13. **account_conversions** - Account conversion requests
+14. **bookings** - Service bookings with time slots
+15. **booking_inquiries** - Inquiry-based service requests
+16. **booking_carts** - Multiple service booking carts
+17. **worker_assignments** - Admin worker assignments
+18. **location_tracking** - Real-time worker location
+19. **reviews** - Service and worker reviews
+20. **ai_conversations** - AI assistant chat history
 
 ---
 
@@ -253,11 +304,14 @@ Controller → Service → Repository → Database
 
 ### **Module Priority Order:**
 
-1. **Property Management** - Completes dual platform vision
-2. **Worker Management** - Essential for service execution
-3. **Booking Management** - Core business logic
-4. **Communication System** - User experience enhancement
-5. **AI Assistant** - Differentiation feature
+1. **Credit & Wallet System** - Core business logic
+2. **Simplified Authentication** - User experience improvement
+3. **Subscription System** - Revenue generation
+4. **Enhanced Booking System** - Core functionality
+5. **Account Conversion System** - User type management
+6. **AI Assistant System** - User experience enhancement
+7. **Three Main Modules** - Platform functionality
+8. **Advanced Features** - Nice-to-have features
 
 ### **Implementation Priority:**
 
@@ -268,83 +322,313 @@ Controller → Service → Repository → Database
 
 ---
 
-## 🔄 **Broker Conversion Process**
+## 📱 **Simplified Authentication Flow**
 
-### **How to Convert Your Account to Broker:**
-
-#### **Step 1: Submit Broker Application**
-
-**Endpoint:** `POST /api/role-applications/broker`
-
-**Required Information:**
-
-- `broker_license`: Your broker license number
-- `broker_agency`: Your broker agency name
-
-**Optional Information (only if not in profile):**
-
-- `email`: Your email address (only if not set in profile)
-- `name`: Your full name (only if not set in profile)
-
-**Example Request (if profile is complete):**
-
-```json
-{
-  "broker_license": "BRK123456789",
-  "broker_agency": "ABC Real Estate Agency"
-}
-```
-
-**Example Request (if profile is missing email/name):**
-
-```json
-{
-  "email": "broker@example.com",
-  "name": "John Doe",
-  "broker_license": "BRK123456789",
-  "broker_agency": "ABC Real Estate Agency"
-}
-```
-
-#### **Step 2: Application Review Process**
-
-1. **Pending Status**: Your application goes into "pending" status
-2. **Admin Review**: An admin reviews your broker credentials
-3. **Approval/Rejection**: Admin can approve or reject with notes
-
-#### **Step 3: Account Conversion**
-
-If approved:
-
-- Your `user_type` changes from "normal" to "broker"
-- `role_application_status` becomes "approved"
-- You get access to broker-specific features
-- Broker-specific fields are populated:
-  - `broker_license`: License number
-  - `broker_agency`: Agency name
-
-### **Current API Flow:**
+### **Single Login Process:**
 
 ```
-User submits broker application → Admin reviews → Approval/Rejection → Account type updated
+1. User enters phone number
+2. System sends OTP via SMS
+3. User enters OTP
+4. System validates OTP
+5. If valid: User is logged in and gets 3 free credits
+6. If invalid: Show error and retry
 ```
 
-### **What's Available Now:**
+### **User Registration (Automatic):**
 
-✅ **Broker Application System** - Simplified application process (`/api/role-applications/broker`)
-✅ **Worker Application System** - Comprehensive application process (`/api/role-applications/worker`)
-✅ **Broker Profile Fields** - License and agency information
-✅ **Worker Profile Fields** - Skills, documents, and location
-✅ **Admin Review System** - Approval/rejection workflow
-✅ **Email Notifications** - Application status updates
+- **No separate registration**: First login automatically creates account
+- **Auto-credit assignment**: New users get 3 free credits
+- **Wallet initialization**: Wallet created with 0 balance
+- **Profile completion**: Optional profile setup after login
 
-### **What's Coming Next:**
+### **Login Flow Details:**
 
-🔄 **Property Management** - Broker dashboard and property listing capabilities
-🔄 **Broker Features** - Property management tools
-🔄 **Commission System** - Earnings tracking for brokers
-🔄 **Worker Dashboard** - Service booking management
-🔄 **Worker Features** - Job acceptance and completion tools
+#### **Step 1: Phone Number Entry**
+
+- User enters phone number
+- System validates phone format
+- Shows "Send OTP" button
+
+#### **Step 2: OTP Delivery**
+
+- System sends 6-digit OTP via SMS
+- Shows countdown timer (60 seconds)
+- "Resend OTP" option after timeout
+
+#### **Step 3: OTP Verification**
+
+- User enters 6-digit OTP
+- System validates OTP
+- Shows loading state during verification
+
+#### **Step 4: Account Creation/Login**
+
+- **New User**: Creates account, assigns 3 credits, initializes wallet
+- **Existing User**: Logs in, loads existing data
+- Redirects to home screen with three main modules
+
+### **Error Handling:**
+
+- **Invalid Phone**: Show format error
+- **OTP Expired**: Show resend option
+- **Wrong OTP**: Show retry message
+- **Network Error**: Show retry option
+
+---
+
+## 🤖 **AI Assistant System**
+
+### **AI Features:**
+
+#### **Smart Property Search**
+
+- AI helps users find properties through conversation
+- Natural language property queries
+- Contextual follow-up questions
+- Real-time property listing results
+- Location and price-based filtering
+
+#### **Service Search Assistance**
+
+- AI helps users find appropriate services
+- Service category recommendations
+- Provider suggestions based on needs
+- Booking guidance and explanations
+
+#### **Conversational Interface**
+
+- Natural language queries
+- Contextual follow-up questions
+- Step-by-step guidance
+- Platform usage help
+
+#### **Example AI Conversations:**
+
+**Property Search:**
+
+```
+User: "What is the best property under 1 lakh?"
+AI: "Where are you looking for?"
+User: "Siliguri"
+AI: "Here are all properties under 1 lakh in Siliguri: [Property Listings]"
+```
+
+**Service Search:**
+
+```
+User: "I need a plumber"
+AI: "What type of plumbing work do you need?"
+User: "Tap repair"
+AI: "Here are available plumbers for tap repair: [Service Listings]"
+```
+
+**General Help:**
+
+```
+User: "How do I book a service?"
+AI: "To book a service, follow these steps: [Step-by-step guide]"
+```
+
+### **AI Integration:**
+
+- **OpenAI GPT-4**: Core AI engine
+- **Conversation History**: Track user interactions
+- **Context Awareness**: Understand user context
+- **Multi-language Support**: Hindi and English
+- **Real-time Data**: Connect to actual property/service listings
+
+---
+
+## 👥 **Account Conversion System**
+
+### **Conversion Types:**
+
+#### **Worker Conversion:**
+
+- **Skills Selection**: Choose service categories
+- **Experience Details**: Years of experience
+- **Service Areas**: Coverage locations
+- **Document Upload**: KYC, certifications
+- **Admin Approval**: Manual verification
+- **Worker Access**: Access to worker features after approval
+
+#### **Broker Conversion:**
+
+- **License Information**: Broker license
+- **Agency Details**: Agency information
+- **Experience**: Real estate experience
+- **Document Upload**: License, certifications
+- **Admin Approval**: Manual verification
+
+#### **Contractor Conversion:**
+
+- **Profession Selection**: Primary profession
+- **Skills & Expertise**: Specific skills
+- **Experience**: Years of experience
+- **Service Areas**: Coverage locations
+- **Rate Setting**: Hourly/daily rates
+- **Document Upload**: Certifications, portfolio
+- **Admin Approval**: Manual verification
+
+### **Worker Management System:**
+
+#### **Admin-Owned Workers:**
+
+- **Admin manages workers**: Admin has his own pool of workers
+- **Worker applications**: Workers apply for account conversion
+- **Admin approval**: Admin approves worker applications
+- **Worker assignment**: Admin assigns workers to services
+- **Direct communication**: Users can chat and call workers (masked)
+
+#### **Worker Application Process:**
+
+```
+1. Worker applies for account conversion
+2. Admin reviews worker credentials and documents
+3. Admin approves/rejects the application
+4. If approved: Worker gets access to worker features
+5. Admin assigns workers to specific services
+```
+
+---
+
+## 📅 **Enhanced Booking System**
+
+### **Service Types:**
+
+#### **1. Fixed Price Services:**
+
+- **Instant Booking**: Immediate booking available
+- **Fixed Pricing**: Pre-determined prices
+- **Time Slots**: Available booking slots
+- **Examples**: Plumbing repairs, cleaning, basic electrical
+
+#### **2. Inquiry-based Services:**
+
+- **Detailed Form**: Comprehensive requirement form
+- **Admin Review**: Admin reviews requirements
+- **Custom Quote**: Admin sets price based on details
+- **User Confirmation**: Accept/reject quote
+- **Booking Conversion**: Convert to booking after acceptance
+- **Examples**: Room painting, renovation, complex projects
+
+### **Booking Flow:**
+
+#### **Fixed Price Booking:**
+
+```
+1. User selects service → View fixed price
+2. Choose time slot → Available slots shown
+3. Fill booking details → Address, description
+4. Make payment → Razorpay integration
+5. Admin assigns worker → Manual assignment
+6. User can chat/call worker → Masked communication
+7. Worker accepts → Real-time location tracking
+8. Service completion → Worker review
+```
+
+#### **Inquiry-based Booking:**
+
+```
+1. User selects inquiry service → Fill detailed form
+2. Submit inquiry → Admin receives notification
+3. Admin reviews → Set custom price
+4. User receives quote → Accept/reject decision
+5. User accepts → Convert to booking
+6. Make payment → Razorpay integration
+7. Admin assigns worker → Manual assignment
+8. User can chat/call worker → Masked communication
+9. Service execution → Same as fixed price
+```
+
+### **Multiple Service Booking Solutions:**
+
+#### **Option 1: Cart-based System (Recommended)**
+
+- **Add Multiple Services**: Different services in one cart
+- **Time Slot Management**: Select slots for each service
+- **Bulk Discount**: Discount for multiple services
+- **Individual Tracking**: Track each service separately
+- **Flexible Scheduling**: Different dates/times for each service
+
+#### **Option 2: Package-based System**
+
+- **Pre-defined Packages**: Admin creates service combinations
+- **Package Pricing**: Discounted pricing for packages
+- **User Selection**: Choose from available packages
+- **Single Booking**: Book entire package
+- **Sequential Execution**: Services executed in order
+
+#### **Option 3: Sequential Booking System**
+
+- **Primary Service**: Book main service first
+- **Related Services**: Suggest related services
+- **Sequential Scheduling**: Schedule in logical order
+- **Dependent Execution**: Second service after first completion
+- **Conditional Booking**: Book second only if first succeeds
+
+---
+
+## 🏠 **Three Main Modules**
+
+### **1. Home Services Module**
+
+#### **User Flow:**
+
+1. User clicks "Home Services" card
+2. Bottom sheet opens with service categories
+3. User selects category (e.g., "Plumbing")
+4. Service listings shown (e.g., "Tap Repair - ₹500")
+5. User can book service or contact provider
+
+#### **Features:**
+
+- Service categories and subcategories
+- Service listings with pricing
+- Service provider profiles
+- Booking system with time slots
+- Admin worker assignment
+- User-worker communication (chat/call)
+- Real-time location tracking
+- Review and rating system
+
+### **2. Contractor Module**
+
+#### **User Flow:**
+
+1. User clicks "Contractor" card
+2. List of contractors shown
+3. User can filter by profession, skills, location
+4. User can contact contractor (text/call with masking)
+5. Direct communication with contractor
+
+#### **Features:**
+
+- Contractor profiles with skills
+- Filtering and search
+- Direct contact (masked calls)
+- Rating and review system
+- Contractor availability
+
+### **3. Real Estate Module**
+
+#### **User Flow:**
+
+1. User clicks "Rental/Property" card
+2. Property listings shown
+3. User can search and filter properties
+4. User can contact seller/owner
+5. Property viewing and transaction
+
+#### **Features:**
+
+- Property listings (rental/sale)
+- Credit-based posting system
+- Property search and filtering
+- Contact seller/owner
+- Property viewing scheduling
+- Instant purchase option
 
 ---
 
@@ -370,6 +654,26 @@ User submits broker application → Admin reviews → Approval/Rejection → Acc
 - **Problem**: JWT token validation failing
 - **Solution**: Check middleware order and token format
 
+### **Credit System Issues:**
+
+- **Problem**: Credits not deducted properly
+- **Solution**: Use database transactions for credit operations
+
+### **Wallet Issues:**
+
+- **Problem**: Wallet balance not updated
+- **Solution**: Ensure atomic operations for wallet transactions
+
+### **Booking System Issues:**
+
+- **Problem**: Time slot conflicts
+- **Solution**: Implement proper slot validation and locking
+
+### **AI Integration Issues:**
+
+- **Problem**: AI responses too slow
+- **Solution**: Implement caching and response optimization
+
 ---
 
 ## 📚 **Reference Links**
@@ -386,6 +690,8 @@ User submits broker application → Admin reviews → Approval/Rejection → Acc
 - [Gin Framework Documentation](https://gin-gonic.com/docs/)
 - [GORM Documentation](https://gorm.io/docs/)
 - [Supabase Documentation](https://supabase.com/docs)
+- [Razorpay Documentation](https://razorpay.com/docs/)
+- [OpenAI API Documentation](https://platform.openai.com/docs/)
 
 ---
 
@@ -405,6 +711,16 @@ User submits broker application → Admin reviews → Approval/Rejection → Acc
 - ✅ **Scalability**: Database properly indexed
 - ✅ **Maintainability**: Clean code structure
 - ✅ **Extensibility**: Easy to add new features
+
+### **New Business Metrics:**
+
+- ✅ **Credit Usage**: Track credit consumption
+- ✅ **Wallet Transactions**: Monitor wallet activity
+- ✅ **Subscription Sales**: Track subscription revenue
+- ✅ **Module Usage**: Monitor three main modules
+- ✅ **Booking Conversion**: Track booking success rates
+- ✅ **AI Engagement**: Monitor AI assistant usage
+- ✅ **Account Conversions**: Track conversion rates
 
 ---
 
@@ -437,8 +753,8 @@ User submits broker application → Admin reviews → Approval/Rejection → Acc
 ---
 
 **Last Updated**: January 2024
-**Version**: 1.0
-**Status**: Active Development
+**Version**: 3.0
+**Status**: Active Development - Enhanced Scope Implementation
 
 ---
 

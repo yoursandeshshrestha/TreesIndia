@@ -2,7 +2,7 @@
 
 ## 🎯 **Overview**
 
-TREESINDIA is a unified digital platform combining home services and real estate marketplace with advanced features like AI assistance, call masking, and privacy protection. This document outlines the complete technology stack for the application.
+TREESINDIA is a unified digital platform with two main modules (Home Services, Real Estate), featuring a credit system, wallet system, and subscription model. The platform uses simplified phone+OTP authentication and credit-based property posting with Razorpay integration.
 
 ---
 
@@ -84,25 +84,40 @@ backend/
 ├── controllers/          # Handle HTTP requests and responses
 │   ├── auth.go
 │   ├── user.go
+│   ├── credit.go
+│   ├── wallet.go
+│   ├── subscription.go
 │   ├── service.go
+
 │   ├── property.go
-│   └── booking.go
+│   └── admin_config.go
 ├── models/              # Data models and database schema
 │   ├── user.go
+│   ├── admin_config.go
+│   ├── wallet_transaction.go
+│   ├── subscription_plan.go
+│   ├── user_subscription.go
 │   ├── service.go
+│   ├── contractor.go
 │   ├── property.go
-│   ├── booking.go
 │   └── review.go
 ├── views/               # JSON responses and data formatting
 │   ├── response.go
 │   ├── user_view.go
+│   ├── credit_view.go
+│   ├── wallet_view.go
 │   └── error_view.go
 ├── routes/              # Route definitions and middleware
 │   ├── auth_routes.go
 │   ├── user_routes.go
+│   ├── credit_routes.go
+│   ├── wallet_routes.go
+│   ├── subscription_routes.go
 │   └── api_routes.go
 ├── middleware/          # Custom middleware
 │   ├── auth.go
+│   ├── credit_validation.go
+│   ├── subscription_validation.go
 │   ├── cors.go
 │   └── logging.go
 ├── config/              # Configuration management
@@ -129,7 +144,6 @@ backend/
 - **SMS & Call Masking**: Twilio
 - **Maps & Location**: Google Maps API
 - **Push Notifications**: Firebase Cloud Messaging
-- **AI Chatbot**: OpenAI GPT-4
 - **Email Service**: SendGrid/Resend
 - **File Storage**: Cloudinary
 
@@ -163,16 +177,26 @@ backend/
 
 ---
 
-## 🔐 **Security & Authentication**
+## 🔐 **Authentication System**
 
-### **Authentication System**
+### **Simplified Authentication:**
 
-- **Primary**: Supabase Auth
-- **Fallback**: Custom JWT implementation
-- **Social Login**: Google OAuth
-- **Phone Auth**: SMS OTP via Twilio
-- **Session Management**: JWT tokens
-- **Password Security**: bcrypt hashing
+- **Phone OTP only**: No email/password complexity
+- **OTP Service**: Twilio SMS integration
+- **Auto-registration**: First login creates account
+- **JWT Tokens**: Session management
+- **Role-based Access**: User, Broker, Admin roles
+
+### **Authentication Flow:**
+
+```
+1. User enters phone number
+2. System sends OTP via SMS
+3. User enters OTP
+4. System validates and creates/logs in user
+5. Auto-assigns 3 credits and initializes wallet
+6. Returns JWT token for session
+```
 
 ### **Authorization**
 
@@ -192,76 +216,103 @@ backend/
 // User Management
 type User struct {
     gorm.Model
-    Name         string    `json:"name"`
-    Email        string    `json:"email" gorm:"unique"`
-    Phone        string    `json:"phone" gorm:"unique"`
-    UserType     string    `json:"user_type"` // user, worker, admin
-    KYCVerified  bool      `json:"kyc_verified"`
-    Location     string    `json:"location"`
-    Avatar       string    `json:"avatar"`
-    IsActive     bool      `json:"is_active" gorm:"default:true"`
+    Name                string    `json:"name"`
+    Phone               string    `json:"phone" gorm:"unique"`
+    UserType            string    `json:"user_type"` // user, broker, admin
+    CreditsRemaining    int       `json:"credits_remaining" gorm:"default:3"`
+    WalletBalance       float64   `json:"wallet_balance" gorm:"default:0"`
+    SubscriptionID      *uint     `json:"subscription_id"`
+    Subscription        *UserSubscription `json:"subscription"`
+    IsActive            bool      `json:"is_active" gorm:"default:true"`
 }
 
-// Service Management
+// Admin Configuration
+type AdminConfig struct {
+    gorm.Model
+    CreditLimit         int       `json:"credit_limit" gorm:"default:3"`
+    WalletLimit         float64   `json:"wallet_limit" gorm:"default:100000"`
+    SubscriptionPrices  string    `json:"subscription_prices"` // JSON
+}
+
+// Wallet Transactions
+type WalletTransaction struct {
+    gorm.Model
+    UserID              uint      `json:"user_id"`
+    User                User      `json:"user"`
+    Amount              float64   `json:"amount"`
+    Type                string    `json:"type"` // 'credit', 'subscription', 'recharge'
+    Description         string    `json:"description"`
+    RazorpayPaymentID   string    `json:"razorpay_payment_id"`
+    Status              string    `json:"status" gorm:"default:'pending'"`
+}
+
+// Subscription Plans
+type SubscriptionPlan struct {
+    gorm.Model
+    Name                string    `json:"name"`
+    Price               float64   `json:"price"`
+    DurationMonths      int       `json:"duration_months"`
+    Features            string    `json:"features"` // JSON
+    IsActive            bool      `json:"is_active" gorm:"default:true"`
+}
+
+// User Subscriptions
+type UserSubscription struct {
+    gorm.Model
+    UserID              uint      `json:"user_id"`
+    User                User      `json:"user"`
+    PlanID              uint      `json:"plan_id"`
+    Plan                SubscriptionPlan `json:"plan"`
+    Status              string    `json:"status" gorm:"default:'active'"`
+    StartsAt            time.Time `json:"starts_at"`
+    ExpiresAt           time.Time `json:"expires_at"`
+}
+
+// Service Management (Home Services)
 type Service struct {
     gorm.Model
-    Name          string  `json:"name"`
-    Description   string  `json:"description"`
-    BasePrice     float64 `json:"base_price"`
-    ServiceType   string  `json:"service_type"` // direct, inquiry
-    MaxRadius     int     `json:"max_radius"`
-    CoverageAreas string  `json:"coverage_areas"`
-    IsActive      bool    `json:"is_active"`
-    Icon          string  `json:"icon"`
+    Name                string    `json:"name"`
+    Description         string    `json:"description"`
+    Price               float64   `json:"price"`
+    CategoryID          uint      `json:"category_id"`
+    Category            Category  `json:"category"`
+    SubcategoryID       uint      `json:"subcategory_id"`
+    Subcategory         Subcategory `json:"subcategory"`
+    ProviderID          uint      `json:"provider_id"`
+    Provider            User      `json:"provider"`
+    Status              string    `json:"status" gorm:"default:'active'"`
 }
 
-// Property Management
+// Contractor Management
+type Contractor struct {
+    gorm.Model
+    UserID              uint      `json:"user_id"`
+    User                User      `json:"user"`
+    Profession          string    `json:"profession"`
+    Skills              string    `json:"skills"` // JSON array
+    ExperienceYears     int       `json:"experience_years"`
+    HourlyRate          float64   `json:"hourly_rate"`
+    Availability        string    `json:"availability"` // JSON
+    Rating              float64   `json:"rating" gorm:"default:0"`
+    TotalJobs           int       `json:"total_jobs" gorm:"default:0"`
+}
+
+// Property Management (Real Estate)
 type Property struct {
     gorm.Model
-    Title         string  `json:"title"`
-    Description   string  `json:"description"`
-    Price         float64 `json:"price"`
-    PropertyType  string  `json:"property_type"`
-    Location      string  `json:"location"`
-    OwnerID       uint    `json:"owner_id"`
-    Owner         User    `json:"owner"`
-    IsVerified    bool    `json:"is_verified"`
-    Status        string  `json:"status"`
-    Images        string  `json:"images"`
-    Amenities     string  `json:"amenities"`
-}
-
-// Booking System
-type Booking struct {
-    gorm.Model
-    UserID        uint    `json:"user_id"`
-    User          User    `json:"user"`
-    ServiceID     uint    `json:"service_id"`
-    Service       Service `json:"service"`
-    WorkerID      uint    `json:"worker_id"`
-    Worker        User    `json:"worker"`
-    Status        string  `json:"status"`
-    ScheduledDate time.Time `json:"scheduled_date"`
-    Address       string  `json:"address"`
-    Description   string  `json:"description"`
-    Price         float64 `json:"price"`
-    PaymentStatus string  `json:"payment_status"`
-    OTP           string  `json:"otp"`
-    CompletedAt   *time.Time `json:"completed_at"`
-}
-
-// Review System
-type Review struct {
-    gorm.Model
-    UserID      uint    `json:"user_id"`
-    User        User    `json:"user"`
-    WorkerID    uint    `json:"worker_id"`
-    Worker      User    `json:"worker"`
-    BookingID   uint    `json:"booking_id"`
-    Booking     Booking `json:"booking"`
-    Rating      int     `json:"rating"`
-    Comment     string  `json:"comment"`
-    IsPublished bool    `json:"is_published"`
+    Title               string    `json:"title"`
+    Description         string    `json:"description"`
+    Price               float64   `json:"price"`
+    PropertyType        string    `json:"property_type"`
+    Location            string    `json:"location"`
+    OwnerID             uint      `json:"owner_id"`
+    Owner               User      `json:"owner"`
+    CreditUsed          int       `json:"credit_used" gorm:"default:1"`
+    SubscriptionPosted  bool      `json:"subscription_posted" gorm:"default:false"`
+    IsVerified          bool      `json:"is_verified"`
+    Status              string    `json:"status"`
+    Images              string    `json:"images"`
+    Amenities           string    `json:"amenities"`
 }
 ```
 
@@ -274,36 +325,47 @@ type Review struct {
 ```
 /api/v1/
 ├── auth/
-│   ├── login
-│   ├── register
-│   ├── logout
+│   ├── request-otp
+│   ├── verify-otp
 │   └── refresh
 ├── users/
 │   ├── profile
 │   ├── update
-│   └── kyc
+│   ├── credits
+│   ├── buy-credits
+│   ├── wallet
+│   ├── wallet/recharge
+│   └── wallet/transactions
+├── subscriptions/
+│   ├── plans
+│   ├── purchase
+│   ├── my-subscription
+│   └── cancel
 ├── services/
+│   ├── categories
+│   ├── subcategories
 │   ├── list
-│   ├── create
-│   ├── update
-│   └── delete
+│   ├── book
+│   └── bookings
+├── contractors/
+│   ├── list
+│   ├── filter
+│   ├── contact
+│   └── reviews
 ├── properties/
+│   ├── create (credit check)
 │   ├── list
-│   ├── create
-│   ├── update
-│   └── delete
-├── bookings/
-│   ├── create
-│   ├── list
-│   ├── update
-│   └── complete
-├── payments/
-│   ├── create
-│   ├── verify
-│   └── refund
-└── ai/
-    ├── chat
-    └── recommendations
+│   ├── search
+│   └── inquiries
+├── admin/
+│   ├── config
+│   ├── users
+│   ├── subscriptions/plans
+│   └── analytics
+└── payments/
+    ├── create
+    ├── verify
+    └── refund
 ```
 
 ### **WebSocket Events**
@@ -318,11 +380,12 @@ type WebSocketEvent struct {
 
 // Event types
 const (
-    EventBookingCreated = "booking_created"
-    EventBookingUpdated = "booking_updated"
-    EventPaymentSuccess = "payment_success"
-    EventMessageReceived = "message_received"
-    EventServiceCompleted = "service_completed"
+    EventCreditUsed = "credit_used"
+    EventWalletRecharged = "wallet_recharged"
+    EventSubscriptionPurchased = "subscription_purchased"
+    EventPropertyPosted = "property_posted"
+    EventServiceBooked = "service_booked"
+    EventContractorContacted = "contractor_contacted"
 )
 ```
 
@@ -354,7 +417,6 @@ RAZORPAY_KEY=your-razorpay-key
 RAZORPAY_SECRET=your-razorpay-secret
 TWILIO_ACCOUNT_SID=your-twilio-sid
 TWILIO_AUTH_TOKEN=your-twilio-token
-OPENAI_API_KEY=your-openai-key
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
@@ -373,10 +435,12 @@ CLOUDINARY_API_SECRET=your-api-secret
 
 ### **Business Analytics**
 
-- **User Analytics**: PostHog/Mixpanel
-- **Revenue Tracking**: Custom analytics
-- **Performance Metrics**: Custom dashboards
-- **A/B Testing**: PostHog
+- **Credit Analytics**: Credit usage patterns and sales
+- **Wallet Analytics**: Transaction volume and user behavior
+- **Subscription Analytics**: Plan adoption and retention
+- **Module Analytics**: Three main modules usage statistics
+- **Revenue Tracking**: Credit sales, subscription revenue
+- **Performance Metrics**: User engagement and satisfaction
 
 ---
 
@@ -416,6 +480,9 @@ npm update
 - [ ] Database migrations ready
 - [ ] SSL certificates configured
 - [ ] Monitoring setup complete
+- [ ] Credit system tested
+- [ ] Wallet system tested
+- [ ] Subscription system tested
 
 ### **Deployment Steps**
 
@@ -434,6 +501,9 @@ npm update
 - [ ] Error tracking configured
 - [ ] Backup verification
 - [ ] User notifications sent
+- [ ] Credit system functional
+- [ ] Wallet system functional
+- [ ] Subscription system functional
 
 ---
 
@@ -445,6 +515,8 @@ npm update
 - **Mobile App**: <2s cold start
 - **Web App**: <1s page load
 - **Database Queries**: <100ms average
+- **Credit Validation**: <50ms
+- **Wallet Transactions**: <100ms
 
 ### **Scalability**
 
@@ -452,6 +524,8 @@ npm update
 - **Database**: Handle 1M+ records
 - **File Storage**: 10TB+ capacity
 - **API Rate Limit**: 1000 requests/minute/user
+- **Credit System**: Handle 100K+ credit transactions/day
+- **Wallet System**: Handle 50K+ wallet transactions/day
 
 ---
 
@@ -461,7 +535,7 @@ npm update
 
 - **Microservices**: Service decomposition
 - **Event Sourcing**: CQRS pattern
-- **Machine Learning**: Recommendation engine
+- **Advanced Analytics**: Machine learning insights
 - **Blockchain**: Smart contracts for payments
 
 ### **Phase 3 Scaling**
@@ -526,4 +600,36 @@ func (c *CloudinaryService) UploadImage(file multipart.File) (string, error) {
 
 ---
 
-**TREESINDIA Tech Stack** - Built for scale, performance, and developer experience.
+## 💳 **Payment Integration with Razorpay**
+
+### **Razorpay Features**
+
+- **Multiple Payment Methods**: UPI, cards, wallets, net banking
+- **Secure Processing**: PCI compliant
+- **Webhook Support**: Real-time payment notifications
+- **Refund Management**: Automated refund processing
+- **Analytics**: Payment analytics and reporting
+
+### **Payment Flow**
+
+```go
+// Example Razorpay integration
+type RazorpayService struct {
+    KeyID     string
+    KeySecret string
+}
+
+func (r *RazorpayService) CreatePayment(amount float64, currency string) (string, error) {
+    // Create payment intent
+    // Return payment ID
+}
+
+func (r *RazorpayService) VerifyPayment(paymentID, signature string) (bool, error) {
+    // Verify payment signature
+    // Return verification status
+}
+```
+
+---
+
+**TREESINDIA Tech Stack** - Built for scale, performance, and developer experience with credit system, wallet system, and subscription model.
