@@ -18,6 +18,19 @@ func RunMigrations(db *gorm.DB) error {
 		&models.Category{},
 		&models.Subcategory{},
 		&models.Service{},
+		&models.Worker{},
+		&models.WorkerInquiry{},
+		&models.Broker{},
+	
+		&models.UserRole{},
+		&models.UserDocument{},
+		&models.UserSkill{},
+		&models.UserNotificationSettings{},
+		&models.Location{},
+		&models.RoleApplication{},
+		&models.Property{},
+		&models.AdminConfig{},
+		&models.WalletTransaction{},
 	)
 
 	if err != nil {
@@ -31,7 +44,19 @@ func RunMigrations(db *gorm.DB) error {
 
 // SeedInitialData seeds initial data into the database
 func SeedInitialData(db *gorm.DB) error {
-	return seed.SeedAdminUser(db)
+	// Seed admin user
+	if err := seed.SeedAdminUser(db); err != nil {
+		return err
+	}
+	
+
+	
+	// Seed admin configurations
+	if err := seed.SeedAdminConfigs(db); err != nil {
+		return err
+	}
+	
+	return nil
 }
 
 

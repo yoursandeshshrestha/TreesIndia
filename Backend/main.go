@@ -146,6 +146,12 @@ func main() {
 		if err := runMigrations(appConfig); err != nil {
 			log.Fatal("Failed to run migrations:", err)
 		}
+		
+		// Seed initial data (admin user and configs)
+		log.Println("Seeding initial data...")
+		if err := config.SeedInitialData(db); err != nil {
+			log.Fatal("Failed to seed initial data:", err)
+		}
 	} else {
 		log.Println("Skipping database migrations in production")
 	}
