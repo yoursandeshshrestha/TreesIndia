@@ -258,7 +258,7 @@ const Sidebar = () => {
                     }
                     ${
                       isActiveRoute(child.path)
-                        ? "text-blue-600 bg-blue-50 border-l-2 border-blue-500"
+                        ? "text-blue-600 bg-blue-50  border-blue-500"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                     }
                   `}
