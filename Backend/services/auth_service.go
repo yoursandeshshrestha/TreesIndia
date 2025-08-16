@@ -45,8 +45,6 @@ func (as *AuthService) RegisterUser(phone string) (*models.User, error) {
 		Phone:       phone,
 		UserType:    models.UserTypeNormal,
 		IsActive:    true,
-		KYCStatus:   models.KYCStatusNotNeeded,
-		IsVerified:  false,
 	}
 
 	if err := as.db.Create(&user).Error; err != nil {
@@ -112,7 +110,6 @@ func (as *AuthService) VerifyOTP(phone, otp string) (*models.User, *TokenRespons
 	}
 
 	// Mark user as verified and update last login
-	user.IsVerified = true
 	now := time.Now()
 	user.LastLoginAt = &now
 

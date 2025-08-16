@@ -24,8 +24,7 @@ func SeedAdminUser(db *gorm.DB) error {
 		Phone:     "+918597831351",
 		UserType:  "admin",
 		IsActive:  true,
-		IsVerified: true,
-		KYCStatus: "verified",
+		
 	}
 
 	if err := db.Create(&adminUser).Error; err != nil {
