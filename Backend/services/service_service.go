@@ -127,6 +127,69 @@ func (ss *ServiceService) GetServiceByID(id uint) (*models.Service, error) {
 	return service, nil
 }
 
+// GetServiceCategories retrieves all service categories
+func (ss *ServiceService) GetServiceCategories() ([]models.Category, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServiceCategories panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceService.GetServiceCategories called")
+	
+	var categories []models.Category
+	err := ss.serviceRepo.GetDB().Where("is_active = ?", true).Find(&categories).Error
+	if err != nil {
+		logrus.Errorf("ServiceService.GetServiceCategories error: %v", err)
+		return nil, err
+	}
+	
+	logrus.Infof("ServiceService.GetServiceCategories returning %d categories", len(categories))
+	return categories, nil
+}
+
+// GetServiceSubcategories retrieves subcategories for a category
+func (ss *ServiceService) GetServiceSubcategories(categoryID uint) ([]models.Subcategory, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServiceSubcategories panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetServiceSubcategories called with categoryID: %d", categoryID)
+	
+	var subcategories []models.Subcategory
+	err := ss.serviceRepo.GetDB().Where("category_id = ? AND is_active = ?", categoryID, true).Find(&subcategories).Error
+	if err != nil {
+		logrus.Errorf("ServiceService.GetServiceSubcategories error: %v", err)
+		return nil, err
+	}
+	
+	logrus.Infof("ServiceService.GetServiceSubcategories returning %d subcategories", len(subcategories))
+	return subcategories, nil
+}
+
+// GetServicesWithFilters retrieves services with advanced filtering
+func (ss *ServiceService) GetServicesWithFilters(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, excludeInactive bool) ([]models.Service, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServicesWithFilters panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetServicesWithFilters called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, excludeInactive: %v", 
+		priceType, category, subcategory, priceMin, priceMax, excludeInactive)
+	
+	services, err := ss.serviceRepo.GetWithFilters(priceType, category, subcategory, priceMin, priceMax, excludeInactive)
+	if err != nil {
+		logrus.Errorf("ServiceService.GetServicesWithFilters error: %v", err)
+		return nil, err
+	}
+	
+	logrus.Infof("ServiceService.GetServicesWithFilters returning %d services", len(services))
+	return services, nil
+}
+
 // GetAllServices retrieves all services with optional filtering
 func (ss *ServiceService) GetAllServices(excludeInactive bool) ([]models.Service, error) {
 	defer func() {

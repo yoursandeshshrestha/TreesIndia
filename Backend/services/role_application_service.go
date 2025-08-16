@@ -60,27 +60,39 @@ func (s *RoleApplicationService) SubmitApplication(userID uint, req *models.Crea
 }
 
 // SubmitBrokerApplication submits a simplified broker application for a user
-func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, req *models.CreateBrokerApplicationRequest) (*models.RoleApplicationDetail, error) {
+func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, req *models.CreateBrokerApplicationRequest) (*models.SimpleApplicationResponse, error) {
 	// Use database transaction for atomicity and performance
 	application, err := s.submitBrokerApplicationWithTransaction(userID, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return detailed application information
-	return s.buildApplicationDetail(application)
+	// Return simple application information
+	return &models.SimpleApplicationResponse{
+		ID:            application.ID,
+		UserID:        application.UserID,
+		RequestedRole: application.RequestedRole,
+		Status:        application.Status,
+		SubmittedAt:   application.SubmittedAt,
+	}, nil
 }
 
 // SubmitWorkerApplication submits a worker application for a user
-func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, req *models.CreateWorkerApplicationRequest) (*models.RoleApplicationDetail, error) {
+func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, req *models.CreateWorkerApplicationRequest) (*models.SimpleApplicationResponse, error) {
 	// Use database transaction for atomicity and performance
 	application, err := s.submitWorkerApplicationWithTransaction(userID, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return detailed application information
-	return s.buildApplicationDetail(application)
+	// Return simple application information
+	return &models.SimpleApplicationResponse{
+		ID:            application.ID,
+		UserID:        application.UserID,
+		RequestedRole: application.RequestedRole,
+		Status:        application.Status,
+		SubmittedAt:   application.SubmittedAt,
+	}, nil
 }
 
 // submitApplicationWithTransaction handles the application submission within a database transaction
@@ -174,10 +186,10 @@ func (s *RoleApplicationService) submitBrokerApplicationWithTransaction(userID u
 			return errors.New("user already has a pending application")
 		}
 
-		// Validate and update user profile with broker information
-		err = s.validateAndUpdateBrokerProfileWithTx(tx, userID, req)
+		// Validate and update user profile with basic information
+		err = s.validateAndUpdateUserProfileWithTx(tx, userID, req.Email, "", "")
 		if err != nil {
-			logrus.Errorf("Failed to validate/update user broker profile: %v", err)
+			logrus.Errorf("Failed to validate/update user profile: %v", err)
 			return err
 		}
 
@@ -210,8 +222,8 @@ func (s *RoleApplicationService) submitBrokerApplicationWithTransaction(userID u
 		return nil, err
 	}
 
-	// Send email notification to user
-	go s.sendBrokerApplicationEmailAsync(userID, application)
+	// Start async processing for non-critical operations
+	go s.processBrokerApplicationAsync(userID, req, application)
 
 	return application, nil
 }
@@ -231,10 +243,10 @@ func (s *RoleApplicationService) submitWorkerApplicationWithTransaction(userID u
 			return errors.New("user already has a pending application")
 		}
 
-		// Validate and update user profile with worker information
-		err = s.validateAndUpdateWorkerProfileWithTx(tx, userID, req)
+		// Validate and update user profile with basic information
+		err = s.validateAndUpdateUserProfileWithTx(tx, userID, req.Email, req.Gender, req.Avatar)
 		if err != nil {
-			logrus.Errorf("Failed to validate/update user worker profile: %v", err)
+			logrus.Errorf("Failed to validate/update user profile: %v", err)
 			return err
 		}
 
@@ -267,12 +279,19 @@ func (s *RoleApplicationService) submitWorkerApplicationWithTransaction(userID u
 		return nil, err
 	}
 
-	// Send email notification to user
+	// Create documents and skills synchronously to ensure they're saved
+	s.createWorkerDocumentsIndividually(userID, req)
+	
+	// Create skills for the user (handle duplicates)
+	if len(req.Skills) > 0 {
+		s.createSkillsIndividually(userID, req.Skills)
+	}
+
+	// Start async processing for non-critical operations (email only)
 	go s.sendWorkerApplicationEmailAsync(userID, application)
 
 	return application, nil
 }
-
 
 // checkUserHasApplicationWithTx checks if user has application within transaction
 func (s *RoleApplicationService) checkUserHasApplicationWithTx(tx *gorm.DB, userID uint) (bool, error) {
@@ -320,10 +339,6 @@ func (s *RoleApplicationService) validateAndUpdateUserProfileWithTx(tx *gorm.DB,
 		return err
 	}
 
-	// Check if user has location
-	var location models.Location
-	hasLocation := tx.Where("user_id = ?", userID).First(&location).Error == nil
-
 	// Validate required profile information
 	var missingFields []string
 
@@ -348,10 +363,8 @@ func (s *RoleApplicationService) validateAndUpdateUserProfileWithTx(tx *gorm.DB,
 		}
 	}
 
-	// Check location
-	if !hasLocation {
-		missingFields = append(missingFields, "location")
-	}
+	// Note: Location validation is handled separately in the application submission process
+	// We don't validate location here because it can be provided in the request
 
 	// If any required fields are missing, return error
 	if len(missingFields) > 0 {
@@ -390,93 +403,6 @@ func (s *RoleApplicationService) validateAndUpdateUserProfileWithTx(tx *gorm.DB,
 	return nil
 }
 
-// validateAndUpdateBrokerProfileWithTx validates and updates user profile with broker information
-func (s *RoleApplicationService) validateAndUpdateBrokerProfileWithTx(tx *gorm.DB, userID uint, req *models.CreateBrokerApplicationRequest) error {
-	// Get current user profile
-	user := &models.User{}
-	err := tx.Where("id = ?", userID).First(user).Error
-	if err != nil {
-		return err
-	}
-
-	// Check if user has required profile information
-	if user.Email == nil || *user.Email == "" {
-		if req.Email == nil || *req.Email == "" {
-			return errors.New("email is required - please provide email in application or update your profile")
-		}
-	}
-
-	if user.Name == "" {
-		if req.Name == nil || *req.Name == "" {
-			return errors.New("name is required - please provide name in application or update your profile")
-		}
-	}
-
-	// Prepare updates map
-	updates := map[string]interface{}{
-		"broker_license": req.BrokerLicense,
-		"broker_agency":  req.BrokerAgency,
-	}
-
-	// Only update email if provided and user doesn't have one
-	if (user.Email == nil || *user.Email == "") && req.Email != nil && *req.Email != "" {
-		updates["email"] = *req.Email
-	}
-
-	// Only update name if provided and user doesn't have one
-	if user.Name == "" && req.Name != nil && *req.Name != "" {
-		updates["name"] = *req.Name
-	}
-
-	return tx.Model(&models.User{}).
-		Where("id = ?", userID).
-		Updates(updates).Error
-}
-
-// validateAndUpdateWorkerProfileWithTx validates and updates user profile with worker information
-func (s *RoleApplicationService) validateAndUpdateWorkerProfileWithTx(tx *gorm.DB, userID uint, req *models.CreateWorkerApplicationRequest) error {
-	// Get current user profile
-	user := &models.User{}
-	err := tx.Where("id = ?", userID).First(user).Error
-	if err != nil {
-		return err
-	}
-
-	// Check if user has required profile information
-	if user.Email == nil || *user.Email == "" {
-		if req.Email == nil || *req.Email == "" {
-			return errors.New("email is required - please provide email in application or update your profile")
-		}
-	}
-
-	// Prepare updates map - only update email if provided and user doesn't have one
-	updates := map[string]interface{}{}
-
-	// Only update email if provided and user doesn't have one
-	if (user.Email == nil || *user.Email == "") && req.Email != nil && *req.Email != "" {
-		updates["email"] = *req.Email
-	}
-
-	// Only update gender if provided
-	if req.Gender != "" {
-		updates["gender"] = req.Gender
-	}
-
-	// Only update avatar if provided
-	if req.Avatar != "" {
-		updates["avatar"] = req.Avatar
-	}
-
-	// Update user profile if there are changes
-	if len(updates) > 0 {
-		return tx.Model(&models.User{}).
-			Where("id = ?", userID).
-			Updates(updates).Error
-	}
-
-	return nil
-}
-
 // updateUserApplicationStatusWithTx updates user application status within transaction
 func (s *RoleApplicationService) updateUserApplicationStatusWithTx(tx *gorm.DB, userID uint, now *time.Time) error {
 	return tx.Model(&models.User{}).
@@ -490,64 +416,15 @@ func (s *RoleApplicationService) updateUserApplicationStatusWithTx(tx *gorm.DB, 
 // processApplicationAsync handles non-critical operations asynchronously
 func (s *RoleApplicationService) processApplicationAsync(userID uint, req *models.CreateRoleApplicationRequest, application *models.RoleApplication) {
 	// Create documents for the user (handle duplicates)
-	s.createDocumentsAsync(userID, req)
+	s.createDocumentsIndividually(userID, req)
 
 	// Create skills for the user (handle duplicates)
-	s.createSkillsAsync(userID, req.Skills)
+	if len(req.Skills) > 0 {
+		s.createSkillsIndividually(userID, req.Skills)
+	}
 
 	// Send email notification to user
 	s.sendApplicationEmailAsync(userID, application)
-}
-
-// createDocumentsAsync creates documents asynchronously using batch processing
-func (s *RoleApplicationService) createDocumentsAsync(userID uint, req *models.CreateRoleApplicationRequest) {
-	// Prepare documents for batch creation
-	documents := []models.UserDocument{
-		{
-			DocumentType: models.DocumentTypeAadhaarCard,
-			FileURL:      req.AadhaarCardFront,
-			FileName:     "aadhaar_card_front",
-			FileSize:     0,
-		},
-		{
-			DocumentType: models.DocumentTypeAadhaarCard,
-			FileURL:      req.AadhaarCardBack,
-			FileName:     "aadhaar_card_back",
-			FileSize:     0,
-		},
-		{
-			DocumentType: models.DocumentTypePANCard,
-			FileURL:      req.PanCardFront,
-			FileName:     "pan_card_front",
-			FileSize:     0,
-		},
-		{
-			DocumentType: models.DocumentTypePANCard,
-			FileURL:      req.PanCardBack,
-			FileName:     "pan_card_back",
-			FileSize:     0,
-		},
-	}
-
-	// Add avatar as profile photo document if provided
-	if req.Avatar != "" {
-		documents = append(documents, models.UserDocument{
-			DocumentType: models.DocumentTypeProfilePhoto,
-			FileURL:      req.Avatar,
-			FileName:     "avatar",
-			FileSize:     0,
-		})
-	}
-
-	// Use batch processing service for better performance
-	batchProcessor := NewParallelBatchProcessor()
-	
-	// Process documents in batch
-	if err := batchProcessor.batchService.BatchCreateDocuments(userID, documents); err != nil {
-		logrus.Errorf("Failed to create documents in batch: %v", err)
-		// Fallback to individual creation if batch fails
-		s.createDocumentsIndividually(userID, req)
-	}
 }
 
 // createDocumentsIndividually creates documents one by one (fallback method)
@@ -556,10 +433,10 @@ func (s *RoleApplicationService) createDocumentsIndividually(userID uint, req *m
 		docType models.DocumentType
 		fileURL string
 	}{
-		{models.DocumentTypeAadhaarCard, req.AadhaarCardFront},
-		{models.DocumentTypeAadhaarCard, req.AadhaarCardBack},
-		{models.DocumentTypePANCard, req.PanCardFront},
-		{models.DocumentTypePANCard, req.PanCardBack},
+		{models.DocumentTypeAadhaarCardFront, req.AadhaarCardFront},
+		{models.DocumentTypeAadhaarCardBack, req.AadhaarCardBack},
+		{models.DocumentTypePANCardFront, req.PanCardFront},
+		{models.DocumentTypePANCardBack, req.PanCardBack},
 	}
 
 	// Add avatar as profile photo document if provided
@@ -597,25 +474,63 @@ func (s *RoleApplicationService) createDocumentsIndividually(userID uint, req *m
 	wg.Wait()
 }
 
-// createSkillsAsync creates skills asynchronously using batch processing
-func (s *RoleApplicationService) createSkillsAsync(userID uint, skills []string) {
-	// Prepare skills for batch creation
-	userSkills := make([]models.UserSkill, len(skills))
-	for i, skillName := range skills {
-		userSkills[i] = models.UserSkill{
-			Skill: skillName,
-			Level: models.SkillLevelBeginner, // Default level
-		}
+// createWorkerDocumentsIndividually creates documents for worker applications one by one
+func (s *RoleApplicationService) createWorkerDocumentsIndividually(userID uint, req *models.CreateWorkerApplicationRequest) {
+	documents := []struct {
+		docType models.DocumentType
+		fileURL string
+	}{
+		{models.DocumentTypeAadhaarCardFront, req.AadhaarCardFront},
+		{models.DocumentTypeAadhaarCardBack, req.AadhaarCardBack},
+		{models.DocumentTypePANCardFront, req.PanCardFront},
+		{models.DocumentTypePANCardBack, req.PanCardBack},
 	}
 
-	// Use batch processing service for better performance
-	batchProcessor := NewParallelBatchProcessor()
+	// Add avatar as profile photo document if provided
+	if req.Avatar != "" {
+		documents = append(documents, struct {
+			docType models.DocumentType
+			fileURL string
+		}{models.DocumentTypeProfilePhoto, req.Avatar})
+	}
+
+	// Create documents sequentially to ensure all are saved
+	for _, doc := range documents {
+		if doc.fileURL == "" {
+			logrus.Warnf("Empty file URL for document type %s, skipping", doc.docType)
+			continue
+		}
+		
+		docReq := &models.CreateUserDocumentRequest{
+			DocumentType: doc.docType,
+			FileURL:      doc.fileURL,
+			FileName:     "uploaded_document",
+			FileSize:     0,
+		}
+		
+		_, err := s.documentService.UploadDocument(userID, docReq)
+		if err != nil {
+			// If document already exists, continue (don't fail the application)
+			if strings.Contains(err.Error(), "already exists") {
+				logrus.Infof("Document of type %s already exists for user %d, skipping", doc.docType, userID)
+				continue
+			}
+			logrus.Errorf("Failed to create document of type %s for user %d: %v", doc.docType, userID, err)
+			// Continue with other documents even if one fails
+		} else {
+			logrus.Infof("Successfully created document of type %s for user %d", doc.docType, userID)
+		}
+	}
 	
-	// Process skills in batch
-	if err := batchProcessor.batchService.BatchCreateSkills(userID, userSkills); err != nil {
-		logrus.Errorf("Failed to create skills in batch: %v", err)
-		// Fallback to individual creation if batch fails
-		s.createSkillsIndividually(userID, skills)
+	// Log summary of documents created
+	allDocs, err := s.documentService.GetUserDocuments(userID)
+	if err != nil {
+		logrus.Errorf("Failed to get user documents for summary: %v", err)
+	} else {
+		logrus.Infof("User %d now has %d total documents", userID, len(allDocs))
+		for _, doc := range allDocs {
+			logrus.Infof("  - Document ID %d: Type %s, URL: %s", doc.ID, doc.DocumentType, doc.FileURL)
+		}
 	}
 }
 
@@ -700,27 +615,52 @@ func (s *RoleApplicationService) GetUserApplication(userID uint) (*models.RoleAp
 }
 
 // GetUserApplicationWithDetails gets the role application for a user with detailed information
-func (s *RoleApplicationService) GetUserApplicationWithDetails(userID uint) (*models.RoleApplicationDetail, error) {
+func (s *RoleApplicationService) GetUserApplicationWithDetails(userID uint) (interface{}, error) {
 	application, err := s.applicationRepo.GetApplicationByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.buildApplicationDetail(application)
+	// Return role-specific detailed information
+	switch application.RequestedRole {
+	case models.UserTypeWorker:
+		return s.buildWorkerApplicationDetail(application)
+	case models.UserTypeBroker:
+		return s.buildBrokerApplicationDetail(application)
+	default:
+		return s.buildDetailedApplicationDetail(application)
+	}
 }
 
 // GetApplicationWithDetails gets a role application by ID with detailed information
-func (s *RoleApplicationService) GetApplicationWithDetails(id uint) (*models.RoleApplicationDetail, error) {
+func (s *RoleApplicationService) GetApplicationWithDetails(id uint) (interface{}, error) {
 	application, err := s.applicationRepo.GetApplicationByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.buildApplicationDetail(application)
+	// Return role-specific detailed information
+	switch application.RequestedRole {
+	case models.UserTypeWorker:
+		return s.buildWorkerApplicationDetail(application)
+	case models.UserTypeBroker:
+		return s.buildBrokerApplicationDetail(application)
+	default:
+		return s.buildDetailedApplicationDetail(application)
+	}
 }
 
-// buildApplicationDetail builds a detailed application response
+// buildApplicationDetail builds a simple application response for submission
 func (s *RoleApplicationService) buildApplicationDetail(app *models.RoleApplication) (*models.RoleApplicationDetail, error) {
+	detail := &models.RoleApplicationDetail{
+		RoleApplication: app,
+	}
+
+	return detail, nil
+}
+
+// buildDetailedApplicationDetail builds a detailed application response with user, location, documents, and skills
+func (s *RoleApplicationService) buildDetailedApplicationDetail(app *models.RoleApplication) (*models.RoleApplicationDetail, error) {
 	detail := &models.RoleApplicationDetail{
 		RoleApplication: app,
 	}
@@ -741,15 +681,11 @@ func (s *RoleApplicationService) buildApplicationDetail(app *models.RoleApplicat
 		UserType:              user.UserType,
 		Avatar:                user.Avatar,
 		IsActive:              user.IsActive,
-		IsVerified:            user.IsVerified,
-		KYCStatus:             user.KYCStatus,
 		RoleApplicationStatus: user.RoleApplicationStatus,
 		ApplicationDate:       user.ApplicationDate,
 		ApprovalDate:          user.ApprovalDate,
 		CreatedAt:             user.CreatedAt,
 	}
-	
-
 
 	// Get location
 	location := &models.Location{}
@@ -796,6 +732,102 @@ func (s *RoleApplicationService) buildApplicationDetail(app *models.RoleApplicat
 	return detail, nil
 }
 
+// buildWorkerApplicationDetail builds a detailed worker application response
+func (s *RoleApplicationService) buildWorkerApplicationDetail(app *models.RoleApplication) (*models.WorkerApplicationDetail, error) {
+	detail := &models.WorkerApplicationDetail{
+		RoleApplication: app,
+	}
+
+	// Get user details
+	user := &models.User{}
+	err := s.userRepo.FindByID(user, app.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get user details for application %d: %v", app.ID, err)
+		return nil, err
+	}
+
+	detail.User = &models.UserDetail{
+		ID:                    user.ID,
+		Name:                  user.Name,
+		Email:                 user.Email,
+		Phone:                 user.Phone,
+		UserType:              user.UserType,
+		Avatar:                user.Avatar,
+		IsActive:              user.IsActive,
+		RoleApplicationStatus: user.RoleApplicationStatus,
+		ApplicationDate:       user.ApplicationDate,
+		ApprovalDate:          user.ApprovalDate,
+		CreatedAt:             user.CreatedAt,
+	}
+
+	// Get location
+	location := &models.Location{}
+	err = s.locationRepo.FindByUserID(location, app.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get location for application %d: %v", app.ID, err)
+	} else {
+		detail.Location = location
+	}
+
+	// Get documents
+	documents, err := s.documentService.GetUserDocuments(app.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get documents for application %d: %v", app.ID, err)
+	} else {
+		detail.Documents = documents
+	}
+
+	// Get skills
+	skills, err := s.skillService.GetUserSkills(app.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get skills for application %d: %v", app.ID, err)
+	} else {
+		detail.Skills = skills
+	}
+
+	return detail, nil
+}
+
+// buildBrokerApplicationDetail builds a detailed broker application response
+func (s *RoleApplicationService) buildBrokerApplicationDetail(app *models.RoleApplication) (*models.BrokerApplicationDetail, error) {
+	detail := &models.BrokerApplicationDetail{
+		RoleApplication: app,
+	}
+
+	// Get user details
+	user := &models.User{}
+	err := s.userRepo.FindByID(user, app.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get user details for application %d: %v", app.ID, err)
+		return nil, err
+	}
+
+	detail.User = &models.UserDetail{
+		ID:                    user.ID,
+		Name:                  user.Name,
+		Email:                 user.Email,
+		Phone:                 user.Phone,
+		UserType:              user.UserType,
+		Avatar:                user.Avatar,
+		IsActive:              user.IsActive,
+		RoleApplicationStatus: user.RoleApplicationStatus,
+		ApplicationDate:       user.ApplicationDate,
+		ApprovalDate:          user.ApprovalDate,
+		CreatedAt:             user.CreatedAt,
+	}
+
+	// Get broker details
+	broker := &models.Broker{}
+	err = s.db.Where("id IN (SELECT role_id FROM user_roles WHERE user_id = ? AND role_type = 'broker')", app.UserID).First(broker).Error
+	if err != nil {
+		logrus.Errorf("Failed to get broker details for application %d: %v", app.ID, err)
+	} else {
+		detail.Broker = broker
+	}
+
+	return detail, nil
+}
+
 // GetApplication gets a role application by ID
 func (s *RoleApplicationService) GetApplication(id uint) (*models.RoleApplication, error) {
 	return s.applicationRepo.GetApplicationByID(id)
@@ -820,59 +852,124 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, req *m
 		return nil, err
 	}
 
-	// Update user's role if approved
-	if req.Status == models.ApplicationStatusApproved {
-		user := &models.User{}
-		err = s.userRepo.FindByID(user, application.UserID)
-		if err != nil {
-			logrus.Errorf("Failed to get user: %v", err)
-			return nil, err
+	// Handle approval/rejection in a transaction
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		if req.Status == models.ApplicationStatusApproved {
+			user := &models.User{}
+			err = s.userRepo.FindByID(user, application.UserID)
+			if err != nil {
+				logrus.Errorf("Failed to get user: %v", err)
+				return err
+			}
+
+			// Update user's application status and user type
+			user.RoleApplicationStatus = "approved"
+			user.ApprovalDate = &now
+			user.UserType = application.RequestedRole // Change user type to the approved role
+			err = s.userRepo.Update(user)
+			if err != nil {
+				logrus.Errorf("Failed to update user application status: %v", err)
+				return err
+			}
+
+			// Create role-specific entry based on the requested role
+			err = s.createRoleEntry(tx, application.UserID, application.RequestedRole)
+			if err != nil {
+				logrus.Errorf("Failed to create role entry: %v", err)
+				return err
+			}
+
+			// Send approval email notification
+			if user.Email != nil {
+				go func() {
+					if err := s.emailService.SendApplicationApprovedEmail(user, application); err != nil {
+						logrus.Errorf("Failed to send application approved email: %v", err)
+					}
+				}()
+			}
+		} else if req.Status == models.ApplicationStatusRejected {
+			// Update user's application status to rejected
+			user := &models.User{}
+			err = s.userRepo.FindByID(user, application.UserID)
+			if err != nil {
+				logrus.Errorf("Failed to get user: %v", err)
+				return err
+			}
+
+			user.RoleApplicationStatus = "rejected"
+			user.UserType = models.UserTypeNormal // Reset user type back to normal if rejected
+			err = s.userRepo.Update(user)
+			if err != nil {
+				logrus.Errorf("Failed to update user application status: %v", err)
+				return err
+			}
+
+			// Send rejection email notification
+			if user.Email != nil {
+				go func() {
+					if err := s.emailService.SendApplicationRejectedEmail(user, application); err != nil {
+						logrus.Errorf("Failed to send application rejected email: %v", err)
+					}
+				}()
+			}
 		}
 
-		user.UserType = application.RequestedRole
-		user.RoleApplicationStatus = "approved"
-		user.ApprovalDate = &now
-		err = s.userRepo.Update(user)
-		if err != nil {
-			logrus.Errorf("Failed to update user role: %v", err)
-			return nil, err
-		}
+		return nil
+	})
 
-		// Send approval email notification
-		if user.Email != nil {
-			go func() {
-				if err := s.emailService.SendApplicationApprovedEmail(user, application); err != nil {
-					logrus.Errorf("Failed to send application approved email: %v", err)
-				}
-			}()
-		}
-	} else if req.Status == models.ApplicationStatusRejected {
-		// Update user's application status to rejected
-		user := &models.User{}
-		err = s.userRepo.FindByID(user, application.UserID)
-		if err != nil {
-			logrus.Errorf("Failed to get user: %v", err)
-			return nil, err
-		}
-
-		user.RoleApplicationStatus = "rejected"
-		err = s.userRepo.Update(user)
-		if err != nil {
-			logrus.Errorf("Failed to update user application status: %v", err)
-			return nil, err
-		}
-
-		// Send rejection email notification
-		if user.Email != nil {
-			go func() {
-				if err := s.emailService.SendApplicationRejectedEmail(user, application); err != nil {
-					logrus.Errorf("Failed to send application rejected email: %v", err)
-				}
-			}()
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return application, nil
+}
+
+// createRoleEntry creates a role-specific entry in the appropriate table and links it via UserRole
+func (s *RoleApplicationService) createRoleEntry(tx *gorm.DB, userID uint, roleType models.UserType) error {
+	// Deactivate any existing user roles for this user
+	err := tx.Model(&models.UserRole{}).Where("user_id = ?", userID).Update("is_active", false).Error
+	if err != nil {
+		logrus.Errorf("Failed to deactivate existing user roles for user %d: %v", userID, err)
+		return err
+	}
+	switch roleType {
+	case models.UserTypeWorker:
+		// Create worker entry
+		worker := &models.Worker{
+			IsActive: true,
+		}
+		if err := tx.Create(worker).Error; err != nil {
+			return err
+		}
+
+		// Create UserRole entry
+		userRole := &models.UserRole{
+			UserID:   userID,
+			RoleType: "worker",
+			RoleID:   worker.ID,
+			IsActive: true,
+		}
+		return tx.Create(userRole).Error
+
+	case models.UserTypeBroker:
+		// Create broker entry
+		broker := &models.Broker{}
+		if err := tx.Create(broker).Error; err != nil {
+			return err
+		}
+
+		// Create UserRole entry
+		userRole := &models.UserRole{
+			UserID:   userID,
+			RoleType: "broker",
+			RoleID:   broker.ID,
+			IsActive: true,
+		}
+		return tx.Create(userRole).Error
+
+	default:
+		return errors.New("unsupported role type")
+	}
 }
 
 // GetPendingApplications gets all pending applications
@@ -886,24 +983,43 @@ func (s *RoleApplicationService) GetApplicationsByStatus(status models.Applicati
 }
 
 // GetApplicationsByStatusWithDetails gets applications by status with detailed information
-func (s *RoleApplicationService) GetApplicationsByStatusWithDetails(status models.ApplicationStatus) ([]*models.RoleApplicationDetail, error) {
+func (s *RoleApplicationService) GetApplicationsByStatusWithDetails(status models.ApplicationStatus) ([]models.RoleApplication, error) {
 	applications, err := s.applicationRepo.GetApplicationsByStatus(status)
 	if err != nil {
 		return nil, err
 	}
 
-	var detailedApplications []*models.RoleApplicationDetail
+	return applications, nil
+}
 
-	for _, app := range applications {
-		detail, err := s.buildApplicationDetail(&app)
-		if err != nil {
-			logrus.Errorf("Failed to build application detail for application %d: %v", app.ID, err)
-			continue
-		}
-		detailedApplications = append(detailedApplications, detail)
+// GetApplicationsByStatusAndRole gets applications by status and optional role type filter
+func (s *RoleApplicationService) GetApplicationsByStatusAndRole(status models.ApplicationStatus, roleType string) ([]models.RoleApplication, error) {
+	applications, err := s.applicationRepo.GetApplicationsByStatus(status)
+	if err != nil {
+		return nil, err
 	}
 
-	return detailedApplications, nil
+	// If no role type filter, return all applications
+	if roleType == "" {
+		return applications, nil
+	}
+
+	// Filter applications by role type
+	var filteredApplications []models.RoleApplication
+	for _, app := range applications {
+		switch roleType {
+		case "worker":
+			if app.RequestedRole == models.UserTypeWorker {
+				filteredApplications = append(filteredApplications, app)
+			}
+		case "broker":
+			if app.RequestedRole == models.UserTypeBroker {
+				filteredApplications = append(filteredApplications, app)
+			}
+		}
+	}
+
+	return filteredApplications, nil
 }
 
 // GetAllApplicationsWithDetails gets all applications with detailed information
@@ -937,8 +1053,7 @@ func (s *RoleApplicationService) GetAllApplicationsWithDetails() ([]*models.Role
 			UserType:              user.UserType,
 			Avatar:                user.Avatar,
 			IsActive:              user.IsActive,
-			IsVerified:            user.IsVerified,
-			KYCStatus:             user.KYCStatus,
+			
 			RoleApplicationStatus: user.RoleApplicationStatus,
 			ApplicationDate:       user.ApplicationDate,
 			ApprovalDate:          user.ApprovalDate,
@@ -979,4 +1094,43 @@ func (s *RoleApplicationService) GetAllApplicationsWithDetails() ([]*models.Role
 // DeleteApplication deletes a role application
 func (s *RoleApplicationService) DeleteApplication(id uint) error {
 	return s.applicationRepo.DeleteApplication(id)
+}
+
+// processBrokerApplicationAsync handles non-critical operations for broker applications asynchronously
+func (s *RoleApplicationService) processBrokerApplicationAsync(userID uint, req *models.CreateBrokerApplicationRequest, application *models.RoleApplication) {
+	// Create broker record with license and agency information
+	s.createBrokerRecord(userID, req)
+	
+	// Send email notification to user
+	s.sendBrokerApplicationEmailAsync(userID, application)
+}
+
+// createBrokerRecord creates a broker record with license and agency information
+func (s *RoleApplicationService) createBrokerRecord(userID uint, req *models.CreateBrokerApplicationRequest) {
+	broker := &models.Broker{
+		License: req.BrokerLicense,
+		Agency:  req.BrokerAgency,
+	}
+	
+	err := s.db.Create(broker).Error
+	if err != nil {
+		logrus.Errorf("Failed to create broker record for user %d: %v", userID, err)
+		return
+	}
+	
+	// Create UserRole entry to link user with broker
+	userRole := &models.UserRole{
+		UserID:   userID,
+		RoleType: "broker",
+		RoleID:   broker.ID,
+		IsActive: true,
+	}
+	
+	err = s.db.Create(userRole).Error
+	if err != nil {
+		logrus.Errorf("Failed to create user role for broker user %d: %v", userID, err)
+		return
+	}
+	
+	logrus.Infof("Successfully created broker record for user %d with license %s and agency %s", userID, req.BrokerLicense, req.BrokerAgency)
 }
