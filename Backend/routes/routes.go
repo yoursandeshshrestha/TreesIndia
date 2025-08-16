@@ -46,6 +46,32 @@ func SetupRoutes(r *gin.Engine) {
 		
 		// User routes
 		SetupUserRoutes(v1)
+		
+		// Property routes
+		SetupPropertyRoutes(v1)
+		
+		// Subscription routes
+		SetupSubscriptionRoutes(v1)
+		
+		// Admin configuration routes
+		SetupAdminConfigRoutes(v1)
+		
+		// Wallet routes
+		SetupWalletRoutes(v1)
+		
+		// Razorpay routes
+		SetupRazorpayRoutes(v1)
+		
+		// Booking routes
+		SetupBookingRoutes(v1)
+		
+		// Worker inquiry routes
+		SetupWorkerInquiryRoutes(v1)
+		
+		// Admin inquiry routes
+		SetupAdminInquiryRoutes(v1)
+		
+
 	}
 }
 
