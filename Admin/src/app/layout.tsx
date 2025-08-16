@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import { Toaster } from "sonner";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import QueryProvider from "@/providers/QueryProvider";
-import StoreProvider from "@/providers/StoreProvider";
+import Providers from "./providers";
 
-const poppins = Poppins({
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
-  display: "swap",
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "TreesIndia Admin",
-  description: "TreesIndia Admin",
+  title: "TreesIndia",
+  description: "The service company",
 };
 
 export default function RootLayout({
@@ -24,13 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} font-sans antialiased`}>
-        <StoreProvider>
-          <QueryProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-          </QueryProvider>
-        </StoreProvider>
+      <body className={`${plusJakartaSans.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
