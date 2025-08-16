@@ -87,6 +87,8 @@ type CreateWorkerApplicationRequest struct {
 	Location *CreateLocationRequest `json:"location" binding:"omitempty"`
 }
 
+
+
 // UpdateRoleApplicationRequest represents the request structure for updating a role application (admin only)
 type UpdateRoleApplicationRequest struct {
 	Status     ApplicationStatus `json:"status" binding:"required,oneof=pending approved rejected"`
@@ -111,10 +113,36 @@ type UserDetail struct {
 	UserType              UserType   `json:"user_type"`
 	Avatar                string     `json:"avatar"`
 	IsActive              bool       `json:"is_active"`
-	IsVerified            bool       `json:"is_verified"`
-	KYCStatus             KYCStatus  `json:"kyc_status"`
+	
 	RoleApplicationStatus string     `json:"role_application_status"`
 	ApplicationDate       *time.Time `json:"application_date"`
 	ApprovalDate          *time.Time `json:"approval_date"`
 	CreatedAt             time.Time  `json:"created_at"`
 }
+
+// SimpleApplicationResponse represents a simple application response for submission
+type SimpleApplicationResponse struct {
+	ID            uint              `json:"id"`
+	UserID        uint              `json:"user_id"`
+	RequestedRole UserType          `json:"requested_role"`
+	Status        ApplicationStatus `json:"status"`
+	SubmittedAt   time.Time         `json:"submitted_at"`
+}
+
+// WorkerApplicationDetail represents a detailed worker application response
+type WorkerApplicationDetail struct {
+	*RoleApplication
+	User      *UserDetail     `json:"user"`
+	Location  *Location       `json:"location"`
+	Documents []UserDocument  `json:"documents"`
+	Skills    []UserSkill     `json:"skills"`
+}
+
+// BrokerApplicationDetail represents a detailed broker application response
+type BrokerApplicationDetail struct {
+	*RoleApplication
+	User    *UserDetail `json:"user"`
+	Broker  *Broker     `json:"broker"`
+}
+
+
