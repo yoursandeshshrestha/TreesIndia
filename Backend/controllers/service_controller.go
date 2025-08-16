@@ -121,9 +121,7 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 		form, err := c.MultipartForm()
 		if err == nil {
 			if files, exists := form.File["images"]; exists {
-				for _, file := range files {
-					imageFiles = append(imageFiles, file)
-				}
+				imageFiles = append(imageFiles, files...)
 			}
 		}
 	} else {
@@ -211,11 +209,16 @@ func (sc *ServiceController) GetServiceByID(c *gin.Context) {
 	c.JSON(200, views.CreateSuccessResponse("Service retrieved successfully", service))
 }
 
-// GetServices retrieves all services
-// @Summary Get all services
-// @Description Get all services with optional filtering
+// GetServices retrieves all services with advanced filtering
+// @Summary Get all services with filters
+// @Description Get all services with optional filtering by type, category, subcategory, and price
 // @Tags services
 // @Produce json
+// @Param type query string false "Service type (fixed-price or inquiry-based)"
+// @Param category query string false "Category name or ID"
+// @Param subcategory query string false "Subcategory name or ID"
+// @Param price_min query number false "Minimum price"
+// @Param price_max query number false "Maximum price"
 // @Param exclude_inactive query boolean false "Exclude inactive services"
 // @Success 200 {object} views.Response{data=[]models.Service}
 // @Router /api/v1/services [get]
@@ -229,10 +232,49 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 	logrus.Info("ServiceController.GetServices called")
 	
 	// Get query parameters
+	serviceType := c.Query("type")           // "fixed-price" or "inquiry-based"
+	category := c.Query("category")          // Category name or ID
+	subcategory := c.Query("subcategory")    // Subcategory name or ID
+	priceMinStr := c.Query("price_min")      // Minimum price
+	priceMaxStr := c.Query("price_max")      // Maximum price
 	excludeInactive := c.Query("exclude_inactive") == "true"
-	logrus.Infof("ServiceController.GetServices excludeInactive: %v", excludeInactive)
+	
+	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, excludeInactive: %v", 
+		serviceType, category, subcategory, priceMinStr, priceMaxStr, excludeInactive)
 
-	services, err := sc.serviceService.GetAllServices(excludeInactive)
+	// Parse price range
+	var priceMin, priceMax *float64
+	if priceMinStr != "" {
+		if min, err := strconv.ParseFloat(priceMinStr, 64); err == nil {
+			priceMin = &min
+		}
+	}
+	if priceMaxStr != "" {
+		if max, err := strconv.ParseFloat(priceMaxStr, 64); err == nil {
+			priceMax = &max
+		}
+	}
+
+	// Map service type to database values
+	var priceType *string
+	if serviceType == "fixed-price" {
+		priceTypeStr := "fixed"
+		priceType = &priceTypeStr
+	} else if serviceType == "inquiry-based" {
+		priceTypeStr := "inquiry"
+		priceType = &priceTypeStr
+	}
+
+	// Convert string parameters to pointers
+	var categoryPtr, subcategoryPtr *string
+	if category != "" {
+		categoryPtr = &category
+	}
+	if subcategory != "" {
+		subcategoryPtr = &subcategory
+	}
+
+	services, err := sc.serviceService.GetServicesWithFilters(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServices error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
@@ -347,9 +389,7 @@ func (sc *ServiceController) UpdateService(c *gin.Context) {
 		form, err := c.MultipartForm()
 		if err == nil {
 			if files, exists := form.File["images"]; exists {
-				for _, file := range files {
-					imageFiles = append(imageFiles, file)
-				}
+				imageFiles = append(imageFiles, files...)
 			}
 		}
 	} else {
@@ -393,6 +433,69 @@ func (sc *ServiceController) DeleteService(c *gin.Context) {
 	}
 
 	c.JSON(200, views.CreateSuccessResponse("Service deleted successfully", nil))
+}
+
+// GetServiceCategories retrieves all service categories
+// @Summary Get service categories
+// @Description Get all service categories for the Home Services module
+// @Tags services
+// @Produce json
+// @Success 200 {object} views.Response{data=[]models.Category}
+// @Router /api/v1/services/categories [get]
+func (sc *ServiceController) GetServiceCategories(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceController.GetServiceCategories panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceController.GetServiceCategories called")
+	
+	categories, err := sc.serviceService.GetServiceCategories()
+	if err != nil {
+		logrus.Errorf("ServiceController.GetServiceCategories error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to retrieve categories", err.Error()))
+		return
+	}
+
+	logrus.Infof("ServiceController.GetServiceCategories returning %d categories", len(categories))
+	c.JSON(200, views.CreateSuccessResponse("Categories retrieved successfully", categories))
+}
+
+// GetServiceSubcategories retrieves subcategories for a category
+// @Summary Get service subcategories
+// @Description Get all subcategories for a specific category
+// @Tags services
+// @Produce json
+// @Param id path integer true "Category ID"
+// @Success 200 {object} views.Response{data=[]models.Subcategory}
+// @Router /api/v1/services/categories/{id}/subcategories [get]
+func (sc *ServiceController) GetServiceSubcategories(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceController.GetServiceSubcategories panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceController.GetServiceSubcategories called")
+	
+	categoryIDStr := c.Param("id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		logrus.Errorf("ServiceController.GetServiceSubcategories invalid category ID: %v", err)
+		c.JSON(400, views.CreateErrorResponse("Invalid category ID", err.Error()))
+		return
+	}
+
+	subcategories, err := sc.serviceService.GetServiceSubcategories(uint(categoryID))
+	if err != nil {
+		logrus.Errorf("ServiceController.GetServiceSubcategories error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to retrieve subcategories", err.Error()))
+		return
+	}
+
+	logrus.Infof("ServiceController.GetServiceSubcategories returning %d subcategories", len(subcategories))
+	c.JSON(200, views.CreateSuccessResponse("Subcategories retrieved successfully", subcategories))
 }
 
 // ToggleStatus toggles the active status of a service

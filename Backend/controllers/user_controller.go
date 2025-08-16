@@ -87,7 +87,6 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 		"avatar":     user.Avatar,
 		"gender":     user.Gender,
 		"is_active":  user.IsActive,
-		"is_verified": user.IsVerified,
 		"created_at": user.CreatedAt,
 		"updated_at": user.UpdatedAt,
 	}

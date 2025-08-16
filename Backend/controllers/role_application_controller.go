@@ -418,6 +418,8 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, views.CreateSuccessResponse("Worker application submitted successfully", application))
 }
 
+
+
 // uploadFilesParallel uploads multiple files to Cloudinary in parallel with timeout
 func (c *RoleApplicationController) uploadFilesParallel(cloudinaryService *services.CloudinaryService, files map[string]*multipart.FileHeader) map[string]*services.FileUploadResult {
 	results := make(map[string]*services.FileUploadResult)
@@ -624,11 +626,12 @@ func (c *RoleApplicationController) GetAllApplications(ctx *gin.Context) {
 
 // GetApplicationsByStatus gets applications by status (admin only)
 // @Summary Get applications by status
-// @Description Get role applications by status with detailed information (admin only)
+// @Description Get role applications by status with optional role type filter (admin only)
 // @Tags role-applications
 // @Produce json
 // @Param status query string true "Application status (pending, approved, rejected)"
-// @Success 200 {object} views.Response{data=[]models.RoleApplicationDetail}
+// @Param role_type query string false "Role type filter (worker, broker)"
+// @Success 200 {object} views.Response{data=[]models.RoleApplication}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
 // @Failure 403 {object} views.Response
@@ -649,7 +652,16 @@ func (c *RoleApplicationController) GetApplicationsByStatus(ctx *gin.Context) {
 		return
 	}
 
-	applications, err := c.applicationService.GetApplicationsByStatusWithDetails(applicationStatus)
+	// Get optional role type filter
+	roleType := ctx.Query("role_type")
+	if roleType != "" {
+		if roleType != "worker" && roleType != "broker" {
+			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid role type", "Role type must be worker or broker"))
+			return
+		}
+	}
+
+	applications, err := c.applicationService.GetApplicationsByStatusAndRole(applicationStatus, roleType)
 	if err != nil {
 		logrus.Errorf("Failed to get applications by status: %v", err)
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get applications", "Database error occurred"))
