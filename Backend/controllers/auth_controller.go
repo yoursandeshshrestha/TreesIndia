@@ -45,10 +45,15 @@ type LoginRequest struct {
 	Phone string `json:"phone" binding:"required,min=13,max=13,startswith=+91"`
 }
 
+// RequestOTPRequest represents OTP request
+type RequestOTPRequest struct {
+	Phone string `json:"phone" binding:"required,min=13,max=13,startswith=+91"`
+}
+
 // VerifyOTPRequest represents OTP verification request
 type VerifyOTPRequest struct {
 	Phone string `json:"phone" binding:"required,min=13,max=13,startswith=+91"`
-	OTP   string `json:"otp" binding:"required,len=4"`
+	OTP   string `json:"otp" binding:"required,len=6"`
 }
 
 // RefreshTokenRequest represents refresh token request
@@ -61,6 +66,78 @@ type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
+}
+
+// RequestOTP godoc
+// @Summary Request OTP
+// @Description Send OTP to phone number for authentication (creates user if not exists)
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body RequestOTPRequest true "OTP request"
+// @Success 200 {object} models.Response "OTP sent successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /auth/request-otp [post]
+func (ac *AuthController) RequestOTP(c *gin.Context) {
+	var req RequestOTPRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorMsg := ac.getUserFriendlyError(err.Error())
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", errorMsg))
+		return
+	}
+
+	// Custom phone number validation
+	if err := ac.validationHelper.ValidatePhoneNumber(req.Phone); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid phone number", err.Error()))
+		return
+	}
+
+	// Check if user exists, if not create one
+	var user models.User
+	var isNewUser bool
+	
+	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Get admin configuration for default values
+			adminConfigService := services.NewAdminConfigService()
+			maxWalletBalance := adminConfigService.GetMaxWalletBalance()
+			
+			// Create new user
+			user = models.User{
+				Phone:           req.Phone,
+				UserType:        models.UserTypeNormal, // Default role is user
+				IsActive:        true,
+				WalletBalance:    0,  // Default 0 balance
+				WalletLimit:      maxWalletBalance, // Use admin-configured wallet limit
+			}
+			
+			if err := ac.db.Create(&user).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
+				return
+			}
+			isNewUser = true
+		} else {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
+			return
+		}
+	} else {
+		// Existing user
+		if !user.IsActive {
+			c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Account disabled", "Your account has been disabled"))
+			return
+		}
+		isNewUser = false
+	}
+
+	// TODO: Integrate with SMS service (Twilio) later
+	// For now, just return success as OTP is hardcoded to "000000"
+	
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
+		"phone":      req.Phone,
+		"expires_in": 60, // 60 seconds
+		"is_new_user": isNewUser,
+	}))
 }
 
 // Register godoc
@@ -117,13 +194,17 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
+	// Get admin configuration for default values
+	adminConfigService := services.NewAdminConfigService()
+	maxWalletBalance := adminConfigService.GetMaxWalletBalance()
+	
 	// Create user
 	user := models.User{
-		Phone:       req.Phone,
-		UserType:    models.UserTypeNormal,
-		IsActive:    true,
-		KYCStatus:   models.KYCStatusNotNeeded,
-		IsVerified:  false,
+		Phone:           req.Phone,
+		UserType:        models.UserTypeNormal,
+		IsActive:        true,
+		WalletBalance:    0,  // Default 0 balance
+		WalletLimit:      maxWalletBalance, // Use admin-configured wallet limit
 	}
 
 	if err := ac.db.Create(&user).Error; err != nil {
@@ -198,52 +279,21 @@ func (ac *AuthController) Login(c *gin.Context) {
 }
 
 // VerifyOTP godoc
-// @Summary Verify OTP
-// @Description Verify OTP and generate JWT tokens
+// @Summary Verify OTP and login
+// @Description Verify OTP and generate JWT tokens (auto-registers new users)
 // @Tags Authentication
 // @Accept json
-// @Accept multipart/form-data
 // @Produce json
 // @Param request body VerifyOTPRequest true "OTP verification request"
-// @Param phone formData string true "Phone number (+919876543210)"
-// @Param otp formData string true "4-digit OTP"
-// @Success 200 {object} models.Response "OTP verified successfully"
+// @Success 200 {object} models.Response "Login successful"
 // @Failure 400 {object} models.Response "Invalid OTP or request data"
-// @Failure 404 {object} models.Response "User not found"
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /auth/verify-otp [post]
 func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	var req VerifyOTPRequest
-	
-	// Check content type to handle both JSON and form-data
-	contentType := c.GetHeader("Content-Type")
-	
-	if strings.Contains(contentType, "application/json") {
-		// Handle JSON request
-		if err := c.ShouldBindJSON(&req); err != nil {
-			// Provide user-friendly error messages
-			errorMsg := ac.getUserFriendlyError(err.Error())
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", errorMsg))
-			return
-		}
-	} else if strings.Contains(contentType, "multipart/form-data") {
-		// Handle form-data request
-		phone := c.PostForm("phone")
-		otp := c.PostForm("otp")
-		
-		if phone == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing phone number", "Phone number is required"))
-			return
-		}
-		if otp == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing OTP", "OTP is required"))
-			return
-		}
-		
-		req.Phone = phone
-		req.OTP = otp
-	} else {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorMsg := ac.getUserFriendlyError(err.Error())
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", errorMsg))
 		return
 	}
 
@@ -253,28 +303,45 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Find user
-	var user models.User
-	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "Please register first"))
-		return
-	}
-
-	// Check if user is active
-	if !user.IsActive {
-		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Account disabled", "Your account has been disabled"))
-		return
-	}
-
-	// Verify OTP (hardcoded to "0000" for now)
-	if req.OTP != "0000" {
+	// Verify OTP (hardcoded to "000000" for now)
+	if req.OTP != "000000" {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", "OTP is incorrect"))
 		return
 	}
 
-	// Mark user as verified
-	user.IsVerified = true
+	// Find user or create new one
+	var user models.User
+	var isNewUser bool
 	
+	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Create new user
+			user = models.User{
+				Phone:           req.Phone,
+				UserType:        models.UserTypeNormal, // Default role is user
+				IsActive:        true,
+				WalletBalance:    0,  // Default 0 balance
+				WalletLimit:      100000, // Default 100,000 limit
+			}
+			
+			if err := ac.db.Create(&user).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
+				return
+			}
+			isNewUser = true
+		} else {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
+			return
+		}
+	} else {
+		// Existing user
+		if !user.IsActive {
+			c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Account disabled", "Your account has been disabled"))
+			return
+		}
+		isNewUser = false
+	}
+
 	// Update last login
 	now := time.Now()
 	user.LastLoginAt = &now
@@ -291,10 +358,20 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP verified successfully", gin.H{
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Login successful", gin.H{
+		"user": gin.H{
+					"id":                user.ID,
+		"phone":             user.Phone,
+		"name":              user.Name,
+		"role":              user.UserType,
+		"wallet_balance":    user.WalletBalance,
+		"wallet_limit":      user.WalletLimit,
+		"created_at":        user.CreatedAt,
+		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 		"expires_in":    3600, // 1 hour in seconds
+		"is_new_user":   isNewUser, // Frontend uses this to show onboarding info
 	}))
 }
 
@@ -334,13 +411,14 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User information retrieved successfully", gin.H{
-		"id":         user.ID,
-		"name":       user.Name,
-		"phone":      user.Phone,
-		"email":      user.Email,
-		"user_type":  user.UserType,
-		"is_active":  user.IsActive,
-		"is_verified": user.IsVerified,
+		"id":                user.ID,
+		"name":              user.Name,
+		"phone":             user.Phone,
+		"email":             user.Email,
+		"user_type":         user.UserType,
+		"is_active":         user.IsActive,
+		"wallet_balance":    user.WalletBalance,
+		"wallet_limit":      user.WalletLimit,
 	}))
 }
 
@@ -393,9 +471,19 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Token refreshed successfully", gin.H{
+		"user": gin.H{
+			"id":                user.ID,
+			"phone":             user.Phone,
+			"name":              user.Name,
+			"role":              user.UserType,
+			"wallet_balance":    user.WalletBalance,
+			"wallet_limit":      user.WalletLimit,
+			"created_at":        user.CreatedAt,
+		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 		"expires_in":    3600, // 1 hour in seconds
+		"is_new_user":   false, // Always false for refresh token (user already exists)
 	}))
 }
 
@@ -506,9 +594,9 @@ func (ac *AuthController) getUserFriendlyError(errorMsg string) string {
 		if strings.Contains(errorMsg, "required") {
 			return "OTP is required"
 		} else if strings.Contains(errorMsg, "len") {
-			return "OTP must be exactly 4 digits"
+			return "OTP must be exactly 6 digits"
 		} else {
-			return "Please enter a valid 4-digit OTP"
+			return "Please enter a valid 6-digit OTP"
 		}
 	}
 	
