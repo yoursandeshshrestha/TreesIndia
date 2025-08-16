@@ -7,6 +7,7 @@ export async function middleware(req: NextRequest) {
   // Get tokens from cookies (we'll store them in cookies for middleware access)
   const accessToken = req.cookies.get("treesindia_access_token")?.value;
   const refreshToken = req.cookies.get("treesindia_refresh_token")?.value;
+  const userCookie = req.cookies.get("treesindia_user")?.value;
 
   // Public routes that don't need authentication
   const publicRoutes = ["/auth/sign-in", "/auth/sign-up"];
@@ -19,6 +20,10 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
+
+  // Admin-only routes that require admin role
+  const adminRoutes = ["/dashboard", "/admin"];
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
 
   // Handle root route
   if (pathname === "/") {
@@ -42,7 +47,7 @@ export async function middleware(req: NextRequest) {
       // Has refresh token but no access token, try to refresh
       try {
         const backendUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1";
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
         const refreshResponse = await fetch(
           `${backendUrl}/auth/refresh-token`,
           {
@@ -75,6 +80,7 @@ export async function middleware(req: NextRequest) {
           );
           response.cookies.delete("treesindia_access_token");
           response.cookies.delete("treesindia_refresh_token");
+          response.cookies.delete("treesindia_user");
           return response;
         }
       } catch (error) {
@@ -84,11 +90,38 @@ export async function middleware(req: NextRequest) {
         );
         response.cookies.delete("treesindia_access_token");
         response.cookies.delete("treesindia_refresh_token");
+        response.cookies.delete("treesindia_user");
         return response;
       }
     }
 
-    // Has access token, allow access
+    // Check admin role for admin routes
+    if (isAdminRoute && accessToken && userCookie) {
+      try {
+        const user = JSON.parse(userCookie);
+        if (user.role !== "admin") {
+          // User is not admin, clear all tokens and redirect to sign-in
+          const response = NextResponse.redirect(
+            new URL("/auth/sign-in", req.url)
+          );
+          response.cookies.delete("treesindia_access_token");
+          response.cookies.delete("treesindia_refresh_token");
+          response.cookies.delete("treesindia_user");
+          return response;
+        }
+      } catch (error) {
+        // Invalid user cookie, redirect to sign-in
+        const response = NextResponse.redirect(
+          new URL("/auth/sign-in", req.url)
+        );
+        response.cookies.delete("treesindia_access_token");
+        response.cookies.delete("treesindia_refresh_token");
+        response.cookies.delete("treesindia_user");
+        return response;
+      }
+    }
+
+    // Has access token and proper role, allow access
     return NextResponse.next();
   }
 
