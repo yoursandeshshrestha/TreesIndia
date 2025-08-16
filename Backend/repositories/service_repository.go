@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"strconv"
 	"treesindia/models"
 
 	"github.com/sirupsen/logrus"
@@ -103,6 +104,72 @@ func (sr *ServiceRepository) GetByIDWithRelations(id uint) (*models.Service, err
 	
 	logrus.Infof("ServiceRepository.GetByIDWithRelations found service: %s", service.Name)
 	return &service, nil
+}
+
+// GetWithFilters retrieves services with advanced filtering
+func (sr *ServiceRepository) GetWithFilters(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, excludeInactive bool) ([]models.Service, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceRepository.GetWithFilters panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceRepository.GetWithFilters called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, excludeInactive: %v", 
+		priceType, category, subcategory, priceMin, priceMax, excludeInactive)
+	
+	var services []models.Service
+	query := sr.GetDB().Preload("Category").Preload("Subcategory")
+	
+	// Filter by price type
+	if priceType != nil {
+		query = query.Where("price_type = ?", *priceType)
+	}
+	
+	// Filter by category (by name or ID)
+	if category != nil {
+		// Try to parse as ID first
+		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
+			query = query.Where("category_id = ?", categoryID)
+		} else {
+			// If not a number, treat as category name
+			query = query.Joins("JOIN categories ON services.category_id = categories.id").
+				Where("categories.name ILIKE ?", "%"+*category+"%")
+		}
+	}
+	
+	// Filter by subcategory (by name or ID)
+	if subcategory != nil {
+		// Try to parse as ID first
+		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
+			query = query.Where("subcategory_id = ?", subcategoryID)
+		} else {
+			// If not a number, treat as subcategory name
+			query = query.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
+				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+		}
+	}
+	
+	// Filter by price range
+	if priceMin != nil {
+		query = query.Where("price >= ?", *priceMin)
+	}
+	if priceMax != nil {
+		query = query.Where("price <= ?", *priceMax)
+	}
+	
+	// Filter by active status
+	if excludeInactive {
+		query = query.Where("is_active = ?", true)
+	}
+	
+	err := query.Find(&services).Error
+	if err != nil {
+		logrus.Errorf("ServiceRepository.GetWithFilters database error: %v", err)
+		return nil, err
+	}
+	
+	logrus.Infof("ServiceRepository.GetWithFilters found %d services", len(services))
+	return services, nil
 }
 
 // GetAll retrieves all services with optional filtering

@@ -52,11 +52,6 @@ func (ur *UserRepository) FindVerifiedUsers(users *[]models.User) error {
 	return ur.db.Where("is_verified = ?", true).Find(users).Error
 }
 
-// FindByKYCStatus finds users by KYC status
-func (ur *UserRepository) FindByKYCStatus(users *[]models.User, kycStatus models.KYCStatus) error {
-	return ur.db.Where("kyc_status = ?", kycStatus).Find(users).Error
-}
-
 // FindWithKYC finds users with KYC information
 func (ur *UserRepository) FindWithKYC(users *[]models.User) error {
 	return ur.db.Preload("KYC").Find(users).Error
@@ -92,11 +87,6 @@ func (ur *UserRepository) FindByLocation(users *[]models.User, lat, lng float64,
 // UpdateLastLogin updates the last login timestamp
 func (ur *UserRepository) UpdateLastLogin(userID uint) error {
 	return ur.db.Model(&models.User{}).Where("id = ?", userID).Update("last_login_at", gorm.Expr("NOW()")).Error
-}
-
-// UpdateKYCStatus updates the KYC status of a user
-func (ur *UserRepository) UpdateKYCStatus(userID uint, status models.KYCStatus) error {
-	return ur.db.Model(&models.User{}).Where("id = ?", userID).Update("kyc_status", status).Error
 }
 
 // UpdateVerificationStatus updates the verification status of a user
