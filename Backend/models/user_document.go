@@ -12,6 +12,10 @@ type DocumentType string
 const (
 	DocumentTypePANCard        DocumentType = "pan_card"
 	DocumentTypeAadhaarCard    DocumentType = "aadhaar_card"
+	DocumentTypeAadhaarCardFront DocumentType = "aadhaar_card_front"
+	DocumentTypeAadhaarCardBack  DocumentType = "aadhaar_card_back"
+	DocumentTypePANCardFront   DocumentType = "pan_card_front"
+	DocumentTypePANCardBack    DocumentType = "pan_card_back"
 	DocumentTypeAddressProof   DocumentType = "address_proof"
 	DocumentTypeSkillCertificate DocumentType = "skill_certificate"
 	DocumentTypeProfilePhoto   DocumentType = "profile_photo"
@@ -38,7 +42,7 @@ func (UserDocument) TableName() string {
 
 // CreateUserDocumentRequest represents the request structure for uploading a document
 type CreateUserDocumentRequest struct {
-	DocumentType DocumentType `json:"document_type" binding:"required,oneof=pan_card aadhaar_card address_proof skill_certificate profile_photo"`
+	DocumentType DocumentType `json:"document_type" binding:"required,oneof=pan_card aadhaar_card aadhaar_card_front aadhaar_card_back pan_card_front pan_card_back address_proof skill_certificate profile_photo"`
 	FileURL      string       `json:"file_url" binding:"required"`
 	FileName     string       `json:"file_name"`
 	FileSize     int64        `json:"file_size"`
