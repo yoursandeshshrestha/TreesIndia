@@ -10,7 +10,6 @@ import 'package:trees_india/commons/domain/usecases/get_user_profile_usecase.dar
 import 'package:trees_india/commons/domain/usecases/refresh_token_usecase.dart';
 import 'package:trees_india/commons/domain/usecases/verify_otp_usecase.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/utils/services/auth_notifier.dart';
 import 'package:trees_india/commons/utils/services/centralized_local_storage_service.dart';
 import 'package:trees_india/commons/utils/services/notification_service.dart';

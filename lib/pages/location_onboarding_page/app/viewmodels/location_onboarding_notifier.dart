@@ -23,12 +23,14 @@ class LocationOnboardingNotifier extends StateNotifier<LocationOnboardingState> 
     }
   }
 
-  Future<void> getCurrentLocation() async {
+  Future<void> getCurrentLocation({bool isFirstLogin = true}) async {
     state = LocationOnboardingLoading();
     try {
       final location = await _locationService.getCurrentLocation();
       await _locationService.saveLocation(location);
-      await _locationService.markFirstLoginComplete();
+      if (isFirstLogin) {
+        await _locationService.markFirstLoginComplete();
+      }
       state = LocationOnboardingLocationSaved(location);
     } catch (e) {
       if (e.toString().contains('permission')) {
@@ -39,11 +41,13 @@ class LocationOnboardingNotifier extends StateNotifier<LocationOnboardingState> 
     }
   }
 
-  Future<void> saveLocationAndComplete(LocationEntity location) async {
+  Future<void> saveLocationAndComplete(LocationEntity location, {bool isFirstLogin = true}) async {
     state = LocationOnboardingLoading();
     try {
       await _locationService.saveLocation(location);
-      await _locationService.markFirstLoginComplete();
+      if (isFirstLogin) {
+        await _locationService.markFirstLoginComplete();
+      }
       state = LocationOnboardingLocationSaved(location);
     } catch (e) {
       state = LocationOnboardingError('Failed to save location: ${e.toString()}');

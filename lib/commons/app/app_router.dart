@@ -74,10 +74,8 @@ class AppRouter {
                   return '/location-onboarding';
                 }
 
-                if (!isFirstLogin && isLocationOnboardingRoute) {
-                  debugPrint('🏠 Location already set, redirecting to home');
-                  return '/home';
-                }
+                // Allow access to location onboarding if user explicitly navigates there
+                // (removed automatic redirect to home for non-first-login users)
 
                 // If user IS authenticated and on public route, go to home (unless first login)
                 if (state.matchedLocation == '/' ||

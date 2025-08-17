@@ -90,6 +90,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  void _navigateToLocationPicker() async {
+    final result = await context.push('/location-onboarding');
+    if (result == true) {
+      _loadCurrentLocation();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -98,40 +105,49 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_currentLocation != null) ...[
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 20,
-                    color: AppColors.brandPrimary600,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: B1Bold(
-                      text: _getDisplayLocation(_currentLocation!),
-                      color: AppColors.brandNeutral800,
+        title: GestureDetector(
+          onTap: _navigateToLocationPicker,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_currentLocation != null) ...[
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 20,
+                      color: AppColors.brandPrimary600,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: B3Regular(
-                      text: _getDisplayLocationWithCountry(_currentLocation!),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: B1Bold(
+                        text: _getDisplayLocation(_currentLocation!),
+                        color: AppColors.brandNeutral800,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
                       color: AppColors.brandNeutral600,
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: B3Regular(
+                        text: _getDisplayLocationWithCountry(_currentLocation!),
+                        color: AppColors.brandNeutral600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
