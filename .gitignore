@@ -73,4 +73,5 @@ DerivedData/
 /android/app/profile
 /android/app/release
 
-
+# FVM Version Cache
+.fvm/

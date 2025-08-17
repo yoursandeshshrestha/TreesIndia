@@ -47,11 +47,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
     super.dispose();
   }
 
-  void _checkMounted() {
-    if (!_mounted) {
-      throw StateError('AuthFlowNotifier has been disposed');
-    }
-  }
+  // Removed unused method _checkMounted
 
   @override
   void reset() {
@@ -89,9 +85,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
           successMessage: response.message,
         );
         // Show success message
-        notificationService.showSuccessSnackBar(
-          response.message ?? 'OTP sent successfully!',
-        );
+        notificationService.showSuccessSnackBar(response.message);
       } else {
         if (!_mounted) return;
         state = state.copyWith(
@@ -100,9 +94,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
           errorMessage: response.message,
         );
         // Show error message
-        notificationService.showErrorSnackBar(
-          response.message ?? 'Login failed. Please try again.',
-        );
+        notificationService.showErrorSnackBar(response.message);
       }
     } catch (e) {
       debugPrint('Login error: $e');
@@ -138,7 +130,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
 
       if (!_mounted) return;
 
-      print(
+      debugPrint(
           "AuthFlowNotifier received response: success=${response.success}, message=${response.message}");
 
       if (response.success) {
@@ -148,22 +140,18 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
           successMessage: response.message,
         );
         // Show success message
-        notificationService.showSuccessSnackBar(
-          response.message ?? 'OTP sent successfully!',
-        );
+        notificationService.showSuccessSnackBar(response.message);
       } else {
         // Handle error response (including 409 "User already exists")
-        print("Register failed with message: ${response.message}");
+        debugPrint("Register failed with message: ${response.message}");
         state = state.copyWith(
           state: auth_flow.AuthFlowState.error,
           isLoading: false,
           errorMessage: response.message,
         );
-        print("Error state set - errorMessage: ${state.errorMessage}");
+        debugPrint("Error state set - errorMessage: ${state.errorMessage}");
         // Show error message
-        notificationService.showErrorSnackBar(
-          response.message ?? 'Registration failed. Please try again.',
-        );
+        notificationService.showErrorSnackBar(response.message);
       }
     } catch (e) {
       debugPrint('Register exception: $e');
@@ -173,8 +161,8 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
         isLoading: false,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
       );
-      print("Exception caught - error: $e");
-      print("Exception caught - errorMessage: ${state.errorMessage}");
+      debugPrint("Exception caught - error: $e");
+      debugPrint("Exception caught - errorMessage: ${state.errorMessage}");
       // Show error message
       notificationService.showErrorSnackBar(
         e.toString().replaceFirst('Exception: ', ''),
@@ -221,9 +209,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
         );
 
         // Show success message
-        notificationService.showSuccessSnackBar(
-          response.message ?? 'OTP verified successfully!',
-        );
+        notificationService.showSuccessSnackBar(response.message);
 
         // Update the main auth notifier
         await ref.read(authProvider.notifier).checkAuthState();
@@ -234,9 +220,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
           errorMessage: response.message,
         );
         // Show error message
-        notificationService.showErrorSnackBar(
-          response.message ?? 'OTP verification failed.',
-        );
+        notificationService.showErrorSnackBar(response.message);
       }
     } catch (e) {
       debugPrint('OTP verification error: $e');

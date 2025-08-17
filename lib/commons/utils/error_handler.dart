@@ -55,7 +55,6 @@ class ErrorHandler {
         _logger.w(errorMessage);
         break;
       case CustomErrorType.generic:
-      default:
         errorMessage = error.message;
         _logger.e(errorMessage);
     }
@@ -112,6 +111,8 @@ class ErrorHandler {
         return "Service not found. Please try again later.";
       case 500:
         return "Server error. Please try again later.";
+      case null:
+        return "An unknown error occurred. Please try again.";
       default:
         return "An unknown error occurred. Please try again.";
     }

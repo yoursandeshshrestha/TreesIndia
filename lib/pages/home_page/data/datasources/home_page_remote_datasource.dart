@@ -6,4 +6,15 @@ class HomePageRemoteDatasource {
   final ErrorHandler _errorHandler; // Inject ErrorHandler
 
   HomePageRemoteDatasource(this._dioClient, this._errorHandler);
+
+  // TODO: Implement home page data fetching methods
+  // Example:
+  // Future<HomePageData> fetchHomePageData() async {
+  //   try {
+  //     final response = await _dioClient.dio.get('/home');
+  //     return HomePageData.fromJson(response.data);
+  //   } catch (e) {
+  //     throw _errorHandler.handleError(e);
+  //   }
+  // }
 }

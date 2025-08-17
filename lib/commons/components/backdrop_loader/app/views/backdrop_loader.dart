@@ -18,7 +18,7 @@ class BackdropLoader extends StatelessWidget {
                 sigmaY: BottomSheetConstants.bottomSheetBlurSigma,
               ),
               child: Container(
-                color: const Color(0xFFFFFFFF).withOpacity(0.2),
+                color: const Color(0xFFFFFFFF).withValues(alpha: 0.2),
               ),
             ),
           ),

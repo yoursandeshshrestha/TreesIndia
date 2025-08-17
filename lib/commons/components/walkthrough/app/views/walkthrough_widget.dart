@@ -270,7 +270,7 @@ class _WalkthroughWidgetState extends ConsumerState<WalkthroughWidget> {
             // Blurred background
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-              child: Container(color: const Color(0xff1c1c1e).withOpacity(0.6)),
+              child: Container(color: const Color(0xff1c1c1e).withValues(alpha: 0.6)),
             ),
             // Highlight the specific widget with a border
             Positioned(

@@ -4,7 +4,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 
 class AppBorders {
   // Simple border with a single color
-  static const Border SIMPLE_BORDER = Border(
+  static const Border simpleBorder = Border(
     top: BorderSide(color: AppColors.brandNeutral300, width: 1.0),
     bottom: BorderSide(color: AppColors.brandNeutral300, width: 1.0),
   );

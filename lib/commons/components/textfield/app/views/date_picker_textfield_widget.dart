@@ -61,7 +61,7 @@ class _DatePickerTextFieldState extends State<DatePickerTextField> {
         builder: (context, child) {
           return Theme(
             data: Theme.of(context).copyWith(
-              dialogTheme: DialogTheme(
+              dialogTheme: DialogThemeData(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

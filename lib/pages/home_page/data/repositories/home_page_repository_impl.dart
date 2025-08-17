@@ -5,4 +5,11 @@ class HomePageRepositoryImpl extends HomePageRepository {
   final HomePageRemoteDatasource _remoteDatasource;
 
   HomePageRepositoryImpl(this._remoteDatasource);
+
+  // TODO: Implement repository methods
+  // Example:
+  // @override
+  // Future<HomePageData> getHomePageData() async {
+  //   return await _remoteDatasource.fetchHomePageData();
+  // }
 }
