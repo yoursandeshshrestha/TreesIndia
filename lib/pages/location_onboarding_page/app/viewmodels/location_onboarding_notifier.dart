@@ -27,7 +27,9 @@ class LocationOnboardingNotifier extends StateNotifier<LocationOnboardingState> 
     state = LocationOnboardingLoading();
     try {
       final location = await _locationService.getCurrentLocation();
-      state = LocationOnboardingCurrentLocationFetched(location);
+      await _locationService.saveLocation(location);
+      await _locationService.markFirstLoginComplete();
+      state = LocationOnboardingLocationSaved(location);
     } catch (e) {
       if (e.toString().contains('permission')) {
         state = LocationOnboardingPermissionDenied();

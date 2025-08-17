@@ -85,6 +85,9 @@ class _LocationOnboardingPageState
   }
 
   Widget _buildLocationOptions() {
+    final state = ref.watch(locationOnboardingNotifierProvider);
+    final isLoadingCurrentLocation = state is LocationOnboardingLoading && !_isSearchMode;
+
     return Column(
       children: [
         Row(
@@ -93,7 +96,7 @@ class _LocationOnboardingPageState
               child: SolidButtonWidget(
                 label: 'Choose Location',
                 icon: Icons.search,
-                onPressed: () {
+                onPressed: isLoadingCurrentLocation ? null : () {
                   setState(() {
                     _isSearchMode = true;
                   });
@@ -107,9 +110,10 @@ class _LocationOnboardingPageState
           children: [
             Expanded(
               child: SolidButtonWidget(
-                label: 'Use Current Location',
-                icon: Icons.my_location,
-                onPressed: () {
+                label: isLoadingCurrentLocation ? 'Getting Location...' : 'Use Current Location',
+                icon: isLoadingCurrentLocation ? null : Icons.my_location,
+                isLoading: isLoadingCurrentLocation,
+                onPressed: isLoadingCurrentLocation ? null : () {
                   ref
                       .read(locationOnboardingNotifierProvider.notifier)
                       .getCurrentLocation();
@@ -171,10 +175,6 @@ class _LocationOnboardingPageState
       return const Center(
         child: CircularProgressIndicator(),
       );
-    }
-
-    if (state is LocationOnboardingCurrentLocationFetched) {
-      return _buildLocationCard(state.location, isCurrentLocation: true);
     }
 
     if (state is LocationOnboardingSearchResults) {

@@ -72,16 +72,20 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   String _getDisplayLocation(LocationEntity location) {
+    // Fallback to first two parts of address
+    final parts = location.address.split(', ');
+    if (parts.length >= 2) {
+      return '${parts[0]}, ${parts[1]}';
+    }
+    return location.address;
+  }
+
+  String _getDisplayLocationWithCountry(LocationEntity location) {
     if (location.city != null && location.state != null) {
-      return '${location.city}, ${location.state}';
+      return '${location.city}, ${location.state} - ${location.country}';
     } else if (location.city != null) {
       return location.city!;
     } else {
-      // Fallback to first two parts of address
-      final parts = location.address.split(', ');
-      if (parts.length >= 2) {
-        return '${parts[0]}, ${parts[1]}';
-      }
       return location.address;
     }
   }
@@ -97,29 +101,31 @@ class _HomePageState extends ConsumerState<HomePage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            H3Bold(
-              text: 'Trees India',
-              color: AppColors.brandNeutral900,
-            ),
             if (_currentLocation != null) ...[
-              const SizedBox(height: 2),
               Row(
                 children: [
                   const Icon(
                     Icons.location_on,
-                    size: 14,
+                    size: 20,
                     color: AppColors.brandPrimary600,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
-                    child: Text(
-                      _getDisplayLocation(_currentLocation!),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.brandNeutral600,
-                        fontWeight: FontWeight.normal,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    child: B1Bold(
+                      text: _getDisplayLocation(_currentLocation!),
+                      color: AppColors.brandNeutral800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: B3Regular(
+                      text: _getDisplayLocationWithCountry(_currentLocation!),
+                      color: AppColors.brandNeutral600,
                     ),
                   ),
                 ],
