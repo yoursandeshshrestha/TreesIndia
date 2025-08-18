@@ -239,6 +239,26 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 	priceMaxStr := c.Query("price_max")      // Maximum price
 	excludeInactive := c.Query("exclude_inactive") == "true"
 	
+	// Get pagination parameters
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+	
+	// Parse pagination parameters
+	page := 1
+	limit := 10
+	
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+	
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	
 	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, excludeInactive: %v", 
 		serviceType, category, subcategory, priceMinStr, priceMaxStr, excludeInactive)
 
@@ -274,15 +294,43 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		subcategoryPtr = &subcategory
 	}
 
-	services, err := sc.serviceService.GetServicesWithFilters(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive)
+	// Get sorting parameters
+	sortBy := c.Query("sort_by")
+	sortOrder := c.Query("sort_order")
+	
+	// Default sorting
+	if sortBy == "" {
+		sortBy = "name"
+	}
+	if sortOrder == "" {
+		sortOrder = "asc"
+	}
+	
+	services, total, err := sc.serviceService.GetServicesWithFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServices error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
 		return
 	}
 
-	logrus.Infof("ServiceController.GetServices returning %d services", len(services))
-	c.JSON(200, views.CreateSuccessResponse("Services retrieved successfully", services))
+	// Calculate pagination metadata
+	totalPages := (total + int64(limit) - 1) / int64(limit)
+	pagination := map[string]interface{}{
+		"page":        page,
+		"limit":       limit,
+		"total":       total,
+		"total_pages": totalPages,
+		"has_next":    int64(page*limit) < total,
+		"has_prev":    page > 1,
+	}
+
+	response := map[string]interface{}{
+		"services":   services,
+		"pagination": pagination,
+	}
+
+	logrus.Infof("ServiceController.GetServices returning %d services (total: %d)", len(services), total)
+	c.JSON(200, views.CreateSuccessResponse("Services retrieved successfully", response))
 }
 
 // GetServicesBySubcategory retrieves services by subcategory ID

@@ -99,18 +99,13 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	
 	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			// Get admin configuration for default values
-			adminConfigService := services.NewAdminConfigService()
-			maxWalletBalance := adminConfigService.GetMaxWalletBalance()
-			
-			// Create new user
-			user = models.User{
-				Phone:           req.Phone,
-				UserType:        models.UserTypeNormal, // Default role is user
-				IsActive:        true,
-				WalletBalance:    0,  // Default 0 balance
-				WalletLimit:      maxWalletBalance, // Use admin-configured wallet limit
-			}
+					// Create new user
+		user = models.User{
+			Phone:           req.Phone,
+			UserType:        models.UserTypeNormal, // Default role is user
+			IsActive:        true,
+			WalletBalance:    0,  // Default 0 balance
+		}
 			
 			if err := ac.db.Create(&user).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
@@ -194,9 +189,7 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Get admin configuration for default values
-	adminConfigService := services.NewAdminConfigService()
-	maxWalletBalance := adminConfigService.GetMaxWalletBalance()
+
 	
 	// Create user
 	user := models.User{
@@ -204,7 +197,6 @@ func (ac *AuthController) Register(c *gin.Context) {
 		UserType:        models.UserTypeNormal,
 		IsActive:        true,
 		WalletBalance:    0,  // Default 0 balance
-		WalletLimit:      maxWalletBalance, // Use admin-configured wallet limit
 	}
 
 	if err := ac.db.Create(&user).Error; err != nil {
@@ -321,7 +313,6 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 				UserType:        models.UserTypeNormal, // Default role is user
 				IsActive:        true,
 				WalletBalance:    0,  // Default 0 balance
-				WalletLimit:      100000, // Default 100,000 limit
 			}
 			
 			if err := ac.db.Create(&user).Error; err != nil {
@@ -365,7 +356,6 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		"name":              user.Name,
 		"role":              user.UserType,
 		"wallet_balance":    user.WalletBalance,
-		"wallet_limit":      user.WalletLimit,
 		"created_at":        user.CreatedAt,
 		},
 		"access_token":  accessToken,
@@ -418,7 +408,6 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		"user_type":         user.UserType,
 		"is_active":         user.IsActive,
 		"wallet_balance":    user.WalletBalance,
-		"wallet_limit":      user.WalletLimit,
 	}))
 }
 
@@ -477,7 +466,6 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 			"name":              user.Name,
 			"role":              user.UserType,
 			"wallet_balance":    user.WalletBalance,
-			"wallet_limit":      user.WalletLimit,
 			"created_at":        user.CreatedAt,
 		},
 		"access_token":  accessToken,

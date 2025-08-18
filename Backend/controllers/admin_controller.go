@@ -237,7 +237,7 @@ type AdminUpdateUserRequest struct {
 	IsActive               bool       `json:"is_active"`
 	RoleApplicationStatus  string     `json:"role_application_status" binding:"omitempty,oneof=none pending approved rejected"`
 	WalletBalance          float64    `json:"wallet_balance"`
-	WalletLimit            float64    `json:"wallet_limit"`
+
 	HasActiveSubscription  bool       `json:"has_active_subscription"`
 }
 
@@ -304,7 +304,7 @@ func (ac *AdminController) UpdateUserByID(c *gin.Context) {
 	user.IsActive = req.IsActive
 	user.RoleApplicationStatus = req.RoleApplicationStatus
 	user.WalletBalance = req.WalletBalance
-	user.WalletLimit = req.WalletLimit
+
 	user.HasActiveSubscription = req.HasActiveSubscription
 
 	if err := ac.db.Save(&user).Error; err != nil {

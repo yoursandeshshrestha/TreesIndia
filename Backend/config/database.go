@@ -43,20 +43,10 @@ func RunMigrations(db *gorm.DB) error {
 }
 
 // SeedInitialData seeds initial data into the database
+// DEPRECATED: Use seed.NewSeedManager().SeedAll() instead
 func SeedInitialData(db *gorm.DB) error {
-	// Seed admin user
-	if err := seed.SeedAdminUser(db); err != nil {
-		return err
-	}
-	
-
-	
-	// Seed admin configurations
-	if err := seed.SeedAdminConfigs(db); err != nil {
-		return err
-	}
-	
-	return nil
+	seedManager := seed.NewSeedManager()
+	return seedManager.SeedAll()
 }
 
 
