@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - backend-network
+      - treesindia-network
     env_file:
       - .env
     restart: unless-stopped
@@ -29,6 +29,6 @@ services:
       start_period: 40s
 
 networks:
-  backend-network:
+  treesindia-network:
     driver: bridge
     enable_ipv6: true
