@@ -26,6 +26,9 @@ func SetupCategoryRoutes(router *gin.RouterGroup) {
 	adminCategories.Use(middleware.AuthMiddleware())
 	adminCategories.Use(middleware.AdminMiddleware())
 	{
+		// GET /api/v1/admin/categories - Get all categories for admin (includes inactive)
+		adminCategories.GET("", categoryController.GetCategories)
+		
 		// POST /api/v1/admin/categories - Create new category or subcategory
 		adminCategories.POST("", categoryController.CreateCategory)
 		

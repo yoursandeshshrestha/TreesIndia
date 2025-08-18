@@ -22,7 +22,9 @@ func SetupUserRoutes(router *gin.RouterGroup) {
 		users.PUT("/profile", userController.UpdateUserProfile)
 		
 		// POST /api/v1/users/upload-avatar - Upload profile picture
-		users.POST("/upload-avatar", userController.UploadAvatar)
+		users.POST("/upload-avatar", 
+			middleware.NewDynamicConfigMiddleware().CheckFeatureEnabled("enable_avatar_upload", true),
+			userController.UploadAvatar)
 		
 		// GET /api/v1/users/notifications - Get notification settings
 		users.GET("/notifications", userController.GetNotificationSettings)

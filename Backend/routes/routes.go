@@ -13,6 +13,7 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	// Add global middleware
 	r.Use(middleware.RequestIDMiddleware())
+	r.Use(middleware.ValidationMiddleware())
 	
 	// Swagger documentation route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -20,58 +21,33 @@ func SetupRoutes(r *gin.Engine) {
 	// API v1 routes group
 	v1 := r.Group(APIVersion)
 	{
-		// Health check route
+		// Health check route (always available)
 		setupHealthRoutes(v1)
 		
-		// Authentication routes
+		// Authentication routes (always available)
 		SetupAuthRoutes(v1)
 		
-		// Admin routes
+		// All routes
 		SetupAdminRoutes(v1)
-		
-		// Category routes
-		SetupCategoryRoutes(v1)
-		
-		// Subcategory routes
-		SetupSubcategoryRoutes(v1)
-		
-		// Service routes
-		SetupServiceRoutes(v1)
-		
-		// Location routes
-		SetupLocationRoutes(v1)
-		
-		// Role application routes (comprehensive)
-		SetupRoleApplicationRoutes(v1)
-		
-		// User routes
-		SetupUserRoutes(v1)
-		
-		// Property routes
-		SetupPropertyRoutes(v1)
-		
-		// Subscription routes
-		SetupSubscriptionRoutes(v1)
-		
-		// Admin configuration routes
 		SetupAdminConfigRoutes(v1)
-		
-		// Wallet routes
+		SetupAdminInquiryRoutes(v1)
+		SetupCategoryRoutes(v1)
+		SetupSubcategoryRoutes(v1)
+		SetupServiceRoutes(v1)
+		SetupLocationRoutes(v1)
+		SetupRoleApplicationRoutes(v1)
+		SetupUserRoutes(v1)
+		SetupPropertyRoutes(v1)
+		SetupSubscriptionRoutes(v1)
 		SetupWalletRoutes(v1)
-		
-		// Razorpay routes
 		SetupRazorpayRoutes(v1)
 		
-		// Booking routes
-		SetupBookingRoutes(v1)
-		
-		// Worker inquiry routes
-		SetupWorkerInquiryRoutes(v1)
-		
-		// Admin inquiry routes
-		SetupAdminInquiryRoutes(v1)
-		
-
+		// Booking routes with booking system middleware
+		bookingMiddleware := middleware.NewDynamicConfigMiddleware()
+		bookingGroup := v1.Group("")
+		bookingGroup.Use(bookingMiddleware.BookingSystem())
+		SetupBookingRoutes(bookingGroup)
+		SetupWorkerInquiryRoutes(bookingGroup)
 	}
 }
 
