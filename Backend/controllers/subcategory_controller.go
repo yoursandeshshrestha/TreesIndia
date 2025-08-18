@@ -55,6 +55,7 @@ func (sc *SubcategoryController) GetSubcategories(c *gin.Context) {
 
 	// Get query parameters
 	parentID := c.Query("parent_id")
+	categoryName := c.Query("category_name")
 	isActive := c.Query("is_active")
 	excludeInactive := c.Query("exclude_inactive") == "true"
 
@@ -66,6 +67,12 @@ func (sc *SubcategoryController) GetSubcategories(c *gin.Context) {
 		query = query.Where("parent_id = ?", parentID)
 	}
 
+	// Filter by category name
+	if categoryName != "" {
+		query = query.Joins("JOIN categories ON subcategories.parent_id = categories.id").
+			Where("categories.name ILIKE ?", "%"+categoryName+"%")
+	}
+
 	// Filter by active status
 	if isActive != "" {
 		active := isActive == "true"
@@ -75,9 +82,9 @@ func (sc *SubcategoryController) GetSubcategories(c *gin.Context) {
 		query = query.Where("is_active = ?", true)
 	}
 
-	// Get subcategories
+	// Get subcategories with parent information
 	var subcategories []models.Subcategory
-	if err := query.Order("name ASC").Find(&subcategories).Error; err != nil {
+	if err := query.Preload("Parent").Order("name ASC").Find(&subcategories).Error; err != nil {
 		logrus.Error("Failed to fetch subcategories:", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch subcategories", err.Error()))
 		return
@@ -98,7 +105,7 @@ func (sc *SubcategoryController) GetSubcategoryByID(c *gin.Context) {
 	db := database.GetDB()
 
 	var subcategory models.Subcategory
-	if err := db.First(&subcategory, id).Error; err != nil {
+	if err := db.Preload("Parent").First(&subcategory, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("Subcategory not found", "Subcategory with the specified ID does not exist"))
 			return
@@ -145,31 +152,34 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 				}
 			}
 			
-			// Try to get the image file from form
-			if files, exists := form.File["image_file"]; exists && len(files) > 0 {
-				file = files[0]
-				logrus.Info("Image file found via MultipartForm:", file.Filename, "Size:", file.Size)
-			} else {
-				// Try alternative field names
-				alternativeNames := []string{"image", "file", "photo", "picture"}
-				for _, name := range alternativeNames {
-					if files, exists := form.File[name]; exists && len(files) > 0 {
-						file = files[0]
-						logrus.Info("Image file found with alternative name '", name, "':", file.Filename, "Size:", file.Size)
-						break
-					}
+					// Try to get the image file from form
+		if files, exists := form.File["image_file"]; exists && len(files) > 0 {
+			file = files[0]
+			logrus.Info("Image file found via MultipartForm:", file.Filename, "Size:", file.Size)
+		} else if files, exists := form.File["image"]; exists && len(files) > 0 {
+			file = files[0]
+			logrus.Info("Image file found with name 'image':", file.Filename, "Size:", file.Size)
+		} else {
+			// Try alternative field names
+			alternativeNames := []string{"file", "photo", "picture"}
+			for _, name := range alternativeNames {
+				if files, exists := form.File[name]; exists && len(files) > 0 {
+					file = files[0]
+					logrus.Info("Image file found with alternative name '", name, "':", file.Filename, "Size:", file.Size)
+					break
 				}
 			}
+		}
 		}
 		
 		// If MultipartForm failed or no file found, try FormFile directly
 		if file == nil {
 			logrus.Info("Trying FormFile approach...")
-			formFile, formErr := c.FormFile("image_file")
+			formFile, formErr := c.FormFile("image")
 			if formErr != nil {
-				logrus.Error("FormFile error for 'image_file':", formErr)
+				logrus.Error("FormFile error for 'image':", formErr)
 				// Try alternative field names with FormFile
-				alternativeNames := []string{"image", "file", "photo", "picture"}
+				alternativeNames := []string{"image_file", "file", "photo", "picture"}
 				for _, name := range alternativeNames {
 					formFile, formErr = c.FormFile(name)
 					if formErr == nil {
@@ -187,7 +197,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		// If still no file found, return error
 		if file == nil {
 			logrus.Error("No image file found in form data")
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing image", "Image file is required. Please ensure the file is properly attached with field name 'image_file'"))
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing image", "Image file is required. Please ensure the file is properly attached with field name 'image'"))
 			return
 		}
 		
@@ -374,8 +384,8 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		return
 	}
 
-	// Load the created subcategory without parent relationship
-	if err := db.First(&subcategory, subcategory.ID).Error; err != nil {
+	// Load the created subcategory with parent relationship
+	if err := db.Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
 		logrus.Error("Failed to load created subcategory:", err)
 	}
 
