@@ -6,22 +6,13 @@ import (
 	"treesindia/config"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // CORSMiddleware creates a CORS middleware with configurable origins
 func CORSMiddleware(config *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		
-		// Check if origin is allowed
-		allowed := isOriginAllowed(origin, config.CORSAllowedOrigins)
-		
-		if allowed {
-			c.Header("Access-Control-Allow-Origin", origin)
-		} else {
-			logrus.Debugf("CORS: Origin %s not allowed", origin)
-		}
+		// TEMPORARY: Allow all origins
+		c.Header("Access-Control-Allow-Origin", "*")
 		
 		// Set CORS headers
 		c.Header("Access-Control-Allow-Credentials", "true")
@@ -46,6 +37,10 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 		return false
 	}
 	
+	// TEMPORARY: Allow all origins for development
+	// TODO: Remove this in production and use proper origin validation
+	return true
+	
 	// If wildcard is allowed, accept all origins (not recommended for production)
 	if len(allowedOrigins) == 1 && allowedOrigins[0] == "*" {
 		return true
@@ -64,20 +59,8 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 // SecureCORSMiddleware creates a more secure CORS middleware for production
 func SecureCORSMiddleware(config *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		
-		// Check if origin is allowed
-		allowed := isOriginAllowed(origin, config.CORSAllowedOrigins)
-		
-		if allowed {
-			c.Header("Access-Control-Allow-Origin", origin)
-		} else {
-			// In production, don't set Access-Control-Allow-Origin for disallowed origins
-			if config.IsProduction() {
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-		}
+		// TEMPORARY: Allow all origins
+		c.Header("Access-Control-Allow-Origin", "*")
 		
 		// Set security headers
 		c.Header("Access-Control-Allow-Credentials", "true")
