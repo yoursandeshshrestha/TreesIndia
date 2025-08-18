@@ -172,6 +172,132 @@ func (sr *ServiceRepository) GetWithFilters(priceType *string, category *string,
 	return services, nil
 }
 
+// GetWithFiltersPaginated retrieves services with advanced filtering and pagination
+func (sr *ServiceRepository) GetWithFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.Service, int64, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceRepository.GetWithFiltersPaginated panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceRepository.GetWithFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, excludeInactive: %v, page: %d, limit: %d", 
+		priceType, category, subcategory, priceMin, priceMax, excludeInactive, page, limit)
+	
+	var services []models.Service
+	var total int64
+	
+	// Build base query
+	query := sr.GetDB().Preload("Category").Preload("Subcategory")
+	
+	// Filter by price type
+	if priceType != nil {
+		query = query.Where("price_type = ?", *priceType)
+	}
+	
+	// Filter by category (by name or ID)
+	if category != nil {
+		// Try to parse as ID first
+		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
+			query = query.Where("category_id = ?", categoryID)
+		} else {
+			// If not a number, treat as category name
+			query = query.Joins("JOIN categories ON services.category_id = categories.id").
+				Where("categories.name ILIKE ?", "%"+*category+"%")
+		}
+	}
+	
+	// Filter by subcategory (by name or ID)
+	if subcategory != nil {
+		// Try to parse as ID first
+		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
+			query = query.Where("subcategory_id = ?", subcategoryID)
+		} else {
+			// If not a number, treat as subcategory name
+			query = query.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
+				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+		}
+	}
+	
+	// Filter by price range
+	if priceMin != nil {
+		query = query.Where("price >= ?", *priceMin)
+	}
+	if priceMax != nil {
+		query = query.Where("price <= ?", *priceMax)
+	}
+	
+	// Filter by active status
+	if excludeInactive {
+		query = query.Where("is_active = ?", true)
+	}
+	
+	// Apply sorting
+	if sortBy != "" {
+		orderClause := sortBy
+		if sortOrder == "desc" {
+			orderClause += " DESC"
+		} else {
+			orderClause += " ASC"
+		}
+		query = query.Order(orderClause)
+	} else {
+		// Default sorting by name ascending
+		query = query.Order("services.name ASC")
+	}
+	
+	// Get total count using a separate query to avoid join issues
+	countQuery := sr.GetDB().Model(&models.Service{})
+	
+	// Apply the same filters to count query
+	if priceType != nil {
+		countQuery = countQuery.Where("price_type = ?", *priceType)
+	}
+	
+	if category != nil {
+		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
+			countQuery = countQuery.Where("category_id = ?", categoryID)
+		} else {
+			countQuery = countQuery.Joins("JOIN categories ON services.category_id = categories.id").
+				Where("categories.name ILIKE ?", "%"+*category+"%")
+		}
+	}
+	
+	if subcategory != nil {
+		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
+			countQuery = countQuery.Where("subcategory_id = ?", subcategoryID)
+		} else {
+			countQuery = countQuery.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
+				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+		}
+	}
+	
+	if priceMin != nil {
+		countQuery = countQuery.Where("price >= ?", *priceMin)
+	}
+	if priceMax != nil {
+		countQuery = countQuery.Where("price <= ?", *priceMax)
+	}
+	
+	if excludeInactive {
+		countQuery = countQuery.Where("is_active = ?", true)
+	}
+	
+	if err := countQuery.Count(&total).Error; err != nil {
+		logrus.Errorf("ServiceRepository.GetWithFiltersPaginated count error: %v", err)
+		return nil, 0, err
+	}
+	
+	// Apply pagination
+	offset := (page - 1) * limit
+	if err := query.Offset(offset).Limit(limit).Find(&services).Error; err != nil {
+		logrus.Errorf("ServiceRepository.GetWithFiltersPaginated database error: %v", err)
+		return nil, 0, err
+	}
+	
+	logrus.Infof("ServiceRepository.GetWithFiltersPaginated found %d services (total: %d)", len(services), total)
+	return services, total, nil
+}
+
 // GetAll retrieves all services with optional filtering
 func (sr *ServiceRepository) GetAll(excludeInactive bool) ([]models.Service, error) {
 	defer func() {

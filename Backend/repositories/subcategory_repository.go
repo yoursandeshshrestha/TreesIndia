@@ -97,7 +97,7 @@ func (sr *SubcategoryRepository) GetSubcategoriesByCategory(categoryID uint, exc
 		query = query.Where("is_active = ?", true)
 	}
 	
-	err := query.Order("name ASC").Find(&subcategories).Error
+	err := query.Preload("Parent").Order("name ASC").Find(&subcategories).Error
 	return subcategories, err
 }
 
