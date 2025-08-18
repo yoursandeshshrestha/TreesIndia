@@ -40,7 +40,6 @@ type User struct {
 	
 	// Wallet System
 	WalletBalance    float64 `json:"wallet_balance" gorm:"default:0"`    // Wallet balance
-	WalletLimit      float64 `json:"wallet_limit" gorm:"default:100000"` // Admin configurable wallet limit
 	
 	// Subscription fields
 	SubscriptionID      *uint             `json:"subscription_id"`

@@ -37,7 +37,7 @@ type Subcategory struct {
 	
 	// Parent relationship
 	ParentID    uint      `json:"parent_id" gorm:"not null"`
-	Parent      Category  `json:"-" gorm:"foreignKey:ParentID"` // Exclude from JSON response
+	Parent      Category  `json:"parent,omitempty" gorm:"foreignKey:ParentID"` // Include parent in JSON response
 	
 	// Status
 	IsActive    bool `json:"is_active" gorm:"default:true"`

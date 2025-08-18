@@ -18,8 +18,8 @@ type Service struct {
 	Duration      *string        `json:"duration"` // Optional duration
 	CategoryID    uint           `json:"category_id" gorm:"not null"`
 	SubcategoryID uint           `json:"subcategory_id" gorm:"not null"`
-	Category      Category       `json:"-" gorm:"foreignKey:CategoryID"` // Excluded from JSON response
-	Subcategory   Subcategory    `json:"-" gorm:"foreignKey:SubcategoryID"` // Excluded from JSON response
+	Category      Category       `json:"category" gorm:"foreignKey:CategoryID"` // Include category name
+	Subcategory   Subcategory    `json:"subcategory" gorm:"foreignKey:SubcategoryID"` // Include subcategory name
 	IsActive      bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -31,8 +31,8 @@ type CreateServiceRequest struct {
 	Name          string   `json:"name" binding:"required"`
 	Description   string   `json:"description"`
 	PriceType     string   `json:"price_type" binding:"required,oneof=fixed inquiry"`
-	Price         *float64 `json:"price"` // Required if price_type is "fixed"
-	Duration      *string  `json:"duration"`
+	Price         *float64 `json:"price" binding:"price_required_for_fixed"` // Required if price_type is "fixed"
+	Duration      *string  `json:"duration" binding:"omitempty,duration"` // Custom validation
 	CategoryID    uint     `json:"category_id" binding:"required"`
 	SubcategoryID uint     `json:"subcategory_id" binding:"required"`
 	IsActive      *bool    `json:"is_active"`

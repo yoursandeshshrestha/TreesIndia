@@ -73,7 +73,7 @@ func CreateIndexes() error {
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)").Error; err != nil {
 		return err
 	}
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_subcategories_category_id ON subcategories(category_id)").Error; err != nil {
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_subcategories_parent_id ON subcategories(parent_id)").Error; err != nil {
 		return err
 	}
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_subcategories_name ON subcategories(name)").Error; err != nil {
