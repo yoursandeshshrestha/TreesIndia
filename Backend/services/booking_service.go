@@ -7,6 +7,7 @@ import (
 
 	"treesindia/models"
 	"treesindia/repositories"
+	"treesindia/utils"
 )
 
 type BookingService struct {
@@ -71,8 +72,21 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 		return nil, errors.New("time slot is not available")
 	}
 
-	// 5. Calculate scheduled end time
-	scheduledEndTime := scheduledTime.Add(time.Duration(config.ServiceDurationMinutes+config.BufferTimeMinutes) * time.Minute)
+	// 5. Calculate scheduled end time based on service duration
+	var serviceDurationMinutes int
+	
+	// Use service duration if available, otherwise use config
+	if service.Duration != nil && *service.Duration != "" {
+		duration, err := utils.ParseDuration(*service.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("invalid service duration: %v", err)
+		}
+		serviceDurationMinutes = duration.ToMinutes()
+	} else {
+		serviceDurationMinutes = config.ServiceDurationMinutes
+	}
+	
+	scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+config.BufferTimeMinutes) * time.Minute)
 
 	// 6. Generate booking reference
 	bookingReference := bs.generateBookingReference()
