@@ -11,6 +11,7 @@ import (
 	"treesindia/database"
 	"treesindia/middleware"
 	"treesindia/routes"
+	"treesindia/seed"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -147,9 +148,10 @@ func main() {
 			log.Fatal("Failed to run migrations:", err)
 		}
 		
-		// Seed initial data (admin user and configs)
+		// Seed initial data using enhanced seed manager
 		log.Println("Seeding initial data...")
-		if err := config.SeedInitialData(db); err != nil {
+		seedManager := seed.NewSeedManager()
+		if err := seedManager.SeedAll(); err != nil {
 			log.Fatal("Failed to seed initial data:", err)
 		}
 	} else {
