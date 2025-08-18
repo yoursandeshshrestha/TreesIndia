@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Build artifacts
+main
+main.exe
+main-*
+tmp/
+build-errors.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files (keeping .env for container)
+# .env
+# .env.local
+# .env.production
+
+# Test files
+*_test.go
+testdata/
+
+# Air (hot reload)
+air.toml
+
+# Scripts
+build.sh
+generate_swagger.sh
+
+# Documentation (keeping docs/ for swagger)
+# docs/
+# swagger.json
+# swagger.yaml
+
+# Temporary files
+tmp/

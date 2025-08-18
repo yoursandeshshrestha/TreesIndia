@@ -141,21 +141,17 @@ func main() {
 	// Initialize database with new config
 	initDatabase(appConfig)
 	
-			// Run database migrations only in development
-	if appConfig.IsDevelopment() {
-		log.Println("Running database migrations with Goose...")
-		if err := runMigrations(appConfig); err != nil {
-			log.Fatal("Failed to run migrations:", err)
-		}
-		
-		// Seed initial data using enhanced seed manager
-		log.Println("Seeding initial data...")
-		seedManager := seed.NewSeedManager()
-		if err := seedManager.SeedAll(); err != nil {
-			log.Fatal("Failed to seed initial data:", err)
-		}
-	} else {
-		log.Println("Skipping database migrations in production")
+	// Always run database migrations (both development and production)
+	log.Println("Running database migrations with Goose...")
+	if err := runMigrations(appConfig); err != nil {
+		log.Fatal("Failed to run migrations:", err)
+	}
+	
+	// Always seed initial data (both development and production)
+	log.Println("Seeding initial data...")
+	seedManager := seed.NewSeedManager()
+	if err := seedManager.SeedAll(); err != nil {
+		log.Fatal("Failed to seed initial data:", err)
 	}
 
 	// Set Gin mode based on environment
