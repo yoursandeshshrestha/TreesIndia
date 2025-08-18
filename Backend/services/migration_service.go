@@ -255,7 +255,7 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 		{Key: "razorpay_key_id", Value: "rzp_test_R5AUjoyz0QoYmH", Type: "string", Category: "payment", Description: "Razorpay Key ID"},
 		{Key: "razorpay_secret_key", Value: "gtpRKsGGGD7ofEXWvaoKRfB4", Type: "string", Category: "payment", Description: "Razorpay Secret Key"},
 		{Key: "razorpay_webhook_secret", Value: "", Type: "string", Category: "payment", Description: "Razorpay Webhook Secret"},
-		{Key: "default_wallet_limit", Value: "100000", Type: "float", Category: "wallet", Description: "Default wallet limit in INR"},
+
 		{Key: "min_recharge_amount", Value: "100", Type: "float", Category: "wallet", Description: "Minimum recharge amount"},
 		{Key: "max_recharge_amount", Value: "50000", Type: "float", Category: "wallet", Description: "Maximum single recharge amount"},
 		{Key: "property_expiry_days", Value: "30", Type: "int", Category: "property", Description: "Days until property listing expires"},
