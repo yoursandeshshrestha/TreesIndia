@@ -69,8 +69,8 @@ func (ss *SubcategoryService) GetSubcategories(parentID string, isActive string)
 		query = query.Where("is_active = ?", active)
 	}
 
-	// Get subcategories
-	if err := query.Order("name ASC").Find(&subcategories).Error; err != nil {
+	// Get subcategories with parent information
+	if err := query.Preload("Parent").Order("name ASC").Find(&subcategories).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch subcategories: %w", err)
 	}
 
@@ -183,8 +183,8 @@ func (ss *SubcategoryService) CreateSubcategory(req *CreateSubcategoryRequest, i
 		return nil, fmt.Errorf("failed to create subcategory: %w", err)
 	}
 
-	// Load the created subcategory without parent relationship
-	if err := ss.subcategoryRepo.GetDB().First(&subcategory, subcategory.ID).Error; err != nil {
+	// Load the created subcategory with parent relationship
+	if err := ss.subcategoryRepo.GetDB().Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
 		return nil, fmt.Errorf("failed to load created subcategory: %w", err)
 	}
 
@@ -203,6 +203,11 @@ func (ss *SubcategoryService) ToggleStatus(id uint) (*models.Subcategory, error)
 
 	if err := ss.subcategoryRepo.Update(&subcategory); err != nil {
 		return nil, fmt.Errorf("failed to update subcategory status: %w", err)
+	}
+
+	// Load the updated subcategory with parent relationship
+	if err := ss.subcategoryRepo.GetDB().Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to load updated subcategory: %w", err)
 	}
 
 	return &subcategory, nil
@@ -277,6 +282,11 @@ func (ss *SubcategoryService) UpdateSubcategory(id uint, req *CreateSubcategoryR
 
 	if err := ss.subcategoryRepo.Update(&subcategory); err != nil {
 		return nil, fmt.Errorf("failed to update subcategory: %w", err)
+	}
+
+	// Load the updated subcategory with parent relationship
+	if err := ss.subcategoryRepo.GetDB().Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to load updated subcategory: %w", err)
 	}
 
 	return &subcategory, nil

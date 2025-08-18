@@ -286,7 +286,7 @@ func (s *WalletService) GetUserWalletSummary(userID uint) (map[string]interface{
 		"total_spent":          totalSpent,
 		"total_transactions":   totalTransactions,
 		"recent_transactions":  recentTransactions,
-		"wallet_limit":         user.WalletLimit,
+
 
 	}
 

@@ -159,7 +159,7 @@ func (ss *ServiceService) GetServiceSubcategories(categoryID uint) ([]models.Sub
 	logrus.Infof("ServiceService.GetServiceSubcategories called with categoryID: %d", categoryID)
 	
 	var subcategories []models.Subcategory
-	err := ss.serviceRepo.GetDB().Where("category_id = ? AND is_active = ?", categoryID, true).Find(&subcategories).Error
+	err := ss.serviceRepo.GetDB().Where("parent_id = ? AND is_active = ?", categoryID, true).Find(&subcategories).Error
 	if err != nil {
 		logrus.Errorf("ServiceService.GetServiceSubcategories error: %v", err)
 		return nil, err
@@ -188,6 +188,27 @@ func (ss *ServiceService) GetServicesWithFilters(priceType *string, category *st
 	
 	logrus.Infof("ServiceService.GetServicesWithFilters returning %d services", len(services))
 	return services, nil
+}
+
+// GetServicesWithFiltersPaginated retrieves services with advanced filtering and pagination
+func (ss *ServiceService) GetServicesWithFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.Service, int64, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServicesWithFiltersPaginated panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetServicesWithFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, excludeInactive: %v, page: %d, limit: %d", 
+		priceType, category, subcategory, priceMin, priceMax, excludeInactive, page, limit)
+	
+	services, total, err := ss.serviceRepo.GetWithFiltersPaginated(priceType, category, subcategory, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
+	if err != nil {
+		logrus.Errorf("ServiceService.GetServicesWithFiltersPaginated error: %v", err)
+		return nil, 0, err
+	}
+	
+	logrus.Infof("ServiceService.GetServicesWithFiltersPaginated returning %d services (total: %d)", len(services), total)
+	return services, total, nil
 }
 
 // GetAllServices retrieves all services with optional filtering
