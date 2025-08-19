@@ -12,6 +12,7 @@ import 'package:trees_india/pages/login_page/app/views/login_page.dart';
 import 'package:trees_india/pages/register_page/app/views/register_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
+import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import './route_tracker.dart';
 
@@ -21,8 +22,8 @@ class AppRouter {
   final GoRouter router;
 
   AppRouter(WidgetRef ref)
-      : router = GoRouter(
-          initialLocation: '/home',
+              : router = GoRouter(
+          initialLocation: '/',
           navigatorKey: appNavigatorKey,
           observers: [
             NavigatorObserverWrapper(
@@ -38,6 +39,7 @@ class AppRouter {
             ref.watch(authProvider.notifier).authStatusStream,
           ),
           redirect: (context, state) async {
+            debugPrint('🔍 Router redirect called for path: ${state.matchedLocation}');
             final authState = ref.read(authProvider);
             final isAuthenticated = authState.isLoggedIn;
 
@@ -46,6 +48,7 @@ class AppRouter {
             debugPrint('🔍 Auth state: ${authState.toString()}');
 
             final isPublicRoute = state.matchedLocation == '/' ||
+                state.matchedLocation == '/welcome' ||
                 state.matchedLocation == '/login' ||
                 state.matchedLocation == '/signup' ||
                 state.matchedLocation.startsWith('/otp-verification');
@@ -79,6 +82,7 @@ class AppRouter {
 
                 // If user IS authenticated and on public route, go to home (unless first login)
                 if (state.matchedLocation == '/' ||
+                    state.matchedLocation == '/welcome' ||
                     state.matchedLocation == '/login') {
                   debugPrint('✅ User authenticated, redirecting to /home');
                   return '/home';
@@ -95,6 +99,11 @@ class AppRouter {
             // Public Routes
             GoRoute(
               path: '/',
+              name: 'SplashScreen',
+              builder: (context, state) => const SplashScreen(),
+            ),
+            GoRoute(
+              path: '/welcome',
               name: 'WelcomePage',
               builder: (context, state) => const WelcomePage(),
             ),
