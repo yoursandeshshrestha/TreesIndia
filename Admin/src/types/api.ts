@@ -55,12 +55,12 @@ export interface User {
   created_at: string;
   updated_at: string;
   last_login_at?: string;
-  
+
   // Wallet Information
   wallet: {
     balance: number;
   };
-  
+
   // Subscription Information
   subscription: {
     has_active_subscription: boolean;
@@ -68,17 +68,14 @@ export interface User {
     expiry_date?: string;
     current_plan?: UserSubscription;
   };
-  
+
   // Role Application Information
   role_application: {
     status: "none" | "pending" | "approved" | "rejected";
     application_date?: string;
     approval_date?: string;
   };
-  
-  // User Roles
-  roles: UserRole[];
-  
+
   // Notification Settings
   notification_settings?: {
     email_notifications: boolean;
@@ -88,10 +85,10 @@ export interface User {
     booking_reminders: boolean;
     service_updates: boolean;
   };
-  
+
   // Subscription History (last 5)
   subscription_history?: UserSubscriptionHistory[];
-  
+
   // Subscription Warnings
   subscription_warnings?: SubscriptionWarning[];
 }
@@ -119,17 +116,6 @@ export interface UserSubscriptionHistory {
   amount: number;
   payment_method: "wallet" | "razorpay";
   created_at: string;
-}
-
-// User Role
-export interface UserRole {
-  id: number;
-  user_id: number;
-  role_type: "worker" | "broker";
-  role_id: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 // Subscription Warning

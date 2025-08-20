@@ -70,7 +70,6 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	var user models.User
 	if err := uc.db.Preload("UserNotificationSettings").
 		Preload("Subscription").
-		Preload("UserRoles").
 		Preload("UserSubscriptions").
 		Preload("SubscriptionWarnings").
 		First(&user, userID).Error; err != nil {
@@ -116,9 +115,6 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 			"application_date": user.ApplicationDate,
 			"approval_date":    user.ApprovalDate,
 		},
-		
-		// User Roles
-		"roles": user.UserRoles,
 	}
 
 	// Add notification settings if they exist
