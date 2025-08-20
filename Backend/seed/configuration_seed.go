@@ -28,6 +28,7 @@ func (sm *SeedManager) SeedAll() error {
 	seeders := []func() error{
 		sm.SeedAdminUser,
 		sm.SeedAdminConfigurations,
+		sm.SeedMainData,
 	}
 
 	for _, seeder := range seeders {
@@ -44,6 +45,11 @@ func (sm *SeedManager) SeedAll() error {
 // SeedAdminUser seeds the admin user
 func (sm *SeedManager) SeedAdminUser() error {
 	return SeedAdminUser(sm.db)
+}
+
+// SeedMainData seeds the main application data
+func (sm *SeedManager) SeedMainData() error {
+	return sm.seedMainData()
 }
 
 // SeedAdminConfigurations seeds all admin configurations
@@ -308,6 +314,14 @@ func (sm *SeedManager) SeedAdminConfigurations() error {
 			Type:        "int",
 			Category:    "booking",
 			Description: "Hours before booking when cancellation is allowed",
+			IsActive:    true,
+		},
+		{
+			Key:         "booking_buffer_time_minutes",
+			Value:       "30",
+			Type:        "int",
+			Category:    "booking",
+			Description: "Buffer time between bookings in minutes",
 			IsActive:    true,
 		},
 	}
