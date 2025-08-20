@@ -41,26 +41,20 @@ type WalletTransaction struct {
 	UserID          uint              `json:"user_id" gorm:"not null"`
 	TransactionType TransactionType   `json:"transaction_type" gorm:"not null"`
 	Status          TransactionStatus `json:"status" gorm:"not null;default:'pending'"`
-	PaymentMethod   string            `json:"payment_method" gorm:"not null"`
 	
 	// Amount Information
 	Amount          float64 `json:"amount" gorm:"not null"`           // Transaction amount
-	PreviousBalance float64 `json:"previous_balance" gorm:"not null"` // User's balance before transaction
-	NewBalance      float64 `json:"new_balance" gorm:"not null"`      // User's balance after transaction
+	BalanceAfter    float64 `json:"balance_after" gorm:"not null"`    // User's balance after transaction (current schema)
 	
 	// Reference Information
 	ReferenceID     string  `json:"reference_id" gorm:"uniqueIndex"` // External payment reference (Razorpay order ID, etc.)
 	Description     string  `json:"description"`                      // Human-readable description
-	AdminNotes      *string `json:"admin_notes"`                      // Admin notes for adjustments
 	
 	// Related Entities (optional)
 	RelatedUserID   *uint   `json:"related_user_id"` // For transfers between users
 	ServiceID       *uint   `json:"service_id"`       // For service payments
 	PropertyID      *uint   `json:"property_id"`      // For property-related transactions
 	SubscriptionID  *uint   `json:"subscription_id"`  // For subscription payments
-	
-	// Timestamps
-	ProcessedAt     *time.Time `json:"processed_at"` // When transaction was processed
 	
 	// Relationships
 	User            *User     `json:"user,omitempty" gorm:"foreignKey:UserID"`
@@ -80,12 +74,6 @@ func (wt *WalletTransaction) BeforeCreate(tx *gorm.DB) error {
 	// Generate reference ID if not provided
 	if wt.ReferenceID == "" {
 		wt.ReferenceID = generateTransactionReference()
-	}
-	
-	// Set processed time for completed transactions
-	if wt.Status == TransactionStatusCompleted && wt.ProcessedAt == nil {
-		now := time.Now()
-		wt.ProcessedAt = &now
 	}
 	
 	return nil
