@@ -313,13 +313,14 @@ func (s *RoleApplicationService) handleLocationWithTx(tx *gorm.DB, userID uint, 
 			// No existing location, create new one
 			location := &models.Location{
 				UserID:     userID,
-				Latitude:   locationReq.Latitude,
-				Longitude:  locationReq.Longitude,
-				Address:    locationReq.Address,
 				City:       locationReq.City,
 				State:      locationReq.State,
+				Country:    locationReq.Country,
+				Address:    locationReq.Address,
 				PostalCode: locationReq.PostalCode,
-				Source:     locationReq.Source,
+				Latitude:   locationReq.Latitude,
+				Longitude:  locationReq.Longitude,
+				IsActive:   true,
 			}
 			return tx.Create(location).Error
 		}
