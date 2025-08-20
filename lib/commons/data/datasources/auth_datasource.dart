@@ -8,8 +8,6 @@ import 'package:trees_india/commons/utils/error_handler.dart';
 import 'package:trees_india/commons/utils/services/dio_client.dart';
 import 'package:trees_india/pages/login_page/data/models/login_request_model.dart';
 import 'package:trees_india/pages/login_page/data/models/login_response_model.dart';
-import 'package:trees_india/pages/register_page/data/models/register_request_model.dart';
-import 'package:trees_india/pages/register_page/data/models/register_response_model.dart';
 
 class AuthDatasource {
   final DioClient dioClient;
@@ -21,7 +19,7 @@ class AuthDatasource {
   });
 
   Future<LoginResponseModel> login(LoginRequestModel request) async {
-    final url = ApiEndpoints.login.path;
+    final url = ApiEndpoints.requestOtp.path;
 
     try {
       final response = await dioClient.dio.post(url, data: request.toJson());
@@ -48,39 +46,6 @@ class AuthDatasource {
         errorHandler.handleGenericError(e);
       }
       throw Exception('Error during login.');
-    }
-  }
-
-  Future<RegisterResponseModel> register(RegisterRequestModel request) async {
-    final url = ApiEndpoints.register.path;
-
-    try {
-      final response = await dioClient.dio.post(url, data: request.toJson());
-      print("Success response: ${response.data}");
-
-      // Only handle successful responses here
-      return RegisterResponseModel.fromJson(response.data);
-    } catch (e) {
-      if (e is DioException) {
-        print("DioException caught - Status: ${e.response?.statusCode}");
-        print("DioException data: ${e.response?.data}");
-
-        // Handle specific status codes
-        if (e.response?.statusCode == 409) {
-          // User already exists - extract server's message
-          final errorData = e.response?.data;
-          if (errorData != null && errorData['message'] != null) {
-            print("409 error message: ${errorData['message']}");
-            throw Exception(errorData['message']);
-          }
-          throw Exception(
-              'Phone number is already registered. Please try logging in instead.');
-        }
-        errorHandler.handleNetworkError(e);
-      } else {
-        errorHandler.handleGenericError(e);
-      }
-      throw Exception('Error during registration.');
     }
   }
 

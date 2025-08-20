@@ -11,7 +11,6 @@ final authFlowProvider =
     StateNotifierProvider<AuthFlowNotifier, auth_flow.AuthFlowStateModel>(
         (ref) {
   final loginUsecase = ref.read(loginUsecaseProvider);
-  final registerUsecase = ref.read(registerUsecaseProvider);
   final verifyOtpUsecase = ref.read(verifyOtpUsecaseProvider);
   final refreshTokenUsecase = ref.read(refreshTokenUsecaseProvider);
   final getUserProfileUsecase = ref.read(getUserProfileUsecaseProvider);
@@ -20,7 +19,6 @@ final authFlowProvider =
 
   return AuthFlowNotifier(
     loginUsecase: loginUsecase,
-    registerUsecase: registerUsecase,
     verifyOtpUsecase: verifyOtpUsecase,
     refreshTokenUsecase: refreshTokenUsecase,
     getUserProfileUsecase: getUserProfileUsecase,

@@ -87,9 +87,10 @@ class DioClient {
                   .read(centralizedDataRepositoryProvider)
                   .getAuthToken();
               print("token: $token");
-              if (token != null) {
+              if (token != null && token.isNotEmpty) {
                 options.headers['Authorization'] = 'Bearer $token';
               } else {
+                print("⚠️ Authorization token is missing or empty");
                 return handler.reject(
                   DioException(
                     requestOptions: options,

@@ -15,13 +15,10 @@ import 'package:trees_india/commons/utils/services/centralized_local_storage_ser
 import 'package:trees_india/commons/utils/services/notification_service.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
 import 'package:trees_india/pages/login_page/domain/usecases/login_usecase.dart';
-import 'package:trees_india/pages/register_page/domain/entities/register_request_entity.dart';
-import 'package:trees_india/pages/register_page/domain/usecases/register_usecase.dart';
 
 class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
     with ResettableNotifier<auth_flow.AuthFlowStateModel> {
   final LoginUsecase loginUsecase;
-  final RegisterUsecase registerUsecase;
   final VerifyOtpUsecase verifyOtpUsecase;
   final RefreshTokenUsecase refreshTokenUsecase;
   final GetUserProfileUsecase getUserProfileUsecase;
@@ -32,7 +29,6 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
 
   AuthFlowNotifier({
     required this.loginUsecase,
-    required this.registerUsecase,
     required this.verifyOtpUsecase,
     required this.refreshTokenUsecase,
     required this.getUserProfileUsecase,
@@ -114,62 +110,6 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
     }
   }
 
-  Future<void> register(String phoneNumber) async {
-    if (!_mounted) return;
-    state = state.copyWith(
-      state: auth_flow.AuthFlowState.loadingRegister,
-      phoneNumber: phoneNumber,
-      isLoading: true,
-      errorMessage: null,
-      successMessage: null,
-    );
-
-    try {
-      final response =
-          await registerUsecase(RegisterRequestEntity(phone: phoneNumber));
-
-      if (!_mounted) return;
-
-      debugPrint(
-          "AuthFlowNotifier received response: success=${response.success}, message=${response.message}");
-
-      if (response.success) {
-        state = state.copyWith(
-          state: auth_flow.AuthFlowState.registerSuccess,
-          isLoading: false,
-          successMessage: response.message,
-        );
-        // Show success message
-        notificationService.showSuccessSnackBar(response.message);
-      } else {
-        // Handle error response (including 409 "User already exists")
-        debugPrint("Register failed with message: ${response.message}");
-        state = state.copyWith(
-          state: auth_flow.AuthFlowState.error,
-          isLoading: false,
-          errorMessage: response.message,
-        );
-        debugPrint("Error state set - errorMessage: ${state.errorMessage}");
-        // Show error message
-        notificationService.showErrorSnackBar(response.message);
-      }
-    } catch (e) {
-      debugPrint('Register exception: $e');
-      if (!_mounted) return;
-      state = state.copyWith(
-        state: auth_flow.AuthFlowState.error,
-        isLoading: false,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      );
-      debugPrint("Exception caught - error: $e");
-      debugPrint("Exception caught - errorMessage: ${state.errorMessage}");
-      // Show error message
-      notificationService.showErrorSnackBar(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
   Future<void> verifyOtp(String otp) async {
     if (state.phoneNumber == null) {
       state = state.copyWith(
@@ -238,6 +178,9 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   Future<void> _saveTokensToStorage(
       String accessToken, String refreshToken) async {
     try {
+      debugPrint('🔐 Saving tokens - Access token length: ${accessToken.length}');
+      debugPrint('🔐 Saving tokens - Refresh token length: ${refreshToken.length}');
+      
       final tokenModel = TokenModel(
         authToken: accessToken,
         refreshToken: refreshToken,
@@ -253,9 +196,13 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
       );
 
       await localStorageService.saveData('user_profile', userModel.toJson());
-      debugPrint('Tokens saved to local storage successfully');
+      debugPrint('✅ Tokens saved to local storage successfully');
+      
+      // Verify tokens were saved correctly
+      final savedData = await localStorageService.getData('user_profile');
+      debugPrint('🔍 Verification - Saved data: ${savedData != null ? "Data found" : "No data"}');
     } catch (e) {
-      debugPrint('Error saving tokens to storage: $e');
+      debugPrint('❌ Error saving tokens to storage: $e');
     }
   }
 

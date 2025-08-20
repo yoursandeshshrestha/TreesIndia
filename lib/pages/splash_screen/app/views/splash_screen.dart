@@ -72,12 +72,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/login');
+      context.push('/login');
     }
   }
 
   void _onSkipPressed() {
-    context.go('/login');
+    context.push('/login');
   }
 
   @override
@@ -173,23 +173,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          color: AppColors.brandNeutral600,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
+                      B4Regular(
+                        text: 'Already have an account? ',
+                        color: AppColors.brandNeutral600,
                       ),
                       GestureDetector(
                         onTap: _onSkipPressed,
-                        child: Text(
-                          'Sign In',
-                          style: TextStyle(
-                            color: const Color(0xFF00A871), // Green
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: B4Bold(
+                          text: 'Sign In',
+                          color: Color(0xFF00A871), // Green
                         ),
                       ),
                     ],

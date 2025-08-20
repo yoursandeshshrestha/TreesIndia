@@ -12,8 +12,8 @@ class TokenModel {
   // Convert the response JSON to a TokenModel
   factory TokenModel.fromJson(Map<String, dynamic> json) {
     return TokenModel(
-        authToken: json['authToken'] ?? '',
-        refreshToken: json['RefreshToken'] ?? '');
+        authToken: json['AuthToken'] ?? '',
+        refreshToken: json['Refreshtoken'] ?? '');
   }
 
   // Convert the Model to a Map (for local storage or POST requests)

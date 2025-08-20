@@ -4,12 +4,9 @@ import 'package:trees_india/commons/domain/entities/refresh_token_request_entity
 import 'package:trees_india/commons/domain/entities/user_profile_entity.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_response_entity.dart';
-import 'package:trees_india/pages/register_page/domain/entities/register_request_entity.dart';
-import 'package:trees_india/pages/register_page/domain/entities/register_response_entity.dart';
 
 abstract class AuthRepository {
   Future<LoginResponseEntity> login(LoginRequestEntity request);
-  Future<RegisterResponseEntity> register(RegisterRequestEntity request);
   Future<OtpResponseEntity> verifyOtp(OtpRequestEntity request);
   Future<OtpResponseEntity> refreshToken(RefreshTokenRequestEntity request);
   Future<UserProfileResponseEntity> getUserProfile({String? authToken});

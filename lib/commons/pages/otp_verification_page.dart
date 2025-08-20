@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:trees_india/commons/app/viewmodels/auth_state.dart'
     as auth_flow;
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
@@ -54,14 +55,14 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
   void _onOtpCompleted(String otp) {
     setState(() {
       otpCode = otp;
-      isOtpComplete = otp.length == 4;
+      isOtpComplete = otp.length == 6;
     });
   }
 
   void _onOtpChanged(String otp) {
     setState(() {
       otpCode = otp;
-      isOtpComplete = otp.length == 4;
+      isOtpComplete = otp.length == 6;
     });
   }
 
@@ -101,7 +102,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     ref.listen<auth_flow.AuthFlowStateModel>(authFlowProvider,
         (previous, current) {
       // Only show error if it's different from the previous error to prevent loops
-      if (current.errorMessage != null && 
+      if (current.errorMessage != null &&
           current.errorMessage != previous?.errorMessage) {
         _showSnackBar(current.errorMessage!, true);
         // Use addPostFrameCallback to avoid triggering during build
@@ -136,8 +137,15 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppSpacing.xl),
-
+              // Phone Lottie Animation
+              Lottie.asset(
+                'assets/lottie/phone_verification_lottie.json',
+                width: 80,
+                height: 80,
+                fit: BoxFit.contain,
+                repeat: false,
+              ),
+              const SizedBox(height: AppSpacing.xs),
               // Title
               H2Bold(
                 text: 'Verify OTP',
@@ -161,13 +169,13 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
               // OTP Input
               OtpTextfieldWidget(
-                length: 4,
+                length: 6,
                 enabled: !authState.isLoading,
                 onCompleted: _onOtpCompleted,
                 onChanged: _onOtpChanged,
               ),
 
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.sm),
 
               // Resend OTP
               Row(
@@ -197,8 +205,6 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       isOtpComplete && !authState.isLoading ? _verifyOtp : null,
                 ),
               ),
-
-              const SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),

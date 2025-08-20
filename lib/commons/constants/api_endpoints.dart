@@ -3,26 +3,22 @@ import 'app_constants.dart';
 
 class ApiEndpoints {
   static final List<ApiEndpoint> endpoints = [
-    login,
-    register,
+    requestOtp,
     verifyOtp,
     refreshToken,
     userProfile,
+    uploadAvatar,
     resetPassword,
     changePassword,
     signUp,
   ];
 
-  static ApiEndpoint login = ApiEndpoint(
-    path: '/auth/login',
+  static ApiEndpoint requestOtp = ApiEndpoint(
+    path: '/auth/request-otp',
     requiresAuth: false,
     useRegionBaseUrl: true,
   );
-  static ApiEndpoint register = ApiEndpoint(
-    path: '/auth/register',
-    requiresAuth: false,
-    useRegionBaseUrl: true,
-  );
+
   static ApiEndpoint verifyOtp = ApiEndpoint(
     path: '/auth/verify-otp',
     requiresAuth: false,
@@ -45,6 +41,11 @@ class ApiEndpoints {
   );
   static ApiEndpoint userProfile = ApiEndpoint(
     path: '/users/profile',
+    requiresAuth: true,
+    useRegionBaseUrl: true,
+  );
+  static ApiEndpoint uploadAvatar = ApiEndpoint(
+    path: '/users/upload-avatar',
     requiresAuth: true,
     useRegionBaseUrl: true,
   );

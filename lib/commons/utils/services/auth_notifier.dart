@@ -190,7 +190,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final currentUserJson =
             await _localStorageService.getData(userStorageKey);
         if (currentUserJson != null) {
-          final currentUserModel = UserModel.fromJson(currentUserJson);
+          final Map<String, dynamic> typedJson = convertToStringDynamicMap(currentUserJson);
+          final currentUserModel = UserModel.fromJson(typedJson);
 
           // Create updated user model with new profile data but keeping tokens
           final updatedUserModel = UserModel(
@@ -227,6 +228,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Don't throw error, profile refresh is not critical
     }
   }
+
+  /// Update user avatar
 
   Future<void> logout() async {
     _checkMounted();

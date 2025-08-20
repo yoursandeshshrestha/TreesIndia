@@ -12,7 +12,22 @@ Map<String, dynamic> convertToStringDynamicMap(dynamic data) {
   if (data is Map<String, dynamic>) {
     return data;
   } else if (data is Map) {
-    return Map<String, dynamic>.from(data);
+    return data.map((key, value) {
+      if (value is Map) {
+        return MapEntry(key.toString(), convertToStringDynamicMap(value));
+      } else if (value is List) {
+        return MapEntry(
+            key.toString(),
+            value.map((item) {
+              if (item is Map) {
+                return convertToStringDynamicMap(item);
+              }
+              return item;
+            }).toList());
+      } else {
+        return MapEntry(key.toString(), value);
+      }
+    });
   } else {
     throw Exception(
         'Cannot convert data to Map<String, dynamic>: ${data.runtimeType}');
@@ -34,15 +49,20 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
   Future<String?> getAuthToken({bool forceRemote = false}) async {
     try {
       final localUserJson = await localStorageService.getData(userStorageKey);
+      debugPrint('getAuthToken - localUserJson: $localUserJson');
 
       if (localUserJson != null && !forceRemote) {
         final Map<String, dynamic> typedJson =
             convertToStringDynamicMap(localUserJson);
         final userModel = UserModel.fromJson(typedJson);
-        return userModel.token?.authToken;
+        final token = userModel.token?.authToken;
+        debugPrint(
+            'getAuthToken - retrieved token: ${token != null ? "Token found (${token.length} chars)" : "No token"}');
+        return token;
       }
 
-      throw Exception('Error fetching auth token!');
+      debugPrint('getAuthToken - No local user data found or forceRemote=true');
+      return null;
     } catch (e) {
       debugPrint('Error fetching auth token: $e');
       return null;
@@ -130,8 +150,7 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
 
       _logger.i('✅ [Flutter] Fresh user profile fetched from API');
       _logger.i('   - User: ${userModel.fullName ?? "Unknown"}');
-      _logger
-          .i('   - Token length: ${userModel.token?.authToken.length ?? 0}');
+      _logger.i('   - Token length: ${userModel.token?.authToken.length ?? 0}');
 
       // Save to local storage
       await localStorageService.saveData(userStorageKey, userModel.toJson());

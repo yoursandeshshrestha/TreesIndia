@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
@@ -8,16 +9,11 @@ class AppTheme {
     primaryColor: AppColors.brandPrimary500,
 
     // Define the default font family.
-    fontFamily: 'Inter',
+    fontFamily: 'Montserrat',
 
     // Define the default `TextTheme`. Use this to specify the default
     // text styling for headlines, titles, bodies of text, and more.
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-          fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.black),
-      titleLarge: TextStyle(fontSize: 20.0, fontStyle: FontStyle.italic),
-      bodyMedium: TextStyle(fontSize: 14.0, fontFamily: 'Hind'),
-    ),
+    textTheme: GoogleFonts.montserratTextTheme(),
 
     // Define button themes
     buttonTheme: const ButtonThemeData(

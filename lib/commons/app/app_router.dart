@@ -9,10 +9,11 @@ import 'package:trees_india/commons/pages/otp_verification_page.dart';
 import 'package:trees_india/commons/utils/services/navigation_service.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
-import 'package:trees_india/pages/register_page/app/views/register_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
+import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import './route_tracker.dart';
 
@@ -22,7 +23,7 @@ class AppRouter {
   final GoRouter router;
 
   AppRouter(WidgetRef ref)
-              : router = GoRouter(
+      : router = GoRouter(
           initialLocation: '/',
           navigatorKey: appNavigatorKey,
           observers: [
@@ -39,7 +40,8 @@ class AppRouter {
             ref.watch(authProvider.notifier).authStatusStream,
           ),
           redirect: (context, state) async {
-            debugPrint('🔍 Router redirect called for path: ${state.matchedLocation}');
+            debugPrint(
+                '🔍 Router redirect called for path: ${state.matchedLocation}');
             final authState = ref.read(authProvider);
             final isAuthenticated = authState.isLoggedIn;
 
@@ -50,7 +52,6 @@ class AppRouter {
             final isPublicRoute = state.matchedLocation == '/' ||
                 state.matchedLocation == '/welcome' ||
                 state.matchedLocation == '/login' ||
-                state.matchedLocation == '/signup' ||
                 state.matchedLocation.startsWith('/otp-verification');
 
             final isLocationOnboardingRoute =
@@ -108,11 +109,6 @@ class AppRouter {
               builder: (context, state) => const WelcomePage(),
             ),
             GoRoute(
-              path: '/signup',
-              name: 'SignUpPage',
-              builder: (context, state) => const SignUpPage(),
-            ),
-            GoRoute(
               path: '/login',
               name: 'LoginPage',
               builder: (context, state) => const LoginPage(),
@@ -155,6 +151,16 @@ class AppRouter {
                   path: '/home',
                   name: 'HomePage',
                   builder: (context, state) => const HomePage(),
+                ),
+                GoRoute(
+                  path: '/profile',
+                  name: 'ProfilePage',
+                  builder: (context, state) => const ProfilePage(),
+                ),
+                GoRoute(
+                  path: '/edit-profile',
+                  name: 'EditProfilePage',
+                  builder: (context, state) => const EditProfilePage(),
                 ),
               ],
             ),

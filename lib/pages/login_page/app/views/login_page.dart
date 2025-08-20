@@ -12,6 +12,7 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 
 import 'package:trees_india/commons/presenters/providers/auth_flow_provider.dart';
 import 'package:trees_india/commons/components/textfield/utilities/mobile_validator.dart';
+import 'package:lottie/lottie.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -74,9 +75,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(
+            AppSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -84,18 +88,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
               // Title
               H1Bold(
-                text: 'Welcome Back',
+                text: 'Enter your phone number',
                 color: AppColors.brandNeutral900,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.xs),
 
               // Subtitle
-              B2Regular(
-                text: 'Enter your phone number to continue',
+              B3Regular(
+                text: 'we will send you a text  with a verification code.',
                 color: AppColors.brandNeutral600,
               ),
 
-              const SizedBox(height: AppSpacing.xl * 2),
+              const SizedBox(height: AppSpacing.lg),
 
               // Phone Number Input
               B3Medium(
@@ -131,7 +135,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         _phoneController.text = value;
                         _onPhoneChanged(value);
                       },
-                      leadingIcon: Icons.phone,
                     ),
                   ),
                 ],
@@ -146,8 +149,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ],
 
-              const SizedBox(height: AppSpacing.md),
+              // const SizedBox(height: AppSpacing.md * 2),
+              const Spacer(),
 
+              // Terms and Conditions
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: B4Regular(
+                  text:
+                      'By continuing, you agree to our Terms of Service and Privacy Policy',
+                  color: AppColors.brandNeutral500,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
               // Login Button
               SizedBox(
                 width: double.infinity,
@@ -162,39 +178,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       : null,
                 ),
               ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Register Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  B3Regular(
-                    text: "Don't have an account? ",
-                    color: AppColors.brandNeutral600,
-                  ),
-                  TextButtonWidget(
-                    label: 'Sign Up',
-                    labelColor: AppColors.brandPrimary600,
-                    onPressed: authState.isLoading ? null : _navigateToRegister,
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Terms and Conditions
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: B4Regular(
-                  text:
-                      'By continuing, you agree to our Terms of Service and Privacy Policy',
-                  color: AppColors.brandNeutral500,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),

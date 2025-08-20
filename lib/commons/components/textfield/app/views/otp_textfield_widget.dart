@@ -83,7 +83,7 @@ class _OtpTextfieldWidgetState extends State<OtpTextfieldWidget> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final totalGaps = widget.length - 1;
-    final fieldWidth = (screenWidth - 48 - (totalGaps * 24)) / widget.length;
+    final fieldWidth = (screenWidth - 48 - (totalGaps * 12)) / widget.length;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

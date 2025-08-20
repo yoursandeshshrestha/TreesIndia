@@ -4,16 +4,10 @@ import 'package:trees_india/commons/domain/usecases/refresh_token_usecase.dart';
 import 'package:trees_india/commons/domain/usecases/verify_otp_usecase.dart';
 import 'package:trees_india/commons/presenters/providers/auth_repository_provider.dart';
 import 'package:trees_india/pages/login_page/domain/usecases/login_usecase.dart';
-import 'package:trees_india/pages/register_page/domain/usecases/register_usecase.dart';
 
 final loginUsecaseProvider = Provider<LoginUsecase>((ref) {
   final authRepository = ref.read(authRepositoryProvider);
   return LoginUsecase(authRepository: authRepository);
-});
-
-final registerUsecaseProvider = Provider<RegisterUsecase>((ref) {
-  final authRepository = ref.read(authRepositoryProvider);
-  return RegisterUsecase(authRepository: authRepository);
 });
 
 final verifyOtpUsecaseProvider = Provider<VerifyOtpUsecase>((ref) {

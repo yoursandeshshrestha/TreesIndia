@@ -9,9 +9,6 @@ import 'package:trees_india/commons/domain/repositories/auth_repository.dart';
 import 'package:trees_india/pages/login_page/data/models/login_request_model.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_response_entity.dart';
-import 'package:trees_india/pages/register_page/data/models/register_request_model.dart';
-import 'package:trees_india/pages/register_page/domain/entities/register_request_entity.dart';
-import 'package:trees_india/pages/register_page/domain/entities/register_response_entity.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthDatasource authDatasource;
@@ -32,29 +29,6 @@ class AuthRepositoryImpl implements AuthRepository {
         print(
             "Repository creating error response: success=false, message=$errorMessage");
         return LoginResponseEntity(
-          success: false,
-          message: errorMessage,
-          timestamp: DateTime.now().toIso8601String(),
-        );
-      }
-      rethrow; // Re-throw other errors
-    }
-  }
-
-  @override
-  Future<RegisterResponseEntity> register(RegisterRequestEntity request) async {
-    final model = RegisterRequestModel(phone: request.phone);
-    try {
-      final response = await authDatasource.register(model);
-      return response.toEntity();
-    } catch (e) {
-      // Handle 409 errors at repository level and return a proper response
-      if (e.toString().contains('User already exists') ||
-          e.toString().contains('already registered')) {
-        final errorMessage = e.toString().replaceFirst('Exception: ', '');
-        print(
-            "Repository creating error response: success=false, message=$errorMessage");
-        return RegisterResponseEntity(
           success: false,
           message: errorMessage,
           timestamp: DateTime.now().toIso8601String(),
