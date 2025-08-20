@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:trees_india/commons/components/button/app/views/outline_button_widget.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
@@ -19,6 +20,20 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoggingOut = false;
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = 'Version ${packageInfo.version}+${packageInfo.buildNumber}';
+    });
+  }
 
   void _showLogoutConfirmation() {
     openCustomBottomSheet(
@@ -317,10 +332,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ),
                 _buildMenuItem(
                   icon: Icons.info_outline,
-                  label: 'About UC',
+                  label: 'About TreesIndia',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('About UC coming soon!')),
+                      const SnackBar(
+                          content: Text('About TreesIndia coming soon!')),
                     );
                   },
                 ),
@@ -344,7 +360,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 // Version
                 Center(
                   child: B4Regular(
-                    text: 'Version 7.6.15 R498',
+                    text: _appVersion.isNotEmpty ? _appVersion : '',
                     color: AppColors.brandNeutral400,
                   ),
                 ),

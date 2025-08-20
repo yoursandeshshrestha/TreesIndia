@@ -1,4 +1,4 @@
-enum AuthFlowState {
+enum LoginState {
   initial,
   loadingLogin,
   loadingRegister,
@@ -10,16 +10,16 @@ enum AuthFlowState {
   error,
 }
 
-class AuthFlowStateModel {
-  final AuthFlowState state;
+class LoginStateModel {
+  final LoginState state;
   final String? phoneNumber;
   final String? otp;
   final String? errorMessage;
   final String? successMessage;
   final bool isLoading;
 
-  const AuthFlowStateModel({
-    this.state = AuthFlowState.initial,
+  const LoginStateModel({
+    this.state = LoginState.initial,
     this.phoneNumber,
     this.otp,
     this.errorMessage,
@@ -27,15 +27,15 @@ class AuthFlowStateModel {
     this.isLoading = false,
   });
 
-  AuthFlowStateModel copyWith({
-    AuthFlowState? state,
+  LoginStateModel copyWith({
+    LoginState? state,
     String? phoneNumber,
     String? otp,
     String? errorMessage,
     String? successMessage,
     bool? isLoading,
   }) {
-    return AuthFlowStateModel(
+    return LoginStateModel(
       state: state ?? this.state,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       otp: otp ?? this.otp,
@@ -45,7 +45,7 @@ class AuthFlowStateModel {
     );
   }
 
-  AuthFlowStateModel clearMessages() {
+  LoginStateModel clearMessages() {
     return copyWith(
       errorMessage: "",
       successMessage: "",
@@ -54,6 +54,6 @@ class AuthFlowStateModel {
 
   @override
   String toString() {
-    return 'AuthFlowStateModel(state: $state, phoneNumber: $phoneNumber, isLoading: $isLoading, errorMessage: $errorMessage, successMessage: $successMessage)';
+    return 'LoginStateModel(state: $state, phoneNumber: $phoneNumber, isLoading: $isLoading, errorMessage: $errorMessage, successMessage: $successMessage)';
   }
 }

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import 'package:trees_india/commons/app/viewmodels/auth_state.dart'
-    as auth_flow;
+import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/button/app/views/text_button_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
@@ -12,7 +11,7 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/components/textfield/app/views/otp_textfield_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/auth_flow_provider.dart';
+import 'package:trees_india/commons/presenters/providers/login_provider.dart';
 
 class OtpVerificationPage extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -40,7 +39,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
       final phoneNumber = widget.phoneNumber.startsWith('+')
           ? widget.phoneNumber
           : '+${widget.phoneNumber}';
-      ref.read(authFlowProvider.notifier).setPhoneNumber(phoneNumber);
+      ref.read(loginProvider.notifier).setPhoneNumber(phoneNumber);
     });
   }
 
@@ -68,7 +67,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
   void _verifyOtp() {
     if (isOtpComplete) {
-      ref.read(authFlowProvider.notifier).verifyOtp(otpCode);
+      ref.read(loginProvider.notifier).verifyOtp(otpCode);
     }
   }
 
@@ -96,11 +95,10 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authFlowProvider);
+    final authState = ref.watch(loginProvider);
 
     // Listen to auth state changes
-    ref.listen<auth_flow.AuthFlowStateModel>(authFlowProvider,
-        (previous, current) {
+    ref.listen<LoginStateModel>(loginProvider, (previous, current) {
       // Only show error if it's different from the previous error to prevent loops
       if (current.errorMessage != null &&
           current.errorMessage != previous?.errorMessage) {
@@ -108,12 +106,12 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
         // Use addPostFrameCallback to avoid triggering during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            ref.read(authFlowProvider.notifier).clearMessages();
+            ref.read(loginProvider.notifier).clearMessages();
           }
         });
       }
 
-      if (current.state == auth_flow.AuthFlowState.authenticationSuccess) {
+      if (current.state == LoginState.authenticationSuccess) {
         _showSnackBar(
             current.successMessage ?? 'OTP verified successfully!', false);
         // Navigate to home page

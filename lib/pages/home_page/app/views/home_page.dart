@@ -1,8 +1,10 @@
 // lib/pages/home_page/app/views/home_page.dart
 
+import 'package:dotlottie_loader/dotlottie_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -222,11 +224,25 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.home,
-                          size: 80,
-                          color: AppColors.stateGreen600,
+                       
+
+                        Lottie.asset(
+                          "assets/lottie/location_fetching.json",
+                          repeat: true,
+                          width: 100,
+                          height: 100,
                         ),
+                        Lottie.asset(
+                          "assets/lottie/location_found.json",
+                          repeat: true,
+                          width: 100,
+                          height: 100,
+                        ),
+                        // const Icon(
+                        //   Icons.home,
+                        //   size: 80,
+                        //   color: AppColors.stateGreen600,
+                        // ),
                         const SizedBox(height: AppSpacing.lg),
                         H3Bold(
                           text: 'Home Page',

@@ -11,9 +11,7 @@ import 'package:trees_india/commons/components/textfield/app/views/email_textfie
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
-import 'package:trees_india/commons/presenters/providers/auth_flow_provider.dart';
 import 'package:trees_india/commons/utils/services/auth_notifier.dart';
-import 'package:trees_india/pages/profile_page/app/viewmodels/profile_state.dart';
 import '../viewmodels/profile_notifier.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {

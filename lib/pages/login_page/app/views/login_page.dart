@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/app/viewmodels/auth_state.dart'
-    as auth_flow;
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
-import 'package:trees_india/commons/components/button/app/views/text_button_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/textfield/app/views/numeric_textfiled_wo_space_widget.dart';
+import 'package:trees_india/commons/components/textfield/utilities/mobile_validator.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-
-import 'package:trees_india/commons/presenters/providers/auth_flow_provider.dart';
-import 'package:trees_india/commons/components/textfield/utilities/mobile_validator.dart';
-import 'package:lottie/lottie.dart';
+import 'package:trees_india/commons/presenters/providers/login_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -38,14 +33,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     // Clear error message when user starts typing
     if (phone.isNotEmpty) {
-      ref.read(authFlowProvider.notifier).clearMessages();
+      ref.read(loginProvider.notifier).clearMessages();
     }
   }
 
   void _login() async {
     if (_isPhoneValid) {
       final phoneNumber = '+91${_phoneController.text}';
-      await ref.read(authFlowProvider.notifier).login(phoneNumber);
+      await ref.read(loginProvider.notifier).login(phoneNumber);
       _navigateToOtpVerification(phoneNumber);
     }
   }
@@ -58,7 +53,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authFlowProvider);
+    final authState = ref.watch(loginProvider);
 
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,

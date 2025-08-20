@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/app/viewmodels/auth_state.dart'
-    as auth_flow;
+import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
 import 'package:trees_india/commons/data/models/token_model.dart';
 import 'package:trees_india/commons/data/models/user_model.dart';
 import 'package:trees_india/commons/domain/entities/otp_request_entity.dart';
@@ -16,8 +15,8 @@ import 'package:trees_india/commons/utils/services/notification_service.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
 import 'package:trees_india/pages/login_page/domain/usecases/login_usecase.dart';
 
-class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
-    with ResettableNotifier<auth_flow.AuthFlowStateModel> {
+class LoginNotifier extends StateNotifier<LoginStateModel>
+    with ResettableNotifier<LoginStateModel> {
   final LoginUsecase loginUsecase;
   final VerifyOtpUsecase verifyOtpUsecase;
   final RefreshTokenUsecase refreshTokenUsecase;
@@ -27,7 +26,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   final Ref ref;
   bool _mounted = true;
 
-  AuthFlowNotifier({
+  LoginNotifier({
     required this.loginUsecase,
     required this.verifyOtpUsecase,
     required this.refreshTokenUsecase,
@@ -35,7 +34,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
     required this.localStorageService,
     required this.notificationService,
     required this.ref,
-  }) : super(const auth_flow.AuthFlowStateModel());
+  }) : super(const LoginStateModel());
 
   @override
   void dispose() {
@@ -48,7 +47,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   @override
   void reset() {
     if (!_mounted) return;
-    state = const auth_flow.AuthFlowStateModel();
+    state = const LoginStateModel();
   }
 
   void clearMessages() {
@@ -62,7 +61,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   Future<void> login(String phoneNumber) async {
     if (!_mounted) return;
     state = state.copyWith(
-      state: auth_flow.AuthFlowState.loadingLogin,
+      state: LoginState.loadingLogin,
       phoneNumber: phoneNumber,
       isLoading: true,
       errorMessage: null,
@@ -76,7 +75,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
       if (response.success) {
         if (!_mounted) return;
         state = state.copyWith(
-          state: auth_flow.AuthFlowState.loginSuccess,
+          state: LoginState.loginSuccess,
           isLoading: false,
           successMessage: response.message,
         );
@@ -85,7 +84,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
       } else {
         if (!_mounted) return;
         state = state.copyWith(
-          state: auth_flow.AuthFlowState.error,
+          state: LoginState.error,
           isLoading: false,
           errorMessage: response.message,
         );
@@ -100,7 +99,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
       String errorMessage = 'Login failed. Please try again.';
 
       state = state.copyWith(
-        state: auth_flow.AuthFlowState.error,
+        state: LoginState.error,
         isLoading: false,
         errorMessage: errorMessage,
       );
@@ -113,14 +112,14 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   Future<void> verifyOtp(String otp) async {
     if (state.phoneNumber == null) {
       state = state.copyWith(
-        state: auth_flow.AuthFlowState.error,
+        state: LoginState.error,
         errorMessage: 'Phone number is required for OTP verification.',
       );
       return;
     }
 
     state = state.copyWith(
-      state: auth_flow.AuthFlowState.loadingOtpVerification,
+      state: LoginState.loadingOtpVerification,
       otp: otp,
       isLoading: true,
       errorMessage: null,
@@ -143,7 +142,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
 
         if (!_mounted) return;
         state = state.copyWith(
-          state: auth_flow.AuthFlowState.authenticationSuccess,
+          state: LoginState.authenticationSuccess,
           isLoading: false,
           successMessage: response.message,
         );
@@ -155,7 +154,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
         await ref.read(authProvider.notifier).checkAuthState();
       } else {
         state = state.copyWith(
-          state: auth_flow.AuthFlowState.error,
+          state: LoginState.error,
           isLoading: false,
           errorMessage: response.message,
         );
@@ -165,7 +164,7 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
     } catch (e) {
       debugPrint('OTP verification error: $e');
       state = state.copyWith(
-        state: auth_flow.AuthFlowState.error,
+        state: LoginState.error,
         isLoading: false,
         errorMessage: 'OTP verification failed. Please try again.',
       );
@@ -178,9 +177,11 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
   Future<void> _saveTokensToStorage(
       String accessToken, String refreshToken) async {
     try {
-      debugPrint('🔐 Saving tokens - Access token length: ${accessToken.length}');
-      debugPrint('🔐 Saving tokens - Refresh token length: ${refreshToken.length}');
-      
+      debugPrint(
+          '🔐 Saving tokens - Access token length: ${accessToken.length}');
+      debugPrint(
+          '🔐 Saving tokens - Refresh token length: ${refreshToken.length}');
+
       final tokenModel = TokenModel(
         authToken: accessToken,
         refreshToken: refreshToken,
@@ -197,10 +198,11 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
 
       await localStorageService.saveData('user_profile', userModel.toJson());
       debugPrint('✅ Tokens saved to local storage successfully');
-      
+
       // Verify tokens were saved correctly
       final savedData = await localStorageService.getData('user_profile');
-      debugPrint('🔍 Verification - Saved data: ${savedData != null ? "Data found" : "No data"}');
+      debugPrint(
+          '🔍 Verification - Saved data: ${savedData != null ? "Data found" : "No data"}');
     } catch (e) {
       debugPrint('❌ Error saving tokens to storage: $e');
     }
@@ -284,6 +286,6 @@ class AuthFlowNotifier extends StateNotifier<auth_flow.AuthFlowStateModel>
 
   void resetState() {
     if (!_mounted) return;
-    state = const auth_flow.AuthFlowStateModel();
+    state = const LoginStateModel();
   }
 }

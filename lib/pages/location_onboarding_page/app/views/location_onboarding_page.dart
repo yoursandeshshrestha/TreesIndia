@@ -60,7 +60,7 @@ class _LocationOnboardingPageState
         (previous, next) {
       if (next is LocationOnboardingLocationSaved) {
         if (_isFirstLogin == true) {
-          context.go('/home');
+          context.go('/location-loading');
         } else {
           Navigator.of(context).pop(true);
         }
@@ -86,37 +86,114 @@ class _LocationOnboardingPageState
 
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppSpacing.xl),
-              H2Bold(
-                text: _isFirstLogin == false
-                    ? 'Change Your Location'
-                    : 'Select Your Location',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              B2Medium(
-                text: _isFirstLogin == false
-                    ? 'Choose a new location to update your preferences.'
-                    : 'Please select your location to get better recommendations and services near you.',
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _buildSearchBar(),
-              const SizedBox(height: AppSpacing.md),
-              _buildUseCurrentLocationButton(),
-              const SizedBox(height: AppSpacing.md),
-              const Divider(),
-              const SizedBox(height: AppSpacing.md),
-              Expanded(
-                child: _buildSearchResults(state),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
+          onPressed: () => context.pop(),
         ),
+      ),
+      body: Column(
+        children: [
+          // Map-like area with location pin
+          Expanded(
+            flex: 3,
+            child: Container(
+              width: double.infinity,
+              color: AppColors.brandNeutral100,
+              child: Stack(
+                children: [
+                  // Mock map background
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.brandNeutral200,
+                      border: Border.all(color: AppColors.brandNeutral300),
+                    ),
+                  ),
+                  // Location pin in center
+                  const Center(
+                    child: Icon(
+                      Icons.location_on,
+                      size: 48,
+                      color: AppColors.brandPrimary600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Bottom content area
+          Expanded(
+            flex: 2,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: AppSpacing.sm),
+                  H3Bold(
+                    text: 'Where do you want your service?',
+                    color: AppColors.brandNeutral900,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  // Current location button
+                  SizedBox(
+                    width: double.infinity,
+                    child: SolidButtonWidget(
+                      label: state is LocationOnboardingLoading
+                          ? 'Getting Location...'
+                          : 'At my current location',
+                      icon: state is LocationOnboardingLoading 
+                          ? null 
+                          : Icons.my_location,
+                      isLoading: state is LocationOnboardingLoading,
+                      onPressed: state is LocationOnboardingLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(locationOnboardingNotifierProvider.notifier)
+                                  .getCurrentLocation(
+                                      isFirstLogin: _isFirstLogin ?? true);
+                            },
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  // Manual location button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        context.push('/manual-location');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: AppColors.brandPrimary600),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: B2Medium(
+                        text: "I'll enter my location manually",
+                        color: AppColors.brandPrimary600,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

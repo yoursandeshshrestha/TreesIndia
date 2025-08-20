@@ -61,6 +61,8 @@ dependencies:
   geolocator: ^14.0.2
   lottie: ^3.1.2
   google_fonts: ^6.2.1
+  dotlottie_loader: ^0.0.5
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
