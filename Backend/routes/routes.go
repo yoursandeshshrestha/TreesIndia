@@ -35,12 +35,14 @@ func SetupRoutes(r *gin.Engine) {
 		SetupSubcategoryRoutes(v1)
 		SetupServiceRoutes(v1)
 		SetupLocationRoutes(v1)
+		SetupGeoapifyRoutes(v1)
 		SetupRoleApplicationRoutes(v1)
 		SetupUserRoutes(v1)
 		SetupPropertyRoutes(v1)
 		SetupSubscriptionRoutes(v1)
 		SetupWalletRoutes(v1)
 		SetupRazorpayRoutes(v1)
+		SetupChatRoutes(v1)
 		
 		// Booking routes with booking system middleware
 		bookingMiddleware := middleware.NewDynamicConfigMiddleware()

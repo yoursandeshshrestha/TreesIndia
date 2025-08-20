@@ -21,11 +21,18 @@ func SetupLocationRoutes(router *gin.RouterGroup) {
 		// GET /api/v1/locations/user/me - Get current user's location (MUST come before /:id)
 		locations.GET("/user/me", locationController.GetLocationByUserID)
 		
+
+		
+		// PUT /api/v1/locations/user/me - Update current user's location
+		locations.PUT("/user/me", locationController.UpdateUserLocation)
+		
 		// GET /api/v1/locations/:id - Get location by ID
 		locations.GET("/:id", locationController.GetLocationByID)
 		
 		// PUT /api/v1/locations/:id - Update location
 		locations.PUT("/:id", locationController.UpdateLocation)
+		
+
 		
 		// DELETE /api/v1/locations/:id - Delete location
 		locations.DELETE("/:id", locationController.DeleteLocation)
