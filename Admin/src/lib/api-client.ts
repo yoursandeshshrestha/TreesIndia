@@ -53,9 +53,6 @@ const createApiClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
-    headers: {
-      "Content-Type": "application/json",
-    },
   });
 
   // Request interceptor
@@ -67,11 +64,13 @@ const createApiClient = (): AxiosInstance => {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Log request in development
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
-        );
+      // Handle Content-Type based on data type
+      if (config.data instanceof FormData) {
+        // For FormData, let axios set the Content-Type automatically
+        delete config.headers["Content-Type"];
+      } else {
+        // For JSON data, set the Content-Type
+        config.headers["Content-Type"] = "application/json";
       }
 
       return config;
@@ -85,13 +84,6 @@ const createApiClient = (): AxiosInstance => {
   // Response interceptor
   client.interceptors.response.use(
     (response: AxiosResponse) => {
-      // Log response in development
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          `✅ API Response: ${response.status} ${response.config.url}`
-        );
-      }
-
       return response;
     },
     (error) => {

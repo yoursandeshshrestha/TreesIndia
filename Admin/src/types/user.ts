@@ -17,7 +17,6 @@ export interface User {
   is_active: boolean;
   role_application_status: RoleApplicationStatus;
   wallet_balance: number;
-  wallet_limit: number;
   has_active_subscription: boolean;
   subscription_expiry_date?: string;
   avatar?: string;
@@ -35,7 +34,6 @@ export interface CreateUserRequest {
   is_active: boolean;
   role_application_status: RoleApplicationStatus;
   wallet_balance: number;
-  wallet_limit: number;
   has_active_subscription: boolean;
   subscription_expiry_date?: string;
 }

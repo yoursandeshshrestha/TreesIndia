@@ -1,8 +1,10 @@
 // Export all slice reducers
 export { sidebarReducer } from "./sidebar";
+export { default as commandPaletteReducer } from "./commandPalette/commandPalette.slice";
 
 // Export all slice actions
 export { toggleSidebar, setSidebarOpen } from "./sidebar";
+export { open, close, toggle } from "./commandPalette/commandPalette.slice";
 
 // Export all selectors
 export {

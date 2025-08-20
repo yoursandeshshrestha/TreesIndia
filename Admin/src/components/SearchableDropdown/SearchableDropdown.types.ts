@@ -23,4 +23,5 @@ export interface SearchableDropdownProps {
   loadingMessage?: string;
   maxHeight?: string;
   width?: string;
+  onOpen?: () => void;
 }

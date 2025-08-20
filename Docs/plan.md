@@ -2,7 +2,7 @@
 
 ## 🎯 **Project Overview**
 
-Implementing the enhanced scope with three main modules (Home Services, Contractor, Real Estate), credit system, wallet system, subscription model, AI assistant, account conversion system, and comprehensive booking management. This plan focuses on creating a complete platform with AI assistance, user type conversions, and advanced booking features.
+Implementing the enhanced scope with three main modules (Home Services, Construction Services, Marketplace), advanced booking systems with time slot management, real-time worker tracking, inquiry-based services with custom quotes, and comprehensive marketplace features. This plan focuses on creating a complete platform with advanced booking, real-time communication, and subscription-based marketplace features.
 
 ---
 
@@ -15,440 +15,511 @@ Implementing the enhanced scope with three main modules (Home Services, Contract
 - [ ] Create OTP generation and sending
 - [ ] Add OTP verification logic
 - [ ] Implement auto-account creation
-- [ ] Add auto-credit assignment (3 credits)
-- [ ] Add auto-wallet initialization
 - [ ] Create JWT token generation
 - [ ] Add role-based authentication
 - [ ] Remove email/password complexity
 
-### **Step 1.2: Credit System Implementation**
+### **Step 1.2: Module Structure Implementation**
 
-- [ ] Create `backend/models/admin_config.go` for system configuration
-- [ ] Add credit tracking to user model
-- [ ] Create credit validation middleware
-- [ ] Implement credit deduction logic
-- [ ] Add credit purchase functionality
+- [ ] Create `backend/models/module.go` for module management
+- [ ] Update `backend/models/category.go` with module types
+- [ ] Add module-specific configurations
+- [ ] Implement module-based routing
+- [ ] Create module access control
 
-### **Step 1.3: Wallet System Implementation**
+### **Step 1.3: Service Type Management**
 
-- [ ] Create `backend/models/wallet_transaction.go`
-- [ ] Integrate Razorpay for wallet recharge
-- [ ] Implement wallet balance tracking
-- [ ] Add wallet transaction history
-- [ ] Create wallet management endpoints
-
----
-
-## 🔧 **Phase 2: Subscription System**
-
-### **Step 2.1: Subscription Models**
-
-- [ ] Create `backend/models/subscription_plan.go`
-- [ ] Create `backend/models/user_subscription.go`
-- [ ] Add subscription fields to user model
-- [ ] Implement subscription validation logic
-
-### **Step 2.2: Subscription Management**
-
-- [ ] Create `backend/controllers/subscription_controller.go`
-- [ ] Implement subscription purchase flow
-- [ ] Add subscription validation middleware
-- [ ] Create admin subscription plan management
-- [ ] Add subscription status tracking
-
-### **Step 2.3: Admin Configuration**
-
-- [ ] Create `backend/controllers/admin_config_controller.go`
-- [ ] Implement credit limit configuration
-- [ ] Add wallet limit configuration
-- [ ] Create subscription plan management
-- [ ] Add system configuration endpoints
+- [ ] Update `backend/models/service.go` for service types
+- [ ] Add fixed price service logic
+- [ ] Implement inquiry-based service system
+- [ ] Create service pricing management
+- [ ] Add service availability tracking
 
 ---
 
-## 🤖 **Phase 3: AI Assistant System**
+## 🔧 **Phase 2: Home Services Module**
 
-### **Step 3.1: AI Integration**
+### **Step 2.1: Service Categories & Subcategories**
 
-- [ ] Create `backend/models/ai_conversation.go`
-- [ ] Integrate OpenAI GPT-4 API
-- [ ] Implement conversation history tracking
-- [ ] Add context awareness for user interactions
-- [ ] Create AI response caching system
+- [ ] Create `backend/models/service_category.go`
+- [ ] Implement subcategory management
+- [ ] Add service category hierarchy
+- [ ] Create service listing system
+- [ ] Implement service filtering
 
-### **Step 3.2: AI Features**
+### **Step 2.2: Fixed Price Services**
 
-- [ ] Create `backend/controllers/ai_controller.go`
-- [ ] Implement smart property search
-- [ ] Add service search assistance
-- [ ] Create conversational interface
-- [ ] Add real-time data connection to listings
+- [ ] Create `backend/models/fixed_price_service.go`
+- [ ] Implement time slot management
+- [ ] Add worker availability tracking
+- [ ] Create booking validation logic
+- [ ] Implement instant booking system
 
-### **Step 3.3: AI Management**
+### **Step 2.3: Inquiry-based Services**
 
-- [ ] Create AI conversation management
-- [ ] Implement response optimization
-- [ ] Add multi-language support (Hindi/English)
-- [ ] Create real-time data integration
-- [ ] Add AI performance tracking
+- [ ] Create `backend/models/inquiry_service.go`
+- [ ] Implement inquiry submission system
+- [ ] Add admin chat interface
+- [ ] Create quote generation system
+- [ ] Implement quote acceptance flow
 
----
+### **Step 2.4: Time Slot Management**
 
-## 👥 **Phase 4: Account Conversion System**
-
-### **Step 4.1: Conversion Models**
-
-- [ ] Create `backend/models/account_conversion.go`
-- [ ] Add conversion fields to user model
-- [ ] Implement conversion status tracking
-- [ ] Add document upload functionality
-- [ ] Create conversion approval workflow
-
-### **Step 4.2: Conversion Types**
-
-- [ ] Create worker application system
-- [ ] Implement broker conversion system
-- [ ] Add contractor conversion system
-- [ ] Create document verification system
-- [ ] Add admin approval interface
-- [ ] Implement worker management system
-
-### **Step 4.3: Role Management**
-
-- [ ] Implement role-based access control
-- [ ] Add permission management
-- [ ] Create role-specific features
-- [ ] Add role transition logic
-- [ ] Create role analytics
-- [ ] Implement admin worker assignment
+- [ ] Create `backend/models/time_slot.go`
+- [ ] Implement worker schedule management
+- [ ] Add time slot availability logic
+- [ ] Create booking conflict detection
+- [ ] Implement dynamic time slot generation
 
 ---
 
-## 📅 **Phase 5: Enhanced Booking System**
+## 👷 **Phase 3: Worker Management System**
 
-### **Step 5.1: Booking Models**
+### **Step 3.1: Worker Models**
+
+- [ ] Create `backend/models/worker.go`
+- [ ] Implement worker profile management
+- [ ] Add skill and certification tracking
+- [ ] Create worker availability system
+- [ ] Implement worker rating system
+
+### **Step 3.2: Worker Assignment**
+
+- [ ] Create `backend/models/worker_assignment.go`
+- [ ] Implement admin assignment interface
+- [ ] Add worker selection algorithm
+- [ ] Create assignment notification system
+- [ ] Implement assignment tracking
+
+### **Step 3.3: Real-time Tracking**
+
+- [ ] Create `backend/models/location_tracking.go`
+- [ ] Implement live location sharing
+- [ ] Add location history tracking
+- [ ] Create location privacy controls
+- [ ] Implement real-time updates
+
+---
+
+## 🏗️ **Phase 4: Construction Services Module**
+
+### **Step 4.1: Construction Service Models**
+
+- [ ] Create `backend/models/construction_service.go`
+- [ ] Implement consultation booking system
+- [ ] Add requirement analysis forms
+- [ ] Create project scope management
+- [ ] Implement construction service types
+
+### **Step 4.2: Consultation System**
+
+- [ ] Create `backend/models/consultation.go`
+- [ ] Implement consultation scheduling
+- [ ] Add admin consultation interface
+- [ ] Create requirement discussion system
+- [ ] Implement consultation tracking
+
+### **Step 4.3: Quote Management**
+
+- [ ] Create `backend/models/quote.go`
+- [ ] Implement quote generation system
+- [ ] Add detailed cost breakdown
+- [ ] Create quote approval workflow
+- [ ] Implement quote acceptance system
+
+---
+
+## 🏪 **Phase 5: Marketplace Module**
+
+### **Step 5.1: Enhanced Property System**
+
+- [ ] Update `backend/models/property.go` for marketplace features
+- [ ] Implement TreesIndia Assured system
+- [ ] Add property verification workflow
+- [ ] Create property analytics
+- [ ] Implement property search optimization
+
+### **Step 5.2: Subscription Features**
+
+- [ ] Create `backend/models/marketplace_subscription.go`
+- [ ] Implement vendor list management
+- [ ] Add workforce section
+- [ ] Create project listing system
+- [ ] Implement subscription benefits
+
+### **Step 5.3: Vendor & Workforce Management**
+
+- [ ] Create `backend/models/vendor.go`
+- [ ] Implement vendor verification system
+- [ ] Add workforce directory
+- [ ] Create vendor rating system
+- [ ] Implement vendor communication
+
+---
+
+## 💬 **Phase 6: Real-time Communication System**
+
+### **Step 6.1: Chat System**
+
+- [ ] Create `backend/models/chat.go`
+- [ ] Implement WebSocket connections
+- [ ] Add real-time messaging
+- [ ] Create chat history management
+- [ ] Implement message encryption
+
+### **Step 6.2: Call Masking**
+
+- [ ] Create `backend/models/call_masking.go`
+- [ ] Implement temporary number generation
+- [ ] Add call routing system
+- [ ] Create call logging
+- [ ] Implement call privacy controls
+
+### **Step 6.3: Notification System**
+
+- [ ] Create `backend/models/notification.go`
+- [ ] Implement push notifications
+- [ ] Add SMS notifications
+- [ ] Create email notifications
+- [ ] Implement notification preferences
+
+---
+
+## 📅 **Phase 7: Advanced Booking System**
+
+### **Step 7.1: Booking Models**
 
 - [ ] Create `backend/models/booking.go`
 - [ ] Create `backend/models/booking_inquiry.go`
 - [ ] Create `backend/models/booking_cart.go`
-- [ ] Create `backend/models/worker_assignment.go`
-- [ ] Create `backend/models/location_tracking.go`
+- [ ] Create `backend/models/booking_timeslot.go`
+- [ ] Create `backend/models/booking_status.go`
 
-### **Step 5.2: Service Types**
-
-- [ ] Implement fixed price services
-- [ ] Create inquiry-based services
-- [ ] Add time slot management
-- [ ] Implement service pricing logic
-- [ ] Create service availability tracking
-
-### **Step 5.3: Booking Flow**
+### **Step 7.2: Booking Flow**
 
 - [ ] Create `backend/controllers/booking_controller.go`
-- [ ] Implement instant booking for fixed price
-- [ ] Add inquiry submission and review
-- [ ] Create quote generation system
-- [ ] Implement booking confirmation
-- [ ] Add user-worker communication system
+- [ ] Implement fixed price booking flow
+- [ ] Add inquiry-based booking flow
+- [ ] Create booking confirmation system
+- [ ] Implement booking cancellation
 
-### **Step 5.4: Multiple Service Booking**
+### **Step 7.3: Payment Integration**
 
-- [ ] Implement cart-based booking system
-- [ ] Add package-based booking system
-- [ ] Create sequential booking system
-- [ ] Add bulk discount logic
-- [ ] Implement flexible scheduling
-
----
-
-## 🛣️ **Phase 6: Three Main Modules**
-
-### **Step 6.1: Home Services Module**
-
-- [ ] Update `backend/models/service.go` for new structure
-- [ ] Create service category hierarchy (plumbing, cleaning, AC repair, etc.)
-- [ ] Implement service listing with pricing
-- [ ] Add service provider profiles
-- [ ] Create service booking system with time slots
-- [ ] Add real-time location tracking
-- [ ] Implement review and rating system
-
-### **Step 6.2: Contractor Module**
-
-- [ ] Create `backend/models/contractor.go`
-- [ ] Implement contractor profiles with skills
-- [ ] Add contractor filtering system
-- [ ] Create contractor contact system (masked calls)
-- [ ] Add contractor rating and review system
-- [ ] Implement availability management
-
-### **Step 6.3: Real Estate Module**
-
-- [ ] Update `backend/models/property.go` with credit validation
-- [ ] Implement credit-based property posting
-- [ ] Add property search and filtering
-- [ ] Create property contact system
-- [ ] Add property viewing scheduling
-- [ ] Implement instant purchase option
+- [ ] Update Razorpay integration for new booking types
+- [ ] Implement quote payment processing
+- [ ] Add milestone payment system
+- [ ] Create payment confirmation
+- [ ] Implement refund processing
 
 ---
 
-## 🧪 **Phase 7: API Endpoints & Routes**
+## 🛣️ **Phase 8: API Endpoints & Routes**
 
-### **Step 7.1: Authentication Routes**
+### **Step 8.1: Authentication Routes**
 
 - [ ] `POST /api/auth/request-otp` - Send OTP to phone
 - [ ] `POST /api/auth/verify-otp` - Verify OTP and login
 - [ ] `POST /api/auth/refresh-token` - Refresh JWT token
 - [ ] `POST /api/auth/logout` - User logout
 
-### **Step 7.2: Credit & Wallet Routes**
+### **Step 8.2: Home Services Routes**
 
-- [ ] `GET /api/user/credits` - Get user credits
-- [ ] `POST /api/user/buy-credits` - Purchase credits
-- [ ] `GET /api/user/wallet` - Get wallet balance
-- [ ] `POST /api/user/wallet/recharge` - Recharge wallet
-- [ ] `GET /api/user/wallet/transactions` - Get transaction history
+- [ ] `GET /api/home-services/categories` - Get service categories
+- [ ] `GET /api/home-services/services/{category_id}` - Get services by category
+- [ ] `GET /api/home-services/timeslots` - Get available time slots
+- [ ] `POST /api/home-services/book-fixed` - Book fixed price service
+- [ ] `POST /api/home-services/submit-inquiry` - Submit inquiry
+- [ ] `GET /api/home-services/inquiries` - Get user inquiries
+- [ ] `POST /api/home-services/accept-quote` - Accept quote
 
-### **Step 7.3: Subscription Routes**
+### **Step 8.3: Construction Services Routes**
 
-- [ ] `GET /api/subscriptions/plans` - Get available plans
-- [ ] `POST /api/subscriptions/purchase` - Buy subscription
-- [ ] `GET /api/subscriptions/my-subscription` - Get user subscription
-- [ ] `PUT /api/subscriptions/cancel` - Cancel subscription
+- [ ] `GET /api/construction-services/types` - Get service types
+- [ ] `POST /api/construction-services/book-consultation` - Book consultation
+- [ ] `GET /api/construction-services/consultations` - Get consultations
+- [ ] `POST /api/construction-services/generate-quote` - Generate quote
+- [ ] `POST /api/construction-services/accept-quote` - Accept quote
 
-### **Step 7.4: AI Assistant Routes**
+### **Step 8.4: Marketplace Routes**
 
-- [ ] `POST /api/ai/chat` - Send message to AI
-- [ ] `GET /api/ai/conversations` - Get conversation history
-- [ ] `POST /api/ai/property-search` - AI property search
-- [ ] `POST /api/ai/service-search` - AI service search
+- [ ] `GET /api/marketplace/properties` - Get properties
+- [ ] `POST /api/marketplace/properties` - Create property
+- [ ] `GET /api/marketplace/vendors` - Get vendor list
+- [ ] `GET /api/marketplace/workforce` - Get workforce list
+- [ ] `POST /api/marketplace/projects` - List project
+- [ ] `GET /api/marketplace/subscription-features` - Get subscription features
 
-### **Step 7.5: Account Conversion Routes**
+### **Step 8.5: Worker Management Routes**
 
-- [ ] `POST /api/conversions/worker` - Convert to worker
-- [ ] `POST /api/conversions/broker` - Convert to broker
-- [ ] `POST /api/conversions/contractor` - Convert to contractor
-- [ ] `GET /api/conversions/status` - Get conversion status
-- [ ] `POST /api/conversions/documents` - Upload documents
+- [ ] `GET /api/workers` - Get all workers
+- [ ] `POST /api/workers` - Add new worker
+- [ ] `PUT /api/workers/{id}` - Update worker
+- [ ] `POST /api/workers/assign` - Assign worker to booking
+- [ ] `GET /api/workers/location/{id}` - Get worker location
+- [ ] `POST /api/workers/location` - Update worker location
 
-### **Step 7.6: Booking Routes**
+### **Step 8.6: Real-time Communication Routes**
 
-- [ ] `POST /api/bookings/create` - Create booking
-- [ ] `POST /api/bookings/inquiry` - Submit inquiry
-- [ ] `GET /api/bookings/list` - Get user bookings
-- [ ] `GET /api/bookings/{id}` - Get booking details
-- [ ] `POST /api/bookings/cart` - Add to booking cart
-- [ ] `POST /api/bookings/cart/checkout` - Checkout cart
-- [ ] `GET /api/bookings/timeslots` - Get available time slots
+- [ ] `GET /api/chat/conversations` - Get chat conversations
+- [ ] `POST /api/chat/send-message` - Send message
+- [ ] `GET /api/chat/messages/{conversation_id}` - Get messages
+- [ ] `POST /api/calls/mask-number` - Generate masked number
+- [ ] `POST /api/calls/initiate` - Initiate call
 
-### **Step 7.7: Module-Specific Routes**
+### **Step 8.7: Admin Routes**
 
-#### **Home Services:**
-
-- [ ] `GET /api/services/categories` - Get service categories
-- [ ] `GET /api/services/list/{category_id}` - Get services by category
-- [ ] `POST /api/services/book` - Book a service
-- [ ] `GET /api/services/timeslots` - Get service time slots
-
-#### **Contractor:**
-
-- [ ] `GET /api/contractors` - Get contractors list
-- [ ] `GET /api/contractors/filter` - Filter contractors
-- [ ] `POST /api/contractors/contact` - Contact contractor
-- [ ] `GET /api/contractors/{id}/availability` - Get availability
-
-#### **Real Estate:**
-
-- [ ] `POST /api/properties` - Create property (with credit check)
-- [ ] `GET /api/properties` - Get properties list
-- [ ] `GET /api/properties/search` - Search properties
-- [ ] `POST /api/properties/{id}/purchase` - Instant purchase
-- [ ] `POST /api/properties/{id}/visit` - Schedule visit
-
-### **Step 7.8: Admin Routes**
-
-- [ ] `GET /api/admin/config` - Get system configuration
-- [ ] `PUT /api/admin/config` - Update system configuration
-- [ ] `GET /api/admin/conversions/pending` - Get pending conversions
-- [ ] `PUT /api/admin/conversions/{id}/approve` - Approve conversion
 - [ ] `GET /api/admin/bookings/pending` - Get pending bookings
 - [ ] `POST /api/admin/bookings/{id}/assign-worker` - Assign worker
 - [ ] `GET /api/admin/workers` - Get all workers
-- [ ] `POST /api/admin/workers` - Add new worker
-- [ ] `GET /api/admin/ai/analytics` - Get AI analytics
+- [ ] `POST /api/admin/quotes/generate` - Generate quote
+- [ ] `GET /api/admin/inquiries/pending` - Get pending inquiries
+- [ ] `PUT /api/admin/inquiries/{id}/respond` - Respond to inquiry
+- [ ] `GET /api/admin/analytics` - Get platform analytics
 
 ---
 
-## 📊 **Phase 8: Database Schema Updates**
+## 📊 **Phase 9: Database Schema Updates**
 
-### **Step 8.1: New Tables**
+### **Step 9.1: New Tables**
 
 ```sql
--- AI Conversations
-ai_conversations (
+-- Module Management
+modules (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    message TEXT NOT NULL,
-    response TEXT NOT NULL,
-    context JSONB,
-    created_at TIMESTAMP
-);
-
--- Account Conversions
-account_conversions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    conversion_type VARCHAR(50), -- 'worker', 'broker', 'contractor'
-    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
-    details JSONB, -- conversion-specific details
-    documents TEXT[], -- document URLs
-    admin_notes TEXT,
-    created_at TIMESTAMP
-);
-
--- Bookings
-bookings (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    service_id INTEGER REFERENCES services(id),
-    worker_id INTEGER REFERENCES users(id),
-    status VARCHAR(20) DEFAULT 'pending',
-    scheduled_time TIMESTAMP,
-    address TEXT,
+    name VARCHAR(50) NOT NULL,
     description TEXT,
-    price DECIMAL,
-    payment_status VARCHAR(20) DEFAULT 'pending',
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP
 );
 
--- Booking Inquiries
-booking_inquiries (
+-- Service Categories with Module Types
+ALTER TABLE categories ADD COLUMN module_type VARCHAR(20) DEFAULT 'home_service';
+ALTER TABLE categories ADD COLUMN parent_category_id BIGINT REFERENCES categories(id);
+
+-- Services with Service Types
+ALTER TABLE services ADD COLUMN service_type VARCHAR(20) DEFAULT 'fixed_price';
+ALTER TABLE services ADD COLUMN inquiry_form JSONB;
+ALTER TABLE services ADD COLUMN time_slot_duration INTEGER DEFAULT 60;
+ALTER TABLE services ADD COLUMN max_workers INTEGER DEFAULT 1;
+
+-- Time Slots
+time_slots (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    service_id INTEGER REFERENCES services(id),
-    details JSONB,
-    status VARCHAR(20) DEFAULT 'pending',
-    admin_quote DECIMAL,
-    user_accepted BOOLEAN,
+    service_id BIGINT REFERENCES services(id),
+    worker_id BIGINT REFERENCES workers(id),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    is_available BOOLEAN DEFAULT true,
     created_at TIMESTAMP
 );
 
--- Booking Carts
-booking_carts (
+-- Workers
+workers (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    items JSONB, -- array of booking items
-    total_amount DECIMAL,
-    status VARCHAR(20) DEFAULT 'active',
+    user_id BIGINT REFERENCES users(id),
+    skills JSONB,
+    service_areas TEXT[],
+    working_hours JSONB,
+    current_location JSONB,
+    is_active BOOLEAN DEFAULT true,
+    rating DECIMAL DEFAULT 0,
+    total_bookings INTEGER DEFAULT 0,
     created_at TIMESTAMP
 );
 
 -- Worker Assignments
 worker_assignments (
     id SERIAL PRIMARY KEY,
-    booking_id INTEGER REFERENCES bookings(id),
-    worker_id INTEGER REFERENCES users(id),
-    assigned_by INTEGER REFERENCES users(id),
+    booking_id BIGINT REFERENCES bookings(id),
+    worker_id BIGINT REFERENCES workers(id),
+    assigned_by BIGINT REFERENCES users(id),
     status VARCHAR(20) DEFAULT 'assigned',
     assigned_at TIMESTAMP
 );
 
--- Worker Management
-workers (
+-- Bookings
+bookings (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    skills JSONB,
-    experience_years INTEGER,
-    service_areas TEXT[],
+    user_id BIGINT REFERENCES users(id),
+    service_id BIGINT REFERENCES services(id),
+    worker_id BIGINT REFERENCES workers(id),
+    booking_type VARCHAR(20), -- 'fixed_price', 'inquiry_based'
+    status VARCHAR(20) DEFAULT 'pending',
+    scheduled_time TIMESTAMP,
+    completion_time TIMESTAMP,
+    price DECIMAL,
+    payment_status VARCHAR(20) DEFAULT 'pending',
+    address TEXT,
+    description TEXT,
+    created_at TIMESTAMP
+);
+
+-- Booking Inquiries
+booking_inquiries (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    service_id BIGINT REFERENCES services(id),
+    requirements TEXT,
+    budget DECIMAL,
+    timeline VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'pending',
+    admin_response TEXT,
+    created_at TIMESTAMP
+);
+
+-- Quotes
+quotes (
+    id SERIAL PRIMARY KEY,
+    inquiry_id BIGINT REFERENCES booking_inquiries(id),
+    amount DECIMAL,
+    breakdown JSONB,
+    validity_days INTEGER DEFAULT 7,
+    status VARCHAR(20) DEFAULT 'pending',
+    accepted_at TIMESTAMP,
+    created_at TIMESTAMP
+);
+
+-- Construction Consultations
+construction_consultations (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    service_type VARCHAR(50),
+    requirements TEXT,
+    budget DECIMAL,
+    timeline VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'pending',
+    admin_notes TEXT,
+    created_at TIMESTAMP
+);
+
+-- Chat Conversations
+chat_conversations (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    worker_id BIGINT REFERENCES workers(id),
+    booking_id BIGINT REFERENCES bookings(id),
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP
 );
 
--- User-Worker Communication
-worker_communications (
+-- Chat Messages
+chat_messages (
     id SERIAL PRIMARY KEY,
-    booking_id INTEGER REFERENCES bookings(id),
-    user_id INTEGER REFERENCES users(id),
-    worker_id INTEGER REFERENCES users(id),
-    message_type VARCHAR(20), -- 'chat', 'call'
+    conversation_id BIGINT REFERENCES chat_conversations(id),
+    sender_id BIGINT REFERENCES users(id),
     message TEXT,
-    masked_phone VARCHAR(20),
+    message_type VARCHAR(20) DEFAULT 'text',
+    is_read BOOLEAN DEFAULT false,
     created_at TIMESTAMP
 );
 
 -- Location Tracking
 location_tracking (
     id SERIAL PRIMARY KEY,
-    worker_id INTEGER REFERENCES users(id),
-    booking_id INTEGER REFERENCES bookings(id),
+    worker_id BIGINT REFERENCES workers(id),
+    booking_id BIGINT REFERENCES bookings(id),
     latitude DECIMAL,
     longitude DECIMAL,
     status VARCHAR(20), -- 'on_way', 'arrived', 'working'
     updated_at TIMESTAMP
 );
 
--- Reviews
-reviews (
+-- Call Masking
+call_masking (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    worker_id INTEGER REFERENCES users(id),
-    booking_id INTEGER REFERENCES bookings(id),
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    photos TEXT[],
+    user_id BIGINT REFERENCES users(id),
+    worker_id BIGINT REFERENCES workers(id),
+    masked_number VARCHAR(20),
+    original_number VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'active',
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP
+);
+
+-- Marketplace Subscriptions
+marketplace_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    plan_name VARCHAR(50),
+    features JSONB,
+    price DECIMAL,
+    duration_days INTEGER,
+    status VARCHAR(20) DEFAULT 'active',
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP
+);
+
+-- Vendors
+vendors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    category VARCHAR(50),
+    contact_info JSONB,
+    rating DECIMAL DEFAULT 0,
+    is_verified BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP
+);
+
+-- Projects
+projects (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    title VARCHAR(100),
+    description TEXT,
+    requirements JSONB,
+    budget DECIMAL,
+    timeline VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'open',
     created_at TIMESTAMP
 );
 ```
 
-### **Step 8.2: Updated Tables**
+### **Step 9.2: Updated Tables**
 
 ```sql
 -- Users table updates
-ALTER TABLE users ADD COLUMN credits_remaining INTEGER DEFAULT 3;
-ALTER TABLE users ADD COLUMN wallet_balance DECIMAL DEFAULT 0;
-ALTER TABLE users ADD COLUMN subscription_id INTEGER REFERENCES user_subscriptions(id);
-ALTER TABLE users ADD COLUMN conversion_id INTEGER REFERENCES account_conversions(id);
-
--- Services table updates
-ALTER TABLE services ADD COLUMN service_type VARCHAR(20) DEFAULT 'fixed'; -- 'fixed', 'inquiry'
-ALTER TABLE services ADD COLUMN time_slots JSONB;
-ALTER TABLE services ADD COLUMN inquiry_form JSONB;
+ALTER TABLE users ADD COLUMN module_access JSONB DEFAULT '{"home_services": true, "construction_services": true, "marketplace": true}';
+ALTER TABLE users ADD COLUMN subscription_features JSONB;
 
 -- Properties table updates
-ALTER TABLE properties ADD COLUMN credit_used INTEGER DEFAULT 1;
-ALTER TABLE properties ADD COLUMN subscription_posted BOOLEAN DEFAULT false;
-ALTER TABLE properties ADD COLUMN instant_purchase BOOLEAN DEFAULT false;
+ALTER TABLE properties ADD COLUMN is_treesindia_assured BOOLEAN DEFAULT false;
+ALTER TABLE properties ADD COLUMN verified_by BIGINT REFERENCES users(id);
+ALTER TABLE properties ADD COLUMN verification_date TIMESTAMP;
 ```
 
 ---
 
-## 🚀 **Phase 9: Frontend Integration**
+## 🚀 **Phase 10: Frontend Integration**
 
-### **Step 9.1: Admin Panel Updates**
+### **Step 10.1: Admin Panel Updates**
 
-- [ ] Add credit limit configuration UI
-- [ ] Add wallet limit configuration UI
-- [ ] Create subscription plan management
-- [ ] Add system configuration dashboard
-- [ ] Update user management with credit/wallet info
-- [ ] Add account conversion approval interface
-- [ ] Create booking management dashboard
-- [ ] Add worker assignment interface
-- [ ] Create AI analytics dashboard
+- [ ] Add module management interface
+- [ ] Create worker assignment dashboard
+- [ ] Add quote generation interface
+- [ ] Create inquiry management system
+- [ ] Add real-time tracking dashboard
+- [ ] Create subscription management
+- [ ] Add analytics and reporting
 
-### **Step 9.2: Mobile App Updates**
+### **Step 10.2: User Interface Updates**
 
-- [ ] Update authentication flow (phone+OTP only)
-- [ ] Add three main module cards on home screen
-- [ ] Implement credit display and purchase
-- [ ] Add wallet recharge functionality
-- [ ] Create subscription purchase flow
-- [ ] Add AI assistant chat interface
-- [ ] Implement account conversion forms
-- [ ] Create booking system with time slots
-- [ ] Add real-time location tracking
-- [ ] Implement review and rating system
+- [ ] Update home screen with three main modules
+- [ ] Create service booking interface
+- [ ] Add time slot selection
+- [ ] Create inquiry submission form
+- [ ] Add quote acceptance interface
+- [ ] Create real-time chat interface
+- [ ] Add location tracking display
+- [ ] Create marketplace subscription interface
+
+### **Step 10.3: Real-time Features**
+
+- [ ] Implement WebSocket connections
+- [ ] Add real-time chat functionality
+- [ ] Create live location tracking
+- [ ] Add push notifications
+- [ ] Implement call masking interface
 
 ---
 
@@ -457,56 +528,65 @@ ALTER TABLE properties ADD COLUMN instant_purchase BOOLEAN DEFAULT false;
 ### **Core System**
 
 - [ ] Simplified authentication (phone+OTP only)
-- [ ] Credit system with admin configuration
-- [ ] Wallet system with Razorpay integration
-- [ ] Subscription system for brokers
-- [ ] Admin configuration management
+- [ ] Module-based architecture
+- [ ] Service type management (fixed price, inquiry-based)
+- [ ] Time slot management system
 
-### **AI Assistant System**
+### **Home Services Module**
 
-- [ ] OpenAI GPT-4 integration
-- [ ] Smart recommendations
-- [ ] Booking assistance
-- [ ] FAQ handling
-- [ ] Human escalation
+- [ ] Service categories and subcategories
+- [ ] Fixed price service booking
+- [ ] Inquiry-based service system
+- [ ] Time slot availability
+- [ ] Worker assignment system
 
-### **Account Conversion System**
+### **Construction Services Module**
 
-- [ ] Worker conversion with admin approval
-- [ ] Broker conversion with admin approval
-- [ ] Contractor conversion with admin approval
-- [ ] Document upload and verification
-- [ ] Role-based access control
+- [ ] Consultation booking system
+- [ ] Requirement analysis
+- [ ] Quote generation and management
+- [ ] Project tracking
+- [ ] Payment processing
 
-### **Enhanced Booking System**
+### **Marketplace Module**
 
-- [ ] Fixed price services with instant booking
-- [ ] Inquiry-based services with custom quotes
-- [ ] Time slot management
-- [ ] Cart-based multiple service booking
+- [ ] Enhanced property listings
+- [ ] Subscription features
+- [ ] Vendor and workforce directories
+- [ ] Project listing system
+- [ ] TreesIndia Assured verification
+
+### **Worker Management**
+
+- [ ] Worker profiles and skills
+- [ ] Assignment system
 - [ ] Real-time location tracking
-- [ ] Worker assignment by admin
-- [ ] Review and rating system
+- [ ] Performance monitoring
+- [ ] Rating and review system
 
-### **Three Main Modules**
+### **Real-time Communication**
 
-- [ ] Home Services module with categories
-- [ ] Contractor module with filtering
-- [ ] Real Estate module with credit validation
-- [ ] Service booking system
-- [ ] Contractor contact system
-- [ ] Property posting with credit check
+- [ ] WebSocket chat system
+- [ ] Call masking integration
+- [ ] Push notifications
+- [ ] Live location sharing
+- [ ] Message history
+
+### **Booking System**
+
+- [ ] Fixed price booking flow
+- [ ] Inquiry-based booking flow
+- [ ] Time slot management
+- [ ] Payment integration
+- [ ] Booking status tracking
 
 ### **API Endpoints**
 
-- [ ] Authentication endpoints (simplified)
-- [ ] Credit and wallet endpoints
-- [ ] Subscription endpoints
-- [ ] AI assistant endpoints
-- [ ] Account conversion endpoints
-- [ ] Booking endpoints
+- [ ] Authentication endpoints
 - [ ] Module-specific endpoints
-- [ ] Admin configuration endpoints
+- [ ] Worker management endpoints
+- [ ] Real-time communication endpoints
+- [ ] Admin management endpoints
 
 ---
 
@@ -514,29 +594,25 @@ ALTER TABLE properties ADD COLUMN instant_purchase BOOLEAN DEFAULT false;
 
 ### **Functional Requirements**
 
-- [ ] Users can register with phone+OTP only
-- [ ] Credits are auto-initialized on registration
-- [ ] Credit validation works for property posting
-- [ ] Wallet recharge works with Razorpay
-- [ ] Subscription system works for brokers
-- [ ] AI assistant provides conversational property/service search
-- [ ] Account conversions work with admin approval
-- [ ] Admin can manage and assign workers
-- [ ] Users can communicate with assigned workers
-- [ ] Booking system handles both fixed and inquiry services
-- [ ] Multiple service booking works with cart system
-- [ ] Real-time location tracking works
-- [ ] Three main modules are functional
+- [ ] Users can access three main modules
+- [ ] Fixed price services work with time slot booking
+- [ ] Inquiry-based services work with quote generation
+- [ ] Worker assignment system functions properly
+- [ ] Real-time tracking and communication work
+- [ ] Marketplace subscription features are functional
+- [ ] Admin can manage workers and generate quotes
+- [ ] Payment system handles all booking types
+- [ ] Call masking and chat work seamlessly
 
 ### **Technical Requirements**
 
 - [ ] Database schema is properly updated
 - [ ] API endpoints return proper responses
-- [ ] Authentication and authorization work
-- [ ] Performance is acceptable
-- [ ] Code follows Go best practices
-- [ ] AI responses are fast and accurate
 - [ ] Real-time features work smoothly
+- [ ] Performance is acceptable under load
+- [ ] Code follows Go best practices
+- [ ] Security measures are implemented
+- [ ] Error handling is comprehensive
 
 ### **Quality Requirements**
 
@@ -552,16 +628,17 @@ ALTER TABLE properties ADD COLUMN instant_purchase BOOLEAN DEFAULT false;
 ## 📅 **Timeline Estimate**
 
 - **Phase 1 (Core System)**: 1-2 weeks
-- **Phase 2 (Subscription System)**: 1 week
-- **Phase 3 (AI Assistant)**: 2 weeks
-- **Phase 4 (Account Conversion)**: 1-2 weeks
-- **Phase 5 (Enhanced Booking)**: 2-3 weeks
-- **Phase 6 (Three Modules)**: 2-3 weeks
-- **Phase 7 (API Endpoints)**: 1-2 weeks
-- **Phase 8 (Database Updates)**: 3-5 days
-- **Phase 9 (Frontend Integration)**: 2-3 weeks
+- **Phase 2 (Home Services)**: 2-3 weeks
+- **Phase 3 (Worker Management)**: 2 weeks
+- **Phase 4 (Construction Services)**: 2 weeks
+- **Phase 5 (Marketplace)**: 2-3 weeks
+- **Phase 6 (Real-time Communication)**: 2-3 weeks
+- **Phase 7 (Advanced Booking)**: 2 weeks
+- **Phase 8 (API Endpoints)**: 1-2 weeks
+- **Phase 9 (Database Updates)**: 3-5 days
+- **Phase 10 (Frontend Integration)**: 2-3 weeks
 
-**Total Estimated Time**: 12-18 weeks
+**Total Estimated Time**: 16-22 weeks
 
 ---
 
@@ -572,23 +649,23 @@ ALTER TABLE properties ADD COLUMN instant_purchase BOOLEAN DEFAULT false;
 3. **Security Audit**: Review authentication and payment security
 4. **User Testing**: Beta testing with real users
 5. **Production Deployment**: Deploy to production environment
-6. **Monitoring Setup**: AI performance and system monitoring
+6. **Monitoring Setup**: Real-time performance monitoring
 7. **Analytics Implementation**: Track all key metrics
 
 ---
 
 ## 📝 **Notes & Considerations**
 
-- Keep the authentication flow simple and user-friendly
-- Ensure proper validation for credit and wallet operations
-- Consider caching for frequently accessed data
+- Implement proper validation for all booking types
+- Ensure real-time features are performant and scalable
 - Plan for future expansion of subscription features
 - Maintain backward compatibility where possible
-- Focus on user experience for the three main modules
-- Implement proper error handling for AI responses
-- Ensure real-time features are performant
-- Plan for scalability of booking system
-- Consider mobile app performance with location tracking
+- Focus on user experience for all three modules
+- Implement proper error handling for real-time features
+- Ensure location tracking respects privacy
+- Plan for scalability of worker assignment system
+- Consider mobile app performance with real-time features
+- Implement proper security for call masking
 
 ---
 

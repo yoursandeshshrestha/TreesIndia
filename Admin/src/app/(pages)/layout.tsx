@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { useAppSelector, useAppDispatch } from "@/app/store";
 import { usePathname } from "next/navigation";
@@ -52,7 +53,7 @@ function Layout({ children }: LayoutProps) {
 
   return (
     <AuthGuard requireAdmin={true}>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex min-h-screen h-full bg-gray-50">
         {/* Sidebar */}
         <div
           className={`fixed left-0 top-0 h-full transition-all duration-300 ease-in-out z-20 ${

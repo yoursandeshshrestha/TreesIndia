@@ -21,6 +21,7 @@ const SearchableDropdown = ({
   loadingMessage = "Loading...",
   maxHeight = "200px",
   width = "100%",
+  onOpen,
 }: SearchableDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -118,7 +119,14 @@ const SearchableDropdown = ({
             ? "bg-gray-100 cursor-not-allowed"
             : "hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
         } ${error ? "border-red-500" : "border-gray-300"}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!disabled) {
+            if (!isOpen && onOpen) {
+              onOpen();
+            }
+            setIsOpen(!isOpen);
+          }
+        }}
         onKeyDown={handleKeyDown}
         tabIndex={disabled ? -1 : 0}
         role="combobox"

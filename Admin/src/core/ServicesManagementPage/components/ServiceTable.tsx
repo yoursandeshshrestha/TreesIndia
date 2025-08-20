@@ -1,0 +1,165 @@
+import { Edit, Trash2, Image as ImageIcon, Package } from "lucide-react";
+import Table from "@/components/Table/Table";
+import Toggle from "@/components/Toggle";
+import { Service } from "../types";
+
+interface ServiceTableProps {
+  services: Service[];
+  togglingItems: Set<number>;
+  onEditService: (service: Service) => void;
+  onDeleteService: (service: Service) => void;
+  onToggleServiceStatus: (service: Service) => void;
+}
+
+export default function ServiceTable({
+  services,
+  togglingItems,
+  onEditService,
+  onDeleteService,
+  onToggleServiceStatus,
+}: ServiceTableProps) {
+  const formatPrice = (price: number | undefined, priceType: string) => {
+    if (priceType === "inquiry") {
+      return "Inquiry Based";
+    }
+    if (price === undefined || price === null) {
+      return "N/A";
+    }
+    return `₹${price.toLocaleString()}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const columns = [
+    {
+      header: "Service Name",
+      accessor: (service: Service) => (
+        <div className="flex items-center space-x-3">
+          {service.images && service.images.length > 0 ? (
+            <img
+              src={service.images[0]}
+              alt={service.name}
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+              <ImageIcon size={16} className="text-gray-400" />
+            </div>
+          )}
+          <div>
+            <div className="font-medium text-gray-900">{service.name}</div>
+            {service.description && (
+              <div className="text-sm text-gray-500 truncate max-w-xs">
+                {service.description}
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Category",
+      accessor: (service: Service) => (
+        <div className="text-sm">
+          <div className="font-medium text-gray-900">
+            {service.category?.name || "N/A"}
+          </div>
+          <div className="text-gray-500">
+            {service.subcategory?.name || "N/A"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Images",
+      accessor: (service: Service) => (
+        <div className="flex items-center gap-2">
+          <ImageIcon size={16} className="text-gray-400" />
+          <span className="text-sm font-medium text-gray-900">
+            {service.images ? service.images.length : 0}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Price",
+      accessor: (service: Service) => (
+        <div className="text-sm">
+          <div className="font-medium text-gray-900">
+            {formatPrice(service.price, service.price_type)}
+          </div>
+          {service.duration && (
+            <div className="text-gray-500">{service.duration}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      accessor: (service: Service) => (
+        <div className="flex items-center gap-2 min-w-[120px]">
+          <Toggle
+            checked={service.is_active}
+            onChange={() => onToggleServiceStatus(service)}
+            disabled={togglingItems.has(service.id)}
+            size="sm"
+          />
+          <span className="text-sm text-gray-600 w-16 text-center">
+            {service.is_active ? "Active" : "Inactive"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Created",
+      accessor: (service: Service) => (
+        <div className="text-sm text-gray-500">
+          {formatDate(service.created_at)}
+        </div>
+      ),
+    },
+  ];
+
+  const actions = [
+    {
+      label: "Edit",
+      icon: <Edit size={14} />,
+      onClick: onEditService,
+      className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+    },
+    {
+      label: "Delete",
+      icon: <Trash2 size={14} />,
+      onClick: onDeleteService,
+      className: "text-red-700 bg-red-100 hover:bg-red-200",
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <Table<Service>
+        data={services}
+        columns={columns}
+        keyField="id"
+        actions={actions}
+        emptyState={
+          <div className="text-center py-8">
+            <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <p className="text-lg font-medium text-gray-900">
+              No services found
+            </p>
+            <p className="text-sm text-gray-500">
+              Try adjusting your search or filters
+            </p>
+          </div>
+        }
+      />
+    </div>
+  );
+}

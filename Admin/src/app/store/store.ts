@@ -1,9 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { sidebarReducer } from "./slices";
+import { sidebarReducer, commandPaletteReducer } from "./slices";
 
 export const store = configureStore({
   reducer: {
     sidebar: sidebarReducer,
+    commandPalette: commandPaletteReducer,
   },
   // Enable Redux DevTools in development
   devTools: process.env.NODE_ENV !== "production",

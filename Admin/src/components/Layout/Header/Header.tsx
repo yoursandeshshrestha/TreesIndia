@@ -1,21 +1,31 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Bell, ChevronDown, PanelLeft, PanelRight, Menu } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Bell,
+  ChevronDown,
+  PanelLeft,
+  PanelRight,
+  Menu,
+  Search,
+} from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/app/store";
 import { useRouter } from "next/navigation";
-import { toggleSidebar, selectIsSidebarOpen } from "@/app/store";
+import { toggleSidebar, selectIsSidebarOpen, open } from "@/app/store";
+import { SearchButton } from "@/components/CommandPalette";
 import type { HeaderProps } from "./Header.types";
 
 const Header: React.FC<HeaderProps> = ({
   breadcrumbs = [{ label: "Dashboard" }],
-  userName = "Sandesh Shrestha",
-  userInitials = "SS",
+  userName = "Amit Bishwakarma",
+  userInitials = "AB",
 }) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const isSidebarOpen = useAppSelector(selectIsSidebarOpen);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -40,6 +50,24 @@ const Header: React.FC<HeaderProps> = ({
   const handleBreadcrumbClick = (href?: string) => {
     if (href) {
       router.push(href);
+    }
+  };
+
+  const handleSearchFocus = () => {
+    // When search input is focused, open command palette with current query
+    dispatch(open(searchQuery));
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      searchInputRef.current?.blur();
+      setSearchQuery("");
+    } else if (e.key === "Enter") {
+      dispatch(open(searchQuery));
     }
   };
 
@@ -88,6 +116,36 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Right Section - Search, Actions, Profile */}
         <div className="flex items-center space-x-2">
+          {/* Search Input */}
+          <div className="relative hidden md:block">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={handleSearchFocus}
+                onClick={handleSearchFocus}
+                onKeyDown={handleSearchKeyDown}
+                className="pl-10 pr-16 py-2 w-64 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-100 cursor-pointer"
+              />
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1 text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                <span>⌘</span>
+                <span>K</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Search Button */}
+          <div className="md:hidden">
+            <SearchButton onClick={() => dispatch(open())} />
+          </div>
+
           {/* Notifications */}
           <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <Bell size={18} className="text-gray-600" />

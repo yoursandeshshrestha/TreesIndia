@@ -146,7 +146,7 @@ const SocialButton: React.FC<SocialButtonProps> = ({
 
   const baseClasses = [
     "inline-flex items-center justify-center gap-3",
-    "font-['Poppins'] font-medium",
+    "font-medium",
     "rounded-lg transition-all duration-200",
     "bg-white text-gray-700 border border-gray-200 shadow-sm",
     "hover:bg-gray-50 active:bg-gray-100",

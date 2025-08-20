@@ -23,7 +23,6 @@ interface VerifyOTPResponse {
       name: string | null;
       role: string;
       wallet_balance: number;
-      wallet_limit: number;
       created_at: string;
     };
     access_token: string;
@@ -43,7 +42,6 @@ interface RefreshTokenResponse {
       name: string | null;
       role: string;
       wallet_balance: number;
-      wallet_limit: number;
       created_at: string;
     };
     access_token: string;

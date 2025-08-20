@@ -42,7 +42,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   const baseClasses = [
     "flex items-center justify-center rounded-full shadow-md",
     "transition-all transform hover:scale-105 active:scale-95",
-    "font-['Poppins']",
+    "",
     sizeClasses[size],
     variantClasses[variant],
     fixed ? `fixed ${positionClasses[position]}` : "",

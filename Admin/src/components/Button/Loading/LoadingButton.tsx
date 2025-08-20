@@ -107,7 +107,7 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
       disabled={disabled || isLoading}
       leftIcon={leftIcon}
       onClick={handleClick}
-      className={`font-['Poppins'] ${rest.className || ""}`}
+      className={rest.className || ""}
     >
       {buttonText}
     </Button>

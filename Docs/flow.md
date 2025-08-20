@@ -2,7 +2,7 @@
 
 ## 🏠 **Platform Overview**
 
-TREESINDIA is a unified digital platform with three main modules: **Home Services**, **Contractor**, and **Real Estate**. Users get free credits for property listings, can recharge their wallet, and brokers can buy subscriptions for unlimited posting. The platform features simplified phone+OTP authentication and a credit-based property posting system.
+TREESINDIA is a unified digital platform with three main modules: **Home Services**, **Construction Services**, and **Marketplace**. The platform features simplified phone+OTP authentication, advanced booking systems with time slot management, real-time worker tracking, inquiry-based services with custom quotes, and subscription-based marketplace features.
 
 ---
 
@@ -12,23 +12,42 @@ TREESINDIA is a unified digital platform with three main modules: **Home Service
 
 - **Login Method**: Phone OTP only
 - **Profile Setup**: Name, phone, location
-- **Credit System**: 3 free credits for property listings (admin-configurable)
-- **Wallet System**: Rechargeable wallet for all transactions
+- **Module Access**: Access to all three main modules
+- **Booking System**: Fixed price and inquiry-based services
+- **Real-time Features**: Live tracking and direct communication
 - **Location Required**: GPS or manual address entry
 
-### **Broker (Property Sellers)**
+### **Service Worker**
 
 - **Login Method**: Phone OTP only
-- **Subscription System**: Can buy unlimited posting subscriptions
-- **Credit System**: Can use credits or subscription for posting
-- **Wallet System**: Rechargeable wallet for subscriptions and credits
+- **Assignment System**: Receive assignments from admin
+- **Real-time Communication**: Chat and call with customers
+- **Location Sharing**: Share live location during service delivery
+- **Service Management**: Track bookings and completion status
+
+### **Construction Professional**
+
+- **Login Method**: Phone OTP only
+- **Consultation Services**: Provide expert consultation
+- **Quote Generation**: Send detailed quotes to customers
+- **Project Management**: Manage construction projects
+- **Direct Communication**: Chat with customers about requirements
+
+### **Property Seller/Broker**
+
+- **Login Method**: Phone OTP only
+- **Free Listings**: Post properties without any cost
+- **Subscription Benefits**: Enhanced marketplace features
+- **Direct Communication**: Chat with potential buyers/renters
+- **Marketplace Access**: Vendor lists and workforce sections
 
 ### **Admin**
 
 - **Login Method**: Phone OTP only
-- **Full Platform Management**: Users, services, contractors, properties
-- **Configuration Management**: Credit limits, wallet limits, subscription plans
-- **Approval Authority**: Property listings (for non-subscribed users)
+- **Worker Management**: Assign workers to bookings
+- **Quote Management**: Generate and send quotes
+- **System Configuration**: Manage time slots and pricing
+- **Quality Assurance**: Monitor service quality
 
 ---
 
@@ -39,88 +58,89 @@ TREESINDIA is a unified digital platform with three main modules: **Home Service
 #### **User Flow:**
 
 1. User clicks "Home Services" card on home screen
-2. Bottom sheet opens with service categories
-3. User selects category (e.g., "Plumbing")
-4. Service listings shown (e.g., "Tap Repair - ₹500")
-5. User can book service or contact provider
+2. Service categories displayed (Plumbing, Pest Control, Painting, etc.)
+3. User selects category and views available services
+4. User chooses between fixed price or inquiry-based services
+5. For fixed price: Select time slot and book instantly
+6. For inquiry-based: Submit requirements and wait for quote
+7. Admin assigns worker and user tracks service delivery
 
 #### **Service Categories:**
 
-- **Plumbing**: Tap repair, pipe installation, drainage
+- **Plumbing**: Tap repair, pipe installation, drainage cleaning
+- **Pest Control**: General pest control, termite treatment, rodent control
+- **Painting**: Interior painting, exterior painting, wall textures
+- **Electrical**: Wiring, repairs, installations, maintenance
 - **Cleaning**: House cleaning, deep cleaning, carpet cleaning
-- **AC Repair**: AC installation, maintenance, repair
-- **Electrical**: Wiring, repairs, installations
-- **Carpentry**: Furniture repair, installation
-- **Painting**: Interior, exterior, wall painting
+- **AC Services**: Installation, repair, maintenance, gas refilling
 
-#### **Service Booking Flow:**
+#### **Service Types:**
 
-```
-1. Select service category → View service listings
-2. Choose service → View details and pricing
-3. Book service → Fill booking form
-4. Payment → Razorpay integration
-5. Service execution → Provider completes service
-6. Review → Rate and review service
-```
+- **Fixed Price Services**: Transparent pricing with instant booking
+- **Inquiry-based Services**: Custom quotes based on requirements
 
-### **2. Contractor Module**
+#### **Booking Features:**
 
-#### **User Flow:**
+- **Time Slot Management**: Available slots based on worker availability
+- **Worker Assignment**: Admin assigns qualified workers
+- **Real-time Tracking**: Live location of assigned workers
+- **Direct Communication**: Chat and call with workers
+- **Service Verification**: OTP-based completion verification
 
-1. User clicks "Contractor" card on home screen
-2. List of contractors shown with filtering options
-3. User can filter by profession, skills, location
-4. User can contact contractor (text/call with masking)
-5. Direct communication with contractor
-
-#### **Contractor Features:**
-
-- **Profession Filtering**: Plumber, Electrician, Carpenter, etc.
-- **Skill-based Search**: Specific skills and expertise
-- **Location-based**: Nearby contractors
-- **Rating System**: Reviews and ratings
-- **Direct Contact**: Masked calls and messaging
-
-#### **Contractor Contact Flow:**
-
-```
-1. Browse contractors → Apply filters
-2. View contractor profile → Check skills and ratings
-3. Contact contractor → Masked call or message
-4. Discuss requirements → Direct communication
-5. Schedule work → Arrange timing and location
-6. Complete work → Direct payment to contractor
-```
-
-### **3. Real Estate Module**
+### **2. Construction Services Module**
 
 #### **User Flow:**
 
-1. User clicks "Rental/Property" card on home screen
-2. Property listings shown with search and filter options
-3. User can search and filter properties
-4. User can contact seller/owner
-5. Property viewing and transaction
+1. User clicks "Construction Services" card on home screen
+2. Construction service types displayed (Renovation, Plan Sanction, etc.)
+3. User books consultation for specific service type
+4. Admin receives consultation request and initiates chat
+5. User discusses requirements with admin
+6. Admin generates detailed quote with cost breakdown
+7. User accepts quote and books with available time slot
+8. Project execution with regular updates
+
+#### **Service Categories:**
+
+- **Renovation**: Home renovation, office renovation, commercial spaces
+- **Plan Sanction**: Building plan approval, documentation, legal compliance
+- **Promoting Services**: Marketing, advertising, property promotion
+- **Construction**: New construction, remodeling, extensions
+
+#### **Service Features:**
+
+- **Consultation Booking**: Schedule expert consultations
+- **Requirement Analysis**: Detailed project requirement gathering
+- **Custom Quotes**: Detailed cost breakdown and timelines
+- **Project Management**: Track progress and milestones
+- **Quality Assurance**: Ensure high-quality service delivery
+
+### **3. Marketplace Module**
+
+#### **User Flow:**
+
+1. User clicks "Marketplace" card on home screen
+2. Property listings and marketplace features displayed
+3. Free users can browse properties and basic features
+4. Subscribed users access enhanced features (vendor lists, workforce)
+5. Direct communication with property owners, vendors, and workers
+6. Project listing and service booking for subscribed users
 
 #### **Property Features:**
 
-- **Credit-based Posting**: 1 credit = 1 property listing
-- **Subscription Posting**: Unlimited posting for brokers
-- **Search & Filter**: Location, price, type, amenities
-- **Contact System**: Masked calls and messaging
-- **Viewing Scheduling**: Book property viewings
+- **Free Listings**: Post properties without any cost
+- **Subscription Benefits**: Enhanced features for subscribed users
+- **TreesIndia Assured**: Verified properties with platform guarantee
+- **Advanced Search**: Location, price, amenities filtering
+- **Direct Communication**: Chat with property owners
 
-#### **Property Posting Flow:**
+#### **Subscription Features:**
 
-```
-1. User wants to post property → Check credits/subscription
-2. If credits available → Deduct credit and post
-3. If subscription active → Post without credit deduction
-4. If no credits/subscription → Buy credits or subscription
-5. Property goes live → Visible to users
-6. Handle inquiries → Contact management
-```
+- **Project Listing**: List projects and requirements
+- **Vendor Lists**: Access verified vendor directories
+- **Workforce Section**: Find skilled workers for projects
+- **Direct Communication**: Chat with vendors and workers
+- **Priority Support**: Enhanced customer support
 
 ---
 
@@ -149,262 +169,198 @@ User enters OTP → System validates → Show loading state → Verify with back
 #### **Step 4: Account Creation/Login**
 
 ```
-New User: Create account + Assign 3 credits + Initialize wallet + Redirect to home
+New User: Create account + Redirect to home
 Existing User: Load existing data + Redirect to home
 ```
 
 ### **User Types & Authentication:**
 
-#### **User/Broker Login:**
+#### **User/Worker/Professional Login:**
 
 - **Phone + OTP**: Single authentication method
 - **Auto-registration**: First login creates account
-- **Credit System**: 3 free credits on registration
-- **Wallet System**: Rechargeable wallet (Razorpay)
-- **Subscription**: Brokers can buy subscriptions
+- **Module Access**: Access to relevant modules
+- **Role-based Features**: Features based on user type
 
 #### **Admin Login:**
 
 - **Phone + OTP**: Same authentication method
-- **Admin privileges**: Configuration management
-- **Worker management**: Own and assign workers
-- **Content approval**: Approve listings and conversions
+- **Admin privileges**: Worker management and quote generation
+- **System configuration**: Manage time slots and pricing
+- **Quality monitoring**: Track service quality
 
 ---
 
-## 💳 **Credit System**
+## 🏠 **Home Services Booking System**
 
-### **Credit Usage:**
+### **Fixed Price Services:**
 
-- **1 Credit = 1 Property Listing**
-- **Credits Don't Expire**: Permanent until used
-- **Admin Configurable**: Default limit can be changed
-- **Purchase Available**: Users can buy more credits
+- **Transparent Pricing**: Clear pricing with no hidden costs
+- **Instant Booking**: Book immediately with available time slots
+- **Worker Assignment**: Admin assigns qualified workers
+- **Real-time Tracking**: Track worker location and progress
+- **Service Completion**: OTP verification and review
 
-### **Credit Flow:**
-
-```
-1. User registers → Gets 3 free credits (default)
-2. User posts property → 1 credit deducted
-3. User checks balance → Shows remaining credits
-4. User buys credits → Wallet payment
-5. Credits added → Available for property posting
-```
-
-### **Credit Validation:**
-
-- **Before Posting**: Check if user has credits or subscription
-- **During Posting**: Deduct credit on successful posting
-- **After Posting**: Update user's credit balance
-- **Error Handling**: Prevent posting if insufficient credits
-
----
-
-## 💰 **Wallet System**
-
-### **Wallet Features:**
-
-- **Rechargeable**: Razorpay integration for payments
-- **Admin Configurable**: Limit set by admin (default: 100,000)
-- **Multi-purpose**: Credits, subscriptions, future services
-- **Transaction History**: Complete record of all transactions
-
-### **Wallet Flow:**
+### **Fixed Price Booking Flow:**
 
 ```
-1. User wants to recharge → Select amount
-2. Payment initiation → Razorpay integration
-3. Payment processing → Secure transaction
-4. Wallet updated → Balance increased
-5. Transaction recorded → History updated
+1. User selects service category → View available services
+2. Choose fixed price service → View pricing and time slots
+3. Select time slot → Check worker availability
+4. Fill booking details → Address and requirements
+5. Make payment → Razorpay integration
+6. Admin assigns worker → User gets notification
+7. Worker arrives → Live location tracking
+8. Service completion → OTP verification and review
 ```
 
-### **Wallet Usage:**
+### **Inquiry-based Services:**
 
-- **Credit Purchase**: Buy more credits for property posting
-- **Subscription Purchase**: Buy broker subscriptions
-- **Future Services**: Payment for home services
-- **Withdrawal**: Request wallet withdrawal (admin approval)
+- **Custom Requirements**: Submit specific requirements
+- **Admin Discussion**: Chat with admin about needs
+- **Custom Quotes**: Detailed cost breakdown
+- **Quote Acceptance**: Accept and book with time slots
+- **Service Execution**: Worker assignment and tracking
 
----
-
-## 📦 **Subscription System**
-
-### **Broker Subscriptions:**
-
-- **Admin Configurable**: Plans and pricing set by admin
-- **Unlimited Posting**: No credit deduction required
-- **No Admin Approval**: Direct posting without review
-- **Priority Features**: Enhanced listing placement
-
-### **Subscription Flow:**
+### **Inquiry-based Booking Flow:**
 
 ```
-1. Broker wants subscription → View available plans
-2. Select plan → Choose duration and features
-3. Payment → Wallet or direct payment
-4. Subscription activated → Unlimited posting access
-5. Subscription management → Renew, cancel, upgrade
-```
-
-### **Subscription Benefits:**
-
-- **Unlimited Property Listings**: No credit requirement
-- **Priority Placement**: Enhanced visibility
-- **Advanced Analytics**: Detailed performance metrics
-- **Dedicated Support**: Priority customer service
-- **No Admin Approval**: Direct posting capability
-
----
-
-## 🏠 **Home Services Module Flow**
-
-### **Service Discovery:**
-
-```
-1. User opens app → Home screen with three cards
-2. Clicks "Home Services" → Bottom sheet opens
-3. Selects category → Service listings shown
-4. Views service details → Pricing and description
-5. Books service → Payment and scheduling
-```
-
-### **Service Categories Structure:**
-
-```
-Home Services
-├── Plumbing
-│   ├── Tap Repair - ₹500
-│   ├── Pipe Installation - ₹1000
-│   └── Drainage Cleaning - ₹800
-├── Cleaning
-│   ├── House Cleaning - ₹1500
-│   ├── Deep Cleaning - ₹2500
-│   └── Carpet Cleaning - ₹1200
-├── AC Repair
-│   ├── AC Installation - ₹3000
-│   ├── AC Maintenance - ₹800
-│   └── AC Repair - ₹1500
-└── Electrical
-    ├── Wiring - ₹2000
-    ├── Switch Repair - ₹500
-    └── Fan Installation - ₹800
-```
-
-### **Service Booking Process:**
-
-```
-1. Select service → View details and pricing
-2. Fill booking form → Address, description, schedule
-3. Make payment → Razorpay integration
-4. Service provider assigned → Admin assignment
-5. Service execution → Provider completes work
-6. OTP verification → Complete service
-7. Review and rating → Rate service provider
+1. User selects inquiry-based service → Submit requirements
+2. Admin receives inquiry → Initiates chat discussion
+3. Discuss requirements → Admin understands needs
+4. Admin sends quote → Detailed cost breakdown
+5. User accepts quote → Book with available time slot
+6. Payment processing → Razorpay integration
+7. Service execution → Worker assignment
+8. Service completion → Verification and feedback
 ```
 
 ---
 
-## 👷 **Contractor Module Flow**
+## 🏗️ **Construction Services System**
 
-### **Contractor Discovery:**
+### **Consultation Booking:**
 
-```
-1. User clicks "Contractor" card → Contractor list
-2. Apply filters → Profession, skills, location
-3. View contractor profiles → Skills, experience, ratings
-4. Contact contractor → Masked call or message
-5. Direct communication → Discuss requirements
-```
+- **Expert Consultation**: Professional advice for construction projects
+- **Requirement Analysis**: Detailed project requirement gathering
+- **Custom Quotes**: Detailed cost breakdown and timelines
+- **Project Management**: Track progress and milestones
+- **Quality Assurance**: Ensure high-quality service delivery
 
-### **Contractor Features:**
-
-#### **Filtering Options:**
-
-- **Profession**: Plumber, Electrician, Carpenter, Painter
-- **Skills**: Specific expertise and certifications
-- **Location**: Nearby contractors
-- **Rating**: Minimum rating filter
-- **Experience**: Years of experience
-- **Availability**: Available contractors
-
-#### **Contractor Profile:**
-
-- **Basic Info**: Name, photo, contact
-- **Profession**: Primary and secondary skills
-- **Experience**: Years of experience
-- **Hourly Rate**: Pricing information
-- **Availability**: Working hours and schedule
-- **Rating**: Average rating and reviews
-- **Portfolio**: Previous work examples
-
-### **Contact Process:**
+### **Construction Services Flow:**
 
 ```
-1. View contractor profile → Check details and ratings
-2. Initiate contact → Masked call or message
-3. Discuss requirements → Direct communication
-4. Get quote → Contractor provides estimate
-5. Schedule work → Arrange timing and location
-6. Complete work → Direct payment to contractor
+1. User books consultation → Admin receives request
+2. Requirement discussion → Chat about project details
+3. Admin sends quote → Custom pricing and timeline
+4. User accepts quote → Payment and project confirmation
+5. Project execution → Regular updates and communication
+6. Project completion → Final verification and payment
+```
+
+### **Quote Management:**
+
+- **Detailed Breakdown**: Itemized cost structure
+- **Timeline Planning**: Project schedule and milestones
+- **Material Specifications**: Detailed material requirements
+- **Quality Standards**: Service quality specifications
+- **Payment Terms**: Milestone-based payment structure
+
+---
+
+## 🏪 **Marketplace System**
+
+### **Free Users:**
+
+- **Property Browsing**: Search and filter properties
+- **Basic Communication**: Contact property owners
+- **Property Viewing**: Schedule property visits
+- **Direct Transactions**: Complete property transactions
+
+### **Free User Flow:**
+
+```
+1. Browse properties → Search and filter options
+2. Contact owners → Direct communication
+3. Property viewing → Schedule visits
+4. Transaction → Direct payment and documentation
+```
+
+### **Subscribed Users:**
+
+- **Enhanced Features**: Access to vendor lists and workforce
+- **Project Listing**: List projects and requirements
+- **Direct Communication**: Chat with vendors and workers
+- **Service Booking**: Book services directly
+- **Priority Support**: Enhanced customer support
+
+### **Subscribed User Flow:**
+
+```
+1. Access enhanced features → Vendor lists and workforce
+2. Direct communication → Chat with vendors and workers
+3. Project management → List projects and requirements
+4. Service booking → Book services directly
+5. Payment processing → Secure transactions
 ```
 
 ---
 
-## 🏘️ **Real Estate Module Flow**
+## 👷 **Worker Management System**
 
-### **Property Discovery:**
+### **Worker Assignment:**
 
-```
-1. User clicks "Rental/Property" card → Property listings
-2. Apply search filters → Location, price, type
-3. View property details → Photos, description, location
-4. Contact seller → Masked call or message
-5. Schedule viewing → Book property visit
-6. Make offer → Negotiate price and terms
-```
+- **Admin Assignment**: Admin assigns workers to bookings
+- **Skill Matching**: Match worker skills to service requirements
+- **Availability Check**: Verify worker availability for time slots
+- **Location Optimization**: Assign workers based on proximity
+- **Performance Tracking**: Monitor worker performance and ratings
 
-### **Property Posting Process:**
-
-#### **Credit-based Posting:**
+### **Worker Assignment Flow:**
 
 ```
-1. User wants to post property → Check credits
-2. If credits available → Deduct 1 credit
-3. Fill property details → Photos, description, price
-4. Submit for posting → Property goes live
-5. Handle inquiries → Manage buyer contacts
+1. Booking received → Admin reviews requirements
+2. Worker selection → Match skills and availability
+3. Assignment notification → Worker receives booking details
+4. Worker acceptance → Confirm assignment
+5. Service execution → Complete assigned service
+6. Performance review → Rate and review worker
 ```
 
-#### **Subscription-based Posting:**
+### **Real-time Tracking:**
 
-```
-1. Broker with subscription → Unlimited posting
-2. Fill property details → Photos, description, price
-3. Submit for posting → Direct posting (no approval)
-4. Property goes live → Enhanced visibility
-5. Handle inquiries → Manage buyer contacts
-```
+- **Live Location**: Real-time worker location sharing
+- **Service Status**: Track service progress and status
+- **Communication**: Direct chat and call with workers
+- **ETA Updates**: Real-time arrival time updates
+- **Service Completion**: OTP-based completion verification
 
-### **Property Features:**
+---
 
-#### **Search & Filter:**
+## 💬 **Real-time Communication System**
 
-- **Location**: City, area, landmarks
-- **Price Range**: Minimum and maximum price
-- **Property Type**: Apartment, house, villa, plot
-- **BHK**: Number of bedrooms
-- **Amenities**: Parking, gym, pool, etc.
-- **Furnishing**: Furnished, semi-furnished, unfurnished
+### **Chat System:**
 
-#### **Property Details:**
+- **Direct Messaging**: Real-time chat between users and workers
+- **Message History**: Complete conversation history
+- **File Sharing**: Share photos and documents
+- **Status Updates**: Real-time service status updates
+- **Admin Support**: Admin intervention when needed
 
-- **Basic Info**: Title, description, price
-- **Location**: Address, landmarks, map
-- **Specifications**: Area, BHK, floor, age
-- **Amenities**: Available facilities
-- **Photos**: Multiple high-quality images
-- **Contact**: Seller information (masked)
+### **Call Masking:**
+
+- **Privacy Protection**: Real phone numbers never shared
+- **Temporary Numbers**: Virtual numbers for each interaction
+- **Auto-expiry**: Numbers expire after interaction
+- **Call Logging**: All calls logged for security
+- **Quality Monitoring**: Call quality and duration tracking
+
+### **Notification System:**
+
+- **Push Notifications**: Real-time updates and alerts
+- **SMS Notifications**: Important booking updates
+- **Email Notifications**: Detailed reports and summaries
+- **In-app Notifications**: Platform-specific notifications
 
 ---
 
@@ -413,38 +369,43 @@ Home Services
 ### **Payment Methods:**
 
 - **Razorpay Integration**: UPI, cards, wallets, net banking
-- **Wallet Payments**: Internal wallet for credits and subscriptions
-- **Direct Payments**: For services and property transactions
 - **Secure Processing**: PCI compliant payment handling
+- **Multiple Options**: Various payment methods available
+- **Transaction Security**: Encrypted payment processing
 
 ### **Payment Flows:**
 
-#### **Wallet Recharge:**
+#### **Fixed Price Services:**
 
 ```
-1. User initiates recharge → Select amount
-2. Payment gateway → Razorpay integration
-3. Payment processing → Secure transaction
-4. Wallet updated → Balance increased
-5. Transaction recorded → History updated
+1. User selects service → View fixed pricing
+2. Choose time slot → Check availability
+3. Make payment → Razorpay integration
+4. Payment confirmation → Booking confirmed
+5. Service execution → Worker assignment
+6. Service completion → Payment released
 ```
 
-#### **Credit Purchase:**
+#### **Inquiry-based Services:**
 
 ```
-1. User wants credits → Select credit package
-2. Payment from wallet → Deduct wallet balance
-3. Credits added → Available for property posting
-4. Transaction recorded → Credit history updated
+1. User submits inquiry → Admin generates quote
+2. Quote acceptance → User accepts quote
+3. Payment processing → Razorpay integration
+4. Payment confirmation → Service booking confirmed
+5. Service execution → Worker assignment
+6. Service completion → Payment released
 ```
 
-#### **Subscription Purchase:**
+#### **Construction Services:**
 
 ```
-1. Broker selects plan → Choose subscription
-2. Payment processing → Wallet or direct payment
-3. Subscription activated → Unlimited posting access
-4. Transaction recorded → Subscription history
+1. Consultation booking → Admin consultation
+2. Quote generation → Detailed cost breakdown
+3. Quote acceptance → User accepts quote
+4. Payment processing → Milestone-based payments
+5. Project execution → Regular updates
+6. Project completion → Final payment
 ```
 
 ---
@@ -453,12 +414,12 @@ Home Services
 
 ### **Notification Types:**
 
-- **OTP Notifications**: Authentication and verification
-- **Credit Alerts**: Low credit balance, credit usage
-- **Wallet Notifications**: Recharge success, transaction updates
-- **Subscription Alerts**: Renewal reminders, expiry warnings
-- **Service Updates**: Booking confirmations, status changes
-- **Property Inquiries**: New inquiries, visit confirmations
+- **Booking Notifications**: Booking confirmations and updates
+- **Worker Assignments**: Worker assignment notifications
+- **Service Updates**: Real-time service status updates
+- **Payment Alerts**: Payment confirmations and reminders
+- **Quote Notifications**: Quote generation and acceptance
+- **Chat Messages**: Real-time message notifications
 
 ### **Notification Channels:**
 
@@ -488,12 +449,12 @@ Home Services
 6. Clean up data → Remove temporary numbers
 ```
 
-### **Credit & Wallet Security:**
+### **Real-time Communication Security:**
 
-- **Transaction Validation**: All transactions verified
-- **Fraud Prevention**: Suspicious activity detection
-- **Audit Trail**: Complete transaction history
-- **Secure Storage**: Encrypted financial data
+- **Secure Chat**: End-to-end encrypted messaging
+- **Live Location**: Real-time location sharing with privacy controls
+- **Call Integration**: Seamless integration with call masking
+- **Message History**: Complete conversation history
 
 ---
 
@@ -501,74 +462,89 @@ Home Services
 
 ### **User Analytics:**
 
-- **Registration Trends**: User growth and demographics
-- **Credit Usage**: Credit consumption patterns
-- **Wallet Activity**: Transaction volume and frequency
-- **Module Usage**: Popular modules and features
-- **Subscription Metrics**: Plan adoption and retention
+- **Booking Trends**: Service booking patterns
+- **Module Usage**: Three main modules adoption
+- **Real-time Features**: Chat and tracking usage
+- **Payment Analytics**: Transaction volume and success rates
+- **Worker Performance**: Service completion and ratings
 
 ### **Business Analytics:**
 
-- **Revenue Tracking**: Credit sales, subscription revenue
-- **Property Analytics**: Listing performance and engagement
-- **Service Analytics**: Booking patterns and completion rates
-- **Contractor Analytics**: Performance and rating trends
+- **Service Bookings**: Home services completion rate
+- **Construction Projects**: Consultation and quote acceptance
+- **Marketplace Transactions**: Property and service transactions
+- **Subscription Revenue**: Monthly recurring revenue
+- **Worker Efficiency**: Service completion and customer satisfaction
 
 ### **Platform Analytics:**
 
-- **Credit System**: Usage patterns and optimization
-- **Wallet System**: Transaction volume and user behavior
-- **Subscription System**: Plan performance and user satisfaction
+- **Real-time Performance**: Chat and tracking system performance
+- **Worker Assignment**: Assignment efficiency and success rates
+- **Quote Generation**: Quote acceptance and conversion rates
 - **Module Performance**: Three main modules usage statistics
 
 ---
 
 ## 🔄 **Complete User Journey Examples**
 
-### **New User Registration Journey:**
+### **Home Services Fixed Price Journey:**
 
 ```
-1. User downloads app → Opens application
-2. Sees three main cards → Home Services, Contractor, Real Estate
-3. Clicks "Get Started" → Phone number entry
-4. Receives OTP → Enters verification code
-5. Account created → Gets 3 free credits
-6. Access to all modules → Can use platform
+1. User needs plumbing service → Opens Home Services module
+2. Selects Plumbing category → Views available services
+3. Chooses "Tap Repair - ₹500" → Fixed price service
+4. Selects 2:00 PM time slot → Checks worker availability
+5. Fills booking details → Address and requirements
+6. Makes payment ₹500 → Razorpay integration
+7. Admin assigns worker → User gets notification
+8. Worker arrives at 2:00 PM → Live location tracking
+9. Service completed → OTP verification
+10. Rates worker 5 stars → Service review submitted
 ```
 
-### **Property Posting Journey:**
+### **Home Services Inquiry-based Journey:**
 
 ```
-1. User wants to post property → Clicks Real Estate module
-2. Checks credits → Shows 3 available credits
-3. Fills property details → Photos, description, price
-4. Submits for posting → 1 credit deducted
-5. Property goes live → Visible to users
-6. Receives inquiries → Manages buyer contacts
+1. User needs custom painting → Opens Home Services module
+2. Selects Painting category → Views inquiry-based services
+3. Submits inquiry → "Need interior painting for 3BHK"
+4. Admin receives inquiry → Initiates chat discussion
+5. Discusses requirements → Color preferences, timeline, budget
+6. Admin sends quote → ₹15,000 with detailed breakdown
+7. User accepts quote → Books with available time slot
+8. Makes payment ₹15,000 → Razorpay integration
+9. Worker assigned → Service execution and tracking
+10. Service completed → Final verification and review
 ```
 
-### **Service Booking Journey:**
+### **Construction Services Journey:**
 
 ```
-1. User needs service → Clicks Home Services module
-2. Selects category → Plumbing services
-3. Views service listings → Tap Repair - ₹500
-4. Books service → Payment through Razorpay
-5. Service provider assigned → Admin assignment
-6. Service completed → OTP verification
-7. Reviews service → Rates provider
+1. User needs renovation → Opens Construction Services module
+2. Books consultation → "Home Renovation Consultation"
+3. Admin receives request → Initiates consultation chat
+4. Discusses requirements → Scope, budget, timeline
+5. Admin sends detailed quote → ₹2,50,000 with milestones
+6. User accepts quote → Payment and project confirmation
+7. Project execution → Regular updates and communication
+8. Milestone completion → Payment releases
+9. Project completion → Final verification and payment
+10. Project review → Quality assessment and feedback
 ```
 
-### **Contractor Contact Journey:**
+### **Marketplace Journey:**
 
 ```
-1. User needs contractor → Clicks Contractor module
-2. Applies filters → Plumber, nearby, 4+ rating
-3. Views contractor profiles → Skills and experience
-4. Contacts contractor → Masked call initiated
-5. Discusses requirements → Direct communication
-6. Schedules work → Arranges timing
-7. Work completed → Direct payment
+1. User wants to buy property → Opens Marketplace module
+2. Browses properties → Search and filter options
+3. Finds suitable property → 3BHK apartment
+4. Contacts owner → Direct communication
+5. Schedules viewing → Property visit arranged
+6. Negotiates price → Price discussion and agreement
+7. Completes transaction → Payment and documentation
+8. For subscribed users → Access vendor lists and workforce
+9. Lists project → "Need interior designer for new home"
+10. Connects with vendors → Direct communication and booking
 ```
 
 ---
@@ -577,27 +553,29 @@ Home Services
 
 ### **Frontend:**
 
-- **Flutter App**: Cross-platform mobile application
-- **Next.js Admin Panel**: Web-based admin interface
+- **Next.js**: Web-based admin panel and user interface
+- **React Native**: Cross-platform mobile app (iOS & Android)
+- **Real-time Features**: WebSocket for live updates
 - **Responsive Design**: Works on all devices
 
 ### **Backend:**
 
-- **GoLang API**: High-performance backend services
-- **PostgreSQL Database**: Reliable data storage
-- **Redis Cache**: Fast data access and sessions
+- **GoLang**: High-performance backend API
+- **PostgreSQL**: Reliable database storage
+- **Redis**: Fast caching and real-time features
+- **WebSocket**: Real-time communication
 
 ### **Integrations:**
 
 - **Google Maps**: Location services and navigation
 - **Razorpay**: Payment processing
 - **Twilio/Exotel**: Call masking and SMS
-- **Firebase**: Push notifications
+- **Firebase**: Push notifications and real-time updates
 
 ### **Deployment:**
 
 - **Hostinger VPS**: Phase 1 deployment
-- **Docker Containers**: Scalable microservices
+- **Docker**: Containerized microservices
 - **Load Balancing**: High availability setup
 - **Future Migration**: AWS/DigitalOcean ready
 
@@ -609,17 +587,17 @@ Home Services
 
 - **Daily Active Users**: App usage frequency
 - **Module Usage**: Three main modules adoption
-- **Credit Usage**: Property posting activity
-- **Wallet Activity**: Transaction volume
-- **Subscription Adoption**: Broker subscription rates
+- **Booking Completion**: Service booking success rates
+- **Real-time Features**: Chat and tracking usage
+- **Subscription Adoption**: Marketplace subscription rates
 
 ### **Business Performance:**
 
-- **Credit Sales**: Revenue from credit purchases
-- **Subscription Revenue**: Monthly recurring revenue
-- **Property Views**: Listing visibility and engagement
 - **Service Bookings**: Home services completion rate
-- **Contractor Engagement**: Contact and booking rates
+- **Construction Projects**: Consultation and quote acceptance
+- **Marketplace Transactions**: Property and service transactions
+- **Subscription Revenue**: Monthly recurring revenue
+- **Worker Efficiency**: Service completion and customer satisfaction
 
 ### **Platform Quality:**
 
@@ -634,22 +612,26 @@ Home Services
 
 ### **Core Features:**
 
-- ✅ Three main modules (Home Services, Contractor, Real Estate)
+- ✅ Three main modules (Home Services, Construction Services, Marketplace)
 - ✅ Simplified phone+OTP authentication
-- ✅ Credit system for property posting
-- ✅ Wallet system with Razorpay integration
-- ✅ Subscription system for brokers
+- ✅ Advanced booking system with time slots
+- ✅ Real-time worker tracking and communication
+- ✅ Fixed price and inquiry-based services
+- ✅ Custom quote generation and management
+- ✅ Subscription-based marketplace features
 - ✅ Call masking for privacy
-- ✅ Admin configuration management
+- ✅ Admin worker assignment system
 - ✅ Real-time notifications
 
 ### **Advanced Features:**
 
-- ✅ Credit-based property posting
-- ✅ Unlimited posting for subscribed brokers
-- ✅ Service booking and management
-- ✅ Contractor filtering and contact
-- ✅ Property search and discovery
+- ✅ Time slot management based on worker availability
+- ✅ Live location tracking of assigned workers
+- ✅ Real-time chat between users and workers
+- ✅ Custom quote generation for construction services
+- ✅ TreesIndia Assured property verification
+- ✅ Vendor and workforce directories
+- ✅ Project listing and management
 - ✅ Secure payment processing
 - ✅ Analytics and reporting
 - ✅ Scalable microservices architecture
@@ -663,13 +645,13 @@ Home Services
 - **In-app Help**: FAQ and guidance
 - **Customer Service**: Phone and chat support
 - **Technical Support**: App and platform issues
-- **Payment Support**: Transaction and wallet issues
+- **Payment Support**: Transaction and booking issues
 
 ### **Admin Support:**
 
-- **Configuration Management**: Credit limits, wallet limits
-- **Subscription Management**: Plan creation and management
-- **User Management**: Account and credit management
+- **Worker Management**: Assignment and performance monitoring
+- **Quote Management**: Generation and tracking
+- **System Configuration**: Time slots and pricing management
 - **Analytics Dashboard**: Performance monitoring
 
 This comprehensive flow document provides complete context for the new TREESINDIA platform scope and serves as a reference for understanding the application's functionality and user journeys.

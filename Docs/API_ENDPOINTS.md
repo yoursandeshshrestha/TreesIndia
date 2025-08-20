@@ -54,7 +54,7 @@ Response:
       "phone": "+919876543210",
       "name": "John Doe",
       "role": "user",
-      "credits_remaining": 3,
+      "wallet_balance": 0.0,
       "wallet_balance": 0.0,
       "wallet_limit": 100000.0,
       "subscription_id": null,
@@ -70,7 +70,7 @@ Response:
 
 - **Single Method**: Phone + OTP only
 - **Auto-registration**: First login creates account
-- **Auto-credits**: New users get 3 free credits
+- **Auto-wallet**: New users get wallet initialized
 - **Auto-wallet**: Wallet initialized with 0 balance
 - **JWT Token**: Session management
 - **Role-based**: User, Broker, Admin roles
@@ -83,8 +83,8 @@ Response:
 
 - `GET /users/profile` – Get User Profile **(User)**
 - `PUT /users/profile` – Update User Profile **(User)**
-- `GET /users/credits` – Get User Credits **(User)**
-- `POST /users/buy-credits` – Purchase Credits **(User)**
+- `GET /users/wallet` – Get Wallet Balance **(User)**
+- `POST /users/wallet/recharge` – Recharge Wallet **(User)**
 - `GET /users/wallet` – Get Wallet Balance **(User)**
 - `POST /users/wallet/recharge` – Recharge Wallet **(User)**
 - `GET /users/wallet/transactions` – Get Wallet Transaction History **(User)**
@@ -94,14 +94,14 @@ Response:
 
 ---
 
-## 💳 Credit & Wallet System Routes
+## 💳 Wallet System Routes
 
-### **Credit Management (Authenticated)**
+### **Wallet Management (Authenticated)**
 
-- `GET /credits/balance` – Get Credit Balance **(User)**
-- `POST /credits/purchase` – Purchase Credits **(User)**
-- `GET /credits/history` – Get Credit Usage History **(User)**
-- `GET /credits/packages` – Get Available Credit Packages **(Public)**
+- `GET /wallet/balance` – Get Wallet Balance **(User)**
+- `POST /wallet/recharge` – Recharge Wallet **(User)**
+- `GET /wallet/transactions` – Get Transaction History **(User)**
+- `GET /wallet/limits` – Get Wallet Limits **(User)**
 
 ### **Wallet Management (Authenticated)**
 
@@ -166,8 +166,6 @@ Response:
 
 ---
 
-
-
 ---
 
 ## 🏘️ Real Estate Module Routes
@@ -184,7 +182,7 @@ Response:
 
 ### **Property Management (Authenticated)**
 
-- `POST /properties` – Create Property Listing **(User - Credit Check)**
+- `POST /properties` – Create Property Listing **(User - Free Posting)**
 - `PUT /properties/{id}` – Update Property Listing **(User)**
 - `DELETE /properties/{id}` – Delete Property Listing **(User)**
 - `GET /properties/my-listings` – Get User's Properties **(User)**
@@ -214,8 +212,8 @@ Response:
 
 - `GET /admin/config` – Get System Configuration **(Admin)**
 - `PUT /admin/config` – Update System Configuration **(Admin)**
-- `GET /admin/config/credit-limits` – Get Credit Limits **(Admin)**
-- `PUT /admin/config/credit-limits` – Update Credit Limits **(Admin)**
+- `GET /admin/config/wallet-limits` – Get Wallet Limits **(Admin)**
+- `PUT /admin/config/wallet-limits` – Update Wallet Limits **(Admin)**
 - `GET /admin/config/wallet-limits` – Get Wallet Limits **(Admin)**
 - `PUT /admin/config/wallet-limits` – Update Wallet Limits **(Admin)**
 - `GET /admin/config/subscription-prices` – Get Subscription Prices **(Admin)**
@@ -225,7 +223,7 @@ Response:
 
 - `GET /admin/users` – Get All Users **(Admin)**
 - `GET /admin/users/{id}` – Get User Details **(Admin)**
-- `PUT /admin/users/{id}/credits` – Update User Credits **(Admin)**
+- `PUT /admin/users/{id}/wallet` – Update User Wallet **(Admin)**
 - `PUT /admin/users/{id}/wallet` – Update User Wallet **(Admin)**
 - `PUT /admin/users/{id}/status` – Update User Status **(Admin)**
 - `GET /admin/users/analytics` – Get User Analytics **(Admin)**
@@ -284,7 +282,7 @@ Response:
 ### **User Analytics (Authenticated)**
 
 - `GET /analytics/usage` – Get User Usage Analytics **(User)**
-- `GET /analytics/credits` – Get Credit Usage Analytics **(User)**
+- `GET /analytics/wallet` – Get Wallet Analytics **(User)**
 - `GET /analytics/wallet` – Get Wallet Analytics **(User)**
 - `GET /analytics/properties` – Get Property Analytics **(User)**
 
@@ -292,7 +290,7 @@ Response:
 
 - `GET /admin/analytics/dashboard` – Get Dashboard Analytics **(Admin)**
 - `GET /admin/analytics/users` – Get User Analytics **(Admin)**
-- `GET /admin/analytics/credits` – Get Credit Analytics **(Admin)**
+- `GET /admin/analytics/wallet` – Get Wallet Analytics **(Admin)**
 - `GET /admin/analytics/wallet` – Get Wallet Analytics **(Admin)**
 - `GET /admin/analytics/subscriptions` – Get Subscription Analytics **(Admin)**
 - `GET /admin/analytics/services` – Get Service Analytics **(Admin)**
@@ -423,16 +421,16 @@ X-API-Key: <api_key>  // For admin endpoints
 }
 ```
 
-### **Credit Response Example**
+### **Wallet Response Example**
 
 ```json
 {
   "success": true,
-  "message": "Credits retrieved successfully",
+  "message": "Wallet balance retrieved successfully",
   "data": {
-    "credits_remaining": 2,
-    "credits_used": 1,
-    "total_credits_earned": 3
+    "wallet_balance": 5000.0,
+    "wallet_limit": 100000.0,
+    "currency": "INR"
   },
   "timestamp": "2024-01-01T00:00:00Z"
 }

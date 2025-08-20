@@ -2,12 +2,12 @@
 
 ## 🎯 **Project Overview**
 
-**TREESINDIA** is a unified digital platform with two main modules: **Home Services** and **Real Estate**. Users get free credits for property listings, can recharge their wallet, and brokers can buy subscriptions for unlimited posting. The platform features simplified phone+OTP authentication, credit-based property posting, AI assistance, and comprehensive booking management.
+**TREESINDIA** is a unified digital platform with two main modules: **Home Services** and **Real Estate**. Users can post properties freely, can recharge their wallet, and brokers can buy subscriptions for unlimited posting. The platform features simplified phone+OTP authentication, free property posting, AI assistance, and comprehensive booking management.
 
 ### **Core Vision:**
 
 - **Two Main Modules**: Home Services, Real Estate
-- **Credit System**: Free credits for property listings (admin-configurable)
+- **Free Property Posting**: Users can post properties without any cost
 - **Wallet System**: Rechargeable wallet for all transactions
 - **Subscription Model**: Brokers can buy unlimited posting subscriptions
 - **Simplified Auth**: Phone number + OTP only
@@ -152,10 +152,8 @@ Controller → Service → Repository → Database
 
 ### **📋 Planned Modules (New Scope):**
 
-#### **6. Credit & Wallet System** (Next Priority)
+#### **6. Wallet System** (Next Priority)
 
-- Admin-configurable credit limit (default: 3)
-- Credit validation before property posting
 - Wallet system with Razorpay integration
 - Admin-configurable wallet limit (default: 100,000)
 - Wallet transaction history
@@ -213,7 +211,7 @@ Controller → Service → Repository → Database
 
 ##### **Real Estate Module**
 
-- Credit-based property posting
+- Free property posting
 - Property listings (rental/sale)
 - Property search and filtering
 - Instant purchase option
@@ -224,7 +222,7 @@ Controller → Service → Repository → Database
 
 - Remove email/password complexity
 - Phone + OTP only flow
-- Auto-initialize credits on registration
+- Auto-initialize wallet on registration
 - Streamlined user onboarding
 
 ---
@@ -242,12 +240,12 @@ Controller → Service → Repository → Database
 
 ### **New Tables Needed:**
 
-7. **admin_config** - System configuration (credit limits, wallet limits)
+7. **admin_config** - System configuration (wallet limits)
 8. **wallet_transactions** - Wallet recharge and usage history
 9. **subscription_plans** - Available subscription plans
 10. **user_subscriptions** - User subscription records
 11. **contractors** - Contractor profiles and skills
-12. **properties** - Property listings (updated with credit validation)
+12. **properties** - Property listings (free posting)
 13. **account_conversions** - Account conversion requests
 14. **bookings** - Service bookings with time slots
 15. **booking_inquiries** - Inquiry-based service requests
@@ -304,7 +302,7 @@ Controller → Service → Repository → Database
 
 ### **Module Priority Order:**
 
-1. **Credit & Wallet System** - Core business logic
+1. **Wallet System** - Core business logic
 2. **Simplified Authentication** - User experience improvement
 3. **Subscription System** - Revenue generation
 4. **Enhanced Booking System** - Core functionality
@@ -331,14 +329,14 @@ Controller → Service → Repository → Database
 2. System sends OTP via SMS
 3. User enters OTP
 4. System validates OTP
-5. If valid: User is logged in and gets 3 free credits
+5. If valid: User is logged in and wallet is initialized
 6. If invalid: Show error and retry
 ```
 
 ### **User Registration (Automatic):**
 
 - **No separate registration**: First login automatically creates account
-- **Auto-credit assignment**: New users get 3 free credits
+- **Auto-wallet initialization**: New users get wallet initialized
 - **Wallet initialization**: Wallet created with 0 balance
 - **Profile completion**: Optional profile setup after login
 
@@ -364,7 +362,7 @@ Controller → Service → Repository → Database
 
 #### **Step 4: Account Creation/Login**
 
-- **New User**: Creates account, assigns 3 credits, initializes wallet
+- **New User**: Creates account, initializes wallet
 - **Existing User**: Logs in, loads existing data
 - Redirects to home screen with three main modules
 
@@ -624,7 +622,7 @@ AI: "To book a service, follow these steps: [Step-by-step guide]"
 #### **Features:**
 
 - Property listings (rental/sale)
-- Credit-based posting system
+- Free property posting system
 - Property search and filtering
 - Contact seller/owner
 - Property viewing scheduling
@@ -654,10 +652,10 @@ AI: "To book a service, follow these steps: [Step-by-step guide]"
 - **Problem**: JWT token validation failing
 - **Solution**: Check middleware order and token format
 
-### **Credit System Issues:**
+### **Wallet System Issues:**
 
-- **Problem**: Credits not deducted properly
-- **Solution**: Use database transactions for credit operations
+- **Problem**: Wallet balance not updated properly
+- **Solution**: Use database transactions for wallet operations
 
 ### **Wallet Issues:**
 
@@ -714,7 +712,7 @@ AI: "To book a service, follow these steps: [Step-by-step guide]"
 
 ### **New Business Metrics:**
 
-- ✅ **Credit Usage**: Track credit consumption
+- ✅ **Property Posting**: Track property listing activity
 - ✅ **Wallet Transactions**: Monitor wallet activity
 - ✅ **Subscription Sales**: Track subscription revenue
 - ✅ **Module Usage**: Monitor three main modules

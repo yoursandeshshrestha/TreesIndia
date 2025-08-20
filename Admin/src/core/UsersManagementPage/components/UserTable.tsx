@@ -122,7 +122,10 @@ const UserTable = ({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
+                    <div
+                      className="text-sm font-medium text-gray-900 truncate"
+                      title={row.name}
+                    >
                       {row.name}
                     </div>
                     <div className="flex flex-col items-start space-x-2 text-xs text-gray-500">

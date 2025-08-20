@@ -20,7 +20,7 @@ const CustomButton = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseClasses =
-      "inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg font-normal";
+      "inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg font-normal cursor-pointer";
 
     const sizeClasses = {
       xs: iconButton ? "p-1.5 text-xs" : "px-3 py-1.5 text-xs",

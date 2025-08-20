@@ -1,0 +1,158 @@
+{
+  "items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "description": "Go to dashboard",
+      "path": "/dashboard",
+      "keywords": ["dashboard", "home", "main", "overview"]
+    },
+    {
+      "id": "users",
+      "label": "Users",
+      "description": "Go to users",
+      "path": "/dashboard/users-management",
+      "keywords": ["users", "accounts", "people", "members"]
+    },
+    {
+      "id": "role-applications",
+      "label": "Role Applications",
+      "description": "Go to role applications",
+      "path": "/dashboard/role-applications",
+      "keywords": ["role", "applications", "permissions", "access"]
+    },
+    {
+      "id": "workers",
+      "label": "Workers",
+      "description": "Go to workers",
+      "path": "/dashboard/workers",
+      "keywords": ["workers", "staff", "employees", "personnel"]
+    },
+    {
+      "id": "brokers",
+      "label": "Brokers",
+      "description": "Go to brokers",
+      "path": "/dashboard/brokers",
+      "keywords": ["brokers", "agents", "representatives"]
+    },
+    {
+      "id": "categories",
+      "label": "Categories",
+      "description": "Go to categories",
+      "path": "/dashboard/categories",
+      "keywords": ["categories", "services", "types", "classification"]
+    },
+    {
+      "id": "subcategories",
+      "label": "Subcategories",
+      "description": "Go to subcategories",
+      "path": "/dashboard/subcategories",
+      "keywords": ["subcategories", "sub", "categories", "services"]
+    },
+    {
+      "id": "properties",
+      "label": "Properties",
+      "description": "Go to properties",
+      "path": "/dashboard/properties",
+      "keywords": ["properties", "real estate", "houses", "buildings"]
+    },
+    {
+      "id": "pending-properties",
+      "label": "Pending Properties",
+      "description": "Go to pending properties",
+      "path": "/dashboard/properties/pending",
+      "keywords": ["pending", "approval", "review", "properties"]
+    },
+    {
+      "id": "locations",
+      "label": "Locations",
+      "description": "Go to locations",
+      "path": "/dashboard/locations",
+      "keywords": ["locations", "areas", "cities", "addresses"]
+    },
+    {
+      "id": "all-bookings",
+      "label": "Bookings",
+      "description": "Go to bookings",
+      "path": "/dashboard/bookings",
+      "keywords": ["bookings", "reservations", "appointments"]
+    },
+    {
+      "id": "booking-stats",
+      "label": "Booking Statistics",
+      "description": "Go to booking statistics",
+      "path": "/dashboard/bookings/stats",
+      "keywords": ["statistics", "analytics", "reports", "bookings"]
+    },
+    {
+      "id": "worker-inquiries",
+      "label": "Worker Inquiries",
+      "description": "Go to worker inquiries",
+      "path": "/dashboard/worker-inquiries",
+      "keywords": ["inquiries", "requests", "worker", "support"]
+    },
+    {
+      "id": "subscription-plans",
+      "label": "Subscription Plans",
+      "description": "Go to subscription plans",
+      "path": "/dashboard/subscription-plans",
+      "keywords": ["subscription", "plans", "pricing", "packages"]
+    },
+    {
+      "id": "user-subscriptions",
+      "label": "User Subscriptions",
+      "description": "Go to user subscriptions",
+      "path": "/dashboard/user-subscriptions",
+      "keywords": ["user", "subscriptions", "memberships", "status"]
+    },
+    {
+      "id": "wallet-transactions",
+      "label": "Wallet Transactions",
+      "description": "Go to wallet transactions",
+      "path": "/dashboard/wallet-transactions",
+      "keywords": ["wallet", "transactions", "payments", "money"]
+    },
+    {
+      "id": "razorpay",
+      "label": "Payment Management",
+      "description": "Go to payment management",
+      "path": "/dashboard/payments",
+      "keywords": ["payments", "razorpay", "billing", "transactions"]
+    },
+    {
+      "id": "admin-configs",
+      "label": "System Configuration",
+      "description": "Go to system configuration",
+      "path": "/dashboard/admin-configs",
+      "keywords": ["settings", "config", "admin", "system"]
+    },
+    {
+      "id": "analytics",
+      "label": "Analytics",
+      "description": "Go to analytics",
+      "path": "/dashboard/analytics",
+      "keywords": ["analytics", "reports", "data", "insights"]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "description": "Go to services",
+      "path": "/dashboard/services",
+      "keywords": ["services", "offerings", "products"]
+    },
+    {
+      "id": "profile",
+      "label": "Profile",
+      "description": "Go to profile",
+      "path": "/dashboard/profile",
+      "keywords": ["profile", "user", "account", "settings"]
+    },
+    {
+      "id": "sign-out",
+      "label": "Sign Out",
+      "description": "Sign out of your account",
+      "path": "/auth/sign-out",
+      "keywords": ["sign out", "logout", "exit", "account"]
+    }
+  ]
+}

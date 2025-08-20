@@ -150,9 +150,7 @@ export const validateUserForm = (
     errors.wallet_balance = "Wallet balance cannot be negative";
   }
 
-  if (formData.wallet_limit !== undefined && formData.wallet_limit <= 0) {
-    errors.wallet_limit = "Wallet limit must be greater than 0";
-  }
+
 
   return errors;
 };
@@ -167,7 +165,6 @@ export const getDefaultUserData = (): Partial<User> => ({
   is_active: true,
   role_application_status: "none",
   wallet_balance: 0,
-  wallet_limit: 100000,
   has_active_subscription: false,
   subscription_expiry_date: undefined,
 });
@@ -181,5 +178,8 @@ export const getDaysRemaining = (expiryDate: string): number => {
 };
 
 export const getAvailableCredit = (user: User): number => {
-  return user.wallet_limit - user.wallet_balance;
+  // Since we removed wallet_limit, we'll use a default max balance from admin config
+  // This should be replaced with actual admin config value when available
+  const defaultMaxBalance = 100000;
+  return defaultMaxBalance - user.wallet_balance;
 };

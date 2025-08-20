@@ -158,12 +158,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
                     {formatCurrency(user.wallet_balance)}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Wallet Limit:</span>
-                  <span className="font-semibold">
-                    {formatCurrency(user.wallet_limit)}
-                  </span>
-                </div>
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Available Credit:</span>
                   <span className="font-semibold">

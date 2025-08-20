@@ -7,19 +7,23 @@ import {
   Calendar,
   FileText,
   MapPin,
-  Wrench,
   Tag,
   Layers,
   Wallet,
   BarChart3,
   MessageSquare,
   Shield,
+  FolderTree,
+  Package,
+  Home,
+  Briefcase,
+  TrendingUp,
 } from "lucide-react";
 
 export interface SidebarItem {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   path?: string;
   children?: SidebarItem[];
   isGroup?: boolean;
@@ -52,7 +56,7 @@ export const sidebarItems: SidebarItem[] = [
       {
         id: "workers",
         label: "Workers",
-        icon: <Wrench size={16} />,
+        icon: <Users size={16} />,
         path: "/dashboard/workers",
       },
       {
@@ -64,34 +68,43 @@ export const sidebarItems: SidebarItem[] = [
     ],
   },
   {
-    id: "services",
-    label: "Services",
-    icon: <Wrench size={16} />,
+    id: "categories",
+    label: "Category Management",
+    icon: <Layers size={16} />,
     children: [
       {
         id: "categories",
         label: "Categories",
-        icon: <Tag size={16} />,
         path: "/dashboard/categories",
       },
       {
         id: "subcategories",
         label: "Subcategories",
-        icon: <Layers size={16} />,
         path: "/dashboard/subcategories",
       },
+    ],
+  },
+  {
+    id: "services",
+    label: "Service Management",
+    icon: <Package size={16} />,
+    children: [
       {
-        id: "services",
-        label: "Services",
-        icon: <Wrench size={16} />,
+        id: "list-services",
+        label: "List Services",
         path: "/dashboard/services",
+      },
+      {
+        id: "create-service",
+        label: "Create New Service",
+        path: "/dashboard/services/create-service",
       },
     ],
   },
   {
     id: "real-estate",
     label: "Real Estate",
-    icon: <Building2 size={16} />,
+    icon: <Home size={16} />,
     children: [
       {
         id: "properties",
@@ -115,8 +128,8 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     id: "bookings",
-    label: "Bookings",
-    icon: <Calendar size={16} />,
+    label: "Bookings & Inquiries",
+    icon: <Briefcase size={16} />,
     children: [
       {
         id: "all-bookings",
@@ -127,7 +140,7 @@ export const sidebarItems: SidebarItem[] = [
       {
         id: "booking-stats",
         label: "Booking Statistics",
-        icon: <BarChart3 size={16} />,
+        icon: <TrendingUp size={16} />,
         path: "/dashboard/bookings/stats",
       },
       {
@@ -159,13 +172,13 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     id: "wallet",
-    label: "Wallet & Payments",
+    label: "Finance & Payments",
     icon: <Wallet size={16} />,
     children: [
       {
         id: "wallet-transactions",
         label: "Wallet Transactions",
-        icon: <Wallet size={16} />,
+        icon: <TrendingUp size={16} />,
         path: "/dashboard/wallet-transactions",
       },
       {
@@ -177,16 +190,16 @@ export const sidebarItems: SidebarItem[] = [
     ],
   },
   {
+    id: "admin-configs",
+    label: "System Configuration",
+    icon: <Settings size={16} />,
+    path: "/dashboard/admin-configs",
+  },
+  {
     id: "system",
     label: "System",
     icon: <Settings size={16} />,
     children: [
-      {
-        id: "admin-configs",
-        label: "System Configuration",
-        icon: <Settings size={16} />,
-        path: "/dashboard/admin-configs",
-      },
       {
         id: "analytics",
         label: "Analytics",
