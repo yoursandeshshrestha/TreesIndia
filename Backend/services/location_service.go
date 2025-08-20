@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"math"
 	"time"
 	"treesindia/models"
 	"treesindia/repositories"
@@ -22,7 +21,7 @@ func NewLocationService() *LocationService {
 	}
 }
 
-// CreateLocation creates a new location for a user
+// CreateLocation creates a new location for a user (one per user)
 func (ls *LocationService) CreateLocation(userID uint, req *models.CreateLocationRequest) (*models.Location, error) {
 	// Check if user exists
 	var user models.User
@@ -30,33 +29,29 @@ func (ls *LocationService) CreateLocation(userID uint, req *models.CreateLocatio
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Check if location already exists for user
+	// Check if user already has a location
 	exists, err := ls.locationRepo.ExistsByUserID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check existing location: %w", err)
 	}
 
 	if exists {
-		return nil, fmt.Errorf("location already exists for user")
-	}
-
-	// Validate coordinates
-	if err := ls.validateCoordinates(req.Latitude, req.Longitude); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user already has a location")
 	}
 
 	// Create location
 	location := &models.Location{
-		UserID:    userID,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
-		Address:   req.Address,
-		City:      req.City,
-		State:     req.State,
+		UserID:     userID,
+		City:       req.City,
+		State:      req.State,
+		Country:    req.Country,
+		Address:    req.Address,
 		PostalCode: req.PostalCode,
-		Source:    req.Source,
-		UpdatedAt: time.Now(),
-		CreatedAt: time.Now(),
+		Latitude:   req.Latitude,
+		Longitude:  req.Longitude,
+		IsActive:   true,
+		UpdatedAt:  time.Now(),
+		CreatedAt:  time.Now(),
 	}
 
 	if err := ls.locationRepo.CreateLocation(location); err != nil {
@@ -95,19 +90,14 @@ func (ls *LocationService) UpdateLocation(id uint, req *models.UpdateLocationReq
 		return nil, fmt.Errorf("location not found: %w", err)
 	}
 
-	// Validate coordinates
-	if err := ls.validateCoordinates(req.Latitude, req.Longitude); err != nil {
-		return nil, err
-	}
-
 	// Update fields
-	location.Latitude = req.Latitude
-	location.Longitude = req.Longitude
-	location.Address = req.Address
 	location.City = req.City
 	location.State = req.State
+	location.Country = req.Country
+	location.Address = req.Address
 	location.PostalCode = req.PostalCode
-	location.Source = req.Source
+	location.Latitude = req.Latitude
+	location.Longitude = req.Longitude
 	location.UpdatedAt = time.Now()
 
 	if err := ls.locationRepo.UpdateLocation(&location); err != nil {
@@ -129,43 +119,6 @@ func (ls *LocationService) DeleteLocation(id uint) error {
 	}
 
 	return nil
-}
-
-// validateCoordinates validates latitude and longitude
-func (ls *LocationService) validateCoordinates(lat, lng float64) error {
-	if lat < -90 || lat > 90 {
-		return fmt.Errorf("latitude must be between -90 and 90")
-	}
-	if lng < -180 || lng > 180 {
-		return fmt.Errorf("longitude must be between -180 and 180")
-	}
-	return nil
-}
-
-// CalculateDistance calculates distance between two coordinates using Haversine formula
-func (ls *LocationService) CalculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
-	const R = 6371 // Earth's radius in kilometers
-
-	lat1Rad := lat1 * math.Pi / 180
-	lat2Rad := lat2 * math.Pi / 180
-	deltaLat := (lat2 - lat1) * math.Pi / 180
-	deltaLng := (lng2 - lng1) * math.Pi / 180
-
-	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
-		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
-			math.Sin(deltaLng/2)*math.Sin(deltaLng/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	return R * c
-}
-
-// FindLocationsWithinRadius finds locations within a certain radius
-func (ls *LocationService) FindLocationsWithinRadius(lat, lng float64, radiusKm int) ([]models.Location, error) {
-	var locations []models.Location
-	if err := ls.locationRepo.FindLocationsWithinRadius(&locations, lat, lng, radiusKm); err != nil {
-		return nil, fmt.Errorf("failed to find locations: %w", err)
-	}
-	return locations, nil
 }
 
 // GetLocationStats gets location statistics
