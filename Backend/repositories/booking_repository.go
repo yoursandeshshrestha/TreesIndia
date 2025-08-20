@@ -17,6 +17,11 @@ func NewBookingRepository() *BookingRepository {
 	}
 }
 
+// GetDB returns the database connection
+func (br *BookingRepository) GetDB() *gorm.DB {
+	return br.db
+}
+
 // Create creates a new booking
 func (br *BookingRepository) Create(booking *models.Booking) (*models.Booking, error) {
 	err := br.db.Create(booking).Error
