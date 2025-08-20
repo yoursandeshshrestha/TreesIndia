@@ -42,15 +42,103 @@ export interface LoadingState {
   error: ApiErrorResponse | null;
 }
 
-// User types (example)
+// User types
 export interface User {
-  id: string;
-  email: string;
+  id: number;
   name: string;
+  email?: string;
+  phone: string;
+  user_type: "normal" | "worker" | "broker" | "admin";
   avatar?: string;
-  role: "admin" | "user" | "moderator";
-  createdAt: string;
-  updatedAt: string;
+  gender?: "male" | "female" | "other" | "prefer_not_to_say";
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login_at?: string;
+  
+  // Wallet Information
+  wallet: {
+    balance: number;
+  };
+  
+  // Subscription Information
+  subscription: {
+    has_active_subscription: boolean;
+    subscription_id?: number;
+    expiry_date?: string;
+    current_plan?: UserSubscription;
+  };
+  
+  // Role Application Information
+  role_application: {
+    status: "none" | "pending" | "approved" | "rejected";
+    application_date?: string;
+    approval_date?: string;
+  };
+  
+  // User Roles
+  roles: UserRole[];
+  
+  // Notification Settings
+  notification_settings?: {
+    email_notifications: boolean;
+    sms_notifications: boolean;
+    push_notifications: boolean;
+    marketing_emails: boolean;
+    booking_reminders: boolean;
+    service_updates: boolean;
+  };
+  
+  // Subscription History (last 5)
+  subscription_history?: UserSubscriptionHistory[];
+  
+  // Subscription Warnings
+  subscription_warnings?: SubscriptionWarning[];
+}
+
+// User Subscription
+export interface UserSubscription {
+  id: number;
+  plan_id: number;
+  start_date: string;
+  end_date: string;
+  status: "active" | "expired";
+  amount: number;
+  payment_method: "wallet" | "razorpay";
+  payment_id?: string;
+  created_at: string;
+}
+
+// User Subscription History
+export interface UserSubscriptionHistory {
+  id: number;
+  plan_id: number;
+  start_date: string;
+  end_date: string;
+  status: "active" | "expired";
+  amount: number;
+  payment_method: "wallet" | "razorpay";
+  created_at: string;
+}
+
+// User Role
+export interface UserRole {
+  id: number;
+  user_id: number;
+  role_type: "worker" | "broker";
+  role_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Subscription Warning
+export interface SubscriptionWarning {
+  id: number;
+  days_left: number;
+  warning_date: string;
+  sent_via: "email" | "sms" | "both";
+  created_at: string;
 }
 
 // Auth types
