@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"net/http"
 	"os"
 )
+
+
 
 type RazorpayService struct {
 	keyID     string
@@ -25,7 +28,7 @@ func NewRazorpayService() *RazorpayService {
 }
 
 // CreateOrder creates a Razorpay order
-func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes string) (*RazorpayOrder, error) {
+func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes string) (map[string]interface{}, error) {
 	// Convert amount to paise (Razorpay expects amount in smallest currency unit)
 	amountInPaise := int64(amount * 100)
 	
@@ -78,32 +81,47 @@ func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes str
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 	
-	return &RazorpayOrder{
-		OrderID:  orderResponse["id"].(string),
-		Amount:   float64(amountInPaise),
-		Currency: "INR",
-		Receipt:  receipt,
-		KeyID:    rs.keyID,
+	return map[string]interface{}{
+		"id":       orderResponse["id"].(string),
+		"amount":   float64(amountInPaise),
+		"currency": "INR",
+		"receipt":  receipt,
+		"key_id":   rs.keyID,
 	}, nil
 }
 
 // VerifyPayment verifies Razorpay payment signature
 func (rs *RazorpayService) VerifyPayment(paymentID, orderID, signature string) (bool, error) {
+	// Debug: Check if keys are loaded
+	if rs.keySecret == "" {
+		return false, fmt.Errorf("razorpay key secret is not configured")
+	}
+	
 	// Create signature string
 	signatureString := orderID + "|" + paymentID
 
-	// Verify signature
+	// Verify signature using HMAC-SHA256
 	expectedSignature := hmac.New(sha256.New, []byte(rs.keySecret))
 	expectedSignature.Write([]byte(signatureString))
 	expectedSignatureHex := hex.EncodeToString(expectedSignature.Sum(nil))
 
+	// Debug: Log signature comparison
+	fmt.Printf("Payment Verification Debug:\n")
+	fmt.Printf("OrderID: %s\n", orderID)
+	fmt.Printf("PaymentID: %s\n", paymentID)
+	fmt.Printf("Signature String: %s\n", signatureString)
+	fmt.Printf("Expected Signature (Hex): %s\n", expectedSignatureHex)
+	fmt.Printf("Received Signature: %s\n", signature)
+	fmt.Printf("Signatures Match: %v\n", expectedSignatureHex == signature)
+
+	// Compare signatures (both should be in hex format)
 	return expectedSignatureHex == signature, nil
 }
 
 // getBasicAuth returns Basic Auth header value
 func (rs *RazorpayService) getBasicAuth() string {
 	auth := rs.keyID + ":" + rs.keySecret
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(auth)))
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
 // VerifyWebhookSignature verifies webhook signature

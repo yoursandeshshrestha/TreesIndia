@@ -52,15 +52,13 @@ func (s *WalletService) RechargeWallet(userID uint, amount float64, paymentMetho
 		return nil, fmt.Errorf("wallet balance cannot exceed ₹%.2f", maxWalletBalance)
 	}
 
-	// Create transaction
+	// Create transaction with current schema fields
 	transaction := &models.WalletTransaction{
 		UserID:          userID,
 		TransactionType: models.TransactionTypeRecharge,
 		Status:          models.TransactionStatusPending,
-		PaymentMethod:   paymentMethod,
 		Amount:          amount,
-		PreviousBalance: user.WalletBalance,
-		NewBalance:      user.WalletBalance + amount,
+		BalanceAfter:    user.WalletBalance + amount,
 		ReferenceID:     referenceID,
 		Description:     fmt.Sprintf("Wallet recharge of ₹%.2f", amount),
 	}
@@ -73,84 +71,6 @@ func (s *WalletService) RechargeWallet(userID uint, amount float64, paymentMetho
 	return transaction, nil
 }
 
-// RechargeWalletImmediate immediately completes a wallet recharge (for testing/development)
-func (s *WalletService) RechargeWalletImmediate(userID uint, amount float64, paymentMethod string, referenceID string) (*models.WalletTransaction, error) {
-	// Get admin config for validation
-	minRecharge, err := s.adminConfigService.GetFloatValue("min_recharge_amount")
-	if err != nil || minRecharge <= 0 {
-		minRecharge = 100 // Default minimum
-	}
-
-	maxRecharge, err := s.adminConfigService.GetFloatValue("max_recharge_amount")
-	if err != nil || maxRecharge <= 0 {
-		maxRecharge = 50000 // Default maximum
-	}
-
-	// Validate amount
-	if amount < minRecharge {
-		return nil, fmt.Errorf("minimum recharge amount is ₹%.2f", minRecharge)
-	}
-
-	if amount > maxRecharge {
-		return nil, fmt.Errorf("maximum recharge amount is ₹%.2f", maxRecharge)
-	}
-
-	// Get user
-	var user models.User
-	if err := s.userRepo.FindByID(&user, userID); err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
-	// Check wallet limit
-	maxWalletBalance := s.adminConfigService.GetMaxWalletBalance()
-	if maxWalletBalance > 0 && (user.WalletBalance+amount) > maxWalletBalance {
-		return nil, fmt.Errorf("wallet balance cannot exceed ₹%.2f", maxWalletBalance)
-	}
-
-	// Start transaction
-	db := s.userRepo.GetDB()
-	tx := db.Begin()
-	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", tx.Error)
-	}
-
-	// Create transaction
-	transaction := &models.WalletTransaction{
-		UserID:          userID,
-		TransactionType: models.TransactionTypeRecharge,
-		Status:          models.TransactionStatusCompleted,
-		PaymentMethod:   paymentMethod,
-		Amount:          amount,
-		PreviousBalance: user.WalletBalance,
-		NewBalance:      user.WalletBalance + amount,
-		ReferenceID:     referenceID,
-		Description:     fmt.Sprintf("Wallet recharge of ₹%.2f", amount),
-	}
-
-	now := time.Now()
-	transaction.ProcessedAt = &now
-
-	// Save transaction
-	if err := tx.Create(transaction).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to create transaction: %w", err)
-	}
-
-	// Update user wallet balance
-	user.WalletBalance += amount
-	if err := tx.Save(&user).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to update user wallet: %w", err)
-	}
-
-	// Commit transaction
-	if err := tx.Commit().Error; err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	logrus.Infof("Wallet recharge completed immediately for user %d: ₹%.2f", userID, amount)
-	return transaction, nil
-}
 
 // CompleteRecharge completes a wallet recharge
 func (s *WalletService) CompleteRecharge(transactionID uint) error {
@@ -174,15 +94,13 @@ func (s *WalletService) CompleteRecharge(transactionID uint) error {
 		return fmt.Errorf("user not found: %w", err)
 	}
 
-	user.WalletBalance = transaction.NewBalance
+	user.WalletBalance = transaction.BalanceAfter
 	if err := s.userRepo.Update(&user); err != nil {
 		return fmt.Errorf("failed to update user wallet: %w", err)
 	}
 
 	// Update transaction status
 	transaction.Status = models.TransactionStatusCompleted
-	now := time.Now()
-	transaction.ProcessedAt = &now
 	if err := s.walletRepo.Update(transaction); err != nil {
 		return fmt.Errorf("failed to update transaction: %w", err)
 	}
@@ -317,12 +235,9 @@ func (s *WalletService) AdminAdjustWallet(userID uint, amount float64, reason st
 		UserID:          userID,
 		TransactionType: models.TransactionTypeAdminAdjustment,
 		Status:          models.TransactionStatusCompleted,
-		PaymentMethod:   string(models.PaymentMethodAdmin),
 		Amount:          amount,
-		PreviousBalance: user.WalletBalance,
-		NewBalance:      newBalance,
+		BalanceAfter:    newBalance,
 		Description:     reason,
-		AdminNotes:      &reason,
 	}
 
 	// Start transaction

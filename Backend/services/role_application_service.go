@@ -935,9 +935,7 @@ func (s *RoleApplicationService) createRoleEntry(tx *gorm.DB, userID uint, roleT
 	switch roleType {
 	case models.UserTypeWorker:
 		// Create worker entry
-		worker := &models.Worker{
-			IsActive: true,
-		}
+		worker := &models.Worker{}
 		if err := tx.Create(worker).Error; err != nil {
 			return err
 		}

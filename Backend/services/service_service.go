@@ -127,6 +127,8 @@ func (ss *ServiceService) GetServiceByID(id uint) (*models.Service, error) {
 	return service, nil
 }
 
+
+
 // GetServiceCategories retrieves all service categories
 func (ss *ServiceService) GetServiceCategories() ([]models.Category, error) {
 	defer func() {

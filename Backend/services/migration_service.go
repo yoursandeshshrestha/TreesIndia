@@ -196,8 +196,6 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 		&models.UserRole{},
 		&models.UserSubscription{},
 		&models.SubscriptionWarning{},
-		&models.ServiceConfig{},
-		&models.TimeSlot{},
 		&models.Property{},
 		&models.Worker{},
 		&models.Broker{},
@@ -398,34 +396,7 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 		}
 	}
 	
-	// Create default service configurations for existing services
-	var services []models.Service
-	if err := db.Find(&services).Error; err != nil {
-		logrus.Warnf("Could not fetch existing services: %v", err)
-	} else {
-		for _, service := range services {
-			// Check if config already exists
-			var existingConfig models.ServiceConfig
-			if err := db.Where("service_id = ?", service.ID).First(&existingConfig).Error; err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					// Create default config
-					defaultConfig := models.ServiceConfig{
-						ServiceID:              service.ID,
-						StartTime:              time.Date(2000, 1, 1, 10, 0, 0, 0, time.UTC), // 10:00 AM
-						EndTime:                time.Date(2000, 1, 1, 22, 0, 0, 0, time.UTC), // 10:00 PM
-						ServiceDurationMinutes: 60, // Default 1 hour
-						BufferTimeMinutes:      30, // Default 30 minutes buffer
-						AdvanceBookingDays:     7,  // Default 7 days advance booking
-						MaxWorkersPerSlot:      10, // Default 10 workers per slot
-						IsActive:               true,
-					}
-					if err := db.Create(&defaultConfig).Error; err != nil {
-						logrus.Warnf("Could not create default config for service %d: %v", service.ID, err)
-					}
-				}
-			}
-		}
-	}
+
 	
 	logrus.Info("Booking system setup completed")
 	
