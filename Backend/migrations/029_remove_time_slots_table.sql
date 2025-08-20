@@ -1,7 +1,12 @@
 -- +goose Up
--- Create tables that depend on services
+-- Remove time_slots table as we're moving to on-demand calculation
 
--- Time slots table
+-- Drop the time_slots table
+DROP TABLE IF EXISTS time_slots CASCADE;
+
+-- +goose Down
+-- Recreate time_slots table (if needed to rollback)
+
 CREATE TABLE IF NOT EXISTS time_slots (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ,
@@ -16,9 +21,3 @@ CREATE TABLE IF NOT EXISTS time_slots (
     is_active BOOLEAN DEFAULT true,
     FOREIGN KEY (service_id) REFERENCES services(id)
 );
-
--- +goose Down
-DROP TABLE IF EXISTS time_slots CASCADE;
-
-
-
