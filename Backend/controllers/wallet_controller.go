@@ -80,55 +80,23 @@ func (c *WalletController) RechargeWallet(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, views.CreateSuccessResponse("Wallet recharge initiated successfully", transaction))
 }
 
-// RechargeWalletImmediate immediately completes a wallet recharge (for testing/development)
-// @Summary Recharge wallet immediately
-// @Description Immediately complete a wallet recharge for the authenticated user (for testing)
-// @Tags Wallet
-// @Accept json
-// @Produce json
-// @Param request body RechargeWalletRequest true "Recharge request"
-// @Success 201 {object} views.Response{data=models.WalletTransaction}
-// @Failure 400 {object} views.Response
-// @Failure 401 {object} views.Response
-// @Failure 500 {object} views.Response
-// @Router /wallet/recharge-immediate [post]
-func (c *WalletController) RechargeWalletImmediate(ctx *gin.Context) {
-	var req RechargeWalletRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-		return
-	}
 
-	// Validate payment method
-	if req.PaymentMethod != models.PaymentMethodRazorpay && req.PaymentMethod != models.PaymentMethodWallet {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid payment method", "Payment method must be razorpay or wallet"))
-		return
-	}
 
-	// Get user ID from context
-	userID := ctx.GetUint("user_id")
-	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
-		return
-	}
-
-	// Create immediate recharge transaction
-	transaction, err := c.service.RechargeWalletImmediate(userID, req.Amount, req.PaymentMethod, req.ReferenceID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to recharge wallet", err.Error()))
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, views.CreateSuccessResponse("Wallet recharge completed successfully", transaction))
+// CompleteRechargeRequest represents the request for completing a wallet recharge
+type CompleteRechargeRequest struct {
+	RazorpayOrderID   string `json:"razorpay_order_id" binding:"required"`
+	RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
+	RazorpaySignature string `json:"razorpay_signature" binding:"required"`
 }
 
-// CompleteRecharge completes a wallet recharge
+// CompleteRecharge completes a wallet recharge with payment verification
 // @Summary Complete recharge
-// @Description Complete a pending wallet recharge
+// @Description Complete a pending wallet recharge with payment verification
 // @Tags Wallet
 // @Accept json
 // @Produce json
 // @Param id path int true "Transaction ID"
+// @Param request body CompleteRechargeRequest true "Payment verification data"
 // @Success 200 {object} views.Response
 // @Failure 400 {object} views.Response
 // @Failure 404 {object} views.Response
@@ -142,6 +110,27 @@ func (c *WalletController) CompleteRecharge(ctx *gin.Context) {
 		return
 	}
 
+	// Parse payment verification data
+	var req CompleteRechargeRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Verify payment signature
+	razorpayService := services.NewRazorpayService()
+	isValid, err := razorpayService.VerifyPayment(req.RazorpayPaymentID, req.RazorpayOrderID, req.RazorpaySignature)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to verify payment", err.Error()))
+		return
+	}
+
+	if !isValid {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid payment signature", "Payment signature verification failed"))
+		return
+	}
+
+	// Complete the recharge
 	if err := c.service.CompleteRecharge(uint(transactionID)); err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to complete recharge", err.Error()))
 		return

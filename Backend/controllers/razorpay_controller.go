@@ -60,7 +60,8 @@ func (c *RazorpayController) CreatePaymentOrder(ctx *gin.Context) {
 	}
 
 	// Create pending wallet transaction
-	transaction, err := c.walletService.RechargeWallet(userID, req.Amount, "razorpay", order.OrderID)
+	orderID := order["id"].(string)
+	transaction, err := c.walletService.RechargeWallet(userID, req.Amount, "razorpay", orderID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create wallet transaction", err.Error()))
 		return
@@ -69,7 +70,7 @@ func (c *RazorpayController) CreatePaymentOrder(ctx *gin.Context) {
 	response := map[string]interface{}{
 		"order":       order,
 		"transaction": transaction,
-		"key_id":      order.KeyID,
+		"key_id":      order["key_id"],
 	}
 
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Payment order created successfully", response))

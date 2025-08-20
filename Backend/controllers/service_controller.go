@@ -571,3 +571,5 @@ func (sc *ServiceController) ToggleStatus(c *gin.Context) {
 
 	c.JSON(200, views.CreateSuccessResponse("Service status toggled successfully", service))
 }
+
+
