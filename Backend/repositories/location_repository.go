@@ -30,7 +30,7 @@ func (lr *LocationRepository) FindByID(location *models.Location, id uint) error
 	return lr.BaseRepository.FindByID(location, id)
 }
 
-// FindByUserID finds a location by user ID
+// FindByUserID finds a location by user ID (one per user)
 func (lr *LocationRepository) FindByUserID(location *models.Location, userID uint) error {
 	return lr.FindByField(location, "user_id", userID)
 }
@@ -65,10 +65,7 @@ func (lr *LocationRepository) FindLocationsByState(locations *[]models.Location,
 	return lr.db.Where("state ILIKE ?", "%"+state+"%").Find(locations).Error
 }
 
-// FindLocationsBySource finds locations by source
-func (lr *LocationRepository) FindLocationsBySource(locations *[]models.Location, source string) error {
-	return lr.db.Where("source = ?", source).Find(locations).Error
-}
+
 
 // FindLocationsWithinRadius finds locations within a certain radius of coordinates
 func (lr *LocationRepository) FindLocationsWithinRadius(locations *[]models.Location, lat, lng float64, radiusKm int) error {
@@ -90,6 +87,8 @@ func (lr *LocationRepository) ExistsByUserID(userID uint) (bool, error) {
 	return lr.Exists(&models.Location{}, "user_id", userID)
 }
 
+
+
 // GetLocationStats gets location statistics
 func (lr *LocationRepository) GetLocationStats() (map[string]int64, error) {
 	stats := make(map[string]int64)
@@ -101,15 +100,7 @@ func (lr *LocationRepository) GetLocationStats() (map[string]int64, error) {
 	}
 	stats["total"] = total
 	
-	// Locations by source
-	sources := []string{"gps", "manual"}
-	for _, source := range sources {
-		var count int64
-		if err := lr.db.Model(&models.Location{}).Where("source = ?", source).Count(&count).Error; err != nil {
-			return nil, err
-		}
-		stats[source] = count
-	}
-	
 	return stats, nil
 }
+
+
