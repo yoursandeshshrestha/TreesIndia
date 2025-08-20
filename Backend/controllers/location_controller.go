@@ -43,7 +43,7 @@ func NewLocationController() *LocationController {
 // @Success 201 {object} models.Response "Location created successfully"
 // @Failure 400 {object} models.Response "Invalid request data"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Failure 409 {object} models.Response "Location already exists for user"
+
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /locations [post]
 func (lc *LocationController) CreateLocation(c *gin.Context) {
@@ -60,10 +60,6 @@ func (lc *LocationController) CreateLocation(c *gin.Context) {
 	// Create location
 	location, err := lc.locationService.CreateLocation(userID, &req)
 	if err != nil {
-		if err.Error() == "location already exists for user" {
-			c.JSON(http.StatusConflict, views.CreateErrorResponse("Location already exists", err.Error()))
-			return
-		}
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create location", err.Error()))
 		return
 	}
@@ -137,6 +133,8 @@ func (lc *LocationController) GetLocationByUserID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Location retrieved successfully", location))
 }
+
+
 
 // UpdateLocation godoc
 // @Summary Update location
@@ -226,4 +224,62 @@ func (lc *LocationController) GetLocationStats(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Statistics retrieved successfully", stats))
+}
+
+// UpdateUserLocation godoc
+// @Summary Update current user's location
+// @Description Update the current user's location
+// @Tags Location
+// @Accept json
+// @Produce json
+// @Param location body models.UpdateLocationRequest true "Updated location data"
+// @Security BearerAuth
+// @Success 200 {object} models.Response "Location updated successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 404 {object} models.Response "Location not found"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /locations/user/me [put]
+func (lc *LocationController) UpdateUserLocation(c *gin.Context) {
+	// Get user ID from context (set by auth middleware)
+	userID := c.GetUint("user_id")
+
+	var req models.UpdateLocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Get current user's location
+	currentLocation, err := lc.locationService.GetLocationByUserID(userID)
+	if err != nil {
+		// If location doesn't exist, create it
+		createReq := models.CreateLocationRequest{
+			City:       req.City,
+			State:      req.State,
+			Country:    req.Country,
+			Address:    req.Address,
+			PostalCode: req.PostalCode,
+			Latitude:   req.Latitude,
+			Longitude:  req.Longitude,
+		}
+		
+		location, err := lc.locationService.CreateLocation(userID, &createReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create location", err.Error()))
+			return
+		}
+		
+		c.JSON(http.StatusCreated, views.CreateSuccessResponse("Location created successfully", location))
+		return
+	}
+
+	// Update existing location
+	location, err := lc.locationService.UpdateLocation(currentLocation.ID, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update location", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Location updated successfully", location))
 }

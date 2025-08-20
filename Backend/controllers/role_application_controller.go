@@ -119,36 +119,31 @@ func (c *RoleApplicationController) SubmitApplication(ctx *gin.Context) {
 	}
 
 	// Parse optional location
-	latitudeStr := ctx.PostForm("latitude")
-	longitudeStr := ctx.PostForm("longitude")
-	address := ctx.PostForm("address")
 	city := ctx.PostForm("city")
 	state := ctx.PostForm("state")
+	address := ctx.PostForm("address")
 	postalCode := ctx.PostForm("postal_code")
-	source := ctx.PostForm("source")
+	latitudeStr := ctx.PostForm("latitude")
+	longitudeStr := ctx.PostForm("longitude")
 
 	var locationReq *models.CreateLocationRequest
-	if latitudeStr != "" && longitudeStr != "" && address != "" && city != "" && state != "" && source != "" {
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid latitude", "Latitude must be a valid number"))
-			return
-		}
-
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid longitude", "Longitude must be a valid number"))
-			return
-		}
-
+	if city != "" && state != "" {
 		locationReq = &models.CreateLocationRequest{
-			Latitude:   latitude,
-			Longitude:  longitude,
-			Address:    address,
 			City:       city,
 			State:      state,
+			Country:    "India", // Default country for now
+			Address:    address,
 			PostalCode: postalCode,
-			Source:     source,
+		}
+
+		// Parse coordinates if provided
+		if latitudeStr != "" && longitudeStr != "" {
+			if latitude, err := strconv.ParseFloat(latitudeStr, 64); err == nil {
+				locationReq.Latitude = latitude
+			}
+			if longitude, err := strconv.ParseFloat(longitudeStr, 64); err == nil {
+				locationReq.Longitude = longitude
+			}
 		}
 	}
 
@@ -314,36 +309,31 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 	}
 
 	// Parse optional location
-	latitudeStr := ctx.PostForm("latitude")
-	longitudeStr := ctx.PostForm("longitude")
-	address := ctx.PostForm("address")
 	city := ctx.PostForm("city")
 	state := ctx.PostForm("state")
+	address := ctx.PostForm("address")
 	postalCode := ctx.PostForm("postal_code")
-	source := ctx.PostForm("source")
+	latitudeStr := ctx.PostForm("latitude")
+	longitudeStr := ctx.PostForm("longitude")
 
 	var locationReq *models.CreateLocationRequest
-	if latitudeStr != "" && longitudeStr != "" && address != "" && city != "" && state != "" && source != "" {
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid latitude", "Latitude must be a valid number"))
-			return
-		}
-
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid longitude", "Longitude must be a valid number"))
-			return
-		}
-
+	if city != "" && state != "" {
 		locationReq = &models.CreateLocationRequest{
-			Latitude:   latitude,
-			Longitude:  longitude,
-			Address:    address,
 			City:       city,
 			State:      state,
+			Country:    "India", // Default country for now
+			Address:    address,
 			PostalCode: postalCode,
-			Source:     source,
+		}
+
+		// Parse coordinates if provided
+		if latitudeStr != "" && longitudeStr != "" {
+			if latitude, err := strconv.ParseFloat(latitudeStr, 64); err == nil {
+				locationReq.Latitude = latitude
+			}
+			if longitude, err := strconv.ParseFloat(longitudeStr, 64); err == nil {
+				locationReq.Longitude = longitude
+			}
 		}
 	}
 
