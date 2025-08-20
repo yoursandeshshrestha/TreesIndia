@@ -48,6 +48,9 @@ func SetupRoutes(r *gin.Engine) {
 		bookingGroup.Use(bookingMiddleware.BookingSystem())
 		SetupBookingRoutes(bookingGroup)
 		SetupWorkerInquiryRoutes(bookingGroup)
+		
+		// Payment routes
+		SetupPaymentRoutes(v1)
 	}
 }
 
