@@ -42,15 +42,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
-  void _login() {
+  void _login() async {
     if (_isPhoneValid) {
       final phoneNumber = '+91${_phoneController.text}';
-      ref.read(authFlowProvider.notifier).login(phoneNumber);
+      await ref.read(authFlowProvider.notifier).login(phoneNumber);
+      _navigateToOtpVerification(phoneNumber);
     }
-  }
-
-  void _navigateToRegister() {
-    context.replace('/signup');
   }
 
   void _navigateToOtpVerification(String phoneNumber) {
@@ -62,16 +59,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authFlowProvider);
-
-    // Listen to auth state changes
-    ref.listen<auth_flow.AuthFlowStateModel>(authFlowProvider,
-        (previous, current) {
-      if (current.state == auth_flow.AuthFlowState.loginSuccess) {
-        if (current.phoneNumber != null) {
-          _navigateToOtpVerification(current.phoneNumber!);
-        }
-      }
-    });
 
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,

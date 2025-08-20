@@ -107,8 +107,8 @@ class PushNotificationService {
 
       if (androidPlugin != null) {
         await androidPlugin.createNotificationChannel(
-            AndroidNotificationChannel(
-                'emsigner_channel', 'emSigner Notifications',
+            const AndroidNotificationChannel(
+                'treesindia_channel', 'treesIndia Notifications',
                 importance: Importance.high));
 
         // Set notification callback for Android
@@ -262,9 +262,9 @@ class PushNotificationService {
       // Use local notifications plugin for iOS foreground notifications
       _localNotifications.show(
         DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        notification.title ?? 'emSigner Notification',
+        notification.title ?? 'treesIndia Notification',
         notification.body ?? '',
-        NotificationDetails(
+        const NotificationDetails(
           iOS: DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
@@ -287,7 +287,7 @@ class PushNotificationService {
       if (title == null || title.isEmpty) {
         title = data['gcm.notification.title'] ??
             data['title'] ??
-            'emSigner Notification';
+            'treesIndia Notification';
       }
 
       if (body == null || body.isEmpty) {
@@ -345,8 +345,8 @@ class PushNotificationService {
         body,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-              'emsigner_channel', 'emSigner Notification',
-              channelDescription: 'Notifications for emSigner app',
+              'treesindia_channel', 'treesIndia Notification',
+              channelDescription: 'Notifications for treesIndia app',
               importance: Importance.high,
               priority: Priority.high,
               showWhen: true,

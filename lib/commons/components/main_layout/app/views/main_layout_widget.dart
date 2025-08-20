@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/components/bottom_navbar/app/views/bottom_navbar_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 
 class MainLayoutWidget extends StatefulWidget {
   final Widget child;
@@ -27,17 +28,17 @@ class _MainLayoutWidgetState extends State<MainLayoutWidget> {
       case 1:
         // Navigate to bookings (placeholder)
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bookings page coming soon!'),
-          ),
+          const InfoSnackbarWidget(
+            message: 'Bookings page coming soon!',
+          ).createSnackBar(),
         );
         break;
       case 2:
         // Navigate to rewards (placeholder)
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rewards page coming soon!'),
-          ),
+          const InfoSnackbarWidget(
+            message: 'Rewards page coming soon!',
+          ).createSnackBar(),
         );
         break;
       case 3:

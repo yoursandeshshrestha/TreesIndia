@@ -145,7 +145,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _currentPage == index
-                              ? const Color(0xFF00A871) // Green
+                              ? AppColors.brandPrimary600 // Green
                               : const Color(0xFFE0E0E0), // Light gray
                         ),
                       );
@@ -162,7 +162,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ? 'Get Started'
                           : 'Next',
                       onPressed: _onNextPressed,
-                      backgroundColor: const Color(0xFF00A871), // Green
+                      backgroundColor: AppColors.brandPrimary600, // Green
                       labelColor: Colors.white,
                     ),
                   ),
@@ -181,7 +181,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         onTap: _onSkipPressed,
                         child: B4Bold(
                           text: 'Sign In',
-                          color: Color(0xFF00A871), // Green
+                          color: AppColors.brandPrimary600, // Green
                         ),
                       ),
                     ],
@@ -220,7 +220,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       width: 150,
                       height: 150,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00A871), // Green
+                        color: AppColors.brandPrimary600, // Green
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(

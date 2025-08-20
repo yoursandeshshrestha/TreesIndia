@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -125,8 +124,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          actions: [
-            const SizedBox(width: AppSpacing.md),
+          actions: const [
+            SizedBox(width: AppSpacing.md),
           ],
         ),
         body: SafeArea(
@@ -197,19 +196,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                           const SizedBox(height: AppSpacing.xs),
                           Row(
                             children: [
-                              Icon(
-                                true ? Icons.verified : Icons.warning,
+                              const Icon(
+                                Icons.verified,
                                 size: 16,
-                                color: true
-                                    ? AppColors.stateGreen600
-                                    : AppColors.stateYellow600,
+                                color: AppColors.stateGreen600,
                               ),
                               const SizedBox(width: AppSpacing.xs),
                               B3Medium(
-                                text: true ? 'Verified' : 'Not Verified',
-                                color: true
-                                    ? AppColors.stateGreen600
-                                    : AppColors.stateYellow600,
+                                text: 'Verified',
+                                color: AppColors.stateGreen600,
                               ),
                             ],
                           ),
