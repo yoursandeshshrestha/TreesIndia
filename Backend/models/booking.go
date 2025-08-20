@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// BookingStatus represents the status of a booking
+// BookingStatus represents the booking status
 type BookingStatus string
 
 const (
@@ -18,6 +18,14 @@ const (
 	BookingStatusCompleted      BookingStatus = "completed"
 	BookingStatusTimeExpired    BookingStatus = "time_expired"
 	BookingStatusCancelled      BookingStatus = "cancelled"
+)
+
+// BookingType represents the type of booking
+type BookingType string
+
+const (
+	BookingTypeRegular BookingType = "regular"
+	BookingTypeInquiry BookingType = "inquiry"
 )
 
 // PaymentStatus represents the payment status
@@ -46,17 +54,17 @@ type Booking struct {
 	BookingReference string        `json:"booking_reference" gorm:"uniqueIndex;not null"`
 	UserID           uint          `json:"user_id" gorm:"not null"`
 	ServiceID        uint          `json:"service_id" gorm:"not null"`
-	TimeSlotID       uint          `json:"time_slot_id" gorm:"not null"`
 	
 	// Status and Type
 	Status           BookingStatus `json:"status" gorm:"default:'pending'"`
 	PaymentStatus    PaymentStatus `json:"payment_status" gorm:"default:'pending'"`
+	BookingType      BookingType   `json:"booking_type" gorm:"default:'regular'"`
 	CompletionType   *CompletionType `json:"completion_type"`
 	
 	// Scheduling
-	ScheduledDate    time.Time     `json:"scheduled_date" gorm:"not null"`
-	ScheduledTime    time.Time     `json:"scheduled_time" gorm:"not null"`
-	ScheduledEndTime time.Time     `json:"scheduled_end_time" gorm:"not null"`
+	ScheduledDate    *time.Time    `json:"scheduled_date"`
+	ScheduledTime    *time.Time    `json:"scheduled_time"`
+	ScheduledEndTime *time.Time    `json:"scheduled_end_time"`
 	
 	// Actual Times
 	ActualStartTime  *time.Time    `json:"actual_start_time"`
@@ -64,14 +72,14 @@ type Booking struct {
 	ActualDurationMinutes *int     `json:"actual_duration_minutes"`
 	
 	// Service Details
-	Address          string        `json:"address" gorm:"not null"`
+	Address          *string       `json:"address"`
 	Description      string        `json:"description"`
 	ContactPerson    string        `json:"contact_person"`
 	ContactPhone     string        `json:"contact_phone"`
 	SpecialInstructions string     `json:"special_instructions"`
 	
 	// Pricing
-	TotalAmount      float64       `json:"total_amount" gorm:"not null"`
+	TotalAmount      *float64      `json:"total_amount"`
 	
 	// Payment Information
 	PaymentID        *string       `json:"payment_id"`
@@ -81,7 +89,6 @@ type Booking struct {
 	// Relationships
 	User             User          `json:"user" gorm:"foreignKey:UserID"`
 	Service          Service       `json:"service" gorm:"foreignKey:ServiceID"`
-	TimeSlot         TimeSlot      `json:"time_slot" gorm:"foreignKey:TimeSlotID"`
 	WorkerAssignment *WorkerAssignment `json:"worker_assignment,omitempty" gorm:"foreignKey:BookingID"`
 	BufferRequests   []BufferRequest `json:"buffer_requests,omitempty" gorm:"foreignKey:BookingID"`
 }
@@ -94,7 +101,6 @@ func (Booking) TableName() string {
 // CreateBookingRequest represents the request structure for creating a booking
 type CreateBookingRequest struct {
 	ServiceID            uint      `json:"service_id" binding:"required"`
-	TimeSlotID           uint      `json:"time_slot_id" binding:"required"`
 	ScheduledDate        string    `json:"scheduled_date" binding:"required"`
 	ScheduledTime        string    `json:"scheduled_time" binding:"required"`
 	Address              string    `json:"address" binding:"required"`
@@ -109,7 +115,23 @@ type VerifyPaymentRequest struct {
 	BookingID            uint   `json:"booking_id" binding:"required"`
 	RazorpayPaymentID    string `json:"razorpay_payment_id" binding:"required"`
 	RazorpayOrderID      string `json:"razorpay_order_id" binding:"required"`
-	RazorpaySignature    string `json:"razorpay_signature" binding:"required"`
+	RazorpaySignature    string `json:"razorpay_signature"` // Optional - will be verified on backend
+}
+
+// VerifyPaymentAndCreateBookingRequest represents the request structure for verifying payment and creating booking
+type VerifyPaymentAndCreateBookingRequest struct {
+	CreateBookingRequest
+	RazorpayPaymentID    string `json:"razorpay_payment_id"`
+	RazorpayOrderID      string `json:"razorpay_order_id"`
+	RazorpaySignature    string `json:"razorpay_signature"` // Optional - will be verified on backend
+}
+
+// VerifyInquiryPaymentRequest represents the request structure for verifying inquiry payment and creating booking
+type VerifyInquiryPaymentRequest struct {
+	ServiceID            uint   `json:"service_id" binding:"required"`
+	RazorpayPaymentID    string `json:"razorpay_payment_id" binding:"required"`
+	RazorpayOrderID      string `json:"razorpay_order_id" binding:"required"`
+	RazorpaySignature    string `json:"razorpay_signature"` // Optional - will be verified on backend
 }
 
 // CancelBookingRequest represents the request structure for cancelling a booking
@@ -129,4 +151,9 @@ type ReviewBookingRequest struct {
 type ContactWorkerRequest struct {
 	ContactType          string `json:"contact_type" binding:"required,oneof=call message"`
 	Message              string `json:"message"`
+}
+
+// CreateInquiryBookingRequest represents the request structure for creating an inquiry-based booking
+type CreateInquiryBookingRequest struct {
+	ServiceID uint `json:"service_id" binding:"required"`
 }
