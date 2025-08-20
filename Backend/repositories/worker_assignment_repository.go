@@ -17,6 +17,11 @@ func NewWorkerAssignmentRepository() *WorkerAssignmentRepository {
 	}
 }
 
+// GetDB returns the underlying database connection
+func (war *WorkerAssignmentRepository) GetDB() *gorm.DB {
+	return war.db
+}
+
 // Create creates a new worker assignment
 func (war *WorkerAssignmentRepository) Create(assignment *models.WorkerAssignment) error {
 	return war.db.Create(assignment).Error

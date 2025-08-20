@@ -11,27 +11,49 @@ import (
 func SetupBookingRoutes(router *gin.RouterGroup) {
 	bookingController := controllers.NewBookingController()
 
-	// User booking routes (authentication required)
+	// Public booking routes (no authentication required)
 	bookings := router.Group("/bookings")
-	bookings.Use(middleware.AuthMiddleware())
+	{
+		// GET /api/v1/bookings/config - Get booking configuration (public)
+		bookings.GET("/config", bookingController.GetBookingConfig)
+	}
+
+	// User booking routes (authentication required)
+	userBookings := router.Group("/bookings")
+	userBookings.Use(middleware.AuthMiddleware())
 	{
 		// POST /api/v1/bookings - Create new booking
-		bookings.POST("", bookingController.CreateBooking)
+		userBookings.POST("", bookingController.CreateBooking)
+		
+		// POST /api/v1/bookings/inquiry - Create inquiry-based booking (simplified)
+		userBookings.POST("/inquiry", bookingController.CreateInquiryBooking)
+		
+		// POST /api/v1/bookings/verify-inquiry-payment - Verify payment and create inquiry booking
+		userBookings.POST("/verify-inquiry-payment", bookingController.VerifyInquiryPaymentAndCreateBooking)
+		
+		// POST /api/v1/bookings/payment-order - Create payment order (without booking)
+		userBookings.POST("/payment-order", bookingController.CreatePaymentOrder)
 		
 		// POST /api/v1/bookings/with-payment - Create booking with payment
-		bookings.POST("/with-payment", bookingController.CreateBookingWithPayment)
+		userBookings.POST("/with-payment", bookingController.CreateBookingWithPayment)
 		
 		// POST /api/v1/bookings/verify-payment - Verify payment
-		bookings.POST("/verify-payment", bookingController.VerifyPayment)
+		userBookings.POST("/verify-payment", bookingController.VerifyPayment)
+		
+		// POST /api/v1/bookings/verify-payment-and-create - Verify payment and create booking
+		userBookings.POST("/verify-payment-and-create", bookingController.VerifyPaymentAndCreateBooking)
 		
 		// GET /api/v1/bookings - Get user's bookings
-		bookings.GET("", bookingController.GetUserBookings)
+		userBookings.GET("", bookingController.GetUserBookings)
+		
+		// GET /api/v1/bookings/available-slots - Get available time slots
+		userBookings.GET("/available-slots", bookingController.GetAvailableSlots)
 		
 		// GET /api/v1/bookings/:id - Get booking by ID
-		bookings.GET("/:id", bookingController.GetBookingByID)
+		userBookings.GET("/:id", bookingController.GetBookingByID)
 		
 		// PUT /api/v1/bookings/:id/cancel - Cancel booking
-		bookings.PUT("/:id/cancel", bookingController.CancelUserBooking)
+		userBookings.PUT("/:id/cancel", bookingController.CancelUserBooking)
 	}
 
 	// Admin booking routes (admin authentication required)
