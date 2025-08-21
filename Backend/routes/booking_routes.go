@@ -41,6 +41,10 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 		userBookings.PUT("/:id/cancel", bookingController.CancelUserBooking)
 	}
 
+	// Inquiry-based booking routes
+	bookings.POST("/inquiry", middleware.AuthMiddleware(), bookingController.CreateInquiryBooking)
+	bookings.POST("/inquiry/verify-payment", middleware.AuthMiddleware(), bookingController.VerifyInquiryPayment)
+
 	// Admin booking routes (admin authentication required)
 	adminBookings := router.Group("/admin/bookings")
 	adminBookings.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
