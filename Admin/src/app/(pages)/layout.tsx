@@ -9,6 +9,7 @@ import Header from "@/components/Layout/Header/Header";
 import { generateBreadcrumbs } from "@/utils/breadcrumbUtils";
 import { setSidebarOpen, selectIsSidebarOpen } from "@/app/store";
 import AuthGuard from "@/components/AuthGuard";
+import UserProvider from "@/components/UserProvider";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,34 +54,36 @@ function Layout({ children }: LayoutProps) {
 
   return (
     <AuthGuard requireAdmin={true}>
-      <div className="flex min-h-screen h-full bg-gray-50">
-        {/* Sidebar */}
-        <div
-          className={`fixed left-0 top-0 h-full transition-all duration-300 ease-in-out z-20 ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <Sidebar />
-        </div>
-
-        {/* Overlay for mobile */}
-        {isMobile && isSidebarOpen && (
+      <UserProvider>
+        <div className="flex min-h-screen h-full bg-gray-50">
+          {/* Sidebar */}
           <div
-            className="fixed inset-0 bg-black/30 z-10 transition-opacity duration-300"
-            onClick={() => dispatch(setSidebarOpen({ isOpen: false }))}
-          />
-        )}
+            className={`fixed left-0 top-0 h-full transition-all duration-300 ease-in-out z-sidebar ${
+              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <Sidebar />
+          </div>
 
-        {/* Main Content */}
-        <div
-          className={`flex-1 transition-all duration-300 ease-in-out ${
-            isSidebarOpen && !isMobile ? "ml-64" : "ml-0"
-          }`}
-        >
-          <Header breadcrumbs={breadcrumbs} />
-          <main className="p-24 px-6">{children}</main>
+          {/* Overlay for mobile */}
+          {isMobile && isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 z-overlay transition-opacity duration-300"
+              onClick={() => dispatch(setSidebarOpen({ isOpen: false }))}
+            />
+          )}
+
+          {/* Main Content */}
+          <div
+            className={`flex-1 transition-all duration-300 ease-in-out ${
+              isSidebarOpen && !isMobile ? "ml-64" : "ml-0"
+            }`}
+          >
+            <Header breadcrumbs={breadcrumbs} />
+            <main className="pt-24 px-6 pb-6">{children}</main>
+          </div>
         </div>
-      </div>
+      </UserProvider>
     </AuthGuard>
   );
 }
