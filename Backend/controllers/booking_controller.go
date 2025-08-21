@@ -1,14 +1,16 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/services"
 
+	"treesindia/views"
+
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // BookingController handles booking-related HTTP requests
@@ -58,8 +60,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	// Debug: Print booking details
-	fmt.Printf("Created booking - ID: %d, Reference: %s, Status: %s\n", booking.ID, booking.BookingReference, booking.Status)
+
 
 	// Prepare response based on whether payment is required
 	response := gin.H{
@@ -90,6 +91,122 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// CreateInquiryBooking creates a new inquiry-based booking
+// @Summary Create inquiry booking
+// @Description Create a new inquiry-based booking (simplified flow)
+// @Tags bookings
+// @Accept json
+// @Produce json
+// @Param request body models.CreateInquiryBookingRequest true "Inquiry booking request"
+// @Success 200 {object} views.Response{data=map[string]interface{}}
+// @Router /api/v1/bookings/inquiry [post]
+func (bc *BookingController) CreateInquiryBooking(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("BookingController.CreateInquiryBooking panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("BookingController.CreateInquiryBooking called")
+	
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Error("BookingController.CreateInquiryBooking: user_id not found in context")
+		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+	
+	// Parse request body
+	var req models.CreateInquiryBookingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logrus.Errorf("BookingController.CreateInquiryBooking binding error: %v", err)
+		c.JSON(400, views.CreateErrorResponse("Invalid request", err.Error()))
+		return
+	}
+	
+	logrus.Infof("BookingController.CreateInquiryBooking request - user_id: %v, service_id: %d", userID, req.ServiceID)
+	
+	// Create inquiry booking
+	booking, paymentOrder, err := bc.bookingService.CreateInquiryBooking(userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("BookingController.CreateInquiryBooking service error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to create inquiry booking", err.Error()))
+		return
+	}
+	
+	// Prepare response
+	response := map[string]interface{}{
+		"booking": booking,
+	}
+	
+	if paymentOrder != nil {
+		response["payment_required"] = true
+		response["payment_order"] = paymentOrder
+	} else {
+		response["payment_required"] = false
+	}
+	
+	// Log success with conditional booking ID
+	if booking != nil {
+		logrus.Infof("BookingController.CreateInquiryBooking success - booking_id: %v, payment_required: %v", 
+			booking.ID, paymentOrder != nil)
+	} else {
+		logrus.Infof("BookingController.CreateInquiryBooking success - payment_required: %v", 
+			paymentOrder != nil)
+	}
+	
+	c.JSON(200, views.CreateSuccessResponse("Inquiry booking created successfully", response))
+}
+
+// VerifyInquiryPayment verifies payment for inquiry booking and creates the booking
+// @Summary Verify inquiry payment
+// @Description Verify payment for inquiry booking and create the actual booking
+// @Tags bookings
+// @Accept json
+// @Produce json
+// @Param request body models.VerifyInquiryPaymentRequest true "Payment verification request"
+// @Success 200 {object} views.Response{data=models.Booking}
+// @Router /api/v1/bookings/inquiry/verify-payment [post]
+func (bc *BookingController) VerifyInquiryPayment(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("BookingController.VerifyInquiryPayment panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("BookingController.VerifyInquiryPayment called")
+	
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Error("BookingController.VerifyInquiryPayment: user_id not found in context")
+		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+	
+	// Parse request body
+	var req models.VerifyInquiryPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logrus.Errorf("BookingController.VerifyInquiryPayment binding error: %v", err)
+		c.JSON(400, views.CreateErrorResponse("Invalid request", err.Error()))
+		return
+	}
+	
+	logrus.Infof("BookingController.VerifyInquiryPayment request - user_id: %v, service_id: %d", userID, req.ServiceID)
+	
+	// Verify payment and create booking
+	booking, err := bc.bookingService.VerifyInquiryPayment(userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("BookingController.VerifyInquiryPayment service error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to verify inquiry payment", err.Error()))
+		return
+	}
+	
+	logrus.Infof("BookingController.VerifyInquiryPayment success - booking_id: %v", booking.ID)
+	
+	c.JSON(200, views.CreateSuccessResponse("Inquiry payment verified and booking created successfully", booking))
+}
 
 
 // GetBookingConfig gets booking-related configuration (public endpoint)
@@ -168,11 +285,10 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Verifying payment for booking ID: %d\n", bookingID)
+
 
 	var req models.VerifyPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Printf("Request binding error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
 		return
 	}
@@ -180,11 +296,8 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 	// Add booking ID to the request
 	req.BookingID = uint(bookingID)
 
-	fmt.Printf("Payment verification request: %+v\n", req)
-
 	booking, err := bc.bookingService.VerifyPayment(&req)
 	if err != nil {
-		fmt.Printf("Payment verification error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to verify payment", "details": err.Error()})
 		return
 	}
