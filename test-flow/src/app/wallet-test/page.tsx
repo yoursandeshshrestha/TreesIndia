@@ -8,37 +8,13 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { apiService } from "../../lib/api";
+import {
+  apiService,
+  WalletTransaction,
+  WalletSummary,
+  RazorpayOrder,
+} from "../../lib/api";
 import RazorpayCheckout from "../../components/RazorpayCheckout";
-
-interface WalletTransaction {
-  id: number;
-  user_id: number;
-  transaction_type: string;
-  status: string;
-  payment_method: string;
-  amount: number;
-  previous_balance: number;
-  new_balance: number;
-  reference_id: string;
-  description: string;
-  created_at: string;
-}
-
-interface RazorpayOrder {
-  id: string;
-  amount: number;
-  currency: string;
-  receipt: string;
-  key_id: string;
-}
-
-interface WalletSummary {
-  current_balance: number;
-  total_recharged: number;
-  total_spent: number;
-  total_transactions: number;
-}
 
 export default function WalletTest() {
   const [token, setToken] = useState("");
@@ -56,10 +32,12 @@ export default function WalletTest() {
   const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrder | null>(
     null
   );
-  const [currentTransaction, setCurrentTransaction] =
-    useState<WalletTransaction | null>(null);
+  const [currentPayment, setCurrentPayment] = useState<any>(null);
   const [isLoadingWallet, setIsLoadingWallet] = useState(false);
   const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
+  const [completingPaymentId, setCompletingPaymentId] = useState<number | null>(
+    null
+  );
 
   const handleTokenSubmit = () => {
     if (token.trim()) {
@@ -114,8 +92,8 @@ export default function WalletTest() {
         payment_method: "razorpay",
       });
 
-      setRazorpayOrder(response.order);
-      setCurrentTransaction(response.transaction);
+      setRazorpayOrder(response.payment_order);
+      setCurrentPayment(response.payment);
       setCurrentStep("payment");
     } catch (error: any) {
       setError(
@@ -132,21 +110,22 @@ export default function WalletTest() {
 
     try {
       console.log("Payment successful:", paymentData);
-      console.log("Current transaction:", currentTransaction);
-      console.log("Transaction ID:", currentTransaction?.id);
-      console.log("Transaction ID (ID):", currentTransaction?.ID);
+      console.log("Current payment:", currentPayment);
+      console.log("Payment ID:", currentPayment?.ID || currentPayment?.id);
 
-      const transactionId = currentTransaction?.id || currentTransaction?.ID;
+      const paymentId = currentPayment?.ID || currentPayment?.id;
 
-      if (!transactionId) {
-        throw new Error("Transaction ID not found");
+      if (!paymentId) {
+        throw new Error("Payment ID not found");
       }
 
-      await apiService.completeWalletRecharge(transactionId, paymentData);
+      console.log("Calling completeWalletRecharge with payment ID:", paymentId);
+      await apiService.completeWalletRecharge(paymentId, paymentData);
       setSuccess("Wallet recharged successfully!");
       setCurrentStep("success");
       loadWalletData(); // Refresh wallet data
     } catch (error: any) {
+      console.error("Error completing wallet recharge:", error);
       setError(
         error.response?.data?.message ||
           error.message ||
@@ -167,6 +146,46 @@ export default function WalletTest() {
     setCurrentStep("recharge");
   };
 
+  const handleCompletePendingPayment = async (payment: WalletTransaction) => {
+    setCompletingPaymentId(payment.id || payment.ID || 0);
+    setError("");
+
+    try {
+      // Check if we have the Razorpay order ID
+      if (!payment.razorpay_order_id) {
+        throw new Error(
+          "Payment order not found. Please try creating a new recharge."
+        );
+      }
+
+      // Create Razorpay order object from the payment
+      const razorpayOrder: RazorpayOrder = {
+        id: payment.razorpay_order_id,
+        amount: payment.amount * 100, // Convert to paise
+        currency: "INR",
+        receipt: payment.payment_reference || payment.reference_id || "",
+        key_id: "rzp_test_R5AUjoyz0QoYmH", // This should come from config
+      };
+
+      // Set the current payment and order
+      setCurrentPayment(payment);
+      setRazorpayOrder(razorpayOrder);
+      setAmount(payment.amount.toString());
+
+      // Open Razorpay checkout
+      setShowRazorpayCheckout(true);
+      setCurrentStep("payment");
+    } catch (error: any) {
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to open payment gateway"
+      );
+    } finally {
+      setCompletingPaymentId(null);
+    }
+  };
+
   const resetFlow = () => {
     setToken("");
     setAmount("");
@@ -174,10 +193,11 @@ export default function WalletTest() {
     setError("");
     setSuccess("");
     setRazorpayOrder(null);
-    setCurrentTransaction(null);
+    setCurrentPayment(null);
     setWalletSummary(null);
     setTransactions([]);
     setShowRazorpayCheckout(false);
+    setCompletingPaymentId(null);
   };
 
   const renderTokenStep = () => (
@@ -325,6 +345,13 @@ export default function WalletTest() {
                   <span className="text-red-700 text-sm">{error}</span>
                 </div>
               )}
+
+              {success && (
+                <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  <span className="text-green-700 text-sm">{success}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -339,19 +366,22 @@ export default function WalletTest() {
               <div className="space-y-3">
                 {transactions.slice(0, 5).map((txn) => (
                   <div
-                    key={txn.id}
+                    key={txn.id || txn.ID}
                     className="flex items-center justify-between p-3 bg-white rounded-lg border"
                   >
-                    <div>
+                    <div className="flex-1">
                       <div className="font-medium text-gray-900">
                         {txn.description}
                       </div>
                       <div className="text-sm text-gray-500">
                         {new Date(txn.created_at).toLocaleDateString()} -{" "}
-                        {txn.transaction_type}
+                        {txn.type || txn.transaction_type}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Ref: {txn.payment_reference || txn.reference_id}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-4">
                       <div
                         className={`font-semibold ${
                           txn.amount > 0 ? "text-green-600" : "text-red-600"
@@ -359,7 +389,31 @@ export default function WalletTest() {
                       >
                         {txn.amount > 0 ? "+" : ""}₹{txn.amount.toFixed(2)}
                       </div>
-                      <div className="text-sm text-gray-500">{txn.status}</div>
+                      <div className="text-sm text-gray-500 mb-2">
+                        {txn.status}
+                      </div>
+
+                      {/* Pay Now Button for Pending Transactions */}
+                      {txn.status === "pending" && (
+                        <div className="text-center">
+                          <button
+                            onClick={() => handleCompletePendingPayment(txn)}
+                            disabled={
+                              completingPaymentId === (txn.id || txn.ID)
+                            }
+                            className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {completingPaymentId === (txn.id || txn.ID) ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mx-auto"></div>
+                            ) : (
+                              "Pay Now"
+                            )}
+                          </button>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Complete payment via Razorpay
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -464,7 +518,8 @@ export default function WalletTest() {
               <div className="flex justify-between">
                 <span>Reference:</span>
                 <span className="font-mono text-xs">
-                  {currentTransaction?.reference_id}
+                  {currentPayment?.payment_reference ||
+                    currentPayment?.reference_id}
                 </span>
               </div>
             </div>

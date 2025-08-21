@@ -1,0 +1,715 @@
+{
+  "info": {
+    "name": "TreesIndia API - Chat to Admin",
+    "description": "Postman collection for TreesIndia backend API covering Chat Management, Razorpay Integration, Role Applications, Worker Inquiries, and Admin Management routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "💬 Chat Management",
+      "item": [
+        {
+          "name": "Create Chat Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_ids\": [1, 2],\n  \"room_type\": \"direct\",\n  \"title\": \"Service Discussion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/rooms",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Get User Chat Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/rooms",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Get Messages for Room",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/rooms/1/messages",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "rooms", "1", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_id\": 1,\n  \"content\": \"Hello, I need help with my booking\",\n  \"message_type\": \"text\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/messages",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Mark Message as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message_id\": 1,\n  \"room_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/messages/read",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "messages", "read"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking Chat Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": 1,\n  \"title\": \"Booking #12345 Discussion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/bookings/1/room",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "bookings", "1", "room"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Razorpay Integration",
+      "item": [
+        {
+          "name": "Create Payment Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"receipt\": \"receipt_123\",\n  \"notes\": \"Payment for service\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/razorpay/create-order",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "razorpay", "create-order"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_order_id\": \"order_123456789\",\n  \"razorpay_signature\": \"signature_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/razorpay/verify",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "razorpay", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Handle Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"id\": \"pay_123456789\",\n      \"status\": \"captured\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/razorpay/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "razorpay", "webhook"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Role Applications",
+      "item": [
+        {
+          "name": "Submit Role Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_type\": \"worker\",\n  \"experience_years\": 5,\n  \"skills\": [\"plumbing\", \"electrical\"],\n  \"documents\": [\"certificate_url\", \"id_proof_url\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/role-applications",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "role-applications"]
+            }
+          }
+        },
+        {
+          "name": "Submit Broker Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"license_number\": \"BROKER123\",\n  \"experience_years\": 3,\n  \"specializations\": [\"residential\", \"commercial\"],\n  \"documents\": [\"license_url\", \"certificate_url\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/role-applications/broker",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "role-applications", "broker"]
+            }
+          }
+        },
+        {
+          "name": "Submit Worker Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_categories\": [1, 2],\n  \"experience_years\": 4,\n  \"certifications\": [\"plumbing_cert\", \"electrical_cert\"],\n  \"documents\": [\"certificate_url\", \"id_proof_url\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/role-applications/worker",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "role-applications", "worker"]
+            }
+          }
+        },
+        {
+          "name": "Get User Application",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/role-applications/me",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "role-applications", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get Applications by Status (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/role-applications?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "role-applications"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Application (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/role-applications/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "role-applications", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Application (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"admin_notes\": \"Application approved after verification\",\n  \"approved_by\": \"admin_user_id\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/role-applications/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "role-applications", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👷 Worker Inquiries",
+      "item": [
+        {
+          "name": "Send Inquiry to Worker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": 1,\n  \"description\": \"Need urgent plumbing service\",\n  \"preferred_date\": \"2024-01-15\",\n  \"preferred_time\": \"10:00:00\",\n  \"budget\": 500.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/1/inquiry",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "1", "inquiry"]
+            }
+          }
+        },
+        {
+          "name": "Get User Inquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/inquiries",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "inquiries"]
+            }
+          }
+        },
+        {
+          "name": "Get Worker Inquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/received-inquiries",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "received-inquiries"]
+            }
+          }
+        },
+        {
+          "name": "Update Worker Response",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"accepted\",\n  \"response_message\": \"I can help with this service\",\n  \"proposed_price\": 450.00,\n  \"available_date\": \"2024-01-15\",\n  \"available_time\": \"10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/received-inquiries/1/response",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "workers",
+                "received-inquiries",
+                "1",
+                "response"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Admin Management",
+      "item": [
+        {
+          "name": "Seed Admin Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_users\": [\n    {\n      \"email\": \"admin@treesindia.com\",\n      \"phone\": \"+919876543210\",\n      \"first_name\": \"Admin\",\n      \"last_name\": \"User\",\n      \"role\": \"admin\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/seed",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "seed"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update User by ID (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+919876543211\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete User by ID (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Toggle User Activation (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false,\n  \"deactivation_reason\": \"Violation of terms\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/users/1/activate",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "users", "1", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Worker Type (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker_type\": \"verified\",\n  \"verification_notes\": \"Worker verified after background check\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/workers/1/toggle-worker-type",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "workers",
+                "1",
+                "toggle-worker-type"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin Configuration",
+      "item": [
+        {
+          "name": "Get All Configs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/configs",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "configs"]
+            }
+          }
+        },
+        {
+          "name": "Get Config by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/configs/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "configs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Config (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"true\",\n  \"description\": \"Enable booking system\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/configs/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "configs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Config Map (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/configs/map",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "configs", "map"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Admin Inquiry Management",
+      "item": [
+        {
+          "name": "Get All Inquiries (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries"]
+            }
+          }
+        },
+        {
+          "name": "Approve Inquiry (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approval_notes\": \"Inquiry approved after verification\",\n  \"approved_by\": \"admin_user_id\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries/1/approve",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries", "1", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Reject Inquiry (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Inquiry does not meet requirements\",\n  \"rejected_by\": \"admin_user_id\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries/1/reject",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries", "1", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health & System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "health"]
+            }
+          }
+        },
+        {
+          "name": "Test Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"test@example.com\",\n  \"subject\": \"Test Email\",\n  \"body\": \"This is a test email from TreesIndia API\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/test-email",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "test-email"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

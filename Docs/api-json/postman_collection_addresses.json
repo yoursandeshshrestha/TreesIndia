@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "TreesIndia API - Address Management",
+    "description": "Postman collection for TreesIndia backend API covering Address Management routes. Addresses are independent entities and do not require location records.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "📍 Address Management",
+      "item": [
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Home Address\",\n  \"address\": \"123 Main Street, Apartment 4B\",\n  \"postal_code\": \"10001\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060,\n  \"landmark\": \"Near Central Park\",\n  \"house_number\": \"123\",\n  \"is_default\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Get All Addresses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Get Default Address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses/default",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses", "default"]
+            }
+          }
+        },
+        {
+          "name": "Get Address by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Home Address\",\n  \"address\": \"456 Oak Street, Suite 2A\",\n  \"postal_code\": \"10002\",\n  \"latitude\": 40.7589,\n  \"longitude\": -73.9851,\n  \"landmark\": \"Near Times Square\",\n  \"house_number\": \"456\",\n  \"is_default\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Set Address as Default",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses/1/set-default",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses", "1", "set-default"]
+            }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/addresses/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "addresses", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

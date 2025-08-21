@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "TreesIndia API - Properties to Locations",
+    "description": "Postman collection for TreesIndia backend API covering Property Management, Location Management, and Geoapify Integration routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🏠 Property Management",
+      "item": [
+        {
+          "name": "Get All Properties (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Get Property by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/properties/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "properties", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Property by Slug (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/properties/slug/sample-property",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "properties",
+                "slug",
+                "sample-property"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Beautiful 2BHK Apartment\",\n  \"description\": \"Spacious apartment with modern amenities\",\n  \"property_type\": \"apartment\",\n  \"bedrooms\": 2,\n  \"bathrooms\": 2,\n  \"area\": 1200,\n  \"area_unit\": \"sqft\",\n  \"price\": 2500000,\n  \"currency\": \"INR\",\n  \"address_id\": 1,\n  \"features\": [\"parking\", \"gym\", \"pool\"],\n  \"images\": [\"url1\", \"url2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/user/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "user", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Get User Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/user/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "user", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Create Broker Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Luxury Villa\",\n  \"description\": \"Premium villa with garden\",\n  \"property_type\": \"villa\",\n  \"bedrooms\": 4,\n  \"bathrooms\": 3,\n  \"area\": 3000,\n  \"area_unit\": \"sqft\",\n  \"price\": 15000000,\n  \"currency\": \"INR\",\n  \"address_id\": 1,\n  \"features\": [\"garden\", \"parking\", \"security\"],\n  \"images\": [\"url1\", \"url2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/broker/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "broker", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Get Broker Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/broker/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "broker", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Create Admin Property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Commercial Space\",\n  \"description\": \"Prime commercial property\",\n  \"property_type\": \"commercial\",\n  \"area\": 5000,\n  \"area_unit\": \"sqft\",\n  \"price\": 50000000,\n  \"currency\": \"INR\",\n  \"address_id\": 1,\n  \"features\": [\"parking\", \"elevator\", \"security\"],\n  \"images\": [\"url1\", \"url2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/properties",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "properties"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Approval Properties (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/properties/pending",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "properties", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Update Property (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Property Title\",\n  \"description\": \"Updated property description\",\n  \"price\": 2600000,\n  \"is_approved\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/properties/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "properties", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Property (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/properties/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "properties", "1"]
+            }
+          }
+        },
+        {
+          "name": "Approve Property (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approval_notes\": \"Property meets all requirements\",\n  \"approved_by\": \"admin_user_id\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/properties/1/approve",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "properties", "1", "approve"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📍 Location Management",
+      "item": [
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_line1\": \"123 Main Street\",\n  \"address_line2\": \"Apartment 4B\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"postal_code\": \"400001\",\n  \"country\": \"India\",\n  \"latitude\": 19.0760,\n  \"longitude\": 72.8777,\n  \"is_default\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User Location",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations/user/me",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations", "user", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update User Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_line1\": \"456 New Street\",\n  \"address_line2\": \"Floor 2\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"postal_code\": \"400002\",\n  \"country\": \"India\",\n  \"latitude\": 19.0760,\n  \"longitude\": 72.8777\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations/user/me",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations", "user", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get Location by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_line1\": \"789 Updated Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"postal_code\": \"400003\",\n  \"country\": \"India\",\n  \"latitude\": 19.0760,\n  \"longitude\": 72.8777\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Location",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/locations/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "locations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Location Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/locations/stats",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "locations", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌍 Geoapify Integration",
+      "item": [
+        {
+          "name": "Get Place Autocomplete",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/places/autocomplete?text=mumbai&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "places", "autocomplete"],
+              "query": [
+                {
+                  "key": "text",
+                  "value": "mumbai"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

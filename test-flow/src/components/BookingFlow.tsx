@@ -44,17 +44,78 @@ interface RazorpayInstance {
   open: () => void;
 }
 
-import { useState, useEffect } from "react";
-import {
-  apiService,
-  Category,
-  Subcategory,
-  Service,
-  AvailableSlot,
-  AvailabilityResponse,
-  BookingRequest,
-} from "../lib/api";
+import React, { useState, useEffect } from "react";
+import { apiService } from "../lib/api";
 import { ChevronRight, CheckCircle, AlertCircle } from "lucide-react";
+
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
+interface Subcategory {
+  id: number;
+  name: string;
+  description: string;
+}
+
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  price_type: string;
+  price?: number;
+  duration?: string;
+}
+
+interface Address {
+  id: number;
+  name: string;
+  address: string;
+  landmark?: string;
+  is_default: boolean;
+}
+
+interface AvailableSlot {
+  time: string;
+  is_available: boolean;
+  available_workers: number;
+}
+
+interface AvailabilityResponse {
+  working_hours: {
+    start: string;
+    end: string;
+  };
+  service_duration: number;
+  buffer_time: number;
+  available_slots: AvailableSlot[];
+}
+
+interface BookingRequest {
+  service_id: number;
+  scheduled_date: string;
+  scheduled_time: string;
+  address: string;
+  description?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  special_instructions?: string;
+}
+
+interface Booking {
+  id: number;
+  booking_reference: string;
+  status: string;
+  payment_status: string;
+  total_amount?: number;
+  service: {
+    id: number;
+    name: string;
+    price_type: string;
+  };
+}
 
 interface BookingFlowProps {
   token: string;
@@ -69,6 +130,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [availabilityData, setAvailabilityData] =
     useState<AvailabilityResponse | null>(null);
   const [bookingConfig, setBookingConfig] = useState<Record<string, string>>(
@@ -84,6 +146,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] =
     useState<AvailableSlot | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
   // Booking form state
   const [bookingForm, setBookingForm] = useState<BookingRequest>({
@@ -105,6 +168,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     if (token) {
       apiService.setAuthToken(token);
       loadCategories();
+      loadAddresses();
     }
     loadBookingConfig();
   }, [token]);
@@ -122,6 +186,20 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         booking_advance_days: "7",
         booking_buffer_time_minutes: "30",
       });
+    }
+  };
+
+  const loadAddresses = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getAddresses();
+      setAddresses(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError("Failed to load addresses");
+      console.error(err);
+      setAddresses([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -202,63 +280,80 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setBookingForm((prev) => ({ ...prev, service_id: service.id }));
+    setStep(4);
+  };
 
-    if (service.price_type === "inquiry") {
-      // For inquiry-based services, go directly to booking creation
-      handleInquiryBooking(service);
-    } else {
-      // For fixed-price services, continue with normal flow
-      setStep(4);
+  const handleDateSelect = (date: string) => {
+    if (selectedService) {
+      setBookingForm((prev) => ({ ...prev, scheduled_date: date }));
+      loadAvailableSlots(selectedService.id, date);
+      setStep(5);
     }
   };
 
-  const handleInquiryBooking = async (service: Service) => {
+  const handleTimeSlotSelect = (timeSlot: AvailableSlot) => {
+    setSelectedTimeSlot(timeSlot);
+    setBookingForm((prev) => ({
+      ...prev,
+      scheduled_time: timeSlot.time,
+    }));
+    setStep(6);
+  };
+
+  const handleAddressSelect = (address: Address) => {
+    setSelectedAddress(address);
+    setBookingForm((prev) => ({
+      ...prev,
+      address: address.address,
+    }));
+    setStep(7);
+  };
+
+  const handleBookingSubmit = async () => {
     try {
       setLoading(true);
       setError("");
 
-      console.log("Creating inquiry booking for service:", service);
+      // Create booking - backend will return payment order if needed
+      const response = await apiService.createBooking(bookingForm);
 
-      // Create inquiry booking with just service_id
-      const result = await apiService.createInquiryBooking({
-        service_id: service.id,
-      });
+      console.log("Backend response:", response);
+      console.log("Booking object:", response.booking);
+      console.log("Booking ID:", response.booking?.ID || response.booking?.id);
 
-      console.log("Inquiry booking result:", result);
+      if (response.payment_required && response.payment_order) {
+        // Payment required - show Razorpay payment modal
+        // Store the booking ID for payment verification
+        setBookingResult({ booking: response.booking });
 
-      if (result.payment_required && result.payment_order) {
-        console.log("Payment required, triggering payment flow");
-        console.log("Payment order details:", result.payment_order);
-        // Payment required - trigger Razorpay payment
-        handleInquiryPayment(result.payment_order);
-        // Don't set step 7 here - wait for payment completion
+        // Check if booking ID exists (try both ID and id)
+        const bookingId = response.booking?.ID || response.booking?.id;
+        if (!bookingId) {
+          console.error("Booking ID not found in response:", response);
+          setError("Booking ID not available for payment verification");
+          return;
+        }
+
+        handleRazorpayPayment(response.payment_order, bookingId);
       } else {
-        console.log("No payment required, showing success directly");
-        // No payment required - show success directly
-        setBookingResult({ booking: result.booking });
-        setStep(7);
+        // No payment required - show success
+        setBookingResult({ booking: response.booking });
+        setStep(8);
       }
     } catch (err: any) {
-      console.error("Inquiry booking error:", err);
-      setError(err.response?.data?.error || "Failed to create inquiry booking");
+      setError(err.response?.data?.error || "Failed to create booking");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInquiryPayment = (paymentOrder: any) => {
-    console.log("handleInquiryPayment called with:", {
-      paymentOrder,
-    });
+  const handleRazorpayPayment = (paymentOrder: any, bookingId: number) => {
+    console.log("Payment order:", paymentOrder);
+    console.log("Booking ID:", bookingId);
 
-    // Capture the service ID to use in the Razorpay handler
-    const serviceId = selectedService?.id;
-    const serviceName = selectedService?.name;
-
-    if (!serviceId) {
-      console.error("Service ID not available for payment verification");
-      alert("Service information not available. Please try again.");
+    if (!bookingId) {
+      setError("Booking ID not available for payment verification");
       return;
     }
 
@@ -272,149 +367,8 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         amount: paymentOrder.amount,
         currency: paymentOrder.currency,
         name: "Trees India Services",
-        description: `Inquiry Booking Fee - ${serviceName}`,
-        order_id: paymentOrder.order_id,
-        // Enable all payment methods including UPI
-        method: {
-          upi: true,
-          card: true,
-          netbanking: true,
-          wallet: true,
-          paylater: true,
-        },
-        handler: async function (response: any) {
-          try {
-            console.log("Payment response:", response);
-
-            // Verify payment and create booking
-            const verificationData = {
-              service_id: serviceId,
-              razorpay_order_id: paymentOrder.id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: "", // Will be handled via webhook
-            };
-
-            console.log("Verification data:", verificationData);
-
-            // Verify payment on backend and create booking
-            const verificationResult = await apiService.verifyInquiryPayment(
-              verificationData
-            );
-
-            // Set the booking result with the created booking
-            setBookingResult({ booking: verificationResult });
-
-            // Show success message
-            alert("Payment successful! Your inquiry has been submitted.");
-            setStep(7); // Go to result step
-          } catch (error) {
-            console.error("Payment verification failed:", error);
-            alert("Payment verification failed. Please contact support.");
-          }
-        },
-        prefill: {
-          name: "", // Will be filled from user profile
-          contact: "", // Will be filled from user profile
-        },
-        theme: {
-          color: "#3B82F6",
-        },
-        modal: {
-          ondismiss: function () {
-            console.log("Payment modal closed");
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    };
-    document.head.appendChild(script);
-  };
-
-  const handleDateSelect = (date: string) => {
-    if (selectedService) {
-      setBookingForm((prev) => ({ ...prev, scheduled_date: date }));
-      loadAvailableSlots(selectedService.id, date);
-      setStep(5);
-    }
-  };
-
-  const handleTimeSlotSelect = (timeSlot: AvailableSlot) => {
-    setSelectedTimeSlot(timeSlot);
-
-    setBookingForm((prev) => ({
-      ...prev,
-      scheduled_time: timeSlot.time, // Use the time directly from the slot
-    }));
-    setStep(6);
-  };
-
-  const handleBookingSubmit = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      if (selectedService?.price_type === "fixed") {
-        // Fixed price service - create payment order first
-        const result = await apiService.createPaymentOrder(bookingForm);
-        console.log("Payment order result:", result);
-        console.log("Payment order:", result.payment_order);
-        console.log("Booking reference:", result.booking_reference);
-
-        // Store booking form data for later use after payment
-        setBookingForm((prev) => ({
-          ...prev,
-          booking_reference: result.booking_reference,
-        }));
-
-        // Automatically trigger Razorpay payment modal
-        if (result.payment_order) {
-          handleRazorpayPayment(result.payment_order, result.booking_reference);
-        } else {
-          console.error("Missing payment_order:", result);
-        }
-
-        setStep(6);
-      } else {
-        // Inquiry-based service - create without payment
-        const result = await apiService.createBooking(bookingForm);
-        setBookingResult({ booking: result });
-        setStep(6);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to create payment order");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRazorpayPayment = (
-    paymentOrder: any,
-    bookingReference: string
-  ) => {
-    console.log("handleRazorpayPayment called with:", {
-      paymentOrder,
-      bookingReference,
-    });
-
-    // Store bookingReference in a variable that will be captured in the closure
-    const capturedBookingReference = bookingReference;
-
-    // Load Razorpay script dynamically
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => {
-      // Initialize Razorpay
-      const options = {
-        key: paymentOrder.key_id,
-        amount: paymentOrder.amount,
-        currency: paymentOrder.currency,
-        name: "Trees India Services",
         description: `Booking Payment - ${selectedService?.name}`,
-        order_id: paymentOrder.order_id,
-        // Enable all payment methods including UPI
+        order_id: paymentOrder.id,
         method: {
           upi: true,
           card: true,
@@ -425,32 +379,21 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         handler: async function (response: any) {
           try {
             console.log("Payment response:", response);
-            console.log(
-              "Captured Booking Reference:",
-              capturedBookingReference
-            );
+            console.log("Verifying payment for booking ID:", bookingId);
 
-            // Verify payment and create booking on backend
-            const verificationData = {
-              ...bookingForm,
-              razorpay_order_id: paymentOrder.id, // Use the order ID from the payment order
+            // Payment successful - verify payment
+            const verifyResponse = await apiService.verifyPayment(bookingId, {
               razorpay_payment_id: response.razorpay_payment_id,
-              // Note: razorpay_signature is not available in frontend callback
-              // Signature verification will be handled via webhook
-            };
-
-            console.log("Verification data:", verificationData);
-
-            const booking = await apiService.verifyPaymentAndCreateBooking(
-              verificationData
-            );
+              razorpay_order_id: paymentOrder.id,
+              razorpay_signature: response.razorpay_signature,
+            });
 
             // Set the booking result
-            setBookingResult({ booking });
+            setBookingResult({ booking: verifyResponse.booking });
 
             // Show success message
             alert("Payment successful! Your booking has been confirmed.");
-            resetFlow();
+            setStep(8);
           } catch (error) {
             console.error("Payment verification failed:", error);
             alert("Payment verification failed. Please contact support.");
@@ -482,9 +425,9 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     setSelectedSubcategory(null);
     setSelectedService(null);
     setSelectedTimeSlot(null);
+    setSelectedAddress(null);
     setBookingForm({
       service_id: 0,
-      time_slot_id: 0,
       scheduled_date: "",
       scheduled_time: "",
       address: "",
@@ -549,6 +492,14 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         );
       case 6:
         return (
+          <AddressSelection
+            addresses={addresses}
+            onSelect={handleAddressSelect}
+            loading={loading}
+          />
+        );
+      case 7:
+        return (
           <BookingForm
             form={bookingForm}
             setForm={setBookingForm}
@@ -557,7 +508,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
             service={selectedService}
           />
         );
-      case 7:
+      case 8:
         return <BookingResult result={bookingResult} onReset={resetFlow} />;
       default:
         return null;
@@ -573,49 +524,26 @@ export default function BookingFlow({ token }: BookingFlowProps) {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-8">
-          {selectedService?.price_type === "inquiry"
-            ? // Simplified 3-step flow for inquiry-based services
-              [1, 2, 3].map((stepNumber) => (
-                <div key={stepNumber} className="flex items-center">
-                  <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                      step >= stepNumber
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
-                  </div>
-                  {stepNumber < 3 && (
-                    <ChevronRight
-                      className={`mx-2 ${
-                        step > stepNumber ? "text-blue-600" : "text-gray-300"
-                      }`}
-                    />
-                  )}
-                </div>
-              ))
-            : // Full 6-step flow for fixed-price services
-              [1, 2, 3, 4, 5, 6].map((stepNumber) => (
-                <div key={stepNumber} className="flex items-center">
-                  <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                      step >= stepNumber
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
-                  </div>
-                  {stepNumber < 6 && (
-                    <ChevronRight
-                      className={`mx-2 ${
-                        step > stepNumber ? "text-blue-600" : "text-gray-300"
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
+          {[1, 2, 3, 4, 5, 6, 7].map((stepNumber) => (
+            <div key={stepNumber} className="flex items-center">
+              <div
+                className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                  step >= stepNumber
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+              </div>
+              {stepNumber < 7 && (
+                <ChevronRight
+                  className={`mx-2 ${
+                    step > stepNumber ? "text-blue-600" : "text-gray-300"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Error Display */}
@@ -776,21 +704,16 @@ function ServiceSelection({
                 </div>
               )}
 
-              {service.price_type === "inquiry" ? (
-                <button
-                  onClick={() => onSelect(service)}
-                  className="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-yellow-700 transition-colors"
-                >
-                  Book Now
-                </button>
-              ) : (
-                <button
-                  onClick={() => onSelect(service)}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Select Service
-                </button>
-              )}
+              <button
+                onClick={() => onSelect(service)}
+                className={`w-full py-2 px-4 rounded-lg font-semibold transition-colors ${
+                  service.price_type === "inquiry"
+                    ? "bg-yellow-600 text-white hover:bg-yellow-700"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                Select Service
+              </button>
             </div>
           ))}
         </div>
@@ -889,7 +812,6 @@ function TimeSlotSelection({
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes} ${ampm}`;
     } catch (error) {
-      // Fallback to original string if parsing fails
       return timeString;
     }
   };
@@ -986,68 +908,50 @@ function TimeSlotSelection({
           })}
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Legend */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-semibold text-gray-700 mb-2">Time Slot Legend:</h4>
-        <div className="flex items-center space-x-4 text-sm">
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-white border-2 border-gray-200 rounded mr-2"></div>
-            <span>Available (Workers free)</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-gray-50 border-2 border-gray-100 rounded mr-2 opacity-60"></div>
-            <span className="text-gray-400">
-              Unavailable (All workers busy)
-            </span>
-          </div>
+function AddressSelection({
+  addresses,
+  onSelect,
+  loading,
+}: {
+  addresses: Address[];
+  onSelect: (address: Address) => void;
+  loading: boolean;
+}) {
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold mb-6">Select Address</h2>
+      {loading ? (
+        <div className="text-center py-8">Loading addresses...</div>
+      ) : !addresses || addresses.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          No addresses available. Please add one in your profile.
         </div>
-        <div className="mt-2 text-xs text-gray-500">
-          <p>• All time slots are shown for transparency</p>
-          <p>• Unavailable slots are grayed out and cannot be selected</p>
-          <p>
-            • Worker availability is checked for the entire service duration
-          </p>
-        </div>
-      </div>
-
-      {/* Debug Information (for testing) */}
-      {process.env.NODE_ENV === "development" && availabilityData && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
-          <div className="text-xs text-yellow-700">
-            <p>
-              Working Hours: {availabilityData.working_hours.start} -{" "}
-              {availabilityData.working_hours.end}
-            </p>
-            <p>Service Duration: {availabilityData.service_duration} minutes</p>
-            <p>Buffer Time: {availabilityData.buffer_time} minutes</p>
-            <p>Total slots: {availabilityData.available_slots.length}</p>
-            <p>
-              Available slots:{" "}
-              {
-                availabilityData.available_slots.filter((slot) =>
-                  isSlotAvailable(slot)
-                ).length
-              }
-            </p>
-            <p>
-              Unavailable slots:{" "}
-              {
-                availabilityData.available_slots.filter(
-                  (slot) => !isSlotAvailable(slot)
-                ).length
-              }
-            </p>
-            <details className="mt-2">
-              <summary className="cursor-pointer">
-                Raw Availability Data
-              </summary>
-              <pre className="mt-2 text-xs overflow-auto">
-                {JSON.stringify(availabilityData, null, 2)}
-              </pre>
-            </details>
-          </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {addresses.map((address) => (
+            <button
+              key={address.id}
+              onClick={() => onSelect(address)}
+              className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+            >
+              <h3 className="font-semibold text-lg">{address.name}</h3>
+              <p className="text-gray-600 text-sm mt-1">{address.address}</p>
+              {address.landmark && (
+                <p className="text-gray-500 text-xs mt-1">
+                  Near: {address.landmark}
+                </p>
+              )}
+              {address.is_default && (
+                <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  Default
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -1094,6 +998,7 @@ function BookingForm({
       return dateString;
     }
   };
+
   const handleInputChange = (field: keyof BookingRequest, value: string) => {
     setForm({ ...form, [field]: value });
   };
@@ -1143,39 +1048,17 @@ function BookingForm({
               </p>
             </div>
           )}
+          {form.address && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Address:</span> {form.address}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Scheduled Date
-          </label>
-          <input
-            type="date"
-            value={form.scheduled_date}
-            onChange={(e) =>
-              handleInputChange("scheduled_date", e.target.value)
-            }
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Address
-          </label>
-          <textarea
-            value={form.address}
-            onChange={(e) => handleInputChange("address", e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            rows={3}
-            placeholder="Enter service address"
-            required
-          />
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Description
@@ -1335,28 +1218,28 @@ function BookingResult({
             </div>
           </div>
         )}
-
-        {result.payment_order && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="font-semibold text-yellow-800 mb-2">
-              Payment Required
-            </h4>
-            <p className="text-yellow-700 text-sm">
-              Please complete the payment using the provided order details.
-            </p>
-            <div className="mt-2 text-sm">
-              <p>
-                <span className="font-medium">Order ID:</span>{" "}
-                {result.payment_order.id}
-              </p>
-              <p>
-                <span className="font-medium">Amount:</span> ₹
-                {result.payment_order.amount / 100}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {result.payment_order && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h4 className="font-semibold text-yellow-800 mb-2">
+            Payment Required
+          </h4>
+          <p className="text-yellow-700 text-sm">
+            Please complete the payment using the provided order details.
+          </p>
+          <div className="mt-2 text-sm">
+            <p>
+              <span className="font-medium">Order ID:</span>{" "}
+              {result.payment_order.id}
+            </p>
+            <p>
+              <span className="font-medium">Amount:</span> ₹
+              {result.payment_order.amount / 100}
+            </p>
+          </div>
+        </div>
+      )}
 
       <button
         onClick={onReset}

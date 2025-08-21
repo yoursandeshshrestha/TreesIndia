@@ -52,6 +52,21 @@ export interface Service {
   is_active: boolean;
 }
 
+export interface Address {
+  id: number;
+  user_id: number;
+  name: string;
+  address: string;
+  postal_code: string;
+  latitude: number;
+  longitude: number;
+  landmark?: string;
+  house_number?: string;
+  is_default: boolean;
+  updated_at: string;
+  created_at: string;
+}
+
 export interface AvailableSlot {
   time: string;
   available_workers: number;
@@ -81,6 +96,16 @@ export interface TimeSlot {
   is_available?: boolean;
 }
 
+// TODO: Update this interface when backend supports the new structure
+// Future structure should be:
+// {
+//   service_id: number;
+//   scheduled_date: string;
+//   scheduled_time: string;
+//   address_id: number;  // Instead of address string
+//   notes?: string;      // Instead of description
+//   preferred_worker_id?: number;
+// }
 export interface BookingRequest {
   service_id: number;
   scheduled_date: string;
@@ -93,7 +118,8 @@ export interface BookingRequest {
 }
 
 export interface Booking {
-  id: number;
+  id?: number;
+  ID?: number; // GORM returns capitalized ID
   booking_reference: string;
   status: string;
   payment_status: string;
@@ -104,19 +130,29 @@ export interface Booking {
   description: string;
 }
 
-// Wallet Types
+// Wallet Types (Unified Payment System)
 export interface WalletTransaction {
   id?: number;
   ID?: number; // Backend might return ID (capitalized)
   user_id: number;
-  transaction_type: string;
-  status: string;
+  // New unified payment fields
+  type?: string; // Payment type (wallet_recharge, wallet_debit, etc.)
+  method?: string; // Payment method
+  payment_reference?: string; // Payment reference
+  balance_after?: number; // Balance after transaction
+  // Razorpay fields
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
+  // Legacy fields for backward compatibility
+  transaction_type?: string;
   payment_method?: string;
-  amount: number;
+  reference_id?: string;
   previous_balance?: number;
   new_balance?: number;
-  balance_after?: number; // Current schema uses this
-  reference_id: string;
+  // Common fields
+  status: string;
+  amount: number;
   description: string;
   created_at: string;
 }
@@ -170,13 +206,19 @@ export const apiService = {
     return response.data.data || response.data.services || response.data || [];
   },
 
+  // Get user addresses
+  getAddresses: async (): Promise<Address[]> => {
+    const response = await api.get("/addresses");
+    return response.data.data || response.data.addresses || response.data || [];
+  },
+
   // Get booking configuration
   getBookingConfig: async (): Promise<Record<string, string>> => {
     const response = await api.get("/bookings/config");
     return response.data.data || response.data || {};
   },
 
-  // Get available time slots for a specific service and date
+  // Get available time slots
   getAvailableSlots: async (
     serviceId: number,
     date: string
@@ -187,109 +229,94 @@ export const apiService = {
     return response.data.data || response.data || [];
   },
 
-  // Create booking (for inquiry-based services)
-  createBooking: async (bookingData: BookingRequest): Promise<Booking> => {
-    const response = await api.post("/bookings", bookingData);
-    return (
-      response.data.data?.booking || response.data.booking || response.data
-    );
-  },
-
-  // Create inquiry booking (simplified flow - only service_id required)
-  createInquiryBooking: async (bookingData: {
-    service_id: number;
-  }): Promise<{
+  // Create booking (handles all booking types)
+  createBooking: async (
+    bookingData: BookingRequest
+  ): Promise<{
+    message: string;
     booking: Booking;
     payment_order?: Record<string, unknown>;
     payment_required: boolean;
+    payment_type?: string;
   }> => {
-    const response = await api.post("/bookings/inquiry", bookingData);
-    console.log("Raw API response:", response.data);
-    const result = response.data.data || response.data;
-    console.log("Parsed result:", result);
-    return result;
+    const response = await api.post("/bookings", bookingData);
+    return response.data.data || response.data;
   },
 
-  // Create payment order (for fixed-price services)
-  createPaymentOrder: async (
-    bookingData: BookingRequest
+  // Verify payment for a booking
+  verifyPayment: async (
+    bookingId: number,
+    paymentData: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    }
   ): Promise<{
-    payment_order: Record<string, unknown>;
-    booking_reference: string;
-    service: Service;
+    message: string;
+    booking: Booking;
+    payment: {
+      payment_id: string;
+      order_id: string;
+      amount: number;
+      status: string;
+    };
   }> => {
-    const response = await api.post("/bookings/payment-order", bookingData);
-    return response.data.data || response.data;
-  },
-
-  // Create booking with payment (for fixed-price services)
-  createBookingWithPayment: async (
-    bookingData: BookingRequest
-  ): Promise<{ booking: Booking; payment_order: Record<string, unknown> }> => {
-    const response = await api.post("/bookings/with-payment", bookingData);
-    return response.data.data || response.data;
-  },
-
-  // Verify payment and create booking
-  verifyPaymentAndCreateBooking: async (paymentData: {
-    service_id: number;
-    scheduled_date: string;
-    scheduled_time: string;
-    address: string;
-    description?: string;
-    contact_person?: string;
-    contact_phone?: string;
-    special_instructions?: string;
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }): Promise<Booking> => {
     const response = await api.post(
-      "/bookings/verify-payment-and-create",
+      `/bookings/${bookingId}/verify-payment`,
       paymentData
     );
-    return (
-      response.data.data?.booking || response.data.booking || response.data
-    );
-  },
-
-  // Verify payment
-  verifyPayment: async (paymentData: {
-    booking_id: number;
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }): Promise<Booking> => {
-    const response = await api.post("/bookings/verify-payment", paymentData);
-    return (
-      response.data.data?.booking || response.data.booking || response.data
-    );
-  },
-
-  // Verify inquiry payment and create booking
-  verifyInquiryPayment: async (paymentData: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }): Promise<Booking> => {
-    const response = await api.post(
-      "/bookings/verify-inquiry-payment",
-      paymentData
-    );
-    return (
-      response.data.data?.booking || response.data.booking || response.data
-    );
+    return response.data.data || response.data;
   },
 
   // Get user bookings
   getUserBookings: async (): Promise<Booking[]> => {
     const response = await api.get("/bookings");
-    return (
-      response.data.data?.bookings || response.data.bookings || response.data
-    );
+    return response.data.data || response.data || [];
   },
 
-  // Wallet API functions
+  // Get booking by ID
+  getBookingById: async (bookingId: number): Promise<Booking> => {
+    const response = await api.get(`/bookings/${bookingId}`);
+    return response.data.data || response.data;
+  },
+
+  // Cancel booking
+  cancelBooking: async (bookingId: number): Promise<{ message: string }> => {
+    const response = await api.put(`/bookings/${bookingId}/cancel`);
+    return response.data.data || response.data;
+  },
+
+  // ===== WALLET API METHODS =====
+
+  // Create wallet recharge
+  createWalletRecharge: async (data: {
+    amount: number;
+    payment_method: string;
+  }): Promise<{
+    payment: any;
+    payment_order: any;
+    message: string;
+  }> => {
+    const response = await api.post("/wallet/recharge", data);
+    return response.data.data || response.data;
+  },
+
+  // Complete wallet recharge
+  completeWalletRecharge: async (
+    paymentId: number,
+    paymentData: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    }
+  ): Promise<{ message: string }> => {
+    const response = await api.post(
+      `/wallet/recharge/${paymentId}/complete`,
+      paymentData
+    );
+    return response.data.data || response.data;
+  },
+
   // Get wallet summary
   getWalletSummary: async (): Promise<WalletSummary> => {
     const response = await api.get("/wallet/summary");
@@ -297,40 +324,41 @@ export const apiService = {
   },
 
   // Get wallet transactions
-  getWalletTransactions: async (): Promise<WalletTransaction[]> => {
-    const response = await api.get("/wallet/transactions");
-    return (
-      response.data.data?.transactions ||
-      response.data.transactions ||
-      response.data ||
-      []
+  getWalletTransactions: async (
+    page = 1,
+    limit = 10
+  ): Promise<WalletTransaction[]> => {
+    const response = await api.get(
+      `/wallet/transactions?page=${page}&limit=${limit}`
     );
+    return response.data.data?.transactions || response.data.transactions || [];
   },
 
-  // Create wallet recharge
-  createWalletRecharge: async (data: {
-    amount: number;
-    payment_method: string;
-  }): Promise<{
-    order: RazorpayOrder;
-    transaction: WalletTransaction;
-  }> => {
-    const response = await api.post("/razorpay/create-order", {
-      amount: data.amount,
-      receipt: `wallet_recharge_${Date.now()}`,
-    });
+  // Get wallet transactions by type
+  getWalletTransactionsByType: async (
+    type: string,
+    page = 1,
+    limit = 10
+  ): Promise<WalletTransaction[]> => {
+    const response = await api.get(
+      `/wallet/transactions/type/${type}?page=${page}&limit=${limit}`
+    );
+    return response.data.data?.transactions || response.data.transactions || [];
+  },
+
+  // Get transaction by reference
+  getTransactionByReference: async (
+    referenceId: string
+  ): Promise<WalletTransaction> => {
+    const response = await api.get(`/wallet/transaction/${referenceId}`);
     return response.data.data || response.data;
   },
 
-  // Complete wallet recharge
-  completeWalletRecharge: async (
-    transactionId: number,
-    paymentData: {
-      razorpay_order_id: string;
-      razorpay_payment_id: string;
-      razorpay_signature: string;
-    }
-  ): Promise<void> => {
-    await api.post(`/wallet/recharge/${transactionId}/complete`, paymentData);
+  // Cancel wallet recharge
+  cancelWalletRecharge: async (
+    paymentId: number
+  ): Promise<{ message: string }> => {
+    const response = await api.post(`/wallet/recharge/${paymentId}/cancel`);
+    return response.data.data || response.data;
   },
 };
