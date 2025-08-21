@@ -9,7 +9,6 @@ import AdminConfigsHeader from "./components/AdminConfigsHeader";
 import AdminConfigsFilters from "./components/AdminConfigsFilters";
 import AdminConfigsGrid from "./components/AdminConfigsGrid";
 import AdminConfigModal from "./components/AdminConfigModal";
-import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 
 // Types
 import { AdminConfig } from "./types";
@@ -152,7 +151,7 @@ function AdminConfigsPage() {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={(value) => setSelectedCategory(String(value))}
       />
 
       {/* Configuration Grid */}

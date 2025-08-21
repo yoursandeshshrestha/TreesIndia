@@ -8,7 +8,7 @@ interface AdminConfigsFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   selectedCategory: string;
-  onCategoryChange: (value: string) => void;
+  onCategoryChange: (value: string | number) => void;
 }
 
 const AdminConfigsFilters: React.FC<AdminConfigsFiltersProps> = ({
@@ -26,7 +26,7 @@ const AdminConfigsFilters: React.FC<AdminConfigsFiltersProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-6 relative">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">
@@ -44,10 +44,10 @@ const AdminConfigsFilters: React.FC<AdminConfigsFiltersProps> = ({
           <SearchableDropdown
             options={categoryOptions}
             value={selectedCategory}
-            onChange={(val) => onCategoryChange(val as string)}
-            placeholder="Filter by category"
+            onChange={(value) => onCategoryChange(String(value))}
+            placeholder="Select category"
+            searchPlaceholder="Search categories..."
             className="h-10"
-            width="16rem"
           />
         </div>
       </div>
