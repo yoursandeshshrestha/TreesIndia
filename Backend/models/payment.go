@@ -14,9 +14,12 @@ type PaymentType string
 const (
 	PaymentTypeBooking     PaymentType = "booking"
 	PaymentTypeSubscription PaymentType = "subscription"
-	PaymentTypeWallet      PaymentType = "wallet"
+	PaymentTypeWalletRecharge PaymentType = "wallet_recharge"
+	PaymentTypeWalletDebit PaymentType = "wallet_debit"
 	PaymentTypeRefund      PaymentType = "refund"
 )
+
+
 
 // JSONMap represents a JSON object that can be stored in the database
 type JSONMap map[string]interface{}
@@ -76,6 +79,9 @@ type Payment struct {
 	CompletedAt      *time.Time    `json:"completed_at"`
 	FailedAt         *time.Time    `json:"failed_at"`
 	RefundedAt       *time.Time    `json:"refunded_at"`
+	
+	// Wallet-specific fields (for wallet operations)
+	BalanceAfter     *float64      `json:"balance_after"` // User's wallet balance after this transaction
 	
 	// Refund Information
 	RefundAmount     *float64      `json:"refund_amount"`

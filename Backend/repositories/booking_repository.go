@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"time"
 	"treesindia/database"
 	"treesindia/models"
 
@@ -34,7 +35,7 @@ func (br *BookingRepository) Create(booking *models.Booking) (*models.Booking, e
 // GetByID gets a booking by ID
 func (br *BookingRepository) GetByID(id uint) (*models.Booking, error) {
 	var booking models.Booking
-	err := br.db.Preload("User").Preload("Service").Preload("TimeSlot").Preload("WorkerAssignment").Preload("BufferRequests").First(&booking, id).Error
+	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment").Preload("BufferRequests").First(&booking, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (br *BookingRepository) GetUserBookings(userID uint, filters *UserBookingFi
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("Service").Preload("TimeSlot").Preload("WorkerAssignment.Worker")
+	query = query.Preload("Service").Preload("WorkerAssignment.Worker")
 
 	// Execute query
 	err = query.Order("created_at DESC").Find(&bookings).Error
@@ -163,6 +164,46 @@ func (br *BookingRepository) GetBookingsWithFilters(filters *AdminBookingFilters
 	}
 
 	return bookings, pagination, nil
+}
+
+// GetConflictingBookings gets bookings that conflict with the given time slot
+func (br *BookingRepository) GetConflictingBookings(startTime time.Time, endTime time.Time) ([]models.Booking, error) {
+	var bookings []models.Booking
+	
+	// Find bookings that overlap with the given time slot
+	// Only consider confirmed, assigned, or in-progress bookings
+	err := br.db.Where(
+		"status IN (?, ?, ?) AND scheduled_time < ? AND scheduled_end_time > ?",
+		models.BookingStatusConfirmed,
+		models.BookingStatusAssigned,
+		models.BookingStatusInProgress,
+		endTime,
+		startTime,
+	).Find(&bookings).Error
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return bookings, nil
+}
+
+// GetExpiredTemporaryHolds gets all temporary holds that have expired
+func (br *BookingRepository) GetExpiredTemporaryHolds() ([]models.Booking, error) {
+	var bookings []models.Booking
+	
+	now := time.Now()
+	err := br.db.Where(
+		"status = ? AND hold_expires_at IS NOT NULL AND hold_expires_at < ?",
+		models.BookingStatusTemporaryHold,
+		now,
+	).Find(&bookings).Error
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return bookings, nil
 }
 
 // UserBookingFilters represents filters for user bookings

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"time"
 	"treesindia/database"
 	"treesindia/models"
 
@@ -223,4 +224,58 @@ func (pr *PaymentRepository) GetPaymentStats(userID *uint) (map[string]interface
 	}
 
 	return stats, nil
+}
+
+// GetByUserIDAndTypes gets payments for a user by type(s)
+func (pr *PaymentRepository) GetByUserIDAndTypes(userID uint, paymentTypes []models.PaymentType, limit, offset int) ([]models.Payment, error) {
+	var payments []models.Payment
+	err := pr.db.Where("user_id = ? AND type IN ?", userID, paymentTypes).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Preload("User").
+		Find(&payments).Error
+	return payments, err
+}
+
+// GetCountByUserIDAndTypes gets payment count for a user by type(s)
+func (pr *PaymentRepository) GetCountByUserIDAndTypes(userID uint, paymentTypes []models.PaymentType) (int64, error) {
+	var count int64
+	err := pr.db.Model(&models.Payment{}).
+		Where("user_id = ? AND type IN ?", userID, paymentTypes).
+		Count(&count).Error
+	return count, err
+}
+
+// GetRecentByUserIDAndTypes gets recent payments for a user by type(s)
+func (pr *PaymentRepository) GetRecentByUserIDAndTypes(userID uint, paymentTypes []models.PaymentType, limit int) ([]models.Payment, error) {
+	var payments []models.Payment
+	err := pr.db.Where("user_id = ? AND type IN ?", userID, paymentTypes).
+		Order("created_at DESC").
+		Limit(limit).
+		Preload("User").
+		Find(&payments).Error
+	return payments, err
+}
+
+// GetTotalAmountByUserIDAndType gets total amount for a user by type
+func (pr *PaymentRepository) GetTotalAmountByUserIDAndType(userID uint, paymentType models.PaymentType) (float64, error) {
+	var totalAmount float64
+	err := pr.db.Model(&models.Payment{}).
+		Where("user_id = ? AND type = ? AND status = ?", userID, paymentType, models.PaymentStatusCompleted).
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&totalAmount).Error
+	return totalAmount, err
+}
+
+// GetAbandonedWalletPayments gets pending wallet payments that are older than the cutoff time
+func (pr *PaymentRepository) GetAbandonedWalletPayments(cutoffTime time.Time) ([]*models.Payment, error) {
+	var payments []*models.Payment
+	err := pr.db.Where("type = ? AND status = ? AND initiated_at < ?", 
+		models.PaymentTypeWalletRecharge, 
+		models.PaymentStatusPending, 
+		cutoffTime).
+		Find(&payments).Error
+	
+	return payments, err
 }

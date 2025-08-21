@@ -12,12 +12,14 @@ type BookingStatus string
 const (
 	BookingStatusPending        BookingStatus = "pending"
 	BookingStatusPaymentPending BookingStatus = "payment_pending"
+	BookingStatusTemporaryHold  BookingStatus = "temporary_hold"  // New status for temporary holds
 	BookingStatusConfirmed      BookingStatus = "confirmed"
 	BookingStatusAssigned       BookingStatus = "assigned"
 	BookingStatusInProgress     BookingStatus = "in_progress"
 	BookingStatusCompleted      BookingStatus = "completed"
 	BookingStatusTimeExpired    BookingStatus = "time_expired"
 	BookingStatusCancelled      BookingStatus = "cancelled"
+	BookingStatusRejected       BookingStatus = "rejected"
 )
 
 // BookingType represents the type of booking
@@ -36,6 +38,8 @@ const (
 	PaymentStatusCompleted PaymentStatus = "completed"
 	PaymentStatusFailed    PaymentStatus = "failed"
 	PaymentStatusRefunded  PaymentStatus = "refunded"
+	PaymentStatusAbandoned PaymentStatus = "abandoned"
+	PaymentStatusExpired   PaymentStatus = "expired"
 )
 
 // CompletionType represents how the service was completed
@@ -57,7 +61,6 @@ type Booking struct {
 	
 	// Status and Type
 	Status           BookingStatus `json:"status" gorm:"default:'pending'"`
-	PaymentStatus    PaymentStatus `json:"payment_status" gorm:"default:'pending'"`
 	BookingType      BookingType   `json:"booking_type" gorm:"default:'regular'"`
 	CompletionType   *CompletionType `json:"completion_type"`
 	
@@ -78,19 +81,15 @@ type Booking struct {
 	ContactPhone     string        `json:"contact_phone"`
 	SpecialInstructions string     `json:"special_instructions"`
 	
-	// Pricing
-	TotalAmount      *float64      `json:"total_amount"`
-	
-	// Payment Information
-	PaymentID        *string       `json:"payment_id"`
-	RazorpayOrderID  *string       `json:"razorpay_order_id"`
-	PaymentCompletedAt *time.Time  `json:"payment_completed_at"`
+	// Hold Management
+	HoldExpiresAt    *time.Time    `json:"hold_expires_at" gorm:"index"`
 	
 	// Relationships
 	User             User          `json:"user" gorm:"foreignKey:UserID"`
 	Service          Service       `json:"service" gorm:"foreignKey:ServiceID"`
 	WorkerAssignment *WorkerAssignment `json:"worker_assignment,omitempty" gorm:"foreignKey:BookingID"`
 	BufferRequests   []BufferRequest `json:"buffer_requests,omitempty" gorm:"foreignKey:BookingID"`
+	Payment          *Payment       `json:"payment,omitempty" gorm:"foreignKey:RelatedEntityID;references:ID;constraint:OnDelete:SET NULL"`
 }
 
 // TableName returns the table name for Booking
@@ -110,9 +109,17 @@ type CreateBookingRequest struct {
 	SpecialInstructions  string    `json:"special_instructions"`
 }
 
+// CreateBookingWithPaymentRequest represents the request structure for creating a booking with payment
+type CreateBookingWithPaymentRequest struct {
+	CreateBookingRequest
+	RazorpayPaymentID    string `json:"razorpay_payment_id" binding:"required"`
+	RazorpayOrderID      string `json:"razorpay_order_id" binding:"required"`
+	RazorpaySignature    string `json:"razorpay_signature" binding:"required"`
+}
+
 // VerifyPaymentRequest represents the request structure for verifying payment
 type VerifyPaymentRequest struct {
-	BookingID            uint   `json:"booking_id" binding:"required"`
+	BookingID            uint   `json:"booking_id"` // Optional - set from URL parameter
 	RazorpayPaymentID    string `json:"razorpay_payment_id" binding:"required"`
 	RazorpayOrderID      string `json:"razorpay_order_id" binding:"required"`
 	RazorpaySignature    string `json:"razorpay_signature"` // Optional - will be verified on backend

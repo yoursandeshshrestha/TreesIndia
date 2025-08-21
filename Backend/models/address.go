@@ -10,9 +10,7 @@ import (
 type Address struct {
 	ID          uint           `json:"id" gorm:"primaryKey"`
 	UserID      uint           `json:"user_id" gorm:"not null;index"`
-	LocationID  uint           `json:"location_id" gorm:"not null;index"`
 	User        User           `json:"-" gorm:"foreignKey:UserID"`
-	Location    Location       `json:"location" gorm:"foreignKey:LocationID"`
 	
 	// Address details
 	Name        string         `json:"name" gorm:"not null"`
@@ -98,7 +96,6 @@ type LocationResponse struct {
 type AddressResponse struct {
 	ID          uint      `json:"id"`
 	UserID      uint      `json:"user_id"`
-	LocationID  uint      `json:"location_id"`
 	Name        string    `json:"name"`
 	Address     string    `json:"address"`
 	PostalCode  string    `json:"postal_code"`
