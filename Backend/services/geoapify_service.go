@@ -267,24 +267,16 @@ func (gps *GeoapifyService) GetPlaceAutocomplete(req *AutocompleteRequest) (*Aut
 	
 	url := fmt.Sprintf("%s?%s", baseURL, params.Encode())
 	
-	fmt.Printf("Making request to: %s\n", url)
-	
 	resp, err := gps.client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-	
-	fmt.Printf("Response status: %s\n", resp.Status)
 
 	var geoapifyResult GeoapifyResponse
 	if err := json.NewDecoder(resp.Body).Decode(&geoapifyResult); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-
-	// Debug: Print the raw response
-	fmt.Printf("Geoapify Response: %+v\n", geoapifyResult)
-	fmt.Printf("Features count: %d\n", len(geoapifyResult.Features))
 
 	// Convert Geoapify results to autocomplete format
 	return gps.convertGeoapifyToAutocomplete(&geoapifyResult), nil

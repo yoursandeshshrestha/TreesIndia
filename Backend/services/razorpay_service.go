@@ -105,14 +105,7 @@ func (rs *RazorpayService) VerifyPayment(paymentID, orderID, signature string) (
 	expectedSignature.Write([]byte(signatureString))
 	expectedSignatureHex := hex.EncodeToString(expectedSignature.Sum(nil))
 
-	// Debug: Log signature comparison
-	fmt.Printf("Payment Verification Debug:\n")
-	fmt.Printf("OrderID: %s\n", orderID)
-	fmt.Printf("PaymentID: %s\n", paymentID)
-	fmt.Printf("Signature String: %s\n", signatureString)
-	fmt.Printf("Expected Signature (Hex): %s\n", expectedSignatureHex)
-	fmt.Printf("Received Signature: %s\n", signature)
-	fmt.Printf("Signatures Match: %v\n", expectedSignatureHex == signature)
+
 
 	// Compare signatures (both should be in hex format)
 	return expectedSignatureHex == signature, nil

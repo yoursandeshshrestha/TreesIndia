@@ -16,6 +16,7 @@ type BookingService struct {
 	serviceRepo      *repositories.ServiceRepository
 	userRepo         *repositories.UserRepository
 	workerAssignmentRepo *repositories.WorkerAssignmentRepository
+	paymentService   *PaymentService
 	razorpayService  *RazorpayService
 	notificationService *NotificationService
 }
@@ -26,26 +27,27 @@ func NewBookingService() *BookingService {
 		serviceRepo:      repositories.NewServiceRepository(),
 		userRepo:         repositories.NewUserRepository(),
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
+		paymentService:   NewPaymentService(),
 		razorpayService:  NewRazorpayService(),
 		notificationService: NewNotificationService(),
 	}
 }
 
-// CreateBooking creates a new booking
-func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRequest) (*models.Booking, error) {
+// CreateBooking creates a new booking (handles all booking types)
+func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRequest) (*models.Booking, map[string]interface{}, error) {
 	// 1. Validate service exists and is active
 	service, err := bs.serviceRepo.GetByID(req.ServiceID)
 	if err != nil {
-		return nil, errors.New("service not found")
+		return nil, nil, errors.New("service not found")
 	}
 	if !service.IsActive {
-		return nil, errors.New("service is not active")
+		return nil, nil, errors.New("service is not active")
 	}
 
 	// 2. Parse scheduled date and time
 	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
 	if err != nil {
-		return nil, errors.New("invalid date format")
+		return nil, nil, errors.New("invalid date format")
 	}
 
 	// Parse the scheduled time and create it in IST timezone
@@ -56,14 +58,14 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 	
 	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
 	if err != nil {
-		return nil, errors.New("invalid time format")
+		return nil, nil, errors.New("invalid time format")
 	}
 	
 	// Create the scheduled time in IST timezone for the given date
 	scheduledTime = time.Date(scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0, istLocation)
 
-	// 3. Get admin configuration for buffer time
+	// 3. Get admin configuration for buffer time and hold time
 	adminConfigRepo := repositories.NewAdminConfigRepository()
 	bufferTimeConfig, err := adminConfigRepo.GetByKey("booking_buffer_time_minutes")
 	if err != nil {
@@ -76,112 +78,205 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 		bufferTimeMinutes = 30 // Default fallback
 	}
 
+	// Get hold time configuration
+	holdTimeConfig, err := adminConfigRepo.GetByKey("booking_hold_time_minutes")
+	if err != nil {
+		// Default 7 minutes hold time if not configured
+		holdTimeConfig = &models.AdminConfig{Value: "7"}
+	}
+	
+	holdTimeMinutes, err := strconv.Atoi(holdTimeConfig.Value)
+	if err != nil {
+		holdTimeMinutes = 7 // Default fallback
+	}
 
-
-	// 5. Calculate service duration
+	// 4. Calculate service duration
 	var serviceDurationMinutes int
 	
 	// Use service duration if available, otherwise use default
 	if service.Duration != nil && *service.Duration != "" {
 		duration, err := utils.ParseDuration(*service.Duration)
 		if err != nil {
-			return nil, fmt.Errorf("invalid service duration: %v", err)
+			return nil, nil, fmt.Errorf("invalid service duration: %v", err)
 		}
 		serviceDurationMinutes = duration.ToMinutes()
 	} else {
 		serviceDurationMinutes = 120 // Default 2 hours
 	}
 
-	// Find and assign an available worker
-	assignedWorkerID, err := bs.assignAvailableWorker(scheduledTime, serviceDurationMinutes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to assign worker: %v", err)
+	// 5. Determine booking type and payment requirements
+	var bookingType models.BookingType
+	var totalAmount *float64
+
+	if service.PriceType == "fixed" {
+		// Fixed price service - implement two-phase booking
+		bookingType = models.BookingTypeRegular
+		totalAmount = service.Price
+		
+		// Check if time slot is available (no confirmed bookings)
+		isSlotAvailable, err := bs.isTimeSlotAvailable(scheduledTime, serviceDurationMinutes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to check slot availability: %v", err)
+		}
+		
+		if !isSlotAvailable {
+			return nil, nil, errors.New("selected time slot is not available")
+		}
+		
+		scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
+
+		// 6. Generate booking reference
+		bookingReference := bs.generateBookingReference()
+
+		// 7. Calculate hold expiration time
+		now := time.Now()
+		holdExpiresAt := now.Add(time.Duration(holdTimeMinutes) * time.Minute)
+
+		// 8. Create booking with temporary hold status
+		booking := &models.Booking{
+			UserID:              userID,
+			ServiceID:           req.ServiceID,
+			BookingReference:    bookingReference,
+			Status:              models.BookingStatusTemporaryHold,
+			BookingType:         bookingType,
+			ScheduledDate:       &scheduledDate,
+			ScheduledTime:       &scheduledTime,
+			ScheduledEndTime:    &scheduledEndTime,
+			Address:             &req.Address,
+			Description:         req.Description,
+			ContactPerson:       req.ContactPerson,
+			ContactPhone:        req.ContactPhone,
+			SpecialInstructions: req.SpecialInstructions,
+			HoldExpiresAt:       &holdExpiresAt,
+		}
+
+		// 9. Save booking
+		booking, err = bs.bookingRepo.Create(booking)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// 10. Create payment record
+		paymentReq := &models.CreatePaymentRequest{
+			UserID:            userID,
+			Amount:            *totalAmount,
+			Currency:          "INR",
+			Type:              models.PaymentTypeBooking,
+			Method:            "razorpay",
+			RelatedEntityType: "booking",
+			RelatedEntityID:   booking.ID,
+			Description:       "Service booking payment",
+		}
+
+		_, razorpayOrder, err := bs.paymentService.CreateRazorpayOrder(paymentReq)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create payment: %v", err)
+		}
+
+		return booking, razorpayOrder, nil
+
+	} else {
+		// Inquiry-based service
+		bookingType = models.BookingTypeInquiry
+		
+		// Check inquiry booking fee
+		feeConfig, err := adminConfigRepo.GetByKey("inquiry_booking_fee")
+		if err != nil {
+			// Default to 0 if config not found
+			feeConfig = &models.AdminConfig{Value: "0"}
+		}
+		
+		feeAmount, err := strconv.Atoi(feeConfig.Value)
+		if err != nil {
+			feeAmount = 0 // Default to 0 if parsing fails
+		}
+
+		if feeAmount > 0 {
+			// Inquiry fee required
+			feeFloat := float64(feeAmount)
+			totalAmount = &feeFloat
+			
+			// Generate booking reference
+			bookingReference := bs.generateBookingReference()
+
+			// Create booking with minimal data for inquiry-based booking
+			booking := &models.Booking{
+				UserID:              userID,
+				ServiceID:           req.ServiceID,
+				BookingReference:    bookingReference,
+				Status:              models.BookingStatusPaymentPending,
+				BookingType:         bookingType,
+				ScheduledDate:       &scheduledDate,
+				ScheduledTime:       &scheduledTime,
+				Address:             &req.Address,
+				Description:         req.Description,
+				ContactPerson:       req.ContactPerson,
+				ContactPhone:        req.ContactPhone,
+				SpecialInstructions: req.SpecialInstructions,
+			}
+
+			// Save booking
+			booking, err = bs.bookingRepo.Create(booking)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// Create payment record for inquiry fee
+			paymentReq := &models.CreatePaymentRequest{
+				UserID:            userID,
+				Amount:            feeFloat,
+				Currency:          "INR",
+				Type:              models.PaymentTypeBooking,
+				Method:            "razorpay",
+				RelatedEntityType: "booking",
+				RelatedEntityID:   booking.ID,
+				Description:       "Inquiry booking fee",
+			}
+
+			_, razorpayOrder, err := bs.paymentService.CreateRazorpayOrder(paymentReq)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to create payment: %v", err)
+			}
+
+			return booking, razorpayOrder, nil
+
+		} else {
+			// No inquiry fee required
+			// Generate booking reference
+			bookingReference := bs.generateBookingReference()
+
+			// Create booking with minimal data for inquiry-based booking
+			booking := &models.Booking{
+				UserID:              userID,
+				ServiceID:           req.ServiceID,
+				BookingReference:    bookingReference,
+				Status:              models.BookingStatusConfirmed,
+				BookingType:         bookingType,
+				ScheduledDate:       &scheduledDate,
+				ScheduledTime:       &scheduledTime,
+				Address:             &req.Address,
+				Description:         req.Description,
+				ContactPerson:       req.ContactPerson,
+				ContactPhone:        req.ContactPhone,
+				SpecialInstructions: req.SpecialInstructions,
+			}
+
+			// Save booking
+			booking, err = bs.bookingRepo.Create(booking)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			return booking, nil, nil
+		}
 	}
-
-
-	
-	scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
-
-	// 6. Generate booking reference
-	bookingReference := bs.generateBookingReference()
-
-	// 7. Create booking
-	booking := &models.Booking{
-		UserID:              userID,
-		ServiceID:           req.ServiceID,
-		BookingReference:    bookingReference,
-		Status:              models.BookingStatusPending,
-		PaymentStatus:       models.PaymentStatusPending,
-		BookingType:         models.BookingTypeRegular,
-		ScheduledDate:       &scheduledDate,
-		ScheduledTime:       &scheduledTime,
-		ScheduledEndTime:    &scheduledEndTime,
-		Address:             &req.Address,
-		Description:         req.Description,
-		ContactPerson:       req.ContactPerson,
-		ContactPhone:        req.ContactPhone,
-		SpecialInstructions: req.SpecialInstructions,
-		TotalAmount:         service.Price,
-	}
-
-	// 8. Save booking
-	booking, err = bs.bookingRepo.Create(booking)
-	if err != nil {
-		return nil, err
-	}
-
-	// 9. Create worker assignment
-	now := time.Now()
-	workerAssignment := &models.WorkerAssignment{
-		BookingID:  booking.ID,
-		WorkerID:   assignedWorkerID,
-		AssignedBy: userID, // For now, assign by the user who created the booking
-		Status:     "assigned",
-		AssignedAt: now,
-	}
-
-	// Save worker assignment
-	workerAssignmentRepo := repositories.NewWorkerAssignmentRepository()
-	if err := workerAssignmentRepo.Create(workerAssignment); err != nil {
-		return nil, fmt.Errorf("failed to create worker assignment: %v", err)
-	}
-
-
-
-	return booking, nil
 }
 
 // CreateBookingWithPayment creates booking with Razorpay payment for fixed price services
 func (bs *BookingService) CreateBookingWithPayment(userID uint, req *models.CreateBookingRequest) (*models.Booking, map[string]interface{}, error) {
-	// 1. Create booking
-	booking, err := bs.CreateBooking(userID, req)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// 2. Create Razorpay order
-	var amount float64
-	if booking.TotalAmount != nil {
-		amount = *booking.TotalAmount
-	} else {
-		return nil, nil, errors.New("booking amount is not set")
-	}
-	
-	razorpayOrder, err := bs.razorpayService.CreateOrder(amount, booking.BookingReference, "Booking payment")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// 3. Update booking with order ID
-	orderID := razorpayOrder["id"].(string)
-	booking.RazorpayOrderID = &orderID
-	booking.Status = models.BookingStatusPaymentPending
-	err = bs.bookingRepo.Update(booking)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return booking, razorpayOrder, nil
+	// This method is now redundant since CreateBooking handles all cases
+	// Keeping for backward compatibility but it just calls the main CreateBooking method
+	return bs.CreateBooking(userID, req)
 }
 
 // CreateInquiryBooking creates a new inquiry-based booking (simplified flow)
@@ -213,11 +308,8 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		feeAmount = 0 // Default to 0 if parsing fails
 	}
 
-	fmt.Printf("Inquiry booking fee config - Value: %s, Parsed: %d\n", feeConfig.Value, feeAmount)
-
 	// 4. If fee is required, create Razorpay order directly (no payment record yet)
 	if feeAmount > 0 {
-		fmt.Printf("Creating Razorpay order for inquiry booking - Fee: %d\n", feeAmount)
 		
 		// Generate temporary booking reference for tracking
 		tempBookingReference := bs.GenerateTemporaryBookingReference()
@@ -228,8 +320,6 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create payment order: %v", err)
 		}
-
-		fmt.Printf("Razorpay order created - Order ID: %s, Temp Ref: %s\n", razorpayOrder["id"], tempBookingReference)
 
 		// Add metadata to Razorpay order for tracking
 		if razorpayOrder["notes"] == nil {
@@ -244,7 +334,6 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		// Return nil booking and payment order - booking will be created after payment
 		return nil, razorpayOrder, nil
 	} else {
-		fmt.Printf("No fee required for inquiry booking\n")
 		
 		// 5. Generate booking reference
 		bookingReference := bs.generateBookingReference()
@@ -255,7 +344,6 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 			ServiceID:           req.ServiceID,
 			BookingReference:    bookingReference,
 			Status:              models.BookingStatusPending,
-			PaymentStatus:       models.PaymentStatusCompleted, // No payment needed
 			BookingType:         models.BookingTypeInquiry,
 			ScheduledDate:       nil, // Will be set later
 			ScheduledTime:       nil, // Will be set later
@@ -265,7 +353,6 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 			ContactPerson:       "",  // Will be filled later
 			ContactPhone:        "",  // Will be filled later
 			SpecialInstructions: "",  // Will be filled later
-			TotalAmount:         nil, // Will be determined later
 		}
 
 		// 7. Save booking
@@ -301,17 +388,44 @@ func (bs *BookingService) checkWorkerBookingConflict(workerID uint, startTime ti
 		return false, err
 	}
 
-	// Debug: Log the conflict check
+	// Check for conflicts
 	if len(conflictingBookings) > 0 {
-		fmt.Printf("Worker %d has %d conflicting bookings for time %s to %s\n", 
-			workerID, len(conflictingBookings), startTime.Format("15:04"), endTime.Format("15:04"))
-		for _, booking := range conflictingBookings {
-			fmt.Printf("  - Booking %d: %s to %s\n", 
-				booking.ID, booking.ScheduledTime.Format("15:04"), booking.ScheduledEndTime.Format("15:04"))
-		}
+		return true, nil
 	}
 
 	return len(conflictingBookings) > 0, nil
+}
+
+// isTimeSlotAvailable checks if a time slot is available for booking
+func (bs *BookingService) isTimeSlotAvailable(scheduledTime time.Time, serviceDurationMinutes int) (bool, error) {
+	// Get buffer time configuration
+	adminConfigRepo := repositories.NewAdminConfigRepository()
+	bufferTimeConfig, err := adminConfigRepo.GetByKey("booking_buffer_time_minutes")
+	if err != nil {
+		// Default 30 minutes buffer if not configured
+		bufferTimeConfig = &models.AdminConfig{Value: "30"}
+	}
+	
+	bufferTimeMinutes, err := strconv.Atoi(bufferTimeConfig.Value)
+	if err != nil {
+		bufferTimeMinutes = 30 // Default fallback
+	}
+
+	// Calculate end time including buffer
+	endTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
+
+	// Check for conflicting confirmed bookings
+	conflictingBookings, err := bs.bookingRepo.GetConflictingBookings(scheduledTime, endTime)
+	if err != nil {
+		return false, fmt.Errorf("failed to check for conflicting bookings: %v", err)
+	}
+
+	// If there are any confirmed bookings in this time slot, it's not available
+	if len(conflictingBookings) > 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // assignAvailableWorker finds and assigns an available worker for the given time period
@@ -379,17 +493,12 @@ func (bs *BookingService) VerifyPaymentAndCreateBooking(userID uint, req *models
 	}
 
 	// 4. Create the booking with the verified payment
-	booking, err := bs.CreateBooking(userID, &req.CreateBookingRequest)
+	booking, _, err := bs.CreateBooking(userID, &req.CreateBookingRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. Update booking with payment details
-	booking.PaymentStatus = models.PaymentStatusCompleted
-	booking.PaymentID = &req.RazorpayPaymentID
-	booking.RazorpayOrderID = &req.RazorpayOrderID
-	now := time.Now()
-	booking.PaymentCompletedAt = &now
+	// 5. Update booking status
 	booking.Status = models.BookingStatusConfirmed
 
 	// 6. Save booking
@@ -404,45 +513,140 @@ func (bs *BookingService) VerifyPaymentAndCreateBooking(userID uint, req *models
 	return booking, nil
 }
 
-// VerifyPayment verifies payment and confirms booking
+// VerifyPayment verifies payment and confirms booking (Phase 2 of two-phase booking)
 func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*models.Booking, error) {
+	fmt.Printf("VerifyPayment called with booking ID: %d\n", req.BookingID)
+	
 	// 1. Get booking
 	booking, err := bs.bookingRepo.GetByID(req.BookingID)
 	if err != nil {
+		fmt.Printf("Error getting booking by ID %d: %v\n", req.BookingID, err)
 		return nil, errors.New("booking not found")
 	}
 
-	if booking.Status != models.BookingStatusPaymentPending {
-		return nil, errors.New("booking is not in payment pending status")
+	fmt.Printf("Found booking: ID=%d, Status=%s\n", booking.ID, booking.Status)
+
+	// Check if booking is in temporary hold status
+	if booking.Status != models.BookingStatusTemporaryHold {
+		fmt.Printf("Booking status is %s, expected %s\n", booking.Status, models.BookingStatusTemporaryHold)
+		return nil, errors.New("booking is not in temporary hold status")
+	}
+
+	// Check if hold has expired
+	if booking.HoldExpiresAt != nil && time.Now().After(*booking.HoldExpiresAt) {
+		fmt.Printf("Booking hold has expired at %v\n", booking.HoldExpiresAt)
+		return nil, errors.New("booking hold has expired")
 	}
 
 	// 2. Verify Razorpay payment
 	isValid, err := bs.razorpayService.VerifyPayment(req.RazorpayPaymentID, req.RazorpayOrderID, req.RazorpaySignature)
 	if err != nil {
+		fmt.Printf("Razorpay verification error: %v\n", err)
 		return nil, err
 	}
 
 	if !isValid {
+		fmt.Printf("Razorpay verification failed\n")
 		return nil, errors.New("payment verification failed")
 	}
 
-	// 3. Update booking status
-	booking.Status = models.BookingStatusConfirmed
-	booking.PaymentStatus = models.PaymentStatusCompleted
-	booking.PaymentID = &req.RazorpayPaymentID
-	now := time.Now()
-	booking.PaymentCompletedAt = &now
+	fmt.Printf("Payment verification successful, proceeding with booking confirmation\n")
 
-	// 4. Save booking
+	// 3. Check if time slot is still available and get service duration
+	var serviceDurationMinutes int
+	if booking.ScheduledTime != nil {
+		service, err := bs.serviceRepo.GetByID(booking.ServiceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get service: %v", err)
+		}
+
+		if service.Duration != nil && *service.Duration != "" {
+			duration, err := utils.ParseDuration(*service.Duration)
+			if err != nil {
+				return nil, fmt.Errorf("invalid service duration: %v", err)
+			}
+			serviceDurationMinutes = duration.ToMinutes()
+		} else {
+			serviceDurationMinutes = 120 // Default 2 hours
+		}
+
+		isSlotAvailable, err := bs.isTimeSlotAvailable(*booking.ScheduledTime, serviceDurationMinutes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check slot availability: %v", err)
+		}
+
+		if !isSlotAvailable {
+			// Slot is no longer available, cancel the booking
+			booking.Status = models.BookingStatusCancelled
+			bs.bookingRepo.Update(booking)
+			return nil, errors.New("selected time slot is no longer available")
+		}
+	} else {
+		serviceDurationMinutes = 120 // Default 2 hours
+	}
+
+	// 4. Assign worker (Phase 2: Worker assignment)
+	assignedWorkerID, err := bs.assignAvailableWorker(*booking.ScheduledTime, serviceDurationMinutes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to assign worker: %v", err)
+	}
+
+	// 5. Create worker assignment
+	now := time.Now()
+	workerAssignment := &models.WorkerAssignment{
+		BookingID:  booking.ID,
+		WorkerID:   assignedWorkerID,
+		AssignedBy: booking.UserID,
+		Status:     "assigned",
+		AssignedAt: now,
+	}
+
+	// Save worker assignment
+	workerAssignmentRepo := repositories.NewWorkerAssignmentRepository()
+	if err := workerAssignmentRepo.Create(workerAssignment); err != nil {
+		return nil, fmt.Errorf("failed to create worker assignment: %v", err)
+	}
+
+	// 6. Update booking status to confirmed
+	booking.Status = models.BookingStatusConfirmed
+	booking.HoldExpiresAt = nil // Clear hold expiration
+
+	// 7. Save booking
 	err = bs.bookingRepo.Update(booking)
 	if err != nil {
+		fmt.Printf("Error updating booking: %v\n", err)
 		return nil, err
 	}
 
-	// 5. Send confirmation notifications
+	// 8. Send confirmation notifications
 	go bs.notificationService.SendBookingConfirmation(booking)
 
 	return booking, nil
+}
+
+// CleanupExpiredTemporaryHolds cleans up expired temporary holds
+func (bs *BookingService) CleanupExpiredTemporaryHolds() error {
+	// Get expired temporary holds
+	expiredHolds, err := bs.bookingRepo.GetExpiredTemporaryHolds()
+	if err != nil {
+		return fmt.Errorf("failed to get expired holds: %v", err)
+	}
+
+	for _, booking := range expiredHolds {
+		// Update booking status to cancelled
+		booking.Status = models.BookingStatusTimeExpired
+		
+		err := bs.bookingRepo.Update(&booking)
+		if err != nil {
+			// Log error but continue with other bookings
+			fmt.Printf("Failed to update expired booking %d: %v\n", booking.ID, err)
+			continue
+		}
+		
+		fmt.Printf("Cleaned up expired temporary hold: Booking ID %d\n", booking.ID)
+	}
+
+	return nil
 }
 
 // GetUserBookings gets bookings for a user
@@ -483,11 +687,10 @@ func (bs *BookingService) CancelUserBooking(userID uint, bookingID uint, req *mo
 	// 4. Process refund if payment was made
 	var refundAmount float64
 	var refundMethod string
-	if booking.PaymentStatus == models.PaymentStatusCompleted && booking.TotalAmount != nil {
-		refundAmount = *booking.TotalAmount
-		refundMethod = "razorpay"
-		// TODO: Process refund through Razorpay
-	}
+	// TODO: Get payment details from payment table and process refund
+	// For now, set default values
+	refundAmount = 0
+	refundMethod = "razorpay"
 
 	return map[string]interface{}{
 		"booking_id":       booking.ID,
@@ -675,8 +878,6 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 	
 	// For now, skip signature verification and rely on webhook verification
 	// In production, you might want to implement a more robust verification
-	fmt.Printf("Skipping signature verification for inquiry payment - Payment ID: %s, Order ID: %s\n", 
-		req.RazorpayPaymentID, req.RazorpayOrderID)
 
 	// 2. Get service details from Razorpay order notes (or we can pass it in the request)
 	// For now, let's get the service ID from the request or we can store it in the order notes
@@ -723,7 +924,7 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 		return nil, fmt.Errorf("failed to update payment with Razorpay details: %v", err)
 	}
 
-	fmt.Printf("Payment record created after verification - ID: %d, Reference: %s\n", payment.ID, payment.PaymentReference)
+
 
 	// 4. Create the actual booking
 	bookingReference := bs.generateBookingReference()
@@ -732,7 +933,6 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 		ServiceID:           serviceID, // This needs to be properly set
 		BookingReference:    bookingReference,
 		Status:              models.BookingStatusPending,
-		PaymentStatus:       models.PaymentStatusCompleted,
 		BookingType:         models.BookingTypeInquiry,
 		ScheduledDate:       nil, // Will be set later
 		ScheduledTime:       nil, // Will be set later
@@ -742,10 +942,6 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 		ContactPerson:       "",  // Will be filled later
 		ContactPhone:        "",  // Will be filled later
 		SpecialInstructions: "",  // Will be filled later
-		TotalAmount:         &payment.Amount,
-		PaymentID:           &payment.PaymentReference,
-		RazorpayOrderID:     &req.RazorpayOrderID,
-		PaymentCompletedAt:  &now,
 	}
 
 	// 5. Save booking
@@ -761,8 +957,6 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update payment with booking link: %v", err)
 	}
-
-	fmt.Printf("Inquiry booking created after payment - Booking ID: %d, Reference: %s\n", booking.ID, booking.BookingReference)
 
 	return booking, nil
 }

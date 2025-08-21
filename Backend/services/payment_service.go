@@ -191,6 +191,31 @@ func (ps *PaymentService) RefundPayment(paymentID uint, req *models.RefundPaymen
 	return payment, nil
 }
 
+// GetAbandonedWalletPayments gets pending wallet payments that are older than the cutoff time
+func (ps *PaymentService) GetAbandonedWalletPayments(cutoffTime time.Time) ([]*models.Payment, error) {
+	return ps.paymentRepo.GetAbandonedWalletPayments(cutoffTime)
+}
+
+// GetPaymentsByUserAndType gets payments for a user by type(s)
+func (ps *PaymentService) GetPaymentsByUserAndType(userID uint, paymentTypes []models.PaymentType, limit, offset int) ([]models.Payment, error) {
+	return ps.paymentRepo.GetByUserIDAndTypes(userID, paymentTypes, limit, offset)
+}
+
+// GetPaymentCountByUserAndType gets payment count for a user by type(s)
+func (ps *PaymentService) GetPaymentCountByUserAndType(userID uint, paymentTypes []models.PaymentType) (int64, error) {
+	return ps.paymentRepo.GetCountByUserIDAndTypes(userID, paymentTypes)
+}
+
+// GetRecentPaymentsByUserAndType gets recent payments for a user by type(s)
+func (ps *PaymentService) GetRecentPaymentsByUserAndType(userID uint, paymentTypes []models.PaymentType, limit int) ([]models.Payment, error) {
+	return ps.paymentRepo.GetRecentByUserIDAndTypes(userID, paymentTypes, limit)
+}
+
+// GetTotalAmountByUserAndType gets total amount for a user by type
+func (ps *PaymentService) GetTotalAmountByUserAndType(userID uint, paymentType models.PaymentType) (float64, error) {
+	return ps.paymentRepo.GetTotalAmountByUserIDAndType(userID, paymentType)
+}
+
 // generatePaymentReference generates a unique payment reference
 func (ps *PaymentService) generatePaymentReference() string {
 	timestamp := time.Now().Format("20060102")
