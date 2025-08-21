@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"time"
 	"treesindia/repositories"
 )
@@ -32,9 +31,8 @@ func (sws *SubscriptionWarningService) CheckAndSendExpiryWarnings() error {
 	for _, subscription := range subscriptions7Days {
 		// Check if we already sent a warning for this user
 		if !sws.hasWarningBeenSent(subscription.UserID, 7) {
-			sws.notificationService.SendSubscriptionExpiryWarning(&subscription.User, 7)
-			sws.markWarningAsSent(subscription.UserID, 7)
-			log.Printf("7-day expiry warning sent to user %d", subscription.UserID)
+					sws.notificationService.SendSubscriptionExpiryWarning(&subscription.User, 7)
+		sws.markWarningAsSent(subscription.UserID, 7)
 		}
 	}
 
@@ -49,7 +47,6 @@ func (sws *SubscriptionWarningService) CheckAndSendExpiryWarnings() error {
 		if !sws.hasWarningBeenSent(subscription.UserID, 1) {
 			sws.notificationService.SendSubscriptionExpiryWarning(&subscription.User, 1)
 			sws.markWarningAsSent(subscription.UserID, 1)
-			log.Printf("1-day expiry warning sent to user %d", subscription.UserID)
 		}
 	}
 
@@ -68,7 +65,7 @@ func (sws *SubscriptionWarningService) hasWarningBeenSent(userID uint, daysLeft 
 func (sws *SubscriptionWarningService) markWarningAsSent(userID uint, daysLeft int) {
 	// TODO: Implement with database storage
 	// For now, just log the action
-	log.Printf("Warning marked as sent for user %d, %d days before expiry", userID, daysLeft)
+	_, _ = userID, daysLeft // Suppress unused parameter warnings
 }
 
 // StartWarningJob starts the background warning job
@@ -77,9 +74,8 @@ func (sws *SubscriptionWarningService) StartWarningJob() {
 	go func() {
 		for range ticker.C {
 			if err := sws.CheckAndSendExpiryWarnings(); err != nil {
-				log.Printf("Error sending subscription warnings: %v", err)
+				// Handle error silently
 			}
 		}
 	}()
-	log.Println("Subscription warning job started")
 }

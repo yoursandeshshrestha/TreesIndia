@@ -1,0 +1,328 @@
+{
+  "info": {
+    "name": "TreesIndia API - Auth to Categories",
+    "description": "Postman collection for TreesIndia backend API covering Authentication, User Management, and Category Management routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+919876543210\",\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/request-otp",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "request-otp"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+919876543210\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"your_refresh_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+919876543210\",\n  \"date_of_birth\": \"1990-01-01\",\n  \"gender\": \"male\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Upload Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/users/upload-avatar",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "users", "upload-avatar"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/users/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "users", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Update Notification Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email_notifications\": true,\n  \"sms_notifications\": false,\n  \"push_notifications\": true,\n  \"booking_reminders\": true,\n  \"promotional_emails\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/users/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "users", "notifications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📂 Category Management",
+      "item": [
+        {
+          "name": "Get All Categories (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get All Categories (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/categories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Home Services\",\n  \"description\": \"Professional home maintenance and repair services\",\n  \"icon\": \"home\",\n  \"color\": \"#4CAF50\",\n  \"is_active\": true,\n  \"parent_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/categories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Home Services Updated\",\n  \"description\": \"Updated description for home services\",\n  \"icon\": \"home\",\n  \"color\": \"#2196F3\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Category Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/categories/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "categories", "1", "status"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

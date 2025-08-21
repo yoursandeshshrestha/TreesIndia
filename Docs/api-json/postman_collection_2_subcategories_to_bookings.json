@@ -1,0 +1,571 @@
+{
+  "info": {
+    "name": "TreesIndia API - Subcategories to Bookings",
+    "description": "Postman collection for TreesIndia backend API covering Subcategory Management, Service Management, and Booking Management routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "📁 Subcategory Management",
+      "item": [
+        {
+          "name": "Get All Subcategories (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subcategories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subcategories"]
+            }
+          }
+        },
+        {
+          "name": "Get Subcategory by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subcategories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subcategories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Subcategories by Category (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subcategories/category/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subcategories", "category", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Subcategory (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Plumbing Services\",\n  \"description\": \"Professional plumbing and pipe repair services\",\n  \"category_id\": 1,\n  \"icon\": \"droplets\",\n  \"color\": \"#2196F3\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subcategories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subcategories"]
+            }
+          }
+        },
+        {
+          "name": "Update Subcategory (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Plumbing Services Updated\",\n  \"description\": \"Updated description for plumbing services\",\n  \"category_id\": 1,\n  \"icon\": \"droplets\",\n  \"color\": \"#1976D2\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subcategories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subcategories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Subcategory (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subcategories/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subcategories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Subcategory Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subcategories/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subcategories", "1", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Service Management",
+      "item": [
+        {
+          "name": "Get All Services (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services"]
+            }
+          }
+        },
+        {
+          "name": "Get Service by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Services by Subcategory (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/subcategory/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "subcategory", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Categories (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/categories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Subcategories (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/categories/1/subcategories",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "categories", "1", "subcategories"]
+            }
+          }
+        },
+        {
+          "name": "Create Service (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pipe Repair Service\",\n  \"description\": \"Professional pipe repair and maintenance service\",\n  \"subcategory_id\": 1,\n  \"price\": 500.00,\n  \"duration\": \"2 hours\",\n  \"is_active\": true,\n  \"features\": [\"24/7 availability\", \"warranty included\", \"professional tools\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/services",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "services"]
+            }
+          }
+        },
+        {
+          "name": "Update Service (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pipe Repair Service Updated\",\n  \"description\": \"Updated description for pipe repair service\",\n  \"subcategory_id\": 1,\n  \"price\": 600.00,\n  \"duration\": \"2.5 hours\",\n  \"is_active\": true,\n  \"features\": [\"24/7 availability\", \"warranty included\", \"professional tools\", \"emergency service\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/services/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "services", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Service (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/services/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "services", "1"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Service Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/services/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "services", "1", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Booking Management",
+      "item": [
+        {
+          "name": "Get Booking Config (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/config",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "config"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": 1,\n  \"scheduled_date\": \"2024-01-15\",\n  \"scheduled_time\": \"10:00:00\",\n  \"address_id\": 1,\n  \"notes\": \"Please bring necessary tools\",\n  \"preferred_worker_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Create Inquiry Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": 1,\n  \"description\": \"Need urgent pipe repair\",\n  \"address_id\": 1,\n  \"preferred_date\": \"2024-01-15\",\n  \"preferred_time\": \"10:00:00\",\n  \"contact_preference\": \"phone\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/inquiry",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "inquiry"]
+            }
+          }
+        },
+        {
+          "name": "Verify Inquiry Payment and Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_id\": \"pay_123456789\",\n  \"inquiry_id\": 1,\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_signature\": \"signature_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/verify-inquiry-payment",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "verify-inquiry-payment"]
+            }
+          }
+        },
+        {
+          "name": "Create Payment Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": 1,\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"receipt\": \"receipt_123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/payment-order",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "payment-order"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking with Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": 1,\n  \"scheduled_date\": \"2024-01-15\",\n  \"scheduled_time\": \"10:00:00\",\n  \"address_id\": 1,\n  \"payment_method\": \"razorpay\",\n  \"amount\": 500.00,\n  \"currency\": \"INR\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/with-payment",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "with-payment"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_order_id\": \"order_123456789\",\n  \"razorpay_signature\": \"signature_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/verify-payment",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "verify-payment"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment and Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_order_id\": \"order_123456789\",\n  \"razorpay_signature\": \"signature_here\",\n  \"service_id\": 1,\n  \"scheduled_date\": \"2024-01-15\",\n  \"scheduled_time\": \"10:00:00\",\n  \"address_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/verify-payment-and-create",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "verify-payment-and-create"]
+            }
+          }
+        },
+        {
+          "name": "Get User Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Available Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/available-slots?service_id=1&date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "available-slots"],
+              "query": [
+                {
+                  "key": "service_id",
+                  "value": "1"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "1"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Schedule conflict\",\n  \"cancellation_notes\": \"Need to reschedule for next week\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/bookings/1/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "bookings", "1", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Get All Bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Update Booking Status (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"notes\": \"Worker has started the service\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/bookings/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "bookings", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "Assign Worker to Booking (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker_id\": 1,\n  \"assignment_notes\": \"Assigned to experienced plumber\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/bookings/1/assign-worker",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "bookings", "1", "assign-worker"]
+            }
+          }
+        },
+        {
+          "name": "Get Booking Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/bookings/stats",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "bookings", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

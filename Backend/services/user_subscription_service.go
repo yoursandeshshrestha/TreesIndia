@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"log"
 	"time"
 	"treesindia/database"
 	"treesindia/models"
@@ -70,8 +69,6 @@ func (uss *UserSubscriptionService) CheckAndUpdateSubscriptionStatus(userID uint
 			
 			// Send expiry notification
 			go uss.notificationService.SendSubscriptionExpiredNotification(user)
-			
-			log.Printf("Subscription expired for user %d, status updated", userID)
 		}
 	}
 	

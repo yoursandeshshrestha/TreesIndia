@@ -1,0 +1,511 @@
+{
+  "info": {
+    "name": "TreesIndia API - Payments to Subscriptions",
+    "description": "Postman collection for TreesIndia backend API covering Payment Management, Wallet Management, and Subscription Management routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "💳 Payment Management",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"payment_method\": \"razorpay\",\n  \"description\": \"Payment for booking service\",\n  \"booking_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments"]
+            }
+          }
+        },
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"receipt\": \"receipt_123\",\n  \"notes\": \"Payment for service booking\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments/razorpay-order",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments", "razorpay-order"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_order_id\": \"order_123456789\",\n  \"razorpay_signature\": \"signature_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments/1/verify",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments", "1", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Get User Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments/stats",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/payments/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "payments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Refund Payment (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refund_amount\": 500.00,\n  \"refund_reason\": \"Customer requested cancellation\",\n  \"refund_notes\": \"Full refund processed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/payments/1/refund",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "payments", "1", "refund"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Wallet Management",
+      "item": [
+        {
+          "name": "Recharge Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000.00,\n  \"payment_method\": \"razorpay\",\n  \"currency\": \"INR\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/recharge",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "wallet", "recharge"]
+            }
+          }
+        },
+        {
+          "name": "Complete Recharge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_payment_id\": \"pay_123456789\",\n  \"razorpay_order_id\": \"order_123456789\",\n  \"razorpay_signature\": \"signature_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/recharge/1/complete",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "wallet", "recharge", "1", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Get User Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "wallet", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/transactions/type/credit",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "wallet",
+                "transactions",
+                "type",
+                "credit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction by Reference",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/transaction/ref_123456",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "wallet", "transaction", "ref_123456"]
+            }
+          }
+        },
+        {
+          "name": "Get Wallet Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/wallet/summary",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "wallet", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Admin Adjust Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"amount\": 100.00,\n  \"type\": \"credit\",\n  \"reason\": \"Bonus credit\",\n  \"notes\": \"Welcome bonus for new user\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/wallet/adjust",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "wallet", "adjust"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Subscription Management",
+      "item": [
+        {
+          "name": "Get All Subscription Plans (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscription-plans",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscription-plans"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Plans (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscription-plans/active",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscription-plans", "active"]
+            }
+          }
+        },
+        {
+          "name": "Get Plans by Duration (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscription-plans/duration/monthly",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "subscription-plans",
+                "duration",
+                "monthly"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Plan by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscription-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscription-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Purchase Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": 1,\n  \"payment_method\": \"razorpay\",\n  \"auto_renew\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscriptions/purchase",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscriptions", "purchase"]
+            }
+          }
+        },
+        {
+          "name": "Get User Subscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscriptions/my-subscription",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscriptions", "my-subscription"]
+            }
+          }
+        },
+        {
+          "name": "Get Subscription History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/subscriptions/history",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "subscriptions", "history"]
+            }
+          }
+        },
+        {
+          "name": "Create Subscription Plan (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Monthly\",\n  \"description\": \"Premium subscription with unlimited services\",\n  \"duration\": \"monthly\",\n  \"price\": 999.00,\n  \"currency\": \"INR\",\n  \"features\": [\"unlimited_bookings\", \"priority_support\", \"discounts\"],\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscription-plans",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subscription-plans"]
+            }
+          }
+        },
+        {
+          "name": "Update Subscription Plan (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Monthly Updated\",\n  \"description\": \"Updated premium subscription\",\n  \"duration\": \"monthly\",\n  \"price\": 899.00,\n  \"currency\": \"INR\",\n  \"features\": [\"unlimited_bookings\", \"priority_support\", \"discounts\", \"free_delivery\"],\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscription-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subscription-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Subscription Plan (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscription-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subscription-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get All Subscriptions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscriptions",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Get Expiring Subscriptions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscriptions/expiring",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "subscriptions", "expiring"]
+            }
+          }
+        },
+        {
+          "name": "Extend User Subscription (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"extension_days\": 30,\n  \"reason\": \"Customer service compensation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscriptions/users/1/extend",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "subscriptions",
+                "users",
+                "1",
+                "extend"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh User Subscription Status (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/subscriptions/users/1/refresh-status",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "subscriptions",
+                "users",
+                "1",
+                "refresh-status"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
