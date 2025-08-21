@@ -9,6 +9,8 @@ import (
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type BookingService struct {
@@ -308,35 +310,53 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		feeAmount = 0 // Default to 0 if parsing fails
 	}
 
-	// 4. If fee is required, create Razorpay order directly (no payment record yet)
+	// 4. If fee is required, try to create Razorpay order
 	if feeAmount > 0 {
+		logrus.Infof("Inquiry booking fee required: %d", feeAmount)
 		
-		// Generate temporary booking reference for tracking
-		tempBookingReference := bs.GenerateTemporaryBookingReference()
-		
-		// Create Razorpay order directly without payment record
-		feeFloat := float64(feeAmount)
-		razorpayOrder, err := bs.razorpayService.CreateOrder(feeFloat, tempBookingReference, "Inquiry booking fee")
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create payment order: %v", err)
-		}
-
-		// Add metadata to Razorpay order for tracking
-		if razorpayOrder["notes"] == nil {
-			razorpayOrder["notes"] = map[string]interface{}{
-				"temp_booking_reference": tempBookingReference,
-				"service_id":            req.ServiceID,
-				"user_id":               userID,
-				"booking_type":          "inquiry",
+		// Check if razorpay service is available and configured
+		if bs.razorpayService == nil {
+			logrus.Warn("Razorpay service is nil, creating booking without payment")
+			// Fall through to create booking without payment
+		} else {
+			// Try to create Razorpay order using payment service (same as fixed price booking)
+			tempBookingReference := bs.GenerateTemporaryBookingReference()
+			logrus.Infof("Generated temporary booking reference: %s", tempBookingReference)
+			
+			feeFloat := float64(feeAmount)
+			
+			// Create payment request (same pattern as fixed price booking)
+			paymentReq := &models.CreatePaymentRequest{
+				UserID:            userID,
+				Amount:            feeFloat,
+				Currency:          "INR",
+				Type:              models.PaymentTypeBooking,
+				Method:            "razorpay",
+				RelatedEntityType: "inquiry_booking",
+				RelatedEntityID:   0, // Will be set after booking creation
+				Description:       "Inquiry booking fee",
+			}
+			
+			logrus.Infof("Creating Razorpay order for inquiry booking fee: %f", feeFloat)
+			_, razorpayOrder, err := bs.paymentService.CreateRazorpayOrder(paymentReq)
+			if err != nil {
+				logrus.Warnf("Failed to create Razorpay order: %v, creating booking without payment", err)
+				// Fall through to create booking without payment
+			} else {
+				logrus.Infof("Razorpay order created successfully for inquiry booking")
+				
+				// Return nil booking and payment order - booking will be created after payment
+				return nil, razorpayOrder, nil
 			}
 		}
-
-		// Return nil booking and payment order - booking will be created after payment
-		return nil, razorpayOrder, nil
-	} else {
+	}
+	
+	// 5. Create booking directly (either no fee required or payment failed)
+	logrus.Infof("Creating inquiry booking directly")
 		
 		// 5. Generate booking reference
 		bookingReference := bs.generateBookingReference()
+		logrus.Infof("Generated booking reference: %s", bookingReference)
 
 		// 6. Create booking with minimal data for inquiry-based booking
 		booking := &models.Booking{
@@ -358,6 +378,7 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		// 7. Save booking
 		booking, err = bs.bookingRepo.Create(booking)
 		if err != nil {
+			logrus.Errorf("Failed to create inquiry booking: %v", err)
 			return nil, nil, err
 		}
 
@@ -365,7 +386,6 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		// bs.notificationService.SendInquiryBookingNotification(booking)
 
 		return booking, nil, nil
-	}
 }
 
 
@@ -515,42 +535,33 @@ func (bs *BookingService) VerifyPaymentAndCreateBooking(userID uint, req *models
 
 // VerifyPayment verifies payment and confirms booking (Phase 2 of two-phase booking)
 func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*models.Booking, error) {
-	fmt.Printf("VerifyPayment called with booking ID: %d\n", req.BookingID)
-	
 	// 1. Get booking
 	booking, err := bs.bookingRepo.GetByID(req.BookingID)
 	if err != nil {
-		fmt.Printf("Error getting booking by ID %d: %v\n", req.BookingID, err)
 		return nil, errors.New("booking not found")
 	}
 
-	fmt.Printf("Found booking: ID=%d, Status=%s\n", booking.ID, booking.Status)
-
 	// Check if booking is in temporary hold status
 	if booking.Status != models.BookingStatusTemporaryHold {
-		fmt.Printf("Booking status is %s, expected %s\n", booking.Status, models.BookingStatusTemporaryHold)
 		return nil, errors.New("booking is not in temporary hold status")
 	}
 
 	// Check if hold has expired
 	if booking.HoldExpiresAt != nil && time.Now().After(*booking.HoldExpiresAt) {
-		fmt.Printf("Booking hold has expired at %v\n", booking.HoldExpiresAt)
 		return nil, errors.New("booking hold has expired")
 	}
 
-	// 2. Verify Razorpay payment
-	isValid, err := bs.razorpayService.VerifyPayment(req.RazorpayPaymentID, req.RazorpayOrderID, req.RazorpaySignature)
+	// 2. Find and verify the associated payment
+	payment, err := bs.paymentService.GetPaymentByRazorpayOrderID(req.RazorpayOrderID)
 	if err != nil {
-		fmt.Printf("Razorpay verification error: %v\n", err)
-		return nil, err
+		return nil, errors.New("payment not found")
 	}
 
-	if !isValid {
-		fmt.Printf("Razorpay verification failed\n")
-		return nil, errors.New("payment verification failed")
+	// Verify the payment
+	_, err = bs.paymentService.VerifyAndCompletePayment(payment.ID, req.RazorpayPaymentID, req.RazorpaySignature)
+	if err != nil {
+		return nil, fmt.Errorf("payment verification failed: %v", err)
 	}
-
-	fmt.Printf("Payment verification successful, proceeding with booking confirmation\n")
 
 	// 3. Check if time slot is still available and get service duration
 	var serviceDurationMinutes int
@@ -614,7 +625,6 @@ func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*mode
 	// 7. Save booking
 	err = bs.bookingRepo.Update(booking)
 	if err != nil {
-		fmt.Printf("Error updating booking: %v\n", err)
 		return nil, err
 	}
 
@@ -639,11 +649,8 @@ func (bs *BookingService) CleanupExpiredTemporaryHolds() error {
 		err := bs.bookingRepo.Update(&booking)
 		if err != nil {
 			// Log error but continue with other bookings
-			fmt.Printf("Failed to update expired booking %d: %v\n", booking.ID, err)
 			continue
 		}
-		
-		fmt.Printf("Cleaned up expired temporary hold: Booking ID %d\n", booking.ID)
 	}
 
 	return nil
@@ -957,6 +964,101 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update payment with booking link: %v", err)
 	}
+
+	return booking, nil
+}
+
+// VerifyInquiryPayment verifies payment for inquiry booking and creates the actual booking
+func (bs *BookingService) VerifyInquiryPayment(userID uint, req *models.VerifyInquiryPaymentRequest) (*models.Booking, error) {
+	logrus.Infof("VerifyInquiryPayment called for user_id: %d, service_id: %d", userID, req.ServiceID)
+	
+	// 1. Validate service exists and is active
+	service, err := bs.serviceRepo.GetByID(req.ServiceID)
+	if err != nil {
+		logrus.Errorf("Service not found: %v", err)
+		return nil, errors.New("service not found")
+	}
+	if !service.IsActive {
+		return nil, errors.New("service is not active")
+	}
+
+	// 2. Validate service is inquiry-based
+	if service.PriceType != "inquiry" {
+		return nil, errors.New("service is not inquiry-based")
+	}
+
+	// 3. Verify Razorpay payment
+	if bs.razorpayService == nil {
+		logrus.Error("Razorpay service is nil")
+		return nil, errors.New("payment service not available")
+	}
+	
+	logrus.Infof("Verifying Razorpay payment: payment_id=%s, order_id=%s", req.RazorpayPaymentID, req.RazorpayOrderID)
+	isValid, err := bs.razorpayService.VerifyPayment(req.RazorpayPaymentID, req.RazorpayOrderID, req.RazorpaySignature)
+	if err != nil {
+		logrus.Errorf("Payment verification failed: %v", err)
+		return nil, fmt.Errorf("payment verification failed: %v", err)
+	}
+	if !isValid {
+		logrus.Error("Payment signature verification failed")
+		return nil, errors.New("payment signature verification failed")
+	}
+	
+	logrus.Info("Payment verification successful")
+
+	// 4. Generate booking reference
+	bookingReference := bs.generateBookingReference()
+
+	// 5. Create booking with inquiry type (confirmed since payment is verified)
+	booking := &models.Booking{
+		UserID:              userID,
+		ServiceID:           req.ServiceID,
+		BookingReference:    bookingReference,
+		Status:              models.BookingStatusConfirmed, // Confirmed since payment is verified
+		BookingType:         models.BookingTypeInquiry,
+		ScheduledDate:       nil, // Will be set when quote is accepted
+		ScheduledTime:       nil, // Will be set when quote is accepted
+		ScheduledEndTime:    nil, // Will be set when quote is accepted
+		Address:             nil, // Will be filled when quote is accepted
+		Description:         "",  // Will be filled when quote is accepted
+		ContactPerson:       "",  // Will be filled when quote is accepted
+		ContactPhone:        "",  // Will be filled when quote is accepted
+		SpecialInstructions: "",  // Will be filled when quote is accepted
+	}
+
+	// 6. Save booking
+	booking, err = bs.bookingRepo.Create(booking)
+	if err != nil {
+		return nil, err
+	}
+
+	// 7. Update the existing payment record (from the initial inquiry booking)
+	// Find the payment record by Razorpay order ID and update it
+	existingPayment, err := bs.paymentService.GetPaymentByRazorpayOrderID(req.RazorpayOrderID)
+	if err != nil {
+		logrus.Warnf("Could not find existing payment record: %v", err)
+	} else {
+		// Update payment record with booking link and mark as completed
+		existingPayment.RelatedEntityType = "booking"
+		existingPayment.RelatedEntityID = booking.ID
+		existingPayment.Status = models.PaymentStatusCompleted
+		existingPayment.RazorpayPaymentID = &req.RazorpayPaymentID
+		existingPayment.RazorpaySignature = &req.RazorpaySignature
+		now := time.Now()
+		existingPayment.CompletedAt = &now
+		existingPayment.Notes = "Inquiry booking fee - payment completed"
+		
+		err = bs.paymentService.UpdatePayment(existingPayment)
+		if err != nil {
+			logrus.Errorf("Failed to update payment record: %v", err)
+			// Don't fail the booking creation if payment update fails
+		} else {
+			logrus.Infof("Payment record updated successfully for booking ID: %d", booking.ID)
+		}
+	}
+
+	// 8. Send notification (optional)
+	// bs.notificationService.SendInquiryBookingNotification(booking)
 
 	return booking, nil
 }

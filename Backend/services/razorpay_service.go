@@ -29,6 +29,11 @@ func NewRazorpayService() *RazorpayService {
 
 // CreateOrder creates a Razorpay order
 func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes string) (map[string]interface{}, error) {
+	// Check if Razorpay is configured
+	if rs.keyID == "" || rs.keySecret == "" {
+		return nil, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	
 	// Convert amount to paise (Razorpay expects amount in smallest currency unit)
 	amountInPaise := int64(amount * 100)
 	
@@ -55,7 +60,11 @@ func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes str
 	
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+rs.getBasicAuth())
+	auth := rs.getBasicAuth()
+	if auth == "" {
+		return nil, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	req.Header.Set("Authorization", "Basic "+auth)
 	
 	// Make request
 	client := &http.Client{}
@@ -113,12 +122,20 @@ func (rs *RazorpayService) VerifyPayment(paymentID, orderID, signature string) (
 
 // getBasicAuth returns Basic Auth header value
 func (rs *RazorpayService) getBasicAuth() string {
+	if rs.keyID == "" || rs.keySecret == "" {
+		return ""
+	}
 	auth := rs.keyID + ":" + rs.keySecret
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
 // VerifyWebhookSignature verifies webhook signature
 func (rs *RazorpayService) VerifyWebhookSignature(body []byte, signature string) bool {
+	// Check if Razorpay is configured
+	if rs.keySecret == "" {
+		return false
+	}
+	
 	// Create expected signature
 	expectedSignature := hmac.New(sha256.New, []byte(rs.keySecret))
 	expectedSignature.Write(body)
@@ -129,6 +146,11 @@ func (rs *RazorpayService) VerifyWebhookSignature(body []byte, signature string)
 
 // ParseWebhookPayload parses webhook payload
 func (rs *RazorpayService) ParseWebhookPayload(body []byte) (map[string]interface{}, error) {
+	// Check if Razorpay is configured
+	if rs.keySecret == "" {
+		return nil, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	
 	var webhookData map[string]interface{}
 	if err := json.Unmarshal(body, &webhookData); err != nil {
 		return nil, fmt.Errorf("failed to parse webhook payload: %w", err)
@@ -138,6 +160,11 @@ func (rs *RazorpayService) ParseWebhookPayload(body []byte) (map[string]interfac
 
 // GetPaymentDetails gets payment details
 func (rs *RazorpayService) GetPaymentDetails(paymentID string) (map[string]interface{}, error) {
+	// Check if Razorpay is configured
+	if rs.keyID == "" || rs.keySecret == "" {
+		return nil, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	
 	// Create HTTP request
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.razorpay.com/v1/payments/%s", paymentID), nil)
 	if err != nil {
@@ -145,7 +172,11 @@ func (rs *RazorpayService) GetPaymentDetails(paymentID string) (map[string]inter
 	}
 	
 	// Set headers
-	req.Header.Set("Authorization", "Basic "+rs.getBasicAuth())
+	auth := rs.getBasicAuth()
+	if auth == "" {
+		return nil, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	req.Header.Set("Authorization", "Basic "+auth)
 	
 	// Make request
 	client := &http.Client{}
@@ -176,6 +207,11 @@ func (rs *RazorpayService) GetPaymentDetails(paymentID string) (map[string]inter
 
 // IsPaymentSuccessful checks if payment was successful
 func (rs *RazorpayService) IsPaymentSuccessful(paymentDetails map[string]interface{}) bool {
+	// Check if Razorpay is configured
+	if rs.keySecret == "" {
+		return false
+	}
+	
 	status, ok := paymentDetails["status"].(string)
 	if !ok {
 		return false
@@ -185,6 +221,11 @@ func (rs *RazorpayService) IsPaymentSuccessful(paymentDetails map[string]interfa
 
 // GetPaymentAmount gets payment amount
 func (rs *RazorpayService) GetPaymentAmount(paymentDetails map[string]interface{}) (float64, error) {
+	// Check if Razorpay is configured
+	if rs.keySecret == "" {
+		return 0, fmt.Errorf("razorpay is not configured - missing API keys")
+	}
+	
 	amount, ok := paymentDetails["amount"].(float64)
 	if !ok {
 		return 0, fmt.Errorf("invalid amount format")
@@ -194,6 +235,11 @@ func (rs *RazorpayService) GetPaymentAmount(paymentDetails map[string]interface{
 
 // VerifyPaymentSignature verifies payment signature
 func (rs *RazorpayService) VerifyPaymentSignature(orderID, paymentID, signature string) bool {
+	// Check if Razorpay is configured
+	if rs.keySecret == "" {
+		return false
+	}
+	
 	// Create signature string
 	signatureString := orderID + "|" + paymentID
 	
