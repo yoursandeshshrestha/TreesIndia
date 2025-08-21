@@ -95,7 +95,10 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
     } else if (digits.length <= 6) {
       return `${digits.slice(0, 3)}-${digits.slice(3)}`;
     } else {
-      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(
+        6,
+        10
+      )}`;
     }
   };
 
@@ -205,7 +208,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
               </button>
 
               {openDropdownId === phone.id && (
-                <div className="absolute z-50 mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
+                <div className="absolute z-dropdown mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
                   {/* Search Input */}
                   <div className="p-3 border-b border-gray-200">
                     <div className="relative">

@@ -1,24 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Bell,
-  ChevronDown,
-  PanelLeft,
-  PanelRight,
-  Menu,
-  Search,
-} from "lucide-react";
+import { Bell, PanelLeft, PanelRight, Menu, Search } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/app/store";
 import { useRouter } from "next/navigation";
 import { toggleSidebar, selectIsSidebarOpen, open } from "@/app/store";
 import { SearchButton } from "@/components/CommandPalette";
+import ProfileDropdown from "./ProfileDropdown";
+import {
+  selectUser,
+  selectUserLoading,
+  selectUserName,
+  selectUserEmail,
+  selectUserInitials,
+  selectUserAvatar,
+} from "@/app/store/slices";
 import type { HeaderProps } from "./Header.types";
 
 const Header: React.FC<HeaderProps> = ({
   breadcrumbs = [{ label: "Dashboard" }],
-  userName = "Amit Bishwakarma",
-  userInitials = "AB",
 }) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -26,6 +26,14 @@ const Header: React.FC<HeaderProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Get user data from Redux store
+  const userData = useAppSelector(selectUser);
+  const userLoading = useAppSelector(selectUserLoading);
+  const userName = useAppSelector(selectUserName);
+  const userEmail = useAppSelector(selectUserEmail);
+  const userInitials = useAppSelector(selectUserInitials);
+  const userAvatar = useAppSelector(selectUserAvatar);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -72,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-white w-full border-b border-black/10 px-6 py-3 fixed top-0 z-10 overflow-x-hidden transition-all duration-300">
+    <header className="bg-white w-full border-b border-black/10 px-6 py-3 fixed top-0 z-[99] overflow-x-hidden transition-all duration-300">
       <div
         className={`flex items-center flex-wrap justify-between ${
           isSidebarOpen && !isMobile ? "w-[calc(100%-256px)]" : "w-full"
@@ -153,18 +161,23 @@ const Header: React.FC<HeaderProps> = ({
             <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></div>
           </button>
 
-          {/* User Profile */}
-          <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {userInitials}
-              </span>
+          {/* User Profile Dropdown */}
+          {userLoading ? (
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-gray-50">
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="flex flex-col space-y-1">
+                <div className="h-3 bg-gray-200 rounded animate-pulse w-16"></div>
+                <div className="h-2 bg-gray-200 rounded animate-pulse w-24"></div>
+              </div>
             </div>
-            <span className="text-sm font-medium text-gray-700">
-              {userName}
-            </span>
-            <ChevronDown size={16} className="text-gray-400" />
-          </div>
+          ) : userData ? (
+            <ProfileDropdown
+              userName={userName}
+              userEmail={userEmail}
+              userInitials={userInitials}
+              userAvatar={userAvatar}
+            />
+          ) : null}
         </div>
       </div>
     </header>

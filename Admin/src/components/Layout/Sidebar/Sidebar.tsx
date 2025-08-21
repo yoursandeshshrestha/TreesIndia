@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useAppDispatch } from "@/app/store";
 import { setSidebarOpen } from "@/app/store";
+import ProfileCard from "./ProfileCard";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -338,6 +339,9 @@ const Sidebar = () => {
           {filteredItems.map((item, index) => renderSidebarItem(item, index))}
         </div>
       </div>
+
+      {/* Profile Card */}
+      <ProfileCard />
     </div>
   );
 };

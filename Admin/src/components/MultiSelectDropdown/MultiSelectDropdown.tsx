@@ -190,7 +190,7 @@ const MultiSelectDropdown = ({
 
       {isOpen && (
         <div
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
+                      className="absolute z-dropdown w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
           style={{ maxHeight }}
         >
           <div className="p-2 border-b border-gray-200">
