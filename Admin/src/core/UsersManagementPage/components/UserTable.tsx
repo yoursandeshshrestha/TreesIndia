@@ -33,6 +33,31 @@ interface UserTableProps {
   onDeleteUser: (user: User) => void;
 }
 
+const isBase64Image = (src: string): boolean => {
+  return src.startsWith("data:image/");
+};
+
+const renderAvatar = (src: string, alt: string) => {
+  if (isBase64Image(src)) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className="h-10 w-10 rounded-full object-cover"
+      />
+    );
+  }
+  return (
+    <Image
+      className="h-10 w-10 rounded-full object-cover"
+      src={src}
+      width={40}
+      height={40}
+      alt={alt}
+    />
+  );
+};
+
 const UserTable = ({
   users,
   selectionMode,
@@ -106,13 +131,7 @@ const UserTable = ({
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
                     {row.avatar ? (
-                      <Image
-                        className="h-10 w-10 rounded-full object-cover"
-                        src={row.avatar}
-                        width={40}
-                        height={40}
-                        alt={row.name}
-                      />
+                      renderAvatar(row.avatar, row.name)
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span className="text-sm font-medium text-gray-700">

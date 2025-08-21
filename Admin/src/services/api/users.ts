@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/types/api";
+import { isAuthenticated } from "@/utils/authUtils";
 import type {
   User,
   ApiResponse,
@@ -40,8 +41,13 @@ export const userApi = {
   },
 
   // Get current user profile
-  getProfile: async (): Promise<User> => {
-    return api.get<User>(USER_ENDPOINTS.profile);
+  getProfile: async (): Promise<ApiResponse<User>> => {
+    return api.get<ApiResponse<User>>(USER_ENDPOINTS.profile);
+  },
+
+  // Update current user profile
+  updateProfile: async (data: Partial<User>): Promise<User> => {
+    return api.put<User>(USER_ENDPOINTS.profile, data);
   },
 
   // Create new user
@@ -83,6 +89,12 @@ export const useProfile = () => {
     queryKey: queryKeys.profile,
     queryFn: () => userApi.getProfile(),
     staleTime: 10 * 60 * 1000, // 10 minutes
+    select: (data) => data.data, // Extract the data from the response
+    enabled: isAuthenticated(), // Only run when user is authenticated
+    retry: 3, // Retry failed requests
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch when component mounts
   });
 };
 
@@ -109,12 +121,32 @@ export const useUpdateUser = () => {
     mutationFn: userApi.updateUser,
     onSuccess: (updatedUser) => {
       // Update user in cache
-      queryClient.setQueryData(queryKeys.user(updatedUser.id), updatedUser);
+      queryClient.setQueryData(
+        queryKeys.user(updatedUser.id.toString()),
+        updatedUser
+      );
       // Invalidate users list
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
     },
     onError: (error) => {
       console.error("Failed to update user:", error);
+    },
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: userApi.updateProfile,
+    onSuccess: (updatedUser) => {
+      // Update profile in cache
+      queryClient.setQueryData(queryKeys.profile, { data: updatedUser });
+      // Invalidate profile query
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
+    },
+    onError: (error) => {
+      console.error("Failed to update profile:", error);
     },
   });
 };

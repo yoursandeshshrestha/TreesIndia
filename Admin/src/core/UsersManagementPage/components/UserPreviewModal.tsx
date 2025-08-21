@@ -27,6 +27,32 @@ interface UserPreviewModalProps {
   user: UserType | null;
 }
 
+const isBase64Image = (src: string): boolean => {
+  return src.startsWith("data:image/");
+};
+
+const renderAvatar = (src: string, alt: string, size: number = 96) => {
+  if (isBase64Image(src)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt}
+        className="h-24 w-24 rounded-full object-cover"
+      />
+    );
+  }
+  return (
+    <Image
+      className="h-24 w-24 rounded-full"
+      src={src}
+      width={size}
+      height={size}
+      alt={alt}
+    />
+  );
+};
+
 const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
   isOpen,
   onClose,
@@ -73,7 +99,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -92,13 +118,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
           <div className="flex items-start space-x-6 mb-8">
             <div className="flex-shrink-0">
               {user.avatar ? (
-                <Image
-                  className="h-24 w-24 rounded-full"
-                  src={user.avatar}
-                  width={96}
-                  height={96}
-                  alt={user.name}
-                />
+                renderAvatar(user.avatar, user.name)
               ) : (
                 <div className="h-24 w-24 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-3xl font-medium text-gray-700">

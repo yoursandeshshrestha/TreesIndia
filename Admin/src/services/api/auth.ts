@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/types/api";
+import { useProfile } from "./users";
 
 // Auth response types
 interface RequestOTPResponse {
@@ -56,7 +57,6 @@ const AUTH_ENDPOINTS = {
   verifyOTP: "/auth/verify-otp",
   logout: "/auth/logout",
   refresh: "/auth/refresh-token",
-  me: "/auth/me",
 } as const;
 
 // Cookie names (matching middleware)
@@ -175,7 +175,7 @@ export const authApi = {
 
   // Get current user
   getCurrentUser: async () => {
-    return api.get(AUTH_ENDPOINTS.me);
+    return api.get("/users/profile");
   },
 };
 
@@ -224,7 +224,22 @@ export const useVerifyOTP = () => {
     onSuccess: (data) => {
       // Set user data in cache
       if (data.data?.user) {
-        queryClient.setQueryData(queryKeys.profile, data.data.user);
+        // Transform the user data to match the expected structure
+        const transformedUser = {
+          ...data.data.user,
+          user_type: data.data.user.role, // Map role to user_type
+          wallet: {
+            balance: data.data.user.wallet_balance || 0,
+          },
+          subscription: {
+            has_active_subscription: false,
+          },
+          role_application: {
+            status: "none",
+          },
+        };
+
+        queryClient.setQueryData(queryKeys.profile, transformedUser);
         queryClient.setQueryData(queryKeys.auth, data.data);
       }
     },
@@ -242,11 +257,14 @@ export const useLogout = () => {
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
+      // Clear auth data from cookies
+      authUtils.clearAuth();
     },
     onError: (error) => {
       console.error("Logout failed:", error);
-      // Still clear cache even if API call fails
+      // Still clear cache and auth data even if API call fails
       queryClient.clear();
+      authUtils.clearAuth();
     },
   });
 };
@@ -259,7 +277,22 @@ export const useRefreshToken = () => {
     onSuccess: (data) => {
       // Update user data in cache
       if (data.data?.user) {
-        queryClient.setQueryData(queryKeys.profile, data.data.user);
+        // Transform the user data to match the expected structure
+        const transformedUser = {
+          ...data.data.user,
+          user_type: data.data.user.role, // Map role to user_type
+          wallet: {
+            balance: data.data.user.wallet_balance || 0,
+          },
+          subscription: {
+            has_active_subscription: false,
+          },
+          role_application: {
+            status: "none",
+          },
+        };
+
+        queryClient.setQueryData(queryKeys.profile, transformedUser);
         queryClient.setQueryData(queryKeys.auth, data.data);
       }
     },
@@ -273,12 +306,7 @@ export const useRefreshToken = () => {
 
 // Hook to get current user
 export const useCurrentUser = () => {
-  return useQuery({
-    queryKey: queryKeys.profile,
-    queryFn: authApi.getCurrentUser,
-    enabled: authUtils.isAuthenticated(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  return useProfile();
 };
 
 // Hook to check authentication status

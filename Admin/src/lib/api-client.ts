@@ -102,21 +102,11 @@ const createApiClient = (): AxiosInstance => {
         if (status === 401) {
           // Unauthorized - redirect to login or refresh token
           autoSignOut();
-
-          // Redirect to sign-in
-          if (typeof window !== "undefined") {
-            window.location.href = "/auth/sign-in";
-          }
         }
 
         if (status === 403) {
           // Forbidden - user doesn't have admin privileges
           autoSignOut();
-
-          // Redirect to sign-in
-          if (typeof window !== "undefined") {
-            window.location.href = "/auth/sign-in";
-          }
         }
 
         console.error("API Error:", apiError);
