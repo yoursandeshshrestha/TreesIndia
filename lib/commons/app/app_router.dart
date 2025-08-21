@@ -11,6 +11,8 @@ import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
+import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
+import 'package:trees_india/pages/location_loading_page/app/views/location_loading_page.dart';
 import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
 import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
@@ -54,13 +56,13 @@ class AppRouter {
                 state.matchedLocation == '/login' ||
                 state.matchedLocation.startsWith('/otp-verification');
 
-            final isLocationOnboardingRoute =
-                state.matchedLocation == '/location-onboarding';
+            final isLocationFlowRoute =
+                state.matchedLocation == '/location-onboarding' ||
+                    state.matchedLocation == '/manual-location' ||
+                    state.matchedLocation == '/location-loading';
 
             // If user is NOT authenticated and trying to access protected route
-            if (!isAuthenticated &&
-                !isPublicRoute &&
-                !isLocationOnboardingRoute) {
+            if (!isAuthenticated && !isPublicRoute && !isLocationFlowRoute) {
               debugPrint('🔒 User not authenticated, redirecting to /login');
               return '/login';
             }
@@ -72,7 +74,7 @@ class AppRouter {
                     ref.read(locationOnboardingServiceProvider);
                 final isFirstLogin = await locationService.isFirstLogin();
 
-                if (isFirstLogin && !isLocationOnboardingRoute) {
+                if (isFirstLogin && !isLocationFlowRoute) {
                   debugPrint(
                       '🗺️ First login detected, redirecting to location onboarding');
                   return '/location-onboarding';
@@ -81,12 +83,10 @@ class AppRouter {
                 // Allow access to location onboarding if user explicitly navigates there
                 // (removed automatic redirect to home for non-first-login users)
 
-                // If user IS authenticated and on public route, go to home (unless first login)
-                if (state.matchedLocation == '/' ||
-                    state.matchedLocation == '/welcome' ||
-                    state.matchedLocation == '/login') {
-                  debugPrint('✅ User authenticated, redirecting to /home');
-                  return '/home';
+                // If user IS authenticated and on public route, go to location loading
+                if (isPublicRoute) {
+                  debugPrint('✅ User authenticated, redirecting to location setup');
+                  return '/location-loading';
                 }
               } catch (e) {
                 debugPrint('⚠️ Error checking first login status: $e');
@@ -125,6 +125,16 @@ class AppRouter {
               path: '/location-onboarding',
               name: 'LocationOnboardingPage',
               builder: (context, state) => const LocationOnboardingPage(),
+            ),
+            GoRoute(
+              path: '/manual-location',
+              name: 'ManualLocationPage',
+              builder: (context, state) => const ManualLocationPage(),
+            ),
+            GoRoute(
+              path: '/location-loading',
+              name: 'LocationLoadingPage',
+              builder: (context, state) => const LocationLoadingPage(),
             ),
 
             // Protected Routes (Requires authentication)

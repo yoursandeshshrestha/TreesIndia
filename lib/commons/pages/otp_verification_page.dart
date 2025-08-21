@@ -114,8 +114,8 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
       if (current.state == LoginState.authenticationSuccess) {
         _showSnackBar(
             current.successMessage ?? 'OTP verified successfully!', false);
-        // Navigate to home page
-        context.go('/home');
+        // Navigate to location loading page to handle location setup
+        context.go('/location-loading');
       }
     });
 

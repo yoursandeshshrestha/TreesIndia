@@ -1,6 +1,5 @@
 // lib/pages/home_page/app/views/home_page.dart
 
-import 'package:dotlottie_loader/dotlottie_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,7 +62,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _navigateToLocationPicker() async {
-    final result = await context.push('/location-onboarding');
+    final result = await context.push('/manual-location');
     if (result == true) {
       _loadCurrentLocation();
     }
@@ -224,8 +223,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                       
-
                         Lottie.asset(
                           "assets/lottie/location_fetching.json",
                           repeat: true,

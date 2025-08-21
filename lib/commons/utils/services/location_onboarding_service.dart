@@ -1,15 +1,18 @@
 import 'dart:convert';
+import 'package:geocoding/geocoding.dart';
 import '../../data/models/location_model.dart';
 import '../../domain/entities/location_entity.dart';
 import 'centralized_local_storage_service.dart';
+import 'location_service.dart';
 
 class LocationOnboardingService {
   static const String _locationKey = 'user_selected_location';
   static const String _firstLoginKey = 'is_first_login';
 
   final CentralizedLocalStorageService _localStorage;
+  final LocationService _locationService;
 
-  LocationOnboardingService(this._localStorage);
+  LocationOnboardingService(this._localStorage, this._locationService);
 
   Future<bool> isFirstLogin() async {
     try {
@@ -50,18 +53,59 @@ class LocationOnboardingService {
   }
 
   Future<LocationEntity> getCurrentLocation() async {
-    // For demo purposes, return a mock current location
-    // In production, you would implement actual GPS location fetching here
-    await Future.delayed(const Duration(seconds: 1)); // Simulate API delay
+    try {
+      // First check and request location permission
+      final hasPermission = await _locationService.checkAndRequestPermission();
+      if (!hasPermission) {
+        throw Exception('Location permission denied');
+      }
 
-    return const LocationEntity(
-      address: 'Matigara, Siliguri, West Bengal',
-      latitude: 37.7749,
-      longitude: -122.4194,
-      city: 'Siliguri',
-      state: 'West Bengal',
-      country: 'India',
-    );
+      // Get current coordinates
+      final coordinates = await _locationService.getCurrentCoordinates();
+
+      // Get address from coordinates using geocoding
+      final placemarks = await placemarkFromCoordinates(
+        coordinates.$1,
+        coordinates.$2,
+      );
+
+      if (placemarks.isEmpty) {
+        throw Exception('Unable to get address from current location');
+      }
+
+      final placemark = placemarks.first;
+      final address = _formatDetailedAddress(placemark);
+
+      return LocationEntity(
+        address: address,
+        latitude: coordinates.$1,
+        longitude: coordinates.$2,
+        city: placemark.locality,
+        state: placemark.administrativeArea,
+        country: placemark.country ?? 'Unknown',
+      );
+    } catch (e) {
+      throw Exception('Failed to get current location: $e');
+    }
+  }
+
+  String _formatDetailedAddress(Placemark place) {
+    List<String> addressParts = [];
+
+    if (place.subLocality?.isNotEmpty ?? false) {
+      addressParts.add(place.subLocality!);
+    }
+    if (place.locality?.isNotEmpty ?? false) addressParts.add(place.locality!);
+    if (place.subAdministrativeArea?.isNotEmpty ?? false) {
+      addressParts.add(place.subAdministrativeArea!);
+    }
+    if (place.administrativeArea?.isNotEmpty ?? false) {
+      addressParts.add(place.administrativeArea!);
+    }
+
+    return addressParts.isNotEmpty
+        ? addressParts.join(', ')
+        : 'Unknown Location';
   }
 
   Future<List<LocationEntity>> searchLocations(String query) async {

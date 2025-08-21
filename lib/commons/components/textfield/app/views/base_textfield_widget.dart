@@ -1,13 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/textfield/app/viewmodels/base_textfield_viewmodel.dart';
-import 'package:trees_india/commons/components/textfield/app/viewmodels/password_textfield_multi_validation_viewmodel.dart';
 import 'package:trees_india/commons/components/textfield/app/viewmodels/password_textfield_viewmodel.dart';
 import 'package:trees_india/commons/components/textfield/domain/entities/helper_message_entity.dart';
 import 'package:trees_india/commons/components/textfield/domain/entities/textfield_entity.dart';
 import 'package:trees_india/commons/components/textfield/domain/entities/validation_message_entity.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/theming/text_styles.dart';
-import 'package:flutter/material.dart';
 
 abstract class BaseTextfieldWidget extends StatefulWidget {
   final String hintText;
@@ -137,8 +136,7 @@ abstract class BaseTextfieldWidgetState<T extends BaseTextfieldWidget>
 
   Widget buildTextField(TextFieldEntity state,
       List<ValidationMessage> validationMessages, BuildContext context) {
-    final isPasswordField = viewModel is PasswordTextFieldViewModel ||
-        viewModel is PasswordTextFieldMultiValidationViewModel;
+    final isPasswordField = viewModel is PasswordTextFieldViewModel;
 
     return SizedBox(
       width: double.infinity,
