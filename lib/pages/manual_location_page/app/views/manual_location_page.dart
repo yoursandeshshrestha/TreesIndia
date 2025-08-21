@@ -79,9 +79,9 @@ class _ManualLocationPageState extends ConsumerState<ManualLocationPage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,
+            AppSpacing.sm,
             AppSpacing.lg,
             AppSpacing.lg,
-            0,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

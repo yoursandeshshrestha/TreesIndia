@@ -97,33 +97,33 @@ class LocationService {
     }
   }
 
-  Future<bool> _handleLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  // Future<bool> _handleLocationPermission() async {
+  //   bool serviceEnabled;
+  //   LocationPermission permission;
 
-    // Test if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception(
-          'Location services are disabled. Please enable them in your device settings.');
-    }
+  //   // Test if location services are enabled
+  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //   if (!serviceEnabled) {
+  //     throw Exception(
+  //         'Location services are disabled. Please enable them in your device settings.');
+  //   }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception(
-            'Location permissions are denied. Please enable them to use this feature.');
-      }
-    }
+  //   permission = await Geolocator.checkPermission();
+  //   if (permission == LocationPermission.denied) {
+  //     permission = await Geolocator.requestPermission();
+  //     if (permission == LocationPermission.denied) {
+  //       throw Exception(
+  //           'Location permissions are denied. Please enable them to use this feature.');
+  //     }
+  //   }
 
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-          'Location permissions are permanently denied. Please enable them in your device settings.');
-    }
+  //   if (permission == LocationPermission.deniedForever) {
+  //     throw Exception(
+  //         'Location permissions are permanently denied. Please enable them in your device settings.');
+  //   }
 
-    return true;
-  }
+  //   return true;
+  // }
 
   // Get location with coordinates for geo tagging
   Future<String> getGeoTaggingLocation() async {

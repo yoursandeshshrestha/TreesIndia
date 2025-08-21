@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_notifier.dart';
 import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
-import 'package:trees_india/commons/presenters/providers/auth_usecase_providers.dart';
+import 'package:trees_india/commons/presenters/providers/login_usecase_providers.dart';
 import 'package:trees_india/commons/presenters/providers/local_storage_provider.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';

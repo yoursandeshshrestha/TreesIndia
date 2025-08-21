@@ -77,65 +77,64 @@ class _HomePageState extends ConsumerState<HomePage> {
       currentIndex: 0,
       child: Scaffold(
         backgroundColor: AppColors.brandNeutral50,
-        appBar: AppBar(
-          title: GestureDetector(
-            onTap: _navigateToLocationPicker,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_currentLocation != null) ...[
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 20,
-                        color: AppColors.brandPrimary600,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: B1Bold(
-                          text: _getDisplayLocation(_currentLocation!),
-                          color: AppColors.brandNeutral800,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 18,
-                        color: AppColors.brandNeutral600,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: B3Regular(
-                          text:
-                              _getDisplayLocationWithCountry(_currentLocation!),
-                          color: AppColors.brandNeutral600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: const [
-            SizedBox(width: AppSpacing.md),
-          ],
-        ),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Welcome Section
+                GestureDetector(
+                  onTap: _navigateToLocationPicker,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_currentLocation != null) ...[
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 20,
+                              color: AppColors.brandPrimary600,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: B1Bold(
+                                text: _getDisplayLocation(_currentLocation!),
+                                color: AppColors.brandNeutral800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: B3Regular(
+                                text: _getDisplayLocationWithCountry(
+                                    _currentLocation!),
+                                color: AppColors.brandNeutral600,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 18,
+                              color: AppColors.brandNeutral600,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -223,23 +222,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Lottie.asset(
-                          "assets/lottie/location_fetching.json",
-                          repeat: true,
-                          width: 100,
-                          height: 100,
-                        ),
-                        Lottie.asset(
-                          "assets/lottie/location_found.json",
-                          repeat: true,
-                          width: 100,
-                          height: 100,
-                        ),
-                        // const Icon(
-                        //   Icons.home,
-                        //   size: 80,
-                        //   color: AppColors.stateGreen600,
-                        // ),
+                       
                         const SizedBox(height: AppSpacing.lg),
                         H3Bold(
                           text: 'Home Page',

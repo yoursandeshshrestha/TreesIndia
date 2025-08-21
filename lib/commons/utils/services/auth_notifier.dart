@@ -6,7 +6,7 @@ import 'package:trees_india/commons/domain/entities/user_entity.dart';
 import 'package:trees_india/commons/domain/entities/refresh_token_request_entity.dart';
 import 'package:trees_india/commons/domain/usecases/get_user_profile_usecase.dart';
 import 'package:trees_india/commons/domain/usecases/refresh_token_usecase.dart';
-import 'package:trees_india/commons/presenters/providers/auth_usecase_providers.dart';
+import 'package:trees_india/commons/presenters/providers/login_usecase_providers.dart';
 import 'package:trees_india/commons/presenters/providers/local_storage_provider.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
 import 'package:trees_india/commons/utils/services/centralized_local_storage_service.dart';

@@ -9,11 +9,11 @@ import 'package:trees_india/commons/utils/services/dio_client.dart';
 import 'package:trees_india/pages/login_page/data/models/login_request_model.dart';
 import 'package:trees_india/pages/login_page/data/models/login_response_model.dart';
 
-class AuthDatasource {
+class LoginDatasource {
   final DioClient dioClient;
   final ErrorHandler errorHandler;
 
-  AuthDatasource({
+  LoginDatasource({
     required this.dioClient,
     required this.errorHandler,
   });
