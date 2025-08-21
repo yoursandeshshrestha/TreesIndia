@@ -14,6 +14,14 @@ import 'package:trees_india/pages/location_loading_page/app/views/location_loadi
 import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
 import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_plans/app/views/my_plans_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/app/views/wallet_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/plus_membership/app/views/plus_membership_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_rating/app/views/my_rating_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addresses/app/views/manage_addresses_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payment_methods/app/views/manage_payment_methods_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -171,6 +179,46 @@ class AppRouter {
                   path: '/edit-profile',
                   name: 'EditProfilePage',
                   builder: (context, state) => const EditProfilePage(),
+                ),
+                GoRoute(
+                  path: '/my-plans',
+                  name: 'MyPlansPage',
+                  builder: (context, state) => const MyPlansPage(),
+                ),
+                GoRoute(
+                  path: '/wallet',
+                  name: 'WalletPage',
+                  builder: (context, state) => const WalletPage(),
+                ),
+                GoRoute(
+                  path: '/plus-membership',
+                  name: 'PlusMembershipPage',
+                  builder: (context, state) => const PlusMembershipPage(),
+                ),
+                GoRoute(
+                  path: '/my-rating',
+                  name: 'MyRatingPage',
+                  builder: (context, state) => const MyRatingPage(),
+                ),
+                GoRoute(
+                  path: '/manage-addresses',
+                  name: 'ManageAddressesPage',
+                  builder: (context, state) => const ManageAddressesPage(),
+                ),
+                GoRoute(
+                  path: '/manage-payment-methods',
+                  name: 'ManagePaymentMethodsPage',
+                  builder: (context, state) => const ManagePaymentMethodsPage(),
+                ),
+                GoRoute(
+                  path: '/settings',
+                  name: 'SettingsPage',
+                  builder: (context, state) => const SettingsPage(),
+                ),
+                GoRoute(
+                  path: '/about-trees-india',
+                  name: 'AboutTreesIndiaPage',
+                  builder: (context, state) => const AboutTreesIndiaPage(),
                 ),
               ],
             ),

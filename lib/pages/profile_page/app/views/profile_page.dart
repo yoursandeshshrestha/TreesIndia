@@ -234,19 +234,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        icon: Icons.devices,
-                        label: 'Native devices',
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Native devices coming soon!')),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
+                    // Expanded(
+                    //   child: _buildQuickActionCard(
+                    //     icon: Icons.devices,
+                    //     label: 'Native devices',
+                    //     onTap: () {
+                    //       ScaffoldMessenger.of(context).showSnackBar(
+                    //         const SnackBar(
+                    //             content: Text('Native devices coming soon!')),
+                    //       );
+                    //     },
+                    //   ),
+                    // ),
+                    // const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: _buildQuickActionCard(
                         icon: Icons.headset_mic,
@@ -269,76 +269,56 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   icon: Icons.description,
                   label: 'My Plans',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('My Plans coming soon!')),
-                    );
+                    context.push('/my-plans');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.account_balance_wallet,
                   label: 'Wallet',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Wallet coming soon!')),
-                    );
+                    context.push('/wallet');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.star_border,
                   label: 'Plus membership',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Plus membership coming soon!')),
-                    );
+                    context.push('/plus-membership');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.star_outline,
                   label: 'My rating',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('My rating coming soon!')),
-                    );
+                    context.push('/my-rating');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.location_on,
                   label: 'Manage addresses',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Manage addresses coming soon!')),
-                    );
+                    context.push('/manage-addresses');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.credit_card,
                   label: 'Manage payment methods',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Manage payment methods coming soon!')),
-                    );
+                    context.push('/manage-payment-methods');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.settings,
                   label: 'Settings',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Settings coming soon!')),
-                    );
+                    context.push('/settings');
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.info_outline,
                   label: 'About TreesIndia',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('About TreesIndia coming soon!')),
-                    );
+                    context.push('/about-trees-india');
                   },
                 ),
 
