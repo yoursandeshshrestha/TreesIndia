@@ -84,7 +84,7 @@ type AppConfig struct {
 func LoadConfig() *AppConfig {
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		fmt.Printf("Warning: Could not load .env file: %v\n", err)
+		// .env file not found, continue with environment variables
 	}
 	
 	
@@ -177,7 +177,6 @@ func (ac *AppConfig) GetDatabaseURL() string {
 	// Otherwise, construct from individual components
 	constructedURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		ac.DatabaseHost, ac.DatabasePort, ac.DatabaseUser, ac.DatabasePassword, ac.DatabaseName, ac.DatabaseSSLMode)
-	fmt.Printf("DEBUG: Constructed URL: '%s'\n", constructedURL)
 	return constructedURL
 }
 

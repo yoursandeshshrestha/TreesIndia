@@ -140,32 +140,21 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		var form *multipart.Form
 		var err error
 		
-		// Try MultipartForm first for better debugging
+		// Try MultipartForm first
 		form, err = c.MultipartForm()
 		if err == nil {
-			// Debug: Log all available form files
-			logrus.Info("Available form files:")
-			for key, files := range form.File {
-				logrus.Info("File key:", key, "Files:", len(files))
-				for i, f := range files {
-					logrus.Info("  File", i, ":", f.Filename, "Size:", f.Size)
-				}
-			}
 			
 					// Try to get the image file from form
 		if files, exists := form.File["image_file"]; exists && len(files) > 0 {
 			file = files[0]
-			logrus.Info("Image file found via MultipartForm:", file.Filename, "Size:", file.Size)
 		} else if files, exists := form.File["image"]; exists && len(files) > 0 {
 			file = files[0]
-			logrus.Info("Image file found with name 'image':", file.Filename, "Size:", file.Size)
 		} else {
 			// Try alternative field names
 			alternativeNames := []string{"file", "photo", "picture"}
 			for _, name := range alternativeNames {
 				if files, exists := form.File[name]; exists && len(files) > 0 {
 					file = files[0]
-					logrus.Info("Image file found with alternative name '", name, "':", file.Filename, "Size:", file.Size)
 					break
 				}
 			}
@@ -174,29 +163,24 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		
 		// If MultipartForm failed or no file found, try FormFile directly
 		if file == nil {
-			logrus.Info("Trying FormFile approach...")
 			formFile, formErr := c.FormFile("image")
 			if formErr != nil {
-				logrus.Error("FormFile error for 'image':", formErr)
 				// Try alternative field names with FormFile
 				alternativeNames := []string{"image_file", "file", "photo", "picture"}
 				for _, name := range alternativeNames {
 					formFile, formErr = c.FormFile(name)
 					if formErr == nil {
-						logrus.Info("Image file found with FormFile alternative name '", name, "':", formFile.Filename, "Size:", formFile.Size)
 						file = formFile
 						break
 					}
 				}
 			} else {
-				logrus.Info("Image file found via FormFile:", formFile.Filename, "Size:", formFile.Size)
 				file = formFile
 			}
 		}
 		
 		// If still no file found, return error
 		if file == nil {
-			logrus.Error("No image file found in form data")
 			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing image", "Image file is required. Please ensure the file is properly attached with field name 'image'"))
 			return
 		}
@@ -214,7 +198,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			return
 		}
 		
-		logrus.Info("Image file found:", file.Filename, "Size:", file.Size)
+
 		
 		// Now get the form fields from the parsed form
 		name := form.Value["name"]
@@ -279,7 +263,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			return
 		}
 		
-		logrus.Info("Image uploaded to Cloudinary:", imageURL)
+
 		
 		// Set the request struct manually
 		req = CreateSubcategoryRequest{
@@ -294,8 +278,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		return
 	}
 
-	logrus.Info("Parsed request:", req)
-	logrus.Info("Image URL:", req.Image)
+
 
 	// Convert ParentID from interface{} to uint
 	var parentID uint
@@ -346,7 +329,6 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 
 	// Generate slug from name using global slug utility
 	slug := utils.GenerateSlug(req.Name)
-	logrus.Info("Generated slug:", slug)
 
 	// Check if slug already exists
 	var existingSubcategory models.Subcategory

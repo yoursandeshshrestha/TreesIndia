@@ -25,7 +25,7 @@ func NewBookingController() *BookingController {
 	}
 }
 
-// CreateBooking creates a new booking
+// CreateBooking creates a new booking (handles all booking types)
 func (bc *BookingController) CreateBooking(c *gin.Context) {
 	userID := bc.GetUserID(c)
 	if userID == 0 {
@@ -39,33 +39,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	booking, err := bc.bookingService.CreateBooking(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create booking", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Booking created successfully",
-		"booking": booking,
-	})
-}
-
-// CreatePaymentOrder creates a Razorpay payment order for a booking (without creating the booking yet)
-func (bc *BookingController) CreatePaymentOrder(c *gin.Context) {
-	userID := bc.GetUserID(c)
-	if userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
-	var req models.CreateBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
-		return
-	}
-
-	// Validate service exists and get its price
+	// Get service details
 	service, err := bc.bookingService.GetServiceByID(req.ServiceID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
@@ -77,158 +51,53 @@ func (bc *BookingController) CreatePaymentOrder(c *gin.Context) {
 		return
 	}
 
-	// Create payment record first
-	paymentService := services.NewPaymentService()
-	paymentReq := &models.CreatePaymentRequest{
-		UserID:             userID,
-		Amount:             *service.Price,
-		Currency:           "INR",
-		Type:               models.PaymentTypeBooking,
-		Method:             "razorpay",
-		RelatedEntityType:  "service",
-		RelatedEntityID:    service.ID,
-		Description:        fmt.Sprintf("Payment for %s service", service.Name),
-		Notes:              "Booking payment order",
-	}
-
-	payment, err := paymentService.CreatePayment(paymentReq)
+	// Create booking with payment order
+	booking, paymentOrder, err := bc.bookingService.CreateBooking(userID, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create payment record", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create booking", "details": err.Error()})
 		return
 	}
 
-	// Create Razorpay order
-	razorpayService := services.NewRazorpayService()
-	razorpayOrder, err := razorpayService.CreateOrder(*service.Price, payment.PaymentReference, "Booking payment")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create payment order", "details": err.Error()})
-		return
-	}
+	// Debug: Print booking details
+	fmt.Printf("Created booking - ID: %d, Reference: %s, Status: %s\n", booking.ID, booking.BookingReference, booking.Status)
 
-	// Update payment with Razorpay order ID
-	orderID := razorpayOrder["id"].(string)
-	payment.RazorpayOrderID = &orderID
-	err = paymentService.UpdatePayment(payment)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update payment", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Payment order created successfully",
-		"payment_order": razorpayOrder,
-		"payment_id": payment.ID,
-		"payment_reference": payment.PaymentReference,
-		"service": service,
-	})
-}
-
-// CreateBookingWithPayment creates a booking with Razorpay payment for fixed price services
-func (bc *BookingController) CreateBookingWithPayment(c *gin.Context) {
-	userID := bc.GetUserID(c)
-	if userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
-	var req models.CreateBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
-		return
-	}
-
-	booking, razorpayOrder, err := bc.bookingService.CreateBookingWithPayment(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create booking with payment", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Booking created with payment order",
+	// Prepare response based on whether payment is required
+	response := gin.H{
+		"message": "Booking created successfully",
 		"booking": booking,
-		"payment_order": razorpayOrder,
-	})
-}
-
-// CreateInquiryBooking creates a new inquiry-based booking (simplified flow)
-func (bc *BookingController) CreateInquiryBooking(c *gin.Context) {
-	userID := bc.GetUserID(c)
-	if userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
 	}
 
-	var req models.CreateInquiryBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
-		return
-	}
-
-	booking, razorpayOrder, err := bc.bookingService.CreateInquiryBooking(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create inquiry booking", "details": err.Error()})
-		return
-	}
-
-	// Debug logging
-	if booking != nil {
-		fmt.Printf("Inquiry booking created - Booking ID: %d, Razorpay Order: %v\n", booking.ID, razorpayOrder != nil)
+	if paymentOrder != nil {
+		response["payment_order"] = paymentOrder
+		response["payment_required"] = true
+		
+		// Check booking type and provide appropriate messaging
+		if booking.BookingType == models.BookingTypeRegular {
+			response["message"] = "Time slot reserved temporarily. Complete payment within 7 minutes to confirm your booking."
+			response["payment_type"] = "booking_payment"
+			response["hold_expires_at"] = booking.HoldExpiresAt
+		} else if booking.BookingType == models.BookingTypeInquiry {
+			response["message"] = "Inquiry booking created. Payment required for inquiry fee."
+			response["payment_type"] = "inquiry_fee"
+		}
 	} else {
-		fmt.Printf("Inquiry booking - No booking created yet, Razorpay Order: %v\n", razorpayOrder != nil)
+		response["payment_required"] = false
+		if booking.BookingType == models.BookingTypeInquiry {
+			response["message"] = "Inquiry booking created successfully."
+		}
 	}
 
-	// Check if payment is required
-	if razorpayOrder != nil {
-		// Payment required - return payment order info
-		fmt.Printf("Payment required - returning payment order\n")
-		c.JSON(http.StatusCreated, gin.H{
-			"message": "Payment required for inquiry booking",
-			"payment_order": razorpayOrder,
-			"payment_required": true,
-		})
-	} else {
-		// No payment required
-		fmt.Printf("No payment required - returning success\n")
-		c.JSON(http.StatusCreated, gin.H{
-			"message": "Inquiry booking created successfully",
-			"booking": booking,
-			"payment_required": false,
-		})
-	}
+	c.JSON(http.StatusCreated, response)
 }
 
-// VerifyInquiryPaymentAndCreateBooking verifies payment and creates the inquiry booking
-func (bc *BookingController) VerifyInquiryPaymentAndCreateBooking(c *gin.Context) {
-	userID := bc.GetUserID(c)
-	if userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
 
-	var req models.VerifyInquiryPaymentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
-		return
-	}
-
-	booking, err := bc.bookingService.VerifyInquiryPaymentAndCreateBooking(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to verify payment and create inquiry booking", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Payment verified and inquiry booking created successfully",
-		"booking": booking,
-	})
-}
 
 // GetBookingConfig gets booking-related configuration (public endpoint)
 func (bc *BookingController) GetBookingConfig(c *gin.Context) {
 	adminConfigRepo := repositories.NewAdminConfigRepository()
 	
 	// Get specific configs needed for booking
-	configKeys := []string{"working_hours_start", "working_hours_end", "booking_advance_days", "booking_buffer_time_minutes"}
+	configKeys := []string{"working_hours_start", "working_hours_end", "booking_advance_days", "booking_buffer_time_minutes", "booking_hold_time_minutes"}
 	
 	configs := make(map[string]string)
 	for _, key := range configKeys {
@@ -281,33 +150,9 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 	})
 }
 
-// VerifyPaymentAndCreateBooking verifies payment and creates the booking
-func (bc *BookingController) VerifyPaymentAndCreateBooking(c *gin.Context) {
-	userID := bc.GetUserID(c)
-	if userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
 
-	var req models.VerifyPaymentAndCreateBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
-		return
-	}
 
-	booking, err := bc.bookingService.VerifyPaymentAndCreateBooking(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to verify payment and create booking", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Payment verified and booking created successfully",
-		"booking": booking,
-	})
-}
-
-// VerifyPayment verifies payment and confirms booking
+// VerifyPayment verifies payment for a specific booking
 func (bc *BookingController) VerifyPayment(c *gin.Context) {
 	userID := bc.GetUserID(c)
 	if userID == 0 {
@@ -315,21 +160,43 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 		return
 	}
 
+	// Get booking ID from URL parameter
+	bookingIDStr := c.Param("id")
+	bookingID, err := strconv.ParseUint(bookingIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid booking ID"})
+		return
+	}
+
+	fmt.Printf("Verifying payment for booking ID: %d\n", bookingID)
+
 	var req models.VerifyPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("Request binding error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
 		return
 	}
 
+	// Add booking ID to the request
+	req.BookingID = uint(bookingID)
+
+	fmt.Printf("Payment verification request: %+v\n", req)
+
 	booking, err := bc.bookingService.VerifyPayment(&req)
 	if err != nil {
+		fmt.Printf("Payment verification error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to verify payment", "details": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment verified and booking confirmed",
+		"message": "Payment verified and booking confirmed successfully",
 		"booking": booking,
+		"payment": gin.H{
+			"payment_id": req.RazorpayPaymentID,
+			"order_id": req.RazorpayOrderID,
+			"status": "completed",
+		},
 	})
 }
 

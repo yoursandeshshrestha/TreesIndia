@@ -12,13 +12,13 @@ import (
 
 // WalletController handles HTTP requests for wallet operations
 type WalletController struct {
-	service *services.WalletService
+	service *services.UnifiedWalletService
 }
 
 // NewWalletController creates a new wallet controller
 func NewWalletController() *WalletController {
 	return &WalletController{
-		service: services.NewWalletService(),
+		service: services.NewUnifiedWalletService(),
 	}
 }
 
@@ -71,13 +71,19 @@ func (c *WalletController) RechargeWallet(ctx *gin.Context) {
 	}
 
 	// Create recharge transaction
-	transaction, err := c.service.RechargeWallet(userID, req.Amount, req.PaymentMethod, req.ReferenceID)
+	payment, razorpayOrder, err := c.service.RechargeWallet(userID, req.Amount, req.PaymentMethod)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to recharge wallet", err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, views.CreateSuccessResponse("Wallet recharge initiated successfully", transaction))
+	response := gin.H{
+		"payment": payment,
+		"payment_order": razorpayOrder,
+		"message": "Wallet recharge initiated successfully. Complete payment to add funds to your wallet.",
+	}
+
+	ctx.JSON(http.StatusCreated, views.CreateSuccessResponse("Wallet recharge initiated successfully", response))
 }
 
 
@@ -117,26 +123,50 @@ func (c *WalletController) CompleteRecharge(ctx *gin.Context) {
 		return
 	}
 
-	// Verify payment signature
-	razorpayService := services.NewRazorpayService()
-	isValid, err := razorpayService.VerifyPayment(req.RazorpayPaymentID, req.RazorpayOrderID, req.RazorpaySignature)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to verify payment", err.Error()))
-		return
-	}
-
-	if !isValid {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid payment signature", "Payment signature verification failed"))
-		return
-	}
-
-	// Complete the recharge
-	if err := c.service.CompleteRecharge(uint(transactionID)); err != nil {
+	// Complete the recharge (payment verification happens in the service)
+	if err := c.service.CompleteWalletRecharge(uint(transactionID), req.RazorpayPaymentID, req.RazorpaySignature); err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to complete recharge", err.Error()))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Wallet recharge completed successfully", nil))
+}
+
+// CancelRecharge allows users to cancel a pending wallet recharge
+// @Summary Cancel wallet recharge
+// @Description Cancel a pending wallet recharge payment
+// @Tags Wallet
+// @Accept json
+// @Produce json
+// @Param id path int true "Payment ID"
+// @Success 200 {object} views.Response
+// @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response
+// @Failure 404 {object} views.Response
+// @Failure 500 {object} views.Response
+// @Router /wallet/recharge/{id}/cancel [post]
+func (c *WalletController) CancelRecharge(ctx *gin.Context) {
+	paymentIDStr := ctx.Param("id")
+	paymentID, err := strconv.ParseUint(paymentIDStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid payment ID", "Payment ID must be a valid integer"))
+		return
+	}
+
+	// Get user ID from context
+	userID := ctx.GetUint("user_id")
+	if userID == 0 {
+		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	// Cancel the recharge
+	if err := c.service.CancelWalletRecharge(uint(paymentID), userID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to cancel recharge", err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Wallet recharge cancelled successfully", nil))
 }
 
 
@@ -173,7 +203,7 @@ func (c *WalletController) GetUserTransactions(ctx *gin.Context) {
 	}
 
 	// Get transactions
-	transactions, total, err := c.service.GetUserTransactions(userID, page, limit)
+	transactions, total, err := c.service.GetUserWalletTransactions(userID, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get transactions", err.Error()))
 		return
@@ -214,10 +244,22 @@ func (c *WalletController) GetUserTransactionsByType(ctx *gin.Context) {
 		return
 	}
 
-	// Get transaction type
-	transactionType := models.TransactionType(ctx.Param("type"))
+	// Get transaction type and convert to payment type
+	transactionType := ctx.Param("type")
 	if transactionType == "" {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Transaction type is required", "Transaction type parameter cannot be empty"))
+		return
+	}
+
+	// Convert transaction type to payment type
+	var paymentType models.PaymentType
+	switch transactionType {
+	case "recharge":
+		paymentType = models.PaymentTypeWalletRecharge
+	case "debit":
+		paymentType = models.PaymentTypeWalletDebit
+	default:
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid transaction type", "Transaction type must be 'recharge' or 'debit'"))
 		return
 	}
 
@@ -233,7 +275,7 @@ func (c *WalletController) GetUserTransactionsByType(ctx *gin.Context) {
 	}
 
 	// Get transactions
-	transactions, total, err := c.service.GetUserTransactionsByType(userID, transactionType, page, limit)
+	transactions, total, err := c.service.GetUserWalletTransactionsByType(userID, paymentType, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get transactions", err.Error()))
 		return

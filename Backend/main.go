@@ -12,6 +12,7 @@ import (
 	"treesindia/middleware"
 	"treesindia/routes"
 	"treesindia/seed"
+	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -49,8 +50,7 @@ func initDatabase(appConfig *config.AppConfig) {
 	var err error
 	dsn := appConfig.GetDatabaseURL()
 	
-	// Debug: Print the database URL (remove sensitive info)
-	logrus.Infof("Connecting to database with URL: %s", maskPassword(dsn))
+	// Connect to database
 	
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -186,6 +186,10 @@ func main() {
 
 	// Handle method not allowed
 	r.NoMethod(middleware.MethodNotAllowedHandler())
+
+	// Start cleanup service
+	cleanupService := services.NewCleanupService()
+	cleanupService.StartPeriodicCleanup()
 
 	// Start server
 	log.Printf("Server starting on %s:%s", appConfig.ServerHost, appConfig.ServerPort)

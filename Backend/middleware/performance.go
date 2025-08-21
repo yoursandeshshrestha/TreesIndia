@@ -32,7 +32,7 @@ func PerformanceMiddleware() gin.HandlerFunc {
 		case duration > 1*time.Second:
 			logrus.Infof("MODERATE REQUEST: %s %s - %d - %v", method, path, status, duration)
 		default:
-			logrus.Debugf("FAST REQUEST: %s %s - %d - %v", method, path, status, duration)
+			// Fast requests don't need logging
 		}
 		
 		// Add performance headers
