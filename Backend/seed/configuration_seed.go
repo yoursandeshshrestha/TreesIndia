@@ -324,6 +324,22 @@ func (sm *SeedManager) SeedAdminConfigurations() error {
 			Description: "Buffer time between bookings in minutes",
 			IsActive:    true,
 		},
+		{
+			Key:         "booking_hold_time_minutes",
+			Value:       "7",
+			Type:        "int",
+			Category:    "booking",
+			Description: "Temporary hold time for booking slots in minutes (before payment)",
+			IsActive:    true,
+		},
+		{
+			Key:         "wallet_payment_timeout_minutes",
+			Value:       "30",
+			Type:        "int",
+			Category:    "wallet",
+			Description: "Time in minutes before a pending wallet payment is considered abandoned",
+			IsActive:    true,
+		},
 	}
 
 	for _, config := range configs {

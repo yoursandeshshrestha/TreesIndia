@@ -31,6 +31,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupAdminRoutes(v1)
 		SetupAdminConfigRoutes(v1)
 		SetupAdminInquiryRoutes(v1)
+		SetupAddressRoutes(v1)
 		SetupCategoryRoutes(v1)
 		SetupSubcategoryRoutes(v1)
 		SetupServiceRoutes(v1)

@@ -22,26 +22,11 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 	userBookings := router.Group("/bookings")
 	userBookings.Use(middleware.AuthMiddleware())
 	{
-		// POST /api/v1/bookings - Create new booking
+		// POST /api/v1/bookings - Create new booking (handles all booking types)
 		userBookings.POST("", bookingController.CreateBooking)
 		
-		// POST /api/v1/bookings/inquiry - Create inquiry-based booking (simplified)
-		userBookings.POST("/inquiry", bookingController.CreateInquiryBooking)
-		
-		// POST /api/v1/bookings/verify-inquiry-payment - Verify payment and create inquiry booking
-		userBookings.POST("/verify-inquiry-payment", bookingController.VerifyInquiryPaymentAndCreateBooking)
-		
-		// POST /api/v1/bookings/payment-order - Create payment order (without booking)
-		userBookings.POST("/payment-order", bookingController.CreatePaymentOrder)
-		
-		// POST /api/v1/bookings/with-payment - Create booking with payment
-		userBookings.POST("/with-payment", bookingController.CreateBookingWithPayment)
-		
-		// POST /api/v1/bookings/verify-payment - Verify payment
-		userBookings.POST("/verify-payment", bookingController.VerifyPayment)
-		
-		// POST /api/v1/bookings/verify-payment-and-create - Verify payment and create booking
-		userBookings.POST("/verify-payment-and-create", bookingController.VerifyPaymentAndCreateBooking)
+		// POST /api/v1/bookings/:id/verify-payment - Verify payment for booking
+		userBookings.POST("/:id/verify-payment", bookingController.VerifyPayment)
 		
 		// GET /api/v1/bookings - Get user's bookings
 		userBookings.GET("", bookingController.GetUserBookings)

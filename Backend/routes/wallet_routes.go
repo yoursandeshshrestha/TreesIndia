@@ -19,6 +19,7 @@ func SetupWalletRoutes(group *gin.RouterGroup) {
 		// Wallet recharge
 		walletGroup.POST("/recharge", walletController.RechargeWallet)
 		walletGroup.POST("/recharge/:id/complete", walletController.CompleteRecharge)
+	walletGroup.POST("/recharge/:id/cancel", walletController.CancelRecharge)
 
 
 

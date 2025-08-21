@@ -9,17 +9,15 @@ import (
 
 // AddressService handles address business logic
 type AddressService struct {
-	addressRepo  *repositories.AddressRepository
-	locationRepo *repositories.LocationRepository
-	userRepo     *repositories.UserRepository
+	addressRepo *repositories.AddressRepository
+	userRepo    *repositories.UserRepository
 }
 
 // NewAddressService creates a new address service
 func NewAddressService() *AddressService {
 	return &AddressService{
-		addressRepo:  repositories.NewAddressRepository(),
-		locationRepo: repositories.NewLocationRepository(),
-		userRepo:     repositories.NewUserRepository(),
+		addressRepo: repositories.NewAddressRepository(),
+		userRepo:    repositories.NewUserRepository(),
 	}
 }
 
@@ -29,12 +27,6 @@ func (as *AddressService) CreateAddress(userID uint, req *models.CreateAddressRe
 	var user models.User
 	if err := as.userRepo.FindByID(&user, userID); err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
-	// Get user's location (required for address)
-	var location models.Location
-	if err := as.locationRepo.FindByUserID(&location, userID); err != nil {
-		return nil, fmt.Errorf("user location not found: %w", err)
 	}
 
 	// Check if this is the user's first address
@@ -59,7 +51,6 @@ func (as *AddressService) CreateAddress(userID uint, req *models.CreateAddressRe
 	// Create address
 	address := &models.Address{
 		UserID:      userID,
-		LocationID:  location.ID,
 		Name:        req.Name,
 		Address:     req.Address,
 		PostalCode:  req.PostalCode,
@@ -111,15 +102,38 @@ func (as *AddressService) GetDefaultAddressByUserID(userID uint) (*models.Addres
 }
 
 // SetAddressAsDefault sets an address as default for a user
-func (as *AddressService) SetAddressAsDefault(addressID uint, userID uint) error {
-	return as.addressRepo.SetAddressAsDefault(addressID, userID)
+func (as *AddressService) SetAddressAsDefault(addressID uint, userID uint) (*models.Address, error) {
+	var address models.Address
+	if err := as.addressRepo.FindByID(&address, addressID); err != nil {
+		return nil, fmt.Errorf("address not found")
+	}
+
+	// Check if address belongs to the user
+	if address.UserID != userID {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	if err := as.addressRepo.SetAddressAsDefault(addressID, userID); err != nil {
+		return nil, fmt.Errorf("failed to set default address: %w", err)
+	}
+
+	// Update the address object to reflect the change
+	address.IsDefault = true
+	address.UpdatedAt = time.Now()
+
+	return &address, nil
 }
 
 // UpdateAddress updates an address
-func (as *AddressService) UpdateAddress(id uint, req *models.UpdateAddressRequest) (*models.Address, error) {
+func (as *AddressService) UpdateAddress(id uint, userID uint, req *models.UpdateAddressRequest) (*models.Address, error) {
 	var address models.Address
 	if err := as.addressRepo.FindByID(&address, id); err != nil {
-		return nil, fmt.Errorf("address not found: %w", err)
+		return nil, fmt.Errorf("address not found")
+	}
+
+	// Check if address belongs to the user
+	if address.UserID != userID {
+		return nil, fmt.Errorf("access denied")
 	}
 
 	// If this is set as default, unset other default addresses for this user
@@ -162,13 +176,26 @@ func (as *AddressService) UpdateAddress(id uint, req *models.UpdateAddressReques
 }
 
 // DeleteAddress deletes an address
-func (as *AddressService) DeleteAddress(id uint) error {
+func (as *AddressService) DeleteAddress(id uint, userID uint) error {
 	var address models.Address
 	if err := as.addressRepo.FindByID(&address, id); err != nil {
-		return fmt.Errorf("address not found: %w", err)
+		return fmt.Errorf("address not found")
 	}
 
-	userID := address.UserID
+	// Check if address belongs to the user
+	if address.UserID != userID {
+		return fmt.Errorf("access denied")
+	}
+
+	// Check if this is the last address
+	count, err := as.addressRepo.CountAddressesByUserID(userID)
+	if err != nil {
+		return fmt.Errorf("failed to count addresses: %w", err)
+	}
+	if count <= 1 {
+		return fmt.Errorf("cannot delete last address")
+	}
+
 	wasDefault := address.IsDefault
 
 	if err := as.addressRepo.DeleteAddress(&address); err != nil {
@@ -180,7 +207,6 @@ func (as *AddressService) DeleteAddress(id uint) error {
 		var remainingAddresses []models.Address
 		if err := as.addressRepo.FindByUserID(&remainingAddresses, userID); err != nil {
 			// Log the error but don't fail the deletion
-			fmt.Printf("Warning: Failed to check remaining addresses after deleting default: %v\n", err)
 			return nil
 		}
 
@@ -188,7 +214,6 @@ func (as *AddressService) DeleteAddress(id uint) error {
 		if len(remainingAddresses) > 0 {
 			if err := as.addressRepo.SetAddressAsDefault(remainingAddresses[0].ID, userID); err != nil {
 				// Log the error but don't fail the deletion
-				fmt.Printf("Warning: Failed to set new default address: %v\n", err)
 			}
 		}
 	}
