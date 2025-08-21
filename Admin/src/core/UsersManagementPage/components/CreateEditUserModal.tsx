@@ -6,8 +6,6 @@ import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdo
 import { User } from "@/types/user";
 import {
   GENDER_OPTIONS,
-  USER_TYPE_OPTIONS,
-  ROLE_APPLICATION_OPTIONS,
   validateUserForm,
   getDefaultUserData,
 } from "@/utils/userUtils";
@@ -85,10 +83,10 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99] p-4 overflow-hidden">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full flex flex-col max-h-[95vh] overflow-visible">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 py-4 border-b rounded-t-lg border-gray-200 bg-white sticky top-0 z-10">
+        <div className="flex items-center justify-between p-6 py-4 border-b rounded-t-lg border-gray-200 bg-white sticky top-0 z-floating">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}

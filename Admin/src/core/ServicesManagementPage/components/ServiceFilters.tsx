@@ -104,13 +104,13 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
           leftIcon={<Search size={16} />}
         />
         {isSearching ? (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 z-floating">
             <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
           </div>
         ) : search ? (
           <button
             onClick={onClearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-floating text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X size={16} />
           </button>
