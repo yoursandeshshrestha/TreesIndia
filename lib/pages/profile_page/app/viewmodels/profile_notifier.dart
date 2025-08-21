@@ -1,29 +1,13 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/utils/services/notification_service.dart';
-import '../../app/providers/profile_providers.dart';
-import '../../domain/entities/profile_update_entity.dart';
+
 import '../../domain/entities/avatar_upload_entity.dart';
+import '../../domain/entities/profile_update_entity.dart';
+import '../../domain/usecases/get_profile_usecase.dart';
 import '../../domain/usecases/update_profile_usecase.dart';
 import '../../domain/usecases/upload_avatar_usecase.dart';
-import '../../domain/usecases/get_profile_usecase.dart';
 import 'profile_state.dart';
-
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
-  final updateProfileUsecase = ref.read(updateProfileUsecaseProvider);
-  final uploadAvatarUsecase = ref.read(uploadAvatarUsecaseProvider);
-  final getProfileUsecase = ref.read(getProfileUsecaseProvider);
-  final notificationService = ref.read(notificationServiceProvider);
-  return ProfileNotifier(
-    updateProfileUsecase,
-    uploadAvatarUsecase,
-    getProfileUsecase,
-    notificationService,
-  );
-});
 
 class ProfileNotifier extends StateNotifier<ProfileState> {
   final UpdateProfileUsecase _updateProfileUsecase;

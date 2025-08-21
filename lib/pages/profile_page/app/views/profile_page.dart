@@ -9,7 +9,8 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -134,8 +135,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
+    final userProfileState = ref.watch(userProfileProvider);
+    final user = userProfileState.user;
 
     return MainLayoutWidget(
       currentIndex: 3,

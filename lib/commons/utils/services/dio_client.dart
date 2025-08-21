@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:trees_india/commons/config/api_config.dart';
 import 'package:trees_india/commons/presenters/providers/data_repository_provider.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../utils/services/notification_service.dart';

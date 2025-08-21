@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +15,7 @@ import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
 import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
 
 // auth_provider.dart
@@ -85,7 +84,8 @@ class AppRouter {
 
                 // If user IS authenticated and on public route, go to location loading
                 if (isPublicRoute) {
-                  debugPrint('✅ User authenticated, redirecting to location setup');
+                  debugPrint(
+                      '✅ User authenticated, redirecting to location setup');
                   return '/location-loading';
                 }
               } catch (e) {

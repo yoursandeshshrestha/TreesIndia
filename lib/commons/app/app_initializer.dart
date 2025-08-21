@@ -7,7 +7,7 @@ import 'package:trees_india/commons/constants/app_constants.dart';
 import 'package:trees_india/commons/presenters/providers/language_provider.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/theming/app_theme.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 
 final appLifecycleProvider = StateProvider<AppLifecycleState?>((ref) {
   return null;

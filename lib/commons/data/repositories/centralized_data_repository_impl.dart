@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:trees_india/commons/data/models/user_model.dart';
-import 'package:trees_india/commons/domain/entities/user_entity.dart';
 import 'package:trees_india/commons/domain/repositories/centralized_data_repository.dart';
 
 import '../../utils/services/centralized_local_storage_service.dart';
@@ -39,7 +37,8 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
   final CentralizedLocalStorageService localStorageService;
   final Logger _logger = Logger();
 
-  static const String userStorageKey = 'user_profile';
+  static const String authStorageKey = 'user_auth_tokens';
+  static const String profileStorageKey = 'user_profile_data';
 
   CentralizedDataRepositoryImpl({
     required this.datasource,
@@ -48,20 +47,21 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
 
   Future<String?> getAuthToken({bool forceRemote = false}) async {
     try {
-      final localUserJson = await localStorageService.getData(userStorageKey);
-      debugPrint('getAuthToken - localUserJson: $localUserJson');
+      final localTokenJson = await localStorageService.getData(authStorageKey);
+      debugPrint('getAuthToken - localTokenJson: $localTokenJson');
 
-      if (localUserJson != null && !forceRemote) {
+      if (localTokenJson != null && !forceRemote) {
         final Map<String, dynamic> typedJson =
-            convertToStringDynamicMap(localUserJson);
-        final userModel = UserModel.fromJson(typedJson);
-        final token = userModel.token?.authToken;
+            convertToStringDynamicMap(localTokenJson);
+        // Auth storage now contains token data directly, not wrapped in UserModel
+        final token = typedJson['authToken'] as String?;
         debugPrint(
             'getAuthToken - retrieved token: ${token != null ? "Token found (${token.length} chars)" : "No token"}');
         return token;
       }
 
-      debugPrint('getAuthToken - No local user data found or forceRemote=true');
+      debugPrint(
+          'getAuthToken - No local token data found or forceRemote=true');
       return null;
     } catch (e) {
       debugPrint('Error fetching auth token: $e');
@@ -74,12 +74,9 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
     try {
       _logger.i('🚪 [Flutter] Starting logout process...');
 
-      // Clear local storage first
-      await localStorageService.saveData('selectedRegion', '');
-      await localStorageService.deleteData(userStorageKey);
+      await localStorageService.deleteData(authStorageKey);
+      await localStorageService.deleteData(profileStorageKey);
       _logger.i('✅ [Flutter] Local storage cleared during logout');
-
-      // Clear ALL iCloud data using the comprehensive cleanup method - ONLY ON iOS
 
       _logger.i('✅ [Flutter] User logged out successfully');
     } catch (e) {
@@ -95,88 +92,6 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
     } catch (e) {
       _logger.e('Error resetting password for $email: $e');
       throw Exception('Failed to reset password. Please try again.');
-    }
-  }
-
-  @override
-  Future<bool> changePassword(
-      String email, String currentPassword, String newPassword) async {
-    try {
-      return await datasource.changePassword(
-          email, currentPassword, newPassword);
-    } catch (e) {
-      _logger.e('Error changing password for $email: $e');
-      throw Exception('Failed to change password. Please try again.');
-    }
-  }
-
-  @override
-  Future<UserEntity> getUserProfile() async {
-    try {
-      final userJson = await localStorageService.getData(userStorageKey);
-      UserEntity? userEntity;
-      UserModel? userModel;
-
-      _logger.i('🔍 [Flutter] GetUserProfile - Checking local storage...');
-      debugPrint('GetUserProfile - UserJson from storage: $userJson');
-
-      if (userJson != null) {
-        final Map<String, dynamic> typedJson =
-            convertToStringDynamicMap(userJson);
-        try {
-          userModel = UserModel.fromJson(typedJson);
-          userEntity = userModel.toEntity();
-
-          _logger.i('✅ [Flutter] User profile found in local storage');
-          _logger.i('   - User: ${userModel.fullName ?? "Unknown"}');
-          _logger.i(
-              '   - Token length: ${userModel.token?.authToken.length ?? 0}');
-
-          // Still save to iCloud for watch sync even if using cached data
-          // await _saveTokenToICloud(userModel);
-
-          return userEntity;
-        } catch (e) {
-          _logger.w('⚠️ [Flutter] Error parsing stored user data: $e');
-          debugPrint('Error parsing stored user data: $e');
-        }
-      }
-
-      _logger.i('🌐 [Flutter] Fetching fresh user profile from API...');
-      debugPrint('Fetching fresh user profile from API');
-
-      userModel = await datasource.getUserProfile();
-      userEntity = userModel.toEntity();
-
-      _logger.i('✅ [Flutter] Fresh user profile fetched from API');
-      _logger.i('   - User: ${userModel.fullName ?? "Unknown"}');
-      _logger.i('   - Token length: ${userModel.token?.authToken.length ?? 0}');
-
-      // Save to local storage
-      await localStorageService.saveData(userStorageKey, userModel.toJson());
-      _logger.i('💾 [Flutter] User profile saved to local storage');
-
-      // Save to iCloud for watch sync
-
-      return userEntity;
-    } catch (e) {
-      _logger.e('❌ [Flutter] Error in getUserProfile: $e');
-      debugPrint('Error in getUserProfile: $e');
-      rethrow;
-    }
-  }
-
-  /// Force save token to iCloud (used after fresh login)
-
-  /// Optional utility to refresh iCloud token directly
-  Future<void> refreshAuthToken() async {
-    try {
-      _logger.i('🔄 [Flutter] Refreshing auth token and syncing to iCloud...');
-      await getUserProfile(); // This triggers iCloud sync
-      _logger.i('✅ [Flutter] Auth token refreshed and synced to iCloud');
-    } catch (e) {
-      _logger.e('❌ [Flutter] Error refreshing auth token: $e');
-      rethrow;
     }
   }
 }

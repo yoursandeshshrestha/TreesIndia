@@ -3,9 +3,10 @@ import 'dart:async';
 
 import 'package:trees_india/commons/data/models/user_model.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
+import 'package:trees_india/commons/domain/entities/token_entity.dart';
 import 'package:trees_india/commons/domain/entities/refresh_token_request_entity.dart';
-import 'package:trees_india/commons/domain/usecases/get_user_profile_usecase.dart';
 import 'package:trees_india/commons/domain/usecases/refresh_token_usecase.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/presenters/providers/login_usecase_providers.dart';
 import 'package:trees_india/commons/presenters/providers/local_storage_provider.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
@@ -18,34 +19,32 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   debugPrint('Creating AuthNotifier...');
   final localStorageService = ref.watch(localStorageServiceProvider);
   final refreshTokenUsecase = ref.watch(refreshTokenUsecaseProvider);
-  final getUserProfileUsecase = ref.watch(getUserProfileUsecaseProvider);
-  return AuthNotifier(
-      localStorageService, refreshTokenUsecase, getUserProfileUsecase, ref);
+  return AuthNotifier(localStorageService, refreshTokenUsecase, ref);
 })
   ..registerProvider();
 
 class AuthState {
   final bool isLoggedIn;
-  final UserEntity? user;
+  final TokenEntity? token;
 
   const AuthState({
     this.isLoggedIn = false,
-    this.user,
+    this.token,
   });
 
   AuthState copyWith({
     bool? isLoggedIn,
-    UserEntity? user,
+    TokenEntity? token,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
-      user: user ?? this.user,
+      token: token ?? this.token,
     );
   }
 
   @override
   toString() {
-    return 'AuthState(isLoggedIn: $isLoggedIn, user: $user)';
+    return 'AuthState(isLoggedIn: $isLoggedIn, token: ${token != null ? 'present' : 'null'})';
   }
 }
 
@@ -53,13 +52,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final Ref ref;
   final CentralizedLocalStorageService _localStorageService;
   final RefreshTokenUsecase _refreshTokenUsecase;
-  final GetUserProfileUsecase _getUserProfileUsecase;
   final Logger _logger = Logger();
-  static const String userStorageKey = 'user_profile';
+  static const String authStorageKey = 'user_auth_tokens';
   bool _mounted = true;
 
-  AuthNotifier(this._localStorageService, this._refreshTokenUsecase,
-      this._getUserProfileUsecase, this.ref)
+  AuthNotifier(this._localStorageService, this._refreshTokenUsecase, this.ref)
       : super(const AuthState()) {
     debugPrint('AuthNotifier initialized');
   }
@@ -85,30 +82,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _checkMounted();
     debugPrint('Checking auth state...');
     try {
-      final userJson = await _localStorageService.getData(userStorageKey);
-      debugPrint('User JSON from storage: $userJson');
+      final tokenJson = await _localStorageService.getData(authStorageKey);
+      debugPrint('Token JSON from storage: $tokenJson');
 
-      if (!_mounted) return; // Check mounted after async operation
+      if (!_mounted) return;
 
-      if (userJson != null) {
+      if (tokenJson != null) {
         final Map<String, dynamic> typedJson =
-            convertToStringDynamicMap(userJson);
+            convertToStringDynamicMap(tokenJson);
 
         try {
-          if (!_mounted) return; // Check mounted before state update
+          if (!_mounted) return;
 
-          final userModel = UserModel.fromJson(typedJson);
-          final userEntity = userModel.toEntity();
+          final tokenEntity = TokenEntity(
+            token: typedJson['authToken'] ?? '',
+            refreshToken: typedJson['refreshToken'] ?? '',
+            userId: typedJson['userId']?.toString(),
+          );
 
-          if (userModel.token != null) {
+          if (tokenEntity.token.isNotEmpty) {
             // Check if token needs refresh
-            if (_isTokenExpired(userModel.token!.authToken)) {
+            if (_isTokenExpired(tokenEntity.token)) {
               debugPrint('Token is expired, attempting to refresh...');
               final refreshed =
-                  await _refreshTokenIfNeeded(userModel.token!.refreshToken);
+                  await _refreshTokenIfNeeded(tokenEntity.refreshToken);
               if (refreshed) {
                 debugPrint('Token refreshed successfully');
-                // Reload user data after refresh
                 await checkAuthState();
                 return;
               } else {
@@ -118,127 +117,94 @@ class AuthNotifier extends StateNotifier<AuthState> {
               }
             }
 
-            state = AuthState(isLoggedIn: true, user: userEntity);
+            state = AuthState(isLoggedIn: true, token: tokenEntity);
             debugPrint('Auth state set to true - valid token found');
+
+            // Load profile data separately
+            await ref.read(userProfileProvider.notifier).loadUserProfile();
             return;
           }
         } catch (e) {
-          debugPrint('Error parsing UserModel: $e');
+          debugPrint('Error parsing token data: $e');
         }
       }
 
       if (!_mounted) return;
-      debugPrint('No valid user data found, setting auth state to logged out');
-      state = const AuthState(isLoggedIn: false, user: null);
+      debugPrint('No valid token found, setting auth state to logged out');
+      state = const AuthState(isLoggedIn: false, token: null);
     } catch (e) {
       if (!_mounted) return;
       debugPrint('Error checking auth state: $e');
-      state = const AuthState(isLoggedIn: false, user: null);
+      state = const AuthState(isLoggedIn: false, token: null);
     }
     debugPrint('Auth state is: ${state.isLoggedIn}');
   }
 
-  Future<void> login() async {
+  Future<void> login(UserModel userModel) async {
     _checkMounted();
     debugPrint('Login called');
     try {
-      final userJson = await _localStorageService.getData(userStorageKey);
+      if (userModel.token != null) {
+        // Save auth tokens separately
+        final tokenData = {
+          'authToken': userModel.token!.authToken,
+          'refreshToken': userModel.token!.refreshToken,
+          'userId': userModel.userId?.toString(),
+        };
 
-      if (!_mounted) return;
+        await _localStorageService.saveData(authStorageKey, tokenData);
 
-      if (userJson != null) {
-        final Map<String, dynamic> typedJson =
-            convertToStringDynamicMap(userJson);
+        // Save profile data separately
+        await ref.read(userProfileProvider.notifier).saveUserProfile(
+              UserEntity(
+                userId: userModel.userId,
+                name: userModel.fullName,
+                email: userModel.email,
+                userImage: userModel.userImage,
+                phone: userModel.phone,
+                gender: userModel.gender,
+                isActive: userModel.isActive,
+                isVerified: userModel.isVerified,
+                userType: userModel.userType,
+                createdAt: userModel.createdAt,
+                updatedAt: userModel.updatedAt,
+              ),
+            );
 
-        try {
-          if (!_mounted) return;
+        if (!_mounted) return;
 
-          final userModel = UserModel.fromJson(typedJson);
-          final userEntity = userModel.toEntity();
-          state = AuthState(isLoggedIn: true, user: userEntity);
-          debugPrint('User loaded from storage and auth state updated');
-          _authStatusController.add(true);
-        } catch (e) {
-          debugPrint('Error parsing UserModel: $e');
-        }
-        // }
+        final tokenEntity =
+            userModel.token!.toEntity(userId: userModel.userId?.toString());
+        state = AuthState(isLoggedIn: true, token: tokenEntity);
+        debugPrint('User logged in and auth state updated');
+        _authStatusController.add(true);
       }
     } catch (e) {
       if (!_mounted) return;
       debugPrint('Error during login: $e');
-      state = const AuthState(isLoggedIn: false, user: null);
+      state = const AuthState(isLoggedIn: false, token: null);
       throw Exception('Failed to initialize user session');
     }
   }
 
-  /// Refresh user profile data from server
-  Future<void> refreshUserProfile() async {
+  /// Get current token for API calls
+  TokenEntity? get currentToken {
     _checkMounted();
-    if (!state.isLoggedIn) {
-      debugPrint('User not logged in, cannot refresh profile');
-      return;
-    }
-
-    try {
-      debugPrint('Refreshing user profile from server...');
-      final profileResponse = await _getUserProfileUsecase();
-
-      if (profileResponse.success && profileResponse.data != null) {
-        final profileData = profileResponse.data!;
-
-        // Get current user data to preserve tokens
-        final currentUserJson =
-            await _localStorageService.getData(userStorageKey);
-        if (currentUserJson != null) {
-          final Map<String, dynamic> typedJson = convertToStringDynamicMap(currentUserJson);
-          final currentUserModel = UserModel.fromJson(typedJson);
-
-          // Create updated user model with new profile data but keeping tokens
-          final updatedUserModel = UserModel(
-            userId: profileData.id,
-            fullName: profileData.name,
-            email: profileData.email,
-            userImage: profileData.avatar,
-            phone: profileData.phone,
-            gender: profileData.gender,
-            isActive: profileData.isActive,
-            isVerified: profileData.isVerified,
-            userType: profileData.userType,
-            createdAt: profileData.createdAt,
-            updatedAt: profileData.updatedAt,
-            token: currentUserModel.token, // Preserve existing tokens
-          );
-
-          // Save updated profile to storage
-          await _localStorageService.saveData(
-              userStorageKey, updatedUserModel.toJson());
-
-          // Update state
-          if (!_mounted) return;
-          state =
-              AuthState(isLoggedIn: true, user: updatedUserModel.toEntity());
-          debugPrint('User profile refreshed successfully');
-        }
-      } else {
-        debugPrint(
-            'Failed to refresh user profile: ${profileResponse.message}');
-      }
-    } catch (e) {
-      debugPrint('Error refreshing user profile: $e');
-      // Don't throw error, profile refresh is not critical
-    }
+    return state.token;
   }
-
-  /// Update user avatar
 
   Future<void> logout() async {
     _checkMounted();
     try {
       _logger.i('🚪 [AuthNotifier] Starting logout process...');
 
-      // Clear local storage first
-      await _localStorageService.deleteData(userStorageKey);
-      _logger.i('✅ [AuthNotifier] Local storage cleared during logout');
+      // Clear auth tokens
+      await _localStorageService.deleteData(authStorageKey);
+      _logger.i('✅ [AuthNotifier] Auth tokens cleared during logout');
+
+      // Clear profile data
+      await ref.read(userProfileProvider.notifier).clearUserProfile();
+      _logger.i('✅ [AuthNotifier] Profile data cleared during logout');
 
       if (!_mounted) return;
 
@@ -246,7 +212,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       ProviderRegistry.resetAll(ref.container);
 
       if (!_mounted) return;
-      state = const AuthState(isLoggedIn: false, user: null);
+      state = const AuthState(isLoggedIn: false, token: null);
 
       _logger.i('✅ [AuthNotifier] User logged out successfully');
       debugPrint('Logout completed successfully');
@@ -255,14 +221,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (!_mounted) return;
       _logger.e('❌ [AuthNotifier] Error during logout: $e');
       debugPrint('Error during logout: $e');
-      state = const AuthState(isLoggedIn: false, user: null);
+      state = const AuthState(isLoggedIn: false, token: null);
       throw Exception('Failed to log out. Please try again.');
     }
-  }
-
-  UserEntity? get currentUser {
-    _checkMounted();
-    return state.user;
   }
 
   // Helper method to check if token is expired
@@ -287,22 +248,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       if (response.success && response.data != null) {
         // Save new tokens
-        final userJson = await _localStorageService.getData(userStorageKey);
-        if (userJson != null) {
-          final typedJson = convertToStringDynamicMap(userJson);
-          final userModel = UserModel.fromJson(typedJson);
+        final tokenData = {
+          'authToken': response.data!.accessToken,
+          'refreshToken': response.data!.refreshToken,
+          'userId': state.token?.userId,
+        };
 
-          final updatedTokenModel = userModel.token?.copyWith(
-            authToken: response.data!.accessToken,
-            refreshToken: response.data!.refreshToken,
-          );
+        await _localStorageService.saveData(authStorageKey, tokenData);
 
-          final updatedUserModel = userModel.copyWith(token: updatedTokenModel);
+        // Update auth state with new tokens
+        final newTokenEntity = TokenEntity(
+          token: response.data!.accessToken,
+          refreshToken: response.data!.refreshToken,
+          userId: state.token?.userId,
+        );
 
-          await _localStorageService.saveData(
-              userStorageKey, updatedUserModel.toJson());
-          return true;
-        }
+        if (!_mounted) return false;
+        state = state.copyWith(token: newTokenEntity);
+        return true;
       }
       return false;
     } catch (e) {

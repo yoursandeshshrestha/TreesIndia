@@ -11,8 +11,8 @@ import 'package:trees_india/commons/components/textfield/app/views/email_textfie
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
-import '../viewmodels/profile_notifier.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -39,8 +39,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   void _initializeWithUserData() {
-    final authState = ref.read(authProvider);
-    final user = authState.user;
+    final profileState = ref.read(userProfileProvider);
+    final user = profileState.user;
     if (user != null && !_isInitialized) {
       _nameController.text = user.name ?? '';
       _emailController.text = user.email ?? '';
@@ -76,7 +76,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         await ref
             .read(profileProvider.notifier)
             .uploadAvatar(imageBytes, image.name);
-        await ref.read(authProvider.notifier).refreshUserProfile();
+        // Refresh profile data after avatar upload
+        await ref.read(userProfileProvider.notifier).refreshUserProfile();
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -96,7 +97,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           .read(profileProvider.notifier)
           .updateProfile(name, email, _selectedGender);
 
-      await ref.read(authProvider.notifier).refreshUserProfile();
+      // Refresh profile data after update
+      await ref.read(userProfileProvider.notifier).refreshUserProfile();
 
       // Navigate back to profile page
       if (mounted) {
@@ -116,9 +118,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    final userProfileState = ref.watch(userProfileProvider);
     final profileState = ref.watch(profileProvider);
-    final user = authState.user;
+    final user = userProfileState.user;
 
     // Re-initialize if user data changes and we haven't initialized yet
     if (user != null && !_isInitialized) {

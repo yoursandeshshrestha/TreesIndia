@@ -3,11 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
@@ -70,8 +69,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
+    final userProfileState = ref.watch(userProfileProvider);
+    final user = userProfileState.user;
 
     return MainLayoutWidget(
       currentIndex: 0,

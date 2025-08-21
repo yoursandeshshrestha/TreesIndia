@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
 import 'package:trees_india/commons/data/models/token_model.dart';
 import 'package:trees_india/commons/data/models/user_model.dart';
@@ -9,7 +10,6 @@ import 'package:trees_india/commons/domain/usecases/get_user_profile_usecase.dar
 import 'package:trees_india/commons/domain/usecases/refresh_token_usecase.dart';
 import 'package:trees_india/commons/domain/usecases/verify_otp_usecase.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
-import 'package:trees_india/commons/utils/services/auth_notifier.dart';
 import 'package:trees_india/commons/utils/services/centralized_local_storage_service.dart';
 import 'package:trees_india/commons/utils/services/notification_service.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
@@ -132,9 +132,7 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
       );
 
       if (response.success && response.data != null) {
-        // Save tokens to local storage
-        await _saveTokensToStorage(
-            response.data!.accessToken, response.data!.refreshToken);
+        // Tokens will be saved by auth provider
 
         // Fetch user profile and save complete user data
         await _fetchAndSaveUserProfile(
@@ -150,8 +148,7 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
         // Show success message
         notificationService.showSuccessSnackBar(response.message);
 
-        // Update the main auth notifier
-        await ref.read(authProvider.notifier).checkAuthState();
+
       } else {
         state = state.copyWith(
           state: LoginState.error,
@@ -182,21 +179,9 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
       debugPrint(
           '🔐 Saving tokens - Refresh token length: ${refreshToken.length}');
 
-      final tokenModel = TokenModel(
-        authToken: accessToken,
-        refreshToken: refreshToken,
-      );
+      // TokenModel creation removed - handled by auth provider
 
-      // Create a minimal user model with just tokens
-      final userModel = UserModel(
-        userId: null,
-        fullName: null,
-        email: null,
-        userImage: null,
-        token: tokenModel,
-      );
-
-      await localStorageService.saveData('user_profile', userModel.toJson());
+      // Tokens are now handled by the auth provider during login
       debugPrint('✅ Tokens saved to local storage successfully');
 
       // Verify tokens were saved correctly
@@ -219,7 +204,7 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
       if (profileResponse.success && profileResponse.data != null) {
         final profileData = profileResponse.data!;
 
-        // Create complete user model with profile data and tokens
+        // Update the auth provider with complete user model
         final tokenModel = TokenModel(
           authToken: accessToken,
           refreshToken: refreshToken,
@@ -240,8 +225,8 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
           token: tokenModel,
         );
 
-        await localStorageService.saveData(
-            'user_profile', completeUserModel.toJson());
+        // Use the new login method to save both auth and profile data separately
+        await ref.read(authProvider.notifier).login(completeUserModel);
         debugPrint('Complete user profile saved to local storage successfully');
       } else {
         debugPrint('Failed to fetch user profile: ${profileResponse.message}');
