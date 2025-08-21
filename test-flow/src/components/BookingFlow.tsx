@@ -163,6 +163,26 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   // Results state
   const [bookingResult, setBookingResult] = useState<any>(null);
 
+  // Helper function to check if current service is inquiry-based
+  const isInquiryService = () => {
+    return selectedService?.price_type === "inquiry";
+  };
+
+  // Helper function to get total steps based on service type
+  const getTotalSteps = () => {
+    return isInquiryService() ? 4 : 7; // 4 steps for inquiry, 7 for fixed price
+  };
+
+  // Helper function to get current step number for display
+  const getCurrentStepNumber = () => {
+    if (isInquiryService()) {
+      // For inquiry: 1=Category, 2=Subcategory, 3=Service, 4=Payment
+      return step;
+    }
+    // For fixed price: 1=Category, 2=Subcategory, 3=Service, 4=Date, 5=Time, 6=Address, 7=Form
+    return step;
+  };
+
   // Load initial data
   useEffect(() => {
     if (token) {
@@ -280,7 +300,14 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setBookingForm((prev) => ({ ...prev, service_id: service.id }));
-    setStep(4);
+    
+    if (service.price_type === "inquiry") {
+      // For inquiry-based services, skip to payment directly
+      setStep(4);
+    } else {
+      // For fixed price services, continue to date selection
+      setStep(4);
+    }
   };
 
   const handleDateSelect = (date: string) => {
@@ -317,10 +344,6 @@ export default function BookingFlow({ token }: BookingFlowProps) {
       // Create booking - backend will return payment order if needed
       const response = await apiService.createBooking(bookingForm);
 
-      console.log("Backend response:", response);
-      console.log("Booking object:", response.booking);
-      console.log("Booking ID:", response.booking?.ID || response.booking?.id);
-
       if (response.payment_required && response.payment_order) {
         // Payment required - show Razorpay payment modal
         // Store the booking ID for payment verification
@@ -348,11 +371,34 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     }
   };
 
-  const handleRazorpayPayment = (paymentOrder: any, bookingId: number) => {
-    console.log("Payment order:", paymentOrder);
-    console.log("Booking ID:", bookingId);
+  const handleInquiryBookingSubmit = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    if (!bookingId) {
+      // Create inquiry booking - backend will return payment order if needed
+      const response = await apiService.createInquiryBooking({
+        service_id: selectedService!.id
+      });
+
+      if (response.payment_required && response.payment_order) {
+        // Payment required - show Razorpay payment modal
+        handleRazorpayPayment(response.payment_order, null, true);
+      } else {
+        // No payment required - show success
+        setBookingResult({ booking: response.booking });
+        setStep(4);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to create inquiry booking");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRazorpayPayment = (paymentOrder: any, bookingId: number | null, isInquiry: boolean = false) => {
+    if (!isInquiry && !bookingId) {
       setError("Booking ID not available for payment verification");
       return;
     }
@@ -367,7 +413,9 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         amount: paymentOrder.amount,
         currency: paymentOrder.currency,
         name: "Trees India Services",
-        description: `Booking Payment - ${selectedService?.name}`,
+        description: isInquiry 
+          ? `Inquiry Booking - ${selectedService?.name}`
+          : `Booking Payment - ${selectedService?.name}`,
         order_id: paymentOrder.id,
         method: {
           upi: true,
@@ -378,22 +426,35 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         },
         handler: async function (response: any) {
           try {
-            console.log("Payment response:", response);
-            console.log("Verifying payment for booking ID:", bookingId);
+            if (isInquiry) {
+              // Payment successful - verify inquiry payment
+              const verifyResponse = await apiService.verifyInquiryPayment({
+                service_id: selectedService!.id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: paymentOrder.id,
+                razorpay_signature: response.razorpay_signature,
+              });
 
-            // Payment successful - verify payment
-            const verifyResponse = await apiService.verifyPayment(bookingId, {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: paymentOrder.id,
-              razorpay_signature: response.razorpay_signature,
-            });
+              // Set the booking result
+              setBookingResult({ booking: verifyResponse.booking });
+            } else {
+              // Payment successful - verify payment
+              const verifyResponse = await apiService.verifyPayment(bookingId!, {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: paymentOrder.id,
+                razorpay_signature: response.razorpay_signature,
+              });
 
-            // Set the booking result
-            setBookingResult({ booking: verifyResponse.booking });
+              // Set the booking result
+              setBookingResult({ booking: verifyResponse.booking });
+            }
 
             // Show success message
-            alert("Payment successful! Your booking has been confirmed.");
-            setStep(8);
+            alert(isInquiry 
+              ? "Inquiry booking successful! We'll contact you with a detailed quote."
+              : "Payment successful! Your booking has been confirmed."
+            );
+            setStep(isInquiry ? 4 : 8);
           } catch (error) {
             console.error("Payment verification failed:", error);
             alert("Payment verification failed. Please contact support.");
@@ -408,7 +469,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         },
         modal: {
           ondismiss: function () {
-            console.log("Payment modal closed");
+            // Payment modal closed
           },
         },
       };
@@ -441,77 +502,118 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   };
 
   const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <CategorySelection
-            categories={categories}
-            onSelect={handleCategorySelect}
-            loading={loading}
-          />
-        );
-      case 2:
-        return (
-          <SubcategorySelection
-            subcategories={subcategories}
-            onSelect={handleSubcategorySelect}
-            loading={loading}
-          />
-        );
-      case 3:
-        return (
-          <ServiceSelection
-            services={services}
-            onSelect={handleServiceSelect}
-            loading={loading}
-          />
-        );
-      case 4:
-        return (
-          <DateSelection
-            onSelect={handleDateSelect}
-            service={selectedService}
-            bookingConfig={bookingConfig}
-          />
-        );
-      case 5:
-        return (
-          <TimeSlotSelection
-            availabilityData={availabilityData}
-            onSelect={handleTimeSlotSelect}
-            loading={loading}
-            onRefresh={() => {
-              if (selectedService && bookingForm.scheduled_date) {
-                loadAvailableSlots(
-                  selectedService.id,
-                  bookingForm.scheduled_date
-                );
-              }
-            }}
-          />
-        );
-      case 6:
-        return (
-          <AddressSelection
-            addresses={addresses}
-            onSelect={handleAddressSelect}
-            loading={loading}
-          />
-        );
-      case 7:
-        return (
-          <BookingForm
-            form={bookingForm}
-            setForm={setBookingForm}
-            onSubmit={handleBookingSubmit}
-            loading={loading}
-            service={selectedService}
-          />
-        );
-      case 8:
-        return <BookingResult result={bookingResult} onReset={resetFlow} />;
-      default:
-        return null;
+    if (isInquiryService()) {
+      // Simplified flow for inquiry-based services
+      switch (step) {
+        case 1:
+          return (
+            <CategorySelection
+              categories={categories}
+              onSelect={handleCategorySelect}
+              loading={loading}
+            />
+          );
+        case 2:
+          return (
+            <SubcategorySelection
+              subcategories={subcategories}
+              onSelect={handleSubcategorySelect}
+              loading={loading}
+            />
+          );
+        case 3:
+          return (
+            <ServiceSelection
+              services={services}
+              onSelect={handleServiceSelect}
+              loading={loading}
+            />
+          );
+        case 4:
+          return (
+            <InquiryBookingPayment
+              service={selectedService}
+              onSubmit={handleInquiryBookingSubmit}
+              loading={loading}
+            />
+          );
+        default:
+          return null;
+      }
+    } else {
+      // Original flow for fixed price services
+      switch (step) {
+        case 1:
+          return (
+            <CategorySelection
+              categories={categories}
+              onSelect={handleCategorySelect}
+              loading={loading}
+            />
+          );
+        case 2:
+          return (
+            <SubcategorySelection
+              subcategories={subcategories}
+              onSelect={handleSubcategorySelect}
+              loading={loading}
+            />
+          );
+        case 3:
+          return (
+            <ServiceSelection
+              services={services}
+              onSelect={handleServiceSelect}
+              loading={loading}
+            />
+          );
+        case 4:
+          return (
+            <DateSelection
+              onSelect={handleDateSelect}
+              service={selectedService}
+              bookingConfig={bookingConfig}
+            />
+          );
+        case 5:
+          return (
+            <TimeSlotSelection
+              availabilityData={availabilityData}
+              onSelect={handleTimeSlotSelect}
+              loading={loading}
+              onRefresh={() => {
+                if (selectedService && bookingForm.scheduled_date) {
+                  loadAvailableSlots(
+                    selectedService.id,
+                    bookingForm.scheduled_date
+                  );
+                }
+              }}
+            />
+          );
+        case 6:
+          return (
+            <AddressSelection
+              addresses={addresses}
+              onSelect={handleAddressSelect}
+              loading={loading}
+            />
+          );
+        case 7:
+          return (
+            <BookingForm
+              form={bookingForm}
+              setForm={setBookingForm}
+              onSubmit={handleBookingSubmit}
+              loading={loading}
+              service={selectedService}
+            />
+          );
+        case 8:
+          return <BookingResult result={bookingResult} onReset={resetFlow} />;
+        default:
+          return null;
+      }
     }
   };
 
@@ -524,27 +626,77 @@ export default function BookingFlow({ token }: BookingFlowProps) {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-8">
-          {[1, 2, 3, 4, 5, 6, 7].map((stepNumber) => (
-            <div key={stepNumber} className="flex items-center">
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  step >= stepNumber
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
-              </div>
-              {stepNumber < 7 && (
-                <ChevronRight
-                  className={`mx-2 ${
-                    step > stepNumber ? "text-blue-600" : "text-gray-300"
+          {isInquiryService() ? (
+            // Simplified progress for inquiry-based services
+            [1, 2, 3, 4].map((stepNumber) => (
+              <div key={stepNumber} className="flex items-center">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    step >= stepNumber
+                      ? "bg-yellow-600 text-white"
+                      : "bg-gray-200 text-gray-600"
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+                </div>
+                {stepNumber < 4 && (
+                  <ChevronRight
+                    className={`mx-2 ${
+                      step > stepNumber ? "text-yellow-600" : "text-gray-300"
+                    }`}
+                  />
+                )}
+              </div>
+            ))
+          ) : (
+            // Original progress for fixed price services
+            [1, 2, 3, 4, 5, 6, 7].map((stepNumber) => (
+              <div key={stepNumber} className="flex items-center">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    step >= stepNumber
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+                </div>
+                {stepNumber < 7 && (
+                  <ChevronRight
+                    className={`mx-2 ${
+                      step > stepNumber ? "text-blue-600" : "text-gray-300"
+                    }`}
+                  />
+                )}
+              </div>
+            ))
+          )}
         </div>
+
+        {/* Service Type Indicator */}
+        {selectedService && (
+          <div className={`mb-4 p-3 rounded-lg ${
+            isInquiryService() 
+              ? "bg-yellow-50 border border-yellow-200" 
+              : "bg-blue-50 border border-blue-200"
+          }`}>
+            <div className="flex items-center">
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                isInquiryService() ? "bg-yellow-500" : "bg-blue-500"
+              }`}></div>
+              <span className={`font-medium ${
+                isInquiryService() ? "text-yellow-800" : "text-blue-800"
+              }`}>
+                {isInquiryService() ? "Inquiry-Based Service" : "Fixed Price Service"}
+              </span>
+            </div>
+            {isInquiryService() && (
+              <p className="text-yellow-700 text-sm mt-1">
+                No scheduling required. We'll contact you with a detailed quote after booking.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -1125,6 +1277,134 @@ function BookingForm({
           className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? "Creating Booking..." : "Create Booking"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InquiryBookingPayment({
+  service,
+  onSubmit,
+  loading,
+}: {
+  service: Service | null;
+  onSubmit: () => void;
+  loading: boolean;
+}) {
+  const [inquiryForm, setInquiryForm] = useState({
+    description: "",
+    contact_person: "",
+    contact_phone: "",
+    special_instructions: "",
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setInquiryForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold mb-6">Inquiry Booking</h2>
+      {service && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="font-semibold text-lg mb-2">
+            Selected Service: {service.name}
+          </h3>
+          <p className="text-yellow-700 mb-2">
+            This is an inquiry-based service. We'll contact you with a detailed quote after booking.
+          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-yellow-600">
+                No scheduling required
+              </p>
+              {service.duration && (
+                <p className="text-sm text-gray-500">
+                  Estimated Duration: {service.duration}
+                </p>
+              )}
+            </div>
+            <div className="text-right">
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                Inquiry Based
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Description
+          </label>
+          <textarea
+            value={inquiryForm.description}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            rows={3}
+            placeholder="Describe your service requirement"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Contact Person
+            </label>
+            <input
+              type="text"
+              value={inquiryForm.contact_person}
+              onChange={(e) => handleInputChange("contact_person", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              placeholder="Contact person name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Contact Phone
+            </label>
+            <input
+              type="tel"
+              value={inquiryForm.contact_phone}
+              onChange={(e) => handleInputChange("contact_phone", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              placeholder="Contact phone number"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Special Instructions
+          </label>
+          <textarea
+            value={inquiryForm.special_instructions}
+            onChange={(e) => handleInputChange("special_instructions", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            rows={2}
+            placeholder="Any special instructions for the service"
+          />
+        </div>
+
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-medium text-blue-800 mb-2">What happens next?</h4>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• You'll pay a small booking fee (if applicable)</li>
+            <li>• We'll review your requirements</li>
+            <li>• We'll contact you with a detailed quote</li>
+            <li>• You can accept or reject the quote</li>
+          </ul>
+        </div>
+
+        <button
+          onClick={onSubmit}
+          disabled={loading || !inquiryForm.contact_person || !inquiryForm.contact_phone}
+          className="w-full bg-yellow-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? "Submitting Inquiry..." : "Submit Inquiry"}
         </button>
       </div>
     </div>

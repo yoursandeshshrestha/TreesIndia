@@ -109,17 +109,12 @@ export default function WalletTest() {
     setError("");
 
     try {
-      console.log("Payment successful:", paymentData);
-      console.log("Current payment:", currentPayment);
-      console.log("Payment ID:", currentPayment?.ID || currentPayment?.id);
-
       const paymentId = currentPayment?.ID || currentPayment?.id;
 
       if (!paymentId) {
         throw new Error("Payment ID not found");
       }
 
-      console.log("Calling completeWalletRecharge with payment ID:", paymentId);
       await apiService.completeWalletRecharge(paymentId, paymentData);
       setSuccess("Wallet recharged successfully!");
       setCurrentStep("success");
@@ -164,7 +159,7 @@ export default function WalletTest() {
         amount: payment.amount * 100, // Convert to paise
         currency: "INR",
         receipt: payment.payment_reference || payment.reference_id || "",
-        key_id: "rzp_test_R5AUjoyz0QoYmH", // This should come from config
+        key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "", // From environment config
       };
 
       // Set the current payment and order

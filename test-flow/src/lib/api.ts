@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 // Create axios instance
 const api = axios.create({
@@ -171,6 +171,17 @@ export interface RazorpayOrder {
   currency: string;
   receipt: string;
   key_id: string;
+}
+
+export interface CreateInquiryBookingRequest {
+  service_id: number;
+}
+
+export interface VerifyInquiryPaymentRequest {
+  service_id: number;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
 }
 
 // API functions
@@ -359,6 +370,19 @@ export const apiService = {
     paymentId: number
   ): Promise<{ message: string }> => {
     const response = await api.post(`/wallet/recharge/${paymentId}/cancel`);
+    return response.data.data || response.data;
+  },
+
+  async createInquiryBooking(data: CreateInquiryBookingRequest) {
+    const response = await api.post("/bookings/inquiry", data);
+    return response.data.data || response.data;
+  },
+
+  async verifyInquiryPayment(data: VerifyInquiryPaymentRequest) {
+    const response = await api.post(
+      `/bookings/inquiry/verify-payment`,
+      data
+    );
     return response.data.data || response.data;
   },
 };
