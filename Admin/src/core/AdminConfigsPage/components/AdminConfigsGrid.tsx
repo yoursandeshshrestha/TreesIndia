@@ -191,7 +191,7 @@ const AdminConfigsGrid: React.FC<AdminConfigsGridProps> = ({
               <div
                 key={config.ID}
                 className={cn(
-                  "bg-white rounded-lg p-4 hover:shadow-md transition-all duration-200",
+                  "bg-white rounded-lg p-4",
                   config.type === "bool" ? "" : "cursor-pointer"
                 )}
                 onClick={() => {

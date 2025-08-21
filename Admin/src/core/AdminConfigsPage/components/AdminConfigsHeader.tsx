@@ -1,14 +1,7 @@
 import React from "react";
-import { Settings, RotateCcw } from "lucide-react";
-import Button from "@/components/Button/Base/Button";
+import { Settings } from "lucide-react";
 
-interface AdminConfigsHeaderProps {
-  onResetDefaults?: () => void;
-}
-
-const AdminConfigsHeader: React.FC<AdminConfigsHeaderProps> = ({
-  onResetDefaults,
-}) => {
+const AdminConfigsHeader: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
