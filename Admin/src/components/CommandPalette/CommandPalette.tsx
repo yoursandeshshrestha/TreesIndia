@@ -107,6 +107,13 @@ const CommandPalette: React.FC = () => {
     (e: KeyboardEvent) => {
       if (!isOpen) return;
 
+      // Handle Command+K to close the palette
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        dispatch(close());
+        return;
+      }
+
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
@@ -133,6 +140,7 @@ const CommandPalette: React.FC = () => {
           break;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isOpen, filteredItems, selectedIndex, dispatch]
   );
 
@@ -175,10 +183,10 @@ const CommandPalette: React.FC = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-3xl z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-3xl z-[100] flex items-center justify-center p-4">
       <div
         ref={containerRef}
-        className="bg-white rounded-lg shadow-lg w-full max-w-[500px] max-h-[600px] overflow-hidden"
+        className="bg-white rounded-lg shadow-lg w-full max-w-[500px] max-h-[500px] overflow-hidden"
       >
         {/* Search Input */}
         <div className="p-4 border-b border-gray-200">
@@ -203,9 +211,9 @@ const CommandPalette: React.FC = () => {
         </div>
 
         {/* Results */}
-        <div className="max-h-[520px] overflow-y-auto">
+        <div className="max-h-[520px] min-h-[500px] overflow-y-auto">
           {filteredItems.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="h-[400px] flex flex-col items-center justify-center text-gray-500">
               <p className="text-lg font-medium">No results found</p>
               <p className="text-sm">Try searching for something else</p>
             </div>

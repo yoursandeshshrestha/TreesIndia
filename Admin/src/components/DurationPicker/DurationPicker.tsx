@@ -136,7 +136,7 @@ export default function DurationPicker({
       {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-4">
+        <div className="absolute z-dropdown w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-gray-700">Duration</h4>

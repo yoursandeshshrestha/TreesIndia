@@ -38,14 +38,16 @@ const Dropdown: React.FC<DropdownProps> = ({
     <div className={`relative inline-block ${className}`} ref={dropdownRef}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`cursor-pointer ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
         {trigger}
       </div>
 
       {isOpen && (
         <div
-          className={`absolute z-50 mt-1 ${width} rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${
+          className={`absolute z-dropdown mt-1 ${width} rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
