@@ -11,6 +11,7 @@ class ApiEndpoints {
     resetPassword,
     changePassword,
     signUp,
+    locationAutocomplete,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -51,6 +52,11 @@ class ApiEndpoints {
   );
   static ApiEndpoint signUp = ApiEndpoint(
     path: '/Mobvalidatelogin',
+    requiresAuth: false,
+    useRegionBaseUrl: true,
+  );
+  static ApiEndpoint locationAutocomplete = ApiEndpoint(
+    path: '/places/autocomplete',
     requiresAuth: false,
     useRegionBaseUrl: true,
   );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:trees_india/commons/domain/repositories/centralized_data_repository.dart';
+import 'package:trees_india/commons/domain/entities/location_entity.dart';
 
 import '../../utils/services/centralized_local_storage_service.dart';
 import '../datasources/centralized_datasource.dart';
@@ -92,6 +93,16 @@ class CentralizedDataRepositoryImpl implements CentralizedDataRepository {
     } catch (e) {
       _logger.e('Error resetting password for $email: $e');
       throw Exception('Failed to reset password. Please try again.');
+    }
+  }
+
+  @override
+  Future<List<LocationEntity>> searchLocations(String query) async {
+    try {
+      return await datasource.searchLocations(query);
+    } catch (e) {
+      _logger.e('Error searching locations for query "$query": $e');
+      throw Exception('Failed to search locations. Please try again.');
     }
   }
 }

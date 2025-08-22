@@ -4,8 +4,8 @@ import 'prod_environment.dart';
 
 class GlobalEnvironment {
   static late String apiBaseUrl;
-  static late String apiKey;
   static late bool enableLogging;
+  static late String razorpayKey;
 
   static void loadEnvironment() {
     String environment = dotenv.env['ENVIRONMENT'] ?? 'development';
