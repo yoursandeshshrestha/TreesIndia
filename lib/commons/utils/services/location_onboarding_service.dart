@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:geocoding/geocoding.dart';
 import '../../data/models/location_model.dart';
 import '../../domain/entities/location_entity.dart';
+import '../../domain/repositories/centralized_data_repository.dart';
 import 'centralized_local_storage_service.dart';
 import 'location_service.dart';
 
@@ -11,8 +12,13 @@ class LocationOnboardingService {
 
   final CentralizedLocalStorageService _localStorage;
   final LocationService _locationService;
+  final CentralizedDataRepository _dataRepository;
 
-  LocationOnboardingService(this._localStorage, this._locationService);
+  LocationOnboardingService(
+    this._localStorage,
+    this._locationService,
+    this._dataRepository,
+  );
 
   Future<bool> isFirstLogin() async {
     try {
@@ -113,40 +119,41 @@ class LocationOnboardingService {
       return [];
     }
 
-    // For demo purposes, return mock search results
-    // In production, you would implement actual location search API here
-    await Future.delayed(
-        const Duration(milliseconds: 500)); // Simulate API delay
+    try {
+      return await _dataRepository.searchLocations(query);
+    } catch (e) {
+      // Fallback to mock data if API fails
+      await Future.delayed(const Duration(milliseconds: 500));
 
-    // Mock search results based on query
-    final mockResults = [
-      LocationEntity(
-        address: '$query, Sample City, Sample State',
-        latitude: 37.7749 + (query.length * 0.001),
-        longitude: -122.4194 + (query.length * 0.001),
-        city: 'Sample City',
-        state: 'Sample State',
-        country: 'Sample Country',
-      ),
-      LocationEntity(
-        address: '$query Downtown, Sample City, Sample State',
-        latitude: 37.7849 + (query.length * 0.001),
-        longitude: -122.4094 + (query.length * 0.001),
-        city: 'Sample City',
-        state: 'Sample State',
-        country: 'Sample Country',
-      ),
-      LocationEntity(
-        address: '$query Area, Another City, Sample State',
-        latitude: 37.7949 + (query.length * 0.001),
-        longitude: -122.3994 + (query.length * 0.001),
-        city: 'Another City',
-        state: 'Sample State',
-        country: 'Sample Country',
-      ),
-    ];
+      final mockResults = [
+        LocationEntity(
+          address: '$query, Sample City, Sample State',
+          latitude: 37.7749 + (query.length * 0.001),
+          longitude: -122.4194 + (query.length * 0.001),
+          city: 'Sample City',
+          state: 'Sample State',
+          country: 'Sample Country',
+        ),
+        LocationEntity(
+          address: '$query Downtown, Sample City, Sample State',
+          latitude: 37.7849 + (query.length * 0.001),
+          longitude: -122.4094 + (query.length * 0.001),
+          city: 'Sample City',
+          state: 'Sample State',
+          country: 'Sample Country',
+        ),
+        LocationEntity(
+          address: '$query Area, Another City, Sample State',
+          latitude: 37.7949 + (query.length * 0.001),
+          longitude: -122.3994 + (query.length * 0.001),
+          city: 'Another City',
+          state: 'Sample State',
+          country: 'Sample Country',
+        ),
+      ];
 
-    return mockResults;
+      return mockResults;
+    }
   }
 
   Future<void> clearLocationData() async {

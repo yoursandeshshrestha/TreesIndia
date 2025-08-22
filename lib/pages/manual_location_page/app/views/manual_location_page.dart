@@ -224,6 +224,34 @@ class _ManualLocationPageState extends ConsumerState<ManualLocationPage> {
       );
     }
 
+    // Check if user has typed something but it's too short
+    if (_searchController.text.trim().isNotEmpty &&
+        _searchController.text.trim().length < 3) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.keyboard,
+              size: 64,
+              color: AppColors.brandNeutral400,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            B2Medium(
+              text: 'Type at least 3 characters',
+              color: AppColors.brandNeutral600,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            B3Regular(
+              text: 'Continue typing to see location suggestions',
+              color: AppColors.brandNeutral500,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
