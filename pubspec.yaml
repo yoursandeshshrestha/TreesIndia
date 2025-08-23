@@ -64,6 +64,7 @@ dependencies:
   dotlottie_loader: ^0.0.5
   package_info_plus: ^8.0.0
   chip_list: ^3.1.0
+  razorpay_flutter: ^1.4.0
 
 dev_dependencies:
   flutter_test:
