@@ -3,13 +3,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
+import 'package:trees_india/pages/home_page/app/views/widgets/service_banner_widget.dart';
+import '../providers/service_providers.dart';
+import '../../domain/entities/service_entity.dart';
+import '../viewmodels/service_state.dart';
+import 'widgets/service_cards_grid_widget.dart';
+import 'widgets/service_banner_list_widget.dart';
+import 'widgets/service_category_tabs_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -25,6 +32,11 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _loadCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(serviceNotifierProvider.notifier)
+          .loadServicesByCategory(ServiceCategory.homeServices);
+    });
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -69,26 +81,26 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final userProfileState = ref.watch(userProfileProvider);
-    final user = userProfileState.user;
+    final serviceState = ref.watch(serviceNotifierProvider);
+    final serviceNotifier = ref.read(serviceNotifierProvider.notifier);
 
     return MainLayoutWidget(
       currentIndex: 0,
       child: Scaffold(
-        backgroundColor: AppColors.brandNeutral50,
+        backgroundColor: Colors.white,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.lg,
-              AppSpacing.lg,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Section
-                GestureDetector(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Section
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
+                child: GestureDetector(
                   onTap: _navigateToLocationPicker,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,112 +145,124 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandPrimary50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.brandPrimary200,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      H2Bold(
-                        text: 'Welcome!',
-                        color: AppColors.brandPrimary900,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      B2Regular(
-                        text: 'You are successfully logged in to Trees India.',
-                        color: AppColors.brandPrimary700,
-                      ),
-                      if (user != null) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        B3Medium(
-                          text: 'User ID: ${user.userId ?? 'N/A'}',
-                          color: AppColors.brandPrimary600,
-                        ),
-                        if (user.name != null && user.name!.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          B3Medium(
-                            text: 'Name: ${user.name}',
-                            color: AppColors.brandPrimary600,
-                          ),
-                        ],
-                        if (user.email != null && user.email!.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          B3Medium(
-                            text: 'Email: ${user.email}',
-                            color: AppColors.brandPrimary600,
-                          ),
-                        ],
-                        if (user.phone != null && user.phone!.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          B3Medium(
-                            text: 'Phone: ${user.phone}',
-                            color: AppColors.brandPrimary600,
-                          ),
-                        ],
-                        if (user.gender != null && user.gender!.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          B3Medium(
-                            text: 'Gender: ${user.gender}',
-                            color: AppColors.brandPrimary600,
-                          ),
-                        ],
-                        if (user.isVerified != null) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.verified,
-                                size: 16,
-                                color: AppColors.stateGreen600,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              B3Medium(
-                                text: 'Verified',
-                                color: AppColors.stateGreen600,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ],
-                  ),
-                ),
+              ),
 
-                const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.md),
 
-                // Content Section
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                       
-                        const SizedBox(height: AppSpacing.lg),
-                        H3Bold(
-                          text: 'Home Page',
-                          color: AppColors.brandNeutral900,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        B2Regular(
-                          text: 'Your dashboard content will go here.',
-                          color: AppColors.brandNeutral600,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+              // Service Categories Grid
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    H2Bold(
+                      text: 'Service Categories',
+                      color: AppColors.brandNeutral900,
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+              // Service Category Tabs
+              ServiceCategoryTabsWidget(
+                selectedCategory: serviceState.selectedCategory,
+                onCategorySelected: (category) {
+                  serviceNotifier.setSelectedCategory(category);
+                },
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Services Grid
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: serviceState.status == ServiceStatus.loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : serviceState.status == ServiceStatus.failure
+                        ? Center(
+                            child: B2Regular(
+                              text: 'Failed to load services',
+                              color: AppColors.stateRed600,
+                            ),
+                          )
+                        : ServiceCardsGridWidget(
+                            services: serviceNotifier.filteredServices,
+                            onServiceTap: (service) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  InfoSnackbarWidget(
+                                          message:
+                                              '${service.name} service is coming soon')
+                                      .createSnackBar());
+                            },
+                          ),
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              Container(
+                width: double.maxFinite,
+                height: 8,
+                color: AppColors.brandNeutral100,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Promotional Banners
+              ServiceBannerListWidget(
+                banners: [
+                  ServiceBannerWidget(
+                    title: 'Work with our best service provider',
+                    description: 'Get professional services for your home',
+                    buttonText: 'Book',
+                    backgroundColor: const Color(0xFFFBB040),
+                    imagePath: 'assets/images/electrician.jpg',
+                    onButtonPressed: () {
+                      // TODO: Navigate to booking
+                    },
+                  ),
+                  ServiceBannerWidget(
+                    title: 'Construction made easy',
+                    description: 'Expert builders for your dream home',
+                    buttonText: 'Explore',
+                    backgroundColor: const Color(0xFFFF6B35),
+                    imagePath: 'assets/images/electrician.jpg',
+                    onButtonPressed: () {
+                      // TODO: Navigate to construction services
+                    },
+                  ),
+                  ServiceBannerWidget(
+                    title: 'Marketplace deals',
+                    description: 'Best prices on materials',
+                    buttonText: 'Shop',
+                    backgroundColor: const Color(0xFF4ECDC4),
+                    onButtonPressed: () {
+                      // TODO: Navigate to marketplace
+                    },
+                  ),
+                  ServiceBannerWidget(
+                    title: 'Marketplace deals',
+                    description: 'Best prices on materials',
+                    buttonText: 'Shop',
+                    backgroundColor: const Color(0xFF4ECDC4),
+                    onButtonPressed: () {
+                      // TODO: Navigate to marketplace
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              Container(
+                width: double.maxFinite,
+                height: 8,
+                color: AppColors.brandNeutral100,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+            ],
           ),
         ),
       ),
