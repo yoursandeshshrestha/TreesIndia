@@ -52,6 +52,11 @@ func (sm *SeedManager) SeedMainData() error {
 	return sm.seedMainData()
 }
 
+// SeedServiceAreas seeds service areas for all services
+func (sm *SeedManager) SeedServiceAreas() error {
+	return sm.SeedServiceAreasData()
+}
+
 // SeedAdminConfigurations seeds all admin configurations
 func (sm *SeedManager) SeedAdminConfigurations() error {
 	logrus.Info("Seeding admin configurations...")
