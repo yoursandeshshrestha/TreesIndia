@@ -139,7 +139,7 @@ func (br *BookingRepository) GetBookingsWithFilters(filters *AdminBookingFilters
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("User").Preload("Service").Preload("TimeSlot").Preload("WorkerAssignment.Worker")
+	query = query.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker")
 
 	// Apply sorting
 	if filters.Sort != "" {
