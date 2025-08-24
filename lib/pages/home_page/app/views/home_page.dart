@@ -103,7 +103,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            
             children: [
               Container(
                 width: 40,
@@ -134,17 +133,21 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       );
                     } else {
-                      return ServiceCardsGridWidget(
-                        services: serviceNotifier.filteredServices,
-                        onServiceTap: (service) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            InfoSnackbarWidget(
-                              message: '${service.name} service is coming soon',
-                            ).createSnackBar(),
-                          );
-                        },
+                      return SizedBox(
+                        width: double.maxFinite,
+                        child: ServiceCardsGridWidget(
+                          services: serviceNotifier.filteredServices,
+                          onServiceTap: (service) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              InfoSnackbarWidget(
+                                message:
+                                    '${service.name} service is coming soon',
+                              ).createSnackBar(),
+                            );
+                          },
+                        ),
                       );
                     }
                   },

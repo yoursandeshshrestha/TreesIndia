@@ -7,6 +7,8 @@ import 'package:trees_india/commons/config/api_config.dart';
 import 'package:trees_india/commons/presenters/providers/data_repository_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/domain/entities/refresh_token_request_entity.dart';
+import 'package:trees_india/commons/presenters/providers/login_usecase_providers.dart';
 
 import '../../utils/services/notification_service.dart';
 import 'centralized_local_storage_service.dart';
@@ -22,6 +24,7 @@ class DioClient {
   // Add these fields to control refresh state
   bool _isRefreshing = false;
   final Set<String> _processedErrorIds = <String>{};
+  static const int _maxRetries = 1;
 
   DioClient(
     this._ref,
@@ -216,39 +219,39 @@ class DioClient {
 
       print(message);
 
-      // final refreshSuccess = await _callRefreshToken(_ref);
+      final refreshSuccess = await _callRefreshToken();
 
-      // if (refreshSuccess) {
-      //   print("Token refresh successful, retrying request...");
+      if (refreshSuccess) {
+        print("Token refresh successful, retrying request...");
 
-      //   // Get the retry count from request options
-      //   final retryCount =
-      //       error.requestOptions.extra['retryCount'] as int? ?? 0;
+        // Get the retry count from request options
+        final retryCount =
+            error.requestOptions.extra['retryCount'] as int? ?? 0;
 
-      //   if (retryCount < _maxRetries) {
-      //     // Increment retry count
-      //     error.requestOptions.extra['retryCount'] = retryCount + 1;
+        if (retryCount < _maxRetries) {
+          // Increment retry count
+          error.requestOptions.extra['retryCount'] = retryCount + 1;
 
-      //     // Update the authorization header with new token
-      //     final newToken =
-      //         await _ref.read(centralizedDataRepositoryProvider).getAuthToken();
+          // Update the authorization header with new token
+          final newToken =
+              await _ref.read(centralizedDataRepositoryProvider).getAuthToken();
 
-      //     if (newToken != null) {
-      //       error.requestOptions.headers['Authorization'] = 'Basic $newToken';
+          if (newToken != null) {
+            error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
 
-      //       // Retry the request
-      //       try {
-      //         final response = await _dio.fetch(error.requestOptions);
-      //         handler.resolve(response);
-      //         return;
-      //       } catch (retryError) {
-      //         print("Retry failed: $retryError");
-      //         handler.next(error);
-      //         return;
-      //       }
-      //     }
-      //   }
-      // }
+            // Retry the request
+            try {
+              final response = await _dio.fetch(error.requestOptions);
+              handler.resolve(response);
+              return;
+            } catch (retryError) {
+              print("Retry failed: $retryError");
+              handler.next(error);
+              return;
+            }
+          }
+        }
+      }
 
       // If refresh failed or max retries reached, redirect to login
       await _redirectToLogin(message);
@@ -299,23 +302,67 @@ class DioClient {
     return deviceInformation;
   }
 
-  // Future<bool> _callRefreshToken(Ref ref) async {
-  //   try {
-  //     final localUserJson = await _localStorageService.getData(userStorageKey);
-  //     if (localUserJson != null) {
-  //       final Map<String, dynamic> typedJson =
-  //           convertToStringDynamicMap(localUserJson);
+  Future<bool> _callRefreshToken() async {
+    try {
+      // Get the current auth token data which includes refresh token
+      final localTokenJson =
+          await _localStorageService.getData('user_auth_tokens');
+      if (localTokenJson != null) {
+        final Map<String, dynamic> typedJson =
+            _convertToStringDynamicMap(localTokenJson);
 
-  //       final userModel = UserModel.fromJson(typedJson);
-  //       final isSuccess = await ref
-  //           .read(loginPageProvider.notifier)
-  //           .refreshToken(userModel.token!.refreshToken, _ref);
+        final refreshToken = typedJson['refreshToken'] as String?;
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          // Use the refresh token usecase to refresh the token
+          final refreshTokenUsecase = _ref.read(refreshTokenUsecaseProvider);
+          final response = await refreshTokenUsecase(
+            RefreshTokenRequestEntity(refreshToken: refreshToken),
+          );
 
-  //       return isSuccess;
-  //     }
-  //   } catch (e) {
-  //     print('Error refreshing token: $e');
-  //   }
-  //   return false;
-  // }
+          if (response.success && response.data != null) {
+            // Save new tokens to local storage
+            final tokenData = {
+              'authToken': response.data!.accessToken,
+              'refreshToken': response.data!.refreshToken,
+              'userId': typedJson['userId'] as String? ?? '',
+            };
+
+            await _localStorageService.saveData('user_auth_tokens', tokenData);
+            print('Token refreshed and saved successfully');
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error refreshing token: $e');
+    }
+    return false;
+  }
+
+  // Helper method to safely convert storage data to Map<String, dynamic>
+  Map<String, dynamic> _convertToStringDynamicMap(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    } else if (data is Map) {
+      return data.map((key, value) {
+        if (value is Map) {
+          return MapEntry(key.toString(), _convertToStringDynamicMap(value));
+        } else if (value is List) {
+          return MapEntry(
+              key.toString(),
+              value.map((item) {
+                if (item is Map) {
+                  return _convertToStringDynamicMap(item);
+                }
+                return item;
+              }).toList());
+        } else {
+          return MapEntry(key.toString(), value);
+        }
+      });
+    } else {
+      throw Exception(
+          'Cannot convert data to Map<String, dynamic>: ${data.runtimeType}');
+    }
+  }
 }

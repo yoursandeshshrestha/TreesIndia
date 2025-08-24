@@ -99,8 +99,11 @@ class _CategoryCard extends StatelessWidget {
       child: Container(
         height: 136,
         width: 120,
-        padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+        padding: const EdgeInsets.only(
+            top: 20.0,
+            bottom: AppSpacing.md,
+            left: AppSpacing.sm,
+            right: AppSpacing.sm),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
@@ -117,7 +120,7 @@ class _CategoryCard extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
               width: 48,
@@ -128,7 +131,7 @@ class _CategoryCard extends StatelessWidget {
               ),
               child: Center(child: icon),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 12.0),
             Flexible(
               child: Text(
                 title,

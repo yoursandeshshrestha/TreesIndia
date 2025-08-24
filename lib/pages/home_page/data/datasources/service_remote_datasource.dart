@@ -94,25 +94,26 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
     ),
 
     // Marketplace
-    ServiceModel(
-      id: '9',
-      name: 'Marketplace',
-      description: 'Buy and sell construction materials and tools',
-      iconUrl: 'lib/image/marketplace.png',
-      category: ServiceCategory.rentalAndProperties,
-      isActive: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 15)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
+
     ServiceModel(
       id: '10',
-      name: 'Equipment Rental',
+      name: 'Property Rental',
       description: 'Rent construction equipment and machinery',
       iconUrl: 'lib/image/marketplace.png',
       category: ServiceCategory.rentalAndProperties,
       isActive: true,
       createdAt: DateTime.now().subtract(const Duration(days: 12)),
       updatedAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    ServiceModel(
+      id: '11',
+      name: 'Property Buy and Sell',
+      description: 'Buy and sell properties',
+      iconUrl: 'lib/image/marketplace.png',
+      category: ServiceCategory.rentalAndProperties,
+      isActive: true,
+      createdAt: DateTime.now().subtract(const Duration(days: 10)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
   ];
 
