@@ -13,6 +13,7 @@ import Checkbox from "@/components/Checkbox/Checkbox";
 import { Category, Subcategory, CreateServiceRequest } from "./types";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
+import ServiceAreaSelector from "./components/ServiceAreaSelector";
 
 export default function CreateServicePage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function CreateServicePage() {
     category_id: 0,
     subcategory_id: 0,
     is_active: true,
+    service_area_ids: [],
   });
 
   const loadCategories = async () => {
@@ -97,6 +99,11 @@ export default function CreateServicePage() {
       newErrors.price = "Price is required for fixed price services";
     }
 
+    // Validate service areas
+    if (!formData.service_area_ids || formData.service_area_ids.length === 0) {
+      newErrors.service_area_ids = "At least one service area is required";
+    }
+
     // Validate files if selected
     selectedFiles.forEach((file, index) => {
       const maxSize = 10 * 1024 * 1024; // 10MB
@@ -130,23 +137,31 @@ export default function CreateServicePage() {
 
     setIsLoading(true);
     try {
-      const formDataToSend = new FormData();
+      // Prepare the data for submission
+      const serviceData = {
+        ...formData,
+        service_area_ids: formData.service_area_ids,
+      };
 
-      // Add service data
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formDataToSend.append(key, value.toString());
-        }
-      });
-
-      // Add images if provided
+      let response;
       if (selectedFiles.length > 0) {
+        // Use FormData for file upload
+        const formDataToSend = new FormData();
+
+        // Add service data as JSON string
+        formDataToSend.append("data", JSON.stringify(serviceData));
+
+        // Add images
         selectedFiles.forEach((file) => {
           formDataToSend.append("images", file);
         });
+
+        response = await apiClient.post("/admin/services", formDataToSend);
+      } else {
+        // Use JSON for data without files
+        response = await apiClient.post("/admin/services", serviceData);
       }
 
-      await apiClient.post("/admin/services", formDataToSend);
       toast.success("Service created successfully!");
       router.push("/dashboard/services");
     } catch (error) {
@@ -182,6 +197,13 @@ export default function CreateServicePage() {
       loadSubcategories(categoryIdNum);
     } else {
       setSubcategories([]);
+    }
+  };
+
+  const handleServiceAreasChange = (serviceAreaIds: number[]) => {
+    setFormData((prev) => ({ ...prev, service_area_ids: serviceAreaIds }));
+    if (errors.service_area_ids) {
+      setErrors((prev) => ({ ...prev, service_area_ids: "" }));
     }
   };
 
@@ -430,6 +452,18 @@ export default function CreateServicePage() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Service Areas */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Service Areas
+              </h3>
+              <ServiceAreaSelector
+                selectedServiceAreaIds={formData.service_area_ids}
+                onChange={handleServiceAreasChange}
+                errors={errors}
+              />
             </div>
 
             {/* Image Upload */}
