@@ -9,11 +9,20 @@ export interface Service {
   duration?: string;
   category_id: number;
   subcategory_id: number;
-  category?: Category;
-  subcategory?: Subcategory;
+  category_name: string;
+  subcategory_name: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  service_areas?: ServiceArea[];
+}
+
+export interface ServiceArea {
+  id: number;
+  city: string;
+  state: string;
+  country: string;
+  is_active: boolean;
 }
 
 export interface Category {
@@ -39,6 +48,13 @@ export interface Subcategory {
   updated_at: string;
 }
 
+export interface CreateServiceAreaRequest {
+  city: string;
+  state: string;
+  country: string;
+  is_active?: boolean;
+}
+
 export interface CreateServiceRequest {
   name: string;
   description?: string;
@@ -48,6 +64,7 @@ export interface CreateServiceRequest {
   category_id: number;
   subcategory_id: number;
   is_active?: boolean;
+  service_area_ids: number[];
 }
 
 export interface UpdateServiceRequest {

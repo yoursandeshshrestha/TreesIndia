@@ -68,10 +68,10 @@ export default function ServiceTable({
       accessor: (service: Service) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900">
-            {service.category?.name || "N/A"}
+            {service.category_name || "N/A"}
           </div>
           <div className="text-gray-500">
-            {service.subcategory?.name || "N/A"}
+            {service.subcategory_name || "N/A"}
           </div>
         </div>
       ),
@@ -84,6 +84,29 @@ export default function ServiceTable({
           <span className="text-sm font-medium text-gray-900">
             {service.images ? service.images.length : 0}
           </span>
+        </div>
+      ),
+    },
+    {
+      header: "Service Areas",
+      accessor: (service: Service) => (
+        <div className="text-sm">
+          {service.service_areas && service.service_areas.length > 0 ? (
+            <div className="space-y-1">
+              {service.service_areas.slice(0, 2).map((area, index) => (
+                <div key={area.id} className="text-gray-900">
+                  {area.city}, {area.state}
+                </div>
+              ))}
+              {service.service_areas.length > 2 && (
+                <div className="text-gray-500 text-xs">
+                  +{service.service_areas.length - 2} more
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-400">No areas</span>
+          )}
         </div>
       ),
     },
