@@ -6,11 +6,12 @@ import 'service_state.dart';
 class ServiceNotifier extends StateNotifier<ServiceState> {
   final GetServicesUseCase getServicesUseCase;
 
-  ServiceNotifier({required this.getServicesUseCase}) : super(const ServiceState());
+  ServiceNotifier({required this.getServicesUseCase})
+      : super(const ServiceState());
 
   Future<void> loadServices() async {
     state = state.copyWith(status: ServiceStatus.loading);
-    
+
     try {
       final services = await getServicesUseCase();
       state = state.copyWith(
@@ -30,7 +31,7 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
       status: ServiceStatus.loading,
       selectedCategory: category,
     );
-    
+
     try {
       final services = await getServicesUseCase.getByCategory(category);
       state = state.copyWith(

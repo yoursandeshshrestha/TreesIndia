@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
 import '../../../domain/entities/service_entity.dart';
 
 class ServiceCategoryTabsWidget extends StatelessWidget {
-  final ServiceCategory selectedCategory;
+  final ServiceCategory? selectedCategory;
   final Function(ServiceCategory) onCategorySelected;
 
   const ServiceCategoryTabsWidget({
     super.key,
-    required this.selectedCategory,
+    this.selectedCategory,
     required this.onCategorySelected,
   });
 
@@ -21,58 +19,132 @@ class ServiceCategoryTabsWidget extends StatelessWidget {
         return 'Home Services';
       case ServiceCategory.constructionServices:
         return 'Construction Services';
-      case ServiceCategory.marketplace:
-        return 'Marketplace';
+      case ServiceCategory.rentalAndProperties:
+        return 'Rental & Properties';
+    }
+  }
+
+  Widget _getCategoryIcon(ServiceCategory category) {
+    switch (category) {
+      case ServiceCategory.homeServices:
+        return const Icon(
+          Icons.home_repair_service_rounded,
+          size: 20,
+          color: AppColors.brandPrimary600,
+        );
+      case ServiceCategory.constructionServices:
+        return const Icon(
+          Icons.construction_outlined,
+          size: 20,
+          color: AppColors.brandPrimary600,
+        );
+      case ServiceCategory.rentalAndProperties:
+        return const Icon(
+          Icons.home_outlined,
+          size: 20,
+          color: AppColors.brandPrimary600,
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
+      padding: const EdgeInsets.only(left: 0),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: ServiceCategory.values.asMap().entries.map((entry) {
-            final index = entry.key;
-            final category = entry.value;
-            final isSelected = category == selectedCategory;
+            int index = entry.key;
+            ServiceCategory category = entry.value;
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: index == 0 ? AppSpacing.lg : AppSpacing.sm,
-                right: index == ServiceCategory.values.length - 1
-                    ? AppSpacing.lg
-                    : 0,
+            return Container(
+              margin: EdgeInsets.only(
+                left: index == 0 ? AppSpacing.lg : 0,
+                right: index < ServiceCategory.values.length - 1
+                    ? AppSpacing.md
+                    : AppSpacing.lg,
               ),
-              child: GestureDetector(
+              child: _CategoryCard(
+                category: category,
+                title: _getCategoryDisplayName(category),
+                icon: _getCategoryIcon(category),
                 onTap: () => onCategorySelected(category),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.brandPrimary600
-                        : AppColors.brandNeutral100,
-                    borderRadius: BorderRadius.circular(40.0),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.brandPrimary600
-                          : AppColors.brandNeutral300,
-                    ),
-                  ),
-                  child: B4Regular(
-                    text: _getCategoryDisplayName(category),
-                    color: isSelected
-                        ? AppColors.white
-                        : AppColors.brandNeutral700,
-                  ),
-                ),
               ),
             );
           }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final ServiceCategory category;
+  final String title;
+  final Widget icon;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.category,
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 136,
+        width: 120,
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.brandNeutral200,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNeutral900.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.brandPrimary50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(child: icon),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.brandNeutral900,
+                  height: 1.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                softWrap: true,
+              ),
+            ),
+          ],
         ),
       ),
     );

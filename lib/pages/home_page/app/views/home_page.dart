@@ -10,6 +10,7 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
+import 'package:trees_india/pages/home_page/app/viewmodels/service_notifier.dart';
 import 'package:trees_india/pages/home_page/app/views/widgets/service_banner_widget.dart';
 import '../providers/service_providers.dart';
 import '../../domain/entities/service_entity.dart';
@@ -32,11 +33,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _loadCurrentLocation();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(serviceNotifierProvider.notifier)
-          .loadServicesByCategory(ServiceCategory.homeServices);
-    });
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -77,6 +73,88 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (result == true) {
       _loadCurrentLocation();
     }
+  }
+
+  String _getCategoryDisplayName(ServiceCategory category) {
+    switch (category) {
+      case ServiceCategory.homeServices:
+        return 'Home Services';
+      case ServiceCategory.constructionServices:
+        return 'Construction Services';
+      case ServiceCategory.rentalAndProperties:
+        return 'Rental & Properties';
+    }
+  }
+
+  void _showServicesBottomSheet(BuildContext context, ServiceCategory category,
+      ServiceNotifier serviceNotifier) {
+    serviceNotifier.loadServicesByCategory(category);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        builder: (context, scrollController) => Container(
+          width: double.maxFinite,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.brandNeutral300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              H3Bold(
+                text: _getCategoryDisplayName(category),
+                color: AppColors.brandNeutral900,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Expanded(
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final serviceState = ref.watch(serviceNotifierProvider);
+
+                    if (serviceState.status == ServiceStatus.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (serviceState.status == ServiceStatus.failure) {
+                      return Center(
+                        child: B2Regular(
+                          text: 'Failed to load services',
+                          color: AppColors.stateRed600,
+                        ),
+                      );
+                    } else {
+                      return ServiceCardsGridWidget(
+                        services: serviceNotifier.filteredServices,
+                        onServiceTap: (service) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            InfoSnackbarWidget(
+                              message: '${service.name} service is coming soon',
+                            ).createSnackBar(),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -156,7 +234,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     H2Bold(
-                      text: 'Service Categories',
+                      text: 'What are you looking for?',
                       color: AppColors.brandNeutral900,
                     ),
                   ],
@@ -164,39 +242,11 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
 
               const SizedBox(height: AppSpacing.lg),
-              // Service Category Tabs
+              // Service Category Cards
               ServiceCategoryTabsWidget(
-                selectedCategory: serviceState.selectedCategory,
                 onCategorySelected: (category) {
-                  serviceNotifier.setSelectedCategory(category);
+                  _showServicesBottomSheet(context, category, serviceNotifier);
                 },
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // Services Grid
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: serviceState.status == ServiceStatus.loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : serviceState.status == ServiceStatus.failure
-                        ? Center(
-                            child: B2Regular(
-                              text: 'Failed to load services',
-                              color: AppColors.stateRed600,
-                            ),
-                          )
-                        : ServiceCardsGridWidget(
-                            services: serviceNotifier.filteredServices,
-                            onServiceTap: (service) {
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  InfoSnackbarWidget(
-                                          message:
-                                              '${service.name} service is coming soon')
-                                      .createSnackBar());
-                            },
-                          ),
               ),
 
               const SizedBox(height: AppSpacing.lg),

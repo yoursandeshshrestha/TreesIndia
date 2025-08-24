@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum ServiceCategory { homeServices, constructionServices, marketplace }
+enum ServiceCategory { homeServices, constructionServices, rentalAndProperties }
 
 class ServiceEntity extends Equatable {
   final String id;

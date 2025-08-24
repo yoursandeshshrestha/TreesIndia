@@ -8,7 +8,6 @@ abstract class ServiceRemoteDataSource {
 }
 
 class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
-  
   static final List<ServiceModel> _dummyServices = [
     // Home Services
     ServiceModel(
@@ -100,7 +99,7 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
       name: 'Marketplace',
       description: 'Buy and sell construction materials and tools',
       iconUrl: 'lib/image/marketplace.png',
-      category: ServiceCategory.marketplace,
+      category: ServiceCategory.rentalAndProperties,
       isActive: true,
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -110,7 +109,7 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
       name: 'Equipment Rental',
       description: 'Rent construction equipment and machinery',
       iconUrl: 'lib/image/marketplace.png',
-      category: ServiceCategory.marketplace,
+      category: ServiceCategory.rentalAndProperties,
       isActive: true,
       createdAt: DateTime.now().subtract(const Duration(days: 12)),
       updatedAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -125,7 +124,8 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<List<ServiceModel>> getServicesByCategory(ServiceCategory category) async {
+  Future<List<ServiceModel>> getServicesByCategory(
+      ServiceCategory category) async {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 300));
     return _dummyServices
