@@ -13,14 +13,16 @@ import (
 )
 
 type ServiceService struct {
-	serviceRepo *repositories.ServiceRepository
-	cloudinary  *CloudinaryService
+	serviceRepo     *repositories.ServiceRepository
+	serviceAreaRepo *repositories.ServiceAreaRepository
+	cloudinary      *CloudinaryService
 }
 
 func NewServiceService(serviceRepo *repositories.ServiceRepository, cloudinary *CloudinaryService) *ServiceService {
 	return &ServiceService{
-		serviceRepo: serviceRepo,
-		cloudinary:  cloudinary,
+		serviceRepo:     serviceRepo,
+		serviceAreaRepo: repositories.NewServiceAreaRepository(),
+		cloudinary:      cloudinary,
 	}
 }
 
@@ -41,6 +43,25 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 	if req.PriceType == "inquiry" && req.Price != nil {
 		logrus.Error("ServiceService.CreateService validation error: price should not be provided when price_type is inquiry")
 		return nil, errors.New("price should not be provided when price_type is inquiry")
+	}
+
+	// Validate that service area IDs exist
+	if len(req.ServiceAreaIDs) == 0 {
+		logrus.Error("ServiceService.CreateService validation error: at least one service area ID is required")
+		return nil, errors.New("at least one service area ID is required")
+	}
+
+	// Verify that all service area IDs exist
+	for _, areaID := range req.ServiceAreaIDs {
+		exists, err := ss.serviceAreaRepo.ExistsByID(areaID)
+		if err != nil {
+			logrus.Errorf("ServiceService.CreateService error checking service area ID %d: %v", areaID, err)
+			return nil, err
+		}
+		if !exists {
+			logrus.Errorf("ServiceService.CreateService validation error: service area ID %d does not exist", areaID)
+			return nil, errors.New("service area ID does not exist")
+		}
 	}
 
 	logrus.Info("ServiceService.CreateService validation passed")
@@ -98,7 +119,19 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 
 	logrus.Infof("ServiceService.CreateService service created with ID: %d", service.ID)
 
-	// Fetch the created service with subcategory
+	// Associate service areas with the service using many-to-many relationship
+	if len(req.ServiceAreaIDs) > 0 {
+		err = ss.serviceRepo.AssociateServiceAreas(service.ID, req.ServiceAreaIDs)
+		if err != nil {
+			logrus.Errorf("ServiceService.CreateService failed to associate service areas: %v", err)
+			// Clean up the created service if association fails
+			ss.serviceRepo.Delete(service.ID)
+			return nil, err
+		}
+		logrus.Infof("ServiceService.CreateService associated %d service areas with service", len(req.ServiceAreaIDs))
+	}
+
+	// Fetch the created service with service areas
 	logrus.Info("ServiceService.CreateService fetching created service")
 	return ss.serviceRepo.GetByID(service.ID)
 }
@@ -330,4 +363,81 @@ func (ss *ServiceService) ToggleStatus(id uint) (*models.Service, error) {
 	
 	// Return the updated service
 	return ss.serviceRepo.GetByID(id)
+}
+
+// GetServicesByLocation gets all services available in a specific location
+func (ss *ServiceService) GetServicesByLocation(city, state string) ([]models.Service, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServicesByLocation panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetServicesByLocation called with city: %s, state: %s", city, state)
+	
+	// Get service areas for the location
+	serviceAreaRepo := repositories.NewServiceAreaRepository()
+	var serviceAreas []models.ServiceArea
+	if err := serviceAreaRepo.FindServicesByLocation(&serviceAreas, city, state); err != nil {
+		logrus.Errorf("ServiceService.GetServicesByLocation error getting service areas: %v", err)
+		return nil, err
+	}
+	
+	// Extract unique service area IDs
+	serviceAreaIDs := make([]uint, 0, len(serviceAreas))
+	for _, area := range serviceAreas {
+		serviceAreaIDs = append(serviceAreaIDs, area.ID)
+	}
+	
+	if len(serviceAreaIDs) == 0 {
+		logrus.Infof("ServiceService.GetServicesByLocation no service areas found for location: %s, %s", city, state)
+		return []models.Service{}, nil
+	}
+	
+	// Get service IDs from the junction table
+	var serviceIDs []uint
+	if err := ss.serviceRepo.GetDB().Table("service_service_areas").
+		Select("DISTINCT service_id").
+		Where("service_area_id IN ?", serviceAreaIDs).
+		Pluck("service_id", &serviceIDs).Error; err != nil {
+		logrus.Errorf("ServiceService.GetServicesByLocation error getting service IDs: %v", err)
+		return nil, err
+	}
+	
+	// Get services
+	var services []models.Service
+	for _, serviceID := range serviceIDs {
+		service, err := ss.serviceRepo.GetByID(serviceID)
+		if err != nil {
+			logrus.Warnf("ServiceService.GetServicesByLocation failed to get service ID %d: %v", serviceID, err)
+			continue
+		}
+		if service.IsActive {
+			services = append(services, *service)
+		}
+	}
+	
+	logrus.Infof("ServiceService.GetServicesByLocation returning %d services", len(services))
+	return services, nil
+}
+
+// GetServiceSummariesWithFiltersPaginated retrieves service summaries with advanced filtering and pagination
+func (ss *ServiceService) GetServiceSummariesWithFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.ServiceSummary, int64, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetServiceSummariesWithFiltersPaginated panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetServiceSummariesWithFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, excludeInactive: %v, page: %d, limit: %d", 
+		priceType, category, subcategory, priceMin, priceMax, excludeInactive, page, limit)
+	
+	services, total, err := ss.serviceRepo.GetSummariesWithFiltersPaginated(priceType, category, subcategory, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
+	if err != nil {
+		logrus.Errorf("ServiceService.GetServiceSummariesWithFiltersPaginated error: %v", err)
+		return nil, 0, err
+	}
+	
+	logrus.Infof("ServiceService.GetServiceSummariesWithFiltersPaginated returning %d services (total: %d)", len(services), total)
+	return services, total, nil
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -18,6 +19,8 @@ type BookingService struct {
 	serviceRepo      *repositories.ServiceRepository
 	userRepo         *repositories.UserRepository
 	workerAssignmentRepo *repositories.WorkerAssignmentRepository
+	serviceAreaRepo  *repositories.ServiceAreaRepository
+	locationRepo     *repositories.LocationRepository
 	paymentService   *PaymentService
 	razorpayService  *RazorpayService
 	notificationService *NotificationService
@@ -29,6 +32,8 @@ func NewBookingService() *BookingService {
 		serviceRepo:      repositories.NewServiceRepository(),
 		userRepo:         repositories.NewUserRepository(),
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
+		serviceAreaRepo:  repositories.NewServiceAreaRepository(),
+		locationRepo:     repositories.NewLocationRepository(),
 		paymentService:   NewPaymentService(),
 		razorpayService:  NewRazorpayService(),
 		notificationService: NewNotificationService(),
@@ -44,6 +49,15 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 	}
 	if !service.IsActive {
 		return nil, nil, errors.New("service is not active")
+	}
+
+	// 1.5. Check service availability using city and state from the address object
+	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to check service availability: %v", err)
+	}
+	if !available {
+		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
 	}
 
 	// 2. Parse scheduled date and time
@@ -134,6 +148,13 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 		now := time.Now()
 		holdExpiresAt := now.Add(time.Duration(holdTimeMinutes) * time.Minute)
 
+		// Convert address object to JSON string for storage
+		addressJSON, err := json.Marshal(req.Address)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to marshal address: %v", err)
+		}
+		addressStr := string(addressJSON)
+		
 		// 8. Create booking with temporary hold status
 		booking := &models.Booking{
 			UserID:              userID,
@@ -144,7 +165,7 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			ScheduledDate:       &scheduledDate,
 			ScheduledTime:       &scheduledTime,
 			ScheduledEndTime:    &scheduledEndTime,
-			Address:             &req.Address,
+			Address:             &addressStr,
 			Description:         req.Description,
 			ContactPerson:       req.ContactPerson,
 			ContactPhone:        req.ContactPhone,
@@ -201,6 +222,13 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			// Generate booking reference
 			bookingReference := bs.generateBookingReference()
 
+			// Convert address object to JSON string for storage
+			addressJSON, err := json.Marshal(req.Address)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to marshal address: %v", err)
+			}
+			addressStr := string(addressJSON)
+			
 			// Create booking with minimal data for inquiry-based booking
 			booking := &models.Booking{
 				UserID:              userID,
@@ -210,7 +238,7 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 				BookingType:         bookingType,
 				ScheduledDate:       &scheduledDate,
 				ScheduledTime:       &scheduledTime,
-				Address:             &req.Address,
+				Address:             &addressStr,
 				Description:         req.Description,
 				ContactPerson:       req.ContactPerson,
 				ContactPhone:        req.ContactPhone,
@@ -247,6 +275,13 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			// Generate booking reference
 			bookingReference := bs.generateBookingReference()
 
+			// Convert address object to JSON string for storage
+			addressJSON, err := json.Marshal(req.Address)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to marshal address: %v", err)
+			}
+			addressStr := string(addressJSON)
+			
 			// Create booking with minimal data for inquiry-based booking
 			booking := &models.Booking{
 				UserID:              userID,
@@ -256,7 +291,7 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 				BookingType:         bookingType,
 				ScheduledDate:       &scheduledDate,
 				ScheduledTime:       &scheduledTime,
-				Address:             &req.Address,
+				Address:             &addressStr,
 				Description:         req.Description,
 				ContactPerson:       req.ContactPerson,
 				ContactPhone:        req.ContactPhone,
@@ -297,7 +332,16 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		return nil, nil, errors.New("service is not inquiry-based")
 	}
 
-	// 3. Check inquiry booking fee
+	// 3. Check service availability using the address from the inquiry request
+	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to check service availability: %v", err)
+	}
+	if !available {
+		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
+	}
+
+	// 4. Check inquiry booking fee
 	adminConfigRepo := repositories.NewAdminConfigRepository()
 	feeConfig, err := adminConfigRepo.GetByKey("inquiry_booking_fee")
 	if err != nil {
@@ -310,7 +354,7 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		feeAmount = 0 // Default to 0 if parsing fails
 	}
 
-	// 4. If fee is required, try to create Razorpay order
+	// 5. If fee is required, try to create Razorpay order
 	if feeAmount > 0 {
 		logrus.Infof("Inquiry booking fee required: %d", feeAmount)
 		
@@ -325,6 +369,15 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 			
 			feeFloat := float64(feeAmount)
 			
+			// Store inquiry data in metadata for later retrieval
+			inquiryMetadata := models.JSONMap{
+				"address":             req.Address,
+				"description":         req.Description,
+				"contact_person":      req.ContactPerson,
+				"contact_phone":       req.ContactPhone,
+				"special_instructions": req.SpecialInstructions,
+			}
+			
 			// Create payment request (same pattern as fixed price booking)
 			paymentReq := &models.CreatePaymentRequest{
 				UserID:            userID,
@@ -335,6 +388,7 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 				RelatedEntityType: "inquiry_booking",
 				RelatedEntityID:   0, // Will be set after booking creation
 				Description:       "Inquiry booking fee",
+				Metadata:          &inquiryMetadata,
 			}
 			
 			logrus.Infof("Creating Razorpay order for inquiry booking fee: %f", feeFloat)
@@ -351,14 +405,21 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		}
 	}
 	
-	// 5. Create booking directly (either no fee required or payment failed)
+	// 6. Create booking directly (either no fee required or payment failed)
 	logrus.Infof("Creating inquiry booking directly")
 		
-		// 5. Generate booking reference
+		// 7. Generate booking reference
 		bookingReference := bs.generateBookingReference()
 		logrus.Infof("Generated booking reference: %s", bookingReference)
 
-		// 6. Create booking with minimal data for inquiry-based booking
+		// 8. Create booking with address data from the inquiry request
+		// Convert address object to JSON string for storage
+		addressJSON, err := json.Marshal(req.Address)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to marshal address: %v", err)
+		}
+		addressStr := string(addressJSON)
+		
 		booking := &models.Booking{
 			UserID:              userID,
 			ServiceID:           req.ServiceID,
@@ -368,21 +429,21 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 			ScheduledDate:       nil, // Will be set later
 			ScheduledTime:       nil, // Will be set later
 			ScheduledEndTime:    nil, // Will be set later
-			Address:             nil, // Will be filled later
-			Description:         "",  // Will be filled later
-			ContactPerson:       "",  // Will be filled later
-			ContactPhone:        "",  // Will be filled later
-			SpecialInstructions: "",  // Will be filled later
+			Address:             &addressStr,
+			Description:         req.Description,
+			ContactPerson:       req.ContactPerson,
+			ContactPhone:        req.ContactPhone,
+			SpecialInstructions: req.SpecialInstructions,
 		}
 
-		// 7. Save booking
+		// 9. Save booking
 		booking, err = bs.bookingRepo.Create(booking)
 		if err != nil {
 			logrus.Errorf("Failed to create inquiry booking: %v", err)
 			return nil, nil, err
 		}
 
-		// 8. Send notification (optional)
+		// 10. Send notification (optional)
 		// bs.notificationService.SendInquiryBookingNotification(booking)
 
 		return booking, nil, nil
@@ -1032,29 +1093,76 @@ func (bs *BookingService) VerifyInquiryPayment(userID uint, req *models.VerifyIn
 		return nil, err
 	}
 
-	// 7. Update the existing payment record (from the initial inquiry booking)
-	// Find the payment record by Razorpay order ID and update it
+	// 7. Get the existing payment record to retrieve inquiry data
 	existingPayment, err := bs.paymentService.GetPaymentByRazorpayOrderID(req.RazorpayOrderID)
 	if err != nil {
-		logrus.Warnf("Could not find existing payment record: %v", err)
-	} else {
-		// Update payment record with booking link and mark as completed
-		existingPayment.RelatedEntityType = "booking"
-		existingPayment.RelatedEntityID = booking.ID
-		existingPayment.Status = models.PaymentStatusCompleted
-		existingPayment.RazorpayPaymentID = &req.RazorpayPaymentID
-		existingPayment.RazorpaySignature = &req.RazorpaySignature
-		now := time.Now()
-		existingPayment.CompletedAt = &now
-		existingPayment.Notes = "Inquiry booking fee - payment completed"
-		
-		err = bs.paymentService.UpdatePayment(existingPayment)
+		logrus.Errorf("Could not find existing payment record: %v", err)
+		return nil, fmt.Errorf("payment record not found: %v", err)
+	}
+	
+	// 8. Retrieve inquiry data from payment metadata
+	var inquiryData struct {
+		Address             models.BookingAddress `json:"address"`
+		Description         string                `json:"description"`
+		ContactPerson       string                `json:"contact_person"`
+		ContactPhone        string                `json:"contact_phone"`
+		SpecialInstructions string                `json:"special_instructions"`
+	}
+	
+	if existingPayment.Metadata != nil {
+		// Convert metadata back to inquiry data
+		metadataBytes, err := json.Marshal(existingPayment.Metadata)
 		if err != nil {
-			logrus.Errorf("Failed to update payment record: %v", err)
-			// Don't fail the booking creation if payment update fails
-		} else {
-			logrus.Infof("Payment record updated successfully for booking ID: %d", booking.ID)
+			logrus.Errorf("Failed to marshal payment metadata: %v", err)
+			return nil, fmt.Errorf("failed to retrieve inquiry data: %v", err)
 		}
+		
+		err = json.Unmarshal(metadataBytes, &inquiryData)
+		if err != nil {
+			logrus.Errorf("Failed to unmarshal inquiry data: %v", err)
+			return nil, fmt.Errorf("failed to parse inquiry data: %v", err)
+		}
+	} else {
+		logrus.Error("Payment metadata is nil - no inquiry data found")
+		return nil, errors.New("inquiry data not found in payment metadata")
+	}
+	
+	// 9. Update booking with inquiry data
+	addressJSON, err := json.Marshal(inquiryData.Address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal address: %v", err)
+	}
+	addressStr := string(addressJSON)
+	
+	booking.Address = &addressStr
+	booking.Description = inquiryData.Description
+	booking.ContactPerson = inquiryData.ContactPerson
+	booking.ContactPhone = inquiryData.ContactPhone
+	booking.SpecialInstructions = inquiryData.SpecialInstructions
+	
+	// 10. Update the booking with inquiry data
+	err = bs.bookingRepo.Update(booking)
+	if err != nil {
+		logrus.Errorf("Failed to update booking with inquiry data: %v", err)
+		return nil, fmt.Errorf("failed to update booking: %v", err)
+	}
+	
+	// 11. Update payment record with booking link and mark as completed
+	existingPayment.RelatedEntityType = "booking"
+	existingPayment.RelatedEntityID = booking.ID
+	existingPayment.Status = models.PaymentStatusCompleted
+	existingPayment.RazorpayPaymentID = &req.RazorpayPaymentID
+	existingPayment.RazorpaySignature = &req.RazorpaySignature
+	now := time.Now()
+	existingPayment.CompletedAt = &now
+	existingPayment.Notes = "Inquiry booking fee - payment completed"
+	
+	err = bs.paymentService.UpdatePayment(existingPayment)
+	if err != nil {
+		logrus.Errorf("Failed to update payment record: %v", err)
+		// Don't fail the booking creation if payment update fails
+	} else {
+		logrus.Infof("Payment record updated successfully for booking ID: %d", booking.ID)
 	}
 
 	// 8. Send notification (optional)
