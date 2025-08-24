@@ -160,3 +160,50 @@ export const queryKeys = {
   auth: ["auth"] as const,
   profile: ["profile"] as const,
 } as const;
+
+// Available Workers API Types
+export interface AvailableWorkersRequest {
+  scheduled_time: string; // ISO format: 2024-01-15T14:00:00Z
+  service_duration?: number; // Optional, default 120 minutes
+}
+
+export interface AvailableWorkersResponse {
+  success: boolean;
+  message: string;
+  data: {
+    available_workers: Worker[];
+    scheduled_time: string;
+    service_duration: number;
+  };
+}
+
+export interface Worker {
+  ID: number;
+  name: string;
+  phone: string;
+  email?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  worker?: {
+    id: number;
+    user_id: number;
+    service_id: number;
+    hourly_rate: number;
+    is_available: boolean;
+    rating: number;
+    total_bookings: number;
+    worker_type: "treesindia" | "independent";
+    skills?: string;
+    experience_years?: number;
+    service_areas?: string;
+    earnings: number;
+    total_jobs: number;
+    service?: {
+      id: number;
+      name: string;
+      price?: number;
+      category_id: number;
+    };
+  };
+}

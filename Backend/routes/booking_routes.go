@@ -45,12 +45,34 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 	bookings.POST("/inquiry", middleware.AuthMiddleware(), bookingController.CreateInquiryBooking)
 	bookings.POST("/inquiry/verify-payment", middleware.AuthMiddleware(), bookingController.VerifyInquiryPayment)
 
+	// Quote management routes (user authentication required)
+	quoteController := controllers.NewQuoteController()
+	{
+		// POST /api/v1/bookings/:id/accept-quote - Accept quote
+		bookings.POST("/:id/accept-quote", middleware.AuthMiddleware(), quoteController.AcceptQuote)
+		
+		// POST /api/v1/bookings/:id/reject-quote - Reject quote
+		bookings.POST("/:id/reject-quote", middleware.AuthMiddleware(), quoteController.RejectQuote)
+		
+		// POST /api/v1/bookings/:id/schedule-after-quote - Schedule after quote acceptance
+		bookings.POST("/:id/schedule-after-quote", middleware.AuthMiddleware(), quoteController.ScheduleAfterQuote)
+		
+		// GET /api/v1/bookings/:id/quote-info - Get quote information
+		bookings.GET("/:id/quote-info", quoteController.GetQuoteInfo)
+	}
+
 	// Admin booking routes (admin authentication required)
 	adminBookings := router.Group("/admin/bookings")
 	adminBookings.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
 	{
 		// GET /api/v1/admin/bookings - Get all bookings
 		adminBookings.GET("", bookingController.AdminGetAllBookings)
+		
+		// GET /api/v1/admin/bookings/dashboard - Get comprehensive dashboard data
+		adminBookings.GET("/dashboard", bookingController.GetBookingDashboard)
+		
+		// GET /api/v1/admin/bookings/:id - Get detailed booking by ID
+		adminBookings.GET("/:id", bookingController.AdminGetBookingByID)
 		
 		// PUT /api/v1/admin/bookings/:id/status - Update booking status
 		adminBookings.PUT("/:id/status", bookingController.AdminUpdateBookingStatus)
@@ -60,5 +82,18 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 		
 		// GET /api/v1/admin/bookings/stats - Get booking statistics
 		adminBookings.GET("/stats", bookingController.GetBookingStats)
+		
+		// Quote management routes (admin only)
+		// POST /api/v1/admin/bookings/:id/provide-quote - Provide quote
+		adminBookings.POST("/:id/provide-quote", quoteController.ProvideQuote)
+		
+		// PUT /api/v1/admin/bookings/:id/update-quote - Update quote
+		adminBookings.PUT("/:id/update-quote", quoteController.UpdateQuote)
+		
+		// GET /api/v1/admin/bookings/inquiries - Get inquiry bookings
+		adminBookings.GET("/inquiries", quoteController.GetInquiryBookings)
+		
+		// POST /api/v1/admin/bookings/cleanup-expired-quotes - Cleanup expired quotes
+		adminBookings.POST("/cleanup-expired-quotes", quoteController.CleanupExpiredQuotes)
 	}
 }

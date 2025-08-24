@@ -38,7 +38,7 @@ type ChatRoom struct {
 	Booking       *Booking       `json:"booking,omitempty" gorm:"foreignKey:BookingID"`
 	Property      *Property      `json:"property,omitempty" gorm:"foreignKey:PropertyID"`
 	WorkerInquiry *WorkerInquiry `json:"worker_inquiry,omitempty" gorm:"foreignKey:WorkerInquiryID"`
-	Participants  []ChatRoomParticipant `json:"participants,omitempty" gorm:"foreignKey:RoomID"`
+	// Participants relationship removed - using direct user associations instead
 	Messages      []ChatMessage         `json:"messages,omitempty" gorm:"foreignKey:RoomID"`
 }
 

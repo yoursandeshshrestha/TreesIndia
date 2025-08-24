@@ -47,10 +47,28 @@ func (war *WorkerAssignmentRepository) GetByBookingID(bookingID uint) (*models.W
 	return &assignment, nil
 }
 
+// Update updates an existing worker assignment
+func (war *WorkerAssignmentRepository) Update(assignment *models.WorkerAssignment) error {
+	return war.db.Save(assignment).Error
+}
+
+// Delete deletes a worker assignment by ID
+func (war *WorkerAssignmentRepository) Delete(id uint) error {
+	return war.db.Delete(&models.WorkerAssignment{}, id).Error
+}
+
 // GetWorkerAssignments gets assignments for a worker
 func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filters *WorkerAssignmentFilters) ([]models.WorkerAssignment, *Pagination, error) {
 	var assignments []models.WorkerAssignment
 	var total int64
+
+	// Set default values if not provided
+	if filters.Page <= 0 {
+		filters.Page = 1
+	}
+	if filters.Limit <= 0 {
+		filters.Limit = 10 // Default limit
+	}
 
 	query := war.db.Where("worker_id = ?", workerID)
 
@@ -92,11 +110,6 @@ func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filte
 	}
 
 	return assignments, pagination, nil
-}
-
-// Update updates a worker assignment
-func (war *WorkerAssignmentRepository) Update(assignment *models.WorkerAssignment) error {
-	return war.db.Save(assignment).Error
 }
 
 // WorkerAssignmentFilters represents filters for worker assignments

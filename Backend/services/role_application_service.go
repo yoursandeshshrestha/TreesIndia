@@ -925,14 +925,8 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, req *m
 	return application, nil
 }
 
-// createRoleEntry creates a role-specific entry in the appropriate table and links it via UserRole
+// createRoleEntry creates a role-specific entry in the appropriate table
 func (s *RoleApplicationService) createRoleEntry(tx *gorm.DB, userID uint, roleType models.UserType) error {
-	// Deactivate any existing user roles for this user
-	err := tx.Model(&models.UserRole{}).Where("user_id = ?", userID).Update("is_active", false).Error
-	if err != nil {
-		logrus.Errorf("Failed to deactivate existing user roles for user %d: %v", userID, err)
-		return err
-	}
 	switch roleType {
 	case models.UserTypeWorker:
 		// Create worker entry
@@ -940,15 +934,7 @@ func (s *RoleApplicationService) createRoleEntry(tx *gorm.DB, userID uint, roleT
 		if err := tx.Create(worker).Error; err != nil {
 			return err
 		}
-
-		// Create UserRole entry
-		userRole := &models.UserRole{
-			UserID:   userID,
-			RoleType: "worker",
-			RoleID:   worker.ID,
-			IsActive: true,
-		}
-		return tx.Create(userRole).Error
+		return nil
 
 	case models.UserTypeBroker:
 		// Create broker entry
@@ -956,15 +942,7 @@ func (s *RoleApplicationService) createRoleEntry(tx *gorm.DB, userID uint, roleT
 		if err := tx.Create(broker).Error; err != nil {
 			return err
 		}
-
-		// Create UserRole entry
-		userRole := &models.UserRole{
-			UserID:   userID,
-			RoleType: "broker",
-			RoleID:   broker.ID,
-			IsActive: true,
-		}
-		return tx.Create(userRole).Error
+		return nil
 
 	default:
 		return errors.New("unsupported role type")
@@ -1117,19 +1095,7 @@ func (s *RoleApplicationService) createBrokerRecord(userID uint, req *models.Cre
 		return
 	}
 	
-	// Create UserRole entry to link user with broker
-	userRole := &models.UserRole{
-		UserID:   userID,
-		RoleType: "broker",
-		RoleID:   broker.ID,
-		IsActive: true,
-	}
-	
-	err = s.db.Create(userRole).Error
-	if err != nil {
-		logrus.Errorf("Failed to create user role for broker user %d: %v", userID, err)
-		return
-	}
+	// User roles are now handled through UserType enum in users table
 	
 	logrus.Infof("Successfully created broker record for user %d with license %s and agency %s", userID, req.BrokerLicense, req.BrokerAgency)
 }

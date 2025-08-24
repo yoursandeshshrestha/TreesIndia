@@ -1,4 +1,11 @@
-import { Edit, Trash2, Image as ImageIcon, Package } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  Image as ImageIcon,
+  Package,
+  DollarSign,
+  MessageSquare,
+} from "lucide-react";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { Service } from "../types";
@@ -26,6 +33,30 @@ export default function ServiceTable({
       return "N/A";
     }
     return `₹${price.toLocaleString()}`;
+  };
+
+  const getPriceTypeIcon = (priceType: string) => {
+    if (priceType === "fixed") {
+      return <DollarSign size={16} className="text-green-600" />;
+    }
+    return <MessageSquare size={16} className="text-blue-600" />;
+  };
+
+  const getPriceTypeBadge = (priceType: string) => {
+    if (priceType === "fixed") {
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <DollarSign size={12} className="mr-1" />
+          Fixed Price
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <MessageSquare size={12} className="mr-1" />
+        Inquiry Based
+      </span>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -59,6 +90,7 @@ export default function ServiceTable({
                 {service.description}
               </div>
             )}
+            <div className="mt-1">{getPriceTypeBadge(service.price_type)}</div>
           </div>
         </div>
       ),
@@ -111,14 +143,22 @@ export default function ServiceTable({
       ),
     },
     {
-      header: "Price",
+      header: "Pricing",
       accessor: (service: Service) => (
         <div className="text-sm">
-          <div className="font-medium text-gray-900">
-            {formatPrice(service.price, service.price_type)}
+          <div className="flex items-center gap-2 mb-1">
+            {getPriceTypeIcon(service.price_type)}
+            <div className="font-medium text-gray-900">
+              {formatPrice(service.price, service.price_type)}
+            </div>
           </div>
           {service.duration && (
-            <div className="text-gray-500">{service.duration}</div>
+            <div className="text-gray-500 text-xs">
+              Duration: {service.duration}
+            </div>
+          )}
+          {service.price_type === "inquiry" && (
+            <div className="text-blue-600 text-xs">Quote-based pricing</div>
           )}
         </div>
       ),

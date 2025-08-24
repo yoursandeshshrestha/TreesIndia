@@ -56,19 +56,7 @@ func (cs *ChatService) CreateChatRoom(req *models.CreateChatRoomRequest) (*model
 		return nil, err
 	}
 
-	// Add participants
-	for _, userID := range req.ParticipantIDs {
-		participant := &models.ChatRoomParticipant{
-			RoomID: chatRoom.ID,
-			UserID: userID,
-			Role:   models.ParticipantRoleUser, // Default role, can be updated later
-		}
-		
-		if err := cs.chatRoomRepo.AddParticipant(participant); err != nil {
-			logrus.Errorf("ChatService.CreateChatRoom failed to add participant %d: %v", userID, err)
-			return nil, err
-		}
-	}
+	// Participants are now handled through messages - no separate participant table needed
 
 	logrus.Infof("ChatService.CreateChatRoom successfully created room ID: %d", chatRoom.ID)
 	return chatRoom, nil
@@ -92,15 +80,10 @@ func (cs *ChatService) GetUserChatRooms(userID uint, req *models.GetChatRoomsReq
 func (cs *ChatService) SendMessage(senderID uint, req *models.SendMessageRequest) (*models.ChatMessage, error) {
 	logrus.Infof("ChatService.SendMessage called by user %d in room %d", senderID, req.RoomID)
 
-	// Validate sender is participant in the room
-	isParticipant, err := cs.chatRoomRepo.IsUserParticipant(req.RoomID, senderID)
+	// Validate room exists
+	_, err := cs.chatRoomRepo.GetByID(req.RoomID)
 	if err != nil {
-		logrus.Errorf("ChatService.SendMessage failed to check participant: %v", err)
-		return nil, err
-	}
-
-	if !isParticipant {
-		return nil, errors.New("user is not a participant in this chat room")
+		return nil, errors.New("chat room not found")
 	}
 
 	// Create message
@@ -135,15 +118,10 @@ func (cs *ChatService) SendMessage(senderID uint, req *models.SendMessageRequest
 func (cs *ChatService) GetMessages(userID uint, req *models.GetMessagesRequest) ([]models.ChatMessage, *repositories.Pagination, error) {
 	logrus.Infof("ChatService.GetMessages called by user %d for room %d", userID, req.RoomID)
 
-	// Validate user is participant in the room
-	isParticipant, err := cs.chatRoomRepo.IsUserParticipant(req.RoomID, userID)
+	// Validate room exists
+	_, err := cs.chatRoomRepo.GetByID(req.RoomID)
 	if err != nil {
-		logrus.Errorf("ChatService.GetMessages failed to check participant: %v", err)
-		return nil, nil, err
-	}
-
-	if !isParticipant {
-		return nil, nil, errors.New("user is not a participant in this chat room")
+		return nil, nil, errors.New("chat room not found")
 	}
 
 	// Get messages
@@ -164,19 +142,10 @@ func (cs *ChatService) GetMessages(userID uint, req *models.GetMessagesRequest) 
 func (cs *ChatService) MarkMessageRead(userID uint, req *models.MarkMessageReadRequest) error {
 	logrus.Infof("ChatService.MarkMessageRead called by user %d for message %d", userID, req.MessageID)
 
-	// Validate user is participant in the room
-	message, err := cs.chatMessageRepo.GetByID(req.MessageID)
+	// Validate message exists
+	_, err := cs.chatMessageRepo.GetByID(req.MessageID)
 	if err != nil {
 		return err
-	}
-
-	isParticipant, err := cs.chatRoomRepo.IsUserParticipant(message.RoomID, userID)
-	if err != nil {
-		return err
-	}
-
-	if !isParticipant {
-		return errors.New("user is not a participant in this chat room")
 	}
 
 	// Mark message as read
@@ -200,10 +169,10 @@ func (cs *ChatService) CreateBookingChatRoom(bookingID uint) (*models.ChatRoom, 
 		return existingRoom, nil
 	}
 
-	// Get worker assignment
-	workerAssignment, err := cs.workerAssignmentRepo.GetByBookingID(bookingID)
+	// Check if worker is assigned (but don't require it for chat room creation)
+	_, err = cs.workerAssignmentRepo.GetByBookingID(bookingID)
 	if err != nil {
-		return nil, fmt.Errorf("no worker assigned to booking")
+		logrus.Warnf("No worker assigned to booking %d, but creating chat room anyway", bookingID)
 	}
 
 	// Create chat room
@@ -219,25 +188,7 @@ func (cs *ChatService) CreateBookingChatRoom(bookingID uint) (*models.ChatRoom, 
 		return nil, err
 	}
 
-	// Add participants: user and worker
-	participants := []uint{booking.UserID, workerAssignment.WorkerID}
-	for _, userID := range participants {
-		role := models.ParticipantRoleUser
-		if userID == workerAssignment.WorkerID {
-			role = models.ParticipantRoleWorker
-		}
-
-		participant := &models.ChatRoomParticipant{
-			RoomID: chatRoom.ID,
-			UserID: userID,
-			Role:   role,
-		}
-		
-		if err := cs.chatRoomRepo.AddParticipant(participant); err != nil {
-			logrus.Errorf("ChatService.CreateBookingChatRoom failed to add participant %d: %v", userID, err)
-			return nil, err
-		}
-	}
+	// Participants are now handled through messages - no separate participant table needed
 
 	logrus.Infof("ChatService.CreateBookingChatRoom successfully created room ID: %d for booking %d", chatRoom.ID, bookingID)
 	return chatRoom, nil

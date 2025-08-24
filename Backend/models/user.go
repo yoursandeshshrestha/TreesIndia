@@ -49,7 +49,7 @@ type User struct {
 	
 	// Relationships
 	UserNotificationSettings *UserNotificationSettings `json:"notification_settings" gorm:"foreignKey:UserID"`
-	UserRoles                []UserRole                `json:"user_roles,omitempty" gorm:"foreignKey:UserID"`
+	// UserRoles removed - using UserType enum instead
 	UserSubscriptions        []UserSubscription        `json:"user_subscriptions,omitempty" gorm:"foreignKey:UserID"`
 	SubscriptionWarnings     []SubscriptionWarning     `json:"subscription_warnings,omitempty" gorm:"foreignKey:UserID"`
 }

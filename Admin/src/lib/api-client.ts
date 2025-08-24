@@ -1,5 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { autoSignOut } from "@/utils/authUtils";
+import {
+  OptimizedBookingResponse,
+  DetailedBookingResponse,
+} from "../types/booking";
 
 // API base configuration
 const API_BASE_URL =
@@ -132,6 +136,114 @@ const createApiClient = (): AxiosInstance => {
 };
 
 export const apiClient = createApiClient();
+
+// Available Workers API - Get workers from admin users endpoint
+export const getAvailableWorkers = async (params: {
+  scheduled_time?: string;
+  service_duration?: number;
+  service_id?: number;
+  location?: string;
+}) => {
+  const queryParams = new URLSearchParams({
+    user_type: "worker",
+    is_active: "true",
+    limit: "100", // Get more workers
+    ...(params.scheduled_time && {
+      scheduled_time: params.scheduled_time,
+    }),
+    ...(params.service_duration && {
+      service_duration: params.service_duration.toString(),
+    }),
+    ...(params.service_id && {
+      service_id: params.service_id.toString(),
+    }),
+    ...(params.location && {
+      location: params.location,
+    }),
+  });
+
+  return api.get(`/admin/users?${queryParams}`);
+};
+
+// Booking Management API
+export const getBookings = async (params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  booking_type?: string;
+  payment_status?: string;
+  date_from?: string;
+  date_to?: string;
+  service_id?: string;
+  worker_id?: string;
+  sort_by?: string;
+  sort_order?: string;
+}) => {
+  const queryParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      queryParams.append(key, value.toString());
+    }
+  });
+
+  return api.get<{
+    bookings: OptimizedBookingResponse[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      total_pages: number;
+    };
+  }>(`/admin/bookings?${queryParams}`);
+};
+
+export const getBookingById = async (
+  bookingId: number,
+  detailed: boolean = false
+) => {
+  const queryParams = detailed ? "?detailed=true" : "";
+  return api.get<{
+    booking: OptimizedBookingResponse | DetailedBookingResponse;
+  }>(`/admin/bookings/${bookingId}${queryParams}`);
+};
+
+export const updateBookingStatus = async (
+  bookingId: number,
+  data: { status: string; reason?: string }
+) => {
+  return api.put(`/admin/bookings/${bookingId}/status`, data);
+};
+
+export const assignWorkerToBooking = async (
+  bookingId: number,
+  data: { worker_id: number; notes?: string }
+) => {
+  return api.post(`/admin/bookings/${bookingId}/assign-worker`, data);
+};
+
+export const getBookingStats = async () => {
+  return api.get("/admin/bookings/stats");
+};
+
+export const getBookingDashboard = async () => {
+  return api.get("/admin/bookings/dashboard");
+};
+
+export const createBooking = async (data: {
+  user_id: number;
+  service_id: number;
+  booking_type: string;
+  scheduled_time: string;
+  address: any;
+  description: string;
+  contact_person: string;
+  contact_phone: string;
+  special_instructions?: string;
+}) => {
+  return api.post("/admin/bookings", data);
+};
 
 // Generic API methods
 export const api = {

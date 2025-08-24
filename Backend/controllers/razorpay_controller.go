@@ -13,17 +13,17 @@ import (
 // RazorpayController handles Razorpay payment gateway operations
 type RazorpayController struct {
 	razorpayService *services.RazorpayService
-	walletService   *services.WalletService
+	unifiedWalletService *services.UnifiedWalletService
 }
 
 // NewRazorpayController creates a new Razorpay controller
 func NewRazorpayController() *RazorpayController {
 	razorpayService := services.NewRazorpayService()
-	walletService := services.NewWalletService()
+	unifiedWalletService := services.NewUnifiedWalletService()
 
 	return &RazorpayController{
 		razorpayService: razorpayService,
-		walletService:   walletService,
+		unifiedWalletService: unifiedWalletService,
 	}
 }
 
@@ -60,8 +60,7 @@ func (c *RazorpayController) CreatePaymentOrder(ctx *gin.Context) {
 	}
 
 	// Create pending wallet transaction
-	orderID := order["id"].(string)
-	transaction, err := c.walletService.RechargeWallet(userID, req.Amount, "razorpay", orderID)
+	transaction, _, err := c.unifiedWalletService.RechargeWallet(userID, req.Amount, "razorpay")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create wallet transaction", err.Error()))
 		return

@@ -1,0 +1,531 @@
+{
+  "info": {
+    "name": "TreesIndia API - Worker Assignment Management",
+    "description": "Postman collection for TreesIndia backend API covering Worker Assignment Management, Worker Inquiry Management, and related booking routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔧 Worker Assignment Management",
+      "item": [
+        {
+          "name": "Get Worker Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments?status=assigned&date=2024-01-15&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "worker", "assignments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "assigned",
+                  "description": "Filter by status (reserved, assigned, accepted, rejected, in_progress, completed)"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-01-15",
+                  "description": "Filter by date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Worker Assignment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "worker", "assignments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Accept Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"I accept this assignment and will arrive on time\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments/1/accept",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "worker",
+                "assignments",
+                "1",
+                "accept"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Schedule conflict\",\n  \"notes\": \"I have another appointment at the same time\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments/1/reject",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "worker",
+                "assignments",
+                "1",
+                "reject"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Starting the service work\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments/1/start",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "worker", "assignments", "1", "start"]
+            }
+          }
+        },
+        {
+          "name": "Complete Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Service completed successfully\",\n  \"materials_used\": [\"pipe fittings\", \"sealant\", \"wrench\"],\n  \"photos\": [\"photo1.jpg\", \"photo2.jpg\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/worker/assignments/1/complete",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "worker",
+                "assignments",
+                "1",
+                "complete"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📞 Worker Inquiry Management",
+      "item": [
+        {
+          "name": "Create Inquiry to Worker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_name\": \"Office Building Plumbing Repair\",\n  \"company_name\": \"ABC Corporation\",\n  \"location\": \"Mumbai, Maharashtra\",\n  \"contact_person\": \"John Doe\",\n  \"contact_phone\": \"+91-9876543210\",\n  \"contact_email\": \"john.doe@abccorp.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/1/inquiry",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "1", "inquiry"]
+            }
+          }
+        },
+        {
+          "name": "Get User Inquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/inquiries?status=pending&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "inquiries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status (pending, approved, rejected, completed)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Worker Received Inquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/received-inquiries?status=approved&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "workers", "received-inquiries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "approved",
+                  "description": "Filter by status (pending, approved, rejected, completed)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Worker Response",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker_response\": \"I can handle this project. Please contact me for further details.\",\n  \"worker_contacted\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/workers/received-inquiries/1/response",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "workers",
+                "received-inquiries",
+                "1",
+                "response"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍💼 Admin Worker Assignment Management",
+      "item": [
+        {
+          "name": "Assign Worker to Booking (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker_id\": 1,\n  \"assignment_notes\": \"Assigned to experienced plumber for urgent repair\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/bookings/1/assign-worker",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "bookings",
+                "1",
+                "assign-worker"
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "Toggle Worker Type (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/workers/1/toggle-worker-type",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "workers",
+                "1",
+                "toggle-worker-type"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Admin Inquiry Management",
+      "item": [
+        {
+          "name": "Get All Inquiries (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries?status=pending&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status (pending, approved, rejected, completed)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Inquiry (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_notes\": \"Approved after verification of project details\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries/1/approve",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries", "1", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Reject Inquiry (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_notes\": \"Rejected due to incomplete project information\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/inquiries/1/reject",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "inquiries", "1", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Chat Communication",
+      "item": [
+        {
+          "name": "Create Booking Chat Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_ids\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/bookings/1/room",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "bookings", "1", "room"]
+            }
+          }
+        },
+        {
+          "name": "Get User Chat Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/rooms",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Get Chat Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/rooms/1/messages?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "rooms", "1", "messages"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Messages per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_id\": 1,\n  \"message\": \"I will arrive at 10:00 AM as scheduled\",\n  \"message_type\": \"text\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/messages",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Mark Message as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/chat/messages/read",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "chat", "messages", "read"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

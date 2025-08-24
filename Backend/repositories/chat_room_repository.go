@@ -31,7 +31,7 @@ func (crr *ChatRoomRepository) Create(chatRoom *models.ChatRoom) (*models.ChatRo
 // GetByID gets a chat room by ID
 func (crr *ChatRoomRepository) GetByID(id uint) (*models.ChatRoom, error) {
 	var chatRoom models.ChatRoom
-	err := crr.db.Preload("Participants.User").Preload("Messages.Sender").First(&chatRoom, id).Error
+	err := crr.db.Preload("Messages.Sender").First(&chatRoom, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +53,8 @@ func (crr *ChatRoomRepository) GetUserRooms(userID uint, roomType *models.RoomTy
 	var chatRooms []models.ChatRoom
 	var total int64
 
-	// Build query
-	query := crr.db.Joins("JOIN chat_room_participants ON chat_rooms.id = chat_room_participants.room_id").
-		Where("chat_room_participants.user_id = ? AND chat_room_participants.is_active = ? AND chat_rooms.is_active = ?", 
-			userID, true, true)
+	// Build query - simplified without participants table
+	query := crr.db.Where("chat_rooms.is_active = ?", true)
 
 	// Filter by room type if provided
 	if roomType != nil {
@@ -74,7 +72,7 @@ func (crr *ChatRoomRepository) GetUserRooms(userID uint, roomType *models.RoomTy
 	query = query.Offset(offset).Limit(limit)
 
 	// Preload relationships
-	query = query.Preload("Participants.User").Preload("Messages", func(db *gorm.DB) *gorm.DB {
+	query = query.Preload("Messages", func(db *gorm.DB) *gorm.DB {
 		return db.Order("created_at DESC").Limit(1) // Get last message
 	}).Preload("Messages.Sender")
 
@@ -96,29 +94,7 @@ func (crr *ChatRoomRepository) GetUserRooms(userID uint, roomType *models.RoomTy
 	return chatRooms, pagination, nil
 }
 
-// AddParticipant adds a participant to a chat room
-func (crr *ChatRoomRepository) AddParticipant(participant *models.ChatRoomParticipant) error {
-	return crr.db.Create(participant).Error
-}
-
-// IsUserParticipant checks if a user is a participant in a chat room
-func (crr *ChatRoomRepository) IsUserParticipant(roomID, userID uint) (bool, error) {
-	var count int64
-	err := crr.db.Model(&models.ChatRoomParticipant{}).
-		Where("room_id = ? AND user_id = ? AND is_active = ?", roomID, userID, true).
-		Count(&count).Error
-	return count > 0, err
-}
-
 // UpdateLastMessageAt updates the last message timestamp for a chat room
 func (crr *ChatRoomRepository) UpdateLastMessageAt(roomID uint, timestamp interface{}) error {
 	return crr.db.Model(&models.ChatRoom{}).Where("id = ?", roomID).Update("last_message_at", timestamp).Error
-}
-
-// GetParticipants gets participants for a chat room
-func (crr *ChatRoomRepository) GetParticipants(roomID uint) ([]models.ChatRoomParticipant, error) {
-	var participants []models.ChatRoomParticipant
-	err := crr.db.Where("room_id = ? AND is_active = ?", roomID, true).
-		Preload("User").Find(&participants).Error
-	return participants, err
 }

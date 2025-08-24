@@ -24,6 +24,7 @@ func (sm *SeedManager) seedMainData() error {
 		sm.SeedHomeServices,     // Then create services with service area IDs
 		sm.SeedConstructionServices,
 		sm.SeedWorkerUser,
+		sm.SeedSecondWorkerUser,
 	}
 
 	for _, seeder := range seeders {
@@ -94,6 +95,69 @@ func (sm *SeedManager) SeedWorkerUser() error {
 	}
 
 	logrus.Info("Worker user seeded successfully")
+	return nil
+}
+
+// SeedSecondWorkerUser seeds a second worker user
+func (sm *SeedManager) SeedSecondWorkerUser() error {
+	logrus.Info("Seeding second worker user...")
+
+	// Check if second worker user already exists
+	var workerCount int64
+	sm.db.Model(&models.User{}).Where("phone = ?", "+919876543211").Count(&workerCount)
+	
+	if workerCount > 0 {
+		logrus.Info("Second worker user already exists")
+		return nil
+	}
+
+	// Create second worker user
+	workerUser := models.User{
+		Name:     "Sarah Worker",
+		Phone:    "+919876543211",
+		UserType: models.UserTypeWorker,
+		IsActive: true,
+	}
+
+	if err := sm.db.Create(&workerUser).Error; err != nil {
+		logrus.Error("Failed to create second worker user:", err)
+		return err
+	}
+
+	// Get the second service for the worker (if available, otherwise use first)
+	var service models.Service
+	if err := sm.db.Offset(1).First(&service).Error; err != nil {
+		// If no second service, use the first one
+		if err := sm.db.First(&service).Error; err != nil {
+			logrus.Error("No services found for worker assignment")
+			return err
+		}
+	}
+
+	// Create worker profile
+	worker := models.Worker{
+		UserID:     workerUser.ID,
+		ServiceID:  service.ID,
+		HourlyRate: 600.0,
+		WorkerType: models.WorkerTypeTreesIndia,
+		Skills:     `["cleaning", "carpentry", "gardening"]`,
+		Experience: 7,
+		ServiceAreas: `["Kolkata", "Howrah"]`,
+		IsAvailable: true,
+		BankAccountHolder: "Sarah Worker",
+		BankAccountNumber: "0987654321",
+		BankIFSCCode:      "HDFC0001234",
+		BankName:          "HDFC Bank",
+		BankBranch:        "Kolkata Main Branch",
+		PoliceVerificationStatus: models.DocumentVerificationStatusPending,
+	}
+
+	if err := sm.db.Create(&worker).Error; err != nil {
+		logrus.Error("Failed to create second worker profile:", err)
+		return err
+	}
+
+	logrus.Info("Second worker user seeded successfully")
 	return nil
 }
 

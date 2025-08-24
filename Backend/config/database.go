@@ -22,7 +22,7 @@ func RunMigrations(db *gorm.DB) error {
 		&models.WorkerInquiry{},
 		&models.Broker{},
 	
-		&models.UserRole{},
+		// UserRole removed - using UserType enum instead
 		&models.UserDocument{},
 		&models.UserSkill{},
 		&models.UserNotificationSettings{},
@@ -30,7 +30,6 @@ func RunMigrations(db *gorm.DB) error {
 		&models.RoleApplication{},
 		&models.Property{},
 		&models.AdminConfig{},
-		&models.WalletTransaction{},
 	)
 
 	if err != nil {

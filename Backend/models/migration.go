@@ -35,7 +35,7 @@ func RunMigrations() error {
 		&UserDocument{},
 		&UserSkill{},
 		&UserNotificationSettings{},
-		&UserRole{},
+		// UserRole removed - using UserType enum instead
 		&SubscriptionPlan{},
 		&UserSubscription{},
 		&SubscriptionWarning{},

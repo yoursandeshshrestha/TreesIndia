@@ -213,7 +213,7 @@ func (ac *AdminController) GetUserByID(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := ac.db.Preload("UserNotificationSettings").Preload("Subscription").Preload("UserRoles").First(&user, userID).Error; err != nil {
+			if err := ac.db.Preload("UserNotificationSettings").Preload("Subscription").First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User does not exist"))
 			return

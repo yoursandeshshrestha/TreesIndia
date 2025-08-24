@@ -193,14 +193,13 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 		&models.UserSkill{},
 		&models.RoleApplication{},
 		&models.UserNotificationSettings{},
-		&models.UserRole{},
+		// UserRole removed - using UserType enum instead
 		&models.UserSubscription{},
 		&models.SubscriptionWarning{},
 		&models.Property{},
 		&models.Worker{},
 		&models.Broker{},
 
-		&models.WalletTransaction{},
 		&models.Booking{},
 		&models.WorkerAssignment{},
 		&models.BufferRequest{},

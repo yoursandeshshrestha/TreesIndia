@@ -140,11 +140,38 @@ export interface Booking {
   booking_reference: string;
   status: string;
   payment_status: string;
+  booking_type: string;
   scheduled_date: string;
   scheduled_time: string;
   total_amount: number;
   address: string;
   description: string;
+  created_at: string;
+  updated_at: string;
+
+  // Quote-related fields
+  quote_amount?: number;
+  quote_notes?: string;
+  quote_provided_at?: string;
+  quote_accepted_at?: string;
+  quote_expires_at?: string;
+
+  // Service information
+  service?: {
+    id: number;
+    name: string;
+    price_type: string;
+    price?: number;
+    duration?: string;
+  };
+
+  // User information
+  user?: {
+    id: number;
+    name: string;
+    phone: string;
+    user_type: string;
+  };
 }
 
 // Wallet Types (Unified Payment System)
@@ -437,5 +464,23 @@ export const apiService = {
       console.error("Failed to get services by location:", error);
       return [];
     }
+  },
+
+  // Accept quote for inquiry booking
+  async acceptQuote(bookingId: number): Promise<{ message: string }> {
+    const response = await api.post(`/bookings/${bookingId}/accept-quote`);
+    return response.data.data || response.data;
+  },
+
+  // Reject quote for inquiry booking
+  async rejectQuote(bookingId: number): Promise<{ message: string }> {
+    const response = await api.post(`/bookings/${bookingId}/reject-quote`);
+    return response.data.data || response.data;
+  },
+
+  // Get quote information for a booking
+  async getQuoteInfo(bookingId: number): Promise<any> {
+    const response = await api.get(`/bookings/${bookingId}/quote-info`);
+    return response.data.data || response.data;
   },
 };

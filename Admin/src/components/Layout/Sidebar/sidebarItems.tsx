@@ -1,11 +1,12 @@
 import {
   LayoutDashboard,
   Users,
+  Layers,
+  Package,
   Settings,
   FileText,
-  Layers,
   Shield,
-  Package,
+  Calendar,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -52,6 +53,33 @@ export const sidebarItems: SidebarItem[] = [
         label: "Brokers",
         icon: <Shield size={16} />,
         path: "/dashboard/brokers",
+      },
+    ],
+  },
+  {
+    id: "booking-management",
+    label: "Booking Management",
+    icon: <Calendar size={16} />,
+    children: [
+      {
+        id: "booking-overview",
+        label: "Booking Overview",
+        path: "/dashboard/bookings/overview",
+      },
+      {
+        id: "all-bookings",
+        label: "All Bookings",
+        path: "/dashboard/bookings/all",
+      },
+      {
+        id: "fixed-price-bookings",
+        label: "Fixed Price Bookings",
+        path: "/dashboard/bookings/fixed-price",
+      },
+      {
+        id: "inquiry-price-bookings",
+        label: "Inquiry Price Bookings",
+        path: "/dashboard/bookings/inquiry-price",
       },
     ],
   },

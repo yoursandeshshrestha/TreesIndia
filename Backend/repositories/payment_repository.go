@@ -63,6 +63,16 @@ func (pr *PaymentRepository) GetByRazorpayPaymentID(paymentID string) (*models.P
 	return &payment, nil
 }
 
+// GetByRelatedEntity gets a payment by related entity type and ID
+func (pr *PaymentRepository) GetByRelatedEntity(entityType string, entityID uint) (*models.Payment, error) {
+	var payment models.Payment
+	err := pr.db.Preload("User").Where("related_entity_type = ? AND related_entity_id = ?", entityType, entityID).First(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
+}
+
 // GetPayments gets payments with filters and pagination
 func (pr *PaymentRepository) GetPayments(filters *models.PaymentFilters) ([]models.Payment, *Pagination, error) {
 	var payments []models.Payment

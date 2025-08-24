@@ -45,7 +45,7 @@ type AdminAdjustWalletRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body RechargeWalletRequest true "Recharge request"
-// @Success 201 {object} views.Response{data=models.WalletTransaction}
+// @Success 201 {object} views.Response{data=models.Payment}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
 // @Failure 500 {object} views.Response
@@ -179,7 +179,7 @@ func (c *WalletController) CancelRecharge(ctx *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number (default: 1)"
 // @Param limit query int false "Items per page (default: 10, max: 100)"
-// @Success 200 {object} views.Response{data=[]models.WalletTransaction}
+// @Success 200 {object} views.Response{data=[]models.Payment}
 // @Failure 401 {object} views.Response
 // @Failure 500 {object} views.Response
 // @Router /wallet/transactions [get]
@@ -231,7 +231,7 @@ func (c *WalletController) GetUserTransactions(ctx *gin.Context) {
 // @Param type path string true "Transaction type"
 // @Param page query int false "Page number (default: 1)"
 // @Param limit query int false "Items per page (default: 10, max: 100)"
-// @Success 200 {object} views.Response{data=[]models.WalletTransaction}
+// @Success 200 {object} views.Response{data=[]models.Payment}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
 // @Failure 500 {object} views.Response
@@ -330,7 +330,7 @@ func (c *WalletController) GetUserWalletSummary(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body AdminAdjustWalletRequest true "Admin adjustment request"
-// @Success 200 {object} views.Response{data=models.WalletTransaction}
+// @Success 200 {object} views.Response{data=models.Payment}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
 // @Failure 403 {object} views.Response
@@ -367,7 +367,7 @@ func (c *WalletController) AdminAdjustWallet(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param reference_id path string true "Transaction reference ID"
-// @Success 200 {object} views.Response{data=models.WalletTransaction}
+// @Success 200 {object} views.Response{data=models.Payment}
 // @Failure 400 {object} views.Response
 // @Failure 404 {object} views.Response
 // @Failure 500 {object} views.Response

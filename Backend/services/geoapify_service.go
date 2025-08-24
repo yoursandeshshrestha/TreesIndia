@@ -289,7 +289,7 @@ func (gps *GeoapifyService) convertGeoapifyToAutocomplete(geoapifyResult *Geoapi
 	}
 	
 	// Check if features exist
-	if geoapifyResult.Features == nil || len(geoapifyResult.Features) == 0 {
+	if len(geoapifyResult.Features) == 0 {
 		result.Predictions = []AutocompletePrediction{}
 		return result
 	}

@@ -60,8 +60,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
 
   const priceTypeOptions = [
     { value: "all", label: "All Price Types" },
-    { value: "fixed", label: "Fixed Price" },
-    { value: "inquiry", label: "Inquiry Based" },
+    { value: "fixed", label: "Fixed Price Services" },
+    { value: "inquiry", label: "Inquiry Based Services" },
   ];
 
   const sortByOptions = [
@@ -104,7 +104,7 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
           leftIcon={<Search size={16} />}
         />
         {isSearching ? (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 z-floating">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-floating">
             <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
           </div>
         ) : search ? (

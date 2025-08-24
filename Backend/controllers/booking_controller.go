@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -29,6 +30,13 @@ func NewBookingController() *BookingController {
 
 // CreateBooking creates a new booking (handles all booking types)
 func (bc *BookingController) CreateBooking(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("BookingController.CreateBooking panic: %v", r)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": "Something went wrong"})
+		}
+	}()
+	
 	userID := bc.GetUserID(c)
 	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -253,8 +261,10 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("Debug: GetAvailableSlots called - Service: %d, Date: %s\n", serviceID, date)
+
 	availabilityService := services.NewAvailabilityService()
-	availableSlots, err := availabilityService.GetAvailableSlots(uint(serviceID), date)
+	availableSlots, err := availabilityService.GetAvailableSlots(uint(serviceID), date, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get available slots", "details": err.Error()})
 		return
@@ -266,8 +276,6 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 		"data": availableSlots,
 	})
 }
-
-
 
 // VerifyPayment verifies payment for a specific booking
 func (bc *BookingController) VerifyPayment(c *gin.Context) {
@@ -285,8 +293,6 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 		return
 	}
 
-
-
 	var req models.VerifyPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
@@ -296,9 +302,34 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 	// Add booking ID to the request
 	req.BookingID = uint(bookingID)
 
-	booking, err := bc.bookingService.VerifyPayment(&req)
+	// Validate that the booking exists and belongs to the user
+	booking, err := bc.bookingService.GetBookingByID(uint(bookingID))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to verify payment", "details": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found", "details": err.Error()})
+		return
+	}
+
+	// Check if user owns this booking
+	if booking.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied - booking does not belong to user"})
+		return
+	}
+
+	// Check if booking is in temporary hold status
+	if booking.Status != models.BookingStatusTemporaryHold {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking is not in temporary hold status", "details": "Booking status is " + string(booking.Status)})
+		return
+	}
+
+	// Log the verification attempt
+	fmt.Printf("Debug: Verifying payment for booking ID %d, order ID %s, payment ID %s\n", 
+		req.BookingID, req.RazorpayOrderID, req.RazorpayPaymentID)
+
+	booking, err = bc.bookingService.VerifyPayment(&req)
+	if err != nil {
+		// Log the error for debugging
+		fmt.Printf("Debug: Payment verification failed for booking %d: %v\n", req.BookingID, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment verification failed. Please contact support.", "details": err.Error()})
 		return
 	}
 
@@ -371,8 +402,28 @@ func (bc *BookingController) GetBookingByID(c *gin.Context) {
 		return
 	}
 
+	// Check if detailed view is requested
+	detailed := c.Query("detailed") == "true"
+	
+	var response interface{}
+	if detailed {
+		// Return detailed response for admin or when explicitly requested
+		if userType == string(models.UserTypeAdmin) || detailed {
+			detailedBooking := bc.bookingService.ConvertToDetailedBookingResponse(booking)
+			response = detailedBooking
+		} else {
+			// Return optimized response for regular users
+			optimizedBooking := bc.bookingService.ConvertToOptimizedBookingResponse(booking)
+			response = optimizedBooking
+		}
+	} else {
+		// Return optimized response by default
+		optimizedBooking := bc.bookingService.ConvertToOptimizedBookingResponse(booking)
+		response = optimizedBooking
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"booking": booking,
+		"booking": response,
 	})
 }
 
@@ -435,9 +486,43 @@ func (bc *BookingController) AdminGetAllBookings(c *gin.Context) {
 		return
 	}
 
+	// Convert to optimized response
+	optimizedBookings := make([]*models.OptimizedBookingResponse, len(bookings))
+	for i, booking := range bookings {
+		optimizedBookings[i] = bc.bookingService.ConvertToOptimizedBookingResponse(&booking)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"bookings":   bookings,
+		"bookings":   optimizedBookings,
 		"pagination": pagination,
+	})
+}
+
+// AdminGetBookingByID gets a detailed booking by ID (admin only)
+func (bc *BookingController) AdminGetBookingByID(c *gin.Context) {
+	userType := bc.GetUserType(c)
+	if userType != string(models.UserTypeAdmin) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+		return
+	}
+
+	bookingID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid booking ID"})
+		return
+	}
+
+	booking, err := bc.bookingService.GetBookingByID(uint(bookingID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found", "details": err.Error()})
+		return
+	}
+
+	// Convert to detailed response
+	detailedBooking := bc.bookingService.ConvertToDetailedBookingResponse(booking)
+
+	c.JSON(http.StatusOK, gin.H{
+		"booking": detailedBooking,
 	})
 }
 
@@ -491,16 +576,40 @@ func (bc *BookingController) AdminAssignWorker(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		WorkerID uint `json:"worker_id" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Parse JSON into a map first to handle flexible field names
+	var jsonData map[string]interface{}
+	if err := c.ShouldBindJSON(&jsonData); err != nil {
+		fmt.Printf("Debug: JSON parsing error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
 		return
 	}
+	
+	// Debug: Log the parsed JSON
+	fmt.Printf("Debug: Parsed JSON: %+v\n", jsonData)
+	
+	// Extract worker_id from the map
+	var workerID uint
+	if workerIDVal, exists := jsonData["worker_id"]; exists {
+		if id, ok := workerIDVal.(float64); ok {
+			workerID = uint(id)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid worker_id format"})
+			return
+		}
+	} else if workerIDVal, exists := jsonData["WorkerID"]; exists {
+		if id, ok := workerIDVal.(float64); ok {
+			workerID = uint(id)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid WorkerID format"})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "worker_id is required"})
+		return
+	}
 
-	assignment, err := bc.bookingService.AssignWorkerToBooking(uint(bookingID), req.WorkerID)
+	adminID := bc.GetUserID(c)
+	assignment, err := bc.bookingService.AssignWorkerToBooking(uint(bookingID), workerID, adminID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to assign worker", "details": err.Error()})
 		return
@@ -511,6 +620,8 @@ func (bc *BookingController) AdminAssignWorker(c *gin.Context) {
 		"assignment": assignment,
 	})
 }
+
+
 
 // GetBookingStats gets booking statistics (admin only)
 func (bc *BookingController) GetBookingStats(c *gin.Context) {
@@ -528,5 +639,41 @@ func (bc *BookingController) GetBookingStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"stats": stats,
+	})
+}
+
+// GetBookingDashboard gets comprehensive booking dashboard data (admin only)
+func (bc *BookingController) GetBookingDashboard(c *gin.Context) {
+	userType := bc.GetUserType(c)
+	if userType != string(models.UserTypeAdmin) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+		return
+	}
+
+	// Get basic stats
+	stats, err := bc.bookingService.GetBookingStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch booking stats", "details": err.Error()})
+		return
+	}
+
+	// Get recent bookings (last 10)
+	recentBookings, err := bc.bookingService.GetRecentBookings(10)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch recent bookings", "details": err.Error()})
+		return
+	}
+
+	// Get urgent alerts (bookings requiring immediate attention)
+	urgentAlerts, err := bc.bookingService.GetUrgentAlerts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch urgent alerts", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"stats":           stats,
+		"recent_bookings": recentBookings,
+		"urgent_alerts":   urgentAlerts,
 	})
 }

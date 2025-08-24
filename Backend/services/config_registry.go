@@ -309,6 +309,21 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		MaxValue:    168,
 		Unit:        "hours",
 	})
+
+	cr.registerSchema(ConfigSchema{
+		Key:         "booking_hold_time_minutes",
+		Type:        "int",
+		Category:    "booking",
+		Description: "Temporary hold time for booking slots in minutes (before payment)",
+		DefaultValue: 7,
+		Example:     10,
+		Required:    false,
+		MinValue:    1,
+		MaxValue:    60,
+		Unit:        "minutes",
+	})
+
+	// Wallet Configuration
 }
 
 // registerSchema registers a configuration schema

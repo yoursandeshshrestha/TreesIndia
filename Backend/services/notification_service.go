@@ -62,3 +62,31 @@ func (ns *NotificationService) SendSubscriptionExtendedNotification(user *models
 	// TODO: Implement actual notification sending
 	return nil
 }
+
+// SendWorkerAssignmentAcceptedNotification sends assignment accepted notification
+func (ns *NotificationService) SendWorkerAssignmentAcceptedNotification(assignment *models.WorkerAssignment) error {
+	// TODO: Implement actual notification sending
+	// For now, just log the notification
+	return nil
+}
+
+// SendWorkerAssignmentRejectedNotification sends assignment rejected notification
+func (ns *NotificationService) SendWorkerAssignmentRejectedNotification(assignment *models.WorkerAssignment) error {
+	// TODO: Implement actual notification sending
+	// For now, just log the notification
+	return nil
+}
+
+// SendWorkerAssignmentStartedNotification sends assignment started notification
+func (ns *NotificationService) SendWorkerAssignmentStartedNotification(assignment *models.WorkerAssignment) error {
+	// TODO: Implement actual notification sending
+	// For now, just log the notification
+	return nil
+}
+
+// SendWorkerAssignmentCompletedNotification sends assignment completed notification
+func (ns *NotificationService) SendWorkerAssignmentCompletedNotification(assignment *models.WorkerAssignment) error {
+	// TODO: Implement actual notification sending
+	// For now, just log the notification
+	return nil
+}

@@ -10,6 +10,7 @@ import (
 type AssignmentStatus string
 
 const (
+	AssignmentStatusReserved AssignmentStatus = "reserved"
 	AssignmentStatusAssigned AssignmentStatus = "assigned"
 	AssignmentStatusAccepted AssignmentStatus = "accepted"
 	AssignmentStatusRejected AssignmentStatus = "rejected"
@@ -36,7 +37,7 @@ type WorkerAssignment struct {
 	CompletedAt  *time.Time       `json:"completed_at"`
 	
 	// Notes
-	AssignmentNotes string        `json:"assignment_notes"`
+	AssignmentNotes string        `json:"assignment_notes" gorm:"column:notes"`
 	AcceptanceNotes string        `json:"acceptance_notes"`
 	RejectionNotes  string        `json:"rejection_notes"`
 	RejectionReason string        `json:"rejection_reason"`
@@ -73,4 +74,20 @@ type CompleteServiceRequest struct {
 	Notes        string   `json:"notes"`
 	MaterialsUsed []string `json:"materials_used"`
 	Photos       []string `json:"photos"`
+}
+
+// WorkerAssignmentFilters represents filters for worker assignments
+type WorkerAssignmentFilters struct {
+	Status string `json:"status"`
+	Date   string `json:"date"`
+	Page   int    `json:"page"`
+	Limit  int    `json:"limit"`
+}
+
+// Pagination represents pagination information
+type Pagination struct {
+	Page       int `json:"page"`
+	Limit      int `json:"limit"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages"`
 } 

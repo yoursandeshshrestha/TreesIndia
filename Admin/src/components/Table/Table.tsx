@@ -194,7 +194,7 @@ const Table = <T extends object>({
                               handleActionClick(e, action.onClick, row)
                             }
                             disabled={isDisabled}
-                            className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded ${
+                            className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium ${
                               isDisabled
                                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                 : typeof action.className === "function"

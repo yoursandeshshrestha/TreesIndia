@@ -91,6 +91,11 @@ func (ps *PaymentService) VerifyAndCompletePayment(paymentID uint, razorpayPayme
 		return nil, fmt.Errorf("payment not found: %v", err)
 	}
 
+	// Check if payment has Razorpay order ID
+	if payment.RazorpayOrderID == nil {
+		return nil, fmt.Errorf("payment does not have Razorpay order ID")
+	}
+
 	// Verify Razorpay payment
 	isValid, err := ps.razorpayService.VerifyPayment(razorpayPaymentID, *payment.RazorpayOrderID, razorpaySignature)
 	if err != nil {
@@ -107,7 +112,7 @@ func (ps *PaymentService) VerifyAndCompletePayment(paymentID uint, razorpayPayme
 		if err != nil {
 			return nil, fmt.Errorf("failed to update payment status: %v", err)
 		}
-		return nil, fmt.Errorf("payment verification failed")
+		return nil, fmt.Errorf("payment signature verification failed")
 	}
 
 	// Update payment as completed

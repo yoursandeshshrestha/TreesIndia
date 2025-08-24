@@ -3,7 +3,15 @@
 import { useState } from "react";
 import BookingFlow from "../components/BookingFlow";
 import UserBookings from "../components/UserBookings";
-import { Key, User, BookOpen, List, Wallet } from "lucide-react";
+import {
+  Key,
+  User,
+  BookOpen,
+  List,
+  Wallet,
+  MessageSquare,
+  KeyRound,
+} from "lucide-react";
 
 export default function Home() {
   const [token, setToken] = useState("");
@@ -135,9 +143,11 @@ export default function Home() {
               <li>4. Follow the step-by-step booking process</li>
               <li>5. Test both fixed-price and inquiry-based services</li>
             </ol>
-            
+
             <div className="mt-4 pt-4 border-t border-blue-200">
-              <h4 className="font-semibold text-blue-900 mb-2">Other Test Pages:</h4>
+              <h4 className="font-semibold text-blue-900 mb-2">
+                Other Test Pages:
+              </h4>
               <div className="flex space-x-2">
                 <a
                   href="/wallet-test"
@@ -145,6 +155,13 @@ export default function Home() {
                 >
                   <Wallet className="w-4 h-4 mr-1" />
                   Wallet Test
+                </a>
+                <a
+                  href="/quote-test"
+                  className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-md text-sm hover:bg-purple-200 transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Quote Test
                 </a>
               </div>
             </div>

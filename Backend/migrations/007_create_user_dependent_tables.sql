@@ -83,19 +83,7 @@ CREATE TABLE IF NOT EXISTS user_notification_settings (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- User roles table
-CREATE TABLE IF NOT EXISTS user_roles (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
-    deleted_at TIMESTAMPTZ,
-    user_id BIGINT NOT NULL,
-    role TEXT NOT NULL,
-    granted_at TIMESTAMPTZ NOT NULL,
-    granted_by BIGINT,
-    expires_at TIMESTAMPTZ,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+-- User roles table removed - using UserType enum in users table instead
 
 -- Subscription warnings table
 CREATE TABLE IF NOT EXISTS subscription_warnings (
@@ -113,7 +101,7 @@ CREATE TABLE IF NOT EXISTS subscription_warnings (
 
 -- +goose Down
 DROP TABLE IF EXISTS subscription_warnings CASCADE;
-DROP TABLE IF EXISTS user_roles CASCADE;
+-- User roles table drop removed - table no longer exists
 DROP TABLE IF EXISTS user_notification_settings CASCADE;
 DROP TABLE IF EXISTS role_applications CASCADE;
 DROP TABLE IF EXISTS user_skills CASCADE;

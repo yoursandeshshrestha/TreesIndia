@@ -354,6 +354,23 @@ func (sm *SeedManager) SeedAdminConfigurations() error {
 		}
 	}
 
+	// Add auto-assignment configuration
+	autoAssignConfig := models.AdminConfig{
+		Key:         "auto_assign_workers_on_booking",
+		Value:       "true",
+		Type:        "bool",
+		Category:    "booking",
+		Description: "Automatically reserve workers from pool when bookings are created",
+		IsActive:    true,
+	}
+
+	if err := sm.db.Where("key = ?", autoAssignConfig.Key).FirstOrCreate(&autoAssignConfig).Error; err != nil {
+		logrus.Error("Failed to create auto-assignment config:", err)
+		return err
+	}
+
+	logrus.Info("Auto-assignment configuration seeded successfully")
+
 	logrus.Info("Admin configurations seeded successfully")
 	return nil
 }
