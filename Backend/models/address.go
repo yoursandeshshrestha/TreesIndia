@@ -15,6 +15,13 @@ type Address struct {
 	// Address details
 	Name        string         `json:"name" gorm:"not null"`
 	Address     string         `json:"address" gorm:"not null"`
+	
+	// Location details (for service area validation)
+	City        string         `json:"city" gorm:"not null"`
+	State       string         `json:"state" gorm:"not null"`
+	Country     string         `json:"country" gorm:"not null;default:'India'"`
+	
+	// Additional details
 	PostalCode  string         `json:"postal_code"`
 	Latitude    float64        `json:"latitude"`
 	Longitude   float64        `json:"longitude"`
@@ -56,6 +63,9 @@ type UpdateLocationRequest struct {
 type CreateAddressRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Address     string  `json:"address" binding:"required"`
+	City        string  `json:"city" binding:"required"`
+	State       string  `json:"state" binding:"required"`
+	Country     string  `json:"country" binding:"required"`
 	PostalCode  string  `json:"postal_code"`
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
@@ -68,6 +78,9 @@ type CreateAddressRequest struct {
 type UpdateAddressRequest struct {
 	Name        string  `json:"name,omitempty"`
 	Address     string  `json:"address,omitempty"`
+	City        string  `json:"city,omitempty"`
+	State       string  `json:"state,omitempty"`
+	Country     string  `json:"country,omitempty"`
 	PostalCode  string  `json:"postal_code,omitempty"`
 	Latitude    float64 `json:"latitude,omitempty"`
 	Longitude   float64 `json:"longitude,omitempty"`
@@ -98,6 +111,9 @@ type AddressResponse struct {
 	UserID      uint      `json:"user_id"`
 	Name        string    `json:"name"`
 	Address     string    `json:"address"`
+	City        string    `json:"city"`
+	State       string    `json:"state"`
+	Country     string    `json:"country"`
 	PostalCode  string    `json:"postal_code"`
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`

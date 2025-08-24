@@ -75,7 +75,7 @@ type Booking struct {
 	ActualDurationMinutes *int     `json:"actual_duration_minutes"`
 	
 	// Service Details
-	Address          *string       `json:"address"`
+	Address          *string       `json:"address" gorm:"type:jsonb"` // Store complete address object as JSON
 	Description      string        `json:"description"`
 	ContactPerson    string        `json:"contact_person"`
 	ContactPhone     string        `json:"contact_phone"`
@@ -97,16 +97,30 @@ func (Booking) TableName() string {
 	return "bookings"
 }
 
+// BookingAddress represents the address structure for bookings
+type BookingAddress struct {
+	Name        string  `json:"name"`
+	Address     string  `json:"address"`
+	City        string  `json:"city"`
+	State       string  `json:"state"`
+	Country     string  `json:"country"`
+	PostalCode  string  `json:"postal_code"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	Landmark    string  `json:"landmark"`
+	HouseNumber string  `json:"house_number"`
+}
+
 // CreateBookingRequest represents the request structure for creating a booking
 type CreateBookingRequest struct {
-	ServiceID            uint      `json:"service_id" binding:"required"`
-	ScheduledDate        string    `json:"scheduled_date" binding:"required"`
-	ScheduledTime        string    `json:"scheduled_time" binding:"required"`
-	Address              string    `json:"address" binding:"required"`
-	Description          string    `json:"description"`
-	ContactPerson        string    `json:"contact_person"`
-	ContactPhone         string    `json:"contact_phone"`
-	SpecialInstructions  string    `json:"special_instructions"`
+	ServiceID            uint            `json:"service_id" binding:"required"`
+	ScheduledDate        string          `json:"scheduled_date" binding:"required"`
+	ScheduledTime        string          `json:"scheduled_time" binding:"required"`
+	Address              BookingAddress  `json:"address" binding:"required"`
+	Description          string          `json:"description"`
+	ContactPerson        string          `json:"contact_person"`
+	ContactPhone         string          `json:"contact_phone"`
+	SpecialInstructions  string          `json:"special_instructions"`
 }
 
 // CreateBookingWithPaymentRequest represents the request structure for creating a booking with payment
@@ -162,5 +176,10 @@ type ContactWorkerRequest struct {
 
 // CreateInquiryBookingRequest represents the request structure for creating an inquiry-based booking
 type CreateInquiryBookingRequest struct {
-	ServiceID uint `json:"service_id" binding:"required"`
+	ServiceID            uint            `json:"service_id" binding:"required"`
+	Address              BookingAddress  `json:"address" binding:"required"`
+	Description          string          `json:"description"`
+	ContactPerson        string          `json:"contact_person"`
+	ContactPhone         string          `json:"contact_phone"`
+	SpecialInstructions  string          `json:"special_instructions"`
 }
