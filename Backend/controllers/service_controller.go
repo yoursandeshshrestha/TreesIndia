@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -85,35 +86,44 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 	var imageFiles []*multipart.FileHeader
 
 	if strings.Contains(contentType, "multipart/form-data") {
-		// Handle form-data
-		req.Name = c.PostForm("name")
-		req.Description = c.PostForm("description")
-		req.PriceType = c.PostForm("price_type")
-		if duration := c.PostForm("duration"); duration != "" {
-			req.Duration = &duration
-		}
-		
-		if categoryIDStr := c.PostForm("category_id"); categoryIDStr != "" {
-			if categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32); err == nil {
-				req.CategoryID = uint(categoryID)
+		// Handle form-data with JSON data field
+		if dataStr := c.PostForm("data"); dataStr != "" {
+			// Parse JSON data from form field
+			if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
+				c.JSON(400, views.CreateErrorResponse("Invalid JSON data", err.Error()))
+				return
 			}
-		}
-		
-		if subcategoryIDStr := c.PostForm("subcategory_id"); subcategoryIDStr != "" {
-			if subcategoryID, err := strconv.ParseUint(subcategoryIDStr, 10, 32); err == nil {
-				req.SubcategoryID = uint(subcategoryID)
+		} else {
+			// Fallback to individual form fields
+			req.Name = c.PostForm("name")
+			req.Description = c.PostForm("description")
+			req.PriceType = c.PostForm("price_type")
+			if duration := c.PostForm("duration"); duration != "" {
+				req.Duration = &duration
 			}
-		}
-		
-		if priceStr := c.PostForm("price"); priceStr != "" {
-			if price, err := strconv.ParseFloat(priceStr, 64); err == nil {
-				req.Price = &price
+			
+			if categoryIDStr := c.PostForm("category_id"); categoryIDStr != "" {
+				if categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32); err == nil {
+					req.CategoryID = uint(categoryID)
+				}
 			}
-		}
-		
-		if isActiveStr := c.PostForm("is_active"); isActiveStr != "" {
-			if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
-				req.IsActive = &isActive
+			
+			if subcategoryIDStr := c.PostForm("subcategory_id"); subcategoryIDStr != "" {
+				if subcategoryID, err := strconv.ParseUint(subcategoryIDStr, 10, 32); err == nil {
+					req.SubcategoryID = uint(subcategoryID)
+				}
+			}
+			
+			if priceStr := c.PostForm("price"); priceStr != "" {
+				if price, err := strconv.ParseFloat(priceStr, 64); err == nil {
+					req.Price = &price
+				}
+			}
+			
+			if isActiveStr := c.PostForm("is_active"); isActiveStr != "" {
+				if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
+					req.IsActive = &isActive
+				}
 			}
 		}
 
@@ -148,6 +158,20 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 	if req.SubcategoryID == 0 {
 		c.JSON(400, views.CreateErrorResponse("Subcategory ID is required", ""))
 		return
+	}
+	
+	// Validate service areas
+	if len(req.ServiceAreaIDs) == 0 {
+		c.JSON(400, views.CreateErrorResponse("At least one service area ID is required", ""))
+		return
+	}
+	
+	// Validate that service area IDs are provided
+	for _, areaID := range req.ServiceAreaIDs {
+		if areaID == 0 {
+			c.JSON(400, views.CreateErrorResponse("Invalid service area ID", ""))
+			return
+		}
 	}
 
 	service, err := sc.serviceService.CreateService(&req, imageFiles)
@@ -306,7 +330,7 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		sortOrder = "asc"
 	}
 	
-	services, total, err := sc.serviceService.GetServicesWithFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
+	services, total, err := sc.serviceService.GetServiceSummariesWithFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServices error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
@@ -370,8 +394,122 @@ func (sc *ServiceController) GetServicesBySubcategory(c *gin.Context) {
 		return
 	}
 
-	logrus.Infof("ServiceController.GetServicesBySubcategory returning %d services", len(services))
-	c.JSON(200, views.CreateSuccessResponse("Services retrieved successfully", services))
+	// Convert to summaries to reduce response size
+	var summaries []models.ServiceSummary
+	for _, service := range services {
+		// Convert service areas to summaries
+		var serviceAreaSummaries []models.ServiceAreaSummary
+		for _, area := range service.ServiceAreas {
+			serviceAreaSummaries = append(serviceAreaSummaries, models.ServiceAreaSummary{
+				ID:       area.ID,
+				City:     area.City,
+				State:    area.State,
+				Country:  area.Country,
+				IsActive: area.IsActive,
+			})
+		}
+		
+		summary := models.ServiceSummary{
+			ID:              service.ID,
+			Name:            service.Name,
+			Slug:            service.Slug,
+			Description:     service.Description,
+			Images:          service.Images,
+			PriceType:       service.PriceType,
+			Price:           service.Price,
+			Duration:        service.Duration,
+			CategoryID:      service.CategoryID,
+			SubcategoryID:   service.SubcategoryID,
+			CategoryName:    service.Category.Name,
+			SubcategoryName: service.Subcategory.Name,
+			IsActive:        service.IsActive,
+			CreatedAt:       service.CreatedAt,
+			UpdatedAt:       service.UpdatedAt,
+			DeletedAt:       service.DeletedAt,
+			ServiceAreas:    serviceAreaSummaries,
+		}
+		summaries = append(summaries, summary)
+	}
+
+	logrus.Infof("ServiceController.GetServicesBySubcategory returning %d services", len(summaries))
+	c.JSON(200, views.CreateSuccessResponse("Services retrieved successfully", summaries))
+}
+
+// GetServicesByLocation gets all services available in a specific location
+// @Summary Get services by location
+// @Description Get all services available in a specific city and state
+// @Tags services
+// @Produce json
+// @Param city query string true "City name"
+// @Param state query string true "State name"
+// @Success 200 {object} views.Response{data=[]models.Service}
+// @Failure 400 {object} views.Response
+// @Router /api/v1/services/by-location [get]
+func (sc *ServiceController) GetServicesByLocation(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceController.GetServicesByLocation panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceController.GetServicesByLocation called")
+	
+	city := c.Query("city")
+	state := c.Query("state")
+	
+	if city == "" || state == "" {
+		c.JSON(400, views.CreateErrorResponse("City and state are required", ""))
+		return
+	}
+	
+	logrus.Infof("ServiceController.GetServicesByLocation city: %s, state: %s", city, state)
+	
+	services, err := sc.serviceService.GetServicesByLocation(city, state)
+	if err != nil {
+		logrus.Errorf("ServiceController.GetServicesByLocation error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
+		return
+	}
+	
+	// Convert to summaries to reduce response size
+	var summaries []models.ServiceSummary
+	for _, service := range services {
+		// Convert service areas to summaries
+		var serviceAreaSummaries []models.ServiceAreaSummary
+		for _, area := range service.ServiceAreas {
+			serviceAreaSummaries = append(serviceAreaSummaries, models.ServiceAreaSummary{
+				ID:       area.ID,
+				City:     area.City,
+				State:    area.State,
+				Country:  area.Country,
+				IsActive: area.IsActive,
+			})
+		}
+		
+		summary := models.ServiceSummary{
+			ID:              service.ID,
+			Name:            service.Name,
+			Slug:            service.Slug,
+			Description:     service.Description,
+			Images:          service.Images,
+			PriceType:       service.PriceType,
+			Price:           service.Price,
+			Duration:        service.Duration,
+			CategoryID:      service.CategoryID,
+			SubcategoryID:   service.SubcategoryID,
+			CategoryName:    service.Category.Name,
+			SubcategoryName: service.Subcategory.Name,
+			IsActive:        service.IsActive,
+			CreatedAt:       service.CreatedAt,
+			UpdatedAt:       service.UpdatedAt,
+			DeletedAt:       service.DeletedAt,
+			ServiceAreas:    serviceAreaSummaries,
+		}
+		summaries = append(summaries, summary)
+	}
+	
+	logrus.Infof("ServiceController.GetServicesByLocation returning %d services", len(summaries))
+	c.JSON(200, views.CreateSuccessResponse("Services retrieved successfully", summaries))
 }
 
 // UpdateService updates a service
