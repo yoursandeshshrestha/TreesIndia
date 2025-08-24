@@ -73,6 +73,9 @@ interface Address {
   id: number;
   name: string;
   address: string;
+  city: string;
+  state: string;
+  country: string;
   landmark?: string;
   is_default: boolean;
 }
@@ -93,11 +96,24 @@ interface AvailabilityResponse {
   available_slots: AvailableSlot[];
 }
 
+interface BookingAddress {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+  latitude: number;
+  longitude: number;
+  landmark: string;
+  house_number: string;
+}
+
 interface BookingRequest {
   service_id: number;
   scheduled_date: string;
   scheduled_time: string;
-  address: string;
+  address: BookingAddress;
   description?: string;
   contact_person?: string;
   contact_phone?: string;
@@ -153,7 +169,18 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     service_id: 0,
     scheduled_date: "",
     scheduled_time: "",
-    address: "",
+    address: {
+      name: "",
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+      postal_code: "",
+      latitude: 0,
+      longitude: 0,
+      landmark: "",
+      house_number: "",
+    },
     description: "",
     contact_person: "",
     contact_phone: "",
@@ -170,13 +197,13 @@ export default function BookingFlow({ token }: BookingFlowProps) {
 
   // Helper function to get total steps based on service type
   const getTotalSteps = () => {
-    return isInquiryService() ? 4 : 7; // 4 steps for inquiry, 7 for fixed price
+    return isInquiryService() ? 6 : 8; // 6 steps for inquiry (including address and result), 8 for fixed price
   };
 
   // Helper function to get current step number for display
   const getCurrentStepNumber = () => {
     if (isInquiryService()) {
-      // For inquiry: 1=Category, 2=Subcategory, 3=Service, 4=Payment
+      // For inquiry: 1=Category, 2=Subcategory, 3=Service, 4=Address, 5=Payment
       return step;
     }
     // For fixed price: 1=Category, 2=Subcategory, 3=Service, 4=Date, 5=Time, 6=Address, 7=Form
@@ -300,9 +327,9 @@ export default function BookingFlow({ token }: BookingFlowProps) {
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setBookingForm((prev) => ({ ...prev, service_id: service.id }));
-    
+
     if (service.price_type === "inquiry") {
-      // For inquiry-based services, skip to payment directly
+      // For inquiry-based services, go to address selection
       setStep(4);
     } else {
       // For fixed price services, continue to date selection
@@ -327,13 +354,67 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     setStep(6);
   };
 
-  const handleAddressSelect = (address: Address) => {
+  const handleAddressSelect = async (address: Address) => {
     setSelectedAddress(address);
     setBookingForm((prev) => ({
       ...prev,
-      address: address.address,
+      address: {
+        name: address.name,
+        address: address.address,
+        city: address.city,
+        state: address.state,
+        country: address.country,
+        postal_code: address.postal_code,
+        latitude: address.latitude,
+        longitude: address.longitude,
+        landmark: address.landmark || "",
+        house_number: address.house_number || "",
+      },
     }));
-    setStep(7);
+
+    // Check service availability for the selected address
+    if (selectedService) {
+      try {
+        setLoading(true);
+        setError("");
+
+        // Use the city and state fields directly from the address object
+        const city = address.city || "Unknown City";
+        const state = address.state || "Unknown State";
+
+        const isAvailable = await apiService.checkServiceAvailability(
+          selectedService.id,
+          city,
+          state
+        );
+
+        if (!isAvailable) {
+          setError(
+            `This service is not available in your selected location (${city}, ${state}). Please contact support for availability in your area.`
+          );
+          return;
+        }
+
+        // Service is available, proceed to next step
+        if (selectedService?.price_type === "inquiry") {
+          setStep(5); // Go to payment for inquiry-based services
+        } else {
+          setStep(7); // Go to booking form for fixed price services
+        }
+      } catch (err: any) {
+        setError("Failed to check service availability. Please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // No service selected, just proceed
+      if (selectedService?.price_type === "inquiry") {
+        setStep(5); // Go to payment for inquiry-based services
+      } else {
+        setStep(7); // Go to booking form for fixed price services
+      }
+    }
   };
 
   const handleBookingSubmit = async () => {
@@ -376,9 +457,44 @@ export default function BookingFlow({ token }: BookingFlowProps) {
       setLoading(true);
       setError("");
 
-      // Create inquiry booking - backend will return payment order if needed
+      // Check if user has provided required information
+      if (
+        !bookingForm.contact_person ||
+        !bookingForm.contact_phone ||
+        !bookingForm.address
+      ) {
+        setError(
+          "Please provide contact information and select an address before submitting inquiry"
+        );
+        return;
+      }
+
+      // Use address from bookingForm
+      const city = bookingForm.address.city;
+      const state = bookingForm.address.state;
+
+      // Check service availability for the provided location
+      const isAvailable = await apiService.checkServiceAvailability(
+        selectedService!.id,
+        city,
+        state
+      );
+
+      if (!isAvailable) {
+        setError(
+          `This service is not available in your location (${city}, ${state}). Please contact support for availability in your area.`
+        );
+        return;
+      }
+
+      // Create inquiry booking with address details - backend will return payment order if needed
       const response = await apiService.createInquiryBooking({
-        service_id: selectedService!.id
+        service_id: selectedService!.id,
+        address: bookingForm.address,
+        description: bookingForm.description,
+        contact_person: bookingForm.contact_person,
+        contact_phone: bookingForm.contact_phone,
+        special_instructions: bookingForm.special_instructions,
       });
 
       if (response.payment_required && response.payment_order) {
@@ -387,7 +503,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
       } else {
         // No payment required - show success
         setBookingResult({ booking: response.booking });
-        setStep(4);
+        setStep(6);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to create inquiry booking");
@@ -397,7 +513,11 @@ export default function BookingFlow({ token }: BookingFlowProps) {
     }
   };
 
-  const handleRazorpayPayment = (paymentOrder: any, bookingId: number | null, isInquiry: boolean = false) => {
+  const handleRazorpayPayment = (
+    paymentOrder: any,
+    bookingId: number | null,
+    isInquiry: boolean = false
+  ) => {
     if (!isInquiry && !bookingId) {
       setError("Booking ID not available for payment verification");
       return;
@@ -413,7 +533,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
         amount: paymentOrder.amount,
         currency: paymentOrder.currency,
         name: "Trees India Services",
-        description: isInquiry 
+        description: isInquiry
           ? `Inquiry Booking - ${selectedService?.name}`
           : `Booking Payment - ${selectedService?.name}`,
         order_id: paymentOrder.id,
@@ -439,22 +559,26 @@ export default function BookingFlow({ token }: BookingFlowProps) {
               setBookingResult({ booking: verifyResponse.booking });
             } else {
               // Payment successful - verify payment
-              const verifyResponse = await apiService.verifyPayment(bookingId!, {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: paymentOrder.id,
-                razorpay_signature: response.razorpay_signature,
-              });
+              const verifyResponse = await apiService.verifyPayment(
+                bookingId!,
+                {
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: paymentOrder.id,
+                  razorpay_signature: response.razorpay_signature,
+                }
+              );
 
               // Set the booking result
               setBookingResult({ booking: verifyResponse.booking });
             }
 
             // Show success message
-            alert(isInquiry 
-              ? "Inquiry booking successful! We'll contact you with a detailed quote."
-              : "Payment successful! Your booking has been confirmed."
+            alert(
+              isInquiry
+                ? "Inquiry booking successful! We'll contact you with a detailed quote."
+                : "Payment successful! Your booking has been confirmed."
             );
-            setStep(isInquiry ? 4 : 8);
+            setStep(isInquiry ? 6 : 8);
           } catch (error) {
             console.error("Payment verification failed:", error);
             alert("Payment verification failed. Please contact support.");
@@ -491,7 +615,18 @@ export default function BookingFlow({ token }: BookingFlowProps) {
       service_id: 0,
       scheduled_date: "",
       scheduled_time: "",
-      address: "",
+      address: {
+        name: "",
+        address: "",
+        city: "",
+        state: "",
+        country: "",
+        postal_code: "",
+        latitude: 0,
+        longitude: 0,
+        landmark: "",
+        house_number: "",
+      },
       description: "",
       contact_person: "",
       contact_phone: "",
@@ -503,7 +638,7 @@ export default function BookingFlow({ token }: BookingFlowProps) {
 
   const renderStep = () => {
     if (isInquiryService()) {
-      // Simplified flow for inquiry-based services
+      // Flow for inquiry-based services
       switch (step) {
         case 1:
           return (
@@ -531,12 +666,24 @@ export default function BookingFlow({ token }: BookingFlowProps) {
           );
         case 4:
           return (
+            <AddressSelection
+              addresses={addresses}
+              onSelect={handleAddressSelect}
+              loading={loading}
+            />
+          );
+        case 5:
+          return (
             <InquiryBookingPayment
               service={selectedService}
               onSubmit={handleInquiryBookingSubmit}
               loading={loading}
+              form={bookingForm}
+              setForm={setBookingForm}
             />
           );
+        case 6:
+          return <BookingResult result={bookingResult} onReset={resetFlow} />;
         default:
           return null;
       }
@@ -626,73 +773,80 @@ export default function BookingFlow({ token }: BookingFlowProps) {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-8">
-          {isInquiryService() ? (
-            // Simplified progress for inquiry-based services
-            [1, 2, 3, 4].map((stepNumber) => (
-              <div key={stepNumber} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                    step >= stepNumber
-                      ? "bg-yellow-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
-                </div>
-                {stepNumber < 4 && (
-                  <ChevronRight
-                    className={`mx-2 ${
-                      step > stepNumber ? "text-yellow-600" : "text-gray-300"
+          {isInquiryService()
+            ? // Progress for inquiry-based services
+              [1, 2, 3, 4, 5].map((stepNumber) => (
+                <div key={stepNumber} className="flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      step >= stepNumber
+                        ? "bg-yellow-600 text-white"
+                        : "bg-gray-200 text-gray-600"
                     }`}
-                  />
-                )}
-              </div>
-            ))
-          ) : (
-            // Original progress for fixed price services
-            [1, 2, 3, 4, 5, 6, 7].map((stepNumber) => (
-              <div key={stepNumber} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                    step >= stepNumber
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+                  >
+                    {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+                  </div>
+                  {stepNumber < 5 && (
+                    <ChevronRight
+                      className={`mx-2 ${
+                        step > stepNumber ? "text-yellow-600" : "text-gray-300"
+                      }`}
+                    />
+                  )}
                 </div>
-                {stepNumber < 7 && (
-                  <ChevronRight
-                    className={`mx-2 ${
-                      step > stepNumber ? "text-blue-600" : "text-gray-300"
+              ))
+            : // Original progress for fixed price services
+              [1, 2, 3, 4, 5, 6, 7].map((stepNumber) => (
+                <div key={stepNumber} className="flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      step >= stepNumber
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-600"
                     }`}
-                  />
-                )}
-              </div>
-            ))
-          )}
+                  >
+                    {step > stepNumber ? <CheckCircle size={16} /> : stepNumber}
+                  </div>
+                  {stepNumber < 7 && (
+                    <ChevronRight
+                      className={`mx-2 ${
+                        step > stepNumber ? "text-blue-600" : "text-gray-300"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
         </div>
 
         {/* Service Type Indicator */}
         {selectedService && (
-          <div className={`mb-4 p-3 rounded-lg ${
-            isInquiryService() 
-              ? "bg-yellow-50 border border-yellow-200" 
-              : "bg-blue-50 border border-blue-200"
-          }`}>
+          <div
+            className={`mb-4 p-3 rounded-lg ${
+              isInquiryService()
+                ? "bg-yellow-50 border border-yellow-200"
+                : "bg-blue-50 border border-blue-200"
+            }`}
+          >
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                isInquiryService() ? "bg-yellow-500" : "bg-blue-500"
-              }`}></div>
-              <span className={`font-medium ${
-                isInquiryService() ? "text-yellow-800" : "text-blue-800"
-              }`}>
-                {isInquiryService() ? "Inquiry-Based Service" : "Fixed Price Service"}
+              <div
+                className={`w-3 h-3 rounded-full mr-2 ${
+                  isInquiryService() ? "bg-yellow-500" : "bg-blue-500"
+                }`}
+              ></div>
+              <span
+                className={`font-medium ${
+                  isInquiryService() ? "text-yellow-800" : "text-blue-800"
+                }`}
+              >
+                {isInquiryService()
+                  ? "Inquiry-Based Service"
+                  : "Fixed Price Service"}
               </span>
             </div>
             {isInquiryService() && (
               <p className="text-yellow-700 text-sm mt-1">
-                No scheduling required. We'll contact you with a detailed quote after booking.
+                No scheduling required. We'll contact you with a detailed quote
+                after booking.
               </p>
             )}
           </div>
@@ -1092,6 +1246,9 @@ function AddressSelection({
             >
               <h3 className="font-semibold text-lg">{address.name}</h3>
               <p className="text-gray-600 text-sm mt-1">{address.address}</p>
+              <p className="text-gray-500 text-xs mt-1">
+                {address.city}, {address.state}
+              </p>
               {address.landmark && (
                 <p className="text-gray-500 text-xs mt-1">
                   Near: {address.landmark}
@@ -1203,7 +1360,14 @@ function BookingForm({
           {form.address && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Address:</span> {form.address}
+                <span className="font-medium">Address:</span>{" "}
+                {form.address.house_number && `${form.address.house_number}, `}
+                {form.address.address}
+                {form.address.landmark && `, ${form.address.landmark}`}
+                {form.address.city && `, ${form.address.city}`}
+                {form.address.state && `, ${form.address.state}`}
+                {form.address.postal_code && ` - ${form.address.postal_code}`}
+                {form.address.country && `, ${form.address.country}`}
               </p>
             </div>
           )}
@@ -1287,20 +1451,17 @@ function InquiryBookingPayment({
   service,
   onSubmit,
   loading,
+  form,
+  setForm,
 }: {
   service: Service | null;
   onSubmit: () => void;
   loading: boolean;
+  form: BookingRequest;
+  setForm: (form: BookingRequest) => void;
 }) {
-  const [inquiryForm, setInquiryForm] = useState({
-    description: "",
-    contact_person: "",
-    contact_phone: "",
-    special_instructions: "",
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setInquiryForm(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof BookingRequest, value: string) => {
+    setForm({ ...form, [field]: value });
   };
 
   return (
@@ -1312,13 +1473,12 @@ function InquiryBookingPayment({
             Selected Service: {service.name}
           </h3>
           <p className="text-yellow-700 mb-2">
-            This is an inquiry-based service. We'll contact you with a detailed quote after booking.
+            This is an inquiry-based service. We'll contact you with a detailed
+            quote after booking.
           </p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-yellow-600">
-                No scheduling required
-              </p>
+              <p className="text-sm text-yellow-600">No scheduling required</p>
               {service.duration && (
                 <p className="text-sm text-gray-500">
                   Estimated Duration: {service.duration}
@@ -1340,7 +1500,7 @@ function InquiryBookingPayment({
             Description
           </label>
           <textarea
-            value={inquiryForm.description}
+            value={form.description || ""}
             onChange={(e) => handleInputChange("description", e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             rows={3}
@@ -1355,8 +1515,10 @@ function InquiryBookingPayment({
             </label>
             <input
               type="text"
-              value={inquiryForm.contact_person}
-              onChange={(e) => handleInputChange("contact_person", e.target.value)}
+              value={form.contact_person || ""}
+              onChange={(e) =>
+                handleInputChange("contact_person", e.target.value)
+              }
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               placeholder="Contact person name"
             />
@@ -1368,21 +1530,44 @@ function InquiryBookingPayment({
             </label>
             <input
               type="tel"
-              value={inquiryForm.contact_phone}
-              onChange={(e) => handleInputChange("contact_phone", e.target.value)}
+              value={form.contact_phone || ""}
+              onChange={(e) =>
+                handleInputChange("contact_phone", e.target.value)
+              }
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               placeholder="Contact phone number"
             />
           </div>
         </div>
 
+        {form.address && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Selected Address
+            </label>
+            <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+              <p className="text-sm text-gray-700">
+                {form.address.house_number && `${form.address.house_number}, `}
+                {form.address.address}
+                {form.address.landmark && `, ${form.address.landmark}`}
+                {form.address.city && `, ${form.address.city}`}
+                {form.address.state && `, ${form.address.state}`}
+                {form.address.postal_code && ` - ${form.address.postal_code}`}
+                {form.address.country && `, ${form.address.country}`}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Special Instructions
           </label>
           <textarea
-            value={inquiryForm.special_instructions}
-            onChange={(e) => handleInputChange("special_instructions", e.target.value)}
+            value={form.special_instructions || ""}
+            onChange={(e) =>
+              handleInputChange("special_instructions", e.target.value)
+            }
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             rows={2}
             placeholder="Any special instructions for the service"
@@ -1401,7 +1586,12 @@ function InquiryBookingPayment({
 
         <button
           onClick={onSubmit}
-          disabled={loading || !inquiryForm.contact_person || !inquiryForm.contact_phone}
+          disabled={
+            loading ||
+            !form.contact_person ||
+            !form.contact_phone ||
+            !form.address
+          }
           className="w-full bg-yellow-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? "Submitting Inquiry..." : "Submit Inquiry"}

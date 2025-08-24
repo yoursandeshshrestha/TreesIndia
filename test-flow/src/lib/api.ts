@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
 // Create axios instance
 const api = axios.create({
@@ -57,6 +58,9 @@ export interface Address {
   user_id: number;
   name: string;
   address: string;
+  city: string;
+  state: string;
+  country: string;
   postal_code: string;
   latitude: number;
   longitude: number;
@@ -106,11 +110,24 @@ export interface TimeSlot {
 //   notes?: string;      // Instead of description
 //   preferred_worker_id?: number;
 // }
+export interface BookingAddress {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+  latitude: number;
+  longitude: number;
+  landmark: string;
+  house_number: string;
+}
+
 export interface BookingRequest {
   service_id: number;
   scheduled_date: string;
   scheduled_time: string;
-  address: string;
+  address: BookingAddress;
   description?: string;
   contact_person?: string;
   contact_phone?: string;
@@ -175,6 +192,11 @@ export interface RazorpayOrder {
 
 export interface CreateInquiryBookingRequest {
   service_id: number;
+  address: BookingAddress;
+  description?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  special_instructions?: string;
 }
 
 export interface VerifyInquiryPaymentRequest {
@@ -379,10 +401,41 @@ export const apiService = {
   },
 
   async verifyInquiryPayment(data: VerifyInquiryPaymentRequest) {
-    const response = await api.post(
-      `/bookings/inquiry/verify-payment`,
-      data
-    );
+    const response = await api.post(`/bookings/inquiry/verify-payment`, data);
     return response.data.data || response.data;
+  },
+
+  // Check if a service is available in a specific location
+  async checkServiceAvailability(
+    serviceId: number,
+    city: string,
+    state: string
+  ): Promise<boolean> {
+    try {
+      const response = await api.get(
+        `/service-availability/${serviceId}?city=${encodeURIComponent(
+          city
+        )}&state=${encodeURIComponent(state)}`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to check service availability:", error);
+      return false;
+    }
+  },
+
+  // Get all services available in a specific location
+  async getServicesByLocation(city: string, state: string): Promise<any[]> {
+    try {
+      const response = await api.get(
+        `/services/by-location?city=${encodeURIComponent(
+          city
+        )}&state=${encodeURIComponent(state)}`
+      );
+      return response.data.data || [];
+    } catch (error) {
+      console.error("Failed to get services by location:", error);
+      return [];
+    }
   },
 };

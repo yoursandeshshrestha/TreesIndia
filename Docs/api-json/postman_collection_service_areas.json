@@ -1,0 +1,238 @@
+{
+  "info": {
+    "name": "TreesIndia API - Service Areas",
+    "description": "Postman collection for TreesIndia backend API covering Service Area Management routes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "📍 Service Areas Management",
+      "item": [
+        {
+          "name": "Get All Service Areas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas"]
+            }
+          }
+        },
+        {
+          "name": "Create Service Area",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"country\": \"India\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Area by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Service Area",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"country\": \"India\",\n  \"is_active\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Service Area",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas/1",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Area Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/service-areas/stats",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "admin", "service-areas", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔗 Service-Specific Service Areas",
+      "item": [
+        {
+          "name": "Get Service Areas by Service ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/admin/services/1/service-areas",
+              "host": ["{{base_url}}"],
+              "path": [
+                "{{api_version}}",
+                "admin",
+                "services",
+                "1",
+                "service-areas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌍 Location-Based Services",
+      "item": [
+        {
+          "name": "Get Services by Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/by-location?city=Mumbai&state=Maharashtra",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "by-location"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "state",
+                  "value": "Maharashtra"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Service Availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/services/1/availability?city=Mumbai&state=Maharashtra",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "services", "1", "availability"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "state",
+                  "value": "Maharashtra"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
