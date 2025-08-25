@@ -119,8 +119,6 @@ func (sc *SubcategoryController) GetSubcategoryByID(c *gin.Context) {
 
 // CreateSubcategory creates a new subcategory
 func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
-	db := database.GetDB()
-
 	// Check content type
 	contentType := c.GetHeader("Content-Type")
 	var req CreateSubcategoryRequest
@@ -143,22 +141,21 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		// Try MultipartForm first
 		form, err = c.MultipartForm()
 		if err == nil {
-			
-					// Try to get the image file from form
-		if files, exists := form.File["image_file"]; exists && len(files) > 0 {
-			file = files[0]
-		} else if files, exists := form.File["image"]; exists && len(files) > 0 {
-			file = files[0]
-		} else {
-			// Try alternative field names
-			alternativeNames := []string{"file", "photo", "picture"}
-			for _, name := range alternativeNames {
-				if files, exists := form.File[name]; exists && len(files) > 0 {
-					file = files[0]
-					break
+			// Try to get the image file from form
+			if files, exists := form.File["image_file"]; exists && len(files) > 0 {
+				file = files[0]
+			} else if files, exists := form.File["image"]; exists && len(files) > 0 {
+				file = files[0]
+			} else {
+				// Try alternative field names
+				alternativeNames := []string{"file", "photo", "picture"}
+				for _, name := range alternativeNames {
+					if files, exists := form.File[name]; exists && len(files) > 0 {
+						file = files[0]
+						break
+					}
 				}
 			}
-		}
 		}
 		
 		// If MultipartForm failed or no file found, try FormFile directly
@@ -198,30 +195,40 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			return
 		}
 		
-
+		// Extract form fields - handle both MultipartForm and direct form access
+		var nameVal, descriptionVal, parentIDVal, isActiveVal string
 		
-		// Now get the form fields from the parsed form
-		name := form.Value["name"]
-		description := form.Value["description"]
-		parentIDStr := form.Value["parent_id"]
-		isActiveStr := form.Value["is_active"]
+		if form != nil {
+			// Use MultipartForm data
+			name := form.Value["name"]
+			description := form.Value["description"]
+			parentIDStr := form.Value["parent_id"]
+			isActiveStr := form.Value["is_active"]
+			
+			// Extract first values from slices
+			if len(name) > 0 {
+				nameVal = name[0]
+			}
+			if len(description) > 0 {
+				descriptionVal = description[0]
+			}
+			if len(parentIDStr) > 0 {
+				parentIDVal = parentIDStr[0]
+			}
+			if len(isActiveStr) > 0 {
+				isActiveVal = isActiveStr[0]
+			}
+		} else {
+			// Fallback to direct form access
+			nameVal = c.PostForm("name")
+			descriptionVal = c.PostForm("description")
+			parentIDVal = c.PostForm("parent_id")
+			isActiveVal = c.PostForm("is_active")
+		}
 		
-		// Extract first values from slices
-		nameVal := ""
-		if len(name) > 0 {
-			nameVal = name[0]
-		}
-		descriptionVal := ""
-		if len(description) > 0 {
-			descriptionVal = description[0]
-		}
-		parentIDVal := ""
-		if len(parentIDStr) > 0 {
-			parentIDVal = parentIDStr[0]
-		}
-		isActiveVal := "true" // default value
-		if len(isActiveStr) > 0 {
-			isActiveVal = isActiveStr[0]
+		// Set default value for is_active if not provided
+		if isActiveVal == "" {
+			isActiveVal = "true"
 		}
 		
 		// Debug: Log all form fields
@@ -230,6 +237,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		logrus.Info("description:", descriptionVal)
 		logrus.Info("parent_id:", parentIDVal)
 		logrus.Info("is_active:", isActiveVal)
+		logrus.Info("file found:", file.Filename, "size:", file.Size)
 		
 		// Validate required fields
 		if nameVal == "" {
@@ -240,11 +248,6 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		if parentIDVal == "" {
 			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing required field", "Parent ID is required for subcategories"))
 			return
-		}
-		
-		// Set default value for is_active if not provided
-		if isActiveVal == "" {
-			isActiveVal = "true"
 		}
 		
 		// Check if Cloudinary service is available
@@ -263,7 +266,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			return
 		}
 		
-
+		logrus.Info("Image uploaded successfully to Cloudinary:", imageURL)
 		
 		// Set the request struct manually
 		req = CreateSubcategoryRequest{
@@ -278,97 +281,22 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		return
 	}
 
-
-
-	// Convert ParentID from interface{} to uint
-	var parentID uint
-	switch v := req.ParentID.(type) {
-	case float64:
-		// JSON numbers are parsed as float64
-		if v > 0 && v == float64(uint(v)) {
-			parentID = uint(v)
-		} else {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid parent_id", "Parent ID must be a positive integer"))
-			return
-		}
-	case string:
-		// Try to parse string as uint
-		if v == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing parent_id", "Parent ID is required for subcategories"))
-			return
-		}
-		if parsed, err := strconv.ParseUint(v, 10, 32); err == nil {
-			parentID = uint(parsed)
-		} else {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid parent_id", "Parent ID must be a valid integer"))
-			return
-		}
-	default:
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid parent_id", "Parent ID must be a number"))
-		return
-	}
-
-	// Convert IsActive from interface{} to bool
-	var isActive bool
-	switch v := req.IsActive.(type) {
-	case bool:
-		isActive = v
-	case string:
-		if v == "true" {
-			isActive = true
-		} else if v == "false" {
-			isActive = false
-		} else {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid is_active", "IsActive must be true or false"))
-			return
-		}
-	default:
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid is_active", "IsActive must be a boolean or string"))
-		return
-	}
-
-	// Generate slug from name using global slug utility
-	slug := utils.GenerateSlug(req.Name)
-
-	// Check if slug already exists
-	var existingSubcategory models.Subcategory
-	if err := db.Where("slug = ?", slug).First(&existingSubcategory).Error; err == nil {
-		c.JSON(http.StatusConflict, views.CreateErrorResponse("Subcategory already exists", "A subcategory with this name already exists"))
-		return
-	}
-
-	// Validate parent category exists
-	var parentCategory models.Category
-	if err := db.First(&parentCategory, parentID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Parent category not found", "The specified parent category does not exist"))
-			return
-		}
-		logrus.Error("Failed to validate parent category:", err)
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to validate parent category", err.Error()))
-		return
-	}
-
-	// Create subcategory
-	logrus.Infof("Creating subcategory with image URL: %s", req.Image)
-	subcategory := models.Subcategory{
+	// Use the service layer to create the subcategory
+	// Convert the controller request to service request
+	serviceReq := &services.CreateSubcategoryRequest{
 		Name:        req.Name,
-		Slug:        slug,
 		Description: req.Description,
 		Image:       req.Image,
-		ParentID:    parentID,
-		IsActive:    isActive,
+		ParentID:    req.ParentID,
+		IsActive:    req.IsActive,
 	}
 
-	if err := db.Create(&subcategory).Error; err != nil {
+	// Create subcategory using service (this will handle image upload if needed)
+	subcategory, err := sc.subcategoryService.CreateSubcategory(serviceReq, nil) // No file since we already uploaded
+	if err != nil {
 		logrus.Error("Failed to create subcategory:", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create subcategory", err.Error()))
 		return
-	}
-
-	// Load the created subcategory with parent relationship
-	if err := db.Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
-		logrus.Error("Failed to load created subcategory:", err)
 	}
 
 	c.JSON(http.StatusCreated, views.CreateSuccessResponse("Subcategory created successfully", subcategory))
@@ -384,6 +312,7 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 	}
 
 	var req CreateSubcategoryRequest
+	var imageFile *multipart.FileHeader
 	
 	// Check content type to handle both JSON and form-data
 	contentType := c.GetHeader("Content-Type")
@@ -395,32 +324,150 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 			return
 		}
 	} else if strings.Contains(contentType, "multipart/form-data") {
-		// Handle form-data request
-		name := c.PostForm("name")
-		description := c.PostForm("description")
-		image := c.PostForm("image")
-		parentIDStr := c.PostForm("parent_id")
-		isActiveStr := c.PostForm("is_active")
+		// Handle form-data request with file upload support
 		
-		if name == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing name", "Name is required"))
-			return
+		// Try to get the image file first
+		var form *multipart.Form
+		var formErr error
+		
+		// Try MultipartForm first
+		form, formErr = c.MultipartForm()
+		if formErr == nil {
+			// Try to get the image file from form
+			if files, exists := form.File["image_file"]; exists && len(files) > 0 {
+				imageFile = files[0]
+			} else if files, exists := form.File["image"]; exists && len(files) > 0 {
+				imageFile = files[0]
+			} else {
+				// Try alternative field names
+				alternativeNames := []string{"file", "photo", "picture"}
+				for _, name := range alternativeNames {
+					if files, exists := form.File[name]; exists && len(files) > 0 {
+						imageFile = files[0]
+						break
+					}
+				}
+			}
 		}
-		if parentIDStr == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing parent_id", "Parent ID is required for subcategories"))
-			return
+		
+		// If MultipartForm failed or no file found, try FormFile directly
+		if imageFile == nil {
+			formFile, formErr := c.FormFile("image")
+			if formErr != nil {
+				// Try alternative field names with FormFile
+				alternativeNames := []string{"image_file", "file", "photo", "picture"}
+				for _, name := range alternativeNames {
+					formFile, formErr = c.FormFile(name)
+					if formErr == nil {
+						imageFile = formFile
+						break
+					}
+				}
+			} else {
+				imageFile = formFile
+			}
+		}
+		
+		// Extract form fields - handle both MultipartForm and direct form access
+		var nameVal, descriptionVal, parentIDVal, isActiveVal string
+		
+		if form != nil {
+			// Use MultipartForm data
+			name := form.Value["name"]
+			description := form.Value["description"]
+			parentIDStr := form.Value["parent_id"]
+			isActiveStr := form.Value["is_active"]
+			
+			// Extract first values from slices
+			if len(name) > 0 {
+				nameVal = name[0]
+			}
+			if len(description) > 0 {
+				descriptionVal = description[0]
+			}
+			if len(parentIDStr) > 0 {
+				parentIDVal = parentIDStr[0]
+			}
+			if len(isActiveStr) > 0 {
+				isActiveVal = isActiveStr[0]
+			}
+		} else {
+			// Fallback to direct form access
+			nameVal = c.PostForm("name")
+			descriptionVal = c.PostForm("description")
+			parentIDVal = c.PostForm("parent_id")
+			isActiveVal = c.PostForm("is_active")
 		}
 		
 		// Set default value for is_active if not provided
-		if isActiveStr == "" {
-			isActiveStr = "true"
+		if isActiveVal == "" {
+			isActiveVal = "true"
 		}
 		
-		req.Name = name
-		req.Description = description
-		req.Image = image
-		req.ParentID = parentIDStr
-		req.IsActive = isActiveStr
+		// Debug: Log all form fields
+		logrus.Info("Update form fields received:")
+		logrus.Info("name:", nameVal)
+		logrus.Info("description:", descriptionVal)
+		logrus.Info("parent_id:", parentIDVal)
+		logrus.Info("is_active:", isActiveVal)
+		if imageFile != nil {
+			logrus.Info("image file found:", imageFile.Filename, "size:", imageFile.Size)
+		} else {
+			logrus.Info("no image file provided")
+		}
+		
+		// Validate required fields
+		if nameVal == "" {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing required field", "Name is required"))
+			return
+		}
+		
+		if parentIDVal == "" {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing required field", "Parent ID is required for subcategories"))
+			return
+		}
+		
+		// Handle image upload if file is provided
+		var imageURL string
+		if imageFile != nil {
+			// Validate file size (max 10MB)
+			if imageFile.Size > 10*1024*1024 {
+				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", "Image file size must be less than 10MB"))
+				return
+			}
+			
+			// Validate file type
+			fileContentType := imageFile.Header.Get("Content-Type")
+			if !strings.HasPrefix(fileContentType, "image/") {
+				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only image files are allowed"))
+				return
+			}
+			
+			// Check if Cloudinary service is available
+			cloudinaryService := sc.subcategoryService.GetCloudinaryService()
+			if cloudinaryService == nil {
+				logrus.Error("Cloudinary service is not available")
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
+				return
+			}
+			
+			// Upload image to Cloudinary
+			uploadedURL, err := cloudinaryService.UploadImage(imageFile, "subcategories")
+			if err != nil {
+				logrus.Error("Failed to upload image to Cloudinary:", err)
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to upload image", "Failed to upload image to cloud storage. Please try again."))
+				return
+			}
+			
+			logrus.Info("Image uploaded successfully to Cloudinary:", uploadedURL)
+			imageURL = uploadedURL
+		}
+		
+		req.Name = nameVal
+		req.Description = descriptionVal
+		req.Image = imageURL
+		req.ParentID = parentIDVal
+		req.IsActive = isActiveVal
 	} else {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
 		return

@@ -12,11 +12,13 @@ import (
 )
 
 type QuoteController struct {
+	BaseController
 	quoteService *services.QuoteService
 }
 
 func NewQuoteController() *QuoteController {
 	return &QuoteController{
+		BaseController: *NewBaseController(),
 		quoteService: services.NewQuoteService(),
 	}
 }
@@ -39,8 +41,8 @@ func (qc *QuoteController) ProvideQuote(c *gin.Context) {
 	}()
 
 	// Get admin ID from context
-	adminID, exists := c.Get("user_id")
-	if !exists {
+	adminID := qc.GetUserID(c)
+	if adminID == 0 {
 		logrus.Error("QuoteController.ProvideQuote: user_id not found in context")
 		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
@@ -61,7 +63,7 @@ func (qc *QuoteController) ProvideQuote(c *gin.Context) {
 	}
 
 	// Provide quote
-	booking, err := qc.quoteService.ProvideQuote(uint(bookingID), adminID.(uint), &req)
+	booking, err := qc.quoteService.ProvideQuote(uint(bookingID), adminID, &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.ProvideQuote service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to provide quote", err.Error()))
@@ -89,8 +91,8 @@ func (qc *QuoteController) UpdateQuote(c *gin.Context) {
 	}()
 
 	// Get admin ID from context
-	adminID, exists := c.Get("user_id")
-	if !exists {
+	adminID := qc.GetUserID(c)
+	if adminID == 0 {
 		logrus.Error("QuoteController.UpdateQuote: user_id not found in context")
 		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
@@ -111,7 +113,7 @@ func (qc *QuoteController) UpdateQuote(c *gin.Context) {
 	}
 
 	// Update quote
-	booking, err := qc.quoteService.UpdateQuote(uint(bookingID), adminID.(uint), &req)
+	booking, err := qc.quoteService.UpdateQuote(uint(bookingID), adminID, &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.UpdateQuote service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to update quote", err.Error()))
@@ -139,8 +141,8 @@ func (qc *QuoteController) AcceptQuote(c *gin.Context) {
 	}()
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := qc.GetUserID(c)
+	if userID == 0 {
 		logrus.Error("QuoteController.AcceptQuote: user_id not found in context")
 		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
@@ -161,7 +163,7 @@ func (qc *QuoteController) AcceptQuote(c *gin.Context) {
 	}
 
 	// Accept quote
-	booking, err := qc.quoteService.AcceptQuote(uint(bookingID), userID.(uint), &req)
+	booking, err := qc.quoteService.AcceptQuote(uint(bookingID), userID, &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.AcceptQuote service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to accept quote", err.Error()))
@@ -189,8 +191,8 @@ func (qc *QuoteController) RejectQuote(c *gin.Context) {
 	}()
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := qc.GetUserID(c)
+	if userID == 0 {
 		logrus.Error("QuoteController.RejectQuote: user_id not found in context")
 		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
@@ -211,7 +213,7 @@ func (qc *QuoteController) RejectQuote(c *gin.Context) {
 	}
 
 	// Reject quote
-	booking, err := qc.quoteService.RejectQuote(uint(bookingID), userID.(uint), &req)
+	booking, err := qc.quoteService.RejectQuote(uint(bookingID), userID, &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.RejectQuote service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to reject quote", err.Error()))
@@ -239,8 +241,8 @@ func (qc *QuoteController) ScheduleAfterQuote(c *gin.Context) {
 	}()
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := qc.GetUserID(c)
+	if userID == 0 {
 		logrus.Error("QuoteController.ScheduleAfterQuote: user_id not found in context")
 		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
@@ -261,7 +263,7 @@ func (qc *QuoteController) ScheduleAfterQuote(c *gin.Context) {
 	}
 
 	// Schedule after quote
-	booking, err := qc.quoteService.ScheduleAfterQuote(uint(bookingID), userID.(uint), &req)
+	booking, err := qc.quoteService.ScheduleAfterQuote(uint(bookingID), userID, &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.ScheduleAfterQuote service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to schedule after quote", err.Error()))
@@ -395,4 +397,109 @@ func (qc *QuoteController) CleanupExpiredQuotes(c *gin.Context) {
 	}
 
 	c.JSON(200, views.CreateSuccessResponse("Expired quotes cleaned up successfully", nil))
+}
+
+// CreateQuotePayment creates a payment order for quote acceptance
+// @Summary Create payment order for quote acceptance
+// @Description Customer creates a payment order to pay for accepted quote
+// @Tags quotes
+// @Accept json
+// @Produce json
+// @Param id path integer true "Booking ID"
+// @Param request body models.CreateQuotePaymentRequest true "Payment details"
+// @Success 200 {object} views.Response{data=map[string]interface{}}
+// @Router /api/v1/bookings/{id}/create-quote-payment [post]
+func (qc *QuoteController) CreateQuotePayment(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("QuoteController.CreateQuotePayment panic: %v", r)
+		}
+	}()
+
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Error("QuoteController.CreateQuotePayment: user_id not found in context")
+		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	// Parse booking ID
+	bookingID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid booking ID", err.Error()))
+		return
+	}
+
+	// Parse request body
+	var req models.CreateQuotePaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid request", err.Error()))
+		return
+	}
+
+	// Create payment order
+	paymentOrder, err := qc.quoteService.CreateQuotePayment(uint(bookingID), userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("QuoteController.CreateQuotePayment service error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to create payment order", err.Error()))
+		return
+	}
+
+	response := map[string]interface{}{
+		"payment_order": paymentOrder,
+		"message":       "Payment order created successfully",
+	}
+
+	c.JSON(200, views.CreateSuccessResponse("Payment order created successfully", response))
+}
+
+// VerifyQuotePayment verifies payment for quote acceptance
+// @Summary Verify payment for quote acceptance
+// @Description Customer verifies payment for accepted quote
+// @Tags quotes
+// @Accept json
+// @Produce json
+// @Param id path integer true "Booking ID"
+// @Param request body models.VerifyQuotePaymentRequest true "Payment verification details"
+// @Success 200 {object} views.Response{data=models.Booking}
+// @Router /api/v1/bookings/{id}/verify-quote-payment [post]
+func (qc *QuoteController) VerifyQuotePayment(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("QuoteController.VerifyQuotePayment panic: %v", r)
+		}
+	}()
+
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Error("QuoteController.VerifyQuotePayment: user_id not found in context")
+		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	// Parse booking ID
+	bookingID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid booking ID", err.Error()))
+		return
+	}
+
+	// Parse request body
+	var req models.VerifyQuotePaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid request", err.Error()))
+		return
+	}
+
+	// Verify payment
+	booking, err := qc.quoteService.VerifyQuotePayment(uint(bookingID), userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("QuoteController.VerifyQuotePayment service error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to verify payment", err.Error()))
+		return
+	}
+
+	c.JSON(200, views.CreateSuccessResponse("Payment verified successfully", booking))
 }

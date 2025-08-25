@@ -14,11 +14,12 @@ func SetupServiceRoutes(router *gin.RouterGroup) {
 	services := router.Group("/services")
 	{
 		services.GET("", serviceController.GetServices)
-		services.GET("/:id", serviceController.GetServiceByID)
+		services.GET("/popular", serviceController.GetPopularServices)
 		services.GET("/subcategory/:subcategoryId", serviceController.GetServicesBySubcategory)
 		services.GET("/by-location", serviceController.GetServicesByLocation)
 		services.GET("/categories", serviceController.GetServiceCategories)
 		services.GET("/categories/:id/subcategories", serviceController.GetServiceSubcategories)
+		services.GET("/:id", serviceController.GetServiceByID)
 	}
 
 	// Admin routes (authentication and admin role required)

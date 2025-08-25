@@ -20,6 +20,7 @@ const (
 	BookingStatusCompleted      BookingStatus = "completed"      // Service completed
 	BookingStatusCancelled      BookingStatus = "cancelled"      // Booking cancelled
 	BookingStatusRejected       BookingStatus = "rejected"       // Quote rejected
+	BookingStatusTemporaryHold  BookingStatus = "temporary_hold" // Temporary hold for payment verification
 )
 
 // BookingType represents the type of booking
@@ -470,6 +471,20 @@ type ScheduleAfterQuoteRequest struct {
 	ScheduledDate string `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
 	ScheduledTime string `json:"scheduled_time" binding:"required"` // HH:MM format
 	Notes         string `json:"notes"`
+}
+
+// CreateQuotePaymentRequest represents the request to create payment for quote acceptance
+type CreateQuotePaymentRequest struct {
+	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
+	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
+	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
+}
+
+// VerifyQuotePaymentRequest represents the request to verify payment for quote acceptance
+type VerifyQuotePaymentRequest struct {
+	RazorpayPaymentID   string `json:"razorpay_payment_id" binding:"required"`
+	RazorpayOrderID     string `json:"razorpay_order_id" binding:"required"`
+	RazorpaySignature   string `json:"razorpay_signature" binding:"required"`
 }
 
 // QuoteInfo represents quote information in booking responses

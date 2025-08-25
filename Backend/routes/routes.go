@@ -45,6 +45,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupWalletRoutes(v1)
 		SetupRazorpayRoutes(v1)
 		SetupChatRoutes(v1)
+		SetupPromotionBannerRoutes(v1)
 		
 		// Booking routes with booking system middleware
 		bookingMiddleware := middleware.NewDynamicConfigMiddleware()

@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface StatusBadgeProps {
-  status: string;
+  status: string | null | undefined;
   type: "booking" | "payment";
   className?: string;
 }
@@ -11,7 +11,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   type,
   className = "",
 }) => {
-  const getStatusColor = (status: string, type: "booking" | "payment") => {
+  const getStatusColor = (status: string | null | undefined, type: "booking" | "payment") => {
+    if (!status) {
+      return "bg-gray-100 text-gray-800 border-gray-300";
+    }
     if (type === "booking") {
       const bookingStatusColors: Record<string, string> = {
         pending: "bg-yellow-100 text-yellow-800 border-yellow-300",

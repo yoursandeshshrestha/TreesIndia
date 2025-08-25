@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -244,50 +243,11 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 	// ========================================
 	logrus.Info("Step 3: Setting up business model configuration")
 	
-	// Add new business model configs
-	newConfigs := []models.AdminConfig{
-		{Key: "max_normal_user_properties", Value: "0", Type: "int", Category: "system", Description: "Maximum properties per normal user (0 = unlimited)"},
-		{Key: "max_broker_properties_without_subscription", Value: "1", Type: "int", Category: "system", Description: "Maximum properties broker can post without subscription"},
-		{Key: "broker_property_priority", Value: "true", Type: "bool", Category: "system", Description: "Broker properties get priority listing"},
-		{Key: "razorpay_key_id", Value: "rzp_test_R5AUjoyz0QoYmH", Type: "string", Category: "payment", Description: "Razorpay Key ID"},
-		{Key: "razorpay_secret_key", Value: "gtpRKsGGGD7ofEXWvaoKRfB4", Type: "string", Category: "payment", Description: "Razorpay Secret Key"},
-		{Key: "razorpay_webhook_secret", Value: "", Type: "string", Category: "payment", Description: "Razorpay Webhook Secret"},
-
-		{Key: "min_recharge_amount", Value: "100", Type: "float", Category: "wallet", Description: "Minimum recharge amount"},
-		{Key: "max_recharge_amount", Value: "50000", Type: "float", Category: "wallet", Description: "Maximum single recharge amount"},
-		{Key: "property_expiry_days", Value: "30", Type: "int", Category: "property", Description: "Days until property listing expires"},
-		{Key: "auto_approve_broker_properties", Value: "true", Type: "bool", Category: "property", Description: "Auto-approve broker property listings"},
-		{Key: "require_property_approval", Value: "true", Type: "bool", Category: "property", Description: "Require admin approval for normal user properties"},
-		{Key: "max_property_images", Value: "5", Type: "int", Category: "system", Description: "Maximum images per property"},
-	}
-
-	for _, config := range newConfigs {
-		// Check if config already exists
-		var existingConfig models.AdminConfig
-		if err := db.Where("key = ?", config.Key).First(&existingConfig).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				// Create new config
-				if err := db.Create(&config).Error; err != nil {
-					logrus.Warnf("Could not create admin config %s: %v", config.Key, err)
-				} else {
-					logrus.Infof("Created admin config: %s = %s", config.Key, config.Value)
-				}
-			} else {
-				logrus.Warnf("Could not check admin config %s: %v", config.Key, err)
-			}
-		} else {
-			// Update existing config
-			existingConfig.Value = config.Value
-			existingConfig.Type = config.Type
-			existingConfig.Category = config.Category
-			existingConfig.Description = config.Description
-			if err := db.Save(&existingConfig).Error; err != nil {
-				logrus.Warnf("Could not update admin config %s: %v", config.Key, err)
-			} else {
-				logrus.Infof("Updated admin config: %s = %s", config.Key, config.Value)
-			}
-		}
-	}
+	// NOTE: Admin configurations are now handled by configuration_seed.go
+	// This prevents conflicts between migration service and seed files
+	logrus.Info("Admin configurations are handled by seed files - skipping migration service configs")
+	
+	
 	
 	logrus.Info("Business model configuration setup completed")
 	

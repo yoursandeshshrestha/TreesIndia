@@ -42,11 +42,17 @@ func (br *BookingRepository) GetByID(id uint) (*models.Booking, error) {
 		return nil, err
 	}
 	
-	// Manually load payment relationship
+	// Manually load payment relationship (get all payments)
 	paymentRepo := NewPaymentRepository()
-	payment, err := paymentRepo.GetByRelatedEntity("booking", booking.ID)
-	if err == nil && payment != nil {
-		booking.Payment = payment
+	payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+		RelatedEntityType: "booking",
+		RelatedEntityID:   &booking.ID,
+	})
+	if err == nil && len(payments) > 0 {
+		// Set the most recent payment as the primary payment
+		booking.Payment = &payments[0]
+		// Store all payments in a custom field if needed
+		// booking.AllPayments = payments
 	}
 	
 	return &booking, nil
@@ -94,12 +100,15 @@ func (br *BookingRepository) GetUserBookings(userID uint, filters *UserBookingFi
 		return nil, nil, err
 	}
 
-	// Manually load payment relationships
+	// Manually load payment relationships (get all payments for each booking)
 	paymentRepo := NewPaymentRepository()
 	for i := range bookings {
-		payment, err := paymentRepo.GetByRelatedEntity("booking", bookings[i].ID)
-		if err == nil && payment != nil {
-			bookings[i].Payment = payment
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
 		}
 	}
 
@@ -173,12 +182,15 @@ func (br *BookingRepository) GetBookingsWithFilters(filters *AdminBookingFilters
 		return nil, nil, err
 	}
 
-	// Manually load payment relationships
+	// Manually load payment relationships (get all payments for each booking)
 	paymentRepo := NewPaymentRepository()
 	for i := range bookings {
-		payment, err := paymentRepo.GetByRelatedEntity("booking", bookings[i].ID)
-		if err == nil && payment != nil {
-			bookings[i].Payment = payment
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
 		}
 	}
 
@@ -219,7 +231,7 @@ func (br *BookingRepository) GetConflictingBookings(startTime time.Time, endTime
 // GetExpiredTemporaryHolds gets expired temporary holds
 func (br *BookingRepository) GetExpiredTemporaryHolds() ([]models.Booking, error) {
 	var bookings []models.Booking
-	err := br.db.Where("status = ? AND hold_expires_at < ?", models.BookingStatusPending, time.Now()).Find(&bookings).Error
+	err := br.db.Where("status = ? AND hold_expires_at < ?", models.BookingStatusTemporaryHold, time.Now()).Find(&bookings).Error
 	return bookings, err
 }
 
@@ -653,20 +665,23 @@ func (br *BookingRepository) convertToOptimizedResponse(booking *models.Booking)
 			Currency: booking.Payment.Currency,
 		}
 	} else {
-		// Manually load payment if not preloaded
+		// Manually load payment if not preloaded (get all payments)
 		paymentRepo := NewPaymentRepository()
-		paymentRecord, err := paymentRepo.GetByRelatedEntity("booking", booking.ID)
-		if err != nil {
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &booking.ID,
+		})
+		if err != nil || len(payments) == 0 {
 			logrus.Infof("No payment found for booking %d (repo): %v", booking.ID, err)
-		} else if paymentRecord != nil {
+		} else {
+			// Set the most recent payment as the primary payment
+			paymentRecord := &payments[0]
 			logrus.Infof("Found payment for booking %d (repo): amount=%f, status=%s", booking.ID, paymentRecord.Amount, paymentRecord.Status)
 			payment = &models.OptimizedPaymentInfo{
 				Amount:   paymentRecord.Amount,
 				Status:   string(paymentRecord.Status),
 				Currency: paymentRecord.Currency,
 			}
-		} else {
-			logrus.Infof("Payment record is nil for booking %d (repo)", booking.ID)
 		}
 	}
 	
@@ -938,12 +953,15 @@ func (br *BookingRepository) GetInquiryBookings(filters *InquiryBookingFilters) 
 		return nil, nil, err
 	}
 
-	// Manually load payment relationships
+	// Manually load payment relationships (get all payments for each booking)
 	paymentRepo := NewPaymentRepository()
 	for i := range bookings {
-		payment, err := paymentRepo.GetByRelatedEntity("booking", bookings[i].ID)
-		if err == nil && payment != nil {
-			bookings[i].Payment = payment
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
 		}
 	}
 
@@ -972,12 +990,15 @@ func (br *BookingRepository) GetExpiredQuotes() ([]models.Booking, error) {
 		return nil, err
 	}
 
-	// Manually load payment relationships
+	// Manually load payment relationships (get all payments for each booking)
 	paymentRepo := NewPaymentRepository()
 	for i := range bookings {
-		payment, err := paymentRepo.GetByRelatedEntity("booking", bookings[i].ID)
-		if err == nil && payment != nil {
-			bookings[i].Payment = payment
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
 		}
 	}
 

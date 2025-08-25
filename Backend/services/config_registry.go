@@ -4,14 +4,16 @@ import (
 	"fmt"
 )
 
+// ConfigRegistry provides schema validation for admin configurations.
+// All actual configuration values are managed through seed files.
+// This registry only defines the structure and validation rules.
+
 // ConfigSchema defines the structure of a configuration
 type ConfigSchema struct {
 	Key         string      `json:"key"`
 	Type        string      `json:"type"`
 	Category    string      `json:"category"`
 	Description string      `json:"description"`
-	DefaultValue interface{} `json:"default_value"`
-	Example     interface{} `json:"example"`
 	Required    bool        `json:"required"`
 	Options     []string    `json:"options,omitempty"`
 	MinValue    interface{} `json:"min_value,omitempty"`
@@ -41,8 +43,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "system",
 		Description: "Allow users to upload profile pictures",
-		DefaultValue: true,
-		Example:     false,
 		Required:    false,
 	})
 
@@ -51,8 +51,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "booking",
 		Description: "Enable the booking system for users",
-		DefaultValue: true,
-		Example:     false,
 		Required:    false,
 	})
 
@@ -61,8 +59,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "system",
 		Description: "Allow new users to register accounts",
-		DefaultValue: true,
-		Example:     true,
 		Required:    false,
 	})
 
@@ -72,8 +68,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "system",
 		Description: "Require email verification for new user accounts",
-		DefaultValue: false,
-		Example:     true,
 		Required:    false,
 	})
 
@@ -82,8 +76,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "system",
 		Description: "Require SMS verification for new user accounts",
-		DefaultValue: false,
-		Example:     false,
 		Required:    false,
 	})
 
@@ -93,8 +85,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "system",
 		Description: "User session timeout in minutes",
-		DefaultValue: 30,
-		Example:     60,
 		Required:    false,
 		MinValue:    5,
 		MaxValue:    1440,
@@ -106,8 +96,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "system",
 		Description: "Maximum login attempts before account lockout",
-		DefaultValue: 3,
-		Example:     5,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    10,
@@ -119,8 +107,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "system",
 		Description: "Maximum file size for avatar uploads",
-		DefaultValue: 5,
-		Example:     10,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    50,
@@ -132,8 +118,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "system",
 		Description: "Maximum file size for document uploads",
-		DefaultValue: 10,
-		Example:     20,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    100,
@@ -141,15 +125,11 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 	})
 
 	// Wallet System
-
-
 	cr.registerSchema(ConfigSchema{
 		Key:         "min_recharge_amount",
 		Type:        "float",
 		Category:    "wallet",
 		Description: "Minimum amount for wallet recharge",
-		DefaultValue: 100.0,
-		Example:     50.0,
 		Required:    false,
 		MinValue:    1.0,
 		MaxValue:    10000.0,
@@ -161,8 +141,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "float",
 		Category:    "wallet",
 		Description: "Maximum amount for single wallet recharge",
-		DefaultValue: 50000.0,
-		Example:     100000.0,
 		Required:    false,
 		MinValue:    100.0,
 		MaxValue:    1000000.0,
@@ -175,8 +153,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "property",
 		Description: "Days until property listing expires",
-		DefaultValue: 30,
-		Example:     60,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    365,
@@ -188,8 +164,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "property",
 		Description: "Maximum images per property listing",
-		DefaultValue: 5,
-		Example:     10,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    20,
@@ -200,8 +174,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "bool",
 		Category:    "property",
 		Description: "Automatically approve property listings from brokers",
-		DefaultValue: true,
-		Example:     false,
 		Required:    false,
 	})
 
@@ -211,8 +183,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "property",
 		Description: "Maximum properties for normal users (0 = unlimited)",
-		DefaultValue: 0,
-		Example:     2,
 		Required:    false,
 		MinValue:    0,
 		MaxValue:    100,
@@ -223,8 +193,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "property",
 		Description: "Maximum properties for broker users",
-		DefaultValue: 1,
-		Example:     5,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    100,
@@ -236,8 +204,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "string",
 		Category:    "system",
 		Description: "Support email address for user inquiries",
-		DefaultValue: "support@treesindiaservices.com",
-		Example:     "help@treesindiaservices.com",
 		Required:    false,
 	})
 
@@ -246,12 +212,8 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "string",
 		Category:    "system",
 		Description: "Support phone number for user inquiries",
-		DefaultValue: "+91-XXXXXXXXXX",
-		Example:     "+91-9876543210",
 		Required:    false,
 	})
-
-
 
 	// Working Hours Configuration
 	cr.registerSchema(ConfigSchema{
@@ -259,8 +221,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "string",
 		Category:    "booking",
 		Description: "Start time for working hours (24-hour format: HH:MM)",
-		DefaultValue: "09:00",
-		Example:     "08:00",
 		Required:    false,
 	})
 
@@ -269,8 +229,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "string",
 		Category:    "booking",
 		Description: "End time for working hours (24-hour format: HH:MM)",
-		DefaultValue: "22:00",
-		Example:     "21:00",
 		Required:    false,
 	})
 
@@ -279,8 +237,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "string",
 		Category:    "booking",
 		Description: "Working days (comma-separated: 1=Monday, 7=Sunday)",
-		DefaultValue: "1,2,3,4,5,6,7",
-		Example:     "1,2,3,4,5,6",
 		Required:    false,
 	})
 
@@ -289,8 +245,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "booking",
 		Description: "How many days in advance users can book services",
-		DefaultValue: 3,
-		Example:     7,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    365,
@@ -302,8 +256,6 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "booking",
 		Description: "Hours before booking when cancellation is allowed",
-		DefaultValue: 24,
-		Example:     12,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    168,
@@ -315,15 +267,33 @@ func (cr *ConfigRegistry) registerDefaultSchemas() {
 		Type:        "int",
 		Category:    "booking",
 		Description: "Temporary hold time for booking slots in minutes (before payment)",
-		DefaultValue: 7,
-		Example:     10,
 		Required:    false,
 		MinValue:    1,
 		MaxValue:    60,
 		Unit:        "minutes",
 	})
 
-	// Wallet Configuration
+	cr.registerSchema(ConfigSchema{
+		Key:         "booking_buffer_time_minutes",
+		Type:        "int",
+		Category:    "booking",
+		Description: "Buffer time between consecutive bookings in minutes",
+		Required:    false,
+		MinValue:    0,
+		MaxValue:    120,
+		Unit:        "minutes",
+	})
+
+	cr.registerSchema(ConfigSchema{
+		Key:         "inquiry_booking_fee",
+		Type:        "int",
+		Category:    "booking",
+		Description: "Fee charged for inquiry-based bookings",
+		Required:    false,
+		MinValue:    0,
+		MaxValue:    10000,
+		Unit:        "INR",
+	})
 }
 
 // registerSchema registers a configuration schema
@@ -428,5 +398,6 @@ func (cr *ConfigRegistry) GetConfigurationTemplate() map[string]interface{} {
 				"is_active": true,
 			},
 		},
+		"note": "All configuration values are managed through seed files. This registry only provides schema validation.",
 	}
 }

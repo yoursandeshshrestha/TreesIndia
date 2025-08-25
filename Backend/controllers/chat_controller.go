@@ -12,14 +12,14 @@ import (
 
 // ChatController handles chat-related HTTP requests
 type ChatController struct {
-	*BaseController
+	BaseController
 	chatService *services.ChatService
 }
 
 // NewChatController creates a new chat controller
 func NewChatController() *ChatController {
 	return &ChatController{
-		BaseController: NewBaseController(),
+		BaseController: *NewBaseController(),
 		chatService:    services.NewChatService(),
 	}
 }
@@ -66,8 +66,8 @@ func (cc *ChatController) CreateChatRoom(c *gin.Context) {
 // @Router /chat/rooms [get]
 func (cc *ChatController) GetUserChatRooms(c *gin.Context) {
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := cc.GetUserID(c)
+	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
 		return
 	}
@@ -84,13 +84,13 @@ func (cc *ChatController) GetUserChatRooms(c *gin.Context) {
 	}
 
 	req := &models.GetChatRoomsRequest{
-		UserID:   userID.(uint),
+		UserID:   userID,
 		RoomType: roomType,
 		Page:     page,
 		Limit:    limit,
 	}
 
-	chatRooms, pagination, err := cc.chatService.GetUserChatRooms(userID.(uint), req)
+	chatRooms, pagination, err := cc.chatService.GetUserChatRooms(userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get chat rooms", err.Error()))
 		return
@@ -124,13 +124,13 @@ func (cc *ChatController) SendMessage(c *gin.Context) {
 	}
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := cc.GetUserID(c)
+	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
 		return
 	}
 
-	message, err := cc.chatService.SendMessage(userID.(uint), &req)
+	message, err := cc.chatService.SendMessage(userID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to send message", err.Error()))
 		return
@@ -163,8 +163,8 @@ func (cc *ChatController) GetMessages(c *gin.Context) {
 	}
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := cc.GetUserID(c)
+	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
 		return
 	}
@@ -179,7 +179,7 @@ func (cc *ChatController) GetMessages(c *gin.Context) {
 		Limit:  limit,
 	}
 
-	messages, pagination, err := cc.chatService.GetMessages(userID.(uint), req)
+	messages, pagination, err := cc.chatService.GetMessages(userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get messages", err.Error()))
 		return
@@ -213,16 +213,16 @@ func (cc *ChatController) MarkMessageRead(c *gin.Context) {
 	}
 
 	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID := cc.GetUserID(c)
+	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
 		return
 	}
 
 	// Override user ID from request with authenticated user ID
-	req.UserID = userID.(uint)
+	req.UserID = userID
 
-	err := cc.chatService.MarkMessageRead(userID.(uint), &req)
+	err := cc.chatService.MarkMessageRead(userID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to mark message as read", err.Error()))
 		return

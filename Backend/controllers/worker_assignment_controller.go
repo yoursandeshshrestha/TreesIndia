@@ -12,6 +12,7 @@ import (
 )
 
 type WorkerAssignmentController struct {
+	BaseController
 	workerAssignmentService *services.WorkerAssignmentService
 }
 
@@ -271,19 +272,4 @@ func (wac *WorkerAssignmentController) CompleteAssignment(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment completed successfully", assignment))
 }
 
-// GetUserID gets the user ID from the context
-func (wac *WorkerAssignmentController) GetUserID(c *gin.Context) uint {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		return 0
-	}
-	
-	switch v := userID.(type) {
-	case float64:
-		return uint(v)
-	case uint:
-		return v
-	default:
-		return 0
-	}
-}
+

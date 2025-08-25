@@ -326,3 +326,144 @@ func (qs *QuoteService) CleanupExpiredQuotes() error {
 
 	return nil
 }
+
+// CreateQuotePayment creates a payment order for quote acceptance
+func (qs *QuoteService) CreateQuotePayment(bookingID uint, userID uint, req *models.CreateQuotePaymentRequest) (map[string]interface{}, error) {
+	// 1. Get booking
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate booking belongs to user
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// 3. Validate booking is inquiry type and quote accepted
+	if booking.BookingType != models.BookingTypeInquiry {
+		return nil, errors.New("booking is not inquiry type")
+	}
+
+	if booking.Status != models.BookingStatusQuoteAccepted {
+		return nil, errors.New("quote has not been accepted")
+	}
+
+	// 4. Validate quote amount matches
+	if booking.QuoteAmount == nil || *booking.QuoteAmount != req.Amount {
+		return nil, errors.New("quote amount mismatch")
+	}
+
+	// 5. Parse scheduled date and time
+	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
+	if err != nil {
+		return nil, errors.New("invalid scheduled date format")
+	}
+
+	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
+	if err != nil {
+		return nil, errors.New("invalid scheduled time format")
+	}
+
+	// 6. Combine date and time
+	scheduledDateTime := time.Date(
+		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+		scheduledDate.Location(),
+	)
+
+	// 7. Validate scheduled time is in the future
+	if scheduledDateTime.Before(time.Now()) {
+		return nil, errors.New("scheduled time must be in the future")
+	}
+
+	// 8. Create Razorpay order using payment service
+	paymentService := NewPaymentService()
+	
+	// Create payment request
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            userID,
+		Amount:            req.Amount,
+		Currency:          "INR",
+		Type:              "booking",
+		Method:            "razorpay",
+		RelatedEntityType: "booking",
+		RelatedEntityID:   bookingID,
+		Description:       "Quote payment for " + booking.BookingReference,
+		Notes:             "Quote payment for booking",
+	}
+	
+	// Create payment record and Razorpay order
+	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment order: %v", err)
+	}
+
+	// 9. Update booking with scheduling details (but keep status as quote_accepted until payment is verified)
+	booking.ScheduledDate = &scheduledDate
+	booking.ScheduledTime = &scheduledDateTime
+
+	// 10. Update booking
+	err = qs.bookingRepo.Update(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update booking: %v", err)
+	}
+
+	logrus.Infof("Payment order created for booking %d: amount=%.2f, order_id=%s", bookingID, req.Amount, paymentOrder["id"])
+	return paymentOrder, nil
+}
+
+// VerifyQuotePayment verifies payment for quote acceptance
+func (qs *QuoteService) VerifyQuotePayment(bookingID uint, userID uint, req *models.VerifyQuotePaymentRequest) (*models.Booking, error) {
+	// 1. Get booking
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate booking belongs to user
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// 3. Validate booking is inquiry type and quote accepted
+	if booking.BookingType != models.BookingTypeInquiry {
+		return nil, errors.New("booking is not inquiry type")
+	}
+
+	if booking.Status != models.BookingStatusQuoteAccepted {
+		return nil, errors.New("quote has not been accepted")
+	}
+
+		// 4. Find the most recent payment record for this booking
+	paymentRepo := repositories.NewPaymentRepository()
+	payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+		RelatedEntityType: "booking",
+		RelatedEntityID:   &bookingID,
+		Limit:             1,
+	})
+	if err != nil || len(payments) == 0 {
+		return nil, fmt.Errorf("payment record not found: %v", err)
+	}
+	payment := &payments[0]
+	
+	// 5. Verify payment with Razorpay using payment service
+	paymentService := NewPaymentService()
+	_, err = paymentService.VerifyAndCompletePayment(payment.ID, req.RazorpayPaymentID, req.RazorpaySignature)
+	if err != nil {
+		return nil, fmt.Errorf("payment verification failed: %v", err)
+	}
+
+	// 6. Update booking status to confirmed
+	booking.Status = models.BookingStatusConfirmed
+	booking.PaymentStatus = "completed"
+
+	// 7. Update booking
+	err = qs.bookingRepo.Update(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update booking: %v", err)
+	}
+
+	logrus.Infof("Payment verified for booking %d: payment_id=%s", bookingID, req.RazorpayPaymentID)
+	return booking, nil
+}

@@ -7,6 +7,7 @@ import {
   FileText,
   Shield,
   Calendar,
+  Image,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -122,5 +123,11 @@ export const sidebarItems: SidebarItem[] = [
     label: "System Configuration",
     icon: <Settings size={16} />,
     path: "/dashboard/admin-configs",
+  },
+  {
+    id: "banners",
+    label: "Banner Management",
+    icon: <Image size={16} />,
+    path: "/dashboard/banners",
   },
 ];

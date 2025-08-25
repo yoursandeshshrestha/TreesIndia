@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"treesindia/models"
 
-	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,11 +19,12 @@ func (sm *SeedManager) seedMainData() error {
 
 	// Seed in order of dependencies
 	seeders := []func() error{
-		sm.SeedServiceAreasData, // Create service areas first
-		sm.SeedHomeServices,     // Then create services with service area IDs
-		sm.SeedConstructionServices,
-		sm.SeedWorkerUser,
-		sm.SeedSecondWorkerUser,
+		sm.SeedCategories,           // Create categories first
+		sm.SeedSubcategories,        // Then subcategories
+		sm.SeedServices,             // Then services
+		sm.SeedServiceAreaAssociations, // Associate services with service areas
+		sm.SeedWorkers,              // Then workers
+		SeedPromotionBanners,        // Finally promotion banners
 	}
 
 	for _, seeder := range seeders {
@@ -38,531 +38,121 @@ func (sm *SeedManager) seedMainData() error {
 	return nil
 }
 
-// SeedWorkerUser seeds a worker user
-func (sm *SeedManager) SeedWorkerUser() error {
-	logrus.Info("Seeding worker user...")
+// SeedCategories seeds all categories
+func (sm *SeedManager) SeedCategories() error {
+	logrus.Info("Seeding categories...")
 
-	// Check if worker user already exists
-	var workerCount int64
-	sm.db.Model(&models.User{}).Where("phone = ?", "+919876543210").Count(&workerCount)
-	
-	if workerCount > 0 {
-		logrus.Info("Worker user already exists")
-		return nil
+	categories := []models.Category{
+		{
+			Name:        "Home Services",
+			Slug:        "home-services",
+			Description: "Professional home services for your daily needs",
+			Image:       "/images/main-icons/home_service.png",
+			IsActive:    true,
+		},
+		{
+			Name:        "Construction Services",
+			Slug:        "construction-services",
+			Description: "Professional construction and renovation services",
+			Image:       "/images/main-icons/construction_service.png",
+			IsActive:    true,
+		},
 	}
 
-	// Create worker user
-	workerUser := models.User{
-		Name:     "John Worker",
-		Phone:    "+919876543210",
-		UserType: models.UserTypeWorker,
-		IsActive: true,
+	for _, category := range categories {
+		if err := sm.db.Where("name = ?", category.Name).FirstOrCreate(&category).Error; err != nil {
+			logrus.Errorf("Failed to create category %s: %v", category.Name, err)
+			return err
+		}
 	}
 
-	if err := sm.db.Create(&workerUser).Error; err != nil {
-		logrus.Error("Failed to create worker user:", err)
-		return err
-	}
-
-	// Get the first service for the worker
-	var firstService models.Service
-	if err := sm.db.First(&firstService).Error; err != nil {
-		logrus.Error("No services found for worker assignment")
-		return err
-	}
-
-	// Create worker profile
-	worker := models.Worker{
-		UserID:     workerUser.ID,
-		ServiceID:  firstService.ID,
-		HourlyRate: 500.0,
-		WorkerType: models.WorkerTypeTreesIndia,
-		Skills:     `["plumbing", "electrical", "painting"]`,
-		Experience: 5,
-		ServiceAreas: `["Siliguri", "Darjeeling"]`,
-		IsAvailable: true,
-		BankAccountHolder: "John Worker",
-		BankAccountNumber: "1234567890",
-		BankIFSCCode:      "SBIN0001234",
-		BankName:          "State Bank of India",
-		BankBranch:        "Siliguri Main Branch",
-		PoliceVerificationStatus: models.DocumentVerificationStatusPending,
-	}
-
-	if err := sm.db.Create(&worker).Error; err != nil {
-		logrus.Error("Failed to create worker profile:", err)
-		return err
-	}
-
-	logrus.Info("Worker user seeded successfully")
+	logrus.Info("Categories seeded successfully")
 	return nil
 }
 
-// SeedSecondWorkerUser seeds a second worker user
-func (sm *SeedManager) SeedSecondWorkerUser() error {
-	logrus.Info("Seeding second worker user...")
+// SeedSubcategories seeds all subcategories
+func (sm *SeedManager) SeedSubcategories() error {
+	logrus.Info("Seeding subcategories...")
 
-	// Check if second worker user already exists
-	var workerCount int64
-	sm.db.Model(&models.User{}).Where("phone = ?", "+919876543211").Count(&workerCount)
-	
-	if workerCount > 0 {
-		logrus.Info("Second worker user already exists")
-		return nil
+	// Get category IDs
+	var homeCategory, constructionCategory models.Category
+	sm.db.Where("name = ?", "Home Services").First(&homeCategory)
+	sm.db.Where("name = ?", "Construction Services").First(&constructionCategory)
+
+	subcategories := []models.Subcategory{
+		// Home Services subcategories
+		{Name: "Plumbing", Slug: "plumbing", Description: "Professional plumbing services", Image: "/images/image-for-seeding/tap.png", ParentID: homeCategory.ID, IsActive: true},
+		{Name: "Pest Control", Slug: "pest-control", Description: "Effective pest control solutions", Image: "/images/image-for-seeding/maid3.jpg", ParentID: homeCategory.ID, IsActive: true},
+		{Name: "Painting", Slug: "painting", Description: "Interior and exterior painting services", Image: "/images/image-for-seeding/maid4.jpg", ParentID: homeCategory.ID, IsActive: true},
+		{Name: "Electrical", Slug: "electrical", Description: "Electrical repair and installation services", Image: "/images/image-for-seeding/maid5.jpg", ParentID: homeCategory.ID, IsActive: true},
+		{Name: "Cleaning", Slug: "cleaning", Description: "Professional cleaning services", Image: "/images/image-for-seeding/cleaning.png", ParentID: homeCategory.ID, IsActive: true},
+		
+		// Construction Services subcategories
+		{Name: "Renovation", Slug: "renovation", Description: "Complete home renovation services", Image: "/images/image-for-seeding/maid6.jpg", ParentID: constructionCategory.ID, IsActive: true},
+		{Name: "Plan Sanction", Slug: "plan-sanction", Description: "Building plan approval and sanction services", Image: "/images/image-for-seeding/maid7.avif", ParentID: constructionCategory.ID, IsActive: true},
+		{Name: "Promoting Services", Slug: "promoting-services", Description: "Construction project promotion and marketing", Image: "/images/image-for-seeding/maid8.jpg", ParentID: constructionCategory.ID, IsActive: true},
 	}
 
-	// Create second worker user
-	workerUser := models.User{
-		Name:     "Sarah Worker",
-		Phone:    "+919876543211",
-		UserType: models.UserTypeWorker,
-		IsActive: true,
-	}
-
-	if err := sm.db.Create(&workerUser).Error; err != nil {
-		logrus.Error("Failed to create second worker user:", err)
-		return err
-	}
-
-	// Get the second service for the worker (if available, otherwise use first)
-	var service models.Service
-	if err := sm.db.Offset(1).First(&service).Error; err != nil {
-		// If no second service, use the first one
-		if err := sm.db.First(&service).Error; err != nil {
-			logrus.Error("No services found for worker assignment")
-			return err
-		}
-	}
-
-	// Create worker profile
-	worker := models.Worker{
-		UserID:     workerUser.ID,
-		ServiceID:  service.ID,
-		HourlyRate: 600.0,
-		WorkerType: models.WorkerTypeTreesIndia,
-		Skills:     `["cleaning", "carpentry", "gardening"]`,
-		Experience: 7,
-		ServiceAreas: `["Kolkata", "Howrah"]`,
-		IsAvailable: true,
-		BankAccountHolder: "Sarah Worker",
-		BankAccountNumber: "0987654321",
-		BankIFSCCode:      "HDFC0001234",
-		BankName:          "HDFC Bank",
-		BankBranch:        "Kolkata Main Branch",
-		PoliceVerificationStatus: models.DocumentVerificationStatusPending,
-	}
-
-	if err := sm.db.Create(&worker).Error; err != nil {
-		logrus.Error("Failed to create second worker profile:", err)
-		return err
-	}
-
-	logrus.Info("Second worker user seeded successfully")
-	return nil
-}
-
-// SeedHomeServices seeds Home Services category, subcategories, and services
-func (sm *SeedManager) SeedHomeServices() error {
-	logrus.Info("Seeding Home Services...")
-
-	// Create Home Services category
-	homeServicesCategory := models.Category{
-		Name:        "Home Services",
-		Slug:        "home-services",
-		Description: "Professional home services for your daily needs",
-		IsActive:    true,
-	}
-
-	if err := sm.db.Where("name = ?", "Home Services").FirstOrCreate(&homeServicesCategory).Error; err != nil {
-		logrus.Error("Failed to create Home Services category:", err)
-		return err
-	}
-
-	// Create subcategories for Home Services
-	homeSubcategories := []models.Subcategory{
-		{
-			Name:        "Plumbing",
-			Slug:        "plumbing",
-			Description: "Professional plumbing services",
-			ParentID:    homeServicesCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Pest Control",
-			Slug:        "pest-control",
-			Description: "Effective pest control solutions",
-			ParentID:    homeServicesCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Painting",
-			Slug:        "painting",
-			Description: "Interior and exterior painting services",
-			ParentID:    homeServicesCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Electrical",
-			Slug:        "electrical",
-			Description: "Electrical repair and installation services",
-			ParentID:    homeServicesCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Cleaning",
-			Slug:        "cleaning",
-			Description: "Professional cleaning services",
-			ParentID:    homeServicesCategory.ID,
-			IsActive:    true,
-		},
-	}
-
-	// Bulk create subcategories
-	for _, subcategory := range homeSubcategories {
-		if err := sm.db.Where("name = ? AND parent_id = ?", subcategory.Name, subcategory.ParentID).FirstOrCreate(&subcategory).Error; err != nil {
-			logrus.Errorf("Failed to create subcategory %s: %v", subcategory.Name, err)
-			return err
-		}
-	}
-
-	// Get subcategory IDs for service creation
-	subcategoryIDs := sm.getSubcategoryIDs(homeServicesCategory.ID)
-
-	// Create services for Home Services
-	homeServices := []models.Service{
-		// Plumbing Services
-		{
-			Name:          "Tap Repair",
-			Slug:          "tap-repair",
-			Description:   "Professional tap repair and replacement service",
-			PriceType:     "fixed",
-			Price:         &[]float64{500}[0],
-			Duration:      &[]string{"2 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Plumbing"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Pipe Installation",
-			Slug:          "pipe-installation",
-			Description:   "Complete pipe installation and repair service",
-			PriceType:     "fixed",
-			Price:         &[]float64{1000}[0],
-			Duration:      &[]string{"4 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Plumbing"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Drainage Cleaning",
-			Slug:          "drainage-cleaning",
-			Description:   "Professional drainage cleaning and unclogging",
-			PriceType:     "fixed",
-			Price:         &[]float64{800}[0],
-			Duration:      &[]string{"3 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Plumbing"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Pest Control Services
-		{
-			Name:          "General Pest Control",
-			Slug:          "general-pest-control",
-			Description:   "Complete pest control treatment for your home",
-			PriceType:     "fixed",
-			Price:         &[]float64{1500}[0],
-			Duration:      &[]string{"6 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Pest Control"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Termite Treatment",
-			Slug:          "termite-treatment",
-			Description:   "Specialized termite treatment and prevention",
-			PriceType:     "fixed",
-			Price:         &[]float64{2500}[0],
-			Duration:      &[]string{"8 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Pest Control"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Painting Services
-		{
-			Name:          "Interior Painting",
-			Slug:          "interior-painting",
-			Description:   "Professional interior painting service",
-			PriceType:     "inquiry",
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Painting"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Exterior Painting",
-			Slug:          "exterior-painting",
-			Description:   "Professional exterior painting service",
-			PriceType:     "inquiry",
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Painting"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Electrical Services
-		{
-			Name:          "Switch Repair",
-			Slug:          "switch-repair",
-			Description:   "Electrical switch repair and replacement",
-			PriceType:     "fixed",
-			Price:         &[]float64{300}[0],
-			Duration:      &[]string{"1 hour"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Electrical"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Fan Installation",
-			Slug:          "fan-installation",
-			Description:   "Ceiling fan installation and repair",
-			PriceType:     "fixed",
-			Price:         &[]float64{600}[0],
-			Duration:      &[]string{"2 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Electrical"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Cleaning Services
-		{
-			Name:          "House Cleaning",
-			Slug:          "house-cleaning",
-			Description:   "Complete house cleaning service",
-			PriceType:     "fixed",
-			Price:         &[]float64{1200}[0],
-			Duration:      &[]string{"4 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Cleaning"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Deep Cleaning",
-			Slug:          "deep-cleaning",
-			Description:   "Deep cleaning and sanitization service",
-			PriceType:     "fixed",
-			Price:         &[]float64{2000}[0],
-			Duration:      &[]string{"6 hours"}[0],
-			CategoryID:    homeServicesCategory.ID,
-			SubcategoryID: subcategoryIDs["Cleaning"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-	}
-
-	// Bulk create services and collect them with proper IDs
-	var createdHomeServices []models.Service
-	for _, service := range homeServices {
-		if err := sm.db.Where("slug = ?", service.Slug).FirstOrCreate(&service).Error; err != nil {
-			logrus.Errorf("Failed to create service %s: %v", service.Name, err)
-			return err
-		}
-		createdHomeServices = append(createdHomeServices, service)
-	}
-
-	// Associate services with service areas
-	if err := sm.associateServicesWithServiceAreas(createdHomeServices); err != nil {
-		logrus.Errorf("Failed to associate home services with service areas: %v", err)
-		return err
-	}
-
-	logrus.Info("Home Services seeded successfully")
-	return nil
-}
-
-// SeedConstructionServices seeds Construction Services category, subcategories, and services
-func (sm *SeedManager) SeedConstructionServices() error {
-	logrus.Info("Seeding Construction Services...")
-
-	// Create Construction Services category
-	constructionCategory := models.Category{
-		Name:        "Construction Services",
-		Slug:        "construction-services",
-		Description: "Professional construction and renovation services",
-		IsActive:    true,
-	}
-
-	if err := sm.db.Where("name = ?", "Construction Services").FirstOrCreate(&constructionCategory).Error; err != nil {
-		logrus.Error("Failed to create Construction Services category:", err)
-		return err
-	}
-
-	// Create subcategories for Construction Services
-	constructionSubcategories := []models.Subcategory{
-		{
-			Name:        "Renovation",
-			Slug:        "renovation",
-			Description: "Complete home renovation services",
-			ParentID:    constructionCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Plan Sanction",
-			Slug:        "plan-sanction",
-			Description: "Building plan approval and sanction services",
-			ParentID:    constructionCategory.ID,
-			IsActive:    true,
-		},
-		{
-			Name:        "Promoting Services",
-			Slug:        "promoting-services",
-			Description: "Construction project promotion and marketing",
-			ParentID:    constructionCategory.ID,
-			IsActive:    true,
-		},
-	}
-
-	// Bulk create subcategories
-	for _, subcategory := range constructionSubcategories {
-		if err := sm.db.Where("name = ? AND parent_id = ?", subcategory.Name, subcategory.ParentID).FirstOrCreate(&subcategory).Error; err != nil {
-			logrus.Errorf("Failed to create subcategory %s: %v", subcategory.Name, err)
-			return err
-		}
-	}
-
-	// Get subcategory IDs for service creation
-	subcategoryIDs := sm.getSubcategoryIDs(constructionCategory.ID)
-
-	// Create services for Construction Services (all inquiry-based)
-	constructionServices := []models.Service{
-		// Renovation Services
-		{
-			Name:          "Kitchen Renovation",
-			Slug:          "kitchen-renovation",
-			Description:   "Complete kitchen renovation and remodeling",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Renovation"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Bathroom Renovation",
-			Slug:          "bathroom-renovation",
-			Description:   "Complete bathroom renovation and remodeling",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Renovation"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Complete Home Renovation",
-			Slug:          "complete-home-renovation",
-			Description:   "Complete home renovation and remodeling service",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Renovation"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Plan Sanction Services
-		{
-			Name:          "Building Plan Approval",
-			Slug:          "building-plan-approval",
-			Description:   "Building plan design and approval services",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Plan Sanction"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Construction Permit",
-			Slug:          "construction-permit",
-			Description:   "Construction permit and license services",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Plan Sanction"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-
-		// Promoting Services
-		{
-			Name:          "Project Marketing",
-			Slug:          "project-marketing",
-			Description:   "Construction project marketing and promotion",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Promoting Services"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-		{
-			Name:          "Brand Promotion",
-			Slug:          "brand-promotion",
-			Description:   "Construction company brand promotion services",
-			PriceType:     "inquiry",
-			CategoryID:    constructionCategory.ID,
-			SubcategoryID: subcategoryIDs["Promoting Services"],
-			Images:        pq.StringArray{},
-			IsActive:      true,
-		},
-	}
-
-	// Bulk create services and collect them with proper IDs
-	var createdConstructionServices []models.Service
-	for _, service := range constructionServices {
-		if err := sm.db.Where("slug = ?", service.Slug).FirstOrCreate(&service).Error; err != nil {
-			logrus.Errorf("Failed to create service %s: %v", service.Name, err)
-			return err
-		}
-		createdConstructionServices = append(createdConstructionServices, service)
-	}
-
-	// Associate services with service areas
-	if err := sm.associateServicesWithServiceAreas(createdConstructionServices); err != nil {
-		logrus.Errorf("Failed to associate construction services with service areas: %v", err)
-		return err
-	}
-
-	logrus.Info("Construction Services seeded successfully")
-	return nil
-}
-
-// getSubcategoryIDs gets all subcategory IDs for a given category ID
-func (sm *SeedManager) getSubcategoryIDs(categoryID uint) map[string]uint {
-	var subcategories []models.Subcategory
-	sm.db.Where("parent_id = ?", categoryID).Find(&subcategories)
-	
-	subcategoryIDs := make(map[string]uint)
 	for _, subcategory := range subcategories {
-		subcategoryIDs[subcategory.Name] = subcategory.ID
+		if err := sm.db.Where("name = ? AND parent_id = ?", subcategory.Name, subcategory.ParentID).FirstOrCreate(&subcategory).Error; err != nil {
+			logrus.Errorf("Failed to create subcategory %s: %v", subcategory.Name, err)
+			return err
+		}
 	}
-	return subcategoryIDs
+
+	logrus.Info("Subcategories seeded successfully")
+	return nil
 }
 
-// getSubcategoryID gets the ID of a subcategory by name and parent ID
-func (sm *SeedManager) getSubcategoryID(name string, parentID uint) uint {
-	var subcategory models.Subcategory
-	sm.db.Where("name = ? AND parent_id = ?", name, parentID).First(&subcategory)
-	return subcategory.ID
+// SeedServices seeds all services
+func (sm *SeedManager) SeedServices() error {
+	logrus.Info("Seeding services...")
+
+	// Get category and subcategory IDs
+	var homeCategory, constructionCategory models.Category
+	sm.db.Where("name = ?", "Home Services").First(&homeCategory)
+	sm.db.Where("name = ?", "Construction Services").First(&constructionCategory)
+
+	// Get subcategory IDs
+	subcategoryIDs := sm.getSubcategoryIDs(homeCategory.ID)
+	constructionSubcategoryIDs := sm.getSubcategoryIDs(constructionCategory.ID)
+
+	services := []models.Service{
+		// Home Services
+		{Name: "Tap Repair", Slug: "tap-repair", Description: "Professional tap repair and replacement service", Images: []string{"/images/image-for-seeding/tap.png"}, PriceType: "fixed", Price: &[]float64{500}[0], Duration: &[]string{"2 hours"}[0], CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Plumbing"], IsActive: true},
+		{Name: "Pipe Installation", Slug: "pipe-installation", Description: "Complete pipe installation and repair service", Images: []string{"/images/image-for-seeding/pipe.png"}, PriceType: "fixed", Price: &[]float64{1000}[0], Duration: &[]string{"4 hours"}[0], CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Plumbing"], IsActive: true},
+		{Name: "General Pest Control", Slug: "general-pest-control", Description: "Complete pest control treatment for your home", Images: []string{"/images/image-for-seeding/maid9.jpg"}, PriceType: "fixed", Price: &[]float64{1500}[0], Duration: &[]string{"6 hours"}[0], CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Pest Control"], IsActive: true},
+		{Name: "Interior Painting", Slug: "interior-painting", Description: "Professional interior painting service", Images: []string{"/images/image-for-seeding/maid10.jpg"}, PriceType: "inquiry", CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Painting"], IsActive: true},
+		{Name: "Switch Repair", Slug: "switch-repair", Description: "Electrical switch repair and replacement", Images: []string{"/images/image-for-seeding/maid11.jpg"}, PriceType: "fixed", Price: &[]float64{300}[0], Duration: &[]string{"1 hour"}[0], CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Electrical"], IsActive: true},
+		{Name: "House Cleaning", Slug: "house-cleaning", Description: "Complete house cleaning service", Images: []string{"/images/image-for-seeding/cleaning.png"}, PriceType: "fixed", Price: &[]float64{1200}[0], Duration: &[]string{"4 hours"}[0], CategoryID: homeCategory.ID, SubcategoryID: subcategoryIDs["Cleaning"], IsActive: true},
+		
+		// Construction Services
+		{Name: "Kitchen Renovation", Slug: "kitchen-renovation", Description: "Complete kitchen renovation and remodeling", Images: []string{"/images/image-for-seeding/maid12.jpg"}, PriceType: "inquiry", CategoryID: constructionCategory.ID, SubcategoryID: constructionSubcategoryIDs["Renovation"], IsActive: true},
+		{Name: "Building Plan Approval", Slug: "building-plan-approval", Description: "Building plan design and approval services", Images: []string{"/images/image-for-seeding/maid.jpg"}, PriceType: "inquiry", CategoryID: constructionCategory.ID, SubcategoryID: constructionSubcategoryIDs["Plan Sanction"], IsActive: true},
+		{Name: "Project Marketing", Slug: "project-marketing", Description: "Construction project marketing and promotion", Images: []string{"/images/image-for-seeding/maid2.jpg"}, PriceType: "inquiry", CategoryID: constructionCategory.ID, SubcategoryID: constructionSubcategoryIDs["Promoting Services"], IsActive: true},
+	}
+
+	for _, service := range services {
+		if err := sm.db.Where("slug = ?", service.Slug).FirstOrCreate(&service).Error; err != nil {
+			logrus.Errorf("Failed to create service %s: %v", service.Name, err)
+			return err
+		}
+	}
+
+	logrus.Info("Services seeded successfully")
+	return nil
 }
 
-// associateServicesWithServiceAreas associates services with existing service areas
-func (sm *SeedManager) associateServicesWithServiceAreas(services []models.Service) error {
-	logrus.Info("Associating services with service areas...")
+// SeedServiceAreaAssociations associates services with service areas
+func (sm *SeedManager) SeedServiceAreaAssociations() error {
+	logrus.Info("Seeding service-service area associations...")
+
+	// Get all services
+	var services []models.Service
+	if err := sm.db.Find(&services).Error; err != nil {
+		logrus.Error("Failed to fetch services:", err)
+		return err
+	}
 
 	// Get all service areas
 	var serviceAreas []models.ServiceArea
@@ -665,4 +255,108 @@ func (sm *SeedManager) selectServiceAreasForService(allAreas []models.ServiceAre
 	}
 	
 	return selectedAreas
+}
+
+// SeedWorkers seeds all workers
+func (sm *SeedManager) SeedWorkers() error {
+	logrus.Info("Seeding workers...")
+
+	// Get first service for worker assignment
+	var firstService models.Service
+	if err := sm.db.First(&firstService).Error; err != nil {
+		logrus.Error("No services found for worker assignment")
+		return err
+	}
+
+	workers := []struct {
+		user   models.User
+		worker models.Worker
+	}{
+		{
+			user: models.User{
+				Name:     "John Worker",
+				Phone:    "+919876543210",
+				UserType: models.UserTypeWorker,
+				IsActive: true,
+			},
+			worker: models.Worker{
+				HourlyRate: 500.0,
+				WorkerType: models.WorkerTypeTreesIndia,
+				Skills:     `["plumbing", "electrical", "painting"]`,
+				Experience: 5,
+				ServiceAreas: `["Siliguri", "Darjeeling"]`,
+				IsAvailable: true,
+				BankAccountHolder: "John Worker",
+				BankAccountNumber: "1234567890",
+				BankIFSCCode:      "SBIN0001234",
+				BankName:          "State Bank of India",
+				BankBranch:        "Siliguri Main Branch",
+				PoliceVerificationStatus: models.DocumentVerificationStatusPending,
+			},
+		},
+		{
+			user: models.User{
+				Name:     "Sarah Worker",
+				Phone:    "+919876543211",
+				UserType: models.UserTypeWorker,
+				IsActive: true,
+			},
+			worker: models.Worker{
+				HourlyRate: 600.0,
+				WorkerType: models.WorkerTypeTreesIndia,
+				Skills:     `["cleaning", "carpentry", "gardening"]`,
+				Experience: 7,
+				ServiceAreas: `["Kolkata", "Howrah"]`,
+				IsAvailable: true,
+				BankAccountHolder: "Sarah Worker",
+				BankAccountNumber: "0987654321",
+				BankIFSCCode:      "HDFC0001234",
+				BankName:          "HDFC Bank",
+				BankBranch:        "Kolkata Main Branch",
+				PoliceVerificationStatus: models.DocumentVerificationStatusPending,
+			},
+		},
+	}
+
+	for _, w := range workers {
+		// Check if worker user already exists
+		var existingUser models.User
+		if err := sm.db.Where("phone = ?", w.user.Phone).First(&existingUser).Error; err == nil {
+			logrus.Infof("Worker user %s already exists", w.user.Name)
+			continue
+		}
+
+		// Create worker user
+		if err := sm.db.Create(&w.user).Error; err != nil {
+			logrus.Errorf("Failed to create worker user %s: %v", w.user.Name, err)
+			return err
+		}
+
+		// Create worker profile
+		w.worker.UserID = w.user.ID
+		w.worker.ServiceID = firstService.ID
+		if err := sm.db.Create(&w.worker).Error; err != nil {
+			logrus.Errorf("Failed to create worker profile for %s: %v", w.user.Name, err)
+			return err
+		}
+
+		logrus.Infof("Worker %s seeded successfully", w.user.Name)
+	}
+
+	logrus.Info("Workers seeded successfully")
+	return nil
+}
+
+
+
+// getSubcategoryIDs gets all subcategory IDs for a given category ID
+func (sm *SeedManager) getSubcategoryIDs(categoryID uint) map[string]uint {
+	var subcategories []models.Subcategory
+	sm.db.Where("parent_id = ?", categoryID).Find(&subcategories)
+	
+	subcategoryIDs := make(map[string]uint)
+	for _, subcategory := range subcategories {
+		subcategoryIDs[subcategory.Name] = subcategory.ID
+	}
+	return subcategoryIDs
 }

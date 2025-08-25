@@ -1,15 +1,16 @@
 -- +goose Up
--- Create subscription_plans table (base table with no dependencies)
+-- Create subscription plans table (base table with no dependencies)
 CREATE TABLE IF NOT EXISTS subscription_plans (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     name TEXT NOT NULL,
-    duration TEXT NOT NULL,
+    description TEXT,
     price DECIMAL NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    description TEXT
+    duration_days INTEGER NOT NULL,
+    features JSONB,
+    is_active BOOLEAN DEFAULT true
 );
 
 -- +goose Down

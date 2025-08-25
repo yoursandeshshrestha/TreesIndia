@@ -1,19 +1,41 @@
 -- +goose Up
 -- Create all tables that depend on users
 
--- Locations table
+-- Locations table (primary location per user)
 CREATE TABLE IF NOT EXISTS locations (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    user_id BIGINT NOT NULL UNIQUE,
+    city TEXT NOT NULL,
+    state TEXT NOT NULL,
+    country TEXT NOT NULL,
+    address TEXT,
+    postal_code TEXT,
+    latitude DECIMAL,
+    longitude DECIMAL,
+    is_active BOOLEAN DEFAULT true,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Addresses table (multiple addresses per user)
+CREATE TABLE IF NOT EXISTS addresses (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
+    name TEXT NOT NULL,
     address TEXT NOT NULL,
     city TEXT NOT NULL,
     state TEXT NOT NULL,
-    postal_code TEXT NOT NULL,
+    country TEXT NOT NULL DEFAULT 'India',
+    postal_code TEXT,
     latitude DECIMAL,
     longitude DECIMAL,
+    landmark TEXT,
+    house_number TEXT,
     is_default BOOLEAN DEFAULT false,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -21,8 +43,8 @@ CREATE TABLE IF NOT EXISTS locations (
 -- User documents table
 CREATE TABLE IF NOT EXISTS user_documents (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
     document_type TEXT NOT NULL,
@@ -39,8 +61,8 @@ CREATE TABLE IF NOT EXISTS user_documents (
 -- User skills table
 CREATE TABLE IF NOT EXISTS user_skills (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
     skill_name TEXT NOT NULL,
@@ -54,8 +76,8 @@ CREATE TABLE IF NOT EXISTS user_skills (
 -- Role applications table
 CREATE TABLE IF NOT EXISTS role_applications (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
     requested_role TEXT NOT NULL,
@@ -70,8 +92,8 @@ CREATE TABLE IF NOT EXISTS role_applications (
 -- User notification settings table
 CREATE TABLE IF NOT EXISTS user_notification_settings (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
     email_notifications BOOLEAN DEFAULT true,
@@ -83,13 +105,11 @@ CREATE TABLE IF NOT EXISTS user_notification_settings (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- User roles table removed - using UserType enum in users table instead
-
 -- Subscription warnings table
 CREATE TABLE IF NOT EXISTS subscription_warnings (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
     warning_type TEXT NOT NULL,
@@ -101,11 +121,11 @@ CREATE TABLE IF NOT EXISTS subscription_warnings (
 
 -- +goose Down
 DROP TABLE IF EXISTS subscription_warnings CASCADE;
--- User roles table drop removed - table no longer exists
 DROP TABLE IF EXISTS user_notification_settings CASCADE;
 DROP TABLE IF EXISTS role_applications CASCADE;
 DROP TABLE IF EXISTS user_skills CASCADE;
 DROP TABLE IF EXISTS user_documents CASCADE;
+DROP TABLE IF EXISTS addresses CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
 
 

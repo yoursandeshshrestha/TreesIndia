@@ -1,24 +1,11 @@
 -- +goose Up
--- Create tables that depend on services
+-- Create service-dependent tables
 
--- Time slots table
-CREATE TABLE IF NOT EXISTS time_slots (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
-    deleted_at TIMESTAMPTZ,
-    service_id BIGINT NOT NULL,
-    date DATE NOT NULL,
-    start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL,
-    available_workers INTEGER NOT NULL,
-    total_workers INTEGER NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    FOREIGN KEY (service_id) REFERENCES services(id)
-);
+-- This migration is intentionally empty as service-dependent tables
+-- are handled in other migrations (properties is a separate real estate table)
 
 -- +goose Down
-DROP TABLE IF EXISTS time_slots CASCADE;
+-- No tables to drop
 
 
 

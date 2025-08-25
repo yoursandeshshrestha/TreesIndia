@@ -2,8 +2,8 @@
 -- Create users table (base table with no dependencies)
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     name TEXT,
     email TEXT UNIQUE,
@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS users (
     application_date TIMESTAMPTZ,
     approval_date TIMESTAMPTZ,
     wallet_balance DECIMAL DEFAULT 0,
-    wallet_limit DECIMAL DEFAULT 100000,
     subscription_id BIGINT,
     has_active_subscription BOOLEAN DEFAULT false,
     subscription_expiry_date TIMESTAMPTZ

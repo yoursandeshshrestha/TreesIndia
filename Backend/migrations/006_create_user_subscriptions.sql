@@ -1,20 +1,18 @@
 -- +goose Up
--- Create user_subscriptions table (depends on users and subscription_plans)
+-- Create user subscriptions table (depends on users and subscription_plans)
 CREATE TABLE IF NOT EXISTS user_subscriptions (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
     user_id BIGINT NOT NULL,
-    plan_id BIGINT NOT NULL,
+    subscription_plan_id BIGINT NOT NULL,
     start_date TIMESTAMPTZ NOT NULL,
     end_date TIMESTAMPTZ NOT NULL,
     status TEXT DEFAULT 'active',
-    payment_method TEXT NOT NULL,
-    payment_id TEXT,
-    amount DECIMAL NOT NULL,
+    payment_status TEXT DEFAULT 'pending',
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (plan_id) REFERENCES subscription_plans(id)
+    FOREIGN KEY (subscription_plan_id) REFERENCES subscription_plans(id)
 );
 
 -- +goose Down

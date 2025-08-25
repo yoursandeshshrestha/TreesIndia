@@ -12,13 +12,24 @@ import {
   X,
   MessageSquare,
   DollarSign,
+  IndianRupee,
 } from "lucide-react";
-import { OptimizedBookingResponse } from "@/types/booking";
+import {
+  OptimizedBookingResponse,
+  getBookingStatusColor,
+} from "@/types/booking";
 import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import Table from "@/components/Table/Table";
 import DualStatusBadge from "@/components/DualStatusBadge";
+import {
+  displayValue,
+  displayDate,
+  displayTime,
+  displayCurrency,
+  displayDuration,
+} from "@/utils/displayUtils";
 
 interface BookingTableProps {
   bookings: OptimizedBookingResponse[];
@@ -112,14 +123,22 @@ const BookingTable: React.FC<BookingTableProps> = ({
         <div>
           <div className="text-sm text-gray-900">{booking.service.name}</div>
           <div className="flex items-center gap-2">
-            {booking.service.price && (
+            {booking.service.price ? (
               <div className="text-sm text-gray-500">
-                ₹{booking.service.price}
+                {displayCurrency(booking.service.price)}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-400">
+                {displayValue(booking.service.price, "Price not set")}
               </div>
             )}
-            {booking.service.duration && (
+            {booking.service.duration ? (
               <div className="text-xs text-gray-400">
-                {formatDuration(booking.service.duration)}
+                {displayDuration(booking.service.duration)}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400">
+                {displayValue(booking.service.duration, "Duration not set")}
               </div>
             )}
           </div>
@@ -134,30 +153,109 @@ const BookingTable: React.FC<BookingTableProps> = ({
             <div className="flex flex-col">
               <div className="text-sm text-gray-900 flex items-center">
                 <Calendar className="w-3 h-3 mr-1" />
-                {formatDate(booking.scheduled_time)}
+                {displayDate(booking.scheduled_time)}
               </div>
               <div className="text-sm text-gray-500 flex items-center">
                 <Clock className="w-3 h-3 mr-1" />
-                {new Date(booking.scheduled_time).toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {displayTime(booking.scheduled_time)}
               </div>
             </div>
           ) : (
-            <span className="text-gray-400">Not scheduled</span>
+            <span className="text-gray-400">
+              {displayValue(booking.scheduled_time, "Not scheduled")}
+            </span>
           )}
         </div>
       ),
     },
     {
-      header: "Status",
+      header: "Booking Status",
       accessor: (booking: OptimizedBookingResponse) => (
-        <DualStatusBadge
-          bookingStatus={booking.status}
-          paymentStatus={booking.payment_status}
-        />
+        <span
+          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getBookingStatusColor(
+            booking.status
+          )}`}
+        >
+          {booking.status.replace("_", " ").toUpperCase()}
+        </span>
       ),
+    },
+    {
+      header: "Payment Status",
+      accessor: (booking: OptimizedBookingResponse) => {
+        const getPaymentStatusColor = (status: string) => {
+          if (!status) {
+            return "bg-gray-100 text-gray-800 border-gray-300";
+          }
+
+          switch (status) {
+            case "completed":
+              return "bg-green-100 text-green-800 border-green-300";
+            case "pending":
+              return "bg-yellow-100 text-yellow-800 border-yellow-300";
+            case "failed":
+              return "bg-red-100 text-red-800 border-red-300";
+            case "refunded":
+              return "bg-orange-100 text-orange-800 border-orange-300";
+            case "abandoned":
+              return "bg-gray-100 text-gray-800 border-gray-300";
+            case "expired":
+              return "bg-red-100 text-red-800 border-red-300";
+            case "hold":
+              return "bg-blue-100 text-blue-800 border-blue-300";
+            default:
+              return "bg-gray-100 text-gray-800 border-gray-300";
+          }
+        };
+
+        const getPaymentStatusLabel = (status: string) => {
+          if (!status) {
+            return "Not Provided";
+          }
+
+          switch (status) {
+            case "pending":
+              return "Pending";
+            case "completed":
+              return "Completed";
+            case "failed":
+              return "Failed";
+            case "refunded":
+              return "Refunded";
+            case "abandoned":
+              return "Abandoned";
+            case "expired":
+              return "Expired";
+            case "hold":
+              return "On Hold";
+            default:
+              return status.replace("_", " ").toUpperCase();
+          }
+        };
+
+        return (
+          <div className="flex flex-col gap-1">
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getPaymentStatusColor(
+                booking.payment?.status || booking.payment_status
+              )}`}
+            >
+              <IndianRupee className="w-3 h-3 mr-1" />
+              {getPaymentStatusLabel(
+                booking.payment?.status || booking.payment_status
+              )}
+            </span>
+            {booking.payment && (
+              <div className="text-xs text-gray-500">
+                {displayCurrency(
+                  booking.payment.amount,
+                  booking.payment.currency
+                )}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: "Type",

@@ -101,7 +101,7 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 		return nil, errors.New("failed to update booking status")
 	}
 
-	booking.Status = models.BookingStatusAccepted
+	booking.Status = models.BookingStatusConfirmed
 	err = was.bookingRepo.Update(booking)
 	if err != nil {
 		logrus.Errorf("Failed to update booking status: %v", err)

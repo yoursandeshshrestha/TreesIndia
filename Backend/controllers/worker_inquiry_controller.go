@@ -13,11 +13,13 @@ import (
 )
 
 type WorkerInquiryController struct {
+	BaseController
 	inquiryService *services.WorkerInquiryService
 }
 
 func NewWorkerInquiryController() *WorkerInquiryController {
 	return &WorkerInquiryController{
+		BaseController: *NewBaseController(),
 		inquiryService: services.NewWorkerInquiryService(),
 	}
 }
@@ -37,8 +39,8 @@ func NewWorkerInquiryController() *WorkerInquiryController {
 // @Router /workers/{worker_id}/inquiry [post]
 func (wic *WorkerInquiryController) CreateInquiry(ctx *gin.Context) {
 	// Get user ID from context
-	userID, exists := ctx.Get("user_id")
-	if !exists {
+	userID := wic.GetUserID(ctx)
+	if userID == 0 {
 		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
 	}
@@ -59,7 +61,7 @@ func (wic *WorkerInquiryController) CreateInquiry(ctx *gin.Context) {
 	}
 
 	// Create inquiry
-	inquiry, err := wic.inquiryService.CreateInquiry(uint(userID.(float64)), uint(workerID), &req)
+	inquiry, err := wic.inquiryService.CreateInquiry(userID, uint(workerID), &req)
 	if err != nil {
 		logrus.Errorf("Failed to create inquiry: %v", err)
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to create inquiry", err.Error()))
@@ -82,8 +84,8 @@ func (wic *WorkerInquiryController) CreateInquiry(ctx *gin.Context) {
 // @Router /workers/inquiries [get]
 func (wic *WorkerInquiryController) GetUserInquiries(ctx *gin.Context) {
 	// Get user ID from context
-	userID, exists := ctx.Get("user_id")
-	if !exists {
+	userID := wic.GetUserID(ctx)
+	if userID == 0 {
 		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
 	}
@@ -110,7 +112,7 @@ func (wic *WorkerInquiryController) GetUserInquiries(ctx *gin.Context) {
 	}
 
 	// Get inquiries
-	inquiries, pagination, err := wic.inquiryService.GetUserInquiries(uint(userID.(float64)), filters)
+	inquiries, pagination, err := wic.inquiryService.GetUserInquiries(userID, filters)
 	if err != nil {
 		logrus.Errorf("Failed to get user inquiries: %v", err)
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get inquiries", err.Error()))
@@ -138,8 +140,8 @@ func (wic *WorkerInquiryController) GetUserInquiries(ctx *gin.Context) {
 // @Router /workers/received-inquiries [get]
 func (wic *WorkerInquiryController) GetWorkerInquiries(ctx *gin.Context) {
 	// Get user ID from context
-	userID, exists := ctx.Get("user_id")
-	if !exists {
+	userID := wic.GetUserID(ctx)
+	if userID == 0 {
 		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
 	}
@@ -166,7 +168,7 @@ func (wic *WorkerInquiryController) GetWorkerInquiries(ctx *gin.Context) {
 	}
 
 	// Get inquiries
-	inquiries, pagination, err := wic.inquiryService.GetWorkerInquiries(uint(userID.(float64)), filters)
+	inquiries, pagination, err := wic.inquiryService.GetWorkerInquiries(userID, filters)
 	if err != nil {
 		logrus.Errorf("Failed to get worker inquiries: %v", err)
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get inquiries", err.Error()))
@@ -196,8 +198,8 @@ func (wic *WorkerInquiryController) GetWorkerInquiries(ctx *gin.Context) {
 // @Router /workers/received-inquiries/{inquiry_id}/response [put]
 func (wic *WorkerInquiryController) UpdateWorkerResponse(ctx *gin.Context) {
 	// Get user ID from context
-	userID, exists := ctx.Get("user_id")
-	if !exists {
+	userID := wic.GetUserID(ctx)
+	if userID == 0 {
 		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
 		return
 	}
@@ -224,7 +226,7 @@ func (wic *WorkerInquiryController) UpdateWorkerResponse(ctx *gin.Context) {
 	}
 
 	// Update worker response
-	inquiry, err := wic.inquiryService.UpdateWorkerResponse(uint(inquiryID), uint(userID.(float64)), response)
+	inquiry, err := wic.inquiryService.UpdateWorkerResponse(uint(inquiryID), userID, response)
 	if err != nil {
 		logrus.Errorf("Failed to update worker response: %v", err)
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to update response", err.Error()))

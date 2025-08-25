@@ -710,4 +710,39 @@ func (sc *ServiceController) ToggleStatus(c *gin.Context) {
 	c.JSON(200, views.CreateSuccessResponse("Service status toggled successfully", service))
 }
 
+// GetPopularServices retrieves the top 8 most popular services
+// @Summary Get popular services
+// @Description Get the top 8 most popular services with optional city and state filtering
+// @Tags services
+// @Produce json
+// @Param city query string false "City name for location-based filtering"
+// @Param state query string false "State name for location-based filtering"
+// @Success 200 {object} views.Response{data=[]models.ServiceSummary}
+// @Failure 500 {object} views.Response
+// @Router /api/v1/services/popular [get]
+func (sc *ServiceController) GetPopularServices(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceController.GetPopularServices panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceController.GetPopularServices called")
+	
+	// Get optional location parameters
+	city := c.Query("city")
+	state := c.Query("state")
+	
+	logrus.Infof("ServiceController.GetPopularServices filters - city: %s, state: %s", city, state)
+	
+	services, err := sc.serviceService.GetPopularServices(8, city, state) // Default to top 8
+	if err != nil {
+		logrus.Errorf("Failed to get popular services: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to get popular services", err.Error()))
+		return
+	}
+	
+	c.JSON(200, views.CreateSuccessResponse("Popular services retrieved successfully", services))
+}
+
 

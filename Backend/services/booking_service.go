@@ -175,7 +175,7 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			UserID:              userID,
 			ServiceID:           req.ServiceID,
 			BookingReference:    bookingReference,
-							Status:              models.BookingStatusPending,
+			Status:              models.BookingStatusTemporaryHold,
 			BookingType:         bookingType,
 			ScheduledDate:       &scheduledDate,
 			ScheduledTime:       &scheduledTime,
@@ -684,7 +684,7 @@ func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*mode
 	}
 
 	// Check if booking is in temporary hold status
-	if booking.Status != models.BookingStatusPending {
+	if booking.Status != models.BookingStatusTemporaryHold {
 		return nil, errors.New("booking is not in temporary hold status")
 	}
 

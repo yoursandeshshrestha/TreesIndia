@@ -20,6 +20,7 @@ import {
   formatCurrency,
   getUserTypeIcon,
 } from "@/utils/userUtils";
+import { displayValue } from "@/utils/displayUtils";
 import Image from "next/image";
 
 interface UserTableProps {
@@ -131,11 +132,11 @@ const UserTable = ({
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
                     {row.avatar ? (
-                      renderAvatar(row.avatar, row.name)
+                      renderAvatar(row.avatar, displayValue(row.name, "User"))
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span className="text-sm font-medium text-gray-700">
-                          {row.name.charAt(0).toUpperCase()}
+                          {row.name ? row.name.charAt(0).toUpperCase() : "U"}
                         </span>
                       </div>
                     )}
@@ -143,20 +144,22 @@ const UserTable = ({
                   <div className="flex-1 min-w-0">
                     <div
                       className="text-sm font-medium text-gray-900 truncate"
-                      title={row.name}
+                      title={displayValue(row.name, "Name not provided")}
                     >
-                      {row.name}
+                      {displayValue(row.name, "Name not provided")}
                     </div>
                     <div className="flex flex-col items-start space-x-2 text-xs text-gray-500">
-                      {row.email && (
-                        <div className="flex items-center space-x-1">
-                          <Mail className="h-3 w-3" />
-                          <span className="truncate">{row.email}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center space-x-1">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate">
+                          {displayValue(row.email, "Email not provided")}
+                        </span>
+                      </div>
                       <div className="flex items-center space-x-1">
                         <Phone className="h-3 w-3" />
-                        <span>{row.phone}</span>
+                        <span>
+                          {displayValue(row.phone, "Phone not provided")}
+                        </span>
                       </div>
                     </div>
                   </div>

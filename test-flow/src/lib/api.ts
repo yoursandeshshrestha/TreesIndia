@@ -141,13 +141,15 @@ export interface Booking {
   status: string;
   payment_status: string;
   booking_type: string;
-  scheduled_date: string;
-  scheduled_time: string;
-  total_amount: number;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  total_amount?: number;
   address: string;
   description: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  CreatedAt?: string; // Backend uses capitalized field names
+  updated_at?: string;
+  UpdatedAt?: string; // Backend uses capitalized field names
 
   // Quote-related fields
   quote_amount?: number;
@@ -155,6 +157,10 @@ export interface Booking {
   quote_provided_at?: string;
   quote_accepted_at?: string;
   quote_expires_at?: string;
+
+  // Contact information
+  contact_person?: string;
+  contact_phone?: string;
 
   // Service information
   service?: {
@@ -167,7 +173,8 @@ export interface Booking {
 
   // User information
   user?: {
-    id: number;
+    id?: number;
+    ID?: number; // Backend uses capitalized field names
     name: string;
     phone: string;
     user_type: string;
@@ -331,7 +338,7 @@ export const apiService = {
   // Get user bookings
   getUserBookings: async (): Promise<Booking[]> => {
     const response = await api.get("/bookings");
-    return response.data.data || response.data || [];
+    return response.data.bookings || response.data.data || response.data || [];
   },
 
   // Get booking by ID
@@ -467,20 +474,80 @@ export const apiService = {
   },
 
   // Accept quote for inquiry booking
-  async acceptQuote(bookingId: number): Promise<{ message: string }> {
-    const response = await api.post(`/bookings/${bookingId}/accept-quote`);
+  async acceptQuote(
+    bookingId: number,
+    notes?: string
+  ): Promise<{ message: string }> {
+    const response = await api.post(`/bookings/${bookingId}/accept-quote`, {
+      notes: notes || "",
+    });
     return response.data.data || response.data;
   },
 
   // Reject quote for inquiry booking
-  async rejectQuote(bookingId: number): Promise<{ message: string }> {
-    const response = await api.post(`/bookings/${bookingId}/reject-quote`);
+  async rejectQuote(
+    bookingId: number,
+    reason: string
+  ): Promise<{ message: string }> {
+    const response = await api.post(`/bookings/${bookingId}/reject-quote`, {
+      reason: reason,
+    });
     return response.data.data || response.data;
   },
 
   // Get quote information for a booking
   async getQuoteInfo(bookingId: number): Promise<any> {
     const response = await api.get(`/bookings/${bookingId}/quote-info`);
+    return response.data.data || response.data;
+  },
+
+  // Schedule service after quote acceptance
+  async scheduleAfterQuote(
+    bookingId: number,
+    scheduledDate: string,
+    scheduledTime: string,
+    notes?: string
+  ): Promise<{ message: string }> {
+    const response = await api.post(
+      `/bookings/${bookingId}/schedule-after-quote`,
+      {
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        notes: notes || "",
+      }
+    );
+    return response.data.data || response.data;
+  },
+
+  // Create payment for quote acceptance
+  async createQuotePayment(
+    bookingId: number,
+    data: {
+      scheduled_date: string;
+      scheduled_time: string;
+      amount: number;
+    }
+  ): Promise<{ payment_order: any; message: string }> {
+    const response = await api.post(
+      `/bookings/${bookingId}/create-quote-payment`,
+      data
+    );
+    return response.data.data || response.data;
+  },
+
+  // Verify quote payment
+  async verifyQuotePayment(
+    bookingId: number,
+    paymentData: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    }
+  ): Promise<{ message: string; booking: any }> {
+    const response = await api.post(
+      `/bookings/${bookingId}/verify-quote-payment`,
+      paymentData
+    );
     return response.data.data || response.data;
   },
 };

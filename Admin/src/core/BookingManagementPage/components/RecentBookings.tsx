@@ -2,6 +2,7 @@ import React from "react";
 import { Chip, Button } from "@mui/material";
 import { Eye, Phone, Clock, Calendar } from "lucide-react";
 import { OptimizedBookingResponse } from "@/types/booking";
+import { displayValue, displayDate, displayTime } from "@/utils/displayUtils";
 
 interface BadgeProps {
   text: string;
@@ -72,7 +73,7 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
+    return displayDate(dateString, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -80,10 +81,7 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return displayTime(dateString);
   };
 
   if (isLoading) {
@@ -167,7 +165,7 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
                   <span className="text-gray-900">{booking.user.phone}</span>
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
-                  {booking.user.name}
+                  {displayValue(booking.user.name, "Name not provided")}
                 </div>
               </td>
               <td className="py-3 px-4">

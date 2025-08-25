@@ -9,6 +9,7 @@ import (
 	"treesindia/repositories"
 	"treesindia/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -95,9 +96,14 @@ func (ss *SubcategoryService) GetSubcategoryByID(id uint) (*models.Subcategory, 
 
 // CreateSubcategory creates a new subcategory
 func (ss *SubcategoryService) CreateSubcategory(req *CreateSubcategoryRequest, imageFile *multipart.FileHeader) (*models.Subcategory, error) {
+	logrus.Info("SubcategoryService.CreateSubcategory called")
+	logrus.Infof("Request data: Name=%s, Description=%s, Image=%s, ParentID=%v, IsActive=%v", 
+		req.Name, req.Description, req.Image, req.ParentID, req.IsActive)
+	
 	// Handle image upload if provided
 	var imageURL string
 	if imageFile != nil {
+		logrus.Info("Image file provided, uploading to Cloudinary")
 		// Validate file size (max 10MB)
 		if err := ss.validationHelper.ValidateFileSize(imageFile.Size, 10*1024*1024); err != nil {
 			return nil, fmt.Errorf("file too large: %w", err)
@@ -115,8 +121,12 @@ func (ss *SubcategoryService) CreateSubcategory(req *CreateSubcategoryRequest, i
 		if err != nil {
 			return nil, fmt.Errorf("failed to upload image: %w", err)
 		}
+		logrus.Infof("Image uploaded successfully: %s", imageURL)
 	} else if req.Image != "" {
+		logrus.Infof("Using provided image URL: %s", req.Image)
 		imageURL = req.Image
+	} else {
+		logrus.Warn("No image provided for subcategory")
 	}
 
 	// Convert ParentID from interface{} to uint
@@ -158,6 +168,8 @@ func (ss *SubcategoryService) CreateSubcategory(req *CreateSubcategoryRequest, i
 		isActive = true // default to true
 	}
 
+	logrus.Infof("Processed data: ParentID=%d, IsActive=%v, ImageURL=%s", parentID, isActive, imageURL)
+
 	// Validate parent category exists
 	if !ss.subcategoryRepo.CheckParentExists(parentID) {
 		return nil, fmt.Errorf("parent category not found")
@@ -179,14 +191,22 @@ func (ss *SubcategoryService) CreateSubcategory(req *CreateSubcategoryRequest, i
 		IsActive:    isActive,
 	}
 
+	logrus.Infof("Creating subcategory in database: %+v", subcategory)
+
 	if err := ss.subcategoryRepo.Create(&subcategory); err != nil {
+		logrus.Errorf("Failed to create subcategory in database: %v", err)
 		return nil, fmt.Errorf("failed to create subcategory: %w", err)
 	}
 
+	logrus.Infof("Subcategory created successfully with ID: %d", subcategory.ID)
+
 	// Load the created subcategory with parent relationship
 	if err := ss.subcategoryRepo.GetDB().Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
+		logrus.Errorf("Failed to load created subcategory: %v", err)
 		return nil, fmt.Errorf("failed to load created subcategory: %w", err)
 	}
+
+	logrus.Infof("Subcategory loaded successfully: ID=%d, Image=%s", subcategory.ID, subcategory.Image)
 
 	return &subcategory, nil
 }
@@ -215,10 +235,16 @@ func (ss *SubcategoryService) ToggleStatus(id uint) (*models.Subcategory, error)
 
 // UpdateSubcategory updates a subcategory
 func (ss *SubcategoryService) UpdateSubcategory(id uint, req *CreateSubcategoryRequest) (*models.Subcategory, error) {
+	logrus.Info("SubcategoryService.UpdateSubcategory called")
+	logrus.Infof("Update request data: Name=%s, Description=%s, Image=%s, ParentID=%v, IsActive=%v", 
+		req.Name, req.Description, req.Image, req.ParentID, req.IsActive)
+	
 	var subcategory models.Subcategory
 	if err := ss.subcategoryRepo.FindByID(&subcategory, id); err != nil {
 		return nil, fmt.Errorf("subcategory not found: %w", err)
 	}
+
+	logrus.Infof("Found existing subcategory: ID=%d, Name=%s, Image=%s", subcategory.ID, subcategory.Name, subcategory.Image)
 
 	// Update fields
 	if req.Name != "" {
@@ -229,14 +255,19 @@ func (ss *SubcategoryService) UpdateSubcategory(id uint, req *CreateSubcategoryR
 			return nil, fmt.Errorf("failed to generate slug: %w", err)
 		}
 		subcategory.Slug = slug
+		logrus.Infof("Updated name to: %s, slug to: %s", req.Name, slug)
 	}
 
 	if req.Description != "" {
 		subcategory.Description = req.Description
+		logrus.Infof("Updated description to: %s", req.Description)
 	}
 
 	if req.Image != "" {
+		logrus.Infof("Updating image from '%s' to '%s'", subcategory.Image, req.Image)
 		subcategory.Image = req.Image
+	} else {
+		logrus.Info("No image update provided, keeping existing image")
 	}
 
 	// Handle ParentID if provided
@@ -268,6 +299,7 @@ func (ss *SubcategoryService) UpdateSubcategory(id uint, req *CreateSubcategoryR
 		}
 
 		subcategory.ParentID = parentID
+		logrus.Infof("Updated parent_id to: %d", parentID)
 	}
 
 	// Handle IsActive
@@ -278,16 +310,25 @@ func (ss *SubcategoryService) UpdateSubcategory(id uint, req *CreateSubcategoryR
 		case string:
 			subcategory.IsActive = v == "true"
 		}
+		logrus.Infof("Updated is_active to: %v", subcategory.IsActive)
 	}
 
+	logrus.Infof("Saving updated subcategory to database: %+v", subcategory)
+
 	if err := ss.subcategoryRepo.Update(&subcategory); err != nil {
+		logrus.Errorf("Failed to update subcategory in database: %v", err)
 		return nil, fmt.Errorf("failed to update subcategory: %w", err)
 	}
 
+	logrus.Infof("Subcategory updated successfully in database with ID: %d", subcategory.ID)
+
 	// Load the updated subcategory with parent relationship
 	if err := ss.subcategoryRepo.GetDB().Preload("Parent").First(&subcategory, subcategory.ID).Error; err != nil {
+		logrus.Errorf("Failed to load updated subcategory: %v", err)
 		return nil, fmt.Errorf("failed to load updated subcategory: %w", err)
 	}
+
+	logrus.Infof("Subcategory loaded successfully: ID=%d, Image=%s", subcategory.ID, subcategory.Image)
 
 	return &subcategory, nil
 }

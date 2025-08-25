@@ -441,3 +441,23 @@ func (ss *ServiceService) GetServiceSummariesWithFiltersPaginated(priceType *str
 	logrus.Infof("ServiceService.GetServiceSummariesWithFiltersPaginated returning %d services (total: %d)", len(services), total)
 	return services, total, nil
 }
+
+// GetPopularServices retrieves the top 8 most popular services
+func (ss *ServiceService) GetPopularServices(limit int, city, state string) ([]models.ServiceSummary, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.GetPopularServices panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.GetPopularServices called with limit: %d, city: %s, state: %s", limit, city, state)
+	
+	services, err := ss.serviceRepo.GetPopularServices(limit, city, state)
+	if err != nil {
+		logrus.Errorf("ServiceService.GetPopularServices error: %v", err)
+		return nil, err
+	}
+	
+	logrus.Infof("ServiceService.GetPopularServices returning %d popular services", len(services))
+	return services, nil
+}

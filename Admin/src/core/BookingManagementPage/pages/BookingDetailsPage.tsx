@@ -37,6 +37,15 @@ import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
+import {
+  displayValue,
+  displayDate,
+  displayTime,
+  displayDateTime,
+  displayCurrency,
+  displayDuration,
+  displayStatus,
+} from "@/utils/displayUtils";
 
 export default function BookingDetailsPage() {
   const params = useParams();
@@ -132,8 +141,7 @@ export default function BookingDetailsPage() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Not scheduled";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return displayDate(dateString, {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -141,22 +149,11 @@ export default function BookingDetailsPage() {
   };
 
   const formatTime = (timeString: string | null) => {
-    if (!timeString) return "Not scheduled";
-    return new Date(timeString).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return displayTime(timeString);
   };
 
   const formatDateTime = (dateTimeString: string | null) => {
-    if (!dateTimeString) return "Not available";
-    return new Date(dateTimeString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return displayDateTime(dateTimeString);
   };
 
   if (isLoading) {
@@ -259,7 +256,7 @@ export default function BookingDetailsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Completion Type</p>
                     <p className="font-medium">
-                      {booking.completion_type || "Not completed"}
+                      {displayValue(booking.completion_type, "Not completed")}
                     </p>
                   </div>
                 </div>
@@ -291,14 +288,14 @@ export default function BookingDetailsPage() {
                     <p className="text-sm text-gray-600">Price</p>
                     <p className="font-medium">
                       {booking.service.price
-                        ? `₹${booking.service.price}`
-                        : "Variable"}
+                        ? displayCurrency(booking.service.price)
+                        : displayValue(booking.service.price, "Price not set")}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Duration</p>
                     <p className="font-medium">
-                      {booking.service.duration || "Not specified"}
+                      {displayDuration(booking.service.duration)}
                     </p>
                   </div>
                 </div>
@@ -322,78 +319,101 @@ export default function BookingDetailsPage() {
             </div>
 
             {/* Address Information */}
-            {booking.address && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Address Information
-                </h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Address Information
+              </h2>
+              {booking.address ? (
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                   <div className="space-y-1">
                     <p className="font-medium">
-                      {booking.address.name || "Service Address"}
+                      {displayValue(booking.address.name, "Service Address")}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {booking.address.address}
+                      {displayValue(
+                        booking.address.address,
+                        "Address not provided"
+                      )}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {booking.address.city}, {booking.address.state}{" "}
-                      {booking.address.postal_code}
+                      {displayValue(booking.address.city, "City not provided")},{" "}
+                      {displayValue(
+                        booking.address.state,
+                        "State not provided"
+                      )}{" "}
+                      {displayValue(
+                        booking.address.postal_code,
+                        "Postal code not provided"
+                      )}
                     </p>
-                    {booking.address.landmark && (
-                      <p className="text-sm text-gray-600">
-                        Landmark: {booking.address.landmark}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-600">
+                      Landmark:{" "}
+                      {displayValue(
+                        booking.address.landmark,
+                        "No landmark specified"
+                      )}
+                    </p>
                   </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-start space-x-3">
+                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      No address information provided
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Contact Information */}
-            {(booking.contact.person || booking.contact.phone) && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Contact Information
-                </h2>
-                <div className="space-y-4">
-                  {booking.contact.person && (
-                    <div className="flex items-center space-x-3">
-                      <User className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Contact Person</p>
-                        <p className="font-medium">{booking.contact.person}</p>
-                      </div>
-                    </div>
-                  )}
-                  {booking.contact.phone && (
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Contact Phone</p>
-                        <p className="font-medium">{booking.contact.phone}</p>
-                      </div>
-                    </div>
-                  )}
-                  {booking.contact.description && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Description</p>
-                      <p className="text-sm">{booking.contact.description}</p>
-                    </div>
-                  )}
-                  {booking.contact.special_instructions && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Special Instructions
-                      </p>
-                      <p className="text-sm">
-                        {booking.contact.special_instructions}
-                      </p>
-                    </div>
-                  )}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Contact Information
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <User className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">Contact Person</p>
+                    <p className="font-medium">
+                      {displayValue(booking.contact.person, "Not provided")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">Contact Phone</p>
+                    <p className="font-medium">
+                      {displayValue(booking.contact.phone, "Not provided")}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Description</p>
+                  <p className="text-sm">
+                    {displayValue(
+                      booking.contact.description,
+                      "No description provided"
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">
+                    Special Instructions
+                  </p>
+                  <p className="text-sm">
+                    {displayValue(
+                      booking.contact.special_instructions,
+                      "No special instructions"
+                    )}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -406,7 +426,9 @@ export default function BookingDetailsPage() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-gray-600">Name</p>
-                  <p className="font-medium">{booking.user.name}</p>
+                  <p className="font-medium">
+                    {displayValue(booking.user.name, "Name not provided")}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Phone</p>
@@ -450,20 +472,25 @@ export default function BookingDetailsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Amount</p>
-                    <p className="font-medium">₹{booking.payment.amount}</p>
+                    <p className="font-medium">
+                      {displayCurrency(
+                        booking.payment.amount,
+                        booking.payment.currency
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Currency</p>
-                    <p className="font-medium">{booking.payment.currency}</p>
+                    <p className="font-medium">
+                      {displayValue(booking.payment.currency)}
+                    </p>
                   </div>
-                  {booking.payment.payment_method && (
-                    <div>
-                      <p className="text-sm text-gray-600">Payment Method</p>
-                      <p className="font-medium">
-                        {booking.payment.payment_method}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-gray-600">Payment Method</p>
+                    <p className="font-medium">
+                      {displayValue(booking.payment.payment_method)}
+                    </p>
+                  </div>
                   <div>
                     <p className="text-sm text-gray-600">Payment Date</p>
                     <p className="font-medium">
@@ -493,25 +520,31 @@ export default function BookingDetailsPage() {
                       ).toUpperCase()}
                     </span>
                   </div>
-                  {booking.worker_assignment.worker && (
-                    <div>
-                      <p className="text-sm text-gray-600">Assigned Worker</p>
-                      <p className="font-medium">
-                        {booking.worker_assignment.worker.name}
-                      </p>
+                  <div>
+                    <p className="text-sm text-gray-600">Assigned Worker</p>
+                    <p className="font-medium">
+                      {booking.worker_assignment.worker
+                        ? displayValue(
+                            booking.worker_assignment.worker.name,
+                            "Worker name not provided"
+                          )
+                        : displayValue(null, "No worker assigned")}
+                    </p>
+                    {booking.worker_assignment.worker && (
                       <p className="text-sm text-gray-600">
-                        {booking.worker_assignment.worker.phone}
+                        {displayValue(
+                          booking.worker_assignment.worker.phone,
+                          "Phone not provided"
+                        )}
                       </p>
-                    </div>
-                  )}
-                  {booking.worker_assignment.assigned_at && (
-                    <div>
-                      <p className="text-sm text-gray-600">Assigned At</p>
-                      <p className="font-medium">
-                        {formatDateTime(booking.worker_assignment.assigned_at)}
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Assigned At</p>
+                    <p className="font-medium">
+                      {displayDateTime(booking.worker_assignment.assigned_at)}
+                    </p>
+                  </div>
                   <div className="flex space-x-2">
                     <Button
                       variant="outline"

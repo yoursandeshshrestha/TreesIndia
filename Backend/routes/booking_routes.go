@@ -57,6 +57,12 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 		// POST /api/v1/bookings/:id/schedule-after-quote - Schedule after quote acceptance
 		bookings.POST("/:id/schedule-after-quote", middleware.AuthMiddleware(), quoteController.ScheduleAfterQuote)
 		
+		// POST /api/v1/bookings/:id/create-quote-payment - Create payment order for quote
+		bookings.POST("/:id/create-quote-payment", middleware.AuthMiddleware(), quoteController.CreateQuotePayment)
+		
+		// POST /api/v1/bookings/:id/verify-quote-payment - Verify payment for quote
+		bookings.POST("/:id/verify-quote-payment", middleware.AuthMiddleware(), quoteController.VerifyQuotePayment)
+		
 		// GET /api/v1/bookings/:id/quote-info - Get quote information
 		bookings.GET("/:id/quote-info", quoteController.GetQuoteInfo)
 	}
