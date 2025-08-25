@@ -66,15 +66,26 @@ export const BannerTable: React.FC<BannerTableProps> = ({
               accessor: (banner: PromotionBanner) => (
                 <div className="flex items-center">
                   <div className="h-16 w-24 flex-shrink-0">
-                    <img
-                      className="h-16 w-24 object-cover rounded-lg"
-                      src={banner.image}
-                      alt={banner.title}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/images/placeholder-image.jpg";
-                      }}
-                    />
+                    {banner.image ? (
+                      <img
+                        className="h-16 w-24 object-cover rounded-lg"
+                        src={banner.image}
+                        alt={banner.title}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML =
+                              '<div class="h-16 w-24 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 font-medium">No Image</div>';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="h-16 w-24 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 font-medium">
+                        No Image
+                      </div>
+                    )}
                   </div>
                 </div>
               ),

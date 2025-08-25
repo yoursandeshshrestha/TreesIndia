@@ -40,7 +40,7 @@ export default function Footer({ className = "" }: FooterProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             {/* Column 1: Company */}
             <div className="space-y-4">
-              <h3 className="font-bold text-lg text-gray-900 tracking-wide uppercase text-sm">
+              <h3 className="font-bold  text-gray-900 tracking-wide uppercase text-sm">
                 Company
               </h3>
               <ul className="space-y-3">
@@ -73,7 +73,7 @@ export default function Footer({ className = "" }: FooterProps) {
 
             {/* Column 2: For customers */}
             <div className="space-y-4">
-              <h3 className="font-bold text-lg text-gray-900 tracking-wide uppercase text-sm">
+              <h3 className="font-bold  text-gray-900 tracking-wide uppercase text-sm">
                 For customers
               </h3>
               <ul className="space-y-3">
@@ -90,7 +90,7 @@ export default function Footer({ className = "" }: FooterProps) {
 
             {/* Column 3: For professionals */}
             <div className="space-y-4">
-              <h3 className="font-bold text-lg text-gray-900 tracking-wide uppercase text-sm">
+              <h3 className="font-bold  text-gray-900 tracking-wide uppercase text-sm">
                 For professionals
               </h3>
               <ul className="space-y-3">

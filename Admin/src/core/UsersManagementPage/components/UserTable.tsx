@@ -45,6 +45,20 @@ const renderAvatar = (src: string, alt: string) => {
         src={src}
         alt={alt}
         className="h-10 w-10 rounded-full object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          const parent = target.parentElement;
+          if (parent) {
+            parent.innerHTML = `
+              <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span class="text-sm font-medium text-gray-700">${alt
+                  .charAt(0)
+                  .toUpperCase()}</span>
+              </div>
+            `;
+          }
+        }}
       />
     );
   }
@@ -55,6 +69,20 @@ const renderAvatar = (src: string, alt: string) => {
       width={40}
       height={40}
       alt={alt}
+      onError={(e) => {
+        const target = e.target as HTMLImageElement;
+        target.style.display = "none";
+        const parent = target.parentElement;
+        if (parent) {
+          parent.innerHTML = `
+            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <span class="text-sm font-medium text-gray-700">${alt
+                .charAt(0)
+                .toUpperCase()}</span>
+              </div>
+          `;
+        }
+      }}
     />
   );
 };
