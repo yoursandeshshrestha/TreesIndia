@@ -83,18 +83,20 @@ const ProfilePage: React.FC = () => {
   const renderAvatar = (src: string, alt: string) => {
     if (isBase64Image(src)) {
       return (
-        <img 
-          src={src} 
-          alt={alt} 
+        <img
+          src={src}
+          alt={alt}
           className="w-full h-full object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
+            target.style.display = "none";
             const parent = target.parentElement;
             if (parent) {
               parent.innerHTML = `
                 <div class="w-full h-full bg-gray-300 flex items-center justify-center rounded-full">
-                  <span class="text-lg font-medium text-gray-700">${alt.charAt(0).toUpperCase()}</span>
+                  <span class="text-lg font-medium text-gray-700">${alt
+                    .charAt(0)
+                    .toUpperCase()}</span>
                 </div>
               `;
             }
@@ -111,12 +113,14 @@ const ProfilePage: React.FC = () => {
         className="w-full h-full object-cover"
         onError={(e) => {
           const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
+          target.style.display = "none";
           const parent = target.parentElement;
           if (parent) {
             parent.innerHTML = `
               <div class="w-full h-full bg-gray-300 flex items-center justify-center rounded-full">
-                <span class="text-lg font-medium text-gray-700">${alt.charAt(0).toUpperCase()}</span>
+                <span class="text-lg font-medium text-gray-700">${alt
+                  .charAt(0)
+                  .toUpperCase()}</span>
               </div>
             `;
           }
