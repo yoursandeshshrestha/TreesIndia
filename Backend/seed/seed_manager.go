@@ -24,15 +24,23 @@ func NewSeedManager() *SeedManager {
 func (sm *SeedManager) SeedAll() error {
 	logrus.Info("🚀 Starting centralized seeding process...")
 
+	// Create JSON-based seed handler
+	jsonSeeder := NewJSONBasedSeeder(sm)
+
 	// Define seeding operations in dependency order
 	seeders := []struct {
 		name string
 		fn   func() error
 	}{
-		{"Admin User", sm.SeedAdminUser},
-		{"Admin Configurations", sm.SeedAdminConfigurations},
-		{"Service Areas", sm.SeedServiceAreasData},
-		{"Main Application Data", sm.SeedMainData},
+		{"Admin User", jsonSeeder.SeedAdminUser},
+		{"Admin Configurations", jsonSeeder.SeedAdminConfigurations},
+		{"Service Areas", jsonSeeder.SeedServiceAreas},
+		{"Categories", jsonSeeder.SeedCategories},
+		{"Subcategories", jsonSeeder.SeedSubcategories},
+		{"Services", jsonSeeder.SeedServices},
+		{"Service Area Associations", jsonSeeder.SeedServiceAreaAssociations},
+		{"Workers", jsonSeeder.SeedWorkers},
+		{"Promotion Banners", jsonSeeder.SeedPromotionBanners},
 	}
 
 	// Execute seeders in order
@@ -49,24 +57,51 @@ func (sm *SeedManager) SeedAll() error {
 	return nil
 }
 
-// SeedAdminUser seeds the admin user
-func (sm *SeedManager) SeedAdminUser() error {
-	return SeedAdminUser(sm.db)
-}
 
-// SeedMainData seeds the main application data
-func (sm *SeedManager) SeedMainData() error {
-	return sm.seedMainData()
-}
 
-// SeedServiceAreas seeds service areas for all services
-func (sm *SeedManager) SeedServiceAreas() error {
-	return sm.SeedServiceAreasData()
-}
+
 
 // GetDatabase returns the database instance
 func (sm *SeedManager) GetDatabase() *gorm.DB {
 	return sm.db
+}
+
+// SeedIndividualComponents allows seeding individual components
+func (sm *SeedManager) SeedIndividualComponents(components ...string) error {
+	logrus.Info("🔧 Starting individual component seeding...")
+
+	// Create JSON-based seed handler
+	jsonSeeder := NewJSONBasedSeeder(sm)
+
+	// Create a map of available seeders
+	seeders := map[string]func() error{
+		"admin_user":              jsonSeeder.SeedAdminUser,
+		"admin_configurations":    jsonSeeder.SeedAdminConfigurations,
+		"service_areas":           jsonSeeder.SeedServiceAreas,
+		"categories":              jsonSeeder.SeedCategories,
+		"subcategories":           jsonSeeder.SeedSubcategories,
+		"services":                jsonSeeder.SeedServices,
+		"service_area_associations": jsonSeeder.SeedServiceAreaAssociations,
+		"workers":                 jsonSeeder.SeedWorkers,
+		"promotion_banners":       jsonSeeder.SeedPromotionBanners,
+	}
+
+	// Execute requested seeders
+	for _, component := range components {
+		if seeder, exists := seeders[component]; exists {
+			logrus.Infof("📦 Seeding: %s", component)
+			if err := seeder(); err != nil {
+				logrus.Errorf("❌ Failed to seed %s: %v", component, err)
+				return err
+			}
+			logrus.Infof("✅ Successfully seeded: %s", component)
+		} else {
+			logrus.Warnf("⚠️  Unknown component: %s", component)
+		}
+	}
+
+	logrus.Info("🔧 Individual component seeding completed")
+	return nil
 }
 
 // VerifySeeding verifies that all seeded data exists
