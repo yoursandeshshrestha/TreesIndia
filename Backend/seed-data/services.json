@@ -1,0 +1,95 @@
+{
+  "services": [
+    {
+      "name": "Tap Repair",
+      "slug": "tap-repair",
+      "description": "Professional tap repair and replacement service",
+      "price_type": "fixed",
+      "price": 500.0,
+      "duration": "2 hours",
+      "category": "Home Services",
+      "subcategory": "Plumbing",
+      "is_active": true
+    },
+    {
+      "name": "Pipe Installation",
+      "slug": "pipe-installation",
+      "description": "Complete pipe installation and repair service",
+      "price_type": "fixed",
+      "price": 1000.0,
+      "duration": "4 hours",
+      "category": "Home Services",
+      "subcategory": "Plumbing",
+      "is_active": true
+    },
+    {
+      "name": "General Pest Control",
+      "slug": "general-pest-control",
+      "description": "Complete pest control treatment for your home",
+      "price_type": "fixed",
+      "price": 1500.0,
+      "duration": "6 hours",
+      "category": "Home Services",
+      "subcategory": "Pest Control",
+      "is_active": true
+    },
+    {
+      "name": "Interior Painting",
+      "slug": "interior-painting",
+      "description": "Professional interior painting service",
+      "price_type": "inquiry",
+      "category": "Home Services",
+      "subcategory": "Painting",
+      "is_active": true
+    },
+    {
+      "name": "Switch Repair",
+      "slug": "switch-repair",
+      "description": "Electrical switch repair and replacement",
+      "price_type": "fixed",
+      "price": 300.0,
+      "duration": "1 hour",
+      "category": "Home Services",
+      "subcategory": "Electrical",
+      "is_active": true
+    },
+    {
+      "name": "House Cleaning",
+      "slug": "house-cleaning",
+      "description": "Complete house cleaning service",
+      "price_type": "fixed",
+      "price": 1200.0,
+      "duration": "4 hours",
+      "category": "Home Services",
+      "subcategory": "Cleaning",
+      "is_active": true
+    },
+    {
+      "name": "Kitchen Renovation",
+      "slug": "kitchen-renovation",
+      "description": "Complete kitchen renovation and remodeling",
+      "price_type": "inquiry",
+      "category": "Construction Services",
+      "subcategory": "Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Building Plan Approval",
+      "slug": "building-plan-approval",
+      "description": "Building plan design and approval services",
+      "price_type": "inquiry",
+      "category": "Construction Services",
+      "subcategory": "Plan Sanction",
+      "is_active": true
+    },
+    {
+      "name": "Project Marketing",
+      "slug": "project-marketing",
+      "description": "Construction project marketing and promotion",
+      "price_type": "inquiry",
+      "category": "Construction Services",
+      "subcategory": "Promoting Services",
+      "is_active": true
+    }
+  ]
+}

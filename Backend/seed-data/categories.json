@@ -1,0 +1,16 @@
+{
+  "categories": [
+    {
+      "name": "Home Services",
+      "slug": "home-services",
+      "description": "Professional home services for your daily needs",
+      "is_active": true
+    },
+    {
+      "name": "Construction Services",
+      "slug": "construction-services",
+      "description": "Professional construction and renovation services",
+      "is_active": true
+    }
+  ]
+}

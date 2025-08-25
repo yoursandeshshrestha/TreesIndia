@@ -1,0 +1,88 @@
+{
+  "service_areas": [
+    {
+      "city": "Siliguri",
+      "state": "West Bengal",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Darjeeling",
+      "state": "West Bengal",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Kolkata",
+      "state": "West Bengal",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Howrah",
+      "state": "West Bengal",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Gangtok",
+      "state": "Sikkim",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Namchi",
+      "state": "Sikkim",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Guwahati",
+      "state": "Assam",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Dibrugarh",
+      "state": "Assam",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Patna",
+      "state": "Bihar",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Gaya",
+      "state": "Bihar",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Ranchi",
+      "state": "Jharkhand",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Jamshedpur",
+      "state": "Jharkhand",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Bhubaneswar",
+      "state": "Odisha",
+      "country": "India",
+      "is_active": true
+    },
+    {
+      "city": "Cuttack",
+      "state": "Odisha",
+      "country": "India",
+      "is_active": true
+    }
+  ]
+}

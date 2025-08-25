@@ -1,0 +1,172 @@
+{
+  "admin_configs": [
+    {
+      "key": "enable_avatar_upload",
+      "value": "true",
+      "type": "bool",
+      "category": "system",
+      "description": "Allow users to upload profile pictures",
+      "is_active": true
+    },
+    {
+      "key": "enable_booking_system",
+      "value": "true",
+      "type": "bool",
+      "category": "booking",
+      "description": "Enable the booking system for users",
+      "is_active": true
+    },
+    {
+      "key": "enable_user_registration",
+      "value": "true",
+      "type": "bool",
+      "category": "system",
+      "description": "Allow new users to register accounts",
+      "is_active": true
+    },
+    {
+      "key": "require_email_verification",
+      "value": "false",
+      "type": "bool",
+      "category": "system",
+      "description": "Require email verification for new user accounts",
+      "is_active": true
+    },
+    {
+      "key": "require_sms_verification",
+      "value": "false",
+      "type": "bool",
+      "category": "system",
+      "description": "Require SMS verification for new user accounts",
+      "is_active": true
+    },
+    {
+      "key": "session_timeout_minutes",
+      "value": "30",
+      "type": "int",
+      "category": "system",
+      "description": "User session timeout in minutes",
+      "is_active": true
+    },
+    {
+      "key": "max_login_attempts",
+      "value": "3",
+      "type": "int",
+      "category": "system",
+      "description": "Maximum login attempts before account lockout",
+      "is_active": true
+    },
+    {
+      "key": "avatar_max_size_mb",
+      "value": "5",
+      "type": "int",
+      "category": "system",
+      "description": "Maximum file size for avatar uploads",
+      "is_active": true
+    },
+    {
+      "key": "document_max_size_mb",
+      "value": "10",
+      "type": "int",
+      "category": "system",
+      "description": "Maximum file size for document uploads",
+      "is_active": true
+    },
+    {
+      "key": "min_recharge_amount",
+      "value": "100.0",
+      "type": "float",
+      "category": "wallet",
+      "description": "Minimum amount for wallet recharge",
+      "is_active": true
+    },
+    {
+      "key": "max_recharge_amount",
+      "value": "50000.0",
+      "type": "float",
+      "category": "wallet",
+      "description": "Maximum amount for single wallet recharge",
+      "is_active": true
+    },
+    {
+      "key": "support_email",
+      "value": "support@treesindiaservices.com",
+      "type": "string",
+      "category": "system",
+      "description": "Support email address for user inquiries",
+      "is_active": true
+    },
+    {
+      "key": "support_phone",
+      "value": "+91-8597831350",
+      "type": "string",
+      "category": "system",
+      "description": "Support phone number for user inquiries",
+      "is_active": true
+    },
+    {
+      "key": "working_hours_start",
+      "value": "09:00",
+      "type": "string",
+      "category": "booking",
+      "description": "Start time for working hours (24-hour format: HH:MM)",
+      "is_active": true
+    },
+    {
+      "key": "working_hours_end",
+      "value": "22:00",
+      "type": "string",
+      "category": "booking",
+      "description": "End time for working hours (24-hour format: HH:MM)",
+      "is_active": true
+    },
+    {
+      "key": "working_days",
+      "value": "1,2,3,4,5,6,7",
+      "type": "string",
+      "category": "booking",
+      "description": "Working days (comma-separated: 1=Monday, 7=Sunday)",
+      "is_active": true
+    },
+    {
+      "key": "booking_advance_days",
+      "value": "3",
+      "type": "int",
+      "category": "booking",
+      "description": "How many days in advance users can book services",
+      "is_active": true
+    },
+    {
+      "key": "booking_cancellation_hours",
+      "value": "24",
+      "type": "int",
+      "category": "booking",
+      "description": "Hours before booking when cancellation is allowed",
+      "is_active": true
+    },
+    {
+      "key": "booking_hold_time_minutes",
+      "value": "7",
+      "type": "int",
+      "category": "booking",
+      "description": "Temporary hold time for booking slots in minutes (before payment)",
+      "is_active": true
+    },
+    {
+      "key": "booking_buffer_time_minutes",
+      "value": "30",
+      "type": "int",
+      "category": "booking",
+      "description": "Buffer time between consecutive bookings in minutes",
+      "is_active": true
+    },
+    {
+      "key": "inquiry_booking_fee",
+      "value": "100",
+      "type": "int",
+      "category": "booking",
+      "description": "Fee charged for inquiry-based bookings",
+      "is_active": true
+    }
+  ]
+}

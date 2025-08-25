@@ -1,0 +1,130 @@
+{
+  "service_area_associations": [
+    {
+      "service_name": "Tap Repair",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok"
+      ]
+    },
+    {
+      "service_name": "Pipe Installation",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi"
+      ]
+    },
+    {
+      "service_name": "General Pest Control",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati"
+      ]
+    },
+    {
+      "service_name": "Interior Painting",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh"
+      ]
+    },
+    {
+      "service_name": "Switch Repair",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh",
+        "Patna"
+      ]
+    },
+    {
+      "service_name": "House Cleaning",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh",
+        "Patna",
+        "Gaya"
+      ]
+    },
+    {
+      "service_name": "Kitchen Renovation",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh",
+        "Patna",
+        "Gaya",
+        "Ranchi"
+      ]
+    },
+    {
+      "service_name": "Building Plan Approval",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh",
+        "Patna",
+        "Gaya",
+        "Ranchi",
+        "Jamshedpur"
+      ]
+    },
+    {
+      "service_name": "Project Marketing",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh",
+        "Patna",
+        "Gaya",
+        "Ranchi",
+        "Jamshedpur",
+        "Bhubaneswar"
+      ]
+    }
+  ]
+}

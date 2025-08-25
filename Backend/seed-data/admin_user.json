@@ -1,0 +1,16 @@
+{
+  "admin_user": [
+    {
+      "name": "Sandesh As Admin",
+      "phone": "+918597831351",
+      "user_type": "admin",
+      "is_active": true
+    },
+    {
+      "name": "Sandesh As 2",
+      "phone": "+918597831352",
+      "user_type": "admin",
+      "is_active": true
+    }
+  ]
+}

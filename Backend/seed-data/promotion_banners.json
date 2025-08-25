@@ -1,0 +1,29 @@
+{
+  "promotion_banners": [
+    {
+      "title": "Professional Cleaning Services",
+      "link": "/services/cleaning",
+      "is_active": true
+    },
+    {
+      "title": "Expert Plumbing Solutions",
+      "link": "/services/plumbing",
+      "is_active": true
+    },
+    {
+      "title": "Home Maintenance Specialists",
+      "link": "/services/maintenance",
+      "is_active": true
+    },
+    {
+      "title": "Quality Construction Services",
+      "link": "/services/construction",
+      "is_active": true
+    },
+    {
+      "title": "Reliable Home Services",
+      "link": "/services",
+      "is_active": false
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "workers": [
+    {
+      "name": "John Worker",
+      "phone": "+919876543210",
+      "is_active": true
+    },
+    {
+      "name": "Sarah Worker",
+      "phone": "+919876543211",
+      "is_active": true
+    },
+    {
+      "name": "Mike Plumber",
+      "phone": "+919876543212",
+      "is_active": true
+    },
+    {
+      "name": "Lisa Electrician",
+      "phone": "+919876543213",
+      "is_active": true
+    },
+    {
+      "name": "David Painter",
+      "phone": "+919876543214",
+      "is_active": true
+    }
+  ]
+}
