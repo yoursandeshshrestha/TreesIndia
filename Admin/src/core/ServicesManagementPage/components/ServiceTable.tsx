@@ -79,7 +79,7 @@ export default function ServiceTable({
               className="w-10 h-10 rounded-lg object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
+                target.style.display = "none";
                 const parent = target.parentElement;
                 if (parent) {
                   parent.innerHTML = `
