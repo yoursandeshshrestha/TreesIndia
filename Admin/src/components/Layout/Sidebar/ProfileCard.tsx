@@ -76,7 +76,9 @@ const ProfileCard: React.FC = () => {
 
         {/* User Info */}
         <div className="flex-1 min-w-0 font-mono">
-          <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {userName}
+          </p>
           <p className="text-xs text-gray-500 truncate">{userEmail}</p>
         </div>
       </div>
