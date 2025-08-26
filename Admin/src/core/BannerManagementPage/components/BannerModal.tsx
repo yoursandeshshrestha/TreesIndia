@@ -5,7 +5,6 @@ import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
-import Checkbox from "@/components/Checkbox/Checkbox";
 import { PromotionBanner, CreateBannerRequest } from "../types";
 import Image from "next/image";
 
@@ -218,7 +217,7 @@ export const BannerModal: React.FC<BannerModalProps> = ({
               {/* Image Preview */}
               {imagePreview && (
                 <div className="relative">
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                  <div className="relative w-full h-70 rounded-lg overflow-hidden border border-gray-200">
                     <Image
                       src={imagePreview}
                       alt="Banner preview"
@@ -229,7 +228,7 @@ export const BannerModal: React.FC<BannerModalProps> = ({
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute top-2 right-2 bg-white text-black rounded-full p-1 hover:bg-red-600 transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -264,16 +263,6 @@ export const BannerModal: React.FC<BannerModalProps> = ({
                 <p className="text-sm text-red-600">{errors.image}</p>
               )}
             </div>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Status</h3>
-            <Checkbox
-              checked={formData.is_active}
-              onChange={(checked) => handleInputChange("is_active", checked)}
-              label="Active"
-            />
           </div>
 
           {/* Action Buttons */}
