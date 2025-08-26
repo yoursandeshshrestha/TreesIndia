@@ -10,6 +10,7 @@ import SubcategoryHeader from "./components/SubcategoryHeader";
 import SubcategoryTable from "./components/SubcategoryTable";
 import { SubcategoryModal } from "./components/SubcategoryModal";
 import SubcategoryFilters from "./components/SubcategoryFilters";
+import SubcategoryTabs, { ServiceType } from "./components/SubcategoryTabs";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 
 // Hooks and types
@@ -42,6 +43,7 @@ function SubcategoriesManagementPage() {
   const [filters, setFilters] = useState({
     search: "",
     status: "",
+    serviceType: "all" as ServiceType,
     sortBy: "name",
     sortOrder: "asc",
   });
@@ -159,12 +161,44 @@ function SubcategoriesManagementPage() {
     setFilters({
       search: "",
       status: "",
+      serviceType: "all",
       sortBy: "name",
       sortOrder: "asc",
     });
     setLocalSearch("");
     setCurrentPage(1);
     toast.success("Filters cleared successfully");
+  };
+
+  // Helper function to determine service type based on category name
+  const getServiceType = (subcategory: Subcategory): ServiceType => {
+    const categoryName = subcategory.parent?.name?.toLowerCase() || "";
+
+    if (
+      categoryName.includes("home") ||
+      categoryName.includes("cleaning") ||
+      categoryName.includes("maid")
+    ) {
+      return "home";
+    } else if (
+      categoryName.includes("construction") ||
+      categoryName.includes("building") ||
+      categoryName.includes("renovation")
+    ) {
+      return "construction";
+    }
+
+    return "home"; // Default to home service
+  };
+
+  // Calculate counts for each service type
+  const serviceTypeCounts = {
+    all: apiSubcategories.length,
+    home: apiSubcategories.filter((sub) => getServiceType(sub) === "home")
+      .length,
+    construction: apiSubcategories.filter(
+      (sub) => getServiceType(sub) === "construction"
+    ).length,
   };
 
   // Filter subcategories based on current filters
@@ -182,7 +216,11 @@ function SubcategoriesManagementPage() {
         ? subcategory.is_active
         : !subcategory.is_active);
 
-    return matchesSearch && matchesStatus;
+    const matchesServiceType =
+      filters.serviceType === "all" ||
+      getServiceType(subcategory) === filters.serviceType;
+
+    return matchesSearch && matchesStatus && matchesServiceType;
   });
 
   if (isLoading && apiSubcategories.length === 0) {
@@ -283,6 +321,7 @@ function SubcategoriesManagementPage() {
           setFilters({
             search: "",
             status: "",
+            serviceType: "all",
             sortBy: "name",
             sortOrder: "asc",
           });
@@ -295,6 +334,18 @@ function SubcategoriesManagementPage() {
         }}
         isSearching={isSearching}
       />
+
+      {/* Service Type Tabs */}
+      <div className="px-6">
+        <SubcategoryTabs
+          activeTab={filters.serviceType}
+          onTabChange={(serviceType) => {
+            setFilters((prev) => ({ ...prev, serviceType }));
+            setCurrentPage(1);
+          }}
+          counts={serviceTypeCounts}
+        />
+      </div>
 
       <SubcategoryTable
         subcategories={filteredSubcategories}
