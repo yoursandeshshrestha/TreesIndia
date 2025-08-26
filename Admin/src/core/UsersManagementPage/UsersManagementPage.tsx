@@ -54,7 +54,6 @@ function UsersManagementPage() {
     search: "",
     user_type: "",
     is_active: "",
-    role_application_status: "",
     has_active_subscription: "",
     date_from: "",
     date_to: "",
@@ -67,7 +66,6 @@ function UsersManagementPage() {
     const search = searchParams.get("search");
     const user_type = searchParams.get("user_type");
     const is_active = searchParams.get("is_active");
-    const role_application_status = searchParams.get("role_application_status");
     const has_active_subscription = searchParams.get("has_active_subscription");
     const date_from = searchParams.get("date_from");
     const date_to = searchParams.get("date_to");
@@ -76,8 +74,6 @@ function UsersManagementPage() {
     if (search) setLocalSearch(search);
     if (user_type) setFilters((prev) => ({ ...prev, user_type }));
     if (is_active) setFilters((prev) => ({ ...prev, is_active }));
-    if (role_application_status)
-      setFilters((prev) => ({ ...prev, role_application_status }));
     if (has_active_subscription)
       setFilters((prev) => ({ ...prev, has_active_subscription }));
     if (date_from) setFilters((prev) => ({ ...prev, date_from }));
@@ -110,9 +106,7 @@ function UsersManagementPage() {
         ...(filters.search && { search: filters.search }),
         ...(filters.user_type && { user_type: filters.user_type }),
         ...(filters.is_active && { is_active: filters.is_active }),
-        ...(filters.role_application_status && {
-          role_application_status: filters.role_application_status,
-        }),
+
         ...(filters.has_active_subscription && {
           has_active_subscription: filters.has_active_subscription,
         }),
@@ -198,7 +192,6 @@ function UsersManagementPage() {
       search: "",
       user_type: "",
       is_active: "",
-      role_application_status: "",
       has_active_subscription: "",
       date_from: "",
       date_to: "",
@@ -220,9 +213,7 @@ function UsersManagementPage() {
     const matchesActive =
       !filters.is_active ||
       (filters.is_active === "true" ? user.is_active : !user.is_active);
-    const matchesRoleStatus =
-      !filters.role_application_status ||
-      user.role_application_status === filters.role_application_status;
+
     const matchesSubscription =
       !filters.has_active_subscription ||
       (filters.has_active_subscription === "true"
@@ -233,7 +224,6 @@ function UsersManagementPage() {
       matchesSearch &&
       matchesUserType &&
       matchesActive &&
-      matchesRoleStatus &&
       matchesSubscription
     );
   });
@@ -305,7 +295,6 @@ function UsersManagementPage() {
         search={localSearch}
         user_type={filters.user_type}
         is_active={filters.is_active}
-        role_application_status={filters.role_application_status}
         has_active_subscription={filters.has_active_subscription}
         onSearchChange={(value) => {
           setLocalSearch(value);
@@ -319,10 +308,6 @@ function UsersManagementPage() {
           setFilters((prev) => ({ ...prev, is_active: value }));
           setCurrentPage(1);
         }}
-        onRoleApplicationStatusChange={(value) => {
-          setFilters((prev) => ({ ...prev, role_application_status: value }));
-          setCurrentPage(1);
-        }}
         onHasActiveSubscriptionChange={(value) => {
           setFilters((prev) => ({ ...prev, has_active_subscription: value }));
           setCurrentPage(1);
@@ -332,7 +317,6 @@ function UsersManagementPage() {
             search: "",
             user_type: "",
             is_active: "",
-            role_application_status: "",
             has_active_subscription: "",
             date_from: "",
             date_to: "",
