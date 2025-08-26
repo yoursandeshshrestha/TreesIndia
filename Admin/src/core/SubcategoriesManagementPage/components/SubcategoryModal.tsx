@@ -272,42 +272,40 @@ export function SubcategoryModal({
             {/* Image preview or upload area */}
             {imagePreview ? (
               <div className="space-y-3">
-                <div className="relative">
+                <div className="relative w-32 h-32">
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-full h-full object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
                     onClick={handleImageClick}
                   />
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-md"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 </div>
                 <div className="text-sm text-gray-600">
                   <p>Click image to change or remove</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Supported formats: PNG, JPG, GIF, WebP (max 10MB)
+                    Recommended: Square image (512x512px) • PNG, JPG, GIF, WebP
+                    (max 10MB)
                   </p>
                 </div>
               </div>
             ) : (
               <div
                 onClick={handleImageClick}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50"
               >
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-lg font-medium text-gray-700 mb-2">
-                  Upload Subcategory Image
+                <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                <p className="text-sm font-medium text-gray-700 text-center">
+                  Upload Icon
                 </p>
-                <p className="text-sm text-gray-600 mb-1">
-                  Click to browse or drag and drop
-                </p>
-                <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF, WebP up to 10MB
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Square image preferred
                 </p>
               </div>
             )}
