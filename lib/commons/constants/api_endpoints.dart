@@ -12,6 +12,8 @@ class ApiEndpoints {
     changePassword,
 
     locationAutocomplete,
+    categories,
+    subcategories,
     walletSummary,
     walletTransactions,
     walletTransactionsByType,
@@ -59,6 +61,18 @@ class ApiEndpoints {
 
   static ApiEndpoint locationAutocomplete = ApiEndpoint(
     path: '/places/autocomplete',
+    requiresAuth: false,
+    useRegionBaseUrl: true,
+  );
+
+  static ApiEndpoint categories = ApiEndpoint(
+    path: '/categories',
+    requiresAuth: false,
+    useRegionBaseUrl: true,
+  );
+
+  static ApiEndpoint subcategories = ApiEndpoint(
+    path: '/subcategories/category/{categoryId}',
     requiresAuth: false,
     useRegionBaseUrl: true,
   );

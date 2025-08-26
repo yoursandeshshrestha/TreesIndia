@@ -1,44 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
+import '../../../../../commons/components/text/app/views/custom_text_library.dart';
+import '../../../domain/entities/category_entity.dart';
 import '../../../domain/entities/service_entity.dart';
+import '../../providers/category_providers.dart';
+import '../../viewmodels/category_state.dart';
+import 'category_loading_skeleton.dart';
 
-class ServiceCategoryTabsWidget extends StatelessWidget {
-  final ServiceCategory? selectedCategory;
-  final Function(ServiceCategory) onCategorySelected;
+class ServiceCategoryTabsWidget extends ConsumerStatefulWidget {
+  final Function(ServiceCategory, CategoryEntity) onCategorySelected;
 
   const ServiceCategoryTabsWidget({
     super.key,
-    this.selectedCategory,
     required this.onCategorySelected,
   });
 
-  String _getCategoryDisplayName(ServiceCategory category) {
-    switch (category) {
-      case ServiceCategory.homeServices:
-        return 'Home Services';
-      case ServiceCategory.constructionServices:
-        return 'Construction Services';
-      case ServiceCategory.rentalAndProperties:
-        return 'Rental & Properties';
+  @override
+  ConsumerState<ServiceCategoryTabsWidget> createState() =>
+      _ServiceCategoryTabsWidgetState();
+}
+
+class _ServiceCategoryTabsWidgetState
+    extends ConsumerState<ServiceCategoryTabsWidget> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(categoryNotifierProvider.notifier).loadCategories();
+    });
+  }
+
+  ServiceCategory _mapSlugToServiceCategory(String slug) {
+    switch (slug) {
+      case 'home-services':
+        return ServiceCategory.homeServices;
+      case 'construction-services':
+        return ServiceCategory.constructionServices;
+      case 'rental-and-properties':
+      default:
+        return ServiceCategory.rentalAndProperties;
     }
   }
 
-  Widget _getCategoryIcon(ServiceCategory category) {
-    switch (category) {
-      case ServiceCategory.homeServices:
+  Widget _getCategoryIcon(String slug) {
+    switch (slug) {
+      case 'home-services':
         return const Icon(
           Icons.home_repair_service_rounded,
           size: 20,
           color: AppColors.brandPrimary600,
         );
-      case ServiceCategory.constructionServices:
+      case 'construction-services':
         return const Icon(
           Icons.construction_outlined,
           size: 20,
           color: AppColors.brandPrimary600,
         );
-      case ServiceCategory.rentalAndProperties:
+      case 'rental-and-properties':
+      default:
         return const Icon(
           Icons.home_outlined,
           size: 20,
@@ -49,27 +70,62 @@ class ServiceCategoryTabsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryState = ref.watch(categoryNotifierProvider);
+
+    if (categoryState.status == CategoryStatus.loading) {
+      return const CategoryLoadingSkeleton();
+    }
+
+    if (categoryState.status == CategoryStatus.failure) {
+      return Container(
+        height: 136,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Center(
+          child: B2Regular(
+            text: 'Failed to load categories',
+            color: AppColors.stateRed600,
+          ),
+        ),
+      );
+    }
+
+    final categories = categoryState.categories;
+
+    if (categories.isEmpty) {
+      return Container(
+        height: 136,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Center(
+          child: B2Regular(
+            text: 'No categories available',
+            color: AppColors.brandNeutral600,
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 0),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: ServiceCategory.values.asMap().entries.map((entry) {
+          children: categories.asMap().entries.map((entry) {
             int index = entry.key;
-            ServiceCategory category = entry.value;
+            CategoryEntity category = entry.value;
+            ServiceCategory mappedCategory =
+                _mapSlugToServiceCategory(category.slug);
 
             return Container(
               margin: EdgeInsets.only(
                 left: index == 0 ? AppSpacing.lg : 0,
-                right: index < ServiceCategory.values.length - 1
+                right: index < categories.length - 1
                     ? AppSpacing.md
                     : AppSpacing.lg,
               ),
               child: _CategoryCard(
-                category: category,
-                title: _getCategoryDisplayName(category),
-                icon: _getCategoryIcon(category),
-                onTap: () => onCategorySelected(category),
+                title: category.name,
+                icon: _getCategoryIcon(category.slug),
+                onTap: () => widget.onCategorySelected(mappedCategory, category),
               ),
             );
           }).toList(),
@@ -80,13 +136,11 @@ class ServiceCategoryTabsWidget extends StatelessWidget {
 }
 
 class _CategoryCard extends StatelessWidget {
-  final ServiceCategory category;
   final String title;
   final Widget icon;
   final VoidCallback onTap;
 
   const _CategoryCard({
-    required this.category,
     required this.title,
     required this.icon,
     required this.onTap,

@@ -3,21 +3,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
-import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
-import 'package:trees_india/pages/home_page/app/viewmodels/service_notifier.dart';
+import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/pages/home_page/app/views/widgets/service_banner_widget.dart';
-import '../providers/service_providers.dart';
+
+import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
-import '../viewmodels/service_state.dart';
-import 'widgets/service_cards_grid_widget.dart';
+import '../../domain/entities/subcategory_entity.dart';
+import '../providers/subcategory_providers.dart';
+import '../viewmodels/subcategory_state.dart';
 import 'widgets/service_banner_list_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
+import 'widgets/subcategory_loading_skeleton.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -87,8 +89,11 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _showServicesBottomSheet(BuildContext context, ServiceCategory category,
-      ServiceNotifier serviceNotifier) {
-    serviceNotifier.loadServicesByCategory(category);
+      CategoryEntity categoryEntity) {
+    // Load subcategories instead of services
+    ref
+        .read(subcategoryNotifierProvider.notifier)
+        .loadSubcategoriesByCategory(categoryEntity.id);
 
     showModalBottomSheet(
       context: context,
@@ -121,33 +126,53 @@ class _HomePageState extends ConsumerState<HomePage> {
               Expanded(
                 child: Consumer(
                   builder: (context, ref, child) {
-                    final serviceState = ref.watch(serviceNotifierProvider);
+                    final subcategoryState =
+                        ref.watch(subcategoryNotifierProvider);
 
-                    if (serviceState.status == ServiceStatus.loading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (serviceState.status == ServiceStatus.failure) {
+                    if (subcategoryState.status == SubcategoryStatus.loading) {
+                      return const SubcategoryLoadingSkeleton();
+                    } else if (subcategoryState.status ==
+                        SubcategoryStatus.failure) {
                       return Center(
                         child: B2Regular(
-                          text: 'Failed to load services',
+                          text: 'Failed to load subcategories',
                           color: AppColors.stateRed600,
                         ),
                       );
-                    } else {
-                      return SizedBox(
-                        width: double.maxFinite,
-                        child: ServiceCardsGridWidget(
-                          services: serviceNotifier.filteredServices,
-                          onServiceTap: (service) {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              InfoSnackbarWidget(
-                                message:
-                                    '${service.name} service is coming soon',
-                              ).createSnackBar(),
-                            );
-                          },
+                    } else if (subcategoryState.subcategories.isEmpty) {
+                      return Center(
+                        child: B2Regular(
+                          text: 'No subcategories available',
+                          color: AppColors.brandNeutral600,
                         ),
+                      );
+                    } else {
+                      return GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: AppSpacing.md,
+                          mainAxisSpacing: AppSpacing.md,
+                          childAspectRatio: 0.9,
+                        ),
+                        itemCount: subcategoryState.subcategories.length,
+                        itemBuilder: (context, index) {
+                          final subcategory =
+                              subcategoryState.subcategories[index];
+                          return _SubcategoryCard(
+                            subcategory: subcategory,
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                InfoSnackbarWidget(
+                                  message:
+                                      '${subcategory.name} service is coming soon',
+                                ).createSnackBar(),
+                              );
+                            },
+                          );
+                        },
                       );
                     }
                   },
@@ -162,9 +187,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final serviceState = ref.watch(serviceNotifierProvider);
-    final serviceNotifier = ref.read(serviceNotifierProvider.notifier);
-
     return MainLayoutWidget(
       currentIndex: 0,
       child: Scaffold(
@@ -247,8 +269,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SizedBox(height: AppSpacing.lg),
               // Service Category Cards
               ServiceCategoryTabsWidget(
-                onCategorySelected: (category) {
-                  _showServicesBottomSheet(context, category, serviceNotifier);
+                onCategorySelected: (serviceCategory, categoryEntity) {
+                  _showServicesBottomSheet(
+                      context, serviceCategory, categoryEntity);
                 },
               ),
 
@@ -317,6 +340,73 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SizedBox(height: AppSpacing.lg),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubcategoryCard extends StatelessWidget {
+  final SubcategoryEntity subcategory;
+  final VoidCallback onTap;
+
+  const _SubcategoryCard({
+    required this.subcategory,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.brandNeutral200),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNeutral900.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 1,
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: AppColors.brandPrimary50,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.build_outlined,
+                  size: 32,
+                  color: AppColors.brandPrimary600,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+                child: B4Medium(
+                  text: subcategory.name,
+                  color: AppColors.brandNeutral900,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
