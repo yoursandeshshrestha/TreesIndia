@@ -41,6 +41,7 @@ export interface UpdateSubcategoryRequest {
 export interface SubcategoryFilters {
   search?: string;
   status?: "active" | "inactive" | "all";
+  serviceType?: "all" | "home" | "construction";
   sortBy?: "name" | "createdAt" | "updatedAt";
   sortOrder?: "asc" | "desc";
 }
