@@ -146,14 +146,14 @@ export const BannerTable: React.FC<BannerTableProps> = ({
             {
               label: "Edit",
               onClick: (banner: PromotionBanner) => onEditBanner(banner),
-              className: "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
-              icon: <Edit2 size={16} />,
+              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+              icon: <Edit2 size={14} />,
             },
             {
               label: "Delete",
               onClick: (banner: PromotionBanner) => onDeleteBanner(banner),
-              className: "text-red-600 hover:text-red-700 hover:bg-red-50",
-              icon: <Trash2 size={16} />,
+              className: "text-red-700 bg-red-100 hover:bg-red-200",
+              icon: <Trash2 size={14} />,
             },
           ]}
         />
