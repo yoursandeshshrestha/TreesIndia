@@ -41,7 +41,6 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
         // Include required backend fields with current values
         user_type: initialData.user_type,
         is_active: initialData.is_active,
-        role_application_status: initialData.role_application_status,
         wallet_balance: initialData.wallet_balance,
         has_active_subscription: initialData.has_active_subscription,
       });
