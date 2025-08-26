@@ -19,7 +19,6 @@ class ServiceCardWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
@@ -78,39 +77,6 @@ class ServiceCardWidget extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class ServiceCardsGridWidget extends StatelessWidget {
-  final List<ServiceEntity> services;
-  final Function(ServiceEntity)? onServiceTap;
-
-  const ServiceCardsGridWidget({
-    super.key,
-    required this.services,
-    this.onServiceTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: AppSpacing.md,
-        mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: services.length,
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return ServiceCardWidget(
-          service: service,
-          onTap: () => onServiceTap?.call(service),
-        );
-      },
     );
   }
 }
