@@ -22,6 +22,7 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addre
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payment_methods/app/views/manage_payment_methods_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
+import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -219,6 +220,18 @@ class AppRouter {
                   path: '/about-trees-india',
                   name: 'AboutTreesIndiaPage',
                   builder: (context, state) => const AboutTreesIndiaPage(),
+                ),
+                GoRoute(
+                  path: '/services/:categoryId/:subcategoryId',
+                  name: 'ServicesPage',
+                  builder: (context, state) {
+                    final categoryId = state.pathParameters['categoryId']!;
+                    final subcategoryId = state.pathParameters['subcategoryId']!;
+                    return ServicesPage(
+                      categoryId: categoryId,
+                      subcategoryId: subcategoryId,
+                    );
+                  },
                 ),
               ],
             ),

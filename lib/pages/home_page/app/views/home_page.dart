@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
-import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -16,6 +15,7 @@ import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
 import '../providers/subcategory_providers.dart';
+import '../../../services_page/app/providers/service_providers.dart';
 import '../viewmodels/subcategory_state.dart';
 import 'widgets/service_banner_list_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
@@ -163,13 +163,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             subcategory: subcategory,
                             onTap: () {
                               Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                InfoSnackbarWidget(
-                                  message:
-                                      '${subcategory.name} service is coming soon',
-                                ).createSnackBar(),
-                              );
+                              // Set category and subcategory in services page state
+                              ref.read(serviceNotifierProvider.notifier)
+                                  .setCategoryAndSubcategory(categoryEntity, subcategory);
+                              // Navigate to services page
+                              context.push('/services/${categoryEntity.id}/${subcategory.id}');
                             },
                           );
                         },

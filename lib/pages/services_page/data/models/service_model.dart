@@ -1,0 +1,116 @@
+import '../../domain/entities/service_entity.dart';
+import 'service_area_model.dart';
+
+class ServiceModel extends ServiceEntity {
+  const ServiceModel({
+    required super.id,
+    required super.name,
+    required super.slug,
+    required super.description,
+    required super.images,
+    required super.priceType,
+    required super.price,
+    required super.duration,
+    required super.categoryId,
+    required super.subcategoryId,
+    required super.categoryName,
+    required super.subcategoryName,
+    required super.isActive,
+    required super.createdAt,
+    required super.updatedAt,
+    super.deletedAt,
+    required super.serviceAreas,
+  });
+
+  factory ServiceModel.fromJson(Map<String, dynamic> json) {
+    return ServiceModel(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      slug: json['slug'] as String,
+      description: json['description'] as String,
+      images: (json['images'] as List<dynamic>).cast<String>(),
+      priceType: json['price_type'] as String,
+      price: json['price'] as int,
+      duration: json['duration'] as String,
+      categoryId: json['category_id'] as int,
+      subcategoryId: json['subcategory_id'] as int,
+      categoryName: json['category_name'] as String,
+      subcategoryName: json['subcategory_name'] as String,
+      isActive: json['is_active'] as bool,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      deletedAt: json['deleted_at'] != null 
+          ? DateTime.parse(json['deleted_at'] as String) 
+          : null,
+      serviceAreas: (json['service_areas'] as List<dynamic>)
+          .map((area) => ServiceAreaModel.fromJson(area as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'slug': slug,
+      'description': description,
+      'images': images,
+      'price_type': priceType,
+      'price': price,
+      'duration': duration,
+      'category_id': categoryId,
+      'subcategory_id': subcategoryId,
+      'category_name': categoryName,
+      'subcategory_name': subcategoryName,
+      'is_active': isActive,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
+      'service_areas': serviceAreas.map((area) => (area as ServiceAreaModel).toJson()).toList(),
+    };
+  }
+
+  ServiceEntity toEntity() {
+    return ServiceEntity(
+      id: id,
+      name: name,
+      slug: slug,
+      description: description,
+      images: images,
+      priceType: priceType,
+      price: price,
+      duration: duration,
+      categoryId: categoryId,
+      subcategoryId: subcategoryId,
+      categoryName: categoryName,
+      subcategoryName: subcategoryName,
+      isActive: isActive,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      deletedAt: deletedAt,
+      serviceAreas: serviceAreas.map((area) => area).toList(),
+    );
+  }
+
+  factory ServiceModel.fromEntity(ServiceEntity entity) {
+    return ServiceModel(
+      id: entity.id,
+      name: entity.name,
+      slug: entity.slug,
+      description: entity.description,
+      images: entity.images,
+      priceType: entity.priceType,
+      price: entity.price,
+      duration: entity.duration,
+      categoryId: entity.categoryId,
+      subcategoryId: entity.subcategoryId,
+      categoryName: entity.categoryName,
+      subcategoryName: entity.subcategoryName,
+      isActive: entity.isActive,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
+      serviceAreas: entity.serviceAreas,
+    );
+  }
+}
