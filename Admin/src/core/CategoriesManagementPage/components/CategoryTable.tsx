@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit2, Trash2, Plus, Layers } from "lucide-react";
+import { Edit2, Trash2, Plus, Layers, Image } from "lucide-react";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { Category, Subcategory } from "../types";
@@ -143,20 +143,20 @@ const CategoryTable = ({
             {
               label: "Add Subcategory",
               onClick: (category: Category) => onAddSubcategory(category.id),
-              className: "text-blue-600 hover:text-blue-700 hover:bg-blue-50",
-              icon: <Plus size={16} />,
+              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+              icon: <Plus size={14} />,
             },
             {
               label: "Edit",
               onClick: (category: Category) => onEditCategory(category),
-              className: "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
-              icon: <Edit2 size={16} />,
+              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+              icon: <Edit2 size={14} />,
             },
             {
               label: "Delete",
               onClick: (category: Category) => onDeleteCategory(category),
-              className: "text-red-600 hover:text-red-700 hover:bg-red-50",
-              icon: <Trash2 size={16} />,
+              className: "text-red-700 bg-red-100 hover:bg-red-200",
+              icon: <Trash2 size={14} />,
             },
           ]}
         />
@@ -233,17 +233,15 @@ const CategoryTable = ({
                     label: "Edit",
                     onClick: (subcategory: Subcategory) =>
                       onEditSubcategory(subcategory),
-                    className:
-                      "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
-                    icon: <Edit2 size={16} />,
+                    className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+                    icon: <Edit2 size={14} />,
                   },
                   {
                     label: "Delete",
                     onClick: (subcategory: Subcategory) =>
                       onDeleteSubcategory(subcategory),
-                    className:
-                      "text-red-600 hover:text-red-700 hover:bg-red-50",
-                    icon: <Trash2 size={16} />,
+                    className: "text-red-700 bg-red-100 hover:bg-red-200",
+                    icon: <Trash2 size={14} />,
                   },
                 ]}
               />
