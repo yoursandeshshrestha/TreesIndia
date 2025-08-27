@@ -6,7 +6,6 @@ import Button from "@/components/Button/Base/Button";
 import {
   USER_TYPE_FILTER_OPTIONS,
   STATUS_OPTIONS,
-  ROLE_APPLICATION_FILTER_OPTIONS,
   SUBSCRIPTION_OPTIONS,
 } from "@/utils/userUtils";
 
@@ -14,12 +13,10 @@ interface UserFiltersProps {
   search: string;
   user_type: string;
   is_active: string;
-  role_application_status: string;
   has_active_subscription: string;
   onSearchChange: (value: string) => void;
   onUserTypeChange: (value: string) => void;
   onIsActiveChange: (value: string) => void;
-  onRoleApplicationStatusChange: (value: string) => void;
   onHasActiveSubscriptionChange: (value: string) => void;
   onClear: () => void;
   isSearching?: boolean;
@@ -29,12 +26,10 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   search,
   user_type,
   is_active,
-  role_application_status,
   has_active_subscription,
   onSearchChange,
   onUserTypeChange,
   onIsActiveChange,
-  onRoleApplicationStatusChange,
   onHasActiveSubscriptionChange,
   onClear,
   isSearching = false,
@@ -71,14 +66,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         className="w-44 h-10"
         width="13rem"
       />
-      <SearchableDropdown
-        options={ROLE_APPLICATION_FILTER_OPTIONS}
-        value={role_application_status}
-        onChange={(val) => onRoleApplicationStatusChange(val as string)}
-        placeholder="Role Application"
-        className="w-48 h-10"
-        width="15rem"
-      />
+
       <SearchableDropdown
         options={SUBSCRIPTION_OPTIONS}
         value={has_active_subscription}
