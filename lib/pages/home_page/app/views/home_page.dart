@@ -164,10 +164,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                             onTap: () {
                               Navigator.of(context).pop();
                               // Set category and subcategory in services page state
-                              ref.read(serviceNotifierProvider.notifier)
-                                  .setCategoryAndSubcategory(categoryEntity, subcategory);
+                              ref
+                                  .read(serviceNotifierProvider.notifier)
+                                  .setCategoryAndSubcategory(
+                                      categoryEntity, subcategory);
                               // Navigate to services page
-                              context.push('/services/${categoryEntity.id}/${subcategory.id}');
+                              context.push(
+                                  '/services/${categoryEntity.id}/${subcategory.id}');
                             },
                           );
                         },
@@ -374,7 +377,7 @@ class _SubcategoryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 1,
+              flex: 3,
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
@@ -393,10 +396,10 @@ class _SubcategoryCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+                    vertical: 0, horizontal: AppSpacing.sm),
                 child: B4Medium(
                   text: subcategory.name,
                   color: AppColors.brandNeutral900,

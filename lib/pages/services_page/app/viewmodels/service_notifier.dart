@@ -35,8 +35,10 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
 
     // Get user location
     await _loadUserLocation();
+    print('userCity: ${state.userCity}');
+    print('userState: ${state.userState}');
 
-    if (state.userCity == null || state.userState == null) {
+    if (state.userCity == null && state.userState == null) {
       state = state.copyWith(
         status: ServiceStatus.failure,
         errorMessage: 'User location not available',
@@ -52,7 +54,7 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
     try {
       final locationService = ref.read(locationOnboardingServiceProvider);
       final location = await locationService.getSavedLocation();
-      
+
       if (location != null) {
         state = state.copyWith(
           userCity: location.city,
@@ -71,10 +73,10 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
 
     try {
       final currentPage = refresh ? 1 : (state.pagination?.page ?? 0) + 1;
-      
+
       final response = await getServicesUseCase(
-        city: state.userCity!,
-        state: state.userState!,
+        city: state.userCity ?? '',
+        state: state.userState ?? '',
         categoryId: state.currentCategory!.id,
         subcategoryId: state.currentSubcategory!.id,
         page: currentPage,

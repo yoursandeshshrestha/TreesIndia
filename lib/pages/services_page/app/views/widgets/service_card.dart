@@ -88,42 +88,69 @@ class ServiceCard extends StatelessWidget {
                     maxLines: 2,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  // Price and Duration Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Price
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandPrimary50,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: B2Bold(
-                          text: '₹${service.price}',
-                          color: AppColors.brandPrimary700,
-                        ),
-                      ),
-                      // Duration
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: AppColors.brandNeutral500,
+                  // Price, Duration or Inquiry Badge
+                  service.priceType == 'inquiry'
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
                           ),
-                          const SizedBox(width: 4),
-                          B3Regular(
-                            text: service.duration,
-                            color: AppColors.brandNeutral500,
+                          decoration: BoxDecoration(
+                            color: AppColors.brandPrimary100,
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.contact_support_outlined,
+                                size: 16,
+                                color: AppColors.brandPrimary700,
+                              ),
+                              const SizedBox(width: 4),
+                              B3Bold(
+                                text: 'Inquiry Required',
+                                color: AppColors.brandPrimary700,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Price
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.brandPrimary50,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: B2Bold(
+                                text: '₹${service.price}',
+                                color: AppColors.brandPrimary700,
+                              ),
+                            ),
+                            // Duration
+                            if (service.duration != null)
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.access_time,
+                                    size: 16,
+                                    color: AppColors.brandNeutral500,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  B3Regular(
+                                    text: service.duration!,
+                                    color: AppColors.brandNeutral500,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                 ],
               ),
             ),

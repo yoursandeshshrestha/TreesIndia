@@ -8,8 +8,8 @@ class ServiceEntity extends Equatable {
   final String description;
   final List<String> images;
   final String priceType;
-  final int price;
-  final String duration;
+  final int? price;
+  final String? duration;
   final int categoryId;
   final int subcategoryId;
   final String categoryName;
@@ -27,8 +27,8 @@ class ServiceEntity extends Equatable {
     required this.description,
     required this.images,
     required this.priceType,
-    required this.price,
-    required this.duration,
+    this.price,
+    this.duration,
     required this.categoryId,
     required this.subcategoryId,
     required this.categoryName,
