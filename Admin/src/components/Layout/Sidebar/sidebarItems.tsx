@@ -130,4 +130,10 @@ export const sidebarItems: SidebarItem[] = [
     icon: <Image size={16} />,
     path: "/dashboard/banners",
   },
+  {
+    id: "website-management",
+    label: "Website Management",
+    icon: <Settings size={16} />,
+    path: "/dashboard/website-management",
+  },
 ];
