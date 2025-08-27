@@ -14,7 +14,7 @@ export interface Subcategory {
   name: string;
   slug: string;
   description?: string;
-  image?: string;
+  icon?: string;
   parent_id: number;
   is_active: boolean;
   created_at: string;
@@ -25,7 +25,7 @@ export interface Subcategory {
 export interface CreateSubcategoryRequest {
   name: string;
   description?: string;
-  image?: string;
+  icon?: string;
   parent_id: number;
   is_active?: boolean;
 }
@@ -33,7 +33,7 @@ export interface CreateSubcategoryRequest {
 export interface UpdateSubcategoryRequest {
   name?: string;
   description?: string;
-  image?: string;
+  icon?: string;
   parent_id?: number;
   is_active?: boolean;
 }
