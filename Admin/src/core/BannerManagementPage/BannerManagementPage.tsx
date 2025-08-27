@@ -27,6 +27,8 @@ function BannerManagementPage() {
 
   // State management
   const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -72,12 +74,15 @@ function BannerManagementPage() {
     imageFile?: File
   ) => {
     try {
+      setIsCreating(true);
       await createBanner(bannerData, imageFile);
       toast.success(`Banner "${bannerData.title}" created successfully`);
       setIsModalOpen(false);
       fetchBanners();
     } catch (err) {
       toast.error("Failed to create banner. Please try again.");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -88,6 +93,7 @@ function BannerManagementPage() {
     if (!selectedBanner) return;
 
     try {
+      setIsUpdating(true);
       await updateBanner(selectedBanner.id, bannerData, imageFile);
       toast.success(`Banner "${bannerData.title}" updated successfully`);
       setIsModalOpen(false);
@@ -95,6 +101,8 @@ function BannerManagementPage() {
       fetchBanners();
     } catch (err) {
       toast.error("Failed to update banner. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -241,7 +249,7 @@ function BannerManagementPage() {
             await handleCreateBanner(data, imageFile);
           }
         }}
-        isLoading={isLoading}
+        isLoading={isUpdating || isCreating}
       />
 
       <ConfirmModal
