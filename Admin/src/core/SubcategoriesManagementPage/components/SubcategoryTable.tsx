@@ -63,11 +63,11 @@ const SubcategoryTable = ({
               header: "Icon",
               accessor: (subcategory: Subcategory) => (
                 <div className="flex items-center justify-center">
-                  {subcategory.image ? (
+                  {subcategory.icon ? (
                     <img
-                      src={subcategory.image}
+                      src={subcategory.icon}
                       alt={subcategory.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-12 h-12 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
