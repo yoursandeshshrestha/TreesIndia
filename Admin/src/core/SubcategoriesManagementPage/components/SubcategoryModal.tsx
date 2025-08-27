@@ -35,7 +35,7 @@ export function SubcategoryModal({
 }: SubcategoryModalProps) {
   const [formData, setFormData] = useState<CreateSubcategoryRequest>({
     name: "",
-    image: "",
+    icon: "",
     parent_id: 0,
     is_active: true,
   });
@@ -49,16 +49,16 @@ export function SubcategoryModal({
     if (subcategory) {
       setFormData({
         name: subcategory.name,
-        image: subcategory.image || "",
+        icon: subcategory.icon || "",
         parent_id: subcategory.parent_id,
         is_active: subcategory.is_active,
       });
-      setImagePreview(subcategory.image || "");
+      setImagePreview(subcategory.icon || "");
       setSelectedFile(null);
     } else {
       setFormData({
         name: "",
-        image: "",
+        icon: "",
         parent_id: 0,
         is_active: true,
       });
@@ -87,7 +87,7 @@ export function SubcategoryModal({
     if (selectedFile) {
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (selectedFile.size > maxSize) {
-        newErrors.image = "Image file size must be less than 10MB";
+        newErrors.icon = "Icon file size must be less than 10MB";
       }
 
       const allowedTypes = [
@@ -97,7 +97,7 @@ export function SubcategoryModal({
         "image/webp",
       ];
       if (!allowedTypes.includes(selectedFile.type)) {
-        newErrors.image = "Only JPEG, PNG, GIF, and WebP images are allowed";
+        newErrors.icon = "Only JPEG, PNG, GIF, and WebP images are allowed";
       }
     }
 
@@ -139,7 +139,7 @@ export function SubcategoryModal({
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setErrors((prev) => ({ ...prev, image: "" }));
+      setErrors((prev) => ({ ...prev, icon: "" }));
 
       // Create preview URL
       const reader = new FileReader();
@@ -254,10 +254,10 @@ export function SubcategoryModal({
             </div>
           </div>
 
-          {/* Image Upload */}
+          {/* Icon Upload */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">
-              Subcategory Image
+              Subcategory Icon
             </h3>
 
             {/* Hidden file input */}
@@ -310,8 +310,8 @@ export function SubcategoryModal({
               </div>
             )}
 
-            {errors.image && (
-              <p className="text-sm text-red-600">{errors.image}</p>
+            {errors.icon && (
+              <p className="text-sm text-red-600">{errors.icon}</p>
             )}
           </div>
 
