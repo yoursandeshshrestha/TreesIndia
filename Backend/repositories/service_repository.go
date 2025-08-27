@@ -69,7 +69,7 @@ func (sr *ServiceRepository) GetByID(id uint) (*models.Service, error) {
 	logrus.Infof("ServiceRepository.GetByID called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByID service not found with ID: %d", id)
@@ -94,7 +94,7 @@ func (sr *ServiceRepository) GetByIDWithRelations(id uint) (*models.Service, err
 	logrus.Infof("ServiceRepository.GetByIDWithRelations called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("Subcategory").Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByIDWithRelations service not found with ID: %d", id)
