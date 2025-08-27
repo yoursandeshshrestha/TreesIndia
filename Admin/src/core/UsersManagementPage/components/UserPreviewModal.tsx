@@ -5,17 +5,14 @@ import Image from "next/image";
 import {
   User as UserType,
   UserType as UserTypeEnum,
-  RoleApplicationStatus,
 } from "@/types/user";
 import {
   getUserTypeIcon,
   getUserTypeColor,
   getStatusColor,
-  getRoleApplicationColor,
   formatCurrency,
   formatDate,
   formatUserType,
-  formatRoleApplicationStatus,
   formatGender,
   getDaysRemaining,
   getAvailableCredit,
@@ -86,17 +83,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
     );
   };
 
-  const getRoleApplicationBadge = (status: RoleApplicationStatus) => {
-    return (
-      <span
-        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleApplicationColor(
-          status
-        )}`}
-      >
-        {formatRoleApplicationStatus(status)}
-      </span>
-    );
-  };
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99]">
@@ -135,7 +122,6 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
               <div className="flex items-center space-x-4 mb-4">
                 {getUserTypeBadge(user.user_type)}
                 {getStatusBadge(user.is_active)}
-                {getRoleApplicationBadge(user.role_application_status)}
               </div>
 
               <div className="flex items-center space-x-6 text-sm text-gray-600">
@@ -258,12 +244,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
                     {user.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Role Application:</span>
-                  <span className="font-semibold capitalize">
-                    {user.role_application_status}
-                  </span>
-                </div>
+
               </div>
             </div>
 
