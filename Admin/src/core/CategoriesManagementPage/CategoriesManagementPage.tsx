@@ -80,12 +80,9 @@ function CategoriesManagementPage() {
     setIsSearching(false);
   }, [debouncedSearch, filters.search]);
 
-  const handleCreateCategory = async (
-    categoryData: CreateCategoryRequest,
-    imageFile?: File
-  ) => {
+  const handleCreateCategory = async (categoryData: CreateCategoryRequest) => {
     try {
-      await createCategory(categoryData, imageFile);
+      await createCategory(categoryData);
       toast.success(`Category "${categoryData.name}" created successfully`);
       setIsCategoryModalOpen(false);
       fetchCategories();
@@ -94,10 +91,7 @@ function CategoriesManagementPage() {
     }
   };
 
-  const handleUpdateCategory = async (
-    categoryData: CreateCategoryRequest,
-    imageFile?: File
-  ) => {
+  const handleUpdateCategory = async (categoryData: CreateCategoryRequest) => {
     if (!selectedCategory) return;
 
     try {
