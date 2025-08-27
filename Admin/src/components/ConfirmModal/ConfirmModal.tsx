@@ -40,7 +40,7 @@ const ConfirmModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-confirm-modal flex items-center justify-center">
+    <div className="fixed inset-0 z-[99] flex items-center justify-center">
       {/* Backdrop with fade animation */}
       <div
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 ease-in-out"
