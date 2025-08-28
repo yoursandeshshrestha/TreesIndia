@@ -1,21 +1,8 @@
 import React from "react";
-import { Chip, Button } from "@mui/material";
 import { Eye, Phone, Clock, Calendar } from "lucide-react";
 import { OptimizedBookingResponse } from "@/types/booking";
-import { displayValue, displayDate, displayTime } from "@/utils/displayUtils";
-
-interface BadgeProps {
-  text: string;
-  color: string;
-}
-
-const Badge: React.FC<BadgeProps> = ({ text, color }) => (
-  <span
-    className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-medium ${color}`}
-  >
-    {text}
-  </span>
-);
+import { displayDate, displayTime } from "@/utils/displayUtils";
+import StatusBadge from "@/components/StatusBadge/StatusBadge";
 
 interface RecentBookingsProps {
   bookings: OptimizedBookingResponse[];
@@ -32,39 +19,6 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
   onClearError,
   onViewBooking,
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-600 text-white";
-      case "pending":
-        return "bg-amber-500 text-white";
-      case "confirmed":
-        return "bg-sky-600 text-white";
-      case "in_progress":
-        return "bg-violet-600 text-white";
-      case "cancelled":
-        return "bg-rose-600 text-white";
-      case "payment_pending":
-        return "bg-orange-500 text-white";
-      case "temporary_hold":
-        return "bg-slate-500 text-white";
-      case "assigned":
-        return "bg-cyan-600 text-white";
-      case "time_expired":
-        return "bg-red-600 text-white";
-      case "rejected":
-        return "bg-red-700 text-white";
-      case "quote_provided":
-        return "bg-purple-600 text-white";
-      case "quote_accepted":
-        return "bg-indigo-600 text-white";
-      case "scheduled":
-        return "bg-blue-600 text-white";
-      default:
-        return "bg-slate-400 text-white";
-    }
-  };
-
   const getTypeColor = (type: string) => {
     switch (type) {
       case "fixed_price":
@@ -170,21 +124,23 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
                   <Phone className="w-4 h-4 text-gray-400" />
                   <span className="text-gray-900">{booking.user.phone}</span>
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  {displayValue(booking.user.name, "Name not provided")}
-                </div>
+                {booking.user.name && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    {booking.user.name}
+                  </div>
+                )}
               </td>
               <td className="py-3 px-4">
-                <Badge
-                  text={booking.booking_type.replace("_", " ")}
-                  color={getTypeColor(booking.booking_type)}
-                />
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getTypeColor(
+                    booking.booking_type
+                  )}`}
+                >
+                  {booking.booking_type.replace("_", " ")}
+                </span>
               </td>
               <td className="py-3 px-4">
-                <Badge
-                  text={booking.status.replace("_", " ")}
-                  color={getStatusColor(booking.status)}
-                />
+                <StatusBadge status={booking.status} type="booking" />
               </td>
               <td className="py-3 px-4">
                 <div className="flex items-center space-x-1">
