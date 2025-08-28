@@ -715,8 +715,9 @@ func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*mode
 	// 4. Note: Worker pool reservation is no longer needed with Go-based availability calculation
 	// The availability is calculated in real-time based on existing bookings and worker assignments
 
-	// 5. Update booking status to confirmed
+	// 5. Update booking status to confirmed and payment status to completed
 	booking.Status = models.BookingStatusConfirmed
+	booking.PaymentStatus = models.PaymentStatusCompleted
 	booking.HoldExpiresAt = nil // Clear hold expiration
 
 	// 6. Save booking
