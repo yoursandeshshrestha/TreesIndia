@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS categories (
     name TEXT NOT NULL,
     slug TEXT UNIQUE,
     description TEXT,
-    image TEXT,
     is_active BOOLEAN DEFAULT true
 );
 

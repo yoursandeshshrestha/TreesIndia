@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 	"treesindia/database"
 	"treesindia/models"
@@ -72,7 +73,17 @@ func (br *BookingRepository) GetUserBookings(userID uint, filters *UserBookingFi
 
 	// Apply filters
 	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+		// Handle comma-separated status values
+		if strings.Contains(filters.Status, ",") {
+			statuses := strings.Split(filters.Status, ",")
+			// Trim whitespace from each status
+			for i, status := range statuses {
+				statuses[i] = strings.TrimSpace(status)
+			}
+			query = query.Where("status IN ?", statuses)
+		} else {
+			query = query.Where("status = ?", filters.Status)
+		}
 	}
 	if filters.DateFrom != "" {
 		query = query.Where("scheduled_date >= ?", filters.DateFrom)
@@ -133,7 +144,17 @@ func (br *BookingRepository) GetBookingsWithFilters(filters *AdminBookingFilters
 
 	// Apply filters
 	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+		// Handle comma-separated status values
+		if strings.Contains(filters.Status, ",") {
+			statuses := strings.Split(filters.Status, ",")
+			// Trim whitespace from each status
+			for i, status := range statuses {
+				statuses[i] = strings.TrimSpace(status)
+			}
+			query = query.Where("status IN ?", statuses)
+		} else {
+			query = query.Where("status = ?", filters.Status)
+		}
 	}
 	if filters.DateFrom != "" {
 		query = query.Where("scheduled_date >= ?", filters.DateFrom)

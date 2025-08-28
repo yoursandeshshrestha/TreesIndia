@@ -15,5 +15,8 @@ func SetupGeoapifyRoutes(router *gin.RouterGroup) {
 	{
 		// GET /api/v1/places/autocomplete - Get place autocomplete suggestions
 		places.GET("/autocomplete", geoapifyController.GetPlaceAutocomplete)
+		
+		// GET /api/v1/places/reverse-geocode - Reverse geocode coordinates
+		places.GET("/reverse-geocode", geoapifyController.ReverseGeocode)
 	}
 }

@@ -222,7 +222,7 @@ func (bc *BookingController) GetBookingConfig(c *gin.Context) {
 	adminConfigRepo := repositories.NewAdminConfigRepository()
 	
 	// Get specific configs needed for booking
-	configKeys := []string{"working_hours_start", "working_hours_end", "booking_advance_days", "booking_buffer_time_minutes", "booking_hold_time_minutes"}
+	configKeys := []string{"working_hours_start", "working_hours_end", "booking_advance_days", "booking_buffer_time_minutes", "booking_hold_time_minutes", "inquiry_booking_fee"}
 	
 	configs := make(map[string]string)
 	for _, key := range configKeys {
@@ -675,5 +675,85 @@ func (bc *BookingController) GetBookingDashboard(c *gin.Context) {
 		"stats":           stats,
 		"recent_bookings": recentBookings,
 		"urgent_alerts":   urgentAlerts,
+	})
+}
+
+// CreateBookingWithWallet creates a new booking with wallet payment
+func (bc *BookingController) CreateBookingWithWallet(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("BookingController.CreateBookingWithWallet panic: %v", r)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": "Something went wrong"})
+		}
+	}()
+	
+	userID := bc.GetUserID(c)
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var req models.CreateBookingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
+		return
+	}
+
+	// Get service details
+	service, err := bc.bookingService.GetServiceByID(req.ServiceID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
+		return
+	}
+
+	if !service.IsActive {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not active"})
+		return
+	}
+
+	// Create booking with wallet payment
+	booking, err := bc.bookingService.CreateBookingWithWallet(userID, &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create booking with wallet payment", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Booking created successfully with wallet payment",
+		"booking": booking,
+	})
+}
+
+// CreateInquiryBookingWithWallet creates a new inquiry booking with wallet payment
+func (bc *BookingController) CreateInquiryBookingWithWallet(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("BookingController.CreateInquiryBookingWithWallet panic: %v", r)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": "Something went wrong"})
+		}
+	}()
+	
+	userID := bc.GetUserID(c)
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var req models.CreateInquiryBookingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
+		return
+	}
+
+	// Create inquiry booking with wallet payment
+	booking, err := bc.bookingService.CreateInquiryBookingWithWallet(userID, &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create inquiry booking with wallet payment", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Inquiry booking created successfully with wallet payment",
+		"booking": booking,
 	})
 }

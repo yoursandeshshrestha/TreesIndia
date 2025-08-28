@@ -4,13 +4,11 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"mime/multipart"
 	"treesindia/database"
 	"treesindia/models"
 	"treesindia/services"
@@ -28,8 +26,6 @@ func NewCategoryController() *CategoryController {
 	categoryService, err := services.NewCategoryService()
 	if err != nil {
 		logrus.Errorf("Failed to initialize CategoryService: %v", err)
-		logrus.Error("This is likely due to missing Cloudinary configuration")
-		logrus.Error("Please ensure CLOUDINARY_URL is set in your environment variables")
 		panic(err) // This should be handled properly in production
 	}
 	
@@ -44,7 +40,6 @@ func NewCategoryController() *CategoryController {
 type CreateCategoryRequest struct {
 	Name        string      `json:"name" form:"name" binding:"required,min=2,max=100"`
 	Description string      `json:"description" form:"description" binding:"max=500"`
-	Image       string      `json:"image" form:"image" binding:"max=255"`
 	IsActive    interface{} `json:"is_active" form:"is_active"` // Can be boolean or string
 }
 
@@ -122,90 +117,9 @@ func (cc *CategoryController) GetCategoryByID(c *gin.Context) {
 func (cc *CategoryController) CreateCategory(c *gin.Context) {
 	var req CreateCategoryRequest
 	
-	// Check content type to handle both JSON and form-data
-	contentType := c.GetHeader("Content-Type")
-	
-	if strings.Contains(contentType, "application/json") {
-		// Handle JSON request
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-			return
-		}
-	} else if strings.Contains(contentType, "multipart/form-data") {
-		// Handle form-data request with file upload
-		
-		// Get the image file directly using FormFile
-		file, err := c.FormFile("image")
-		if err != nil {
-			// Try alternative field names
-			alternativeNames := []string{"image_file", "file", "photo", "picture"}
-			for _, name := range alternativeNames {
-				file, err = c.FormFile(name)
-				if err == nil {
-					break
-				}
-			}
-		}
-		
-		// Get form fields
-		name := c.PostForm("name")
-		description := c.PostForm("description")
-		isActiveStr := c.PostForm("is_active")
-		
-		if name == "" {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing name", "Name is required"))
-			return
-		}
-		
-		// Set default value for is_active if not provided
-		if isActiveStr == "" {
-			isActiveStr = "true"
-		}
-		
-		// Handle image upload if file is provided
-		imageURL := ""
-		if file != nil {
-			// Validate file size (max 10MB)
-			if file.Size > 10*1024*1024 {
-				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", "Image file size must be less than 10MB"))
-				return
-			}
-			
-			// Validate file type
-			fileContentType := file.Header.Get("Content-Type")
-			if !strings.HasPrefix(fileContentType, "image/") {
-				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only image files are allowed"))
-				return
-			}
-			
-			logrus.Info("Image file found:", file.Filename, "Size:", file.Size)
-			
-			// Check if Cloudinary service is available
-			cloudinaryService := cc.categoryService.GetCloudinaryService()
-			if cloudinaryService == nil {
-				logrus.Error("Cloudinary service is not available")
-				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
-				return
-			}
-			
-			// Upload image to Cloudinary using the service's CloudinaryService
-			uploadedURL, err := cloudinaryService.UploadImage(file, "categories")
-			if err != nil {
-				logrus.Error("Failed to upload image to Cloudinary:", err)
-				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to upload image", "Failed to upload image to cloud storage. Please try again."))
-				return
-			}
-			
-			logrus.Info("Image uploaded to Cloudinary:", uploadedURL)
-			imageURL = uploadedURL
-		}
-		
-		req.Name = name
-		req.Description = description
-		req.Image = imageURL
-		req.IsActive = isActiveStr
-	} else {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
+	// Handle JSON request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
 
@@ -243,7 +157,6 @@ func (cc *CategoryController) CreateCategory(c *gin.Context) {
 		Name:        req.Name,
 		Slug:        slug,
 		Description: req.Description,
-		Image:       req.Image,
 		IsActive:    isActive,
 	}
 
@@ -266,87 +179,10 @@ func (cc *CategoryController) UpdateCategory(c *gin.Context) {
 	}
 
 	var req CreateCategoryRequest
-	var file *multipart.FileHeader // Declare file variable
 	
-	// Check content type to handle both JSON and form-data
-	contentType := c.GetHeader("Content-Type")
-	
-	if strings.Contains(contentType, "application/json") {
-		// Handle JSON request
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-			return
-		}
-	} else if strings.Contains(contentType, "multipart/form-data") {
-		// Handle form-data request with file upload
-		
-		// Get the image file directly using FormFile
-		file, err := c.FormFile("image")
-		if err != nil {
-			// Try alternative field names
-			alternativeNames := []string{"image_file", "file", "photo", "picture"}
-			for _, name := range alternativeNames {
-				file, err = c.FormFile(name)
-				if err == nil {
-					break
-				}
-			}
-		}
-		
-		// Get form fields
-		name := c.PostForm("name")
-		description := c.PostForm("description")
-		isActiveStr := c.PostForm("is_active")
-		
-		// Set default value for is_active if not provided
-		if isActiveStr == "" {
-			isActiveStr = "true"
-		}
-		
-		// Handle image upload if file is provided
-		imageURL := ""
-		if file != nil {
-			// Validate file size (max 10MB)
-			if file.Size > 10*1024*1024 {
-				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", "Image file size must be less than 10MB"))
-				return
-			}
-			
-			// Validate file type
-			fileContentType := file.Header.Get("Content-Type")
-			if !strings.HasPrefix(fileContentType, "image/") {
-				c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only image files are allowed"))
-				return
-			}
-			
-			logrus.Info("Image file found:", file.Filename, "Size:", file.Size)
-			
-			// Check if Cloudinary service is available
-			cloudinaryService := cc.categoryService.GetCloudinaryService()
-			if cloudinaryService == nil {
-				logrus.Error("Cloudinary service is not available")
-				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
-				return
-			}
-			
-			// Upload image to Cloudinary using the service's CloudinaryService
-			uploadedURL, err := cloudinaryService.UploadImage(file, "categories")
-			if err != nil {
-				logrus.Error("Failed to upload image to Cloudinary:", err)
-				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to upload image", "Failed to upload image to cloud storage. Please try again."))
-				return
-			}
-			
-			logrus.Info("Image uploaded to Cloudinary:", uploadedURL)
-			imageURL = uploadedURL
-		}
-		
-		req.Name = name
-		req.Description = description
-		req.Image = imageURL
-		req.IsActive = isActiveStr
-	} else {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
+	// Handle JSON request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
 
@@ -354,12 +190,11 @@ func (cc *CategoryController) UpdateCategory(c *gin.Context) {
 	serviceReq := &services.CreateCategoryRequest{
 		Name:        req.Name,
 		Description: req.Description,
-		Image:       req.Image,
 		IsActive:    req.IsActive,
 	}
 
 	// Update category using service
-	category, err := cc.categoryService.UpdateCategory(uint(id), serviceReq, file)
+	category, err := cc.categoryService.UpdateCategory(uint(id), serviceReq)
 	if err != nil {
 		logrus.Error("Failed to update category:", err)
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to update category", err.Error()))

@@ -52,6 +52,11 @@ type NotificationSettingsRequest struct {
 	ServiceUpdates      bool `json:"service_updates"`
 }
 
+// RequestDeleteOTPRequest represents OTP request for account deletion
+type RequestDeleteOTPRequest struct {
+	OTP string `json:"otp" binding:"required,len=6"`
+}
+
 // GetUserProfile godoc
 // @Summary Get user profile
 // @Description Get detailed user profile information including wallet, subscription, and role application status
@@ -427,4 +432,252 @@ func (uc *UserController) UpdateNotificationSettings(c *gin.Context) {
 	}
 	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Notification settings updated successfully", settingsData))
+}
+
+// RequestDeleteOTP godoc
+// @Summary Request OTP for account deletion
+// @Description Send OTP to user's phone for account deletion verification
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body RequestDeleteOTPRequest true "OTP request"
+// @Success 200 {object} models.Response "OTP sent successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /users/request-delete-otp [post]
+func (uc *UserController) RequestDeleteOTP(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	// Get current user
+	var user models.User
+	if err := uc.db.First(&user, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User does not exist"))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
+		return
+	}
+
+	// TODO: Integrate with SMS service (Twilio) later
+	// For now, just return success as OTP is hardcoded to "000000"
+	
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
+		"message": "OTP has been sent to your registered phone number",
+		"phone":   user.Phone, // Return masked phone number for user confirmation
+	}))
+}
+
+// DeleteAccount godoc
+// @Summary Delete user account
+// @Description Permanently delete the authenticated user's account after OTP verification
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body RequestDeleteOTPRequest true "OTP verification request"
+// @Success 200 {object} models.Response "Account deleted successfully"
+// @Failure 400 {object} models.Response "Invalid OTP or request data"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /users/account [delete]
+func (uc *UserController) DeleteAccount(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	var req RequestDeleteOTPRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Get current user
+	var user models.User
+	if err := uc.db.First(&user, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User does not exist"))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
+		return
+	}
+
+	// Verify OTP (hardcoded to "000000" for now)
+	if req.OTP != "000000" {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", "OTP is incorrect"))
+		return
+	}
+
+	// Start a transaction to ensure all deletions are atomic
+	tx := uc.db.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to start transaction", tx.Error.Error()))
+		return
+	}
+
+	// Delete all related data in the correct order to avoid foreign key constraint violations
+	
+	// 1. Delete chat messages where user is the sender
+	if err := tx.Unscoped().Where("sender_id = ?", userID).Delete(&models.ChatMessage{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat messages", err.Error()))
+		return
+	}
+
+	// 2. Delete chat rooms associated with user's bookings, properties, or worker inquiries
+	// First, get all bookings, properties, and worker inquiries for this user
+	var bookingIDs []uint
+	if err := tx.Model(&models.Booking{}).Where("user_id = ?", userID).Pluck("id", &bookingIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user bookings", err.Error()))
+		return
+	}
+
+	var propertyIDs []uint
+	if err := tx.Model(&models.Property{}).Where("user_id = ?", userID).Pluck("id", &propertyIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user properties", err.Error()))
+		return
+	}
+
+	var workerInquiryIDs []uint
+	if err := tx.Model(&models.WorkerInquiry{}).Where("user_id = ?", userID).Pluck("id", &workerInquiryIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user worker inquiries", err.Error()))
+		return
+	}
+
+	// Delete chat rooms associated with these entities
+	if len(bookingIDs) > 0 {
+		if err := tx.Unscoped().Where("booking_id IN ?", bookingIDs).Delete(&models.ChatRoom{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for bookings", err.Error()))
+			return
+		}
+	}
+
+	if len(propertyIDs) > 0 {
+		if err := tx.Unscoped().Where("property_id IN ?", propertyIDs).Delete(&models.ChatRoom{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for properties", err.Error()))
+			return
+		}
+	}
+
+	if len(workerInquiryIDs) > 0 {
+		if err := tx.Unscoped().Where("worker_inquiry_id IN ?", workerInquiryIDs).Delete(&models.ChatRoom{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for worker inquiries", err.Error()))
+			return
+		}
+	}
+
+	// 3. Delete payments
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Payment{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete payments", err.Error()))
+		return
+	}
+
+	// 4. Delete bookings
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Booking{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete bookings", err.Error()))
+		return
+	}
+
+	// 5. Delete worker inquiries
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.WorkerInquiry{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker inquiries", err.Error()))
+		return
+	}
+
+	// 6. Delete properties
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Property{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete properties", err.Error()))
+		return
+	}
+
+	// 7. Delete addresses
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Address{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete addresses", err.Error()))
+		return
+	}
+
+	// 8. Delete user documents
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserDocument{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user documents", err.Error()))
+		return
+	}
+
+	// 9. Delete user skills
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserSkill{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user skills", err.Error()))
+		return
+	}
+
+	// 10. Delete subscription warnings
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.SubscriptionWarning{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete subscription warnings", err.Error()))
+		return
+	}
+
+	// 11. Delete user subscriptions
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserSubscription{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user subscriptions", err.Error()))
+		return
+	}
+
+	// 12. Delete user notification settings
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserNotificationSettings{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete notification settings", err.Error()))
+		return
+	}
+
+	// 13. Delete role applications
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.RoleApplication{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete role applications", err.Error()))
+		return
+	}
+
+	// 14. Delete locations
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Location{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete locations", err.Error()))
+		return
+	}
+
+	// 15. Delete worker record if exists
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Worker{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker record", err.Error()))
+		return
+	}
+
+	// Finally, delete the user account
+	if err := tx.Unscoped().Delete(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete account", err.Error()))
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to commit transaction", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Account deleted successfully", gin.H{
+		"message": "Your account and all associated data have been permanently deleted",
+	}))
 }

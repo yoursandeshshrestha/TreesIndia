@@ -3,8 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"mime/multipart"
-	"strings"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/utils"
@@ -37,7 +35,6 @@ func NewCategoryService() (*CategoryService, error) {
 type CreateCategoryRequest struct {
 	Name        string      `json:"name" form:"name" binding:"required,min=2,max=100"`
 	Description string      `json:"description" form:"description" binding:"max=500"`
-	Image       string      `json:"image" form:"image" binding:"max=255"`
 	IsActive    interface{} `json:"is_active" form:"is_active"`
 }
 
@@ -95,33 +92,7 @@ func (cs *CategoryService) GetCategoryByID(id uint) (*models.Category, error) {
 }
 
 // CreateCategory creates a new category
-func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest, imageFile *multipart.FileHeader) (*models.Category, error) {
-	// Handle image upload if provided
-	var imageURL string
-	if imageFile != nil {
-		// Validate file size (max 10MB)
-		if err := cs.validationHelper.ValidateFileSize(imageFile.Size, 10*1024*1024); err != nil {
-			return nil, fmt.Errorf("file too large: %w", err)
-		}
-
-		// Validate file type
-		fileContentType := imageFile.Header.Get("Content-Type")
-		if err := cs.validationHelper.ValidateFileType(fileContentType, []string{"image/"}); err != nil {
-			return nil, fmt.Errorf("invalid file type: %w", err)
-		}
-
-		// Upload image to Cloudinary
-		var err error
-		imageURL, err = cs.cloudinaryService.UploadImage(imageFile, "categories")
-		if err != nil {
-			return nil, fmt.Errorf("failed to upload image: %w", err)
-		}
-	} else if req.Image != "" {
-		imageURL = req.Image
-	}
-
-
-
+func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest) (*models.Category, error) {
 	// Convert IsActive from interface{} to bool
 	var isActive bool
 	switch v := req.IsActive.(type) {
@@ -150,7 +121,6 @@ func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest, imageFile 
 		Name:        req.Name,
 		Slug:        slug,
 		Description: req.Description,
-		Image:       imageURL,
 		IsActive:    isActive,
 	}
 
@@ -184,33 +154,10 @@ func (cs *CategoryService) ToggleStatus(id uint) (*models.Category, error) {
 }
 
 // UpdateCategory updates a category
-func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest, imageFile *multipart.FileHeader) (*models.Category, error) {
+func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest) (*models.Category, error) {
 	var category models.Category
 	if err := cs.categoryRepo.FindByID(&category, id); err != nil {
 		return nil, fmt.Errorf("category not found: %w", err)
-	}
-
-	// Handle image upload if provided
-	var imageURL string
-	if imageFile != nil {
-		// Validate file size (max 10MB)
-		if imageFile.Size > 10*1024*1024 {
-			return nil, fmt.Errorf("file too large, must be less than 10MB")
-		}
-		
-		// Validate file type
-		fileContentType := imageFile.Header.Get("Content-Type")
-		if !strings.HasPrefix(fileContentType, "image/") {
-			return nil, fmt.Errorf("only image files are allowed")
-		}
-		
-		// Upload image to Cloudinary
-		uploadedURL, err := cs.cloudinaryService.UploadImage(imageFile, "categories")
-		if err != nil {
-			return nil, fmt.Errorf("failed to upload image: %w", err)
-		}
-		
-		imageURL = uploadedURL
 	}
 
 	// Update fields
@@ -226,12 +173,6 @@ func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest, i
 
 	if req.Description != "" {
 		category.Description = req.Description
-	}
-
-	if imageURL != "" {
-		category.Image = imageURL
-	} else if req.Image != "" {
-		category.Image = req.Image
 	}
 
 	// Handle IsActive

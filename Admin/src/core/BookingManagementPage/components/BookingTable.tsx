@@ -123,7 +123,15 @@ const BookingTable: React.FC<BookingTableProps> = ({
         <div>
           <div className="text-sm text-gray-900">{booking.service.name}</div>
           <div className="flex items-center gap-2">
-            {booking.service.price ? (
+            {booking.payment?.status === "completed" &&
+            booking.payment?.amount ? (
+              <div className="text-sm text-green-600 font-medium">
+                {displayCurrency(
+                  booking.payment.amount,
+                  booking.payment.currency
+                )}
+              </div>
+            ) : booking.service.price ? (
               <div className="text-sm text-gray-500">
                 {displayCurrency(booking.service.price)}
               </div>
@@ -362,6 +370,34 @@ const BookingTable: React.FC<BookingTableProps> = ({
                         <div className="text-xs text-gray-500 flex items-center">
                           {booking.worker_assignment.worker.phone}
                         </div>
+                        {booking.worker_assignment.status && (
+                          <div className="text-xs mt-1">
+                            <span
+                              className={`px-1 py-0.5 rounded text-xs font-medium ${
+                                booking.worker_assignment.status === "rejected"
+                                  ? "bg-red-100 text-red-700"
+                                  : booking.worker_assignment.status ===
+                                    "accepted"
+                                  ? "bg-green-100 text-green-700"
+                                  : booking.worker_assignment.status ===
+                                    "in_progress"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {booking.worker_assignment.status.replace(
+                                "_",
+                                " "
+                              )}
+                            </span>
+                            {booking.worker_assignment.status === "rejected" &&
+                              booking.worker_assignment.rejection_reason && (
+                                <div className="text-xs text-red-600 mt-1">
+                                  {booking.worker_assignment.rejection_reason}
+                                </div>
+                              )}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       "Worker Assigned"
@@ -390,12 +426,15 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     "Waiting for customer"}
                   {booking.status === "quote_accepted" &&
                     "Ready for assignment"}
+                  {booking.status === "confirmed" && "Ready for assignment"}
                   {booking.status === "scheduled" && "Ready for assignment"}
                   {booking.status === "assigned" && "Worker assigned"}
                   {booking.status === "in_progress" && "In progress"}
                   {booking.status === "completed" && "Completed"}
                   {booking.status === "cancelled" && "Cancelled"}
                   {booking.status === "rejected" && "Quote rejected"}
+                  {booking.status === "temporary_hold" &&
+                    "Payment verification"}
                 </div>
               </div>
             ) : (

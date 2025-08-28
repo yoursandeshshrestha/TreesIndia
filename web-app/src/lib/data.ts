@@ -32,6 +32,8 @@ const fallbackData: TreesIndiaData = {
       primary: "What are you looking for?",
       secondary: "Find the perfect service for your needs",
     },
+    description:
+      "Connect with verified professionals for home services, construction, and marketplace needs",
     cta: {
       label: "Explore Services",
       href: "#services",

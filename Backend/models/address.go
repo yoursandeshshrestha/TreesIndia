@@ -13,7 +13,7 @@ type Address struct {
 	User        User           `json:"-" gorm:"foreignKey:UserID"`
 	
 	// Address details
-	Name        string         `json:"name" gorm:"not null"`
+	Name        string         `json:"name"`
 	Address     string         `json:"address" gorm:"not null"`
 	
 	// Location details (for service area validation)
@@ -22,7 +22,7 @@ type Address struct {
 	Country     string         `json:"country" gorm:"not null;default:'India'"`
 	
 	// Additional details
-	PostalCode  string         `json:"postal_code"`
+	PostalCode  string         `json:"postal_code" gorm:"not null"`
 	Latitude    float64        `json:"latitude"`
 	Longitude   float64        `json:"longitude"`
 	
@@ -61,12 +61,12 @@ type UpdateLocationRequest struct {
 
 // CreateAddressRequest represents the request structure for creating an address
 type CreateAddressRequest struct {
-	Name        string  `json:"name" binding:"required"`
+	Name        string  `json:"name"`
 	Address     string  `json:"address" binding:"required"`
 	City        string  `json:"city" binding:"required"`
 	State       string  `json:"state" binding:"required"`
 	Country     string  `json:"country" binding:"required"`
-	PostalCode  string  `json:"postal_code"`
+	PostalCode  string  `json:"postal_code" binding:"required"`
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
 	Landmark    string  `json:"landmark,omitempty"`

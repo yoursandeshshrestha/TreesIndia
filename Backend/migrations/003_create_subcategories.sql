@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS subcategories (
     name TEXT NOT NULL,
     slug TEXT UNIQUE,
     description TEXT,
-    image TEXT,
+    icon TEXT,
     parent_id BIGINT,
     is_active BOOLEAN DEFAULT true,
     FOREIGN KEY (parent_id) REFERENCES categories(id)

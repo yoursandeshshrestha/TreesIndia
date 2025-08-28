@@ -13,9 +13,7 @@ import { User } from "@/types/user";
 import {
   getUserTypeColor,
   getStatusColor,
-  getRoleApplicationColor,
   formatUserType,
-  formatRoleApplicationStatus,
   formatDate,
   formatCurrency,
   getUserTypeIcon,
@@ -102,9 +100,6 @@ const UserTable = ({
     total: users.length,
     active: users.filter((u) => u.is_active).length,
     inactive: users.filter((u) => u.is_active === false).length,
-    pendingApplications: users.filter(
-      (u) => u.role_application_status === "pending"
-    ).length,
     withSubscription: users.filter((u) => u.has_active_subscription).length,
     totalWalletBalance: users.reduce((sum, u) => sum + u.wallet_balance, 0),
   };
@@ -129,14 +124,7 @@ const UserTable = ({
             {stats.inactive}
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="text-sm font-medium text-gray-500">
-            Pending Review
-          </div>
-          <div className="text-2xl font-bold text-yellow-600">
-            {stats.pendingApplications}
-          </div>
-        </div>
+
         <div className="bg-white rounded-lg border border-gray-200 p-3">
           <div className="text-sm font-medium text-gray-500">Subscribed</div>
           <div className="text-2xl font-bold text-blue-600">
@@ -259,25 +247,7 @@ const UserTable = ({
                 </div>
               ),
             },
-            {
-              header: "Role Application",
-              accessor: (row: User) => (
-                <div className="space-y-1">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleApplicationColor(
-                      row.role_application_status
-                    )}`}
-                  >
-                    {formatRoleApplicationStatus(row.role_application_status)}
-                  </span>
-                  {row.role_application_status === "pending" && (
-                    <div className="text-xs text-yellow-600 font-medium">
-                      Requires Review
-                    </div>
-                  )}
-                </div>
-              ),
-            },
+
             {
               header: "Account Details",
               accessor: (row: User) => (
@@ -311,15 +281,15 @@ const UserTable = ({
             {
               label: () => "View Details",
               onClick: (row: User) => onRowClick(row),
-              className: "text-blue-600 hover:text-blue-700 hover:bg-blue-50",
-              icon: <Eye size={16} />,
+              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+              icon: <Eye size={14} />,
               disabled: () => selectionMode,
             },
             {
               label: "Edit User",
               onClick: (row: User) => onEditUser(row),
-              className: "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
-              icon: <Edit2 size={16} />,
+              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+              icon: <Edit2 size={14} />,
               disabled: () => selectionMode,
             },
             {
@@ -328,16 +298,18 @@ const UserTable = ({
               onClick: (row: User) => onToggleActivation(row),
               className: (row: User) =>
                 row.is_active
-                  ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                  : "text-green-600 hover:text-green-700 hover:bg-green-50",
-              disabled: () => selectionMode,
+                  ? "text-orange-700 bg-orange-100 hover:bg-orange-200"
+                  : "text-green-700 bg-green-100 hover:bg-green-200",
+              disabled: (row: User) =>
+                selectionMode || row.user_type === "admin",
             },
             {
               label: (row: User) => `Delete`,
               onClick: (row: User) => onDeleteUser(row),
-              className: "text-red-600 hover:text-red-700 hover:bg-red-50",
-              icon: <Trash2 size={16} />,
-              disabled: () => selectionMode,
+              className: "text-red-700 bg-red-100 hover:bg-red-200",
+              icon: <Trash2 size={14} />,
+              disabled: (row: User) =>
+                selectionMode || row.user_type === "admin",
             },
           ]}
           onRowClick={onRowClick}

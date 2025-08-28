@@ -51,7 +51,7 @@ func (as *AddressService) CreateAddress(userID uint, req *models.CreateAddressRe
 	// Create address
 	address := &models.Address{
 		UserID:      userID,
-		Name:        req.Name,
+		Name:        req.Name, // Now optional
 		Address:     req.Address,
 		City:        req.City,
 		State:       req.State,

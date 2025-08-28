@@ -8,6 +8,7 @@ import {
   CreditCard,
   CheckCircle,
   AlertCircle,
+  User,
 } from "lucide-react";
 
 interface UserBookingsProps {
@@ -144,6 +145,36 @@ export default function UserBookings({ token }: UserBookingsProps) {
                   <span className="truncate">{booking.address}</span>
                 </div>
               </div>
+
+              {/* Worker Information - Show when worker is assigned */}
+              {booking.worker_assignment?.worker && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">
+                      Assigned Worker
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="text-sm text-blue-800">
+                      <span className="font-medium">Name:</span>{" "}
+                      {booking.worker_assignment.worker.name}
+                    </div>
+                    <div className="text-sm text-blue-800">
+                      <span className="font-medium">Phone:</span>{" "}
+                      {booking.worker_assignment.worker.phone}
+                    </div>
+                    {booking.worker_assignment.status && (
+                      <div className="text-sm text-blue-800">
+                        <span className="font-medium">Status:</span>{" "}
+                        <span className="capitalize">
+                          {booking.worker_assignment.status.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-sm text-gray-600">

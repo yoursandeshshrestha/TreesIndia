@@ -343,26 +343,26 @@ const ProfilePage: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-[#212126] mb-2">
-                            First name
+                            Name
                           </label>
                           <input
                             type="text"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="First name"
+                            placeholder="Add your name"
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[#212126] mb-2">
-                            Last name
+                            Last Name
                           </label>
                           <input
                             type="text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Last name"
+                            placeholder="Add your last name"
                           />
                         </div>
                       </div>

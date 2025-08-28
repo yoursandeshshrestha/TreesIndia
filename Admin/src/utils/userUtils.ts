@@ -1,4 +1,4 @@
-import { User, UserType, RoleApplicationStatus, Gender } from "@/types/user";
+import { User, UserType, Gender } from "@/types/user";
 import { User as UserIcon, Shield, Crown } from "lucide-react";
 
 // User Type Options
@@ -22,18 +22,7 @@ export const GENDER_OPTIONS = [
   { label: "Prefer not to say", value: "prefer_not_to_say" as Gender },
 ];
 
-// Role Application Status Options
-export const ROLE_APPLICATION_OPTIONS = [
-  { label: "None", value: "none" as RoleApplicationStatus },
-  { label: "Pending", value: "pending" as RoleApplicationStatus },
-  { label: "Approved", value: "approved" as RoleApplicationStatus },
-  { label: "Rejected", value: "rejected" as RoleApplicationStatus },
-];
 
-export const ROLE_APPLICATION_FILTER_OPTIONS = [
-  { label: "All Applications", value: "" },
-  ...ROLE_APPLICATION_OPTIONS.map(({ label, value }) => ({ label, value })),
-];
 
 // Status Options
 export const STATUS_OPTIONS = [
@@ -63,17 +52,7 @@ export const getStatusColor = (isActive: boolean): string => {
   return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 };
 
-export const getRoleApplicationColor = (
-  status: RoleApplicationStatus
-): string => {
-  const colors: Record<RoleApplicationStatus, string> = {
-    none: "bg-gray-100 text-gray-800",
-    pending: "bg-yellow-100 text-yellow-800",
-    approved: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
-  };
-  return colors[status] || colors.none;
-};
+
 
 // Icon Mappings
 export const getUserTypeIcon = (userType: UserType) => {
@@ -113,11 +92,7 @@ export const formatUserType = (userType: UserType): string => {
   return userType.charAt(0).toUpperCase() + userType.slice(1);
 };
 
-export const formatRoleApplicationStatus = (
-  status: RoleApplicationStatus
-): string => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
+
 
 export const formatGender = (gender: Gender): string => {
   return (
@@ -163,7 +138,6 @@ export const getDefaultUserData = (): Partial<User> => ({
   user_type: "normal",
   gender: undefined,
   is_active: true,
-  role_application_status: "none",
   wallet_balance: 0,
   has_active_subscription: false,
   subscription_expiry_date: undefined,

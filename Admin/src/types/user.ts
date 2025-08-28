@@ -1,10 +1,5 @@
 // User Types
 export type UserType = "normal" | "worker" | "broker" | "admin";
-export type RoleApplicationStatus =
-  | "none"
-  | "pending"
-  | "approved"
-  | "rejected";
 export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
 
 export interface User {
@@ -15,7 +10,6 @@ export interface User {
   user_type: UserType;
   gender?: Gender;
   is_active: boolean;
-  role_application_status: RoleApplicationStatus;
   wallet_balance: number;
   has_active_subscription: boolean;
   subscription_expiry_date?: string;
@@ -32,7 +26,6 @@ export interface CreateUserRequest {
   user_type: UserType;
   gender?: Gender;
   is_active: boolean;
-  role_application_status: RoleApplicationStatus;
   wallet_balance: number;
   has_active_subscription: boolean;
   subscription_expiry_date?: string;
@@ -47,7 +40,6 @@ export interface UserFilterState {
   search: string;
   user_type: string;
   is_active: string;
-  role_application_status: string;
   has_active_subscription: string;
   date_from: string;
   date_to: string;

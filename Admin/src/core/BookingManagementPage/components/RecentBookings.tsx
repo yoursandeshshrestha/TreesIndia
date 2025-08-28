@@ -54,6 +54,12 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
         return "bg-red-600 text-white";
       case "rejected":
         return "bg-red-700 text-white";
+      case "quote_provided":
+        return "bg-purple-600 text-white";
+      case "quote_accepted":
+        return "bg-indigo-600 text-white";
+      case "scheduled":
+        return "bg-blue-600 text-white";
       default:
         return "bg-slate-400 text-white";
     }

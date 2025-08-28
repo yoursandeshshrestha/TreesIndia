@@ -31,5 +31,11 @@ func SetupUserRoutes(router *gin.RouterGroup) {
 		
 		// PUT /api/v1/users/notifications - Update notification settings
 		users.PUT("/notifications", userController.UpdateNotificationSettings)
+		
+		// POST /api/v1/users/request-delete-otp - Request OTP for account deletion
+		users.POST("/request-delete-otp", userController.RequestDeleteOTP)
+		
+		// DELETE /api/v1/users/account - Delete user account (requires OTP)
+		users.DELETE("/account", userController.DeleteAccount)
 	}
 }

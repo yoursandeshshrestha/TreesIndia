@@ -503,3 +503,53 @@ func (qc *QuoteController) VerifyQuotePayment(c *gin.Context) {
 
 	c.JSON(200, views.CreateSuccessResponse("Payment verified successfully", booking))
 }
+
+// WalletPayment processes wallet payment for quote acceptance
+// @Summary Process wallet payment for quote acceptance
+// @Description Customer pays for accepted quote using wallet balance
+// @Tags quotes
+// @Accept json
+// @Produce json
+// @Param id path integer true "Booking ID"
+// @Param request body models.WalletPaymentRequest true "Wallet payment details"
+// @Success 200 {object} views.Response{data=models.Booking}
+// @Router /api/v1/bookings/{id}/wallet-payment [post]
+func (qc *QuoteController) WalletPayment(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("QuoteController.WalletPayment panic: %v", r)
+		}
+	}()
+
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Error("QuoteController.WalletPayment: user_id not found in context")
+		c.JSON(401, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	// Parse booking ID
+	bookingID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid booking ID", err.Error()))
+		return
+	}
+
+	// Parse request body
+	var req models.WalletPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid request", err.Error()))
+		return
+	}
+
+	// Process wallet payment
+	booking, err := qc.quoteService.WalletPayment(uint(bookingID), userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("QuoteController.WalletPayment service error: %v", err)
+		c.JSON(500, views.CreateErrorResponse("Failed to process wallet payment", err.Error()))
+		return
+	}
+
+	c.JSON(200, views.CreateSuccessResponse("Wallet payment processed successfully", booking))
+}

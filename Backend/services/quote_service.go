@@ -467,3 +467,78 @@ func (qs *QuoteService) VerifyQuotePayment(bookingID uint, userID uint, req *mod
 	logrus.Infof("Payment verified for booking %d: payment_id=%s", bookingID, req.RazorpayPaymentID)
 	return booking, nil
 }
+
+// WalletPayment processes wallet payment for quote acceptance
+func (qs *QuoteService) WalletPayment(bookingID uint, userID uint, req *models.WalletPaymentRequest) (*models.Booking, error) {
+	// 1. Get booking
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate booking belongs to user
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// 3. Validate booking is inquiry type and quote accepted
+	if booking.BookingType != models.BookingTypeInquiry {
+		return nil, errors.New("booking is not inquiry type")
+	}
+
+	if booking.Status != models.BookingStatusQuoteAccepted {
+		return nil, errors.New("quote has not been accepted")
+	}
+
+	// 4. Validate quote amount matches
+	if booking.QuoteAmount == nil || *booking.QuoteAmount != req.Amount {
+		return nil, errors.New("quote amount mismatch")
+	}
+
+	// 5. Parse scheduled date and time
+	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
+	if err != nil {
+		return nil, errors.New("invalid scheduled date format")
+	}
+
+	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
+	if err != nil {
+		return nil, errors.New("invalid scheduled time format")
+	}
+
+	// 6. Combine date and time
+	scheduledDateTime := time.Date(
+		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+		scheduledDate.Location(),
+	)
+
+	// 7. Validate scheduled time is in the future
+	if scheduledDateTime.Before(time.Now()) {
+		return nil, errors.New("scheduled time must be in the future")
+	}
+
+	// 8. Process wallet payment using unified wallet service
+	walletService := NewUnifiedWalletService()
+	
+	// Deduct amount from wallet for booking payment
+	_, err = walletService.DeductFromWallet(userID, req.Amount, bookingID, "Quote payment for "+booking.BookingReference)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process wallet payment: %v", err)
+	}
+
+	// 9. Update booking with scheduling details and status
+	booking.ScheduledDate = &scheduledDate
+	booking.ScheduledTime = &scheduledDateTime
+	booking.Status = models.BookingStatusConfirmed
+	booking.PaymentStatus = "completed"
+
+	// 10. Update booking
+	err = qs.bookingRepo.Update(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update booking: %v", err)
+	}
+
+	logrus.Infof("Wallet payment processed for booking %d: amount=%.2f", bookingID, req.Amount)
+	return booking, nil
+}

@@ -328,7 +328,7 @@ type DetailedSubcategory struct {
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
 	Description string    `json:"description"`
-	Image       string    `json:"image"`
+	Icon        string    `json:"icon"`
 	IsActive    bool      `json:"is_active"`
 }
 
@@ -485,6 +485,13 @@ type VerifyQuotePaymentRequest struct {
 	RazorpayPaymentID   string `json:"razorpay_payment_id" binding:"required"`
 	RazorpayOrderID     string `json:"razorpay_order_id" binding:"required"`
 	RazorpaySignature   string `json:"razorpay_signature" binding:"required"`
+}
+
+// WalletPaymentRequest represents the request to process wallet payment for quote acceptance
+type WalletPaymentRequest struct {
+	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
+	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
+	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
 }
 
 // QuoteInfo represents quote information in booking responses

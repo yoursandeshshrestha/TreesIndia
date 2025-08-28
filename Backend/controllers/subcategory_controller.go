@@ -44,7 +44,7 @@ func NewSubcategoryController() *SubcategoryController {
 type CreateSubcategoryRequest struct {
 	Name        string      `json:"name" form:"name" binding:"required,min=2,max=100"`
 	Description string      `json:"description" form:"description" binding:"max=500"`
-	Image       string      `json:"image" form:"image" binding:"max=255"`
+	Icon        string      `json:"icon" form:"icon" binding:"max=255"`
 	ParentID    interface{} `json:"parent_id" form:"parent_id" binding:"required"` // Required for subcategories
 	IsActive    interface{} `json:"is_active" form:"is_active"` // Can be boolean or string
 }
@@ -272,7 +272,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		req = CreateSubcategoryRequest{
 			Name:        nameVal,
 			Description: descriptionVal,
-			Image:       imageURL,
+			Icon:        imageURL,
 			ParentID:    parentIDVal,
 			IsActive:    isActiveVal,
 		}
@@ -286,7 +286,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 	serviceReq := &services.CreateSubcategoryRequest{
 		Name:        req.Name,
 		Description: req.Description,
-		Image:       req.Image,
+		Icon:        req.Icon,
 		ParentID:    req.ParentID,
 		IsActive:    req.IsActive,
 	}
@@ -465,7 +465,7 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 		
 		req.Name = nameVal
 		req.Description = descriptionVal
-		req.Image = imageURL
+		req.Icon = imageURL
 		req.ParentID = parentIDVal
 		req.IsActive = isActiveVal
 	} else {
@@ -477,7 +477,7 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 	serviceReq := &services.CreateSubcategoryRequest{
 		Name:        req.Name,
 		Description: req.Description,
-		Image:       req.Image,
+		Icon:        req.Icon,
 		ParentID:    req.ParentID,
 		IsActive:    req.IsActive,
 	}

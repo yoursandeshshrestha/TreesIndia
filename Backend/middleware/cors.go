@@ -11,11 +11,14 @@ import (
 // CORSMiddleware creates a CORS middleware with configurable origins
 func CORSMiddleware(config *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TEMPORARY: Allow all origins
-		c.Header("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		
+		// Check if origin is allowed
+		if isOriginAllowed(origin, config.CORSAllowedOrigins) {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
 		
 		// Set CORS headers
-		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Methods", strings.Join(config.CORSAllowedMethods, ", "))
 		c.Header("Access-Control-Allow-Headers", strings.Join(config.CORSAllowedHeaders, ", "))
 		
@@ -37,10 +40,6 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 		return false
 	}
 	
-	// TEMPORARY: Allow all origins for development
-	// TODO: Remove this in production and use proper origin validation
-	return true
-	
 	// If wildcard is allowed, accept all origins (not recommended for production)
 	if len(allowedOrigins) == 1 && allowedOrigins[0] == "*" {
 		return true
@@ -59,11 +58,14 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 // SecureCORSMiddleware creates a more secure CORS middleware for production
 func SecureCORSMiddleware(config *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TEMPORARY: Allow all origins
-		c.Header("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		
+		// Check if origin is allowed
+		if isOriginAllowed(origin, config.CORSAllowedOrigins) {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
 		
 		// Set security headers
-		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Methods", strings.Join(config.CORSAllowedMethods, ", "))
 		c.Header("Access-Control-Allow-Headers", strings.Join(config.CORSAllowedHeaders, ", "))
 		

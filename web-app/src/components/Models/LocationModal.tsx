@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   X,
   Loader2,
-  ArrowLeft,
   Home,
   RotateCcw,
   Target,
   Search,
 } from "lucide-react";
-import { useLocation } from "@/hooks/useLocation";
+import { useLocation } from "@/hooks/useLocationRedux";
+import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { closeLocationModal } from "@/store/slices/locationModalSlice";
 
@@ -49,17 +49,13 @@ export default function LocationModal() {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.locationModal.isOpen);
 
-  const { detectLocation, isLoading, error, location, setLocation } =
+  const { detectLocation, isLoading, error, setLocation, setError } =
     useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
   const [recentLocations, setRecentLocations] = useState<RecentLocation[]>([]);
-  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
 
   // Load saved and recent locations from localStorage
   useEffect(() => {
@@ -74,80 +70,47 @@ export default function LocationModal() {
         setRecentLocations(JSON.parse(recent));
       }
     } catch (error) {
-      console.error("Error loading saved/recent locations:", error);
+      console.error(error);
     }
   }, []);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-    };
-  }, [debounceTimeout]);
 
   const handleDetectLocation = async () => {
-    await detectLocation();
-    // Close modal after successful location detection
-    dispatch(closeLocationModal());
+    try {
+      // Clear any previous errors
+      setError(null);
+      const detectedLocation = await detectLocation();
+
+      if (detectedLocation) {
+        // Add to recent locations
+        addToRecentLocations(detectedLocation);
+      }
+
+      // Close modal after successful location detection
+      dispatch(closeLocationModal());
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleSearch = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
+  // Use TanStack Query for location search
+  const { data: searchResultsData, isLoading: isSearching } = useLocationSearch(
+    {
+      query: searchQuery,
+      enabled: searchQuery.length >= 2,
     }
+  );
 
-    setIsSearching(true);
-    try {
-      // Using your backend API for autocomplete
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
-      const response = await fetch(
-        `${apiUrl}/places/autocomplete?input=${encodeURIComponent(
-          query
-        )}&limit=5`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data?.predictions) {
-          setSearchResults(data.data.predictions);
-        } else {
-          setSearchResults([]);
-        }
-      } else {
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
+  // Update search results when data changes
+  useEffect(() => {
+    if (searchResultsData) {
+      setSearchResults(searchResultsData);
+    } else {
       setSearchResults([]);
-    } finally {
-      setIsSearching(false);
     }
-  }, []);
+  }, [searchResultsData]);
 
   const handleSearchInputChange = (value: string) => {
     setSearchQuery(value);
-
-    // Clear previous timeout
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
-    }
-
-    // Clear results immediately if query is too short
-    if (value.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    // Set new timeout for debounced search
-    const timeout = setTimeout(() => {
-      handleSearch(value);
-    }, 500); // 500ms delay
-
-    setDebounceTimeout(timeout);
   };
 
   const handleSearchResultSelect = (result: SearchResult) => {
@@ -161,6 +124,31 @@ export default function LocationModal() {
     setSearchResults([]);
   };
 
+  // Helper function to add location to recent locations
+  const addToRecentLocations = (location: {
+    city: string;
+    state: string;
+    country: string;
+  }) => {
+    const newRecent: RecentLocation = {
+      id: Date.now().toString(),
+      city: location.city,
+      state: location.state,
+      country: location.country,
+    };
+
+    setRecentLocations((prev) => {
+      // Remove duplicates based on city and state
+      const filtered = prev.filter(
+        (loc) => loc.city !== location.city || loc.state !== location.state
+      );
+      // Add new location at the beginning and keep only 5 items
+      const updated = [newRecent, ...filtered.slice(0, 4)];
+      localStorage.setItem("recentLocations", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const handleLocationSelect = (selectedLocation: {
     city: string;
     state: string;
@@ -170,23 +158,7 @@ export default function LocationModal() {
     localStorage.setItem("userLocation", JSON.stringify(selectedLocation));
 
     // Add to recent locations
-    const newRecent: RecentLocation = {
-      id: Date.now().toString(),
-      city: selectedLocation.city,
-      state: selectedLocation.state,
-      country: selectedLocation.country,
-    };
-
-    setRecentLocations((prev) => {
-      const filtered = prev.filter(
-        (loc) =>
-          loc.city !== selectedLocation.city ||
-          loc.state !== selectedLocation.state
-      );
-      const updated = [newRecent, ...filtered.slice(0, 4)]; // Keep max 5 recent locations
-      localStorage.setItem("recentLocations", JSON.stringify(updated));
-      return updated;
-    });
+    addToRecentLocations(selectedLocation);
 
     dispatch(closeLocationModal());
   };
@@ -216,7 +188,7 @@ export default function LocationModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -269,12 +241,12 @@ export default function LocationModal() {
 
                 {/* Search Results */}
                 {searchResults.length > 0 && (
-                  <div className="mt-2 max-h-120 overflow-y-auto border border-gray-200 rounded-lg">
+                  <div className="mt-2 max-h-120 overflow-y-auto  rounded-lg">
                     {searchResults.map((result) => (
                       <button
                         key={result.place_id}
                         onClick={() => handleSearchResultSelect(result)}
-                        className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        className="w-full text-left p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
                       >
                         <div className="flex items-start space-x-3">
                           <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
@@ -306,7 +278,7 @@ export default function LocationModal() {
                     <Target className="w-5 h-5" />
                     <span className="font-medium">
                       {isLoading
-                        ? "Detecting your current location..."
+                        ? "Getting your current location..."
                         : "Use current location"}
                     </span>
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -342,7 +314,7 @@ export default function LocationModal() {
 
               {/* Recent Locations */}
               {searchResults.length === 0 && recentLocations.length > 0 && (
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 ">
                   <h3 className="font-semibold text-gray-900 mb-3">Recents</h3>
                   <div className="space-y-3">
                     {recentLocations.map((recentLocation) => (

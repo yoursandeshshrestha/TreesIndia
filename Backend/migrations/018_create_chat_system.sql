@@ -9,8 +9,14 @@ CREATE TABLE IF NOT EXISTS chat_rooms (
     deleted_at TIMESTAMPTZ,
     room_type TEXT NOT NULL,
     room_name TEXT,
+    booking_id BIGINT,
+    property_id BIGINT,
+    worker_inquiry_id BIGINT,
     is_active BOOLEAN DEFAULT true,
-    metadata JSONB
+    last_message_at TIMESTAMPTZ,
+    metadata JSONB,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id)
+    -- Foreign keys for property_id and worker_inquiry_id will be added in a separate migration
 );
 
 -- Chat messages table

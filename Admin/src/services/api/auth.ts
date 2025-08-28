@@ -234,9 +234,6 @@ export const useVerifyOTP = () => {
           subscription: {
             has_active_subscription: false,
           },
-          role_application: {
-            status: "none",
-          },
         };
 
         queryClient.setQueryData(queryKeys.profile, transformedUser);
@@ -286,9 +283,6 @@ export const useRefreshToken = () => {
           },
           subscription: {
             has_active_subscription: false,
-          },
-          role_application: {
-            status: "none",
           },
         };
 

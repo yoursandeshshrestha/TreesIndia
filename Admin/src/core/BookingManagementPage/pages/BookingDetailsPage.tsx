@@ -31,11 +31,14 @@ import {
   getBookingStatusColor,
   getPaymentStatusColor,
   getAssignmentStatusColor,
+  PaymentStatus,
+  AssignmentStatus,
 } from "@/types/booking";
 import Button from "@/components/Button";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
+import Model from "@/components/Model/Base/Model";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import {
   displayValue,
@@ -61,7 +64,11 @@ export default function BookingDetailsPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>("");
-  const [showAssignConfirmation, setShowAssignConfirmation] = useState(false);
+
+  const [showWorkerAssignmentModal, setShowWorkerAssignmentModal] =
+    useState(false);
+  const [modalSelectedWorkerId, setModalSelectedWorkerId] =
+    useState<string>("");
 
   // Get available workers
   const scheduledTime = booking?.scheduled_time || "";
@@ -131,9 +138,30 @@ export default function BookingDetailsPage() {
       });
       toast.success("Worker assigned successfully");
       setSelectedWorkerId("");
-      setShowAssignConfirmation(false);
       loadBookingDetails();
     } catch (err) {
+      toast.error("Failed to assign worker");
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleModalWorkerAssignment = async () => {
+    if (!modalSelectedWorkerId) {
+      toast.error("Please select a worker");
+      return;
+    }
+
+    try {
+      setIsAssigning(true);
+      await assignWorkerToBooking(bookingId, {
+        worker_id: parseInt(modalSelectedWorkerId),
+      });
+      toast.success("Worker assigned successfully");
+      setModalSelectedWorkerId("");
+      setShowWorkerAssignmentModal(false);
+      loadBookingDetails();
+    } catch (error) {
       toast.error("Failed to assign worker");
     } finally {
       setIsAssigning(false);
@@ -368,52 +396,54 @@ export default function BookingDetailsPage() {
               )}
             </div>
 
-            {/* Contact Information */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Contact Information
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <User className="w-5 h-5 text-gray-400" />
+            {/* Contact Information - Only show for inquiry bookings */}
+            {booking.booking_type === "inquiry" && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Contact Information
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-600">Contact Person</p>
+                      <p className="font-medium">
+                        {displayValue(booking.contact.person, "Not provided")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-600">Contact Phone</p>
+                      <p className="font-medium">
+                        {displayValue(booking.contact.phone, "Not provided")}
+                      </p>
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-sm text-gray-600">Contact Person</p>
-                    <p className="font-medium">
-                      {displayValue(booking.contact.person, "Not provided")}
+                    <p className="text-sm text-gray-600 mb-1">Description</p>
+                    <p className="text-sm">
+                      {displayValue(
+                        booking.contact.description,
+                        "No description provided"
+                      )}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-gray-400" />
                   <div>
-                    <p className="text-sm text-gray-600">Contact Phone</p>
-                    <p className="font-medium">
-                      {displayValue(booking.contact.phone, "Not provided")}
+                    <p className="text-sm text-gray-600 mb-1">
+                      Special Instructions
+                    </p>
+                    <p className="text-sm">
+                      {displayValue(
+                        booking.contact.special_instructions,
+                        "No special instructions"
+                      )}
                     </p>
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Description</p>
-                  <p className="text-sm">
-                    {displayValue(
-                      booking.contact.description,
-                      "No description provided"
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    Special Instructions
-                  </p>
-                  <p className="text-sm">
-                    {displayValue(
-                      booking.contact.special_instructions,
-                      "No special instructions"
-                    )}
-                  </p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -464,7 +494,7 @@ export default function BookingDetailsPage() {
                     <span className="text-sm text-gray-600">Status</span>
                     <span
                       className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md border ${getPaymentStatusColor(
-                        booking.payment.status as any
+                        booking.payment.status as PaymentStatus
                       )}`}
                     >
                       {booking.payment.status.toUpperCase()}
@@ -512,7 +542,8 @@ export default function BookingDetailsPage() {
                     <span className="text-sm text-gray-600">Status</span>
                     <span
                       className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md border ${getAssignmentStatusColor(
-                        (booking.worker_assignment.status || "") as any
+                        (booking.worker_assignment.status ||
+                          "") as AssignmentStatus
                       )}`}
                     >
                       {(
@@ -545,15 +576,82 @@ export default function BookingDetailsPage() {
                       {displayDateTime(booking.worker_assignment.assigned_at)}
                     </p>
                   </div>
+                  {booking.worker_assignment.accepted_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Accepted At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.worker_assignment.accepted_at)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.worker_assignment.acceptance_notes && (
+                    <div>
+                      <p className="text-sm text-gray-600">Acceptance Notes</p>
+                      <p className="font-medium">
+                        {booking.worker_assignment.acceptance_notes}
+                      </p>
+                    </div>
+                  )}
+                  {booking.worker_assignment.rejected_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Rejected At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.worker_assignment.rejected_at)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.worker_assignment.rejection_reason && (
+                    <div>
+                      <p className="text-sm text-gray-600">Rejection Reason</p>
+                      <p className="font-medium text-red-600">
+                        {booking.worker_assignment.rejection_reason}
+                      </p>
+                    </div>
+                  )}
+                  {booking.worker_assignment.rejection_notes && (
+                    <div>
+                      <p className="text-sm text-gray-600">Rejection Notes</p>
+                      <p className="font-medium">
+                        {booking.worker_assignment.rejection_notes}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAssignConfirmation(true)}
-                      disabled={isAssigning}
-                    >
-                      {isAssigning ? "Assigning..." : "Reassign"}
-                    </Button>
+                    {/* Show reassign button if worker hasn't accepted, is in progress, or completed */}
+                    {booking.worker_assignment.status !== "accepted" &&
+                      booking.worker_assignment.status !== "in_progress" &&
+                      booking.worker_assignment.status !== "completed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowWorkerAssignmentModal(true)}
+                          disabled={isAssigning}
+                        >
+                          {isAssigning ? "Assigning..." : "Reassign"}
+                        </Button>
+                      )}
+
+                    {/* Show status messages */}
+                    {booking.worker_assignment.status === "accepted" && (
+                      <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                        Worker has accepted the assignment
+                      </div>
+                    )}
+                    {booking.worker_assignment.status === "in_progress" && (
+                      <div className="text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
+                        Service is in progress
+                      </div>
+                    )}
+                    {booking.worker_assignment.status === "completed" && (
+                      <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                        Service completed
+                      </div>
+                    )}
+                    {booking.worker_assignment.status === "rejected" && (
+                      <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
+                        Worker rejected assignment - can reassign
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -648,17 +746,85 @@ export default function BookingDetailsPage() {
         isUpdating={isUpdating}
       />
 
-      {/* Assign Worker Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showAssignConfirmation}
-        onClose={() => setShowAssignConfirmation(false)}
-        onConfirm={handleWorkerAssignment}
-        title="Confirm Worker Assignment"
-        message="Are you sure you want to assign the selected worker to this booking?"
-        confirmText="Assign"
-        cancelText="Cancel"
-        variant="default"
-      />
+      {/* Worker Assignment Modal */}
+      <Model
+        isOpen={showWorkerAssignmentModal}
+        onClose={() => {
+          setShowWorkerAssignmentModal(false);
+          setModalSelectedWorkerId("");
+        }}
+        title="Assign Worker"
+        size="md"
+        footer={
+          <div className="flex space-x-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowWorkerAssignmentModal(false);
+                setModalSelectedWorkerId("");
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleModalWorkerAssignment}
+              disabled={isAssigning || !modalSelectedWorkerId}
+              loading={isAssigning}
+              className="flex-1"
+            >
+              {isAssigning ? "Assigning..." : "Assign Worker"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Worker
+            </label>
+            {workersLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-sm text-gray-600">
+                  Loading workers...
+                </span>
+              </div>
+            ) : workersError ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-800 text-sm">{workersError}</p>
+              </div>
+            ) : workers.length === 0 ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-yellow-800 text-sm">No workers available</p>
+              </div>
+            ) : (
+              <SearchableDropdown
+                options={workerOptions}
+                value={modalSelectedWorkerId}
+                onChange={(value) => setModalSelectedWorkerId(value.toString())}
+                placeholder="Select a worker..."
+                className="w-full"
+              />
+            )}
+          </div>
+
+          {booking.worker_assignment && (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-sm text-gray-600 mb-2">Current Assignment:</p>
+              <p className="text-sm font-medium">
+                {booking.worker_assignment.worker?.name || "No worker assigned"}
+              </p>
+              <p className="text-xs text-gray-500">
+                Status: {booking.worker_assignment.status}
+              </p>
+            </div>
+          )}
+        </div>
+      </Model>
     </div>
   );
 }

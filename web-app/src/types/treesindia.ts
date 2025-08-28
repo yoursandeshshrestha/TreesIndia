@@ -39,6 +39,7 @@ export interface CTA {
 
 export interface Hero {
   headline: Headline;
+  description?: string;
   cta: CTA;
   socialProof: SocialProof;
   partners: Partner[];

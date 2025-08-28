@@ -1579,7 +1579,6 @@ func (bs *BookingService) convertToDetailedCategory(category *models.Category) *
 		Name:        category.Name,
 		Slug:        category.Slug,
 		Description: category.Description,
-		Image:       category.Image,
 		IsActive:    category.IsActive,
 	}
 }
@@ -1593,7 +1592,7 @@ func (bs *BookingService) convertToDetailedSubcategory(subcategory *models.Subca
 		Name:        subcategory.Name,
 		Slug:        subcategory.Slug,
 		Description: subcategory.Description,
-		Image:       subcategory.Image,
+		Icon:        subcategory.Icon,
 		IsActive:    subcategory.IsActive,
 	}
 }
@@ -1638,5 +1637,207 @@ func (bs *BookingService) getBookingDisputes(bookingID uint) []models.Dispute {
 	return []models.Dispute{}
 }
 
+// CreateBookingWithWallet creates a booking with wallet payment for fixed price services
+func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.CreateBookingRequest) (*models.Booking, error) {
+	// 1. Validate service exists and is active
+	service, err := bs.serviceRepo.GetByID(req.ServiceID)
+	if err != nil {
+		return nil, errors.New("service not found")
+	}
+	if !service.IsActive {
+		return nil, errors.New("service is not active")
+	}
 
+	// 2. Validate service is fixed price
+	if service.PriceType != "fixed" {
+		return nil, errors.New("service is not fixed price")
+	}
 
+	// 3. Check if service price is valid
+	if service.Price == nil {
+		return nil, errors.New("service price is not set")
+	}
+
+	// 4. Parse scheduled date and time
+	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
+	if err != nil {
+		return nil, errors.New("invalid scheduled date format")
+	}
+
+	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
+	if err != nil {
+		return nil, errors.New("invalid scheduled time format")
+	}
+
+	// 5. Combine date and time
+	scheduledDateTime := time.Date(
+		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+		scheduledDate.Location(),
+	)
+
+	// 6. Validate scheduled time is in the future
+	if scheduledDateTime.Before(time.Now()) {
+		return nil, errors.New("scheduled time must be in the future")
+	}
+
+	// 7. Check if time slot is available
+	location := ""
+	if req.Address.City != "" && req.Address.State != "" {
+		location = req.Address.City + ", " + req.Address.State
+	}
+	
+	serviceDurationMinutes := 60 // Default duration
+	if service.Duration != nil {
+		durationStr := *service.Duration
+		if duration, err := strconv.Atoi(durationStr); err == nil {
+			serviceDurationMinutes = duration
+		}
+	}
+	
+	isSlotAvailable, err := bs.isTimeSlotAvailable(scheduledTime, serviceDurationMinutes, req.ServiceID, location)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check slot availability: %v", err)
+	}
+	
+	if !isSlotAvailable {
+		return nil, errors.New("selected time slot is not available")
+	}
+
+	// 8. Process wallet payment
+	walletService := NewUnifiedWalletService()
+	_, err = walletService.DeductFromWallet(userID, *service.Price, req.ServiceID, "Service booking payment")
+	if err != nil {
+		return nil, fmt.Errorf("failed to process wallet payment: %v", err)
+	}
+
+	// 9. Generate booking reference
+	bookingReference := bs.generateBookingReference()
+
+	// 10. Calculate scheduled end time
+	bufferTimeMinutes := 15
+	scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
+
+	// 11. Convert address object to JSON string for storage
+	addressJSON, err := json.Marshal(req.Address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal address: %v", err)
+	}
+	addressStr := string(addressJSON)
+	
+	// 12. Create booking with confirmed status
+	booking := &models.Booking{
+		UserID:              userID,
+		ServiceID:           req.ServiceID,
+		BookingReference:    bookingReference,
+		Status:              models.BookingStatusConfirmed,
+		PaymentStatus:       models.PaymentStatusCompleted,
+		BookingType:         models.BookingTypeRegular,
+		ScheduledDate:       &scheduledDate,
+		ScheduledTime:       &scheduledTime,
+		ScheduledEndTime:    &scheduledEndTime,
+		Address:             &addressStr,
+		Description:         req.Description,
+		ContactPerson:       req.ContactPerson,
+		ContactPhone:        req.ContactPhone,
+		SpecialInstructions: req.SpecialInstructions,
+	}
+
+	// 13. Save booking
+	booking, err = bs.bookingRepo.Create(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save booking: %v", err)
+	}
+
+	// 14. Send confirmation notification
+	go bs.notificationService.SendBookingConfirmation(booking)
+
+	logrus.Infof("Wallet payment booking created successfully: booking_id=%d, amount=%.2f", booking.ID, *service.Price)
+	return booking, nil
+}
+
+// CreateInquiryBookingWithWallet creates an inquiry booking with wallet payment
+func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *models.CreateInquiryBookingRequest) (*models.Booking, error) {
+	// 1. Validate service exists and is active
+	service, err := bs.serviceRepo.GetByID(req.ServiceID)
+	if err != nil {
+		return nil, errors.New("service not found")
+	}
+	if !service.IsActive {
+		return nil, errors.New("service is not active")
+	}
+
+	// 2. Validate service is inquiry-based
+	if service.PriceType != "inquiry" {
+		return nil, errors.New("service is not inquiry-based")
+	}
+
+	// 3. Check service availability using the address from the inquiry request
+	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check service availability: %v", err)
+	}
+	if !available {
+		return nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
+	}
+
+	// 4. Check inquiry booking fee
+	adminConfigRepo := repositories.NewAdminConfigRepository()
+	feeConfig, err := adminConfigRepo.GetByKey("inquiry_booking_fee")
+	if err != nil {
+		// Default to 0 if config not found
+		feeConfig = &models.AdminConfig{Value: "0"}
+	}
+	
+	feeAmount, err := strconv.Atoi(feeConfig.Value)
+	if err != nil {
+		feeAmount = 0 // Default to 0 if parsing fails
+	}
+
+	// 5. Process wallet payment if fee is required
+	if feeAmount > 0 {
+		feeFloat := float64(feeAmount)
+		walletService := NewUnifiedWalletService()
+		_, err = walletService.DeductFromWallet(userID, feeFloat, req.ServiceID, "Inquiry booking fee")
+		if err != nil {
+			return nil, fmt.Errorf("failed to process wallet payment: %v", err)
+		}
+	}
+
+	// 6. Generate booking reference
+	bookingReference := bs.generateBookingReference()
+
+	// 7. Convert address object to JSON string for storage
+	addressJSON, err := json.Marshal(req.Address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal address: %v", err)
+	}
+	addressStr := string(addressJSON)
+	
+	// 8. Create booking with inquiry type
+	booking := &models.Booking{
+		UserID:              userID,
+		ServiceID:           req.ServiceID,
+		BookingReference:    bookingReference,
+		Status:              models.BookingStatusPending,
+		PaymentStatus:       models.PaymentStatusCompleted, // Payment completed via wallet
+		BookingType:         models.BookingTypeInquiry,
+		ScheduledDate:       nil, // Will be set when quote is accepted
+		ScheduledTime:       nil, // Will be set when quote is accepted
+		ScheduledEndTime:    nil, // Will be set when quote is accepted
+		Address:             &addressStr,
+		Description:         req.Description,
+		ContactPerson:       req.ContactPerson,
+		ContactPhone:        req.ContactPhone,
+		SpecialInstructions: req.SpecialInstructions,
+	}
+
+	// 9. Save booking
+	booking, err = bs.bookingRepo.Create(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save booking: %v", err)
+	}
+
+	logrus.Infof("Inquiry booking with wallet payment created successfully: booking_id=%d, fee_amount=%.2f", booking.ID, float64(feeAmount))
+	return booking, nil
+}

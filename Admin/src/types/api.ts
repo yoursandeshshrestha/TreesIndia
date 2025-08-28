@@ -69,12 +69,7 @@ export interface User {
     current_plan?: UserSubscription;
   };
 
-  // Role Application Information
-  role_application: {
-    status: "none" | "pending" | "approved" | "rejected";
-    application_date?: string;
-    approval_date?: string;
-  };
+
 
   // Notification Settings
   notification_settings?: {

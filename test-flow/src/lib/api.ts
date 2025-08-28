@@ -179,6 +179,18 @@ export interface Booking {
     phone: string;
     user_type: string;
   };
+
+  // Worker assignment information
+  worker_assignment?: {
+    worker_id?: number;
+    status?: string;
+    worker?: {
+      id: number;
+      name: string;
+      phone: string;
+      user_type: string;
+    };
+  };
 }
 
 // Wallet Types (Unified Payment System)

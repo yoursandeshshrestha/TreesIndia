@@ -9,15 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.1",
+    "@mui/material": "^7.3.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@tanstack/react-query": "^5.85.5",
+    "@types/leaflet": "^1.9.20",
     "dotenv": "^17.2.1",
     "framer-motion": "^12.23.12",
+    "leaflet": "^1.9.4",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.541.0",
     "next": "15.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-redux": "^9.2.0"
+    "react-leaflet": "^5.0.0",
+    "react-redux": "^9.2.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

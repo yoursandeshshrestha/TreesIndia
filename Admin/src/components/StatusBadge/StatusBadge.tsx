@@ -11,7 +11,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   type,
   className = "",
 }) => {
-  const getStatusColor = (status: string | null | undefined, type: "booking" | "payment") => {
+  const getStatusColor = (
+    status: string | null | undefined,
+    type: "booking" | "payment"
+  ) => {
     if (!status) {
       return "bg-gray-100 text-gray-800 border-gray-300";
     }
@@ -27,6 +30,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         completed: "bg-green-100 text-green-800 border-green-300",
         cancelled: "bg-red-100 text-red-800 border-red-300",
         rejected: "bg-gray-100 text-gray-800 border-gray-300",
+        temporary_hold: "bg-orange-100 text-orange-800 border-orange-300",
       };
       return (
         bookingStatusColors[status] ||
@@ -62,6 +66,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         completed: "Completed",
         cancelled: "Cancelled",
         rejected: "Rejected",
+        temporary_hold: "Payment Verification",
       };
       return bookingStatusLabels[status] || status;
     } else {

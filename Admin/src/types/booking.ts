@@ -111,9 +111,7 @@ export interface User {
   gender: string;
   is_active: boolean;
   last_login_at: string | null;
-  role_application_status: string;
-  application_date: string | null;
-  approval_date: string | null;
+
   wallet_balance: number;
   subscription_id: number | null;
   subscription: any | null;
@@ -405,6 +403,8 @@ export const getBookingStatusColor = (status: BookingStatus): string => {
       return "bg-red-100 text-red-800 border-red-200";
     case "rejected":
       return "bg-red-100 text-red-800 border-red-200";
+    case "temporary_hold":
+      return "bg-orange-100 text-orange-800 border-orange-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -592,7 +592,7 @@ export interface DetailedUserInfo {
   gender: string;
   is_active: boolean;
   last_login_at: string | null;
-  role_application_status: string;
+
   wallet_balance: number;
   has_active_subscription: boolean;
   subscription_expiry_date: string | null;

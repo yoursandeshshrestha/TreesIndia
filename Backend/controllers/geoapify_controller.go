@@ -107,3 +107,53 @@ func (gpc *GeoapifyController) GeocodeAddress(c *gin.Context) {
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Address geocoded successfully", result))
 }
+
+// ReverseGeocode godoc
+// @Summary Reverse geocode coordinates
+// @Description Convert coordinates to address
+// @Tags Geoapify
+// @Accept json
+// @Produce json
+// @Param latitude query number true "Latitude"
+// @Param longitude query number true "Longitude"
+// @Success 200 {object} models.Response "Coordinates reverse geocoded successfully"
+// @Failure 400 {object} models.Response "Invalid request parameters"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /places/reverse-geocode [get]
+func (gpc *GeoapifyController) ReverseGeocode(c *gin.Context) {
+	req := &services.ReverseGeocodeRequest{}
+
+	// Parse query parameters
+	if latStr := c.Query("latitude"); latStr != "" {
+		if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
+			req.Latitude = lat
+		} else {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Invalid latitude parameter"))
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Latitude parameter is required"))
+		return
+	}
+
+	if lngStr := c.Query("longitude"); lngStr != "" {
+		if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
+			req.Longitude = lng
+		} else {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Invalid longitude parameter"))
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Longitude parameter is required"))
+		return
+	}
+
+	// Reverse geocode coordinates
+	result, err := gpc.geoapifyService.ReverseGeocode(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to reverse geocode coordinates", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Coordinates reverse geocoded successfully", result))
+}

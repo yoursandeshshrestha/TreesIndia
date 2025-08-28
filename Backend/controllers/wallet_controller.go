@@ -132,6 +132,50 @@ func (c *WalletController) CompleteRecharge(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Wallet recharge completed successfully", nil))
 }
 
+// RefreshRechargeOrder refreshes a pending wallet recharge order
+// @Summary Refresh recharge order
+// @Description Refresh a pending wallet recharge order with a new Razorpay order
+// @Tags Wallet
+// @Accept json
+// @Produce json
+// @Param id path int true "Payment ID"
+// @Success 200 {object} views.Response
+// @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response
+// @Failure 404 {object} views.Response
+// @Failure 500 {object} views.Response
+// @Router /wallet/recharge/{id}/refresh [post]
+func (c *WalletController) RefreshRechargeOrder(ctx *gin.Context) {
+	paymentIDStr := ctx.Param("id")
+	paymentID, err := strconv.ParseUint(paymentIDStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid payment ID", "Payment ID must be a valid integer"))
+		return
+	}
+
+	// Get user ID from context
+	userID := ctx.GetUint("user_id")
+	if userID == 0 {
+		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	// Refresh the recharge order
+	payment, razorpayOrder, err := c.service.RefreshWalletRechargeOrder(uint(paymentID), userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to refresh recharge order", err.Error()))
+		return
+	}
+
+	response := gin.H{
+		"payment": payment,
+		"payment_order": razorpayOrder,
+		"message": "Recharge order refreshed successfully. Complete payment to add funds to your wallet.",
+	}
+
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Recharge order refreshed successfully", response))
+}
+
 // CancelRecharge allows users to cancel a pending wallet recharge
 // @Summary Cancel wallet recharge
 // @Description Cancel a pending wallet recharge payment

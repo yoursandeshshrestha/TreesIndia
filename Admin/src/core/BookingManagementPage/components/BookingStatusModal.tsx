@@ -33,13 +33,14 @@ const BookingStatusModal: React.FC<BookingStatusModalProps> = ({
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
       pending: "Pending",
-      payment_pending: "Payment Pending",
-      temporary_hold: "Temporary Hold",
+      quote_provided: "Quote Provided",
+      quote_accepted: "Quote Accepted",
       confirmed: "Confirmed",
+      scheduled: "Scheduled",
       assigned: "Assigned",
       in_progress: "In Progress",
       completed: "Completed",
-      time_expired: "Time Expired",
+      temporary_hold: "Temporary Hold",
       cancelled: "Cancelled",
       rejected: "Rejected",
     };
@@ -48,13 +49,14 @@ const BookingStatusModal: React.FC<BookingStatusModalProps> = ({
 
   const bookingStatuses = [
     { value: "pending", label: "Pending" },
-    { value: "payment_pending", label: "Payment Pending" },
-    { value: "temporary_hold", label: "Temporary Hold" },
+    { value: "quote_provided", label: "Quote Provided" },
+    { value: "quote_accepted", label: "Quote Accepted" },
     { value: "confirmed", label: "Confirmed" },
+    { value: "scheduled", label: "Scheduled" },
     { value: "assigned", label: "Assigned" },
     { value: "in_progress", label: "In Progress" },
     { value: "completed", label: "Completed" },
-    { value: "time_expired", label: "Time Expired" },
+    { value: "temporary_hold", label: "Temporary Hold" },
     { value: "cancelled", label: "Cancelled" },
     { value: "rejected", label: "Rejected" },
   ];

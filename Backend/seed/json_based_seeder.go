@@ -487,6 +487,8 @@ func (js *JSONBasedSeeder) SeedAdminConfigurations() error {
 		config := models.AdminConfig{
 			Key:         configMap["key"].(string),
 			Value:       configMap["value"].(string),
+			Type:        configMap["type"].(string),
+			Category:    configMap["category"].(string),
 			Description: configMap["description"].(string),
 			IsActive:    configMap["is_active"].(bool),
 		}
@@ -514,6 +516,8 @@ func (js *JSONBasedSeeder) SeedAdminConfigurations() error {
 		if existingConfig, exists := existingMap[config.Key]; exists {
 			// Update existing config
 			existingConfig.Value = config.Value
+			existingConfig.Type = config.Type
+			existingConfig.Category = config.Category
 			existingConfig.Description = config.Description
 			existingConfig.IsActive = config.IsActive
 			configsToUpdate = append(configsToUpdate, existingConfig)

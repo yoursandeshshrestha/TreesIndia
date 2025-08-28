@@ -44,6 +44,10 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 	// Inquiry-based booking routes
 	bookings.POST("/inquiry", middleware.AuthMiddleware(), bookingController.CreateInquiryBooking)
 	bookings.POST("/inquiry/verify-payment", middleware.AuthMiddleware(), bookingController.VerifyInquiryPayment)
+	
+	// Wallet payment routes for regular bookings
+	bookings.POST("/wallet", middleware.AuthMiddleware(), bookingController.CreateBookingWithWallet)
+	bookings.POST("/inquiry/wallet", middleware.AuthMiddleware(), bookingController.CreateInquiryBookingWithWallet)
 
 	// Quote management routes (user authentication required)
 	quoteController := controllers.NewQuoteController()
@@ -62,6 +66,9 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 		
 		// POST /api/v1/bookings/:id/verify-quote-payment - Verify payment for quote
 		bookings.POST("/:id/verify-quote-payment", middleware.AuthMiddleware(), quoteController.VerifyQuotePayment)
+		
+		// POST /api/v1/bookings/:id/wallet-payment - Process wallet payment for quote
+		bookings.POST("/:id/wallet-payment", middleware.AuthMiddleware(), quoteController.WalletPayment)
 		
 		// GET /api/v1/bookings/:id/quote-info - Get quote information
 		bookings.GET("/:id/quote-info", quoteController.GetQuoteInfo)

@@ -14,7 +14,6 @@ type Category struct {
 	Name        string `json:"name" gorm:"not null"`
 	Slug        string `json:"slug" gorm:"uniqueIndex"` // URL-friendly name
 	Description string `json:"description"`
-	Image       string `json:"image"` // Category image URL
 	
 	// Status
 	IsActive    bool `json:"is_active" gorm:"default:true"`
@@ -33,7 +32,7 @@ type Subcategory struct {
 	Name        string `json:"name" gorm:"not null"`
 	Slug        string `json:"slug" gorm:"uniqueIndex"` // URL-friendly name
 	Description string `json:"description"`
-	Image       string `json:"image"` // Subcategory image URL
+	Icon        string `json:"icon"` // Subcategory icon (e.g., Lucide icon name)
 	
 	// Parent relationship
 	ParentID    uint      `json:"parent_id" gorm:"not null"`

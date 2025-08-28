@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchPopularServices } from "@/lib/api";
-import { PopularService } from "@/types/api";
 
 interface UsePopularServicesOptions {
   city?: string;

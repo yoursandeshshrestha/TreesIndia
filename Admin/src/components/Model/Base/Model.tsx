@@ -53,11 +53,11 @@ const Model = ({
   };
 
   return (
-    <div className="fixed inset-0 z-modal-backdrop flex items-center justify-center">
+    <div className="fixed inset-0 z-[99] flex items-center justify-center">
       {/* Overlay */}
       {showOverlay && (
         <div
-          className="absolute inset-0 bg-black bg-opacity-50"
+          className="absolute inset-0 bg-black/50"
           onClick={handleOverlayClick}
         />
       )}
@@ -65,7 +65,9 @@ const Model = ({
       {/* Modal Content */}
       <div
         ref={modelRef}
-        className={`relative bg-white rounded-lg shadow-xl w-full mx-4 ${sizeClasses[size]} z-modal ${className} ${size === "full" ? "flex flex-col" : ""}`}
+        className={`relative bg-white rounded-lg shadow-xl w-full mx-4 ${
+          sizeClasses[size]
+        } z-modal ${className} ${size === "full" ? "flex flex-col" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "model-title" : undefined}
@@ -73,7 +75,9 @@ const Model = ({
         {/* Header */}
         {(title || showCloseButton || header) && (
           <div
-            className={`${size === "full" ? "flex-shrink-0" : ""} flex items-center justify-between p-4 border-b`}
+            className={`${
+              size === "full" ? "flex-shrink-0" : ""
+            } flex items-center justify-between p-4 border-b border-gray-200`}
           >
             {title && (
               <h3
@@ -117,16 +121,16 @@ const Model = ({
         )}
 
         {/* Content */}
-        <div
-          className={`${size === "full" ? "flex-1 overflow-hidden" : "p-4"}`}
-        >
+        <div className={`${size === "full" ? "flex-1 overflow-hidden" : ""}`}>
           {size === "full" ? children : <div className="p-4">{children}</div>}
         </div>
 
         {/* Footer */}
         {footer && (
           <div
-            className={`${size === "full" ? "flex-shrink-0" : ""} px-4 py-3 bg-gray-50 rounded-b-lg border-t`}
+            className={`${
+              size === "full" ? "flex-shrink-0" : ""
+            } px-4 py-3 bg-gray-50 rounded-b-lg border-t border-gray-200`}
           >
             {footer}
           </div>

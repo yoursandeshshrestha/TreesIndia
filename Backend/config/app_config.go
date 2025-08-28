@@ -132,7 +132,7 @@ func LoadConfig() *AppConfig {
 		RateLimitWindow:   getEnvAsDuration("RATE_LIMIT_WINDOW", time.Minute),
 		
 		// CORS Configuration
-		CORSAllowedOrigins: getEnvAsSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:4000"}),
+		CORSAllowedOrigins: getEnvAsSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:3001", "http://localhost:4000", "http://localhost:3002"}),
 		CORSAllowedMethods: getEnvAsSlice("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"}),
 		CORSAllowedHeaders: getEnvAsSlice("CORS_ALLOWED_HEADERS", []string{"Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Cache-Control", "X-File-Name"}),
 		

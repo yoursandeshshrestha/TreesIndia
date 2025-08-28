@@ -107,8 +107,48 @@ func (s *UnifiedWalletService) CompleteWalletRecharge(paymentID uint, razorpayPa
 		return fmt.Errorf("failed to update payment: %w", err)
 	}
 
-	logrus.Infof("Wallet recharge completed for user %d: ₹%.2f, new balance: ₹%.2f", payment.UserID, payment.Amount, newBalance)
+
 	return nil
+}
+
+// RefreshWalletRechargeOrder refreshes a pending wallet recharge order with a new Razorpay order
+func (s *UnifiedWalletService) RefreshWalletRechargeOrder(paymentID uint, userID uint) (*models.Payment, map[string]interface{}, error) {
+	// Get the existing payment
+	payment, err := s.paymentService.GetPaymentByID(paymentID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("payment not found: %w", err)
+	}
+
+	// Verify the payment belongs to the user
+	if payment.UserID != userID {
+		return nil, nil, errors.New("unauthorized access to payment")
+	}
+
+	// Verify it's a wallet recharge payment
+	if payment.Type != models.PaymentTypeWalletRecharge {
+		return nil, nil, errors.New("payment is not a wallet recharge")
+	}
+
+	// Verify it's still pending
+	if payment.Status != models.PaymentStatusPending {
+		return nil, nil, fmt.Errorf("payment is not pending (status: %s)", payment.Status)
+	}
+
+	// Create a new Razorpay order
+	razorpayOrder, err := s.paymentService.razorpayService.CreateOrder(payment.Amount, payment.PaymentReference, "Wallet recharge")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create new razorpay order: %w", err)
+	}
+
+	// Update payment with new Razorpay order ID
+	orderID := razorpayOrder["id"].(string)
+	payment.RazorpayOrderID = &orderID
+	if err := s.paymentService.UpdatePayment(payment); err != nil {
+		return nil, nil, fmt.Errorf("failed to update payment with new order ID: %w", err)
+	}
+
+
+	return payment, razorpayOrder, nil
 }
 
 // DeductFromWallet deducts amount from user's wallet for service payments

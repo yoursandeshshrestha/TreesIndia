@@ -1,0 +1,178 @@
+import { authenticatedFetch } from "./auth-api";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+
+export interface WalletSummary {
+  current_balance: number;
+  total_recharge: number;
+  total_spent: number;
+  total_transactions: number;
+  recent_transactions: WalletTransaction[];
+}
+
+export interface WalletTransaction {
+  id?: number;
+  ID?: number;
+  user_id: number;
+  amount: number;
+  currency: string;
+  type: string;
+  method: string;
+  status: string;
+  description: string;
+  reference_id: string;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  balance_after?: number;
+}
+
+export interface RechargeRequest {
+  amount: number;
+  payment_method: string;
+}
+
+export interface RechargeResponse {
+  payment: {
+    id?: number;
+    ID?: number;
+    amount: number;
+    currency: string;
+    razorpay_order_id: string;
+  };
+  payment_order: {
+    key_id: string;
+    amount: number;
+    currency: string;
+  };
+  message: string;
+}
+
+// Get wallet summary
+export async function getWalletSummary(): Promise<{ data: WalletSummary }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/summary`;
+    const response = await authenticatedFetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Get wallet transactions
+export async function getWalletTransactions(
+  page: number = 1,
+  limit: number = 10
+): Promise<{ data: { transactions: WalletTransaction[]; total: number } }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/transactions?page=${page}&limit=${limit}`;
+    const response = await authenticatedFetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Create wallet recharge
+export async function createWalletRecharge(
+  rechargeData: RechargeRequest
+): Promise<{ data: RechargeResponse }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/recharge`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+      body: JSON.stringify(rechargeData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Complete wallet recharge
+export async function completeWalletRecharge(
+  paymentId: number,
+  paymentData: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }
+): Promise<{ data: { message: string } }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/recharge/${paymentId}/complete`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+      body: JSON.stringify(paymentData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Refresh wallet recharge order
+export async function refreshWalletRechargeOrder(
+  paymentId: number
+): Promise<{ data: RechargeResponse }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/recharge/${paymentId}/refresh`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Cancel wallet recharge
+export async function cancelWalletRecharge(
+  paymentId: number
+): Promise<{ data: { message: string } }> {
+  try {
+    const url = `${API_BASE_URL}/wallet/recharge/${paymentId}/cancel`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
