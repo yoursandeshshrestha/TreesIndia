@@ -154,7 +154,7 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.error_outline,
                         color: AppColors.stateRed400,
                         size: 16,

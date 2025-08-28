@@ -58,7 +58,7 @@ class _SkeletonWidgetState extends State<SkeletonWidget>
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [
+              colors: const [
                 AppColors.brandNeutral100,
                 AppColors.brandNeutral200,
                 AppColors.brandNeutral100,

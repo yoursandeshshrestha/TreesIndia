@@ -169,11 +169,11 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
                 child: ServiceCard(
                   service: service,
                   onTap: () {
-                    // TODO: Navigate to service details
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${service.name} - Coming Soon!'),
-                      ),
+                    context.push(
+                      '/service-detail/${service.id}',
+                      extra: {
+                        'service': service,
+                      },
                     );
                   },
                 ),
@@ -192,7 +192,7 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.search_off,
               size: 64,
               color: AppColors.brandNeutral400,
@@ -221,7 +221,7 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 64,
               color: AppColors.stateRed400,

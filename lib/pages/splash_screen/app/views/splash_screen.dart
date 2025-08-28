@@ -21,17 +21,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   final List<OnboardingData> _onboardingData = [
     OnboardingData(
-      image: 'lib/image/cleaner.png',
+      image: 'assets/images/cleaner.png',
       title: 'Home Services',
       subtitle: 'Trusted professionals for every corner of your home',
     ),
     OnboardingData(
-      image: 'lib/image/construction.png',
+      image: 'assets/images/construction.png',
       title: 'Construction Services',
       subtitle: 'Turn your vision into reality with expert builders',
     ),
     OnboardingData(
-      image: 'lib/image/marketplace.png',
+      image: 'assets/images/marketplace.png',
       title: 'Marketplace',
       subtitle: 'Discover properties and connect with skilled workers',
     ),

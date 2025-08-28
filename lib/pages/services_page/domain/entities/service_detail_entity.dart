@@ -1,12 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'service_area_entity.dart';
 
-class ServiceEntity extends Equatable {
+class ServiceDetailEntity extends Equatable {
   final int id;
   final String name;
   final String slug;
   final String description;
-  final List<String> images;
+  final List<String>? images;
   final String priceType;
   final int? price;
   final String? duration;
@@ -20,12 +20,12 @@ class ServiceEntity extends Equatable {
   final DateTime? deletedAt;
   final List<ServiceAreaEntity> serviceAreas;
 
-  const ServiceEntity({
+  const ServiceDetailEntity({
     required this.id,
     required this.name,
     required this.slug,
     required this.description,
-    required this.images,
+    this.images,
     required this.priceType,
     this.price,
     this.duration,

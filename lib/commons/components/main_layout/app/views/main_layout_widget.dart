@@ -27,11 +27,7 @@ class _MainLayoutWidgetState extends State<MainLayoutWidget> {
         break;
       case 1:
         // Navigate to bookings (placeholder)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const InfoSnackbarWidget(
-            message: 'Bookings page coming soon!',
-          ).createSnackBar(),
-        );
+        context.go('/bookings');
         break;
       case 2:
         // Navigate to rewards (placeholder)

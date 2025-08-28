@@ -5,7 +5,7 @@ class CategoryEntity extends Equatable {
   final String name;
   final String slug;
   final String description;
-  final String image;
+  // final String image;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -15,7 +15,7 @@ class CategoryEntity extends Equatable {
     required this.name,
     required this.slug,
     required this.description,
-    required this.image,
+    // required this.image,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -27,7 +27,7 @@ class CategoryEntity extends Equatable {
         name,
         slug,
         description,
-        image,
+        // image,
         isActive,
         createdAt,
         updatedAt,

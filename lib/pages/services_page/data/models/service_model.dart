@@ -1,13 +1,13 @@
-import '../../domain/entities/service_entity.dart';
+import '../../domain/entities/service_detail_entity.dart';
 import 'service_area_model.dart';
 
-class ServiceModel extends ServiceEntity {
+class ServiceModel extends ServiceDetailEntity {
   const ServiceModel({
     required super.id,
     required super.name,
     required super.slug,
     required super.description,
-    required super.images,
+    super.images,
     required super.priceType,
     super.price,
     super.duration,
@@ -28,7 +28,10 @@ class ServiceModel extends ServiceEntity {
       name: json['name'] as String,
       slug: json['slug'] as String,
       description: json['description'] as String,
-      images: (json['images'] as List<dynamic>).cast<String>(),
+      images: (json['images'] != null &&
+              (json['images'] as List<dynamic>).isNotEmpty)
+          ? (json['images'] as List<dynamic>).cast<String>()
+          : null,
       priceType: json['price_type'] as String,
       price: json['price'] as int?,
       duration: json['duration'] as String?,
@@ -39,11 +42,12 @@ class ServiceModel extends ServiceEntity {
       isActive: json['is_active'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      deletedAt: json['deleted_at'] != null 
-          ? DateTime.parse(json['deleted_at'] as String) 
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.parse(json['deleted_at'] as String)
           : null,
       serviceAreas: (json['service_areas'] as List<dynamic>)
-          .map((area) => ServiceAreaModel.fromJson(area as Map<String, dynamic>))
+          .map(
+              (area) => ServiceAreaModel.fromJson(area as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -66,12 +70,14 @@ class ServiceModel extends ServiceEntity {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'deleted_at': deletedAt?.toIso8601String(),
-      'service_areas': serviceAreas.map((area) => (area as ServiceAreaModel).toJson()).toList(),
+      'service_areas': serviceAreas
+          .map((area) => (area as ServiceAreaModel).toJson())
+          .toList(),
     };
   }
 
-  ServiceEntity toEntity() {
-    return ServiceEntity(
+  ServiceDetailEntity toEntity() {
+    return ServiceDetailEntity(
       id: id,
       name: name,
       slug: slug,
@@ -92,7 +98,7 @@ class ServiceModel extends ServiceEntity {
     );
   }
 
-  factory ServiceModel.fromEntity(ServiceEntity entity) {
+  factory ServiceModel.fromEntity(ServiceDetailEntity entity) {
     return ServiceModel(
       id: entity.id,
       name: entity.name,

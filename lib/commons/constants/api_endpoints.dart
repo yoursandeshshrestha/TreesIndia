@@ -10,7 +10,6 @@ class ApiEndpoints {
     uploadAvatar,
     resetPassword,
     changePassword,
-
     locationAutocomplete,
     categories,
     subcategories,
@@ -21,98 +20,153 @@ class ApiEndpoints {
     walletRecharge,
     walletRechargeComplete,
     walletRechargeCancel,
+    bookingConfig,
+    availableSlots,
+    createBooking,
+    createInquiryBooking,
+    serviceAvailability,
+    verifyPayment,
+    verifyInquiryPayment,
+    bookings,
+    addresses,
+    createAddress,
+    updateAddress,
+    deleteAddress,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
     path: '/auth/request-otp',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint verifyOtp = ApiEndpoint(
     path: '/auth/verify-otp',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint refreshToken = ApiEndpoint(
     path: '/auth/refresh-token',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint resetPassword = ApiEndpoint(
     path: '/Mobvalidatelogin',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint changePassword = ApiEndpoint(
     path: '/Mobvalidatelogin',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint userProfile = ApiEndpoint(
     path: '/users/profile',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint uploadAvatar = ApiEndpoint(
     path: '/users/upload-avatar',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint locationAutocomplete = ApiEndpoint(
     path: '/places/autocomplete',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint categories = ApiEndpoint(
     path: '/categories',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint subcategories = ApiEndpoint(
     path: '/subcategories/category/{categoryId}',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint services = ApiEndpoint(
     path: '/services',
     requiresAuth: false,
-    useRegionBaseUrl: true,
   );
 
   static ApiEndpoint walletSummary = ApiEndpoint(
     path: '/wallet/summary',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint walletTransactions = ApiEndpoint(
     path: '/wallet/transactions',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint walletTransactionsByType = ApiEndpoint(
     path: '/wallet/transactions/type/{type}',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint walletRecharge = ApiEndpoint(
     path: '/wallet/recharge',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint walletRechargeComplete = ApiEndpoint(
     path: '/wallet/recharge/{rechargeId}/complete',
     requiresAuth: true,
-    useRegionBaseUrl: true,
   );
   static ApiEndpoint walletRechargeCancel = ApiEndpoint(
     path: '/wallet/recharge/{rechargeId}/cancel',
     requiresAuth: true,
-    useRegionBaseUrl: true,
+  );
+
+  static ApiEndpoint bookingConfig = ApiEndpoint(
+    path: '/bookings/config',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint availableSlots = ApiEndpoint(
+    path: '/bookings/available-slots',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createBooking = ApiEndpoint(
+    path: '/bookings',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createInquiryBooking = ApiEndpoint(
+    path: '/bookings/inquiry',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint serviceAvailability = ApiEndpoint(
+    path: '/service-availability/{id}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifyPayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/verify-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifyInquiryPayment = ApiEndpoint(
+    path: '/bookings/inquiry/verify-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint bookings = ApiEndpoint(
+    path: '/bookings',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint addresses = ApiEndpoint(
+    path: '/addresses',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createAddress = ApiEndpoint(
+    path: '/addresses',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint updateAddress = ApiEndpoint(
+    path: '/addresses/{addressId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint deleteAddress = ApiEndpoint(
+    path: '/addresses/{addressId}',
+    requiresAuth: true,
   );
 
   // HTTP Headers

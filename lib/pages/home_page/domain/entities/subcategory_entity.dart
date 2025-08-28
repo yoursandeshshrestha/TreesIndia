@@ -6,7 +6,7 @@ class SubcategoryEntity extends Equatable {
   final String name;
   final String slug;
   final String description;
-  final String image;
+  final String icon;
   final int parentId;
   final CategoryEntity parent;
   final bool isActive;
@@ -18,7 +18,7 @@ class SubcategoryEntity extends Equatable {
     required this.name,
     required this.slug,
     required this.description,
-    required this.image,
+    required this.icon,
     required this.parentId,
     required this.parent,
     required this.isActive,
@@ -32,7 +32,7 @@ class SubcategoryEntity extends Equatable {
         name,
         slug,
         description,
-        image,
+        icon,
         parentId,
         parent,
         isActive,

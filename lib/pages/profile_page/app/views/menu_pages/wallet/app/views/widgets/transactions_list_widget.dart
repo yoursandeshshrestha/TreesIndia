@@ -70,7 +70,7 @@ class TransactionsListWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.history_outlined,
               size: 64,
               color: AppColors.brandNeutral400,

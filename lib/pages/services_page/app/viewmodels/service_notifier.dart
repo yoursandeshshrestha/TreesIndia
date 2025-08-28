@@ -35,8 +35,7 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
 
     // Get user location
     await _loadUserLocation();
-    print('userCity: ${state.userCity}');
-    print('userState: ${state.userState}');
+
 
     if (state.userCity == null && state.userState == null) {
       state = state.copyWith(

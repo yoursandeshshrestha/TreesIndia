@@ -286,13 +286,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     context.push('/plus-membership');
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.star_outline,
-                  label: 'My rating',
-                  onTap: () {
-                    context.push('/my-rating');
-                  },
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.star_outline,
+                //   label: 'My rating',
+                //   onTap: () {
+                //     context.push('/my-rating');
+                //   },
+                // ),
                 _buildMenuItem(
                   icon: Icons.location_on,
                   label: 'Manage addresses',
@@ -300,13 +300,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     context.push('/manage-addresses');
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.credit_card,
-                  label: 'Manage payment methods',
-                  onTap: () {
-                    context.push('/manage-payment-methods');
-                  },
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.credit_card,
+                //   label: 'Manage payment methods',
+                //   onTap: () {
+                //     context.push('/manage-payment-methods');
+                //   },
+                // ),
                 _buildMenuItem(
                   icon: Icons.settings,
                   label: 'Settings',

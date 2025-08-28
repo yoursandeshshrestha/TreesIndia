@@ -2,13 +2,13 @@ import 'package:equatable/equatable.dart';
 import '../../../home_page/domain/entities/category_entity.dart';
 import '../../../home_page/domain/entities/subcategory_entity.dart';
 import '../../../../commons/domain/entities/pagination_entity.dart';
-import '../../domain/entities/service_entity.dart';
+import '../../domain/entities/service_detail_entity.dart';
 
 enum ServiceStatus { initial, loading, success, failure, loadingMore }
 
 class ServiceState extends Equatable {
   final ServiceStatus status;
-  final List<ServiceEntity> services;
+  final List<ServiceDetailEntity> services;
   final PaginationEntity? pagination;
   final CategoryEntity? currentCategory;
   final SubcategoryEntity? currentSubcategory;
@@ -33,7 +33,7 @@ class ServiceState extends Equatable {
 
   ServiceState copyWith({
     ServiceStatus? status,
-    List<ServiceEntity>? services,
+    List<ServiceDetailEntity>? services,
     PaginationEntity? pagination,
     CategoryEntity? currentCategory,
     SubcategoryEntity? currentSubcategory,

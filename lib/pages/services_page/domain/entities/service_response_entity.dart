@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 import '../../../../commons/domain/entities/pagination_entity.dart';
-import 'service_entity.dart';
+import 'service_detail_entity.dart';
 
 class ServiceResponseEntity extends Equatable {
-  final List<ServiceEntity> services;
+  final List<ServiceDetailEntity> services;
   final PaginationEntity pagination;
 
   const ServiceResponseEntity({

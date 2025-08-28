@@ -23,6 +23,10 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payme
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
+import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
+import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
+import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
+import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -231,6 +235,29 @@ class AppRouter {
                       categoryId: categoryId,
                       subcategoryId: subcategoryId,
                     );
+                  },
+                ),
+                GoRoute(
+                  path: '/service-detail/:serviceId',
+                  name: 'ServiceDetailPage',
+                  builder: (context, state) {
+                    final serviceData = state.extra as Map<String, dynamic>;
+                    final service = serviceData['service'] as ServiceDetailEntity;
+                    return ServiceDetailPage(service: service);
+                  },
+                ),
+                GoRoute(
+                  path: '/bookings',
+                  name: 'BookingsListingPage',
+                  builder: (context, state) => const BookingsListingPage(),
+                ),
+                GoRoute(
+                  path: '/service/:serviceId/booking',
+                  name: 'BookingPage',
+                  builder: (context, state) {
+                    final serviceData = state.extra as Map<String, dynamic>;
+                    final service = serviceData['service'] as ServiceDetailEntity;
+                    return BookingPage(service: service);
                   },
                 ),
               ],

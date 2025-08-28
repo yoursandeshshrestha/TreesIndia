@@ -12,36 +12,27 @@ class EmailTextFieldWidget extends BaseTextfieldWidget {
   final IconData? trailingIcon;
   final BuildContext? context;
 
-  EmailTextFieldWidget({
-    Key? key,
+  const EmailTextFieldWidget({
+    super.key,
     this.initialText = '',
     this.hasClearTextButton = false,
     this.leadingIcon,
     this.trailingIcon,
     this.context,
     // forward enable/readOnly/error
-    bool enabled = true,
-    bool readOnly = false,
-    bool hasError = false,
+    super.enabled,
+    super.readOnly,
+    super.hasError,
     // your hint & onTextChanged
     String? hintText,
-    required ValueChanged<String> onTextChanged,
+    required super.onTextChanged,
     // NEW: optional callbacks
-    ValueChanged<String>? onBlurred,
-    ValueChanged<String>? onFocused,
-    ValueChanged<String>? onSubmitted,
-    FocusNode? focusNode,
+    super.onBlurred,
+    super.onFocused,
+    super.onSubmitted,
+    super.focusNode,
   }) : super(
-          key: key,
           hintText: hintText ?? 'e.g. name@example.com',
-          onTextChanged: onTextChanged,
-          onBlurred: onBlurred,
-          onFocused: onFocused,
-          onSubmitted: onSubmitted,
-          focusNode: focusNode,
-          enabled: enabled,
-          readOnly: readOnly,
-          hasError: hasError,
         );
 
   @override

@@ -70,7 +70,7 @@ class PasswordTextFieldWidgetState
                   width: 18.0,
                   height: 18.0,
                   child: isValid
-                      ? Icon(
+                      ? const Icon(
                           Icons.check_circle,
                           size: 18.0,
                           color: AppColors.stateGreen500,
