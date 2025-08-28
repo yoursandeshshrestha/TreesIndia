@@ -206,6 +206,61 @@ func (s *UnifiedWalletService) DeductFromWallet(userID uint, amount float64, ser
 	return payment, nil
 }
 
+// DeductFromWalletForBooking deducts amount from user's wallet for booking payments
+func (s *UnifiedWalletService) DeductFromWalletForBooking(userID uint, amount float64, bookingID uint, description string) (*models.Payment, error) {
+	// Get user
+	var user models.User
+	if err := s.userRepo.FindByID(&user, userID); err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Check if user has sufficient balance
+	if user.WalletBalance < amount {
+		return nil, fmt.Errorf("insufficient wallet balance. Required: ₹%.2f, Available: ₹%.2f", amount, user.WalletBalance)
+	}
+
+	// Calculate new balance
+	newBalance := user.WalletBalance - amount
+
+	// Create payment record for wallet debit
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            userID,
+		Amount:            amount,
+		Currency:          "INR",
+		Type:              models.PaymentTypeWalletDebit,
+		Method:            "wallet",
+		RelatedEntityType: "booking",
+		RelatedEntityID:   bookingID,
+		Description:       description,
+		Notes:             "Booking payment from wallet",
+	}
+
+	// Create payment record
+	payment, err := s.paymentService.CreatePayment(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment record: %w", err)
+	}
+
+	// Update user wallet balance
+	user.WalletBalance = newBalance
+	if err := s.userRepo.Update(&user); err != nil {
+		return nil, fmt.Errorf("failed to update user wallet: %w", err)
+	}
+
+	// Update payment status to completed
+	now := time.Now()
+	payment.Status = models.PaymentStatusCompleted
+	payment.CompletedAt = &now
+	payment.BalanceAfter = &newBalance
+
+	if err := s.paymentService.UpdatePayment(payment); err != nil {
+		return nil, fmt.Errorf("failed to update payment: %w", err)
+	}
+
+	logrus.Infof("Wallet debit for booking %d, user %d: ₹%.2f, new balance: ₹%.2f", bookingID, userID, amount, newBalance)
+	return payment, nil
+}
+
 // GetUserWalletTransactions gets wallet transactions for a user
 func (s *UnifiedWalletService) GetUserWalletTransactions(userID uint, page, limit int) ([]models.Payment, int64, error) {
 	offset := (page - 1) * limit

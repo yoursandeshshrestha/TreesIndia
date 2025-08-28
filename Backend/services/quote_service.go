@@ -522,7 +522,7 @@ func (qs *QuoteService) WalletPayment(bookingID uint, userID uint, req *models.W
 	walletService := NewUnifiedWalletService()
 	
 	// Deduct amount from wallet for booking payment
-	_, err = walletService.DeductFromWallet(userID, req.Amount, bookingID, "Quote payment for "+booking.BookingReference)
+	_, err = walletService.DeductFromWalletForBooking(userID, req.Amount, bookingID, "Quote payment for "+booking.BookingReference)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process wallet payment: %v", err)
 	}

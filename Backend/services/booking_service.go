@@ -1704,28 +1704,21 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 		return nil, errors.New("selected time slot is not available")
 	}
 
-	// 8. Process wallet payment
-	walletService := NewUnifiedWalletService()
-	_, err = walletService.DeductFromWallet(userID, *service.Price, req.ServiceID, "Service booking payment")
-	if err != nil {
-		return nil, fmt.Errorf("failed to process wallet payment: %v", err)
-	}
-
-	// 9. Generate booking reference
+	// 8. Generate booking reference
 	bookingReference := bs.generateBookingReference()
 
-	// 10. Calculate scheduled end time
+	// 9. Calculate scheduled end time
 	bufferTimeMinutes := 15
 	scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
 
-	// 11. Convert address object to JSON string for storage
+	// 10. Convert address object to JSON string for storage
 	addressJSON, err := json.Marshal(req.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal address: %v", err)
 	}
 	addressStr := string(addressJSON)
 	
-	// 12. Create booking with confirmed status
+	// 11. Create booking with confirmed status
 	booking := &models.Booking{
 		UserID:              userID,
 		ServiceID:           req.ServiceID,
@@ -1743,10 +1736,21 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 		SpecialInstructions: req.SpecialInstructions,
 	}
 
-	// 13. Save booking
+	// 12. Save booking
 	booking, err = bs.bookingRepo.Create(booking)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save booking: %v", err)
+	}
+
+	// 13. Process wallet payment after booking is created
+	walletService := NewUnifiedWalletService()
+	_, err = walletService.DeductFromWalletForBooking(userID, *service.Price, booking.ID, "Service booking payment")
+	if err != nil {
+		// If payment fails, update booking status to cancelled
+		booking.Status = models.BookingStatusCancelled
+		booking.PaymentStatus = "failed"
+		bs.bookingRepo.Update(booking)
+		return nil, fmt.Errorf("failed to process wallet payment: %v", err)
 	}
 
 	// 14. Send confirmation notification
@@ -1794,27 +1798,17 @@ func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *model
 		feeAmount = 0 // Default to 0 if parsing fails
 	}
 
-	// 5. Process wallet payment if fee is required
-	if feeAmount > 0 {
-		feeFloat := float64(feeAmount)
-		walletService := NewUnifiedWalletService()
-		_, err = walletService.DeductFromWallet(userID, feeFloat, req.ServiceID, "Inquiry booking fee")
-		if err != nil {
-			return nil, fmt.Errorf("failed to process wallet payment: %v", err)
-		}
-	}
-
-	// 6. Generate booking reference
+	// 5. Generate booking reference
 	bookingReference := bs.generateBookingReference()
 
-	// 7. Convert address object to JSON string for storage
+	// 6. Convert address object to JSON string for storage
 	addressJSON, err := json.Marshal(req.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal address: %v", err)
 	}
 	addressStr := string(addressJSON)
 	
-	// 8. Create booking with inquiry type
+	// 7. Create booking with inquiry type
 	booking := &models.Booking{
 		UserID:              userID,
 		ServiceID:           req.ServiceID,
@@ -1832,10 +1826,24 @@ func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *model
 		SpecialInstructions: req.SpecialInstructions,
 	}
 
-	// 9. Save booking
+	// 8. Save booking
 	booking, err = bs.bookingRepo.Create(booking)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save booking: %v", err)
+	}
+
+	// 9. Process wallet payment if fee is required (after booking is created)
+	if feeAmount > 0 {
+		feeFloat := float64(feeAmount)
+		walletService := NewUnifiedWalletService()
+		_, err = walletService.DeductFromWalletForBooking(userID, feeFloat, booking.ID, "Inquiry booking fee")
+		if err != nil {
+			// If payment fails, update booking status to cancelled
+			booking.Status = models.BookingStatusCancelled
+			booking.PaymentStatus = "failed"
+			bs.bookingRepo.Update(booking)
+			return nil, fmt.Errorf("failed to process wallet payment: %v", err)
+		}
 	}
 
 	logrus.Infof("Inquiry booking with wallet payment created successfully: booking_id=%d, fee_amount=%.2f", booking.ID, float64(feeAmount))
