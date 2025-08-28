@@ -69,7 +69,7 @@ func (sr *ServiceRepository) GetByID(id uint) (*models.Service, error) {
 	logrus.Infof("ServiceRepository.GetByID called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByID service not found with ID: %d", id)
@@ -94,7 +94,7 @@ func (sr *ServiceRepository) GetByIDWithRelations(id uint) (*models.Service, err
 	logrus.Infof("ServiceRepository.GetByIDWithRelations called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("Subcategory").Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByIDWithRelations service not found with ID: %d", id)
@@ -722,4 +722,217 @@ func (sr *ServiceRepository) GetPopularServices(limit int, city, state string) (
 	
 	logrus.Infof("ServiceRepository.GetPopularServices found %d popular services", len(serviceSummaries))
 	return serviceSummaries, nil
+}
+
+// GetSummariesWithLocationFiltersPaginated retrieves service summaries with advanced filtering including location and pagination
+func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, city, state string, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.ServiceSummary, int64, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceRepository.GetSummariesWithLocationFiltersPaginated panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceRepository.GetSummariesWithLocationFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, city: %s, state: %s, excludeInactive: %v, page: %d, limit: %d", 
+		priceType, category, subcategory, priceMin, priceMax, city, state, excludeInactive, page, limit)
+	
+	var allServices []models.Service
+	var query *gorm.DB
+	
+	// If location filtering is required, start with location-based query
+	if city != "" || state != "" {
+		// Get service IDs that match location criteria
+		var serviceIDs []uint
+		locationQuery := sr.GetDB().Table("services").
+			Select("DISTINCT services.id").
+			Joins("JOIN service_service_areas ON services.id = service_service_areas.service_id").
+			Joins("JOIN service_areas ON service_service_areas.service_area_id = service_areas.id").
+			Where("service_areas.is_active = ?", true)
+		
+		if city != "" && state != "" {
+			// Both city and state provided
+			locationQuery = locationQuery.Where("service_areas.city ILIKE ? AND service_areas.state ILIKE ?", 
+				"%"+city+"%", "%"+state+"%")
+		} else if city != "" {
+			// Only city provided
+			locationQuery = locationQuery.Where("service_areas.city ILIKE ?", "%"+city+"%")
+		} else if state != "" {
+			// Only state provided
+			locationQuery = locationQuery.Where("service_areas.state ILIKE ?", "%"+state+"%")
+		}
+		
+		// Get the distinct service IDs
+		if err := locationQuery.Pluck("id", &serviceIDs).Error; err != nil {
+			logrus.Errorf("ServiceRepository.GetSummariesWithLocationFiltersPaginated location query error: %v", err)
+			return nil, 0, err
+		}
+		
+		if len(serviceIDs) == 0 {
+			// No services found for the location
+			return []models.ServiceSummary{}, 0, nil
+		}
+		
+		// Create query with location-filtered service IDs
+		query = sr.GetDB().Preload("ServiceAreas").Where("id IN ?", serviceIDs)
+	} else {
+		// No location filtering, get all services
+		query = sr.GetDB().Preload("ServiceAreas")
+	}
+	
+	// Get all matching services first
+	if err := query.Find(&allServices).Error; err != nil {
+		logrus.Errorf("ServiceRepository.GetSummariesWithLocationFiltersPaginated database error: %v", err)
+		return nil, 0, err
+	}
+	
+	// Apply remaining filters in memory
+	var filteredServices []models.Service
+	for _, service := range allServices {
+		// Filter by price type
+		if priceType != nil && service.PriceType != *priceType {
+			continue
+		}
+		
+		// Filter by category
+		if category != nil {
+			if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
+				if service.CategoryID != uint(categoryID) {
+					continue
+				}
+			} else {
+				// Get category name
+				var cat models.Category
+				if err := sr.GetDB().First(&cat, service.CategoryID).Error; err != nil || !strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*category)) {
+					continue
+				}
+			}
+		}
+		
+		// Filter by subcategory
+		if subcategory != nil {
+			if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
+				if service.SubcategoryID != uint(subcategoryID) {
+					continue
+				}
+			} else {
+				// Get subcategory name
+				var subcat models.Subcategory
+				if err := sr.GetDB().First(&subcat, service.SubcategoryID).Error; err != nil || !strings.Contains(strings.ToLower(subcat.Name), strings.ToLower(*subcategory)) {
+					continue
+				}
+			}
+		}
+		
+		// Filter by price range
+		if priceMin != nil && service.Price != nil && *service.Price < *priceMin {
+			continue
+		}
+		if priceMax != nil && service.Price != nil && *service.Price > *priceMax {
+			continue
+		}
+		
+		// Filter by active status
+		if excludeInactive && !service.IsActive {
+			continue
+		}
+		
+		filteredServices = append(filteredServices, service)
+	}
+	
+	total := int64(len(filteredServices))
+	
+	// Apply sorting
+	if sortBy != "" {
+		sort.Slice(filteredServices, func(i, j int) bool {
+			switch sortBy {
+			case "name":
+				if sortOrder == "desc" {
+					return filteredServices[i].Name > filteredServices[j].Name
+				}
+				return filteredServices[i].Name < filteredServices[j].Name
+			case "created_at":
+				if sortOrder == "desc" {
+					return filteredServices[i].CreatedAt.After(filteredServices[j].CreatedAt)
+				}
+				return filteredServices[i].CreatedAt.Before(filteredServices[j].CreatedAt)
+			default:
+				return filteredServices[i].Name < filteredServices[j].Name
+			}
+		})
+	} else {
+		// Default sorting by name ascending
+		sort.Slice(filteredServices, func(i, j int) bool {
+			return filteredServices[i].Name < filteredServices[j].Name
+		})
+	}
+	
+	// Apply pagination
+	start := (page - 1) * limit
+	end := start + limit
+	if start >= len(filteredServices) {
+		start = len(filteredServices)
+	}
+	if end > len(filteredServices) {
+		end = len(filteredServices)
+	}
+	
+	var paginatedServices []models.Service
+	if start < len(filteredServices) {
+		paginatedServices = filteredServices[start:end]
+	}
+	
+	// Convert to ServiceSummary
+	var serviceSummaries []models.ServiceSummary
+	for _, service := range paginatedServices {
+		// Convert service areas to ServiceAreaSummary
+		var serviceAreas []models.ServiceAreaSummary
+		for _, area := range service.ServiceAreas {
+			serviceAreas = append(serviceAreas, models.ServiceAreaSummary{
+				ID:       area.ID,
+				City:     area.City,
+				State:    area.State,
+				Country:  area.Country,
+				IsActive: area.IsActive,
+			})
+		}
+		
+		// Get category and subcategory names
+		var categoryName, subcategoryName string
+		if service.CategoryID > 0 {
+			var category models.Category
+			if err := sr.GetDB().First(&category, service.CategoryID).Error; err == nil {
+				categoryName = category.Name
+			}
+		}
+		if service.SubcategoryID > 0 {
+			var subcategory models.Subcategory
+			if err := sr.GetDB().First(&subcategory, service.SubcategoryID).Error; err == nil {
+				subcategoryName = subcategory.Name
+			}
+		}
+		
+		// Convert to ServiceSummary
+		serviceSummary := models.ServiceSummary{
+			ID:              service.ID,
+			Name:            service.Name,
+			Slug:            service.Slug,
+			Description:     service.Description,
+			Images:          service.Images,
+			PriceType:       service.PriceType,
+			Price:           service.Price,
+			Duration:        service.Duration,
+			CategoryID:      service.CategoryID,
+			SubcategoryID:   service.SubcategoryID,
+			CategoryName:    categoryName,
+			SubcategoryName: subcategoryName,
+			IsActive:        service.IsActive,
+			CreatedAt:       service.CreatedAt,
+			UpdatedAt:       service.UpdatedAt,
+			DeletedAt:       service.DeletedAt,
+			ServiceAreas:    serviceAreas,
+		}
+		serviceSummaries = append(serviceSummaries, serviceSummary)
+	}
+	
+	logrus.Infof("ServiceRepository.GetSummariesWithLocationFiltersPaginated found %d services (total: %d)", len(serviceSummaries), total)
+	return serviceSummaries, total, nil
 }

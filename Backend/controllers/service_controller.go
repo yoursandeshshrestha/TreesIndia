@@ -235,7 +235,7 @@ func (sc *ServiceController) GetServiceByID(c *gin.Context) {
 
 // GetServices retrieves all services with advanced filtering
 // @Summary Get all services with filters
-// @Description Get all services with optional filtering by type, category, subcategory, and price
+// @Description Get all services with optional filtering by type, category, subcategory, price, and location
 // @Tags services
 // @Produce json
 // @Param type query string false "Service type (fixed-price or inquiry-based)"
@@ -243,6 +243,8 @@ func (sc *ServiceController) GetServiceByID(c *gin.Context) {
 // @Param subcategory query string false "Subcategory name or ID"
 // @Param price_min query number false "Minimum price"
 // @Param price_max query number false "Maximum price"
+// @Param city query string false "City name for location filtering"
+// @Param state query string false "State name for location filtering"
 // @Param exclude_inactive query boolean false "Exclude inactive services"
 // @Success 200 {object} views.Response{data=[]models.Service}
 // @Router /api/v1/services [get]
@@ -261,6 +263,8 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 	subcategory := c.Query("subcategory")    // Subcategory name or ID
 	priceMinStr := c.Query("price_min")      // Minimum price
 	priceMaxStr := c.Query("price_max")      // Maximum price
+	city := c.Query("city")                  // City name for location filtering
+	state := c.Query("state")                // State name for location filtering
 	excludeInactive := c.Query("exclude_inactive") == "true"
 	
 	// Get pagination parameters
@@ -283,8 +287,8 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		}
 	}
 	
-	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, excludeInactive: %v", 
-		serviceType, category, subcategory, priceMinStr, priceMaxStr, excludeInactive)
+	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, city: %s, state: %s, excludeInactive: %v", 
+		serviceType, category, subcategory, priceMinStr, priceMaxStr, city, state, excludeInactive)
 
 	// Parse price range
 	var priceMin, priceMax *float64
@@ -330,7 +334,7 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		sortOrder = "asc"
 	}
 	
-	services, total, err := sc.serviceService.GetServiceSummariesWithFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, excludeInactive, page, limit, sortBy, sortOrder)
+	services, total, err := sc.serviceService.GetServiceSummariesWithLocationFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, city, state, excludeInactive, page, limit, sortBy, sortOrder)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServices error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
