@@ -43,6 +43,9 @@ COPY --from=builder /app/main .
 # Copy migrations directory
 COPY --from=builder /app/migrations ./migrations
 
+# Copy seed-data directory
+COPY --from=builder /app/seed-data ./seed-data
+
 # Copy .env file if it exists
 COPY --from=builder /app/.env* ./
 
