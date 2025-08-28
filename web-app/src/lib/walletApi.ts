@@ -14,6 +14,7 @@ export interface WalletSummary {
 export interface WalletTransaction {
   id?: number;
   ID?: number;
+  payment_reference?: string;
   user_id: number;
   amount: number;
   currency: string;
@@ -21,11 +22,42 @@ export interface WalletTransaction {
   method: string;
   status: string;
   description: string;
-  reference_id: string;
-  created_at: string;
-  updated_at: string;
+  reference_id?: string;
+  related_entity_type?: string;
+  related_entity_id?: number;
+  razorpay_order_id?: string | null;
+  razorpay_payment_id?: string | null;
+  razorpay_signature?: string | null;
+  initiated_at?: string;
   completed_at?: string;
+  CompletedAt?: string;
+  failed_at?: string | null;
+  refunded_at?: string | null;
   balance_after?: number;
+  refund_amount?: number | null;
+  refund_reason?: string | null;
+  refund_method?: string | null;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  CreatedAt?: string;
+  updated_at?: string;
+  UpdatedAt?: string;
+  DeletedAt?: string | null;
+  user?: {
+    ID: number;
+    name: string;
+    email: string | null;
+    phone: string;
+    user_type: string;
+    avatar: string;
+    gender: string;
+    is_active: boolean;
+    wallet_balance: number;
+    subscription_id: number | null;
+    has_active_subscription: boolean;
+    subscription_expiry_date: string | null;
+  };
 }
 
 export interface RechargeRequest {

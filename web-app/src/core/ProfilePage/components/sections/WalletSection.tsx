@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Wallet,
   Plus,
@@ -14,6 +14,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { RechargeWalletModal } from "@/components/WalletModal";
 import RazorpayCheckout from "@/components/Models/RazorpayCheckout";
 import { WalletTransaction } from "@/lib/walletApi";
+import { formatDateTime, formatDateClient } from "@/utils/dateUtils";
 
 // Payment data interface for Razorpay
 interface PaymentData {
@@ -29,6 +30,8 @@ interface PendingTransaction extends WalletTransaction {
 }
 
 export function WalletSection() {
+  const [isClient, setIsClient] = useState(false);
+
   const {
     walletSummary,
     transactions,
@@ -43,6 +46,10 @@ export function WalletSection() {
     refetchWalletSummary,
     refetchTransactions,
   } = useWallet();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
@@ -142,15 +149,30 @@ export function WalletSection() {
     setShowRazorpayCheckout(false);
     setCurrentPayment(null);
   };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const getTransactionStatus = (transaction: WalletTransaction) => {
+    if (transaction.status === "pending") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+          <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5 animate-pulse"></div>
+          Pending
+        </span>
+      );
+    } else if (transaction.status === "completed") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5"></div>
+          Completed
+        </span>
+      );
+    } else if (transaction.status === "failed") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+          <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></div>
+          Failed
+        </span>
+      );
+    }
+    return null;
   };
 
   const getTransactionIcon = (type: string) => {
@@ -176,35 +198,12 @@ export function WalletSection() {
     }
   };
 
-  const getTransactionStatus = (transaction: WalletTransaction) => {
-    if (transaction.status === "pending") {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-500 text-white border border-orange-600">
-          Pending
-        </span>
-      );
-    } else if (transaction.status === "completed") {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-600 text-white border border-green-600">
-          Completed
-        </span>
-      );
-    } else if (transaction.status === "failed") {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-300">
-          Failed
-        </span>
-      );
-    }
-    return null;
-  };
-
   if (isLoadingWalletSummary) {
     return <WalletSectionSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
       <div className="">
         <div className="mb-6">
           <div className="flex items-start justify-between mb-4">
@@ -227,7 +226,7 @@ export function WalletSection() {
 
           {/* Wallet Summary */}
           {walletSummary && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div>
                   <p className="text-sm text-gray-600">Current Balance</p>
@@ -266,7 +265,7 @@ export function WalletSection() {
         </h3>
 
         {isLoadingTransactions ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 ">
             {[...Array(3)].map((_, index) => (
               <div key={index} className="py-3">
                 <div className="flex items-start space-x-3">
@@ -301,15 +300,18 @@ export function WalletSection() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 ">
             {transactions.map((transaction, index) => (
               <div
                 key={`transaction-${index}-${
-                  transaction.id || transaction.created_at || Date.now()
+                  transaction.id ||
+                  transaction.created_at ||
+                  transaction.CreatedAt ||
+                  Date.now()
                 }`}
                 className="py-3 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-3 px-5">
                   <div className="mt-1">
                     {getTransactionIcon(transaction.type)}
                   </div>
@@ -320,16 +322,25 @@ export function WalletSection() {
                           <span className="font-medium text-gray-900">
                             {getTransactionTypeLabel(transaction.type)}
                           </span>
-                          {getTransactionStatus(transaction)}
                         </div>
                         <div className="text-sm text-gray-500">
                           <p>{transaction.description}</p>
                           <p className="text-xs mt-1">
-                            {formatDate(transaction.created_at)}
+                            {isClient
+                              ? formatDateTime(
+                                  transaction.created_at ||
+                                    transaction.CreatedAt
+                                )
+                              : "Loading..."}
                             {transaction.balance_after && (
                               <span className="ml-2">
                                 • Balance: ₹
                                 {transaction.balance_after.toFixed(2)}
+                              </span>
+                            )}
+                            {transaction.payment_reference && (
+                              <span className="ml-2">
+                                • Ref: {transaction.payment_reference}
                               </span>
                             )}
                           </p>
@@ -337,19 +348,22 @@ export function WalletSection() {
                       </div>
 
                       <div className="text-right ml-4">
-                        <div
-                          className={`text-lg font-semibold ${
-                            transaction.type === "wallet_recharge" ||
+                        <div className="flex flex-col items-end gap-2">
+                          <div
+                            className={`text-lg font-semibold ${
+                              transaction.type === "wallet_recharge" ||
+                              transaction.type === "credit"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {transaction.type === "wallet_recharge" ||
                             transaction.type === "credit"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {transaction.type === "wallet_recharge" ||
-                          transaction.type === "credit"
-                            ? "+"
-                            : "-"}
-                          ₹{transaction.amount.toFixed(2)}
+                              ? "+"
+                              : "-"}
+                            ₹{transaction.amount.toFixed(2)}
+                          </div>
+                          {getTransactionStatus(transaction)}
                         </div>
 
                         {/* Complete Payment Button for Pending Transactions */}

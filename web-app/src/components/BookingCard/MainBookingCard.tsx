@@ -65,8 +65,8 @@ export function MainBookingCard({
           ),
           text: "Service completed successfully",
           subtitle: "Service has been completed successfully",
-          color: "text-green-600",
-          bgColor: "bg-green-50",
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
         };
       case "confirmed":
       case "scheduled":
@@ -108,7 +108,7 @@ export function MainBookingCard({
               className="w-10 h-10"
             />
           ),
-          text: "Booking scheduled",
+          text: booking?.service?.name || "Service",
           subtitle: workerRejected
             ? "A new professional will be assigned to this booking soon"
             : "A professional will be assigned to this booking soon",
@@ -157,8 +157,8 @@ export function MainBookingCard({
           subtitle: hasStarted
             ? "Your service is currently being performed"
             : "Your service professional has arrived and is ready to start",
-          color: "text-green-600",
-          bgColor: "bg-green-50",
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
         };
       case "quote_accepted":
         return {
@@ -250,7 +250,7 @@ export function MainBookingCard({
     dateString?: string | null,
     timeString?: string | null
   ) => {
-    if (!dateString) return "Not scheduled";
+    if (!dateString) return "To be scheduled after quote acceptance";
 
     try {
       const date = new Date(dateString);
@@ -339,36 +339,40 @@ export function MainBookingCard({
               {statusConfig.icon}
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 text-lg">
-                {statusConfig.text}
+              <h3 className="font-semibold text-gray-900 text-xl mb-1">
+                {booking.service?.name || "Service"}
               </h3>
-              <p className="text-sm text-gray-600">{statusConfig.subtitle}</p>
+              <p className="text-sm text-gray-500 font-medium mb-3">
+                {statusConfig.subtitle}
+              </p>
             </div>
           </div>
 
-          {/* Service and Booking ID */}
-          <div className="space-y-2 mb-4">
+          {/* Scheduled Date & Time - Prominent Display */}
+          <div className="rounded-lg mb-6">
             <div className="flex items-center gap-2">
-              <span className="text-base font-medium text-gray-900">
-                {booking.service?.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Booking ID:</span>
-              <span className="text-sm font-mono text-gray-700">
-                {booking.booking_reference}
-              </span>
+              <div>
+                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                  Service Date
+                </div>
+                <div className="text-base font-semibold text-gray-900">
+                  {formatDate(booking.scheduled_date, booking.scheduled_time)}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Key Details */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <span>
-                {formatDate(booking.scheduled_date, booking.scheduled_time)}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Booking ID:
+              </span>
+              <span className="text-sm font-mono font-semibold text-gray-800">
+                {booking.booking_reference}
               </span>
             </div>
+
             {booking.actual_start_time && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="w-4 h-4 text-gray-500" />
