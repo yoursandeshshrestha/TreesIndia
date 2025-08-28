@@ -93,8 +93,9 @@ export const useCreateBooking = () => {
     mutationFn: bookingFlowApi.createBooking,
     onSuccess: () => {
       toast.success("Booking created successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create booking");
@@ -110,8 +111,9 @@ export const useCreateInquiryBooking = () => {
     mutationFn: bookingFlowApi.createInquiryBooking,
     onSuccess: () => {
       toast.success("Inquiry submitted successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to submit inquiry");
@@ -133,8 +135,9 @@ export const useVerifyPayment = () => {
     }) => bookingFlowApi.verifyPayment(bookingId, paymentData),
     onSuccess: () => {
       toast.success("Payment verified successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to verify payment");
@@ -150,8 +153,9 @@ export const useVerifyInquiryPayment = () => {
     mutationFn: bookingFlowApi.verifyInquiryPayment,
     onSuccess: () => {
       toast.success("Payment verified successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to verify payment");
@@ -167,8 +171,9 @@ export const useCancelBooking = () => {
     mutationFn: bookingFlowApi.cancelBooking,
     onSuccess: () => {
       toast.success("Booking cancelled successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to cancel booking");
@@ -212,8 +217,9 @@ export const useVerifyQuotePayment = () => {
     }) => bookingFlowApi.verifyQuotePayment(bookingId, paymentData),
     onSuccess: () => {
       toast.success("Quote accepted and payment completed successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Payment verification failed");
@@ -239,11 +245,54 @@ export const useProcessWalletPayment = () => {
     }) => bookingFlowApi.processWalletPayment(bookingId, paymentData),
     onSuccess: () => {
       toast.success("Quote accepted and payment completed successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries - both booking flow and user bookings
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Wallet payment failed");
+    },
+  });
+};
+
+// Create booking with wallet payment mutation
+export const useCreateBookingWithWallet = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bookingFlowApi.createBookingWithWallet,
+    onSuccess: () => {
+      toast.success("Booking created successfully with wallet payment!");
+      // Invalidate relevant queries - both booking flow and user bookings
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(
+        error.message || "Failed to create booking with wallet payment"
+      );
+    },
+  });
+};
+
+// Create inquiry booking with wallet payment mutation
+export const useCreateInquiryBookingWithWallet = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bookingFlowApi.createInquiryBookingWithWallet,
+    onSuccess: () => {
+      toast.success(
+        "Inquiry booking created successfully with wallet payment!"
+      );
+      // Invalidate relevant queries - both booking flow and user bookings
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(
+        error.message || "Failed to create inquiry booking with wallet payment"
+      );
     },
   });
 };

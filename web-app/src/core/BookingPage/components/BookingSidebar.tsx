@@ -13,6 +13,10 @@ import { openContactInfoModal } from "@/store/slices/contactInfoModalSlice";
 import { resetBooking } from "@/store/slices/bookingSlice";
 import RazorpayCheckout from "@/components/Models/RazorpayCheckout";
 import { bookingFlowApi } from "@/lib/bookingFlowApi";
+import {
+  useCreateBookingWithWallet,
+  useCreateInquiryBookingWithWallet,
+} from "@/hooks/useBookingFlow";
 import { toast } from "sonner";
 import { formatDateAndTime } from "@/utils/dateTimeUtils";
 import { formatAmount } from "@/utils/formatters";
@@ -41,6 +45,11 @@ export function BookingSidebar({
     useSelector((state: RootState) => state.booking);
   const { user } = useAuth();
   const { walletSummary } = useWallet();
+
+  // Wallet booking mutations
+  const createBookingWithWalletMutation = useCreateBookingWithWallet();
+  const createInquiryBookingWithWalletMutation =
+    useCreateInquiryBookingWithWallet();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
@@ -53,6 +62,9 @@ export function BookingSidebar({
   } | null>(null);
   const [currentBookingId, setCurrentBookingId] = useState<number | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const isWalletBookingLoading =
+    createBookingWithWalletMutation.isPending ||
+    createInquiryBookingWithWalletMutation.isPending;
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -112,6 +124,7 @@ export function BookingSidebar({
           toast.error(
             "Insufficient wallet balance. Please use Razorpay payment or recharge your wallet."
           );
+          setIsProcessingPayment(false);
           return;
         }
 
@@ -138,7 +151,7 @@ export function BookingSidebar({
             special_instructions: bookingForm.special_instructions || "",
           };
 
-          const response = await bookingFlowApi.createInquiryBookingWithWallet(
+          await createInquiryBookingWithWalletMutation.mutateAsync(
             inquiryBookingData
           );
 
@@ -167,9 +180,7 @@ export function BookingSidebar({
             },
           };
 
-          const response = await bookingFlowApi.createBookingWithWallet(
-            bookingData
-          );
+          await createBookingWithWalletMutation.mutateAsync(bookingData);
 
           setSuccessMessage(
             "Booking created successfully with wallet payment!"
@@ -259,7 +270,8 @@ export function BookingSidebar({
         }
       }
     } catch (error) {
-      toast.error("Payment failed. Please try again.");
+      console.error("Payment error:", error);
+      // Error messages are already handled by the mutation hooks
       setIsProcessingPayment(false);
     }
   };
@@ -644,10 +656,12 @@ export function BookingSidebar({
               {selectedPaymentMethod && (
                 <button
                   onClick={handlePayNow}
-                  disabled={isProcessingPayment}
+                  disabled={isProcessingPayment || isWalletBookingLoading}
                   className="w-full bg-[#00a871] hover:bg-[#009a65] text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessingPayment ? "Processing..." : "Pay Now"}
+                  {isProcessingPayment || isWalletBookingLoading
+                    ? "Processing..."
+                    : "Pay Now"}
                 </button>
               )}
             </div>

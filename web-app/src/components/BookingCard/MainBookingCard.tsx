@@ -63,7 +63,7 @@ export function MainBookingCard({
               className="w-10 h-10"
             />
           ),
-          text: "Booking completed",
+          text: "Service completed successfully",
           subtitle: "Service has been completed successfully",
           color: "text-green-600",
           bgColor: "bg-green-50",
@@ -72,6 +72,32 @@ export function MainBookingCard({
       case "scheduled":
         const workerRejected =
           booking?.worker_assignment?.status === "rejected";
+        const hasWorkerAssignment = booking?.worker_assignment?.worker?.name;
+
+        // If there's a worker assignment, show worker assigned status
+        if (
+          hasWorkerAssignment &&
+          booking?.worker_assignment?.status === "accepted"
+        ) {
+          const workerName =
+            booking?.worker_assignment?.worker?.name || "Worker";
+          return {
+            icon: (
+              <Image
+                src="/icons/worker.png"
+                alt="Worker Assigned"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
+            ),
+            text: `Worker assigned - ${workerName}`,
+            subtitle: "Your service professional is on the way",
+            color: "text-blue-600",
+            bgColor: "bg-blue-50",
+          };
+        }
+
         return {
           icon: (
             <Image
@@ -114,7 +140,7 @@ export function MainBookingCard({
         return {
           icon: (
             <Image
-              src="/icons/worker.png"
+              src="/icons/work_in_progress.png"
               alt="Service In Progress"
               width={40}
               height={40}
@@ -122,7 +148,9 @@ export function MainBookingCard({
             />
           ),
           text: hasStarted
-            ? "Service in progress"
+            ? inProgressWorkerName
+              ? `Service in progress - ${inProgressWorkerName}`
+              : "Service in progress"
             : inProgressWorkerName
             ? `${inProgressWorkerName} is on site`
             : "Service starting",
@@ -136,7 +164,7 @@ export function MainBookingCard({
         return {
           icon: (
             <Image
-              src="/icons/completed.png"
+              src="/icons/quote_accepted.png"
               alt="Quote Accepted"
               width={40}
               height={40}
@@ -249,6 +277,21 @@ export function MainBookingCard({
     }
   };
 
+  const formatTimeOnly = (timeString?: string | null) => {
+    if (!timeString) return null;
+
+    try {
+      const time = new Date(timeString);
+      return time.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (error) {
+      return null;
+    }
+  };
+
   const formatAddress = (addressString: string) => {
     try {
       const address = JSON.parse(addressString);
@@ -286,7 +329,7 @@ export function MainBookingCard({
   );
 
   return (
-    <div className="bg-white overflow-hidden">
+    <div className="bg-gray-50 rounded-lg overflow-hidden">
       <div className="flex">
         {/* Left Side - Status and Service Info */}
         <div className="flex-1 p-6">
@@ -326,9 +369,25 @@ export function MainBookingCard({
                 {formatDate(booking.scheduled_date, booking.scheduled_time)}
               </span>
             </div>
+            {booking.actual_start_time && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span>
+                  Started at: {formatTimeOnly(booking.actual_start_time)}
+                </span>
+              </div>
+            )}
+            {booking.actual_end_time && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span>
+                  Completed at: {formatTimeOnly(booking.actual_end_time)}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="truncate max-w-[200px]">
+              <span className="truncate max-w-[400px]">
                 {formatAddress(booking.address)}
               </span>
             </div>
