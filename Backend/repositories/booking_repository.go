@@ -620,12 +620,24 @@ func (br *BookingRepository) getAlerts() (map[string]interface{}, error) {
 func (br *BookingRepository) GetRecentBookings(limit int) ([]models.OptimizedBookingResponse, error) {
 	var bookings []models.Booking
 	
-	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").Preload("Payment").
+	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").
 		Order("created_at DESC").
 		Limit(limit).
 		Find(&bookings).Error
 	if err != nil {
 		return nil, err
+	}
+	
+	// Manually load payment relationships (get all payments for each booking)
+	paymentRepo := NewPaymentRepository()
+	for i := range bookings {
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
+		}
 	}
 	
 	// Convert to optimized response
@@ -643,7 +655,7 @@ func (br *BookingRepository) GetUrgentAlerts() ([]models.OptimizedBookingRespons
 	var bookings []models.Booking
 	
 	// Get bookings that need immediate attention
-	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").Preload("Payment").
+	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").
 		Where("(status = ? AND hold_expires_at BETWEEN NOW() AND NOW() + INTERVAL '1 hour') OR "+
 			"(payment_status = ?) OR "+
 			"(status = ? AND id NOT IN (SELECT booking_id FROM worker_assignments)) OR "+
@@ -657,6 +669,18 @@ func (br *BookingRepository) GetUrgentAlerts() ([]models.OptimizedBookingRespons
 		Find(&bookings).Error
 	if err != nil {
 		return nil, err
+	}
+	
+	// Manually load payment relationships (get all payments for each booking)
+	paymentRepo := NewPaymentRepository()
+	for i := range bookings {
+		payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
+			RelatedEntityType: "booking",
+			RelatedEntityID:   &bookings[i].ID,
+		})
+		if err == nil && len(payments) > 0 {
+			bookings[i].Payment = &payments[0]
+		}
 	}
 	
 	// Convert to optimized response
