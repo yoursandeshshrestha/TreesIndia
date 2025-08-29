@@ -12,6 +12,11 @@ const API_TIMEOUT = 10000; // 10 seconds
 
 // Cookie utility function
 const getCookie = (name: string): string | null => {
+  // Check if we're in a browser environment
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return null;
+  }
+
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
@@ -236,7 +241,7 @@ export const createBooking = async (data: {
   service_id: number;
   booking_type: string;
   scheduled_time: string;
-  address: any;
+  address: string;
   description: string;
   contact_person: string;
   contact_phone: string;
