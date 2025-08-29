@@ -1,12 +1,21 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// ApplicationStatus represents the status of a role application
+// RoleType represents the type of role application
+type RoleType string
+
+const (
+	RoleTypeWorker RoleType = "worker"
+	RoleTypeBroker RoleType = "broker"
+)
+
+// ApplicationStatus represents the status of role application
 type ApplicationStatus string
 
 const (
@@ -15,21 +24,106 @@ const (
 	ApplicationStatusRejected ApplicationStatus = "rejected"
 )
 
-// RoleApplication represents a user's application for role change
+// Enhanced JSON types for better frontend consumption
+type ContactInfo struct {
+	AlternativeNumber string `json:"alternative_number"`
+}
+
+type WorkerAddress struct {
+	Street   string `json:"street"`
+	City     string `json:"city"`
+	State    string `json:"state"`
+	Pincode  string `json:"pincode"`
+	Landmark string `json:"landmark"`
+}
+
+type BankingInfo struct {
+	AccountNumber     string `json:"account_number"`
+	IfscCode         string `json:"ifsc_code"`
+	BankName         string `json:"bank_name"`
+	AccountHolderName string `json:"account_holder_name"`
+}
+
+type Documents struct {
+	AadharCard        string `json:"aadhar_card"`
+	PanCard          string `json:"pan_card"`
+	ProfilePic       string `json:"profile_pic"`
+	PoliceVerification string `json:"police_verification,omitempty"`
+}
+
+// Enhanced Worker with parsed JSON
+type EnhancedWorker struct {
+	gorm.Model
+	UserID             uint       `json:"user_id"`
+	RoleApplicationID  *uint      `json:"role_application_id"`
+	WorkerType         WorkerType `json:"worker_type"`
+	
+	// Parsed JSON fields
+	ContactInfo        ContactInfo    `json:"contact_info"`
+	Address            WorkerAddress  `json:"address"`
+	BankingInfo        BankingInfo    `json:"banking_info"`
+	Documents          Documents   `json:"documents"`
+	Skills             []string    `json:"skills"`
+	
+	// Regular fields
+	Experience         int        `json:"experience_years"`
+	IsAvailable        bool       `json:"is_available"`
+	Rating             float64    `json:"rating"`
+	TotalBookings      int        `json:"total_bookings"`
+	Earnings           float64    `json:"earnings"`
+	TotalJobs          int        `json:"total_jobs"`
+	IsActive           bool       `json:"is_active"`
+}
+
+// Enhanced Broker with parsed JSON
+type EnhancedBroker struct {
+	gorm.Model
+	UserID             uint    `json:"user_id"`
+	RoleApplicationID  *uint   `json:"role_application_id"`
+	
+	// Parsed JSON fields
+	ContactInfo        ContactInfo    `json:"contact_info"`
+	Address            WorkerAddress  `json:"address"`
+	Documents          Documents      `json:"documents"`
+	
+	// Broker specific
+	License            string  `json:"license"`
+	Agency             string  `json:"agency"`
+	IsActive           bool    `json:"is_active"`
+}
+
+// Enhanced RoleApplication with parsed JSON data
+type EnhancedRoleApplication struct {
+	gorm.Model
+	UserID           uint             `json:"user_id"`
+	RequestedRole    string           `json:"requested_role"`
+	Status           ApplicationStatus `json:"status"`
+	SubmittedAt      time.Time        `json:"submitted_at"`
+	ReviewedAt       *time.Time       `json:"reviewed_at"`
+	ReviewedBy       *uint            `json:"reviewed_by"`
+	
+	// Relationships
+	User             User             `json:"user"`
+	ReviewedByUser   *User            `json:"reviewed_by_user"`
+	Worker           *EnhancedWorker  `json:"worker,omitempty"`
+	Broker           *EnhancedBroker  `json:"broker,omitempty"`
+}
+
+// RoleApplication represents the simplified role application model
 type RoleApplication struct {
-	ID            uint               `json:"id" gorm:"primaryKey"`
-	UserID        uint               `json:"user_id" gorm:"not null;uniqueIndex"`
-	User          User               `json:"-" gorm:"foreignKey:UserID"`
-	RequestedRole UserType           `json:"requested_role" gorm:"not null"`
-	Status        ApplicationStatus  `json:"status" gorm:"not null;default:'pending'"`
-	AdminNotes    string             `json:"admin_notes"`
-	SubmittedAt   time.Time          `json:"submitted_at"`
-	ReviewedAt    *time.Time         `json:"reviewed_at"`
-	ReviewedBy    *uint              `json:"reviewed_by"`
-	Admin         *User              `json:"-" gorm:"foreignKey:ReviewedBy"`
-	CreatedAt     time.Time          `json:"created_at"`
-	UpdatedAt     time.Time          `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt     `json:"deleted_at,omitempty" gorm:"index"`
+	gorm.Model
+	UserID           uint             `json:"user_id" gorm:"not null"`
+	RequestedRole    string           `json:"requested_role" gorm:"not null"`
+	Status           ApplicationStatus `json:"status" gorm:"default:'pending'"`
+	SubmittedAt      time.Time        `json:"submitted_at" gorm:"default:NOW()"`
+	ReviewedAt       *time.Time       `json:"reviewed_at"`
+	ReviewedBy       *uint            `json:"reviewed_by"`
+	
+	// Relationships
+	User             User             `json:"user" gorm:"foreignKey:UserID"`
+	ReviewedByUser   *User            `json:"reviewed_by_user" gorm:"foreignKey:ReviewedBy"`
+	Worker           *Worker          `json:"worker,omitempty" gorm:"foreignKey:RoleApplicationID"`
+	Broker           *Broker          `json:"broker,omitempty" gorm:"foreignKey:RoleApplicationID"`
 }
 
 // TableName returns the table name for RoleApplication
@@ -37,112 +131,82 @@ func (RoleApplication) TableName() string {
 	return "role_applications"
 }
 
-// CreateRoleApplicationRequest represents the comprehensive request structure for creating a role application
-type CreateRoleApplicationRequest struct {
-	AccountType string   `json:"account_type" binding:"required,oneof=worker broker"`
-	
-	// Optional user profile information (if not already set in user profile)
-	Email  *string `json:"email" binding:"omitempty,email"`
-	Gender string  `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
-	
-	// Document URLs (uploaded separately and provided as URLs)
-	AadhaarCardFront  string `json:"aadhaar_card_front" binding:"required"`
-	AadhaarCardBack   string `json:"aadhaar_card_back" binding:"required"`
-	PanCardFront      string `json:"pan_card_front" binding:"required"`
-	PanCardBack       string `json:"pan_card_back" binding:"required"`
-	Avatar            string `json:"avatar" binding:"omitempty"` // Optional if user already has avatar
-	
-	// Skills (array of skill names)
-	Skills []string `json:"skills" binding:"required,min=1"`
-	
-	// Location information (optional if user already has location)
-	Location *CreateLocationRequest `json:"location" binding:"omitempty"`
-}
+// ConvertToEnhanced converts a RoleApplication to EnhancedRoleApplication with parsed JSON
+func (ra *RoleApplication) ConvertToEnhanced() *EnhancedRoleApplication {
+	enhanced := &EnhancedRoleApplication{
+		Model:         ra.Model,
+		UserID:        ra.UserID,
+		RequestedRole: ra.RequestedRole,
+		Status:        ra.Status,
+		SubmittedAt:   ra.SubmittedAt,
+		ReviewedAt:    ra.ReviewedAt,
+		ReviewedBy:    ra.ReviewedBy,
+		User:          ra.User,
+		ReviewedByUser: ra.ReviewedByUser,
+	}
 
-// CreateBrokerApplicationRequest represents the simplified request structure for broker applications
-type CreateBrokerApplicationRequest struct {
-	Email         *string `json:"email" binding:"omitempty,email"`
-	Name          *string `json:"name" binding:"omitempty"`
-	BrokerLicense string  `json:"broker_license" binding:"required"`
-	BrokerAgency  string  `json:"broker_agency" binding:"required"`
-}
+	// Convert Worker data if exists
+	if ra.Worker != nil {
+		enhancedWorker := &EnhancedWorker{
+			Model:            ra.Worker.Model,
+			UserID:           ra.Worker.UserID,
+			RoleApplicationID: ra.Worker.RoleApplicationID,
+			WorkerType:       ra.Worker.WorkerType,
+			Experience:       ra.Worker.Experience,
+			IsAvailable:      ra.Worker.IsAvailable,
+			Rating:           ra.Worker.Rating,
+			TotalBookings:    ra.Worker.TotalBookings,
+			Earnings:         ra.Worker.Earnings,
+			TotalJobs:        ra.Worker.TotalJobs,
+			IsActive:         ra.Worker.IsActive,
+		}
 
-// CreateWorkerApplicationRequest represents the request structure for worker applications
-type CreateWorkerApplicationRequest struct {
-	// Optional user profile information (if not already set in user profile)
-	Email  *string `json:"email" binding:"omitempty,email"`
-	Gender string  `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
-	
-	// Document URLs (uploaded separately and provided as URLs)
-	AadhaarCardFront  string `json:"aadhaar_card_front" binding:"required"`
-	AadhaarCardBack   string `json:"aadhaar_card_back" binding:"required"`
-	PanCardFront      string `json:"pan_card_front" binding:"required"`
-	PanCardBack       string `json:"pan_card_back" binding:"required"`
-	Avatar            string `json:"avatar" binding:"omitempty"` // Optional if user already has avatar
-	
-	// Skills (array of skill names)
-	Skills []string `json:"skills" binding:"required,min=1"`
-	
-	// Location information (optional if user already has location)
-	Location *CreateLocationRequest `json:"location" binding:"omitempty"`
-}
+		// Parse JSON fields
+		if ra.Worker.ContactInfo != "" {
+			json.Unmarshal([]byte(ra.Worker.ContactInfo), &enhancedWorker.ContactInfo)
+		}
+		if ra.Worker.Address != "" {
+			json.Unmarshal([]byte(ra.Worker.Address), &enhancedWorker.Address)
+		}
+		if ra.Worker.BankingInfo != "" {
+			json.Unmarshal([]byte(ra.Worker.BankingInfo), &enhancedWorker.BankingInfo)
+		}
+		if ra.Worker.Documents != "" {
+			json.Unmarshal([]byte(ra.Worker.Documents), &enhancedWorker.Documents)
+		}
+		if ra.Worker.Skills != "" {
+			json.Unmarshal([]byte(ra.Worker.Skills), &enhancedWorker.Skills)
+		}
 
+		enhanced.Worker = enhancedWorker
+	}
 
+	// Convert Broker data if exists
+	if ra.Broker != nil {
+		enhancedBroker := &EnhancedBroker{
+			Model:            ra.Broker.Model,
+			UserID:           ra.Broker.UserID,
+			RoleApplicationID: ra.Broker.RoleApplicationID,
+			License:          ra.Broker.License,
+			Agency:           ra.Broker.Agency,
+			IsActive:         ra.Broker.IsActive,
+		}
 
-// UpdateRoleApplicationRequest represents the request structure for updating a role application (admin only)
-type UpdateRoleApplicationRequest struct {
-	Status     ApplicationStatus `json:"status" binding:"required,oneof=pending approved rejected"`
-	AdminNotes string            `json:"admin_notes"`
-}
+		// Parse JSON fields
+		if ra.Broker.ContactInfo != "" {
+			json.Unmarshal([]byte(ra.Broker.ContactInfo), &enhancedBroker.ContactInfo)
+		}
+		if ra.Broker.Address != "" {
+			json.Unmarshal([]byte(ra.Broker.Address), &enhancedBroker.Address)
+		}
+		if ra.Broker.Documents != "" {
+			json.Unmarshal([]byte(ra.Broker.Documents), &enhancedBroker.Documents)
+		}
 
-// RoleApplicationDetail represents a detailed role application with all related information
-type RoleApplicationDetail struct {
-	*RoleApplication
-	User     *UserDetail     `json:"user"`
-	Location *Location       `json:"location"`
-	Documents []UserDocument `json:"documents"`
-	Skills   []UserSkill     `json:"skills"`
-}
+		enhanced.Broker = enhancedBroker
+	}
 
-// UserDetail represents user information for role application details
-type UserDetail struct {
-	ID                    uint       `json:"id"`
-	Name                  string     `json:"name"`
-	Email                 *string    `json:"email"`
-	Phone                 string     `json:"phone"`
-	UserType              UserType   `json:"user_type"`
-	Avatar                string     `json:"avatar"`
-	IsActive              bool       `json:"is_active"`
-	
-	RoleApplicationStatus string     `json:"role_application_status"`
-	ApplicationDate       *time.Time `json:"application_date"`
-	ApprovalDate          *time.Time `json:"approval_date"`
-	CreatedAt             time.Time  `json:"created_at"`
-}
-
-// SimpleApplicationResponse represents a simple application response for submission
-type SimpleApplicationResponse struct {
-	ID            uint              `json:"id"`
-	UserID        uint              `json:"user_id"`
-	RequestedRole UserType          `json:"requested_role"`
-	Status        ApplicationStatus `json:"status"`
-	SubmittedAt   time.Time         `json:"submitted_at"`
-}
-
-// WorkerApplicationDetail represents a detailed worker application response
-type WorkerApplicationDetail struct {
-	*RoleApplication
-	User      *UserDetail     `json:"user"`
-	Location  *Location       `json:"location"`
-	Documents []UserDocument  `json:"documents"`
-	Skills    []UserSkill     `json:"skills"`
-}
-
-// BrokerApplicationDetail represents a detailed broker application response
-type BrokerApplicationDetail struct {
-	*RoleApplication
-	User    *UserDetail `json:"user"`
-	Broker  *Broker     `json:"broker"`
+	return enhanced
 }
 
 

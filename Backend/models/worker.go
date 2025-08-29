@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -10,61 +8,40 @@ import (
 type WorkerType string
 
 const (
-	WorkerTypeTreesIndia   WorkerType = "treesindia"
-	WorkerTypeIndependent  WorkerType = "independent"
-)
-
-// DocumentVerificationStatus represents the status of document verification
-type DocumentVerificationStatus string
-
-const (
-	DocumentVerificationStatusPending  DocumentVerificationStatus = "pending"
-	DocumentVerificationStatusVerified DocumentVerificationStatus = "verified"
-	DocumentVerificationStatusRejected DocumentVerificationStatus = "rejected"
+	WorkerTypeNormal        WorkerType = "normal"
+	WorkerTypeTreesIndia    WorkerType = "treesindia_worker"
 )
 
 // Worker represents the worker model
 type Worker struct {
 	gorm.Model
-	UserID          uint    `json:"user_id" gorm:"not null;uniqueIndex"`
+	UserID             uint       `json:"user_id" gorm:"not null;uniqueIndex"`
+	RoleApplicationID  *uint      `json:"role_application_id"`
 	
-	// Original schema fields
-	ServiceID       uint    `json:"service_id" gorm:"not null"`
-	HourlyRate      float64 `json:"hourly_rate" gorm:"not null"`
-	IsAvailable     bool    `json:"is_available" gorm:"default:true"`
-	Rating          float64 `json:"rating" gorm:"default:0"`
-	TotalBookings   int     `json:"total_bookings" gorm:"default:0"`
+	// Worker Type
+	WorkerType         WorkerType `json:"worker_type" gorm:"default:'normal'"`
 	
-	// Extended fields (added by migrations)
-	WorkerType      WorkerType `json:"worker_type" gorm:"default:'treesindia'"` // treesindia or independent
-	Skills          string  `json:"skills"`                          // JSON array of specific skills
-	Experience      int     `json:"experience_years" gorm:"column:experience_years"` // Years of experience
-	ServiceAreas    string  `json:"service_areas"`                   // JSON array of preferred service areas (optional)
-	ContactPhone    string  `json:"contact_phone"`
-	ContactEmail    string  `json:"contact_email"`
-	BankAccountHolder   string  `json:"bank_account_holder"`
-	BankAccountNumber   string  `json:"bank_account_number"`
-	BankIFSCCode        string  `json:"bank_ifsc_code"`
-	BankName            string  `json:"bank_name"`
-	BankBranch          string  `json:"bank_branch"`
-	PoliceVerificationStatus DocumentVerificationStatus `json:"police_verification_status" gorm:"default:'pending'"`
-	PoliceVerificationDocuments string `json:"police_verification_documents"` // JSON array of document URLs
-	AadhaarCardFront    string  `json:"aadhaar_card_front"`
-	AadhaarCardBack     string  `json:"aadhaar_card_back"`
-	PanCardFront        string  `json:"pan_card_front"`
-	PanCardBack         string  `json:"pan_card_back"`
-	DocumentVerifiedAt  *time.Time `json:"document_verified_at"`
-	DocumentVerifiedBy  *uint     `json:"document_verified_by"`
+	// JSON Objects
+	ContactInfo        string     `json:"contact_info"`        // JSONB: {"alternative_number": "string"}
+	Address            string     `json:"address"`             // JSONB: {"street": "string", "city": "string", "state": "string", "pincode": "string", "landmark": "string"}
+	BankingInfo        string     `json:"banking_info"`        // JSONB: {"account_number": "string", "ifsc_code": "string", "bank_name": "string", "account_holder_name": "string"}
+	Documents          string     `json:"documents"`           // JSONB: {"aadhar_card": "cloudinary_url", "pan_card": "cloudinary_url", "profile_pic": "cloudinary_url", "police_verification": "cloudinary_url"}
 	
-	// Statistics
-	Earnings    float64 `json:"earnings" gorm:"default:0"`
-	TotalJobs   int     `json:"total_jobs" gorm:"default:0"`
-	IsActive    bool    `json:"is_active" gorm:"default:true"`
+	// Skills & Experience
+	Skills             string     `json:"skills"`              // JSONB array of skill names
+	Experience         int        `json:"experience_years" gorm:"column:experience_years"` // Years of experience
+	
+	// Operational Data
+	IsAvailable        bool       `json:"is_available" gorm:"default:false"`
+	Rating             float64    `json:"rating" gorm:"default:0"`
+	TotalBookings      int        `json:"total_bookings" gorm:"default:0"`
+	Earnings           float64    `json:"earnings" gorm:"default:0"`
+	TotalJobs          int        `json:"total_jobs" gorm:"default:0"`
+	IsActive           bool       `json:"is_active" gorm:"default:false"`
 	
 	// Relationships
-	User            User    `json:"user" gorm:"foreignKey:UserID"`
-	Service         Service `json:"service" gorm:"foreignKey:ServiceID"`
-	DocumentVerifiedByUser *User `json:"document_verified_by_user" gorm:"foreignKey:DocumentVerifiedBy"`
+	User               User            `json:"-" gorm:"foreignKey:UserID"` // Exclude to avoid circular reference
+	RoleApplication    *RoleApplication `json:"role_application" gorm:"foreignKey:RoleApplicationID"`
 }
 
 // TableName returns the table name for Worker
