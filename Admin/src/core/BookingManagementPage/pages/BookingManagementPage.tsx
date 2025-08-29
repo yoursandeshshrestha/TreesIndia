@@ -277,16 +277,6 @@ export default function BookingManagementPage() {
         onChat={handleChat}
       />
 
-      {filteredBookings.length === 0 && !isLoading && (
-        <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
-          <div className="text-center">
-            <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-            <p className="text-lg font-medium">No bookings found</p>
-            <p className="text-sm">Try adjusting your search or filters</p>
-          </div>
-        </div>
-      )}
-
       {/* Quote Modal */}
       <QuoteModal
         booking={quoteBooking}
