@@ -1,19 +1,64 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/entities/booking_details_entity.dart';
 import 'bookings_state.dart';
 
 class BookingsNotifier extends StateNotifier<BookingsState> {
   final GetBookingsUseCase getBookingsUseCase;
   final CancelBookingUseCase cancelBookingUseCase;
+  Timer? _autoRefreshTimer;
 
   BookingsNotifier({
     required this.getBookingsUseCase,
     required this.cancelBookingUseCase,
-  }) : super(const BookingsState());
+  }) : super(const BookingsState()) {
+    _startAutoRefresh();
+  }
 
-  Future<void> getBookings({bool isRefresh = false, int? page}) async {
-    final currentPage = page ?? state.currentPage;
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      if (state.currentBookings.isNotEmpty) {
+        _refreshCurrentTab();
+      }
+    });
+  }
+
+  void _refreshCurrentTab() {
+    switch (state.currentTab) {
+      case BookingTab.all:
+        getBookings(tab: BookingTab.all, isRefresh: true);
+        break;
+      case BookingTab.upcoming:
+        getBookings(tab: BookingTab.upcoming, isRefresh: true);
+        break;
+      case BookingTab.completed:
+        getBookings(tab: BookingTab.completed, isRefresh: true);
+        break;
+      case BookingTab.cancelled:
+        getBookings(tab: BookingTab.cancelled, isRefresh: true);
+        break;
+    }
+  }
+
+  void switchTab(BookingTab tab) {
+    state = state.copyWith(currentTab: tab);
+
+    // Load data for the new tab if it's empty
+    if (state.currentBookings.isEmpty) {
+      getBookings(tab: tab, page: 1);
+    }
+  }
+
+  Future<void> getBookings({
+    BookingTab tab = BookingTab.all,
+    bool isRefresh = false,
+    int? page,
+  }) async {
+    final currentPage = page ?? state.currentTabPage;
+
     if (isRefresh) {
       state = state.copyWith(
         isRefreshing: true,
@@ -30,30 +75,23 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
       final response = await getBookingsUseCase.call(
         page: isRefresh ? 1 : currentPage,
         limit: 10,
+        tab: tab,
       );
 
       final newBookings = response.bookings;
       final hasMore = response.pagination.page < response.pagination.totalPages;
 
       if (isRefresh) {
-        state = state.copyWith(
-          status: BookingsStatus.success,
-          bookings: newBookings,
-          isRefreshing: false,
-          currentPage: 2,
-          hasMore: hasMore,
-          errorMessage: '',
-        );
+        _updateTabBookings(tab, newBookings, 2, hasMore);
+        state = state.copyWith(isRefreshing: false);
       } else {
+        final updatedBookings = currentPage == 1
+            ? newBookings
+            : [...state.currentBookings, ...newBookings];
+        _updateTabBookings(tab, updatedBookings, currentPage + 1, hasMore);
         state = state.copyWith(
           status: BookingsStatus.success,
-          bookings: currentPage == 1
-              ? newBookings
-              : [...state.bookings, ...newBookings],
-          currentPage: currentPage + 1,
-          hasMore: hasMore,
           isLoadingMore: false,
-          errorMessage: '',
         );
       }
     } catch (e) {
@@ -72,37 +110,66 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     }
   }
 
+  void _updateTabBookings(BookingTab tab, List<BookingDetailsEntity> bookings,
+      int nextPage, bool hasMore) {
+    switch (tab) {
+      case BookingTab.all:
+        state = state.copyWith(
+          allBookings: bookings,
+          allCurrentPage: nextPage,
+          allHasMore: hasMore,
+        );
+        break;
+      case BookingTab.upcoming:
+        state = state.copyWith(
+          upcomingBookings: bookings,
+          upcomingCurrentPage: nextPage,
+          upcomingHasMore: hasMore,
+        );
+        break;
+      case BookingTab.completed:
+        state = state.copyWith(
+          completedBookings: bookings,
+          completedCurrentPage: nextPage,
+          completedHasMore: hasMore,
+        );
+        break;
+      case BookingTab.cancelled:
+        state = state.copyWith(
+          cancelledBookings: bookings,
+          cancelledCurrentPage: nextPage,
+          cancelledHasMore: hasMore,
+        );
+        break;
+    }
+  }
+
   Future<void> loadMoreBookings() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (state.isLoadingMore || !state.currentTabHasMore) return;
 
     state = state.copyWith(isLoadingMore: true);
 
     try {
       final response = await getBookingsUseCase.call(
-        page: state.currentPage,
+        page: state.currentTabPage,
         limit: 10,
+        tab: state.currentTab,
       );
 
       final newBookings = response.bookings;
       final hasMore = response.pagination.page < response.pagination.totalPages;
 
-      state = state.copyWith(
-        bookings: [...state.bookings, ...newBookings],
-        currentPage: state.currentPage + 1,
-        hasMore: hasMore,
-        isLoadingMore: false,
-        errorMessage: '',
-      );
+      final updatedBookings = [...state.currentBookings, ...newBookings];
+      _updateTabBookings(
+          state.currentTab, updatedBookings, state.currentTabPage + 1, hasMore);
+
+      state = state.copyWith(isLoadingMore: false);
     } catch (e) {
       state = state.copyWith(
         isLoadingMore: false,
         errorMessage: e.toString(),
       );
     }
-  }
-
-  void refresh() {
-    getBookings(isRefresh: true);
   }
 
   Future<void> cancelBooking({
@@ -122,8 +189,15 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
         cancellationReason: cancellationReason,
       );
 
-      // Update the booking status in the local state
-      final updatedBookings = state.bookings.map((booking) {
+      // Update the booking status in all relevant tab lists
+      final updatedAllBookings = state.allBookings.map((booking) {
+        if (booking.id == bookingId) {
+          return booking.copyWith(status: 'cancelled');
+        }
+        return booking;
+      }).toList();
+
+      final updatedUpcomingBookings = state.upcomingBookings.map((booking) {
         if (booking.id == bookingId) {
           return booking.copyWith(status: 'cancelled');
         }
@@ -131,7 +205,8 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
       }).toList();
 
       state = state.copyWith(
-        bookings: updatedBookings,
+        allBookings: updatedAllBookings,
+        upcomingBookings: updatedUpcomingBookings,
         isCancelling: false,
         errorMessage: '',
       );
@@ -142,5 +217,15 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
       );
       rethrow;
     }
+  }
+
+  void refresh() {
+    _refreshCurrentTab();
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
   }
 }

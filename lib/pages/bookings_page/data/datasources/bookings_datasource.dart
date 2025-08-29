@@ -3,6 +3,7 @@ import '../../../../commons/constants/api_endpoints.dart';
 import '../../../../commons/utils/services/dio_client.dart';
 import '../../../../commons/utils/error_handler.dart';
 import '../models/bookings_response_model.dart';
+import '../../app/viewmodels/bookings_state.dart';
 
 class BookingsDatasource {
   final DioClient dioClient;
@@ -16,20 +17,41 @@ class BookingsDatasource {
   Future<BookingsResponseModel> getBookings({
     int page = 1,
     int limit = 10,
+    BookingTab tab = BookingTab.all,
   }) async {
     final url = ApiEndpoints.bookings.path;
+
+    // Build query parameters based on tab
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+
+    // Add status filter based on tab
+    switch (tab) {
+      case BookingTab.all:
+        // No status filter for all bookings
+        break;
+      case BookingTab.upcoming:
+        queryParams['status'] =
+            'confirmed,scheduled,assigned,in_progress,pending,quote_provided';
+        break;
+      case BookingTab.completed:
+        queryParams['status'] = 'completed';
+        break;
+      case BookingTab.cancelled:
+        queryParams['status'] = 'cancelled,rejected';
+        break;
+    }
 
     try {
       final response = await dioClient.dio.get(
         url,
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        print('📍 Parsing bookings response...');
+        print('📍 Parsing bookings response for tab: $tab');
         try {
           return BookingsResponseModel.fromJson(response.data);
         } catch (parseError) {

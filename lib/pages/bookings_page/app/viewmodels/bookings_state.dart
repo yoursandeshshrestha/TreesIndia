@@ -3,9 +3,29 @@ import '../../domain/entities/booking_details_entity.dart';
 
 enum BookingsStatus { initial, loading, success, failure }
 
+enum BookingTab { all, upcoming, completed, cancelled }
+
 class BookingsState extends Equatable {
   final BookingsStatus status;
-  final List<BookingDetailsEntity> bookings;
+  final BookingTab currentTab;
+
+  // Separate booking lists for each tab
+  final List<BookingDetailsEntity> allBookings;
+  final List<BookingDetailsEntity> upcomingBookings;
+  final List<BookingDetailsEntity> completedBookings;
+  final List<BookingDetailsEntity> cancelledBookings;
+
+  // Pagination for each tab
+  final int allCurrentPage;
+  final int upcomingCurrentPage;
+  final int completedCurrentPage;
+  final int cancelledCurrentPage;
+
+  final bool allHasMore;
+  final bool upcomingHasMore;
+  final bool completedHasMore;
+  final bool cancelledHasMore;
+
   final bool isLoadingMore;
   final bool hasMore;
   final int currentPage;
@@ -15,7 +35,19 @@ class BookingsState extends Equatable {
 
   const BookingsState({
     this.status = BookingsStatus.initial,
-    this.bookings = const [],
+    this.currentTab = BookingTab.all,
+    this.allBookings = const [],
+    this.upcomingBookings = const [],
+    this.completedBookings = const [],
+    this.cancelledBookings = const [],
+    this.allCurrentPage = 1,
+    this.upcomingCurrentPage = 1,
+    this.completedCurrentPage = 1,
+    this.cancelledCurrentPage = 1,
+    this.allHasMore = true,
+    this.upcomingHasMore = true,
+    this.completedHasMore = true,
+    this.cancelledHasMore = true,
     this.isLoadingMore = false,
     this.hasMore = true,
     this.currentPage = 1,
@@ -24,9 +56,63 @@ class BookingsState extends Equatable {
     this.errorMessage = '',
   });
 
+  // Getter for current tab's bookings
+  List<BookingDetailsEntity> get currentBookings {
+    switch (currentTab) {
+      case BookingTab.all:
+        return allBookings;
+      case BookingTab.upcoming:
+        return upcomingBookings;
+      case BookingTab.completed:
+        return completedBookings;
+      case BookingTab.cancelled:
+        return cancelledBookings;
+    }
+  }
+
+  // Getter for current tab's page
+  int get currentTabPage {
+    switch (currentTab) {
+      case BookingTab.all:
+        return allCurrentPage;
+      case BookingTab.upcoming:
+        return upcomingCurrentPage;
+      case BookingTab.completed:
+        return completedCurrentPage;
+      case BookingTab.cancelled:
+        return cancelledCurrentPage;
+    }
+  }
+
+  // Getter for current tab's hasMore
+  bool get currentTabHasMore {
+    switch (currentTab) {
+      case BookingTab.all:
+        return allHasMore;
+      case BookingTab.upcoming:
+        return upcomingHasMore;
+      case BookingTab.completed:
+        return completedHasMore;
+      case BookingTab.cancelled:
+        return cancelledHasMore;
+    }
+  }
+
   BookingsState copyWith({
     BookingsStatus? status,
-    List<BookingDetailsEntity>? bookings,
+    BookingTab? currentTab,
+    List<BookingDetailsEntity>? allBookings,
+    List<BookingDetailsEntity>? upcomingBookings,
+    List<BookingDetailsEntity>? completedBookings,
+    List<BookingDetailsEntity>? cancelledBookings,
+    int? allCurrentPage,
+    int? upcomingCurrentPage,
+    int? completedCurrentPage,
+    int? cancelledCurrentPage,
+    bool? allHasMore,
+    bool? upcomingHasMore,
+    bool? completedHasMore,
+    bool? cancelledHasMore,
     bool? isLoadingMore,
     bool? hasMore,
     int? currentPage,
@@ -36,7 +122,19 @@ class BookingsState extends Equatable {
   }) {
     return BookingsState(
       status: status ?? this.status,
-      bookings: bookings ?? this.bookings,
+      currentTab: currentTab ?? this.currentTab,
+      allBookings: allBookings ?? this.allBookings,
+      upcomingBookings: upcomingBookings ?? this.upcomingBookings,
+      completedBookings: completedBookings ?? this.completedBookings,
+      cancelledBookings: cancelledBookings ?? this.cancelledBookings,
+      allCurrentPage: allCurrentPage ?? this.allCurrentPage,
+      upcomingCurrentPage: upcomingCurrentPage ?? this.upcomingCurrentPage,
+      completedCurrentPage: completedCurrentPage ?? this.completedCurrentPage,
+      cancelledCurrentPage: cancelledCurrentPage ?? this.cancelledCurrentPage,
+      allHasMore: allHasMore ?? this.allHasMore,
+      upcomingHasMore: upcomingHasMore ?? this.upcomingHasMore,
+      completedHasMore: completedHasMore ?? this.completedHasMore,
+      cancelledHasMore: cancelledHasMore ?? this.cancelledHasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
@@ -49,7 +147,19 @@ class BookingsState extends Equatable {
   @override
   List<Object?> get props => [
         status,
-        bookings,
+        currentTab,
+        allBookings,
+        upcomingBookings,
+        completedBookings,
+        cancelledBookings,
+        allCurrentPage,
+        upcomingCurrentPage,
+        completedCurrentPage,
+        cancelledCurrentPage,
+        allHasMore,
+        upcomingHasMore,
+        completedHasMore,
+        cancelledHasMore,
         isLoadingMore,
         hasMore,
         currentPage,
