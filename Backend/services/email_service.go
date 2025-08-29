@@ -215,14 +215,12 @@ func (es *EmailService) SendApplicationRejectedEmail(user *models.User, applicat
 				<li>Status: %s</li>
 				<li>Reviewed Date: %s</li>
 			</ul>
-			<p><strong>Admin Notes:</strong></p>
-			<p>%s</p>
 			<p>You can submit a new application after addressing the feedback provided.</p>
 			<br>
 			<p>Best regards,<br>TREESINDIA Team</p>
 		</body>
 		</html>
-	`, user.Name, application.RequestedRole, application.ID, application.RequestedRole, application.Status, application.ReviewedAt.Format("January 2, 2006"), application.AdminNotes)
+	`, user.Name, application.RequestedRole, application.ID, application.RequestedRole, application.Status, application.ReviewedAt.Format("January 2, 2006"))
 
 	return es.SendEmail(*user.Email, subject, body)
 }

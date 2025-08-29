@@ -29,10 +29,14 @@ func (r *RoleApplicationRepository) GetApplicationByUserID(userID uint) (*models
 	return &application, nil
 }
 
-// GetApplicationByID gets a role application by ID
+// GetApplicationByID gets a role application by ID with user data
 func (r *RoleApplicationRepository) GetApplicationByID(id uint) (*models.RoleApplication, error) {
 	var application models.RoleApplication
-	err := r.FindByID(&application, id)
+	err := r.db.Preload("User").
+		Preload("ReviewedByUser").
+		Preload("Worker").
+		Preload("Broker").
+		First(&application, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +58,9 @@ func (r *RoleApplicationRepository) GetPendingApplications() ([]models.RoleAppli
 	var applications []models.RoleApplication
 	err := r.db.Where("status = ?", models.ApplicationStatusPending).
 		Preload("User").
+		Preload("ReviewedByUser").
+		Preload("Worker").
+		Preload("Broker").
 		Order("created_at DESC").
 		Find(&applications).Error
 	return applications, err
@@ -64,6 +71,9 @@ func (r *RoleApplicationRepository) GetApplicationsByStatus(status models.Applic
 	var applications []models.RoleApplication
 	err := r.db.Where("status = ?", status).
 		Preload("User").
+		Preload("ReviewedByUser").
+		Preload("Worker").
+		Preload("Broker").
 		Order("created_at DESC").
 		Find(&applications).Error
 	return applications, err
@@ -82,7 +92,60 @@ func (r *RoleApplicationRepository) CheckUserHasApplication(userID uint) (bool, 
 func (r *RoleApplicationRepository) GetAllApplications() ([]models.RoleApplication, error) {
 	var applications []models.RoleApplication
 	err := r.db.Preload("User").
+		Preload("ReviewedByUser").
+		Preload("Worker").
+		Preload("Broker").
 		Order("created_at DESC").
 		Find(&applications).Error
 	return applications, err
+}
+
+// GetApplicationsWithFilters gets applications with pagination and filters
+func (r *RoleApplicationRepository) GetApplicationsWithFilters(page, limit int, search, status, roleType, dateFrom, dateTo string) ([]models.RoleApplication, int64, error) {
+	var applications []models.RoleApplication
+	var total int64
+	
+	// Build the query with all necessary preloads
+	query := r.db.Model(&models.RoleApplication{}).
+		Preload("User").
+		Preload("ReviewedByUser").
+		Preload("Worker").
+		Preload("Broker")
+	
+	// Apply filters
+	if search != "" {
+		query = query.Joins("JOIN users ON users.id = role_applications.user_id").
+			Where("users.name ILIKE ? OR users.email ILIKE ? OR users.phone ILIKE ?", 
+				"%"+search+"%", "%"+search+"%", "%"+search+"%")
+	}
+	
+	if status != "" {
+		query = query.Where("role_applications.status = ?", status)
+	}
+	
+	if roleType != "" {
+		query = query.Where("role_applications.requested_role = ?", roleType)
+	}
+	
+	if dateFrom != "" {
+		query = query.Where("role_applications.created_at >= ?", dateFrom+" 00:00:00")
+	}
+	
+	if dateTo != "" {
+		query = query.Where("role_applications.created_at <= ?", dateTo+" 23:59:59")
+	}
+	
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	
+	// Apply pagination and get results
+	offset := (page - 1) * limit
+	err := query.Order("role_applications.created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&applications).Error
+	
+	return applications, total, err
 }

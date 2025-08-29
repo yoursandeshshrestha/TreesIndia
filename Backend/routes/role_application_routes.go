@@ -11,13 +11,12 @@ import (
 func SetupRoleApplicationRoutes(group *gin.RouterGroup) {
 	applicationController := controllers.NewRoleApplicationController()
 	
-	// Comprehensive role application route (authenticated users)
+	// Role application routes (authenticated users)
 	applications := group.Group("/role-applications")
 	applications.Use(middleware.AuthMiddleware(), middleware.PerformanceMiddleware())
 	{
-		applications.POST("", applicationController.SubmitApplication)
-		applications.POST("/broker", applicationController.SubmitBrokerApplication)
 		applications.POST("/worker", applicationController.SubmitWorkerApplication)
+		applications.POST("/broker", applicationController.SubmitBrokerApplication)
 		applications.GET("/me", applicationController.GetUserApplication)
 	}
 	
@@ -25,7 +24,8 @@ func SetupRoleApplicationRoutes(group *gin.RouterGroup) {
 	adminApplications := group.Group("/admin/role-applications")
 	adminApplications.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware(), middleware.PerformanceMiddleware())
 	{
-		adminApplications.GET("", applicationController.GetApplicationsByStatus)
+		adminApplications.GET("", applicationController.GetApplicationsWithFilters)
+		adminApplications.GET("/pending", applicationController.GetPendingApplications)
 		adminApplications.GET("/:id", applicationController.GetApplication)
 		adminApplications.PUT("/:id", applicationController.UpdateApplication)
 	}

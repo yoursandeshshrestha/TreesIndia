@@ -69,7 +69,7 @@ func (sr *ServiceRepository) GetByID(id uint) (*models.Service, error) {
 	logrus.Infof("ServiceRepository.GetByID called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByID service not found with ID: %d", id)
@@ -94,7 +94,7 @@ func (sr *ServiceRepository) GetByIDWithRelations(id uint) (*models.Service, err
 	logrus.Infof("ServiceRepository.GetByIDWithRelations called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("Subcategory").Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByIDWithRelations service not found with ID: %d", id)
@@ -309,7 +309,7 @@ func (sr *ServiceRepository) GetAll(excludeInactive bool) ([]models.Service, err
 	}()
 	
 	var services []models.Service
-	query := sr.GetDB().Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
 	
 	if excludeInactive {
 		query = query.Where("is_active = ?", true)
@@ -336,7 +336,7 @@ func (sr *ServiceRepository) GetBySubcategory(subcategoryID uint, excludeInactiv
 	logrus.Infof("ServiceRepository.GetBySubcategory called with subcategoryID: %d, excludeInactive: %v", subcategoryID, excludeInactive)
 	
 	var services []models.Service
-	query := sr.GetDB().Preload("ServiceAreas").Where("subcategory_id = ?", subcategoryID)
+	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas").Where("subcategory_id = ?", subcategoryID)
 	
 	if excludeInactive {
 		query = query.Where("is_active = ?", true)
@@ -380,7 +380,7 @@ func (sr *ServiceRepository) GetSummariesWithFiltersPaginated(priceType *string,
 	
 	// Use the same approach as GetByID - get all services first, then filter and paginate
 	var allServices []models.Service
-	query := sr.GetDB().Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
 	
 	// Get all services first (like GetByID does)
 	if err := query.Find(&allServices).Error; err != nil {
