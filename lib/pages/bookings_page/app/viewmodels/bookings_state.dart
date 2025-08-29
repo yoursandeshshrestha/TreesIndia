@@ -10,6 +10,7 @@ class BookingsState extends Equatable {
   final bool hasMore;
   final int currentPage;
   final bool isRefreshing;
+  final bool isCancelling;
   final String errorMessage;
 
   const BookingsState({
@@ -19,6 +20,7 @@ class BookingsState extends Equatable {
     this.hasMore = true,
     this.currentPage = 1,
     this.isRefreshing = false,
+    this.isCancelling = false,
     this.errorMessage = '',
   });
 
@@ -29,6 +31,7 @@ class BookingsState extends Equatable {
     bool? hasMore,
     int? currentPage,
     bool? isRefreshing,
+    bool? isCancelling,
     String? errorMessage,
   }) {
     return BookingsState(
@@ -38,6 +41,7 @@ class BookingsState extends Equatable {
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
       isRefreshing: isRefreshing ?? this.isRefreshing,
+      isCancelling: isCancelling ?? this.isCancelling,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -50,6 +54,7 @@ class BookingsState extends Equatable {
         hasMore,
         currentPage,
         isRefreshing,
+        isCancelling,
         errorMessage,
       ];
 }

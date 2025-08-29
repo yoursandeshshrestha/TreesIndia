@@ -49,4 +49,38 @@ class BookingsDatasource {
       throw Exception('Error getting bookings.');
     }
   }
+
+  Future<void> cancelBooking({
+    required int bookingId,
+    required String reason,
+    String? cancellationReason,
+  }) async {
+    final url = ApiEndpoints.cancelBooking.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    final payload = <String, dynamic>{
+      'reason': reason,
+    };
+
+    if (cancellationReason != null && cancellationReason.isNotEmpty) {
+      payload['cancellation_reason'] = cancellationReason;
+    }
+
+    try {
+      final response = await dioClient.dio.put(url, data: payload);
+
+      if (response.statusCode == 200) {
+        print('📍 Booking cancelled successfully: $bookingId');
+      } else {
+        throw Exception('Failed to cancel booking. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error cancelling booking.');
+    }
+  }
 }

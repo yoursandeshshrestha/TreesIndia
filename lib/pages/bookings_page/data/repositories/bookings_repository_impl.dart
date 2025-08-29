@@ -15,4 +15,17 @@ class BookingsRepositoryImpl implements BookingsRepository {
     final model = await datasource.getBookings(page: page, limit: limit);
     return model.toEntity();
   }
+
+  @override
+  Future<void> cancelBooking({
+    required int bookingId,
+    required String reason,
+    String? cancellationReason,
+  }) async {
+    await datasource.cancelBooking(
+      bookingId: bookingId,
+      reason: reason,
+      cancellationReason: cancellationReason,
+    );
+  }
 }

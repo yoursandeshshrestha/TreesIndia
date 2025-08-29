@@ -5,4 +5,10 @@ abstract class BookingsRepository {
     int page = 1,
     int limit = 10,
   });
+
+  Future<void> cancelBooking({
+    required int bookingId,
+    required String reason,
+    String? cancellationReason,
+  });
 }

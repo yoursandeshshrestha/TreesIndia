@@ -29,6 +29,7 @@ class ApiEndpoints {
     verifyPayment,
     verifyInquiryPayment,
     bookings,
+    cancelBooking,
     addresses,
     createAddress,
     updateAddress,
@@ -152,6 +153,11 @@ class ApiEndpoints {
 
   static ApiEndpoint bookings = ApiEndpoint(
     path: '/bookings',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint cancelBooking = ApiEndpoint(
+    path: '/bookings/{bookingId}/cancel',
     requiresAuth: true,
   );
 

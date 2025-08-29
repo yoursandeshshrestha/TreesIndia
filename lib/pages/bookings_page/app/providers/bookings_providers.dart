@@ -5,6 +5,7 @@ import '../../data/datasources/bookings_datasource.dart';
 import '../../data/repositories/bookings_repository_impl.dart';
 import '../../domain/repositories/bookings_repository.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
+import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../viewmodels/bookings_notifier.dart';
 import '../viewmodels/bookings_state.dart';
 
@@ -30,11 +31,19 @@ final getBookingsUseCaseProvider = Provider<GetBookingsUseCase>((ref) {
   return GetBookingsUseCase(repository: repository);
 });
 
+final cancelBookingUseCaseProvider = Provider<CancelBookingUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return CancelBookingUseCase(repository: repository);
+});
+
 final bookingsNotifierProvider =
     StateNotifierProvider<BookingsNotifier, BookingsState>((ref) {
   final getBookingsUseCase = ref.read(getBookingsUseCaseProvider);
+  final cancelBookingUseCase = ref.read(cancelBookingUseCaseProvider);
 
   return BookingsNotifier(
     getBookingsUseCase: getBookingsUseCase,
+    cancelBookingUseCase: cancelBookingUseCase,
   );
 });
