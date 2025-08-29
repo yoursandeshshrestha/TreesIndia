@@ -2,15 +2,14 @@ class WalletSummaryEntity {
   final double currentBalance;
   final double totalRecharged;
   final double totalSpent;
-  final int pendingTransactions;
-  final int completedTransactions;
+
+  final int totalTransactions;
 
   const WalletSummaryEntity({
     required this.currentBalance,
     required this.totalRecharged,
     required this.totalSpent,
-    required this.pendingTransactions,
-    required this.completedTransactions,
+    required this.totalTransactions,
   });
 
   @override
@@ -21,8 +20,7 @@ class WalletSummaryEntity {
         other.currentBalance == currentBalance &&
         other.totalRecharged == totalRecharged &&
         other.totalSpent == totalSpent &&
-        other.pendingTransactions == pendingTransactions &&
-        other.completedTransactions == completedTransactions;
+        other.totalTransactions == totalTransactions;
   }
 
   @override
@@ -30,12 +28,11 @@ class WalletSummaryEntity {
     return currentBalance.hashCode ^
         totalRecharged.hashCode ^
         totalSpent.hashCode ^
-        pendingTransactions.hashCode ^
-        completedTransactions.hashCode;
+        totalTransactions.hashCode;
   }
 
   @override
   String toString() {
-    return 'WalletSummaryEntity(currentBalance: $currentBalance, totalRecharged: $totalRecharged, totalSpent: $totalSpent, pendingTransactions: $pendingTransactions, completedTransactions: $completedTransactions)';
+    return 'WalletSummaryEntity(currentBalance: $currentBalance, totalRecharged: $totalRecharged, totalSpent: $totalSpent, totalTransactions: $totalTransactions)';
   }
 }

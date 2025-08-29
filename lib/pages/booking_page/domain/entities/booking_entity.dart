@@ -117,7 +117,7 @@ class CreateBookingRequestEntity extends Equatable {
   final String scheduledDate;
   final String scheduledTime;
   final BookingAddressEntity address;
-  final String description;
+  final String? description;
   final String contactPerson;
   final String contactPhone;
   final String? specialInstructions;
@@ -127,7 +127,7 @@ class CreateBookingRequestEntity extends Equatable {
     required this.scheduledDate,
     required this.scheduledTime,
     required this.address,
-    required this.description,
+    this.description,
     required this.contactPerson,
     required this.contactPhone,
     this.specialInstructions,
@@ -149,7 +149,7 @@ class CreateBookingRequestEntity extends Equatable {
 class CreateInquiryBookingRequestEntity extends Equatable {
   final int serviceId;
   final BookingAddressEntity address;
-  final String description;
+  final String? description;
   final String contactPerson;
   final String contactPhone;
   final String? specialInstructions;
@@ -157,7 +157,7 @@ class CreateInquiryBookingRequestEntity extends Equatable {
   const CreateInquiryBookingRequestEntity({
     required this.serviceId,
     required this.address,
-    required this.description,
+    this.description,
     required this.contactPerson,
     required this.contactPhone,
     this.specialInstructions,
@@ -174,12 +174,36 @@ class CreateInquiryBookingRequestEntity extends Equatable {
       ];
 }
 
+class InquiryBookingResponseEntity extends Equatable {
+  final BookingEntity? booking;
+  final String? message;
+  final PaymentOrderEntity? paymentOrder;
+  final bool? paymentRequired;
+
+  const InquiryBookingResponseEntity({
+    this.message,
+    this.booking,
+    this.paymentOrder,
+    this.paymentRequired,
+  });
+
+  @override
+  List<Object?> get props => [
+        booking,
+        message,
+        paymentOrder,
+        paymentRequired,
+      ];
+}
+
 class VerifyPaymentRequestEntity extends Equatable {
+  final int serviceId;
   final String razorpayPaymentId;
   final String razorpayOrderId;
   final String razorpaySignature;
 
   const VerifyPaymentRequestEntity({
+    required this.serviceId,
     required this.razorpayPaymentId,
     required this.razorpayOrderId,
     required this.razorpaySignature,
@@ -187,5 +211,5 @@ class VerifyPaymentRequestEntity extends Equatable {
 
   @override
   List<Object?> get props =>
-      [razorpayPaymentId, razorpayOrderId, razorpaySignature];
+      [serviceId, razorpayPaymentId, razorpayOrderId, razorpaySignature];
 }

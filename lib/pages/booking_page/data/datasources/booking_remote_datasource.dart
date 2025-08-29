@@ -15,12 +15,14 @@ abstract class BookingRemoteDataSource {
       int serviceId, String city, String state);
   Future<BookingResponseModel> createFixedPriceBooking(
       CreateBookingRequestModel request);
-  Future<BookingResponseModel> createInquiryBooking(
+  Future<BookingResponseModel> createWalletBooking(
+      CreateBookingRequestModel request);
+  Future<InquiryBookingResponseModel> createInquiryBooking(
       CreateInquiryBookingRequestModel request);
   Future<BookingResponseModel> verifyPayment(
       int bookingId, VerifyPaymentRequestModel verifyPaymentRequest);
   Future<BookingResponseModel> verifyInquiryPayment(
-      Map<String, dynamic> paymentData);
+      VerifyPaymentRequestModel verifyPaymentRequest);
 }
 
 class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
@@ -148,7 +150,32 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   }
 
   @override
-  Future<BookingResponseModel> createInquiryBooking(
+  Future<BookingResponseModel> createWalletBooking(
+      CreateBookingRequestModel request) async {
+    try {
+      final response = await dioClient.dio.post(
+        ApiEndpoints.createWalletBooking.path,
+        data: request.toJson(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        return BookingResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to create wallet booking');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Could not create wallet booking. Please try again.');
+    }
+  }
+
+  @override
+  Future<InquiryBookingResponseModel> createInquiryBooking(
       CreateInquiryBookingRequestModel request) async {
     try {
       final response = await dioClient.dio.post(
@@ -158,7 +185,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-        return BookingResponseModel.fromJson(data);
+        return InquiryBookingResponseModel.fromJson(data['data']);
       } else {
         throw Exception('Failed to create inquiry booking');
       }
@@ -200,17 +227,27 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   @override
   Future<BookingResponseModel> verifyInquiryPayment(
-      Map<String, dynamic> paymentData) async {
+      VerifyPaymentRequestModel verifyPaymentRequest) async {
     try {
       final response = await dioClient.dio.post(
         ApiEndpoints.verifyInquiryPayment.path,
-        data: paymentData,
+        data: verifyPaymentRequest.toJson(),
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
         if (data['success'] == true) {
-          return BookingResponseModel.fromJson(data['data']);
+          // The API returns a booking object directly, so we need to wrap it in a response format
+          final responseData = {
+            'booking': data['data'],
+            'message': data['message'],
+            'payment_required': false,
+            'payment_order': null,
+            'hold_expires_at': null,
+            'payment_type': null,
+          };
+          
+          return BookingResponseModel.fromJson(responseData);
         } else {
           throw Exception(
               data['message'] ?? 'Failed to verify inquiry payment');

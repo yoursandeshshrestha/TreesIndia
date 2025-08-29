@@ -8,7 +8,8 @@ abstract class BookingRepository {
   Future<AvailableSlotsResponseEntity> getAvailableSlots(int serviceId, String date);
   Future<ServiceAvailabilityEntity> checkServiceAvailability(int serviceId, String city, String state);
   Future<BookingResponseEntity> createFixedPriceBooking(CreateBookingRequestEntity request);
-  Future<BookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request);
+  Future<BookingResponseEntity> createWalletBooking(CreateBookingRequestEntity request);
+  Future<InquiryBookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request);
   Future<BookingResponseEntity> verifyPayment(int bookingId, VerifyPaymentRequestEntity verifyPaymentRequest);
-  Future<BookingResponseEntity> verifyInquiryPayment(Map<String, dynamic> paymentData);
+  Future<BookingResponseEntity> verifyInquiryPayment(VerifyPaymentRequestEntity verifyPaymentRequest);
 }

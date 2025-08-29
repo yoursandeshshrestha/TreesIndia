@@ -8,11 +8,15 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 class ContactInformationWidget extends StatelessWidget {
   final Function(String) onContactPersonChanged;
   final Function(String) onContactPhoneChanged;
+  final String? initialContactPerson;
+  final String? initialContactPhone;
 
   const ContactInformationWidget({
     super.key,
     required this.onContactPersonChanged,
     required this.onContactPhoneChanged,
+    this.initialContactPerson,
+    this.initialContactPhone,
   });
 
   @override
@@ -28,11 +32,13 @@ class ContactInformationWidget extends StatelessWidget {
         AlphabeticTextfieldWidget(
           onTextChanged: onContactPersonChanged,
           hintText: 'Contact Person Name',
+          initialText: initialContactPerson ?? '',
         ),
         const SizedBox(height: AppSpacing.md),
         NumericTextfieldWidget(
           onTextChanged: onContactPhoneChanged,
           hintText: 'Contact Phone',
+          initialText: initialContactPhone ?? '',
         ),
       ],
     );

@@ -23,7 +23,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bookingsNotifierProvider.notifier).getBookings();
+      ref.read(bookingsNotifierProvider.notifier).getBookings(page: 1);
     });
 
     _scrollController.addListener(() {

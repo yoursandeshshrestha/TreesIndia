@@ -74,7 +74,8 @@ class BookingDetailsBottomSheet extends StatelessWidget {
                         const SizedBox(height: AppSpacing.lg),
                         _buildQuoteSection(),
                       ],
-                      if (booking.actualStartTime != null || booking.actualEndTime != null) ...[
+                      if (booking.actualStartTime != null ||
+                          booking.actualEndTime != null) ...[
                         const SizedBox(height: AppSpacing.lg),
                         _buildActualTimingSection(),
                       ],
@@ -135,7 +136,8 @@ class BookingDetailsBottomSheet extends StatelessWidget {
           _buildDetailRow('Price', '₹${booking.service.price}'),
         if (booking.service.duration != null)
           _buildDetailRow('Duration', booking.service.duration!),
-        _buildDetailRow('Price Type', _formatPriceType(booking.service.priceType)),
+        _buildDetailRow(
+            'Price Type', _formatPriceType(booking.service.priceType)),
         if (booking.description.isNotEmpty)
           _buildDetailRow('Special Requirements', booking.description),
         if (booking.specialInstructions.isNotEmpty)
@@ -148,10 +150,18 @@ class BookingDetailsBottomSheet extends StatelessWidget {
     return _buildSection(
       title: 'Schedule',
       children: [
-        _buildDetailRow('Date', _formatDate(booking.scheduledDate)),
-        _buildDetailRow('Start Time', _formatTime(booking.scheduledTime)),
-        _buildDetailRow('End Time', _formatTime(booking.scheduledEndTime)),
-        _buildDetailRow('Duration', _calculateDuration()),
+        if (booking.scheduledDate != null)
+          _buildDetailRow('Date', _formatDate(booking.scheduledDate!)),
+        if (booking.scheduledTime != null)
+          _buildDetailRow('Start Time', _formatTime(booking.scheduledTime!)),
+        if (booking.scheduledEndTime != null)
+          _buildDetailRow('End Time', _formatTime(booking.scheduledEndTime!)),
+        if (booking.scheduledDate != null &&
+            booking.scheduledTime != null &&
+            booking.scheduledEndTime != null)
+          _buildDetailRow('Duration', _calculateDuration()),
+        if (booking.scheduledDate == null || booking.scheduledTime == null)
+          _buildDetailRow('Status', 'Schedule to be confirmed'),
       ],
     );
   }
@@ -164,7 +174,8 @@ class BookingDetailsBottomSheet extends StatelessWidget {
         _buildDetailRow('Address', booking.address.address),
         if (booking.address.landmark.isNotEmpty)
           _buildDetailRow('Landmark', booking.address.landmark),
-        _buildDetailRow('City', '${booking.address.city}, ${booking.address.state}'),
+        _buildDetailRow(
+            'City', '${booking.address.city}, ${booking.address.state}'),
         _buildDetailRow('Postal Code', booking.address.postalCode),
         if (booking.address.houseNumber.isNotEmpty)
           _buildDetailRow('House Number', booking.address.houseNumber),
@@ -186,22 +197,25 @@ class BookingDetailsBottomSheet extends StatelessWidget {
     return _buildSection(
       title: 'Booking Information',
       children: [
-        _buildDetailRow('Booking Type', _formatBookingType(booking.bookingType)),
+        _buildDetailRow(
+            'Booking Type', _formatBookingType(booking.bookingType)),
         _buildDetailRow('Status', _formatStatus(booking.status)),
-        _buildDetailRow('Payment Status', _formatPaymentStatus(booking.paymentStatus)),
+        _buildDetailRow(
+            'Payment Status', _formatPaymentStatus(booking.paymentStatus)),
         _buildDetailRow('Created On', _formatDateTime(booking.createdAt)),
         _buildDetailRow('Last Updated', _formatDateTime(booking.updatedAt)),
         if (booking.completionType != null)
           _buildDetailRow('Completion Type', booking.completionType!),
         if (booking.holdExpiresAt != null)
-          _buildDetailRow('Hold Expires At', _formatDateTime(booking.holdExpiresAt!)),
+          _buildDetailRow(
+              'Hold Expires At', _formatDateTime(booking.holdExpiresAt!)),
       ],
     );
   }
 
   Widget _buildPaymentSection() {
     if (booking.payment == null) return const SizedBox.shrink();
-    
+
     final payment = booking.payment!;
     return _buildSection(
       title: 'Payment Details',
@@ -212,12 +226,13 @@ class BookingDetailsBottomSheet extends StatelessWidget {
         _buildDetailRow('Status', _formatPaymentStatus(payment.status)),
         if (payment.description.isNotEmpty)
           _buildDetailRow('Description', payment.description),
-        if (payment.notes.isNotEmpty)
-          _buildDetailRow('Notes', payment.notes),
+        if (payment.notes.isNotEmpty) _buildDetailRow('Notes', payment.notes),
         if (payment.initiatedAt != null)
-          _buildDetailRow('Initiated At', _formatDateTime(payment.initiatedAt!)),
+          _buildDetailRow(
+              'Initiated At', _formatDateTime(payment.initiatedAt!)),
         if (payment.completedAt != null)
-          _buildDetailRow('Completed At', _formatDateTime(payment.completedAt!)),
+          _buildDetailRow(
+              'Completed At', _formatDateTime(payment.completedAt!)),
         if (payment.razorpayPaymentId != null)
           _buildDetailRow('Razorpay Payment ID', payment.razorpayPaymentId!),
       ],
@@ -235,11 +250,14 @@ class BookingDetailsBottomSheet extends StatelessWidget {
         if (booking.quoteProvidedBy != null)
           _buildDetailRow('Quote Provided By', booking.quoteProvidedBy!),
         if (booking.quoteProvidedAt != null)
-          _buildDetailRow('Quote Provided At', _formatDateTime(booking.quoteProvidedAt!)),
+          _buildDetailRow(
+              'Quote Provided At', _formatDateTime(booking.quoteProvidedAt!)),
         if (booking.quoteAcceptedAt != null)
-          _buildDetailRow('Quote Accepted At', _formatDateTime(booking.quoteAcceptedAt!)),
+          _buildDetailRow(
+              'Quote Accepted At', _formatDateTime(booking.quoteAcceptedAt!)),
         if (booking.quoteExpiresAt != null)
-          _buildDetailRow('Quote Expires At', _formatDateTime(booking.quoteExpiresAt!)),
+          _buildDetailRow(
+              'Quote Expires At', _formatDateTime(booking.quoteExpiresAt!)),
       ],
     );
   }
@@ -249,11 +267,14 @@ class BookingDetailsBottomSheet extends StatelessWidget {
       title: 'Actual Service Timing',
       children: [
         if (booking.actualStartTime != null)
-          _buildDetailRow('Actual Start Time', _formatDateTime(booking.actualStartTime!)),
+          _buildDetailRow(
+              'Actual Start Time', _formatDateTime(booking.actualStartTime!)),
         if (booking.actualEndTime != null)
-          _buildDetailRow('Actual End Time', _formatDateTime(booking.actualEndTime!)),
+          _buildDetailRow(
+              'Actual End Time', _formatDateTime(booking.actualEndTime!)),
         if (booking.actualDurationMinutes != null)
-          _buildDetailRow('Actual Duration', '${booking.actualDurationMinutes} minutes'),
+          _buildDetailRow(
+              'Actual Duration', '${booking.actualDurationMinutes} minutes'),
       ],
     );
   }
@@ -400,18 +421,43 @@ class BookingDetailsBottomSheet extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    return DateFormat('hh:mm a').format(time);
+    DateTime indianTime;
+
+    if (time.isUtc) {
+      // Convert UTC to IST (UTC+5:30)
+      indianTime = time.add(const Duration(hours: 5, minutes: 30));
+    } else {
+      // Assume it's already in IST
+      indianTime = time;
+    }
+
+    return DateFormat('hh:mm a').format(indianTime);
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return DateFormat('MMM dd, yyyy at hh:mm a').format(dateTime);
+    DateTime indianTime;
+
+    if (dateTime.isUtc) {
+      // Convert UTC to IST (UTC+5:30)
+      indianTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+    } else {
+      // Assume it's already in IST
+      indianTime = dateTime;
+    }
+
+    return DateFormat('MMM dd, yyyy at hh:mm a').format(indianTime);
   }
 
   String _calculateDuration() {
-    final duration = booking.scheduledEndTime.difference(booking.scheduledTime);
+    if (booking.scheduledEndTime == null || booking.scheduledTime == null) {
+      return 'Not specified';
+    }
+
+    final duration =
+        booking.scheduledEndTime!.difference(booking.scheduledTime!);
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
-    
+
     if (hours > 0 && minutes > 0) {
       return '${hours}h ${minutes}m';
     } else if (hours > 0) {

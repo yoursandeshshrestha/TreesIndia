@@ -7,10 +7,12 @@ import '../../data/datasources/booking_remote_datasource.dart';
 import '../../data/repositories/booking_repository_impl.dart';
 import '../../domain/usecases/check_service_availability_usecase.dart';
 import '../../domain/usecases/create_fixed_booking_usecase.dart';
+import '../../domain/usecases/create_wallet_booking_usecase.dart';
 import '../../domain/usecases/create_inquiry_booking_usecase.dart';
 import '../../domain/usecases/get_available_slots_usecase.dart';
 import '../../domain/usecases/get_booking_config_usecase.dart';
 import '../../domain/usecases/verify_payment_usecase.dart';
+import '../../domain/usecases/verify_inquiry_payment_usecase.dart';
 import '../viewmodels/booking_notifier.dart';
 import '../viewmodels/booking_state.dart';
 
@@ -48,6 +50,11 @@ final createFixedBookingUseCaseProvider = Provider((ref) {
   return CreateFixedBookingUseCase(repository);
 });
 
+final createWalletBookingUseCaseProvider = Provider((ref) {
+  final repository = ref.read(bookingRepositoryProvider);
+  return CreateWalletBookingUseCase(repository);
+});
+
 final createInquiryBookingUseCaseProvider = Provider((ref) {
   final repository = ref.read(bookingRepositoryProvider);
   return CreateInquiryBookingUseCase(repository);
@@ -56,6 +63,11 @@ final createInquiryBookingUseCaseProvider = Provider((ref) {
 final verifyPaymentUseCaseProvider = Provider((ref) {
   final repository = ref.read(bookingRepositoryProvider);
   return VerifyPaymentUseCase(repository);
+});
+
+final verifyInquiryPaymentUseCaseProvider = Provider((ref) {
+  final repository = ref.read(bookingRepositoryProvider);
+  return VerifyInquiryPaymentUseCase(repository);
 });
 
 // Razorpay Provider
@@ -70,8 +82,10 @@ final bookingNotifierProvider = StateNotifierProvider<BookingNotifier, BookingSt
     getAvailableSlotsUseCase: ref.read(getAvailableSlotsUseCaseProvider),
     checkServiceAvailabilityUseCase: ref.read(checkServiceAvailabilityUseCaseProvider),
     createFixedBookingUseCase: ref.read(createFixedBookingUseCaseProvider),
+    createWalletBookingUseCase: ref.read(createWalletBookingUseCaseProvider),
     createInquiryBookingUseCase: ref.read(createInquiryBookingUseCaseProvider),
     verifyPaymentUseCase: ref.read(verifyPaymentUseCaseProvider),
+    verifyInquiryPaymentUseCase: ref.read(verifyInquiryPaymentUseCaseProvider),
     razorpay: razorpay,
     ref: ref,
   );

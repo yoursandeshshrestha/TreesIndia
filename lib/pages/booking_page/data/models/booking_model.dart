@@ -215,8 +215,43 @@ class CreateInquiryBookingRequestModel
   }
 }
 
+class InquiryBookingResponseModel extends InquiryBookingResponseEntity {
+  const InquiryBookingResponseModel({
+     super.message,
+    super.booking,
+    super.paymentOrder,
+    super.paymentRequired,
+  });
+
+  factory InquiryBookingResponseModel.fromJson(Map<String, dynamic> json) {
+    return InquiryBookingResponseModel(
+      booking: json['booking'] != null
+          ? BookingModel.fromJson(json['booking'] as Map<String, dynamic>)
+          : null,
+      message: json['message'] as String?,
+      paymentRequired: json['payment_required'] as bool?,
+      paymentOrder: json['payment_order'] != null
+          ? PaymentOrderModel.fromJson(
+              json['payment_order'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  InquiryBookingResponseEntity toEntity() {
+    return InquiryBookingResponseEntity(
+      booking: booking != null ? (booking as BookingModel).toEntity() : null,
+      message: message,
+      paymentRequired: paymentRequired,
+      paymentOrder: paymentOrder != null
+          ? (paymentOrder as PaymentOrderModel).toEntity()
+          : null,
+    );
+  }
+}
+
 class VerifyPaymentRequestModel extends VerifyPaymentRequestEntity {
   const VerifyPaymentRequestModel({
+    required super.serviceId,
     required super.razorpayPaymentId,
     required super.razorpayOrderId,
     required super.razorpaySignature,
@@ -224,6 +259,7 @@ class VerifyPaymentRequestModel extends VerifyPaymentRequestEntity {
 
   Map<String, dynamic> toJson() {
     return {
+      'service_id': serviceId,
       'razorpay_payment_id': razorpayPaymentId,
       'razorpay_order_id': razorpayOrderId,
       'razorpay_signature': razorpaySignature,
@@ -233,6 +269,7 @@ class VerifyPaymentRequestModel extends VerifyPaymentRequestEntity {
   factory VerifyPaymentRequestModel.fromEntity(
       VerifyPaymentRequestEntity entity) {
     return VerifyPaymentRequestModel(
+      serviceId: entity.serviceId,
       razorpayPaymentId: entity.razorpayPaymentId,
       razorpayOrderId: entity.razorpayOrderId,
       razorpaySignature: entity.razorpaySignature,

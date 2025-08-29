@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
+import 'package:trees_india/pages/booking_page/app/views/widgets/booking_info_section_widget.dart';
+import 'package:trees_india/pages/booking_page/app/views/widgets/inquiry_step_indicator_widget.dart';
+import 'package:trees_india/pages/booking_page/app/views/widgets/service_details_widget.dart';
+import 'package:trees_india/pages/services_page/app/providers/service_providers.dart';
+import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
+
+import '../../../../../commons/app/user_profile_provider.dart';
+import '../../../../../commons/components/button/app/views/outline_button_widget.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
-import '../../../../../commons/components/button/app/views/solid_button_widget.dart';
-import '../../../../../commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
-import '../../../../../commons/components/textfield/app/views/numeric_textfield_widget.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
-import '../../../../../commons/widgets/address_selector/app/views/address_selector_widget.dart';
+import '../../../../../commons/widgets/address_selector/app/providers/address_providers.dart';
+import '../../../../../commons/widgets/address_selector/app/viewmodels/address_state.dart';
+import '../../../../../commons/widgets/address_selector/app/views/widgets/address_list_tile.dart';
 import '../../../../../commons/widgets/address_selector/domain/entities/address_entity.dart';
-import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import '../../../domain/entities/booking_address_entity.dart';
 import '../../../domain/entities/booking_entity.dart';
 import '../../providers/booking_providers.dart';
 import '../../viewmodels/booking_state.dart';
+import 'booking_header_widget.dart';
+import 'booking_step_buttons_widget.dart';
+import 'contact_information_widget.dart';
 
 class InquiryBookingWidget extends ConsumerStatefulWidget {
   final ServiceDetailEntity service;
@@ -28,7 +40,6 @@ class InquiryBookingWidget extends ConsumerStatefulWidget {
 }
 
 class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
-  final PageController _pageController = PageController();
   int _currentStep = 0;
 
   // Form controllers
@@ -41,8 +52,15 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
   AddressEntity? _selectedAddress;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserProfile();
+    });
+  }
+
+  @override
   void dispose() {
-    _pageController.dispose();
     _descriptionController.dispose();
     _contactPersonController.dispose();
     _contactPhoneController.dispose();
@@ -50,34 +68,59 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
     super.dispose();
   }
 
+  void _loadUserProfile() {
+    ref.read(userProfileProvider.notifier).loadUserProfile();
+    final userProfile = ref.read(userProfileProvider);
+
+    if (userProfile.user != null) {
+      _contactPersonController.text = userProfile.user?.name ?? '';
+      _contactPhoneController.text = userProfile.user?.phone ?? '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookingState = ref.watch(bookingNotifierProvider);
 
+    // Listen for user profile changes to update contact information
+    ref.listen<UserProfileState>(userProfileProvider, (previous, next) {
+      if (next.user != null && (previous?.user != next.user)) {
+        if (mounted) {
+          setState(() {
+            if (_contactPersonController.text.isEmpty) {
+              _contactPersonController.text = next.user?.name ?? '';
+            }
+            if (_contactPhoneController.text.isEmpty) {
+              _contactPhoneController.text = next.user?.phone ?? '';
+            }
+          });
+        }
+      }
+    });
+
     // Listen for inquiry creation success/failure
     ref.listen<BookingState>(bookingNotifierProvider, (previous, next) {
-      if (next.status == BookingStatus.success &&
-          next.bookingResponse != null) {
-        if (next.bookingResponse!.paymentOrder != null) {
-          // TODO: Navigate to payment screen for inquiry fee
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Inquiry created! Please complete payment to proceed.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        } else {
-          // No payment required, inquiry submitted successfully
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Inquiry submitted successfully! ID: ${next.bookingResponse!.booking.id}'),
-              backgroundColor: Colors.green,
-            ),
-          );
+      if (next.status == BookingStatus.success) {
+        // Case 1: Initial inquiry creation with payment required
+        if (next.inquiryBookingResponse != null) {
+          final response = next.inquiryBookingResponse!;
+
+          if (response.paymentRequired == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const InfoSnackbarWidget(
+                message: 'Inquiry created! Payment in progress...',
+              ).createSnackBar(),
+            );
+            // Payment will be handled automatically by Razorpay
+          } else {
+            _showPaymentSuccessDialog();
+          }
         }
-        Navigator.pop(context);
+        // Case 2: Payment verification completed (inquiryBookingResponse is null, bookingResponse is set)
+        else if (next.bookingResponse != null &&
+            previous?.inquiryBookingResponse != null) {
+          _showPaymentSuccessDialog();
+        }
       } else if (next.status == BookingStatus.failure) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -91,98 +134,46 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
     return Column(
       children: [
         // Header
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    H3Bold(
-                      text: 'Submit Inquiry for ${widget.service.name}',
-                      color: AppColors.brandNeutral900,
-                    ),
-                    if (bookingState.bookingConfig?.inquiryBookingFee != null)
-                      B3Regular(
-                        text:
-                            'Inquiry fee: ₹${bookingState.bookingConfig!.inquiryBookingFee}',
-                        color: AppColors.brandNeutral600,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        BookingHeaderWidget(service: widget.service),
         const Divider(height: 1),
 
         // Step Indicator
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              _buildStepIndicator(0, 'Details', _currentStep >= 0),
-              const Expanded(child: Divider()),
-              _buildStepIndicator(1, 'Review', _currentStep >= 1),
-            ],
-          ),
-        ),
+        InquiryStepIndicatorWidget(currentStep: _currentStep),
 
         // Content
         Expanded(
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentStep = index;
-              });
-            },
-            children: [
-              _buildDetailsStep(),
-              _buildReviewStep(bookingState),
-            ],
-          ),
+          child: _getCurrentStepWidget(bookingState),
+        ),
+
+        // Bottom Buttons
+        BookingStepButtonsWidget(
+          currentStep: _currentStep,
+          onBack: _currentStep > 0 ? () => _previousStep() : null,
+          onContinue: _getOnContinueCallback(),
+          canContinue: _canContinue(),
+          continueLabel: _getContinueLabel(),
+          isLoading: _currentStep == 1
+              ? ref.watch(bookingNotifierProvider).isLoading
+              : false,
         ),
       ],
     );
   }
 
-  Widget _buildStepIndicator(int step, String label, bool isActive) {
-    return Column(
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive
-                ? AppColors.brandPrimary600
-                : AppColors.brandNeutral200,
-          ),
-          child: Center(
-            child: B3Bold(
-              text: '${step + 1}',
-              color: isActive ? Colors.white : AppColors.brandNeutral600,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        B4Regular(
-          text: label,
-          color:
-              isActive ? AppColors.brandPrimary600 : AppColors.brandNeutral600,
-        ),
-      ],
-    );
+  Widget _getCurrentStepWidget(BookingState bookingState) {
+    switch (_currentStep) {
+      case 0:
+        return _buildDetailsStep();
+      case 1:
+        return _buildReviewStep();
+      default:
+        return _buildDetailsStep();
+    }
   }
 
   Widget _buildDetailsStep() {
+    final userProfile = ref.watch(userProfileProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -226,54 +217,17 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
 
           const SizedBox(height: AppSpacing.xl),
 
-          AddressSelectorWidget(
-            title: 'Service Address',
-            selectedAddress: _selectedAddress,
-            onAddressSelected: (address) async {
-              setState(() {
-                _selectedAddress = address;
-              });
-
-              // Check service availability for the selected address
-              final isAvailable = await ref
-                  .read(bookingNotifierProvider.notifier)
-                  .checkServiceAvailability(
-                      widget.service.id, address.city, address.state);
-
-              if (!isAvailable && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Service not available at this address'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                setState(() {
-                  _selectedAddress = null;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          H4Bold(
-            text: 'Contact Information',
-            color: AppColors.brandNeutral900,
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          AlphabeticTextfieldWidget(
-            hintText: 'Contact Person Name',
-            onTextChanged: (value) {
+          ContactInformationWidget(
+            initialContactPerson:
+                userProfile.user?.name ?? _contactPersonController.text,
+            initialContactPhone:
+                userProfile.user?.phone ?? _contactPhoneController.text,
+            onContactPersonChanged: (value) {
               setState(() {
                 _contactPersonController.text = value;
               });
             },
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          NumericTextfieldWidget(
-            hintText: 'Contact Phone',
-            onTextChanged: (value) {
+            onContactPhoneChanged: (value) {
               setState(() {
                 _contactPhoneController.text = value;
               });
@@ -282,50 +236,28 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
           const SizedBox(height: AppSpacing.xl),
 
           H4Bold(
-            text: 'Service Requirements',
-            color: AppColors.brandNeutral900,
+            text: 'Service Address',
           ),
           const SizedBox(height: AppSpacing.md),
-
-          AlphabeticTextfieldWidget(
-            hintText: 'Describe your requirements in detail',
-            onTextChanged: (value) {
-              setState(() {
-                _descriptionController.text = value;
-              });
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          AlphabeticTextfieldWidget(
-            hintText: 'Additional Notes (Optional)',
-            onTextChanged: (value) {
-              setState(() {
-                _specialInstructionsController.text = value;
-              });
-            },
-          ),
-
-          const SizedBox(height: AppSpacing.xl),
-          Row(
-            children: [
-              Expanded(
-                child: SolidButtonWidget(
-                  label: 'Review Inquiry',
-                  onPressed: _isDetailsValid() ? () => _nextStep() : null,
-                  isLoading: false,
+          if (_selectedAddress != null)
+            _buildSelectedAddressCard()
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButtonWidget(
+                    label: 'Select Address',
+                    onPressed: () => _showAddressSelectionBottomSheet(),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildReviewStep(BookingState bookingState) {
-    final inquiryFee = bookingState.bookingConfig?.inquiryBookingFee;
-
+  Widget _buildReviewStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -339,7 +271,7 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
 
           // Service Information
           Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(0),
             decoration: BoxDecoration(
               color: AppColors.brandNeutral50,
               borderRadius: BorderRadius.circular(8),
@@ -352,27 +284,20 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
                   color: AppColors.brandNeutral900,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                B3Regular(
-                  text:
-                      'Category: ${widget.service.categoryName} > ${widget.service.subcategoryName}',
-                  color: AppColors.brandNeutral600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    B2Regular(
+                      text: 'Inquiry Fee:',
+                      color: AppColors.brandNeutral700,
+                    ),
+                    B1Bold(
+                      text:
+                          '₹${ref.watch(bookingNotifierProvider).bookingConfig?.inquiryBookingFee}',
+                      color: AppColors.brandPrimary700,
+                    ),
+                  ],
                 ),
-                if (inquiryFee != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      B2Regular(
-                        text: 'Inquiry Fee:',
-                        color: AppColors.brandNeutral700,
-                      ),
-                      B1Bold(
-                        text: '₹$inquiryFee',
-                        color: AppColors.brandPrimary700,
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
@@ -381,35 +306,40 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
 
           // Address Information
           if (_selectedAddress != null)
-            _buildInfoSection('Service Address', [
-              _selectedAddress!.name,
-              _selectedAddress!.fullAddress,
-            ]),
+            BookingInfoSectionWidget(
+              title: 'Service Address',
+              info: [
+                _selectedAddress!.name,
+                _selectedAddress!.fullAddress,
+              ],
+            ),
 
           const SizedBox(height: AppSpacing.lg),
 
           // Contact Information
-          _buildInfoSection('Contact Information', [
-            _contactPersonController.text,
-            _contactPhoneController.text,
-          ]),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Requirements
-          _buildInfoSection('Service Requirements', [
-            _descriptionController.text,
-          ]),
-
-          if (_specialInstructionsController.text.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _buildInfoSection('Additional Notes', [
-              _specialInstructionsController.text,
-            ]),
-          ],
+          BookingInfoSectionWidget(
+            title: 'Contact Information',
+            info: [
+              _contactPersonController.text,
+              _contactPhoneController.text,
+            ],
+          ),
 
           const SizedBox(height: AppSpacing.xl),
+          ServiceDetailsWidget(
+            onDescriptionChanged: (value) {
+              setState(() {
+                _descriptionController.text = value;
+              });
+            },
+            onSpecialInstructionsChanged: (value) {
+              setState(() {
+                _specialInstructionsController.text = value;
+              });
+            },
+          ),
 
+          const SizedBox(height: AppSpacing.xl),
           // Disclaimer
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -441,56 +371,6 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
               ],
             ),
           ),
-
-          const SizedBox(height: AppSpacing.xl),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _previousStep(),
-                  child: const Text('Back'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: SolidButtonWidget(
-                  label: inquiryFee != null
-                      ? 'Submit & Pay ₹$inquiryFee'
-                      : 'Submit Inquiry',
-                  onPressed: () => _submitInquiry(),
-                  isLoading: bookingState.isLoading,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoSection(String title, List<String> info) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.brandNeutral200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          B2Bold(
-            text: title,
-            color: AppColors.brandNeutral900,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ...info.map((text) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: B3Regular(
-                  text: text,
-                  color: AppColors.brandNeutral700,
-                ),
-              )),
         ],
       ),
     );
@@ -498,33 +378,18 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
 
   void _nextStep() {
     if (_currentStep < 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      setState(() {
+        _currentStep++;
+      });
     }
   }
 
   void _previousStep() {
     if (_currentStep > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      setState(() {
+        _currentStep--;
+      });
     }
-  }
-
-  bool _isDetailsValid() {
-    print('selectedAddress: $_selectedAddress');
-    print('contactPerson: ${_contactPersonController.text}');
-    print('contactPhone: ${_contactPhoneController.text}');
-    print('description: ${_descriptionController.text}');
-    print('specialInstructions: ${_specialInstructionsController.text}');
-
-    return _selectedAddress != null &&
-        _contactPersonController.text.isNotEmpty &&
-        _contactPhoneController.text.isNotEmpty &&
-        _descriptionController.text.isNotEmpty;
   }
 
   void _submitInquiry() {
@@ -542,7 +407,9 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
         latitude: _selectedAddress!.latitude,
         longitude: _selectedAddress!.longitude,
       ),
-      description: _descriptionController.text,
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : null,
       contactPerson: _contactPersonController.text,
       contactPhone: _contactPhoneController.text,
       specialInstructions: _specialInstructionsController.text.isNotEmpty
@@ -551,5 +418,318 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
     );
 
     ref.read(bookingNotifierProvider.notifier).createInquiryBooking(request);
+  }
+
+  bool _canContinue() {
+    switch (_currentStep) {
+      case 0:
+        return _selectedAddress != null &&
+            _contactPersonController.text.isNotEmpty &&
+            _contactPhoneController.text.isNotEmpty;
+      case 1:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  String _getContinueLabel() {
+    switch (_currentStep) {
+      case 0:
+        return 'Continue';
+      case 1:
+        return 'Submit Inquiry';
+      default:
+        return 'Continue';
+    }
+  }
+
+  VoidCallback? _getOnContinueCallback() {
+    if (!_canContinue()) return null;
+
+    switch (_currentStep) {
+      case 0:
+        return () => _nextStep();
+      case 1:
+        return () => _submitInquiry();
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildSelectedAddressCard() {
+    if (_selectedAddress == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                B2Bold(
+                  text: _selectedAddress!.name,
+                  color: const Color(0xFF111827),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                B3Regular(
+                  text: _selectedAddress!.fullAddress,
+                  color: const Color(0xFF6B7280),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            height: 24,
+            child: ElevatedButton(
+              onPressed: () => _showAddressSelectionBottomSheet(),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                backgroundColor: AppColors.brandNeutral300,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  side: BorderSide.none,
+                ),
+              ),
+              child: B5Medium(
+                text: 'Change',
+                color: AppColors.brandNeutral800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddressSelectionBottomSheet() {
+    ref.read(addressNotifierProvider.notifier).loadAddresses();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          return Consumer(
+            builder: (context, ref, child) {
+              final addressState = ref.watch(addressNotifierProvider);
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 4,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          children: [
+                            H4Bold(text: 'Saved Addresses'),
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildAddressListContent(
+                        addressState, scrollController),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddressListContent(
+      AddressState addressState, ScrollController scrollController) {
+    if (addressState.status == AddressStatus.loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (addressState.status == AddressStatus.failure) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            B3Regular(
+              text: addressState.errorMessage ?? 'Failed to load addresses',
+              color: Colors.red,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButtonWidget(
+              label: 'Retry',
+              onPressed: () =>
+                  ref.read(addressNotifierProvider.notifier).loadAddresses(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (addressState.addresses.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.location_off,
+              size: 48,
+              color: Color(0xFF9CA3AF),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            H4Bold(
+              text: 'No addresses found',
+              color: const Color(0xFF6B7280),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            B3Regular(
+              text: 'Add your first address to continue',
+              color: const Color(0xFF9CA3AF),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      controller: scrollController,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      itemCount: addressState.addresses.length,
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AppSpacing.sm),
+      itemBuilder: (context, index) {
+        final address = addressState.addresses[index];
+        final isSelected = _selectedAddress?.id == address.id;
+
+        return AddressListTile(
+          address: address,
+          isSelected: isSelected,
+          onTap: () async {
+            final isAvailable = await ref
+                .read(bookingNotifierProvider.notifier)
+                .checkServiceAvailability(
+                    widget.service.id, address.city, address.state);
+
+            if (!mounted) return;
+
+            if (!isAvailable) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Service not available at this address'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            setState(() {
+              _selectedAddress = address;
+            });
+            Navigator.pop(context);
+          },
+        );
+      },
+    );
+  }
+
+  void _showPaymentSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        // Auto-redirect after 2 seconds
+        Future.delayed(const Duration(seconds: 4), () {
+          if (mounted && Navigator.canPop(dialogContext)) {
+            // Clear and invalidate notifiers
+            ref.read(bookingNotifierProvider.notifier).clearState();
+            ref.invalidate(bookingNotifierProvider);
+            ref.invalidate(serviceNotifierProvider);
+
+            Navigator.of(dialogContext).pop();
+            if (mounted) {
+              context.go('/bookings');
+            }
+          }
+        });
+
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Container(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 120,
+                  width: 120,
+                  child: Lottie.asset(
+                    'assets/lottie/success.json',
+                    repeat: false,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                H4Bold(
+                  text: 'Payment Successful!',
+                  color: AppColors.brandPrimary700,
+                ),
+                const SizedBox(height: 12),
+                B2Regular(
+                  text: 'Your booking has been confirmed successfully.',
+                  color: const Color(0xFF6B7280),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

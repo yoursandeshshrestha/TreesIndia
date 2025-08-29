@@ -37,7 +37,14 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<BookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request) async {
+  Future<BookingResponseEntity> createWalletBooking(CreateBookingRequestEntity request) async {
+    final requestModel = CreateBookingRequestModel.fromEntity(request);
+    final responseModel = await remoteDataSource.createWalletBooking(requestModel);
+    return responseModel.toEntity();
+  }
+
+  @override
+  Future<InquiryBookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request) async {
     final requestModel = CreateInquiryBookingRequestModel.fromEntity(request);
     final responseModel = await remoteDataSource.createInquiryBooking(requestModel);
     return responseModel.toEntity();
@@ -51,8 +58,9 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<BookingResponseEntity> verifyInquiryPayment(Map<String, dynamic> paymentData) async {
-    final responseModel = await remoteDataSource.verifyInquiryPayment(paymentData);
+  Future<BookingResponseEntity> verifyInquiryPayment(VerifyPaymentRequestEntity verifyPaymentRequest) async {
+    final requestModel = VerifyPaymentRequestModel.fromEntity(verifyPaymentRequest);
+    final responseModel = await remoteDataSource.verifyInquiryPayment(requestModel);
     return responseModel.toEntity();
   }
 }

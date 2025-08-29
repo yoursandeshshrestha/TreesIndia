@@ -10,6 +10,7 @@ class BookingState extends Equatable {
   final BookingConfigEntity? bookingConfig;
   final AvailableSlotsResponseEntity? availableSlots;
   final BookingResponseEntity? bookingResponse;
+  final InquiryBookingResponseEntity? inquiryBookingResponse;
   final String? errorMessage;
   final bool isLoading;
   final String? selectedDate;
@@ -20,6 +21,7 @@ class BookingState extends Equatable {
     this.bookingConfig,
     this.availableSlots,
     this.bookingResponse,
+    this.inquiryBookingResponse,
     this.errorMessage,
     this.isLoading = false,
     this.selectedDate,
@@ -31,6 +33,7 @@ class BookingState extends Equatable {
     BookingConfigEntity? bookingConfig,
     AvailableSlotsResponseEntity? availableSlots,
     BookingResponseEntity? bookingResponse,
+    InquiryBookingResponseEntity? inquiryBookingResponse,
     String? errorMessage,
     bool? isLoading,
     String? selectedDate,
@@ -41,6 +44,7 @@ class BookingState extends Equatable {
       bookingConfig: bookingConfig ?? this.bookingConfig,
       availableSlots: availableSlots ?? this.availableSlots,
       bookingResponse: bookingResponse ?? this.bookingResponse,
+      inquiryBookingResponse: inquiryBookingResponse ?? this.inquiryBookingResponse,
       errorMessage: errorMessage ?? this.errorMessage,
       isLoading: isLoading ?? this.isLoading,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -54,6 +58,7 @@ class BookingState extends Equatable {
         bookingConfig,
         availableSlots,
         bookingResponse,
+        inquiryBookingResponse,
         errorMessage,
         isLoading,
         selectedDate,

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/domain/entities/wallet_summary_entity.dart';
 import '../../../../../../../../commons/environment/global_environment.dart';
 import '../../domain/entities/wallet_recharge_entity.dart';
 import '../../domain/usecases/get_wallet_summary_usecase.dart';
@@ -46,6 +47,10 @@ class WalletNotifier extends StateNotifier<WalletState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  Future<WalletSummaryEntity> getWalletSummary() async {
+    return await getWalletSummaryUseCase();
   }
 
   Future<void> _loadWalletSummary() async {

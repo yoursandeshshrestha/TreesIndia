@@ -88,6 +88,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
 
+    if (name.isEmpty && email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please fill in all fields'),
+        ),
+      );
+    }
+
     print(
         'Updating profile with name: $name, email: $email, gender: $_selectedGender');
 
@@ -137,13 +145,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
-            color: Colors.white,
+            color: AppColors.brandPrimary600,
           ),
           onPressed: () => context.pop(),
         ),
         title: H2Bold(
           text: 'Edit Profile',
-          color: Colors.white,
+          color: AppColors.brandPrimary600,
         ),
         centerTitle: true,
       ),

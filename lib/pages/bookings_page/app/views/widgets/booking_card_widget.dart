@@ -24,93 +24,96 @@ class BookingCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: H4Bold(
-                    text: booking.service.name,
-                    color: AppColors.brandNeutral800,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: H4Bold(
+                      text: booking.service.name,
+                      color: AppColors.brandNeutral800,
+                    ),
                   ),
-                ),
-                _buildStatusChip(booking.status),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                const Icon(
-                  Icons.confirmation_number_outlined,
-                  size: 16,
-                  color: AppColors.brandNeutral600,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                B3Medium(
-                  text: booking.bookingReference,
-                  color: AppColors.brandNeutral600,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                const Icon(
-                  Icons.schedule,
-                  size: 16,
-                  color: AppColors.brandNeutral600,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                B3Medium(
-                  text: _formatDateTime(
-                      booking.scheduledDate, booking.scheduledTime),
-                  color: AppColors.brandNeutral600,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: AppColors.brandNeutral600,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: B3Medium(
-                    text: '${booking.address.name}, ${booking.address.city}',
+                  _buildStatusChip(booking.status),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 16,
                     color: AppColors.brandNeutral600,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    _buildPaymentStatusChip(booking.paymentStatus),
-                    const SizedBox(width: AppSpacing.sm),
-                    B3Bold(
-                      text: booking.bookingType.toUpperCase(),
-                      color: AppColors.brandNeutral500,
-                    ),
-                  ],
-                ),
-                if (booking.service.price != null)
+                  const SizedBox(width: AppSpacing.xs),
                   B3Medium(
-                    text: '₹${booking.service.price}',
-                    color: AppColors.brandPrimary600,
+                    text: booking.bookingReference,
+                    color: AppColors.brandNeutral600,
                   ),
-              ],
-            ),
-          ],
-        ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: AppColors.brandNeutral600,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  B3Medium(
+                    text: booking.scheduledDate != null &&
+                            booking.scheduledTime != null
+                        ? _formatDateTime(
+                            booking.scheduledDate!, booking.scheduledTime!)
+                        : 'To be scheduled after quote acceptance',
+                    color: AppColors.brandNeutral600,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: AppColors.brandNeutral600,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: B3Medium(
+                      text: '${booking.address.name}, ${booking.address.city}',
+                      color: AppColors.brandNeutral600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      _buildPaymentStatusChip(booking.paymentStatus),
+                      const SizedBox(width: AppSpacing.sm),
+                      B3Bold(
+                        text: booking.bookingType.toUpperCase(),
+                        color: AppColors.brandNeutral500,
+                      ),
+                    ],
+                  ),
+                  if (booking.service.price != null)
+                    B3Medium(
+                      text: '₹${booking.service.price}',
+                      color: AppColors.brandPrimary600,
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -248,6 +251,16 @@ class BookingCardWidget extends StatelessWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
-    return '${dateFormat.format(date)} at ${timeFormat.format(time)}';
+    DateTime indianTime;
+
+    if (time.isUtc) {
+      // Convert UTC to IST (UTC+5:30)
+      indianTime = time.add(const Duration(hours: 5, minutes: 30));
+    } else {
+      // Assume it's already in IST
+      indianTime = time;
+    }
+
+    return '${dateFormat.format(date)} at ${timeFormat.format(indianTime)}';
   }
 }

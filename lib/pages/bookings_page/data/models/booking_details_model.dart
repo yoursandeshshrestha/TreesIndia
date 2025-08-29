@@ -53,9 +53,15 @@ class BookingDetailsModel extends BookingDetailsEntity {
       paymentStatus: json['payment_status'] as String,
       bookingType: json['booking_type'] as String,
       completionType: json['completion_type'] as String?,
-      scheduledDate: DateTime.parse(json['scheduled_date'] as String),
-      scheduledTime: DateTime.parse(json['scheduled_time'] as String),
-      scheduledEndTime: DateTime.parse(json['scheduled_end_time'] as String),
+      scheduledDate: json['scheduled_date'] != null
+          ? DateTime.parse(json['scheduled_date'] as String)
+          : null,
+      scheduledTime: json['scheduled_time'] != null
+          ? DateTime.parse(json['scheduled_time'] as String)
+          : null,
+      scheduledEndTime: json['scheduled_end_time'] != null
+          ? DateTime.parse(json['scheduled_end_time'] as String)
+          : null,
       actualStartTime: json['actual_start_time'] != null
           ? DateTime.parse(json['actual_start_time'] as String)
           : null,
@@ -75,7 +81,7 @@ class BookingDetailsModel extends BookingDetailsEntity {
           ? (json['quote_amount'] as num).toDouble()
           : null,
       quoteNotes: json['quote_notes'] as String? ?? '',
-      quoteProvidedBy: json['quote_provided_by'] as String?,
+      quoteProvidedBy: json['quote_provided_by']?.toString(),
       quoteProvidedAt: json['quote_provided_at'] != null
           ? DateTime.parse(json['quote_provided_at'] as String)
           : null,
@@ -105,9 +111,9 @@ class BookingDetailsModel extends BookingDetailsEntity {
       'payment_status': paymentStatus,
       'booking_type': bookingType,
       'completion_type': completionType,
-      'scheduled_date': scheduledDate.toIso8601String(),
-      'scheduled_time': scheduledTime.toIso8601String(),
-      'scheduled_end_time': scheduledEndTime.toIso8601String(),
+      'scheduled_date': scheduledDate?.toIso8601String(),
+      'scheduled_time': scheduledTime?.toIso8601String(),
+      'scheduled_end_time': scheduledEndTime?.toIso8601String(),
       'actual_start_time': actualStartTime?.toIso8601String(),
       'actual_end_time': actualEndTime?.toIso8601String(),
       'actual_duration_minutes': actualDurationMinutes,

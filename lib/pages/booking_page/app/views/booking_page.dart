@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/pages/booking_page/app/providers/booking_providers.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../services_page/domain/entities/service_detail_entity.dart';
 import 'widgets/fixed_price_booking_widget.dart';
@@ -22,6 +23,9 @@ class _BookingPageState extends ConsumerState<BookingPage> {
   void initState() {
     super.initState();
     // Booking config is already loaded in service detail page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(bookingNotifierProvider.notifier).loadBookingConfig();
+    });
   }
 
   @override

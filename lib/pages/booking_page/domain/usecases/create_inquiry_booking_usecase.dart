@@ -6,7 +6,7 @@ class CreateInquiryBookingUseCase {
 
   CreateInquiryBookingUseCase(this.repository);
 
-  Future<BookingResponseEntity> call(CreateInquiryBookingRequestEntity request) async {
+  Future<InquiryBookingResponseEntity> call(CreateInquiryBookingRequestEntity request) async {
     return await repository.createInquiryBooking(request);
   }
 }

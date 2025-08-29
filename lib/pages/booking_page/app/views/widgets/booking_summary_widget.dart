@@ -41,7 +41,7 @@ class BookingSummaryWidget extends StatelessWidget {
 
         // Service Information
         Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(0),
           decoration: BoxDecoration(
             color: AppColors.brandNeutral50,
             borderRadius: BorderRadius.circular(8),

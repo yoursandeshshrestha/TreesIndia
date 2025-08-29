@@ -4,15 +4,13 @@ class WalletSummaryModel {
   final double currentBalance;
   final double totalRecharged;
   final double totalSpent;
-  final int pendingTransactions;
-  final int completedTransactions;
+  final int totalTransactions;
 
   const WalletSummaryModel({
     required this.currentBalance,
     required this.totalRecharged,
     required this.totalSpent,
-    required this.pendingTransactions,
-    required this.completedTransactions,
+    required this.totalTransactions,
   });
 
   factory WalletSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -20,18 +18,16 @@ class WalletSummaryModel {
       currentBalance: (json['current_balance'] as num? ?? 0).toDouble(),
       totalRecharged: (json['total_recharge'] as num? ?? 0).toDouble(),
       totalSpent: (json['total_spent'] as num? ?? 0).toDouble(),
-      pendingTransactions: 0, // Not provided by API, defaulting to 0
-      completedTransactions: json['total_transactions'] as int? ?? 0,
+      totalTransactions: json['total_transactions'] as int? ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'current_balance': currentBalance,
-      'total_recharged': totalRecharged,
+      'total_recharge': totalRecharged,
       'total_spent': totalSpent,
-      'pending_transactions': pendingTransactions,
-      'completed_transactions': completedTransactions,
+      'total_transactions': totalTransactions,
     };
   }
 
@@ -40,8 +36,7 @@ class WalletSummaryModel {
       currentBalance: currentBalance,
       totalRecharged: totalRecharged,
       totalSpent: totalSpent,
-      pendingTransactions: pendingTransactions,
-      completedTransactions: completedTransactions,
+      totalTransactions: totalTransactions,
     );
   }
 
@@ -53,8 +48,7 @@ class WalletSummaryModel {
         other.currentBalance == currentBalance &&
         other.totalRecharged == totalRecharged &&
         other.totalSpent == totalSpent &&
-        other.pendingTransactions == pendingTransactions &&
-        other.completedTransactions == completedTransactions;
+        other.totalTransactions == totalTransactions;
   }
 
   @override
@@ -62,12 +56,11 @@ class WalletSummaryModel {
     return currentBalance.hashCode ^
         totalRecharged.hashCode ^
         totalSpent.hashCode ^
-        pendingTransactions.hashCode ^
-        completedTransactions.hashCode;
+        totalTransactions.hashCode;
   }
 
   @override
   String toString() {
-    return 'WalletSummaryModel(currentBalance: $currentBalance, totalRecharged: $totalRecharged, totalSpent: $totalSpent, pendingTransactions: $pendingTransactions, completedTransactions: $completedTransactions)';
+    return 'WalletSummaryModel(currentBalance: $currentBalance, totalRecharged: $totalRecharged, totalSpent: $totalSpent, totalTransactions: $totalTransactions)';
   }
 }

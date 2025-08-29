@@ -9,7 +9,8 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     required this.getBookingsUseCase,
   }) : super(const BookingsState());
 
-  Future<void> getBookings({bool isRefresh = false}) async {
+  Future<void> getBookings({bool isRefresh = false, int? page}) async {
+    final currentPage = page ?? state.currentPage;
     if (isRefresh) {
       state = state.copyWith(
         isRefreshing: true,
@@ -24,7 +25,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
 
     try {
       final response = await getBookingsUseCase.call(
-        page: isRefresh ? 1 : state.currentPage,
+        page: isRefresh ? 1 : currentPage,
         limit: 10,
       );
 
@@ -43,10 +44,10 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
       } else {
         state = state.copyWith(
           status: BookingsStatus.success,
-          bookings: state.currentPage == 1 
+          bookings: currentPage == 1 
               ? newBookings 
               : [...state.bookings, ...newBookings],
-          currentPage: state.currentPage + 1,
+          currentPage: currentPage + 1,
           hasMore: hasMore,
           isLoadingMore: false,
           errorMessage: '',

@@ -20,13 +20,13 @@ class ServiceDetailsWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         H4Bold(
-          text: 'Service Details',
+          text: 'Service Details (Optional)',
           color: AppColors.brandNeutral900,
         ),
         const SizedBox(height: AppSpacing.md),
         AlphabeticTextfieldWidget(
           onTextChanged: onDescriptionChanged,
-          hintText: 'Service Description',
+          hintText: 'Service Description (Optional)',
         ),
         const SizedBox(height: AppSpacing.md),
         AlphabeticTextfieldWidget(

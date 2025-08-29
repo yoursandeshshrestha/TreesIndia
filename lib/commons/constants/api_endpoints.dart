@@ -23,6 +23,7 @@ class ApiEndpoints {
     bookingConfig,
     availableSlots,
     createBooking,
+    createWalletBooking,
     createInquiryBooking,
     serviceAvailability,
     verifyPayment,
@@ -121,6 +122,11 @@ class ApiEndpoints {
 
   static ApiEndpoint createBooking = ApiEndpoint(
     path: '/bookings',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createWalletBooking = ApiEndpoint(
+    path: '/bookings/wallet',
     requiresAuth: true,
   );
 

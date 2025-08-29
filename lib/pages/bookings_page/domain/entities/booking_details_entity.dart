@@ -15,9 +15,9 @@ class BookingDetailsEntity extends Equatable {
   final String paymentStatus;
   final String bookingType;
   final String? completionType;
-  final DateTime scheduledDate;
-  final DateTime scheduledTime;
-  final DateTime scheduledEndTime;
+  final DateTime? scheduledDate;
+  final DateTime? scheduledTime;
+  final DateTime? scheduledEndTime;
   final DateTime? actualStartTime;
   final DateTime? actualEndTime;
   final int? actualDurationMinutes;
@@ -48,9 +48,9 @@ class BookingDetailsEntity extends Equatable {
     required this.paymentStatus,
     required this.bookingType,
     this.completionType,
-    required this.scheduledDate,
-    required this.scheduledTime,
-    required this.scheduledEndTime,
+    this.scheduledDate,
+    this.scheduledTime,
+    this.scheduledEndTime,
     this.actualStartTime,
     this.actualEndTime,
     this.actualDurationMinutes,
