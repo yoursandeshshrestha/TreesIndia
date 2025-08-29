@@ -174,7 +174,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 	query.Count(&total)
 
 	// Get users with pagination and filters
-	if err := query.Preload("UserNotificationSettings").Preload("Subscription").Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
+	if err := query.Preload("UserNotificationSettings").Preload("Subscription").Preload("Worker").Preload("Broker").Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
 		return
 	}
@@ -213,7 +213,7 @@ func (ac *AdminController) GetUserByID(c *gin.Context) {
 	}
 
 	var user models.User
-			if err := ac.db.Preload("UserNotificationSettings").Preload("Subscription").First(&user, userID).Error; err != nil {
+	if err := ac.db.Preload("UserNotificationSettings").Preload("Subscription").Preload("Worker").Preload("Broker").First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User does not exist"))
 			return
@@ -423,14 +423,14 @@ func (ac *AdminController) ToggleUserActivation(c *gin.Context) {
 	}))
 }
 
-// ToggleWorkerType toggles worker type between treesindia and independent
+// ToggleWorkerType toggles worker type between normal and treesindia_worker
 // @Summary Toggle worker type (admin)
-// @Description Toggle worker type between treesindia and independent
+// @Description Toggle worker type between normal and treesindia_worker
 // @Tags Admin Management
 // @Accept json
 // @Produce json
 // @Param worker_id path int true "Worker ID"
-// @Param worker_type body map[string]string true "Worker type (treesindia or independent)"
+// @Param worker_type body map[string]string true "Worker type (normal or treesindia_worker)"
 // @Success 200 {object} views.Response{data=models.Worker}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
@@ -457,8 +457,8 @@ func (ac *AdminController) ToggleWorkerType(c *gin.Context) {
 		return
 	}
 
-	if workerType != "treesindia" && workerType != "independent" {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid worker type", "Worker type must be 'treesindia' or 'independent'"))
+	if workerType != "normal" && workerType != "treesindia_worker" {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid worker type", "Worker type must be 'normal' or 'treesindia_worker'"))
 		return
 	}
 

@@ -40,15 +40,16 @@ CREATE INDEX IF NOT EXISTS idx_worker_assignments_assigned_at ON worker_assignme
 
 -- Indexes for workers table
 CREATE INDEX IF NOT EXISTS idx_workers_user_id ON workers(user_id);
-CREATE INDEX IF NOT EXISTS idx_workers_service_id ON workers(service_id);
-CREATE INDEX IF NOT EXISTS idx_workers_is_available ON workers(is_available);
+CREATE INDEX IF NOT EXISTS idx_workers_role_application_id ON workers(role_application_id);
 CREATE INDEX IF NOT EXISTS idx_workers_worker_type ON workers(worker_type);
-CREATE INDEX IF NOT EXISTS idx_workers_police_verification_status ON workers(police_verification_status);
+CREATE INDEX IF NOT EXISTS idx_workers_is_available ON workers(is_available);
 CREATE INDEX IF NOT EXISTS idx_workers_is_active ON workers(is_active);
 
 -- Indexes for brokers table
 CREATE INDEX IF NOT EXISTS idx_brokers_user_id ON brokers(user_id);
+CREATE INDEX IF NOT EXISTS idx_brokers_role_application_id ON brokers(role_application_id);
 CREATE INDEX IF NOT EXISTS idx_brokers_license ON brokers(license);
+CREATE INDEX IF NOT EXISTS idx_brokers_is_active ON brokers(is_active);
 
 -- Indexes for locations table
 CREATE INDEX IF NOT EXISTS idx_locations_user_id ON locations(user_id);
@@ -60,9 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_addresses_is_default ON addresses(is_default);
 CREATE INDEX IF NOT EXISTS idx_addresses_city ON addresses(city);
 CREATE INDEX IF NOT EXISTS idx_addresses_state ON addresses(state);
 
--- Indexes for user_documents table
-CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_documents_status ON user_documents(status);
+
 
 -- Indexes for role_applications table
 CREATE INDEX IF NOT EXISTS idx_role_applications_user_id ON role_applications(user_id);
@@ -89,21 +88,21 @@ DROP INDEX IF EXISTS idx_wallet_transactions_transaction_type;
 DROP INDEX IF EXISTS idx_wallet_transactions_user_id;
 DROP INDEX IF EXISTS idx_role_applications_status;
 DROP INDEX IF EXISTS idx_role_applications_user_id;
-DROP INDEX IF EXISTS idx_user_documents_status;
-DROP INDEX IF EXISTS idx_user_documents_user_id;
+
 DROP INDEX IF EXISTS idx_addresses_state;
 DROP INDEX IF EXISTS idx_addresses_city;
 DROP INDEX IF EXISTS idx_addresses_is_default;
 DROP INDEX IF EXISTS idx_addresses_user_id;
 DROP INDEX IF EXISTS idx_locations_is_active;
 DROP INDEX IF EXISTS idx_locations_user_id;
+DROP INDEX IF EXISTS idx_brokers_is_active;
 DROP INDEX IF EXISTS idx_brokers_license;
+DROP INDEX IF EXISTS idx_brokers_role_application_id;
 DROP INDEX IF EXISTS idx_brokers_user_id;
 DROP INDEX IF EXISTS idx_workers_is_active;
-DROP INDEX IF EXISTS idx_workers_police_verification_status;
-DROP INDEX IF EXISTS idx_workers_worker_type;
 DROP INDEX IF EXISTS idx_workers_is_available;
-DROP INDEX IF EXISTS idx_workers_service_id;
+DROP INDEX IF EXISTS idx_workers_worker_type;
+DROP INDEX IF EXISTS idx_workers_role_application_id;
 DROP INDEX IF EXISTS idx_workers_user_id;
 DROP INDEX IF EXISTS idx_worker_assignments_assigned_at;
 DROP INDEX IF EXISTS idx_worker_assignments_status;
