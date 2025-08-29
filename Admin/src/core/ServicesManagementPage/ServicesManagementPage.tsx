@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import ServiceHeader from "@/core/ServicesManagementPage/components/ServiceHeader";
 import ServiceFilters from "@/core/ServicesManagementPage/components/ServiceFilters";
 import ServiceTable from "@/core/ServicesManagementPage/components/ServiceTable";
+import ServiceGrid from "@/core/ServicesManagementPage/components/ServiceGrid";
 import { ServiceModal } from "@/core/ServicesManagementPage/components/ServiceModal";
 
 // Types and interfaces
@@ -56,6 +57,9 @@ function ServicesManagementPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // View state
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
 
   // Filters
   const [filters, setFilters] = useState<ServiceFilterState>({
@@ -390,6 +394,8 @@ function ServicesManagementPage() {
             setCurrentPage(1);
           }}
           onRefresh={loadServices}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         <ConfirmModal
@@ -484,13 +490,23 @@ function ServicesManagementPage() {
           isSearching={isSearching}
         />
 
-        <ServiceTable
-          services={filteredServices}
-          togglingItems={togglingItems}
-          onEditService={handleEditServiceWrapper}
-          onDeleteService={handleDeleteServiceClick}
-          onToggleServiceStatus={handleToggleServiceStatus}
-        />
+        {viewMode === "table" ? (
+          <ServiceTable
+            services={filteredServices}
+            togglingItems={togglingItems}
+            onEditService={handleEditServiceWrapper}
+            onDeleteService={handleDeleteServiceClick}
+            onToggleServiceStatus={handleToggleServiceStatus}
+          />
+        ) : (
+          <ServiceGrid
+            services={filteredServices}
+            togglingItems={togglingItems}
+            onEditService={handleEditServiceWrapper}
+            onDeleteService={handleDeleteServiceClick}
+            onToggleServiceStatus={handleToggleServiceStatus}
+          />
+        )}
 
         {filteredServices.length === 0 && !isLoading && (
           <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">

@@ -9,8 +9,10 @@ export interface Service {
   duration?: string;
   category_id: number;
   subcategory_id: number;
-  category_name: string;
-  subcategory_name: string;
+  category_name?: string; // Keep for backward compatibility
+  subcategory_name?: string; // Keep for backward compatibility
+  category?: Category; // New nested object
+  subcategory?: Subcategory; // New nested object
   is_active: boolean;
   created_at: string;
   updated_at: string;
