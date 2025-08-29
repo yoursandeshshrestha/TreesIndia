@@ -104,7 +104,7 @@ class BookingResponseModel extends BookingResponseEntity {
   const BookingResponseModel({
     required super.booking,
     required super.message,
-    required super.paymentRequired,
+    super.paymentRequired,
     super.holdExpiresAt,
     super.paymentOrder,
     super.paymentType,
@@ -217,7 +217,7 @@ class CreateInquiryBookingRequestModel
 
 class InquiryBookingResponseModel extends InquiryBookingResponseEntity {
   const InquiryBookingResponseModel({
-     super.message,
+    super.message,
     super.booking,
     super.paymentOrder,
     super.paymentRequired,

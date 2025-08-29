@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
+import 'package:trees_india/pages/booking_page/domain/usecases/create_inquiry_booking_with_wallet_usecase.dart';
 import '../../../../commons/environment/global_environment.dart';
 import '../../domain/usecases/get_booking_config_usecase.dart';
 import '../../domain/usecases/get_available_slots_usecase.dart';
@@ -12,18 +14,21 @@ import '../../domain/usecases/check_service_availability_usecase.dart';
 import '../../domain/entities/booking_entity.dart';
 import 'booking_state.dart';
 
-class BookingNotifier extends StateNotifier<BookingState> {
+class BookingNotifier extends StateNotifier<BookingState>
+    with ResettableNotifier<BookingState> {
   final GetBookingConfigUseCase getBookingConfigUseCase;
   final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
   final CheckServiceAvailabilityUseCase checkServiceAvailabilityUseCase;
   final CreateFixedBookingUseCase createFixedBookingUseCase;
+  final CreateInquiryBookingWithWalletUsecase
+      createInquiryBookingWithWalletUseCase;
   final CreateWalletBookingUseCase createWalletBookingUseCase;
   final CreateInquiryBookingUseCase createInquiryBookingUseCase;
   final VerifyPaymentUseCase verifyPaymentUseCase;
   final VerifyInquiryPaymentUseCase verifyInquiryPaymentUseCase;
   final Razorpay razorpay;
   final Ref ref;
-  
+
   int? _currentServiceId;
 
   BookingNotifier({
@@ -31,6 +36,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required this.getAvailableSlotsUseCase,
     required this.checkServiceAvailabilityUseCase,
     required this.createFixedBookingUseCase,
+    required this.createInquiryBookingWithWalletUseCase,
     required this.createWalletBookingUseCase,
     required this.createInquiryBookingUseCase,
     required this.verifyPaymentUseCase,
@@ -175,6 +181,28 @@ class BookingNotifier extends StateNotifier<BookingState> {
     }
   }
 
+  Future<void> createInquiryBookingWithWallet(
+      CreateInquiryBookingRequestEntity request) async {
+    state = state.copyWith(status: BookingStatus.loading, isLoading: true);
+
+    try {
+      final response = await createInquiryBookingWithWalletUseCase(request);
+      state = state.copyWith(
+        status: BookingStatus.success,
+        bookingResponse: response,
+        inquiryBookingResponse:
+            null, // Explicitly set to null for wallet payment
+        isLoading: false,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: error.toString(),
+        isLoading: false,
+      );
+    }
+  }
+
   void _openRazorpayCheckout(BookingResponseEntity bookingResponse) {
     final paymentOrder = bookingResponse.paymentOrder!;
     final options = {
@@ -201,7 +229,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     final bookingResponse = state.bookingResponse;
     final inquiryResponse = state.inquiryBookingResponse;
-    
+
     if (bookingResponse != null) {
       _verifyBookingPayment(
         bookingId: bookingResponse.booking.id,
@@ -267,7 +295,8 @@ class BookingNotifier extends StateNotifier<BookingState> {
     }
   }
 
-  void _openInquiryRazorpayCheckout(InquiryBookingResponseEntity inquiryResponse, int serviceId) {
+  void _openInquiryRazorpayCheckout(
+      InquiryBookingResponseEntity inquiryResponse, int serviceId) {
     _currentServiceId = serviceId;
     final paymentOrder = inquiryResponse.paymentOrder!;
     final options = {
@@ -324,7 +353,8 @@ class BookingNotifier extends StateNotifier<BookingState> {
     }
   }
 
-  void clearState() {
+  @override
+  void reset() {
     state = const BookingState();
   }
 

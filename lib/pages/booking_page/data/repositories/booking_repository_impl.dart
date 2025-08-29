@@ -51,6 +51,13 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<BookingResponseEntity> createInquiryBookingWithWallet(CreateInquiryBookingRequestEntity request) async {
+    final requestModel = CreateInquiryBookingRequestModel.fromEntity(request);
+    final responseModel = await remoteDataSource.createInquiryBookingWithWallet(requestModel);
+    return responseModel.toEntity();
+  }
+
+  @override
   Future<BookingResponseEntity> verifyPayment(int bookingId, VerifyPaymentRequestEntity verifyPaymentRequest) async {
     final requestModel = VerifyPaymentRequestModel.fromEntity(verifyPaymentRequest);
     final responseModel = await remoteDataSource.verifyPayment(bookingId, requestModel);

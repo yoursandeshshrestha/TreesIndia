@@ -10,6 +10,7 @@ abstract class BookingRepository {
   Future<BookingResponseEntity> createFixedPriceBooking(CreateBookingRequestEntity request);
   Future<BookingResponseEntity> createWalletBooking(CreateBookingRequestEntity request);
   Future<InquiryBookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request);
+  Future<BookingResponseEntity> createInquiryBookingWithWallet(CreateInquiryBookingRequestEntity request);
   Future<BookingResponseEntity> verifyPayment(int bookingId, VerifyPaymentRequestEntity verifyPaymentRequest);
   Future<BookingResponseEntity> verifyInquiryPayment(VerifyPaymentRequestEntity verifyPaymentRequest);
 }

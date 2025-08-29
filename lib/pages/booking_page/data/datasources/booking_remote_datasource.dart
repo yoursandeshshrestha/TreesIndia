@@ -19,6 +19,8 @@ abstract class BookingRemoteDataSource {
       CreateBookingRequestModel request);
   Future<InquiryBookingResponseModel> createInquiryBooking(
       CreateInquiryBookingRequestModel request);
+  Future<BookingResponseModel> createInquiryBookingWithWallet(
+      CreateInquiryBookingRequestModel request);
   Future<BookingResponseModel> verifyPayment(
       int bookingId, VerifyPaymentRequestModel verifyPaymentRequest);
   Future<BookingResponseModel> verifyInquiryPayment(
@@ -109,7 +111,8 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         if (data['success'] == true) {
           return ServiceAvailabilityModel.fromJson(data);
         } else {
-          throw Exception(data['message'] ?? 'Failed to check service availability');
+          throw Exception(
+              data['message'] ?? 'Failed to check service availability');
         }
       } else {
         throw Exception('Failed to check service availability');
@@ -120,7 +123,8 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       } else {
         errorHandler.handleGenericError(e);
       }
-      throw Exception('Could not check service availability. Please try again.');
+      throw Exception(
+          'Could not check service availability. Please try again.');
     }
   }
 
@@ -200,6 +204,32 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   }
 
   @override
+  Future<BookingResponseModel> createInquiryBookingWithWallet(
+      CreateInquiryBookingRequestModel request) async {
+    try {
+      final response = await dioClient.dio.post(
+        ApiEndpoints.createInquiryBookingWithWallet.path,
+        data: request.toJson(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        return BookingResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to create inquiry booking with wallet');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception(
+          'Could not create inquiry booking with wallet. Please try again.');
+    }
+  }
+
+  @override
   Future<BookingResponseModel> verifyPayment(
       int bookingId, VerifyPaymentRequestModel verifyPaymentRequest) async {
     try {
@@ -246,7 +276,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
             'hold_expires_at': null,
             'payment_type': null,
           };
-          
+
           return BookingResponseModel.fromJson(responseData);
         } else {
           throw Exception(

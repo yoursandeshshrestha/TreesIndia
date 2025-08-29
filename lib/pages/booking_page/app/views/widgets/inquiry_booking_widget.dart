@@ -6,6 +6,7 @@ import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_
 import 'package:trees_india/pages/booking_page/app/views/widgets/booking_info_section_widget.dart';
 import 'package:trees_india/pages/booking_page/app/views/widgets/inquiry_step_indicator_widget.dart';
 import 'package:trees_india/pages/booking_page/app/views/widgets/service_details_widget.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/app/providers/wallet_providers.dart';
 import 'package:trees_india/pages/services_page/app/providers/service_providers.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 
@@ -119,6 +120,12 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
         // Case 2: Payment verification completed (inquiryBookingResponse is null, bookingResponse is set)
         else if (next.bookingResponse != null &&
             previous?.inquiryBookingResponse != null) {
+          _showPaymentSuccessDialog();
+        }
+        // Case 3: Wallet payment completed (inquiryBookingResponse is null, bookingResponse is set, no previous inquiryBookingResponse)
+        else if (next.bookingResponse != null &&
+            next.inquiryBookingResponse == null &&
+            previous?.inquiryBookingResponse == null) {
           _showPaymentSuccessDialog();
         }
       } else if (next.status == BookingStatus.failure) {
@@ -420,6 +427,36 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
     ref.read(bookingNotifierProvider.notifier).createInquiryBooking(request);
   }
 
+  void _submitInquiryWallet() {
+    if (_selectedAddress == null) return;
+
+    final request = CreateInquiryBookingRequestEntity(
+      serviceId: widget.service.id,
+      address: BookingAddressEntity(
+        name: _selectedAddress!.name,
+        address: _selectedAddress!.address,
+        city: _selectedAddress!.city,
+        state: _selectedAddress!.state,
+        country: _selectedAddress!.country,
+        postalCode: _selectedAddress!.postalCode,
+        latitude: _selectedAddress!.latitude,
+        longitude: _selectedAddress!.longitude,
+      ),
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : null,
+      contactPerson: _contactPersonController.text,
+      contactPhone: _contactPhoneController.text,
+      specialInstructions: _specialInstructionsController.text.isNotEmpty
+          ? _specialInstructionsController.text
+          : null,
+    );
+
+    ref
+        .read(bookingNotifierProvider.notifier)
+        .createInquiryBookingWithWallet(request);
+  }
+
   bool _canContinue() {
     switch (_currentStep) {
       case 0:
@@ -451,7 +488,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
       case 0:
         return () => _nextStep();
       case 1:
-        return () => _submitInquiry();
+        return () => _showPaymentOptionsBottomSheet();
+      // return () => _submitInquiry();
       default:
         return null;
     }
@@ -684,7 +722,7 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
         Future.delayed(const Duration(seconds: 4), () {
           if (mounted && Navigator.canPop(dialogContext)) {
             // Clear and invalidate notifiers
-            ref.read(bookingNotifierProvider.notifier).clearState();
+            ref.read(bookingNotifierProvider.notifier).reset();
             ref.invalidate(bookingNotifierProvider);
             ref.invalidate(serviceNotifierProvider);
 
@@ -730,6 +768,167 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
           ),
         );
       },
+    );
+  }
+
+  void _showPaymentOptionsBottomSheet() async {
+    // Load wallet summary first
+    try {
+      ref.read(bookingNotifierProvider.notifier).startLoading();
+      await ref.read(walletNotifierProvider.notifier).loadWalletData();
+    } catch (e) {
+      // Handle error silently, will show default balance in UI
+    } finally {
+      ref.read(bookingNotifierProvider.notifier).stopLoading();
+    }
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final walletState = ref.watch(walletNotifierProvider);
+            final walletBalance =
+                walletState.walletSummary?.currentBalance ?? 0.0;
+            final servicePrice = widget.service.price?.toDouble() ?? 0.0;
+            final isWalletSufficient = walletBalance >= servicePrice;
+
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      height: 4,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  H4Bold(text: 'Choose Payment Method'),
+                  const SizedBox(height: 24),
+
+                  // Wallet Payment Option
+                  _buildPaymentOption(
+                    icon: Icons.account_balance_wallet,
+                    title: 'Pay with Wallet',
+                    subtitle:
+                        'Balance: ₹${walletBalance.toStringAsFixed(0)}${isWalletSufficient ? '' : ' (Insufficient)'}',
+                    onTap: isWalletSufficient
+                        ? () {
+                            Navigator.pop(context);
+                            _submitInquiryWallet();
+                          }
+                        : null,
+                    iconColor: AppColors.brandPrimary700,
+                    isEnabled: isWalletSufficient,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Razorpay Payment Option
+                  _buildPaymentOption(
+                    icon: Icons.payment,
+                    title: 'Pay with Razorpay',
+                    subtitle: 'Credit/Debit Card, UPI, Net Banking',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _submitInquiry();
+                    },
+                    iconColor: Colors.blue,
+                    isEnabled: true,
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback? onTap,
+    required Color iconColor,
+    required bool isEnabled,
+  }) {
+    final opacity = isEnabled ? 1.0 : 0.5;
+
+    return InkWell(
+      onTap: isEnabled ? onTap : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Opacity(
+        opacity: opacity,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isEnabled
+                  ? const Color(0xFFE5E7EB)
+                  : const Color(0xFFE5E7EB).withValues(alpha: 0.5),
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    B2Bold(
+                      text: title,
+                      color: const Color(0xFF111827),
+                    ),
+                    const SizedBox(height: 4),
+                    B3Regular(
+                      text: subtitle,
+                      color: subtitle.contains('Insufficient')
+                          ? Colors.red
+                          : const Color(0xFF6B7280),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: isEnabled
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF9CA3AF).withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -649,10 +649,11 @@ class _FixedPriceBookingWidgetState
         return Consumer(
           builder: (context, ref, child) {
             final walletState = ref.watch(walletNotifierProvider);
-            final walletBalance = walletState.walletSummary?.currentBalance ?? 0.0;
+            final walletBalance =
+                walletState.walletSummary?.currentBalance ?? 0.0;
             final servicePrice = widget.service.price?.toDouble() ?? 0.0;
             final isWalletSufficient = walletBalance >= servicePrice;
-            
+
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -677,11 +678,14 @@ class _FixedPriceBookingWidgetState
                   _buildPaymentOption(
                     icon: Icons.account_balance_wallet,
                     title: 'Pay with Wallet',
-                    subtitle: 'Balance: ₹${walletBalance.toStringAsFixed(0)}${isWalletSufficient ? '' : ' (Insufficient)'}',
-                    onTap: isWalletSufficient ? () {
-                      Navigator.pop(context);
-                      _createWalletBooking();
-                    } : null,
+                    subtitle:
+                        'Balance: ₹${walletBalance.toStringAsFixed(0)}${isWalletSufficient ? '' : ' (Insufficient)'}',
+                    onTap: isWalletSufficient
+                        ? () {
+                            Navigator.pop(context);
+                            _createWalletBooking();
+                          }
+                        : null,
                     iconColor: AppColors.brandPrimary700,
                     isEnabled: isWalletSufficient,
                   ),
@@ -720,7 +724,7 @@ class _FixedPriceBookingWidgetState
     required bool isEnabled,
   }) {
     final opacity = isEnabled ? 1.0 : 0.5;
-    
+
     return InkWell(
       onTap: isEnabled ? onTap : null,
       borderRadius: BorderRadius.circular(12),
@@ -730,9 +734,9 @@ class _FixedPriceBookingWidgetState
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isEnabled 
-                ? const Color(0xFFE5E7EB) 
-                : const Color(0xFFE5E7EB).withValues(alpha: 0.5),
+              color: isEnabled
+                  ? const Color(0xFFE5E7EB)
+                  : const Color(0xFFE5E7EB).withValues(alpha: 0.5),
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -762,9 +766,9 @@ class _FixedPriceBookingWidgetState
                     const SizedBox(height: 4),
                     B3Regular(
                       text: subtitle,
-                      color: subtitle.contains('Insufficient') 
-                        ? Colors.red 
-                        : const Color(0xFF6B7280),
+                      color: subtitle.contains('Insufficient')
+                          ? Colors.red
+                          : const Color(0xFF6B7280),
                     ),
                   ],
                 ),
@@ -772,9 +776,9 @@ class _FixedPriceBookingWidgetState
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: isEnabled 
-                  ? const Color(0xFF9CA3AF) 
-                  : const Color(0xFF9CA3AF).withValues(alpha: 0.5),
+                color: isEnabled
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF9CA3AF).withValues(alpha: 0.5),
               ),
             ],
           ),
@@ -825,10 +829,10 @@ class _FixedPriceBookingWidgetState
         Future.delayed(const Duration(seconds: 4), () {
           if (mounted && Navigator.canPop(dialogContext)) {
             // Clear and invalidate notifiers
-            ref.read(bookingNotifierProvider.notifier).clearState();
+            ref.read(bookingNotifierProvider.notifier).reset();
             ref.invalidate(bookingNotifierProvider);
             ref.invalidate(serviceNotifierProvider);
-            
+
             Navigator.of(dialogContext).pop();
             if (mounted) {
               context.go('/bookings');

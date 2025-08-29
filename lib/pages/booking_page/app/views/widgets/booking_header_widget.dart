@@ -31,11 +31,17 @@ class BookingHeaderWidget extends StatelessWidget {
                   text: 'Book ${service.name}',
                   color: AppColors.brandNeutral900,
                 ),
-                B3Regular(
-                  text:
-                      '₹${service.price} • ${service.duration ?? 'Duration not specified'}',
-                  color: AppColors.brandNeutral600,
-                ),
+                if (service.priceType == 'fixed')
+                  B3Regular(
+                    text:
+                        '₹${service.price} • ${service.duration ?? 'Duration not specified'}',
+                    color: AppColors.brandNeutral600,
+                  )
+                else
+                  B3Regular(
+                    text: ' Inquiry Required',
+                    color: AppColors.brandNeutral600,
+                  )
               ],
             ),
           ),
