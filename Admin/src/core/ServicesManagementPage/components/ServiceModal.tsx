@@ -72,6 +72,12 @@ export function ServiceModal({
       });
       setImagePreviews(service.images || []);
       setSelectedFiles([]);
+      console.log("ServiceModal - Service data set:", {
+        category_id: service.category_id,
+        subcategory_id: service.subcategory_id,
+        categories: categories.length,
+        subcategories: subcategories.length,
+      });
     } else {
       setFormData({
         name: "",
@@ -401,9 +407,16 @@ export function ServiceModal({
                       )
                     }
                     placeholder="Select subcategory"
-                    disabled={
-                      !formData.category_id || subcategories.length === 0
-                    }
+                    disabled={(() => {
+                      const isDisabled =
+                        !formData.category_id || subcategories.length === 0;
+                      console.log("Subcategory disabled check:", {
+                        category_id: formData.category_id,
+                        subcategories_length: subcategories.length,
+                        isDisabled,
+                      });
+                      return isDisabled;
+                    })()}
                     className={errors.subcategory_id ? "border-red-500" : ""}
                     width="100%"
                   />
@@ -432,46 +445,49 @@ export function ServiceModal({
                 className="hidden"
               />
 
-              {/* Image previews */}
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={preview}
-                        width={100}
-                        height={100}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={handleImageClick}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Images and Upload Area */}
+              <div className="flex flex-wrap gap-4">
+                {/* Image previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <Image
+                          src={preview}
+                          width={150}
+                          height={150}
+                          alt={`Preview ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={handleImageClick}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {/* Upload area */}
-              <div
-                onClick={handleImageClick}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-              >
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-lg font-medium text-gray-700 mb-2">
-                  Upload Service Images
-                </p>
-                <p className="text-sm text-gray-600 mb-1">
-                  Click to browse or drag and drop
-                </p>
-                <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF, WebP up to 10MB
-                </p>
+                {/* Upload area - bigger with more info */}
+                <div
+                  onClick={handleImageClick}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors w-32 h-32 flex flex-col items-center justify-center"
+                >
+                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    Add Image
+                  </p>
+                  <p className="text-xs text-gray-500 leading-tight">
+                    PNG, JPG, WebP
+                  </p>
+                  <p className="text-xs text-gray-500 leading-tight">
+                    up to 10MB
+                  </p>
+                </div>
               </div>
             </div>
           </form>

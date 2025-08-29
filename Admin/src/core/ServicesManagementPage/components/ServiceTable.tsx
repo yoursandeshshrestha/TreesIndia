@@ -5,7 +5,10 @@ import {
   Package,
   DollarSign,
   MessageSquare,
+  ExternalLink,
+  IndianRupee,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { Service } from "../types";
@@ -25,6 +28,7 @@ export default function ServiceTable({
   onDeleteService,
   onToggleServiceStatus,
 }: ServiceTableProps) {
+  const router = useRouter();
   const formatPrice = (price: number | undefined, priceType: string) => {
     if (priceType === "inquiry") {
       return "Inquiry Based";
@@ -32,31 +36,14 @@ export default function ServiceTable({
     if (price === undefined || price === null) {
       return "N/A";
     }
-    return `₹${price.toLocaleString()}`;
+    return `₹${price.toLocaleString("en-IN")}`;
   };
 
   const getPriceTypeIcon = (priceType: string) => {
     if (priceType === "fixed") {
-      return <DollarSign size={16} className="text-green-600" />;
+      return <IndianRupee size={16} className="text-green-600" />;
     }
     return <MessageSquare size={16} className="text-blue-600" />;
-  };
-
-  const getPriceTypeBadge = (priceType: string) => {
-    if (priceType === "fixed") {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <DollarSign size={12} className="mr-1" />
-          Fixed Price
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-        <MessageSquare size={12} className="mr-1" />
-        Inquiry Based
-      </span>
-    );
   };
 
   const formatDate = (dateString: string) => {
@@ -104,7 +91,6 @@ export default function ServiceTable({
                 {service.description}
               </div>
             )}
-            <div className="mt-1">{getPriceTypeBadge(service.price_type)}</div>
           </div>
         </div>
       ),
@@ -114,25 +100,15 @@ export default function ServiceTable({
       accessor: (service: Service) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900">
-            {service.category_name || "N/A"}
+            {service.category?.name || service.category_name || "N/A"}
           </div>
           <div className="text-gray-500">
-            {service.subcategory_name || "N/A"}
+            {service.subcategory?.name || service.subcategory_name || "N/A"}
           </div>
         </div>
       ),
     },
-    {
-      header: "Images",
-      accessor: (service: Service) => (
-        <div className="flex items-center gap-2">
-          <ImageIcon size={16} className="text-gray-400" />
-          <span className="text-sm font-medium text-gray-900">
-            {service.images ? service.images.length : 0}
-          </span>
-        </div>
-      ),
-    },
+
     {
       header: "Service Areas",
       accessor: (service: Service) => (
@@ -171,9 +147,6 @@ export default function ServiceTable({
               Duration: {service.duration}
             </div>
           )}
-          {service.price_type === "inquiry" && (
-            <div className="text-blue-600 text-xs">Quote-based pricing</div>
-          )}
         </div>
       ),
     },
@@ -204,6 +177,15 @@ export default function ServiceTable({
   ];
 
   const actions = [
+    {
+      label: "View",
+      icon: <ExternalLink size={14} />,
+      onClick: (service: Service) => {
+        // Navigate in the same tab
+        router.push(`/dashboard/services/${service.id}`);
+      },
+      className: "text-green-700 bg-green-100 hover:bg-green-200",
+    },
     {
       label: "Edit",
       icon: <Edit size={14} />,
