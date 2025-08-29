@@ -30,7 +30,7 @@ const CommandPalette: React.FC = () => {
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Get command items from JSON
-  const commandItems: CommandItem[] = commandItemsData.items;
+  const commandItems: CommandItem[] = commandItemsData;
 
   // Auto-scroll to selected item
   useEffect(() => {
@@ -67,12 +67,12 @@ const CommandPalette: React.FC = () => {
     // Handle filtering logic
     if (!query || typeof query !== "string" || !query.trim()) {
       // When no query, show all items
-      setFilteredItems(commandItems);
+      setFilteredItems(commandItems || []);
     } else {
       // When there's a query, filter items
       const queryLower = (query || "").toLowerCase();
 
-      const filtered = commandItems
+      const filtered = (commandItems || [])
         .filter((item) => {
           const labelMatch = item.label.toLowerCase().includes(queryLower);
           const keywordMatch = item.keywords.some((keyword) =>
@@ -118,18 +118,18 @@ const CommandPalette: React.FC = () => {
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev < filteredItems.length - 1 ? prev + 1 : 0
+            prev < (filteredItems?.length || 0) - 1 ? prev + 1 : 0
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredItems.length - 1
+            prev > 0 ? prev - 1 : (filteredItems?.length || 0) - 1
           );
           break;
         case "Enter":
           e.preventDefault();
-          const selectedItem = filteredItems[selectedIndex];
+          const selectedItem = filteredItems?.[selectedIndex];
           if (selectedItem) {
             handleItemSelect(selectedItem);
           }
@@ -212,7 +212,7 @@ const CommandPalette: React.FC = () => {
 
         {/* Results */}
         <div className="max-h-[520px] min-h-[500px] overflow-y-auto">
-          {filteredItems.length === 0 ? (
+          {!filteredItems || filteredItems.length === 0 ? (
             <div className="h-[400px] flex flex-col items-center justify-center text-gray-500">
               <p className="text-lg font-medium">No results found</p>
               <p className="text-sm">Try searching for something else</p>
