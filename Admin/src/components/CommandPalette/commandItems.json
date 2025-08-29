@@ -145,5 +145,25 @@
     "description": "Go to system configuration",
     "path": "/dashboard/admin-configs",
     "keywords": ["system", "configuration", "settings", "admin", "config"]
+  },
+  {
+    "id": "workers",
+    "label": "Workers",
+    "description": "Go to workers management",
+    "path": "/dashboard/workers",
+    "keywords": ["workers", "worker", "staff", "employees", "service providers"]
+  },
+  {
+    "id": "brokers",
+    "label": "Brokers",
+    "description": "Go to brokers management",
+    "path": "/dashboard/brokers",
+    "keywords": [
+      "brokers",
+      "broker",
+      "agents",
+      "real estate",
+      "property agents"
+    ]
   }
 ]

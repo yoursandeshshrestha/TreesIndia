@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Phone, Lock, ArrowLeft } from "lucide-react";
 import CustomInput from "@/components/Input/Base/Input";
 import CustomButton from "@/components/Button/Base/Button";
-import { useRequestOTP, useVerifyOTP, authUtils } from "@/services/api/auth";
+import { useRequestOTP, useVerifyOTP } from "@/services/api/auth";
 import { useRouter } from "next/navigation";
 import { autoSignOut } from "@/utils/authUtils";
 
@@ -14,12 +14,20 @@ const SignInPage = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [accessDeniedError, setAccessDeniedError] = useState("");
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   const requestOTPMutation = useRequestOTP();
   const verifyOTPMutation = useVerifyOTP();
 
+  // Auto-focus OTP input when step changes to "otp"
+  useEffect(() => {
+    if (step === "otp" && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [step]);
+
   const validatePhone = (phoneNumber: string) => {
-    const phoneRegex = /^\+91[0-9]{10}$/;
+    const phoneRegex = /^[0-9]{10}$/;
     return phoneRegex.test(phoneNumber);
   };
 
@@ -32,7 +40,8 @@ const SignInPage = () => {
     setAccessDeniedError("");
 
     try {
-      const response = await requestOTPMutation.mutateAsync(phone);
+      const fullPhoneNumber = `+91${phone}`;
+      const response = await requestOTPMutation.mutateAsync(fullPhoneNumber);
 
       if (response.success) {
         setStep("otp");
@@ -48,7 +57,11 @@ const SignInPage = () => {
     }
 
     try {
-      const response = await verifyOTPMutation.mutateAsync({ phone, otp });
+      const fullPhoneNumber = `+91${phone}`;
+      const response = await verifyOTPMutation.mutateAsync({
+        phone: fullPhoneNumber,
+        otp,
+      });
 
       if (response.success) {
         // Check if user is admin
@@ -123,7 +136,7 @@ const SignInPage = () => {
         <p className="mt-2 text-center text-sm text-gray-600">
           {step === "phone"
             ? "Enter your admin phone number to receive OTP"
-            : `We've sent a 6-digit code to ${phone}`}
+            : `We've sent a 6-digit code to +91${phone}`}
         </p>
       </div>
 
@@ -131,17 +144,33 @@ const SignInPage = () => {
         <div className=" py-8 px-4  sm:px-10">
           {step === "phone" ? (
             <div className="space-y-6">
-              <CustomInput
-                label="Phone Number"
-                type="tel"
-                placeholder="+919876543210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onKeyPress={handlePhoneKeyPress}
-                leftIcon={<Phone className="w-4 h-4" />}
-                error={getErrorMessage()}
-                maxLength={13}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <div className="flex">
+                  <div className="flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-md">
+                    +91
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder="9876543210"
+                    value={phone}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      setPhone(value.slice(0, 10));
+                    }}
+                    onKeyPress={handlePhoneKeyPress}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    maxLength={10}
+                  />
+                </div>
+                {getErrorMessage() && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {getErrorMessage()}
+                  </p>
+                )}
+              </div>
 
               <CustomButton
                 variant="primary"
@@ -149,7 +178,7 @@ const SignInPage = () => {
                 fullWidth
                 loading={isLoading}
                 onClick={handleRequestOTP}
-                disabled={!phone || phone.length < 13}
+                disabled={!phone || phone.length < 10}
               >
                 Send OTP
               </CustomButton>
@@ -181,6 +210,7 @@ const SignInPage = () => {
               </div>
 
               <CustomInput
+                ref={otpInputRef}
                 label="Enter 6-digit OTP"
                 type="text"
                 placeholder="000000"
