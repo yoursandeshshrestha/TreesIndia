@@ -97,7 +97,7 @@ export default function Footer({ className = "" }: FooterProps) {
               <ul className="space-y-3">
                 <li>
                   <a
-                    href="#"
+                    href="/apply/worker"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     Register as a worker
@@ -105,7 +105,7 @@ export default function Footer({ className = "" }: FooterProps) {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/apply/broker"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     Register as a broker

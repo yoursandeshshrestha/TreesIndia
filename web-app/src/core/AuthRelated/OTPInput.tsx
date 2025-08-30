@@ -133,7 +133,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             onPaste={handlePaste}
             disabled={disabled}
             className={`
-              w-12 h-12 text-center text-lg font-semibold border rounded-lg
+              w-12 h-12 text-center text-lg font-semibold text-black border rounded-lg
               transition-all duration-200 focus:outline-none
               ${
                 error

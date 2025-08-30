@@ -91,7 +91,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             disabled={disabled}
             placeholder={placeholder}
             className={`
-              w-full pl-4 pr-4 py-3 border border-l-0 border-gray-300 rounded-r-lg text-sm transition-all duration-200
+              w-full pl-4 pr-4 py-3 text-black border border-l-0 border-gray-300 rounded-r-lg text-sm transition-all duration-200
               focus:outline-none focus:border-gray-400
               ${
                 error

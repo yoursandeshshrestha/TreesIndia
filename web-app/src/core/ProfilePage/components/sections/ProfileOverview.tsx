@@ -11,6 +11,10 @@ import {
   X,
   Camera,
   Loader2,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
@@ -104,6 +108,45 @@ export function ProfileOverview() {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case "rejected":
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case "pending":
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "Approved";
+      case "rejected":
+        return "Rejected";
+      case "pending":
+        return "Under Review";
+      default:
+        return "Unknown";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "text-green-700 bg-green-100 border-green-300";
+      case "rejected":
+        return "text-red-700 bg-red-100 border-red-300";
+      case "pending":
+        return "text-amber-700 bg-amber-100 border-amber-300";
+      default:
+        return "text-gray-700 bg-gray-100 border-gray-300";
+    }
   };
 
   if (isLoadingProfile) {
@@ -407,6 +450,81 @@ export function ProfileOverview() {
           </div>
         )}
       </div>
+
+      {/* Role Application Status Card */}
+      {userProfile?.role_application &&
+        userProfile.role_application.status &&
+        userProfile.role_application.status !== "none" &&
+        userProfile.role_application.status !== "" && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Role Application Status
+              </h3>
+              <p className="text-gray-600 text-sm mt-1">
+                Track your application to become a service provider
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Status Display */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 mt-1">
+                  {getStatusIcon(userProfile.role_application.status)}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-lg font-semibold text-gray-900">
+                      {getStatusText(userProfile.role_application.status)}
+                    </span>
+                    <span
+                      className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
+                        userProfile.role_application.status
+                      )}`}
+                    >
+                      {userProfile.role_application.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {userProfile.role_application.status === "pending" &&
+                      "Your application is currently under review. We'll notify you once a decision is made."}
+                    {userProfile.role_application.status === "approved" &&
+                      "Congratulations! Your application has been approved. You can now start providing services."}
+                    {userProfile.role_application.status === "rejected" &&
+                      "Your application was not approved at this time. You may reapply in the future."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Application Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Application Date
+                  </label>
+                  <p className="font-semibold text-gray-900">
+                    {userProfile.role_application.application_date
+                      ? formatDate(
+                          userProfile.role_application.application_date
+                        )
+                      : "Not available"}
+                  </p>
+                </div>
+
+                {userProfile.role_application.approval_date && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
+                      Approval Date
+                    </label>
+                    <p className="font-semibold text-gray-900">
+                      {formatDate(userProfile.role_application.approval_date)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

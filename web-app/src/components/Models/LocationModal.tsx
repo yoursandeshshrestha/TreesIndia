@@ -232,7 +232,7 @@ export default function LocationModal() {
                     value={searchQuery}
                     onChange={(e) => handleSearchInputChange(e.target.value)}
                     placeholder="Search for your location/society/apartment"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full text-black   pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {isSearching && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
@@ -269,7 +269,7 @@ export default function LocationModal() {
 
               {/* Use Current Location */}
               {searchResults.length === 0 && (
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 ">
                   <button
                     onClick={handleDetectLocation}
                     disabled={isLoading}
@@ -288,7 +288,7 @@ export default function LocationModal() {
 
               {/* Saved Locations */}
               {searchResults.length === 0 && savedLocations.length > 0 && (
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 ">
                   <h3 className="font-semibold text-gray-900 mb-3">Saved</h3>
                   <div className="space-y-3">
                     {savedLocations.map((savedLocation) => (

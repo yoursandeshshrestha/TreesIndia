@@ -89,9 +89,16 @@ export const authenticatedFetch = async (
   }
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
     ...options.headers,
   };
+
+  // Only set Content-Type to application/json if not already set and not FormData
+  if (
+    !options.headers?.["Content-Type"] &&
+    !(options.body instanceof FormData)
+  ) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (accessToken) {
     (headers as Record<string, string>).Authorization = `Bearer ${accessToken}`;

@@ -8,6 +8,8 @@ import authModalReducer from "./slices/authModalSlice";
 import slotModalReducer from "./slices/slotModalSlice";
 import contactInfoModalReducer from "./slices/contactInfoModalSlice";
 import quoteAcceptanceReducer from "./slices/quoteAcceptanceSlice";
+import workerApplicationReducer from "./slices/workerApplicationSlice";
+import brokerApplicationReducer from "./slices/brokerApplicationSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +22,8 @@ export const store = configureStore({
     slotModal: slotModalReducer,
     contactInfoModal: contactInfoModalReducer,
     quoteAcceptance: quoteAcceptanceReducer,
+    workerApplication: workerApplicationReducer,
+    brokerApplication: brokerApplicationReducer,
   },
 });
 
