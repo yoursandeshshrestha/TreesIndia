@@ -22,7 +22,9 @@ import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
 import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
+import 'widgets/popular_categories_widget.dart';
 import '../../../../../commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
+import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -189,9 +191,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           color: Colors.white,
           child: SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section
+                // Fixed Header Section
                 AppHeaderWidget(
                   currentLocation: _currentLocation,
                   onLocationTap: _navigateToLocationPicker,
@@ -203,7 +204,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                 const SizedBox(height: AppSpacing.md),
 
-                // Search Bar
+                // Fixed Search Bar
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -255,51 +256,86 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Banner Section
-                SimpleBannerWidget(
-                  items: const [
-                    BannerItem(
-                      id: "1",
-                      image: "assets/images/banner_one.png",
-                    ),
-                    BannerItem(
-                      id: "2",
-                      image: "assets/images/banner_two.png",
-                    ),
-                    BannerItem(
-                      id: "3",
-                      image: "assets/images/banner_three.png",
-                    ),
-                  ],
-                ),
+                // Scrollable Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Banner Section
+                        SimpleBannerWidget(
+                          items: const [
+                            BannerItem(
+                              id: "1",
+                              image: "assets/images/banner_one.png",
+                            ),
+                            BannerItem(
+                              id: "2",
+                              image: "assets/images/banner_two.png",
+                            ),
+                            BannerItem(
+                              id: "3",
+                              image: "assets/images/banner_three.png",
+                            ),
+                          ],
+                        ),
 
-                const SizedBox(height: AppSpacing.xl),
+                        const SizedBox(height: AppSpacing.xl),
 
-                // What are you looking for Section
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Headline
-                      H2Bold(
-                        text: 'What are you looking for?',
-                        color: AppColors.brandNeutral900,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      // Service Category Cards
-                      ServiceCategoryTabsWidget(
-                        onCategorySelected: (serviceCategory, categoryEntity) {
-                          _showServicesBottomSheet(
-                              context, serviceCategory, categoryEntity);
-                        },
-                      ),
-                    ],
+                        // What are you looking for Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Headline
+                              H2Bold(
+                                text: 'What are you looking for?',
+                                color: AppColors.brandNeutral900,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              // Service Category Cards
+                              ServiceCategoryTabsWidget(
+                                onCategorySelected:
+                                    (serviceCategory, categoryEntity) {
+                                  _showServicesBottomSheet(
+                                      context, serviceCategory, categoryEntity);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Popular Services Section
+                        PopularServicesWidget(
+                          onSeeAllTap: () {
+                            // Handle "See all" tap - navigate to services page
+                            context.push('/services');
+                          },
+                        ),
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Popular Categories Section
+                        PopularCategoriesWidget(
+                          onSeeAllTap: () {
+                            // Handle "See all" tap - navigate to categories page
+                            context.push('/services');
+                          },
+                          onCategoryTap: () {
+                            // Handle category tap - navigate to specific category
+                            print('Category tapped');
+                          },
+                        ),
+
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
