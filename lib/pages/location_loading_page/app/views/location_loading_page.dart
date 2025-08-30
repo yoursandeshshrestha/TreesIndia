@@ -303,19 +303,67 @@ class _LocationLoadingPageState extends ConsumerState<LocationLoadingPage>
                 if (!_isLocationSet) ...[
                   Lottie.asset(
                     "assets/lottie/location_fetching.json",
-                    width: 200,
-                    height: 200,
+                    width: 300,
+                    height: 300,
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Location fetching animation error: $error');
+                      return Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPrimary50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.location_searching,
+                          size: 120,
+                          color: AppColors.brandPrimary600,
+                        ),
+                      );
+                    },
                   ),
                 ] else ...[
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: Lottie.asset(
-                      "assets/lottie/location_found.json",
-                      width: 160,
-                      height: 160,
-                      fit: BoxFit.contain,
-                      repeat: false,
+                    child: Column(
+                      children: [
+                        Lottie.asset(
+                          "assets/lottie/map_pin.json",
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.contain,
+                          repeat: true,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Map pin animation error: $error');
+                            return Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: AppColors.brandPrimary50,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.location_on,
+                                size: 40,
+                                color: AppColors.brandPrimary600,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        B2Medium(
+                          text: _getDisplayLocation(_currentLocation!),
+                          color: AppColors.brandNeutral900,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        B3Regular(
+                          text: 'Location set successfully!',
+                          color: AppColors.brandNeutral600,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -330,41 +378,6 @@ class _LocationLoadingPageState extends ConsumerState<LocationLoadingPage>
                 // ),
 
                 const SizedBox(height: AppSpacing.md),
-
-                // Location Details (only when location is set)
-                if (_isLocationSet && _currentLocation != null) ...[
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: AppColors.brandPrimary600,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Flexible(
-                              child: B2Medium(
-                                text: _getDisplayLocation(_currentLocation!),
-                                color: AppColors.brandPrimary600,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        B3Regular(
-                          text: 'Location set successfully!',
-                          color: AppColors.brandNeutral600,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
 
                 // Loading indicator for status updates
                 if (!_isLocationSet) ...[

@@ -17,47 +17,45 @@ class BottomNavBarWidget extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 8,
-            offset: Offset(0, -2),
+        border: Border(
+          top: BorderSide(
+            color: Color(0xFFE5E7EB), // Light gray border
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(
                 context,
                 index: 0,
-                icon: Icons.home,
+                icon: Icons.dashboard_outlined,
                 label: 'Home',
                 isActive: currentIndex == 0,
               ),
               _buildNavItem(
                 context,
                 index: 1,
-                icon: Icons.book_online,
+                icon: Icons.calendar_today_outlined,
                 label: 'Bookings',
                 isActive: currentIndex == 1,
               ),
               _buildNavItem(
                 context,
                 index: 2,
-                icon: Icons.card_giftcard,
-                label: 'Rewards',
+                icon: Icons.chat_bubble_outline,
+                label: 'Chat',
                 isActive: currentIndex == 2,
-                hasNotification: true,
               ),
               _buildNavItem(
                 context,
                 index: 3,
-                icon: Icons.person,
-                label: 'Account',
+                icon: Icons.account_circle_outlined,
+                label: 'Profile',
                 isActive: currentIndex == 3,
               ),
             ],
@@ -84,8 +82,10 @@ class BottomNavBarWidget extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 24,
-                color: isActive ? AppColors.brandPrimary600 : AppColors.brandNeutral400,
+                size: 20, // text-lg equivalent
+                color: isActive
+                    ? const Color(0xFF055c3a)
+                    : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
               ),
               if (hasNotification)
                 Positioned(
@@ -102,10 +102,16 @@ class BottomNavBarWidget extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 4),
-          B4Medium(
-            text: label,
-            color: isActive ? AppColors.brandPrimary600 : AppColors.brandNeutral400,
+          const SizedBox(height: 4), // gap-1 equivalent
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12, // text-xs
+              fontWeight: FontWeight.w500, // font-medium
+              color: isActive
+                  ? const Color(0xFF055c3a)
+                  : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
+            ),
           ),
         ],
       ),

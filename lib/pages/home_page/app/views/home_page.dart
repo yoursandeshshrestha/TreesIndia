@@ -19,7 +19,10 @@ import '../../../services_page/app/providers/service_providers.dart';
 import '../viewmodels/subcategory_state.dart';
 import 'widgets/service_banner_list_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
+import 'widgets/simple_banner_widget.dart';
+import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
+import '../../../../../commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -58,16 +61,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       return '${parts[0]}, ${parts[1]}';
     }
     return location.address;
-  }
-
-  String _getDisplayLocationWithCountry(LocationEntity location) {
-    if (location.city != null && location.state != null) {
-      return '${location.city}, ${location.state} - ${location.country}';
-    } else if (location.city != null) {
-      return location.city!;
-    } else {
-      return location.address;
-    }
   }
 
   void _navigateToLocationPicker() async {
@@ -192,154 +185,123 @@ class _HomePageState extends ConsumerState<HomePage> {
       currentIndex: 0,
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.md,
+        body: Container(
+          color: Colors.white,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section
+                AppHeaderWidget(
+                  currentLocation: _currentLocation,
+                  onLocationTap: _navigateToLocationPicker,
+                  onBellTap: () {
+                    // TODO: Handle bell icon tap
+                    print('Bell icon tapped');
+                  },
                 ),
-                child: GestureDetector(
-                  onTap: _navigateToLocationPicker,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_currentLocation != null) ...[
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 20,
-                              color: AppColors.brandPrimary600,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: B1Bold(
-                                text: _getDisplayLocation(_currentLocation!),
-                                color: AppColors.brandNeutral800,
-                              ),
-                            ),
-                          ],
+
+                const SizedBox(height: AppSpacing.md),
+
+                // Search Bar
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.brandNeutral200,
+                        width: 1,
+                      ),
+                    ),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search for services...',
+                        hintStyle: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.brandNeutral400,
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: B3Regular(
-                                text: _getDisplayLocationWithCountry(
-                                    _currentLocation!),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Image.asset(
+                            'assets/icons/search.png',
+                            width: 20,
+                            height: 20,
+                            color: AppColors.brandNeutral600,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.search,
+                                size: 20,
                                 color: AppColors.brandNeutral600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 18,
-                              color: AppColors.brandNeutral600,
-                            ),
-                          ],
+                              );
+                            },
+                          ),
                         ),
-                      ],
-                    ],
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        // TODO: Handle search
+                        print('Search: $value');
+                      },
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.lg),
 
-              // What are you looking for Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Headline
-                    H2Bold(
-                      text: 'What are you looking for?',
-                      color: AppColors.brandNeutral900,
+                // Banner Section
+                SimpleBannerWidget(
+                  items: const [
+                    BannerItem(
+                      id: "1",
+                      image: "assets/images/banner_one.png",
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    // Service Category Cards
-                    ServiceCategoryTabsWidget(
-                      onCategorySelected: (serviceCategory, categoryEntity) {
-                        _showServicesBottomSheet(
-                            context, serviceCategory, categoryEntity);
-                      },
+                    BannerItem(
+                      id: "2",
+                      image: "assets/images/banner_two.png",
+                    ),
+                    BannerItem(
+                      id: "3",
+                      image: "assets/images/banner_three.png",
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.xl),
 
-              Container(
-                width: double.maxFinite,
-                height: 8,
-                color: AppColors.brandNeutral100,
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // Promotional Banners
-              ServiceBannerListWidget(
-                banners: [
-                  ServiceBannerWidget(
-                    title: 'Work with our best service provider',
-                    description: 'Get professional services for your home',
-                    buttonText: 'Book',
-                    backgroundColor: const Color(0xFFFBB040),
-                    imagePath: 'assets/images/electrician.jpg',
-                    onButtonPressed: () {
-                      // TODO: Navigate to booking
-                    },
+                // What are you looking for Section
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Headline
+                      H2Bold(
+                        text: 'What are you looking for?',
+                        color: AppColors.brandNeutral900,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      // Service Category Cards
+                      ServiceCategoryTabsWidget(
+                        onCategorySelected: (serviceCategory, categoryEntity) {
+                          _showServicesBottomSheet(
+                              context, serviceCategory, categoryEntity);
+                        },
+                      ),
+                    ],
                   ),
-                  ServiceBannerWidget(
-                    title: 'Construction made easy',
-                    description: 'Expert builders for your dream home',
-                    buttonText: 'Explore',
-                    backgroundColor: const Color(0xFFFF6B35),
-                    imagePath: 'assets/images/electrician.jpg',
-                    onButtonPressed: () {
-                      // TODO: Navigate to construction services
-                    },
-                  ),
-                  ServiceBannerWidget(
-                    title: 'Marketplace deals',
-                    description: 'Best prices on materials',
-                    buttonText: 'Shop',
-                    backgroundColor: const Color(0xFF4ECDC4),
-                    onButtonPressed: () {
-                      // TODO: Navigate to marketplace
-                    },
-                  ),
-                  ServiceBannerWidget(
-                    title: 'Marketplace deals',
-                    description: 'Best prices on materials',
-                    buttonText: 'Shop',
-                    backgroundColor: const Color(0xFF4ECDC4),
-                    onButtonPressed: () {
-                      // TODO: Navigate to marketplace
-                    },
-                  ),
-                ],
-              ),
+                ),
 
-              const SizedBox(height: AppSpacing.lg),
-
-              Container(
-                width: double.maxFinite,
-                height: 8,
-                color: AppColors.brandNeutral100,
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-            ],
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
         ),
       ),
