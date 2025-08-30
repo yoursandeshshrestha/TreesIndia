@@ -251,32 +251,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
               ),
 
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.lg),
 
-              // Service Categories Grid
+              // What are you looking for Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Headline
                     H2Bold(
                       text: 'What are you looking for?',
                       color: AppColors.brandNeutral900,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    // Service Category Cards
+                    ServiceCategoryTabsWidget(
+                      onCategorySelected: (serviceCategory, categoryEntity) {
+                        _showServicesBottomSheet(
+                            context, serviceCategory, categoryEntity);
+                      },
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: AppSpacing.lg),
-              // Service Category Cards
-              ServiceCategoryTabsWidget(
-                onCategorySelected: (serviceCategory, categoryEntity) {
-                  _showServicesBottomSheet(
-                      context, serviceCategory, categoryEntity);
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xl),
 
               Container(
                 width: double.maxFinite,

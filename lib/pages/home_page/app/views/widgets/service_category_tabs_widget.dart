@@ -32,42 +32,6 @@ class _ServiceCategoryTabsWidgetState
     });
   }
 
-  ServiceCategory _mapSlugToServiceCategory(String slug) {
-    switch (slug) {
-      case 'home-services':
-        return ServiceCategory.homeServices;
-      case 'construction-services':
-        return ServiceCategory.constructionServices;
-      case 'rental-and-properties':
-      default:
-        return ServiceCategory.rentalAndProperties;
-    }
-  }
-
-  Widget _getCategoryIcon(String slug) {
-    switch (slug) {
-      case 'home-services':
-        return const Icon(
-          Icons.home_repair_service_rounded,
-          size: 20,
-          color: AppColors.brandPrimary600,
-        );
-      case 'construction-services':
-        return const Icon(
-          Icons.construction_outlined,
-          size: 20,
-          color: AppColors.brandPrimary600,
-        );
-      case 'rental-and-properties':
-      default:
-        return const Icon(
-          Icons.home_outlined,
-          size: 20,
-          color: AppColors.brandPrimary600,
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final categoryState = ref.watch(categoryNotifierProvider);
@@ -77,131 +41,211 @@ class _ServiceCategoryTabsWidgetState
     }
 
     if (categoryState.status == CategoryStatus.failure) {
-      return Container(
-        height: 136,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Center(
-          child: B2Regular(
-            text: 'Failed to load categories',
-            color: AppColors.stateRed600,
-          ),
+      return Center(
+        child: B2Regular(
+          text: 'Failed to load categories',
+          color: AppColors.stateRed600,
         ),
       );
     }
 
-    final categories = categoryState.categories;
+    // Create fixed categories in the desired order
+    final fixedCategories = [
+      {
+        'slug': 'home-services',
+        'title': 'Home Service',
+        'icon': 'assets/images/cleaner.png',
+        'category': ServiceCategory.homeServices,
+      },
+      {
+        'slug': 'construction-services',
+        'title': 'Construction Service',
+        'icon': 'assets/images/construction.png',
+        'category': ServiceCategory.constructionServices,
+      },
+      {
+        'slug': 'marketplace',
+        'title': 'Marketplace',
+        'icon': 'assets/images/marketplace.png',
+        'category': ServiceCategory.rentalAndProperties,
+      },
+    ];
 
-    if (categories.isEmpty) {
-      return Container(
-        height: 136,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Center(
-          child: B2Regular(
-            text: 'No categories available',
-            color: AppColors.brandNeutral600,
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: categories.asMap().entries.map((entry) {
-            int index = entry.key;
-            CategoryEntity category = entry.value;
-            ServiceCategory mappedCategory =
-                _mapSlugToServiceCategory(category.slug);
-
-            return Container(
-              margin: EdgeInsets.only(
-                left: index == 0 ? AppSpacing.lg : 0,
-                right: index < categories.length - 1
-                    ? AppSpacing.md
-                    : AppSpacing.lg,
-              ),
-              child: _CategoryCard(
-                title: category.name,
-                icon: _getCategoryIcon(category.slug),
-                onTap: () => widget.onCategorySelected(mappedCategory, category),
-              ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: fixedCategories.map((categoryData) {
+        // Find the corresponding category entity from the API if available
+        CategoryEntity categoryEntity;
+        if (categoryState.status == CategoryStatus.success) {
+          try {
+            categoryEntity = categoryState.categories.firstWhere(
+              (cat) => cat.slug == categoryData['slug'] as String,
             );
-          }).toList(),
-        ),
-      ),
+          } catch (e) {
+            // Create a fallback category entity if not found in API
+            categoryEntity = CategoryEntity(
+              id: 1, // Use a default ID
+              name: categoryData['title'] as String,
+              slug: categoryData['slug'] as String,
+              description: '',
+              isActive: true,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+          }
+        } else {
+          // Create a fallback category entity
+          categoryEntity = CategoryEntity(
+            id: 1, // Use a default ID
+            name: categoryData['title'] as String,
+            slug: categoryData['slug'] as String,
+            description: '',
+            isActive: true,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+        }
+
+        return Expanded(
+          child: MainCategoryCard(
+            icon: categoryData['icon'] as String,
+            title: categoryData['title'] as String,
+            onTap: () => widget.onCategorySelected(
+              categoryData['category'] as ServiceCategory,
+              categoryEntity,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
 
-class _CategoryCard extends StatelessWidget {
+class MainCategoryCard extends StatefulWidget {
+  final String icon;
   final String title;
-  final Widget icon;
   final VoidCallback onTap;
 
-  const _CategoryCard({
-    required this.title,
+  const MainCategoryCard({
+    super.key,
     required this.icon,
+    required this.title,
     required this.onTap,
   });
 
   @override
+  State<MainCategoryCard> createState() => _MainCategoryCardState();
+}
+
+class _MainCategoryCardState extends State<MainCategoryCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _underlineAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _underlineAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onHover(bool isHovered) {
+    setState(() {
+      _isHovered = isHovered;
+    });
+    if (isHovered) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 136,
-        width: 120,
-        padding: const EdgeInsets.only(
-            top: 20.0,
-            bottom: AppSpacing.md,
-            left: AppSpacing.sm,
-            right: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.brandNeutral200,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.brandNeutral900.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.brandPrimary50,
-                borderRadius: BorderRadius.circular(12),
+      onTap: widget.onTap,
+      child: MouseRegion(
+        onEnter: (_) => _onHover(true),
+        onExit: (_) => _onHover(false),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Column(
+            children: [
+              // Circular icon container
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: _isHovered
+                      ? AppColors.brandNeutral300
+                      : AppColors.brandNeutral200,
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    widget.icon,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback icon if image fails to load
+                      return const Icon(
+                        Icons.home_outlined,
+                        size: 40,
+                        color: AppColors.brandNeutral600,
+                      );
+                    },
+                  ),
+                ),
               ),
-              child: Center(child: icon),
-            ),
-            const SizedBox(height: 12.0),
-            Flexible(
-              child: Text(
-                title,
+              const SizedBox(height: 12),
+              // Title text
+              Text(
+                widget.title,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.brandNeutral900,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.brandNeutral700,
                   height: 1.2,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                softWrap: true,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              // Animated underline
+              AnimatedBuilder(
+                animation: _underlineAnimation,
+                builder: (context, child) {
+                  return Container(
+                    width: 32 * _underlineAnimation.value,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00A871),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
