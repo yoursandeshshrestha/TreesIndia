@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../constants/app_colors.dart';
 import '../../../../constants/app_spacing.dart';
+import '../../../../components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/service_card/app/views/service_card_widget.dart';
 
 class PopularServicesWidget extends StatelessWidget {
@@ -21,13 +22,9 @@ class PopularServicesWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Popular Services',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.brandNeutral800,
-                ),
+              H4Bold(
+                text: 'Most booked services',
+                color: AppColors.brandNeutral900,
               ),
               GestureDetector(
                 onTap: onSeeAllTap,
@@ -46,17 +43,19 @@ class PopularServicesWidget extends StatelessWidget {
 
           // Service Cards
           SizedBox(
-            height: 200, // Height for the cards
+            height: 206, // Increased height to fix 6px overflow
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
                 ServiceCardWidget(
                   props: const ServiceCardProps(
-                    image: 'assets/images/cleaner.png',
-                    title: 'Home Cleaning',
+                    image: 'assets/images/maid3.jpg',
+                    title: 'Pest control (includes utensil re...)',
                     type: ServiceType.fixed,
                     duration: '2-3 hours',
-                    price: '₹299',
+                    price: '₹1,098',
+                    rating: '4.79',
+                    reviewCount: '116K',
                   ),
                   onTap: () {
                     // Handle tap
@@ -65,11 +64,13 @@ class PopularServicesWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 ServiceCardWidget(
                   props: const ServiceCardProps(
-                    image: 'assets/images/construction.png',
-                    title: 'Plumbing Service',
+                    image: 'assets/images/maid2.jpg',
+                    title: 'Apartment pest control (includes ut...)',
                     type: ServiceType.inquiry,
                     duration: '1-2 hours',
-                    price: '₹199',
+                    price: '₹1,498',
+                    rating: '4.80',
+                    reviewCount: '52K',
                   ),
                   onTap: () {
                     // Handle tap
@@ -78,11 +79,13 @@ class PopularServicesWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 ServiceCardWidget(
                   props: const ServiceCardProps(
-                    image: 'assets/images/electrician.jpg',
-                    title: 'Electrical Work',
+                    image: 'assets/images/maid4.jpg',
+                    title: 'Bed bug',
                     type: ServiceType.fixed,
                     duration: '1-3 hours',
-                    price: '₹399',
+                    price: '₹1,599',
+                    rating: '4.77',
+                    reviewCount: '2K',
                   ),
                   onTap: () {
                     // Handle tap

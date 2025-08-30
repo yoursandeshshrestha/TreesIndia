@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'category_card_widget.dart';
 
 class PopularCategoriesWidget extends StatelessWidget {
@@ -24,13 +25,9 @@ class PopularCategoriesWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Popular Categories',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.brandNeutral800,
-                ),
+              H4Bold(
+                text: 'Popular Categories',
+                color: AppColors.brandNeutral900,
               ),
               GestureDetector(
                 onTap: onSeeAllTap,

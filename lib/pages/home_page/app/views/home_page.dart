@@ -263,19 +263,39 @@ class _HomePageState extends ConsumerState<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Banner Section
-                        SimpleBannerWidget(
-                          items: const [
-                            BannerItem(
-                              id: "1",
-                              image: "assets/images/banner_one.png",
+                        Column(
+                          children: [
+                            // Top divider
+                            Container(
+                              height: 8,
+                              color: const Color(0xFFF5F5F5),
                             ),
-                            BannerItem(
-                              id: "2",
-                              image: "assets/images/banner_two.png",
+                            // Banner with white background
+                            Container(
+                              color: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.lg),
+                              child: SimpleBannerWidget(
+                                items: const [
+                                  BannerItem(
+                                    id: "1",
+                                    image: "assets/images/banner_one.png",
+                                  ),
+                                  BannerItem(
+                                    id: "2",
+                                    image: "assets/images/banner_two.png",
+                                  ),
+                                  BannerItem(
+                                    id: "3",
+                                    image: "assets/images/banner_three.png",
+                                  ),
+                                ],
+                              ),
                             ),
-                            BannerItem(
-                              id: "3",
-                              image: "assets/images/banner_three.png",
+                            // Bottom divider
+                            Container(
+                              height: 8,
+                              color: const Color(0xFFF5F5F5),
                             ),
                           ],
                         ),
@@ -290,11 +310,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Headline
-                              H2Bold(
+                              H3Bold(
                                 text: 'What are you looking for?',
                                 color: AppColors.brandNeutral900,
                               ),
-                              const SizedBox(height: AppSpacing.lg),
+                              const SizedBox(height: AppSpacing.md),
                               // Service Category Cards
                               ServiceCategoryTabsWidget(
                                 onCategorySelected:

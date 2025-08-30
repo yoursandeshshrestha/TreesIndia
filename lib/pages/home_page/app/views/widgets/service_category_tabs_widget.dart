@@ -49,31 +49,32 @@ class _ServiceCategoryTabsWidgetState
       );
     }
 
-    // Create fixed categories in the desired order
+    // Create fixed categories with urban assets and original labels
     final fixedCategories = [
       {
         'slug': 'home-services',
         'title': 'Home Service',
-        'icon': 'assets/images/cleaner.png',
+        'icon': 'assets/urban/home.png',
         'category': ServiceCategory.homeServices,
       },
       {
         'slug': 'construction-services',
         'title': 'Construction Service',
-        'icon': 'assets/images/construction.png',
+        'icon': 'assets/urban/construction.png',
         'category': ServiceCategory.constructionServices,
       },
       {
         'slug': 'marketplace',
         'title': 'Marketplace',
-        'icon': 'assets/images/marketplace.png',
+        'icon': 'assets/urban/marketplace.png',
         'category': ServiceCategory.rentalAndProperties,
       },
     ];
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: fixedCategories.map((categoryData) {
+      children: fixedCategories.asMap().entries.map((entry) {
+        final index = entry.key;
+        final categoryData = entry.value;
         // Find the corresponding category entity from the API if available
         CategoryEntity categoryEntity;
         if (categoryState.status == CategoryStatus.success) {
@@ -107,12 +108,18 @@ class _ServiceCategoryTabsWidgetState
         }
 
         return Expanded(
-          child: MainCategoryCard(
-            icon: categoryData['icon'] as String,
-            title: categoryData['title'] as String,
-            onTap: () => widget.onCategorySelected(
-              categoryData['category'] as ServiceCategory,
-              categoryEntity,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : 8,
+              right: index == fixedCategories.length - 1 ? 0 : 8,
+            ),
+            child: ServiceCategoryCard(
+              icon: categoryData['icon'] as String,
+              title: categoryData['title'] as String,
+              onTap: () => widget.onCategorySelected(
+                categoryData['category'] as ServiceCategory,
+                categoryEntity,
+              ),
             ),
           ),
         );
@@ -121,12 +128,12 @@ class _ServiceCategoryTabsWidgetState
   }
 }
 
-class MainCategoryCard extends StatefulWidget {
+class ServiceCategoryCard extends StatefulWidget {
   final String icon;
   final String title;
   final VoidCallback onTap;
 
-  const MainCategoryCard({
+  const ServiceCategoryCard({
     super.key,
     required this.icon,
     required this.title,
@@ -134,69 +141,36 @@ class MainCategoryCard extends StatefulWidget {
   });
 
   @override
-  State<MainCategoryCard> createState() => _MainCategoryCardState();
+  State<ServiceCategoryCard> createState() => _ServiceCategoryCardState();
 }
 
-class _MainCategoryCardState extends State<MainCategoryCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _underlineAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _underlineAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _onHover(bool isHovered) {
-    setState(() {
-      _isHovered = isHovered;
-    });
-    if (isHovered) {
-      _animationController.forward();
-    } else {
-      _animationController.reverse();
-    }
-  }
+class _ServiceCategoryCardState extends State<ServiceCategoryCard> {
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onTap,
-      child: MouseRegion(
-        onEnter: (_) => _onHover(true),
-        onExit: (_) => _onHover(false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform:
+            _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          height: 120,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Circular icon container
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 80,
+              // Icon container
+              Container(
+                width: double.infinity,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: _isHovered
-                      ? AppColors.brandNeutral300
-                      : AppColors.brandNeutral200,
-                  borderRadius: BorderRadius.circular(40),
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Image.asset(
@@ -208,41 +182,28 @@ class _MainCategoryCardState extends State<MainCategoryCard>
                       // Fallback icon if image fails to load
                       return const Icon(
                         Icons.home_outlined,
-                        size: 40,
+                        size: 32,
                         color: AppColors.brandNeutral600,
                       );
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm),
               // Title text
-              Text(
-                widget.title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.brandNeutral700,
-                  height: 1.2,
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              // Animated underline
-              AnimatedBuilder(
-                animation: _underlineAnimation,
-                builder: (context, child) {
-                  return Container(
-                    width: 32 * _underlineAnimation.value,
-                    height: 2,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00A871),
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  );
-                },
               ),
             ],
           ),
