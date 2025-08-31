@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";
 import Image from "next/image";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 // Import step components
 import {
@@ -260,15 +261,10 @@ export default function BrokerApplyPage() {
   // Show loading state while checking authentication
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Image
-          src="/logo/logo.svg"
-          alt="Trees India"
-          className="w-24 h-30 mb-4 object-contain animate-spin"
-          width={50}
-          height={50}
-        />
-      </div>
+      <LoadingSpinner 
+        message="Checking authentication..." 
+        variant="fullscreen"
+      />
     );
   }
 

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { ProfileOverview } from "./sections/ProfileOverview";
 import { WalletSection } from "./sections/WalletSection";
 import { BookingsSection } from "./sections/BookingsSection";
+import { MyWorkSection } from "./sections/MyWorkSection";
 import { SubscriptionSection } from "./sections/SubscriptionSection";
 import { RatingsSection } from "./sections/RatingsSection";
 import { SettingsSection } from "./sections/SettingsSection";
@@ -19,8 +20,10 @@ export function ProfileMainContent() {
         return <ProfileOverview />;
       case "/profile/wallet":
         return <WalletSection />;
-      case "/profile/bookings":
+      case "/profile/my-bookings":
         return <BookingsSection />;
+      case "/profile/my-work":
+        return <MyWorkSection />;
       case "/profile/subscription":
         return <SubscriptionSection />;
       case "/profile/ratings":
@@ -42,4 +45,3 @@ export function ProfileMainContent() {
     </div>
   );
 }
-

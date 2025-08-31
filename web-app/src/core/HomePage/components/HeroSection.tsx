@@ -38,7 +38,7 @@ const CategoryCard = ({ name, icon, href, categoryId }: CategoryProps) => {
 
   return (
     <div className="group cursor-pointer" onClick={handleClick}>
-      <div className="bg-gray-100 rounded-xl p-4 mb-3 hover:bg-gray-200 transition-colors">
+      <div className="bg-[#f5f5f5] rounded-xl p-4 mb-3  transition-colors">
         <Image
           src={icon}
           alt={name}
