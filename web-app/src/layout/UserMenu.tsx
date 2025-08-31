@@ -8,6 +8,7 @@ import {
   Wallet,
   Calendar,
   User as UserIcon,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,13 +33,25 @@ export const UserMenu: React.FC = () => {
     <>
       {isAuthenticated && user ? (
         <div className="flex items-center space-x-4">
-          {/* My Bookings Button */}
+          {/* My Bookings/My Work Button */}
           <button
-            onClick={() => router.push("/profile/my-bookings")}
+            onClick={() =>
+              router.push(
+                user.user_type === "worker"
+                  ? "/profile/my-work"
+                  : "/profile/my-bookings"
+              )
+            }
             className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm font-medium">My Bookings</span>
+            {user.user_type === "worker" ? (
+              <Briefcase className="w-4 h-4" />
+            ) : (
+              <Calendar className="w-4 h-4" />
+            )}
+            <span className="text-sm font-medium">
+              {user.user_type === "worker" ? "My Work" : "My Bookings"}
+            </span>
           </button>
 
           {/* User Menu Dropdown */}

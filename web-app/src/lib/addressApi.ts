@@ -42,11 +42,18 @@ export async function createAddress(addressData: {
       body: JSON.stringify(addressData),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
+      // If the response contains error details, throw them
+      if (data && typeof data === "object") {
+        throw new Error(
+          data.message || data.error || `HTTP error! status: ${response.status}`
+        );
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error creating address:", error);
@@ -77,11 +84,18 @@ export async function updateAddress(
       body: JSON.stringify(addressData),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
+      // If the response contains error details, throw them
+      if (data && typeof data === "object") {
+        throw new Error(
+          data.message || data.error || `HTTP error! status: ${response.status}`
+        );
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error updating address:", error);
@@ -98,11 +112,18 @@ export async function deleteAddress(
       method: "DELETE",
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
+      // If the response contains error details, throw them
+      if (data && typeof data === "object") {
+        throw new Error(
+          data.message || data.error || `HTTP error! status: ${response.status}`
+        );
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error deleting address:", error);
