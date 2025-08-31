@@ -4,7 +4,19 @@ import {
 } from "@/types/broker-application";
 import { authenticatedFetch } from "./auth-api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// Helper function to handle API responses
+const handleApiResponse = async (response: Response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `HTTP error! status: ${response.status}`
+    );
+  }
+  return response.json();
+};
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 export const brokerApplicationApi = {
   // Submit broker application
@@ -25,21 +37,21 @@ export const brokerApplicationApi = {
     formData.append("profile_pic", applicationData.profile_pic);
 
     const response = await authenticatedFetch(
-      `${API_BASE_URL}/api/v1/role-applications/broker`,
+      `${API_BASE_URL}/role-applications/broker`,
       {
         method: "POST",
         body: formData,
       }
     );
 
-    return response.json();
+    return handleApiResponse(response);
   },
 
   // Get user's current application
   getUserApplication: async (): Promise<BrokerApplicationResponse> => {
     const response = await authenticatedFetch(
-      `${API_BASE_URL}/api/v1/role-applications/user`
+      `${API_BASE_URL}/role-applications/me`
     );
-    return response.json();
+    return handleApiResponse(response);
   },
 };
