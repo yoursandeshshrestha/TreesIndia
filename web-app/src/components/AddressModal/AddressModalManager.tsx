@@ -48,9 +48,9 @@ export default function AddressModalManager() {
     handleClose();
   };
 
-  const handleAddressAdded = () => {
-    // Close the modal completely after adding an address
-    handleClose();
+  const handleAddressAdded = (newAddress?: Address) => {
+    // Go back to the list modal to show the newly added address
+    setCurrentModal("list");
   };
 
   const handleAddressUpdated = () => {

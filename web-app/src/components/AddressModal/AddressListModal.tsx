@@ -66,10 +66,6 @@ export default function AddressListModal({
   };
 
   const handleDelete = async (addressId: number) => {
-    if (!confirm("Are you sure you want to delete this address?")) {
-      return;
-    }
-
     try {
       setLoadingAddressId(addressId);
 
@@ -90,7 +86,12 @@ export default function AddressListModal({
       toast.success("Address deleted successfully!");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete address. Please try again.");
+      // Display the specific error message from the API
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to delete address. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoadingAddressId(null);
     }

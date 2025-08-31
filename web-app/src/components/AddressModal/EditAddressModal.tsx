@@ -168,7 +168,12 @@ export default function EditAddressModal({
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update address. Please try again.");
+      // Display the specific error message from the API
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update address. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
