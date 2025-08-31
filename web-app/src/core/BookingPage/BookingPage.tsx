@@ -12,6 +12,7 @@ import { useServiceById } from "@/hooks/useServiceById";
 import { Service } from "@/types/booking";
 import Image from "next/image";
 import ContactInfoModalManager from "@/components/ContactInfoModal/ContactInfoModalManager";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 function BookingPage() {
   const router = useRouter();
@@ -70,15 +71,10 @@ function BookingPage() {
   // Show loading state while auth is being checked
   if (authLoading) {
     return (
-      <div className="min-h-[80vh] bg-white flex items-center justify-center">
-        <Image
-          src="/logo/logo.svg"
-          alt="Trees India"
-          className="w-24 h-30 mb-4 object-contain animate-spin"
-          width={50}
-          height={50}
-        />
-      </div>
+      <LoadingSpinner 
+        message="Checking authentication..." 
+        variant="fullscreen"
+      />
     );
   }
 
