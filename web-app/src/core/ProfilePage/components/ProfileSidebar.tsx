@@ -14,6 +14,7 @@ import {
   MapPin,
   Info,
   LogOut,
+  Briefcase,
 } from "lucide-react";
 
 interface ProfileSidebarItem {
@@ -23,63 +24,82 @@ interface ProfileSidebarItem {
   path: string;
 }
 
-const profileSidebarItems: ProfileSidebarItem[] = [
-  {
-    id: "profile",
-    label: "Profile",
-    icon: <User className="w-5 h-5" />,
-    path: "/profile",
-  },
-  {
-    id: "wallet",
-    label: "Wallet",
-    icon: <Wallet className="w-5 h-5" />,
-    path: "/profile/wallet",
-  },
-  {
-    id: "address",
-    label: "Manage Address",
-    icon: <MapPin className="w-5 h-5" />,
-    path: "/profile/address",
-  },
-  {
-    id: "bookings",
-    label: "My Bookings",
-    icon: <Calendar className="w-5 h-5" />,
-    path: "/profile/my-bookings",
-  },
-  {
-    id: "subscription",
-    label: "My Subscription",
-    icon: <CreditCard className="w-5 h-5" />,
-    path: "/profile/subscription",
-  },
-  {
-    id: "ratings",
-    label: "My Ratings",
-    icon: <Star className="w-5 h-5" />,
-    path: "/profile/ratings",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: <Settings className="w-5 h-5" />,
-    path: "/profile/settings",
-  },
-
-  {
-    id: "about",
-    label: "About TreesIndia",
-    icon: <Info className="w-5 h-5" />,
-    path: "/profile/about",
-  },
-];
-
 export function ProfileSidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Create sidebar items based on user type
+  const getProfileSidebarItems = (): ProfileSidebarItem[] => {
+    const baseItems = [
+      {
+        id: "profile",
+        label: "Profile",
+        icon: <User className="w-5 h-5" />,
+        path: "/profile",
+      },
+      {
+        id: "wallet",
+        label: "Wallet",
+        icon: <Wallet className="w-5 h-5" />,
+        path: "/profile/wallet",
+      },
+      {
+        id: "address",
+        label: "Manage Address",
+        icon: <MapPin className="w-5 h-5" />,
+        path: "/profile/address",
+      },
+    ];
+
+    // Add work/bookings item based on user type
+    const workOrBookingsItem =
+      user?.user_type === "worker"
+        ? {
+            id: "work",
+            label: "My Work",
+            icon: <Briefcase className="w-5 h-5" />,
+            path: "/profile/my-work",
+          }
+        : {
+            id: "bookings",
+            label: "My Bookings",
+            icon: <Calendar className="w-5 h-5" />,
+            path: "/profile/my-bookings",
+          };
+
+    const remainingItems = [
+      {
+        id: "subscription",
+        label: "My Subscription",
+        icon: <CreditCard className="w-5 h-5" />,
+        path: "/profile/subscription",
+      },
+      {
+        id: "ratings",
+        label: "My Ratings",
+        icon: <Star className="w-5 h-5" />,
+        path: "/profile/ratings",
+      },
+      {
+        id: "settings",
+        label: "Settings",
+        icon: <Settings className="w-5 h-5" />,
+        path: "/profile/settings",
+      },
+      {
+        id: "about",
+        label: "About TreesIndia",
+        icon: <Info className="w-5 h-5" />,
+        path: "/profile/about",
+      },
+    ];
+
+    return [...baseItems, workOrBookingsItem, ...remainingItems];
+  };
+
+  const profileSidebarItems = getProfileSidebarItems();
 
   const handleNavigation = (path: string) => {
     router.push(path);

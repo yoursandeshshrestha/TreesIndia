@@ -44,7 +44,10 @@ export function AddressSection() {
       refetchAddresses();
     } catch (error) {
       console.error("Error deleting address:", error);
-      toast.error("Failed to delete address");
+      // Display the specific error message from the API
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete address";
+      toast.error(errorMessage);
     }
   };
 
