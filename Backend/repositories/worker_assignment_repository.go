@@ -30,7 +30,7 @@ func (war *WorkerAssignmentRepository) Create(assignment *models.WorkerAssignmen
 // GetByID gets a worker assignment by ID
 func (war *WorkerAssignmentRepository) GetByID(id uint) (*models.WorkerAssignment, error) {
 	var assignment models.WorkerAssignment
-	err := war.db.Preload("Booking").Preload("Worker").Preload("AssignedByUser").First(&assignment, id).Error
+	err := war.db.Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser").First(&assignment, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (war *WorkerAssignmentRepository) GetByID(id uint) (*models.WorkerAssignmen
 // GetByBookingID gets worker assignment by booking ID
 func (war *WorkerAssignmentRepository) GetByBookingID(bookingID uint) (*models.WorkerAssignment, error) {
 	var assignment models.WorkerAssignment
-	err := war.db.Where("booking_id = ?", bookingID).Preload("Worker").First(&assignment).Error
+	err := war.db.Where("booking_id = ?", bookingID).Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser").First(&assignment).Error
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filte
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("Booking.Service").Preload("Booking.User")
+	query = query.Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser")
 
 	// Execute query
 	err = query.Order("created_at DESC").Find(&assignments).Error

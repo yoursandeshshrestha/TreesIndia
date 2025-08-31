@@ -13,6 +13,7 @@ type WorkerAssignmentService struct {
 	workerAssignmentRepo *repositories.WorkerAssignmentRepository
 	bookingRepo          *repositories.BookingRepository
 	userRepo             *repositories.UserRepository
+	workerRepo           *repositories.WorkerRepository
 	notificationService  *NotificationService
 }
 
@@ -21,6 +22,7 @@ func NewWorkerAssignmentService() *WorkerAssignmentService {
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
 		bookingRepo:          repositories.NewBookingRepository(),
 		userRepo:             repositories.NewUserRepository(),
+		workerRepo:           repositories.NewWorkerRepository(),
 		notificationService:  NewNotificationService(),
 	}
 }
@@ -264,6 +266,32 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 	if err != nil {
 		logrus.Errorf("Failed to update booking status: %v", err)
 		return nil, errors.New("failed to update booking status")
+	}
+
+	// Update worker statistics
+	worker, err := was.workerRepo.GetByUserID(assignment.WorkerID)
+	if err != nil {
+		logrus.Errorf("Failed to get worker for assignment %d: %v", assignmentID, err)
+		// Don't fail the completion if worker update fails
+	} else {
+		// Calculate earnings from booking
+		earnings := 0.0
+		
+		// Get earnings from quote amount (for inquiry bookings) or service price (for regular bookings)
+		if booking.QuoteAmount != nil {
+			earnings = *booking.QuoteAmount
+		} else if booking.Service.Price != nil {
+			earnings = *booking.Service.Price
+		}
+		
+		// Update worker statistics
+		err = was.workerRepo.IncrementCompletedJob(worker.ID, earnings)
+		if err != nil {
+			logrus.Errorf("Failed to update worker statistics for assignment %d: %v", assignmentID, err)
+			// Don't fail the completion if worker update fails
+		} else {
+			logrus.Infof("Updated worker statistics for assignment %d: worker_id=%d, earnings=%.2f", assignmentID, worker.ID, earnings)
+		}
 	}
 
 	// TODO: Store materials used and photos in a separate table
