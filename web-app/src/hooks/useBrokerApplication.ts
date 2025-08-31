@@ -14,8 +14,19 @@ export const useBrokerApplication = () => {
   } = useQuery({
     queryKey: ["brokerApplication", "user"],
     queryFn: async () => {
-      const response = await brokerApplicationApi.getUserApplication();
-      return response.data;
+      try {
+        const response = await brokerApplicationApi.getUserApplication();
+        return response.data;
+      } catch (error) {
+        // If the error is "Application not found", treat it as no application exists
+        if (
+          error instanceof Error &&
+          error.message.includes("Application not found")
+        ) {
+          return null; // No application exists
+        }
+        throw error; // Re-throw other errors
+      }
     },
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
