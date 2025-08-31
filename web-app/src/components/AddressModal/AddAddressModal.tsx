@@ -7,12 +7,13 @@ import { toast } from "sonner";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useAddresses } from "@/hooks/useAddresses";
 import { AddressFormData } from "./AddressModal.types";
+import { Address } from "@/types/booking";
 import AddressForm from "./AddressForm";
 
 interface AddAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddressAdded?: () => void;
+  onAddressAdded?: (newAddress?: Address) => void;
 }
 
 export default function AddAddressModal({
@@ -62,7 +63,7 @@ export default function AddAddressModal({
           ? formData.customName.trim() || "Other"
           : formData.name;
 
-      await createAddressAsync({
+      const newAddress = await createAddressAsync({
         name: nameToSend,
         address: formData.address,
         city: formData.city,
@@ -93,10 +94,16 @@ export default function AddAddressModal({
       });
 
       toast.success("Address added successfully!");
-      onAddressAdded?.();
+      onAddressAdded?.(newAddress.data);
       onClose();
-    } catch {
-      toast.error("Failed to save address. Please try again.");
+    } catch (error) {
+      console.error(error);
+      // Display the specific error message from the API
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to save address. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
