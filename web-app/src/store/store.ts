@@ -10,6 +10,7 @@ import contactInfoModalReducer from "./slices/contactInfoModalSlice";
 import quoteAcceptanceReducer from "./slices/quoteAcceptanceSlice";
 import workerApplicationReducer from "./slices/workerApplicationSlice";
 import brokerApplicationReducer from "./slices/brokerApplicationSlice";
+import workerAssignmentReducer from "./slices/workerAssignmentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     quoteAcceptance: quoteAcceptanceReducer,
     workerApplication: workerApplicationReducer,
     brokerApplication: brokerApplicationReducer,
+    workerAssignment: workerAssignmentReducer,
   },
 });
 
