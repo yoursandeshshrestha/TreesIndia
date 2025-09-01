@@ -3,13 +3,14 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupWorkerAssignmentRoutes sets up worker assignment-related routes
-func SetupWorkerAssignmentRoutes(router *gin.RouterGroup) {
-	workerAssignmentController := controllers.NewWorkerAssignmentController()
+func SetupWorkerAssignmentRoutes(router *gin.RouterGroup, workerAssignmentService *services.WorkerAssignmentService) {
+	workerAssignmentController := controllers.NewWorkerAssignmentController(workerAssignmentService)
 
 	// Worker assignment routes (authenticated workers only)
 	workerAssignments := router.Group("/worker/assignments")

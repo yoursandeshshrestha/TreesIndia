@@ -44,7 +44,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupSubscriptionRoutes(v1)
 		SetupWalletRoutes(v1)
 		SetupRazorpayRoutes(v1)
-		SetupChatRoutes(v1)
+		// Chat routes will be set up in main.go with WebSocket service
 		SetupPromotionBannerRoutes(v1)
 		SetupHeroRoutes(v1)
 		SetupHomepageCategoryIconRoutes(v1)
@@ -55,7 +55,7 @@ func SetupRoutes(r *gin.Engine) {
 		bookingGroup.Use(bookingMiddleware.BookingSystem())
 		SetupBookingRoutes(bookingGroup)
 		SetupWorkerInquiryRoutes(bookingGroup)
-		SetupWorkerAssignmentRoutes(bookingGroup)
+		// Worker assignment routes will be set up in main.go with chat service
 		
 		// Payment routes
 		SetupPaymentRoutes(v1)
