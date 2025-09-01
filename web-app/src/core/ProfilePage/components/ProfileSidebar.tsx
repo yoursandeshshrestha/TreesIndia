@@ -15,6 +15,7 @@ import {
   Info,
   LogOut,
   Briefcase,
+  MessageCircle,
 } from "lucide-react";
 
 interface ProfileSidebarItem {
@@ -44,6 +45,12 @@ export function ProfileSidebar() {
         label: "Wallet",
         icon: <Wallet className="w-5 h-5" />,
         path: "/profile/wallet",
+      },
+      {
+        id: "messages",
+        label: "Messages",
+        icon: <MessageCircle className="w-5 h-5" />,
+        path: "/profile/messages",
       },
       {
         id: "address",
