@@ -17,6 +17,12 @@
 # Go workspace file
 go.work
 
+# .gitignore
+.env
+config/*.json
+*.key
+*.pem
+
 # Environment variables
 .env
 .env.local

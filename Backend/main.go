@@ -187,9 +187,29 @@ func main() {
 	// Handle method not allowed
 	r.NoMethod(middleware.MethodNotAllowedHandler())
 
+	// Initialize WebSocket service
+	wsService := services.NewWebSocketService()
+	wsController := controllers.NewWebSocketController(wsService)
+
+	// Initialize services with WebSocket service
+	chatService := services.NewChatService(wsService)
+	workerAssignmentService := services.NewWorkerAssignmentService(chatService)
+
 	// Start cleanup service
 	cleanupService := services.NewCleanupService()
 	cleanupService.StartPeriodicCleanup()
+
+	// Setup WebSocket routes (outside of /api/v1 prefix)
+	routes.SetupWebSocketRoutes(r, wsController)
+
+	// Setup chat routes with WebSocket service
+	routes.SetupChatRoutes(r.Group("/api/v1"), chatService)
+
+	// Setup worker assignment routes with chat service
+	bookingMiddleware := middleware.NewDynamicConfigMiddleware()
+	bookingGroup := r.Group("/api/v1")
+	bookingGroup.Use(bookingMiddleware.BookingSystem())
+	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService)
 
 	// Start server
 	log.Printf("Server starting on %s:%s", appConfig.ServerHost, appConfig.ServerPort)
