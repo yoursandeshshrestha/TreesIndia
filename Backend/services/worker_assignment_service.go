@@ -15,15 +15,17 @@ type WorkerAssignmentService struct {
 	userRepo             *repositories.UserRepository
 	workerRepo           *repositories.WorkerRepository
 	notificationService  *NotificationService
+	chatService          *ChatService
 }
 
-func NewWorkerAssignmentService() *WorkerAssignmentService {
+func NewWorkerAssignmentService(chatService *ChatService) *WorkerAssignmentService {
 	return &WorkerAssignmentService{
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
 		bookingRepo:          repositories.NewBookingRepository(),
 		userRepo:             repositories.NewUserRepository(),
 		workerRepo:           repositories.NewWorkerRepository(),
 		notificationService:  NewNotificationService(),
+		chatService:          chatService,
 	}
 }
 
@@ -108,6 +110,13 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 	if err != nil {
 		logrus.Errorf("Failed to update booking status: %v", err)
 		return nil, errors.New("failed to update booking status")
+	}
+
+	// Create chat room when worker accepts assignment
+	_, err = was.chatService.CreateBookingChatRoomWhenWorkerAccepts(assignment.BookingID)
+	if err != nil {
+		logrus.Errorf("Failed to create chat room for booking %d: %v", assignment.BookingID, err)
+		// Don't fail the acceptance if chat room creation fails
 	}
 
 	// Send notification
@@ -292,6 +301,13 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 		} else {
 			logrus.Infof("Updated worker statistics for assignment %d: worker_id=%d, earnings=%.2f", assignmentID, worker.ID, earnings)
 		}
+	}
+
+	// Close chat room when assignment is completed
+	err = was.chatService.CloseBookingChatRoom(assignment.BookingID, "Service completed")
+	if err != nil {
+		logrus.Errorf("Failed to close chat room for booking %d: %v", assignment.BookingID, err)
+		// Don't fail the completion if chat room closure fails
 	}
 
 	// TODO: Store materials used and photos in a separate table

@@ -17,16 +17,18 @@ type ChatService struct {
 	userRepo               *repositories.UserRepository
 	bookingRepo            *repositories.BookingRepository
 	workerAssignmentRepo   *repositories.WorkerAssignmentRepository
+	wsService              *WebSocketService
 }
 
 // NewChatService creates a new chat service
-func NewChatService() *ChatService {
+func NewChatService(wsService *WebSocketService) *ChatService {
 	return &ChatService{
 		chatRoomRepo:         repositories.NewChatRoomRepository(),
 		chatMessageRepo:      repositories.NewChatMessageRepository(),
 		userRepo:             repositories.NewUserRepository(),
 		bookingRepo:          repositories.NewBookingRepository(),
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
+		wsService:            wsService,
 	}
 }
 
@@ -63,10 +65,10 @@ func (cs *ChatService) CreateChatRoom(req *models.CreateChatRoomRequest) (*model
 }
 
 // GetUserChatRooms gets chat rooms for a user
-func (cs *ChatService) GetUserChatRooms(userID uint, req *models.GetChatRoomsRequest) ([]models.ChatRoom, *repositories.Pagination, error) {
+func (cs *ChatService) GetUserChatRooms(userID uint, page, limit int) ([]models.ChatRoom, *repositories.Pagination, error) {
 	logrus.Infof("ChatService.GetUserChatRooms called for user ID: %d", userID)
 
-	rooms, pagination, err := cs.chatRoomRepo.GetUserRooms(userID, req.RoomType, req.Page, req.Limit)
+	rooms, pagination, err := cs.chatRoomRepo.GetUserRooms(userID, nil, page, limit)
 	if err != nil {
 		logrus.Errorf("ChatService.GetUserChatRooms failed: %v", err)
 		return nil, nil, err
@@ -80,10 +82,27 @@ func (cs *ChatService) GetUserChatRooms(userID uint, req *models.GetChatRoomsReq
 func (cs *ChatService) SendMessage(senderID uint, req *models.SendMessageRequest) (*models.ChatMessage, error) {
 	logrus.Infof("ChatService.SendMessage called by user %d in room %d", senderID, req.RoomID)
 
-	// Validate room exists
-	_, err := cs.chatRoomRepo.GetByID(req.RoomID)
+	// Validate room exists and is active
+	chatRoom, err := cs.chatRoomRepo.GetByID(req.RoomID)
 	if err != nil {
 		return nil, errors.New("chat room not found")
+	}
+
+	// Check if room is active
+	if !chatRoom.IsActive {
+		return nil, errors.New("chat room is closed")
+	}
+
+	// Get user type for validation
+	var user models.User
+	err = cs.userRepo.FindByID(&user, senderID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Validate user has access to this chat room
+	if err := cs.ValidateChatAccess(req.RoomID, senderID, string(user.UserType)); err != nil {
+		return nil, err
 	}
 
 	// Create message
@@ -110,29 +129,50 @@ func (cs *ChatService) SendMessage(senderID uint, req *models.SendMessageRequest
 		// Don't fail the entire operation for this
 	}
 
+	// Broadcast message through WebSocket
+	if cs.wsService != nil {
+		go func() {
+			messageData := map[string]interface{}{
+				"id":           message.ID,
+				"room_id":      message.RoomID,
+				"sender_id":    message.SenderID,
+				"message":      message.Message,
+				"message_type": message.MessageType,
+				"status":       message.Status,
+				"created_at":   message.CreatedAt,
+				"sender": map[string]interface{}{
+					"id":   user.ID,
+					"name": user.Name,
+					"type": user.UserType,
+				},
+			}
+			cs.wsService.BroadcastChatMessage(req.RoomID, messageData)
+		}()
+	}
+
 	logrus.Infof("ChatService.SendMessage successfully sent message ID: %d", message.ID)
 	return message, nil
 }
 
 // GetMessages gets messages for a chat room
-func (cs *ChatService) GetMessages(userID uint, req *models.GetMessagesRequest) ([]models.ChatMessage, *repositories.Pagination, error) {
-	logrus.Infof("ChatService.GetMessages called by user %d for room %d", userID, req.RoomID)
+func (cs *ChatService) GetMessages(userID uint, roomID uint, page, limit int) ([]models.ChatMessage, *repositories.Pagination, error) {
+	logrus.Infof("ChatService.GetMessages called by user %d for room %d", userID, roomID)
 
 	// Validate room exists
-	_, err := cs.chatRoomRepo.GetByID(req.RoomID)
+	_, err := cs.chatRoomRepo.GetByID(roomID)
 	if err != nil {
 		return nil, nil, errors.New("chat room not found")
 	}
 
 	// Get messages
-	messages, pagination, err := cs.chatMessageRepo.GetRoomMessages(req.RoomID, req.Page, req.Limit)
+	messages, pagination, err := cs.chatMessageRepo.GetRoomMessages(roomID, page, limit)
 	if err != nil {
 		logrus.Errorf("ChatService.GetMessages failed: %v", err)
 		return nil, nil, err
 	}
 
 	// Mark messages as read for this user
-	go cs.markMessagesAsRead(req.RoomID, userID, messages)
+	go cs.markMessagesAsRead(roomID, userID, messages)
 
 	logrus.Infof("ChatService.GetMessages returning %d messages", len(messages))
 	return messages, pagination, nil
@@ -192,6 +232,133 @@ func (cs *ChatService) CreateBookingChatRoom(bookingID uint) (*models.ChatRoom, 
 
 	logrus.Infof("ChatService.CreateBookingChatRoom successfully created room ID: %d for booking %d", chatRoom.ID, bookingID)
 	return chatRoom, nil
+}
+
+// CreateBookingChatRoomWhenWorkerAccepts creates chat room when worker accepts assignment
+func (cs *ChatService) CreateBookingChatRoomWhenWorkerAccepts(bookingID uint) (*models.ChatRoom, error) {
+	logrus.Infof("ChatService.CreateBookingChatRoomWhenWorkerAccepts called for booking ID: %d", bookingID)
+
+	// Get booking details
+	booking, err := cs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if chat room already exists
+	existingRoom, err := cs.chatRoomRepo.GetByBookingID(bookingID)
+	if err == nil && existingRoom != nil {
+		logrus.Infof("ChatService.CreateBookingChatRoomWhenWorkerAccepts room already exists for booking %d", bookingID)
+		return existingRoom, nil
+	}
+
+	// Verify worker is assigned and accepted
+	assignment, err := cs.workerAssignmentRepo.GetByBookingID(bookingID)
+	if err != nil {
+		return nil, errors.New("no worker assignment found for booking")
+	}
+
+	if assignment.Status != models.AssignmentStatusAccepted {
+		return nil, errors.New("worker has not accepted the assignment yet")
+	}
+
+	// Create chat room
+	chatRoom := &models.ChatRoom{
+		RoomType:  models.RoomTypeBooking,
+		RoomName:  fmt.Sprintf("Booking #%s", booking.BookingReference),
+		BookingID: &bookingID,
+		IsActive:  true,
+	}
+
+	chatRoom, err = cs.chatRoomRepo.Create(chatRoom)
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Infof("ChatService.CreateBookingChatRoomWhenWorkerAccepts successfully created room ID: %d for booking %d", chatRoom.ID, bookingID)
+	return chatRoom, nil
+}
+
+// CloseBookingChatRoom closes a chat room when booking is completed
+func (cs *ChatService) CloseBookingChatRoom(bookingID uint, reason string) error {
+	logrus.Infof("ChatService.CloseBookingChatRoom called for booking ID: %d", bookingID)
+
+	chatRoom, err := cs.chatRoomRepo.GetByBookingID(bookingID)
+	if err != nil {
+		return err
+	}
+
+	err = cs.chatRoomRepo.CloseRoom(chatRoom.ID, reason)
+	if err != nil {
+		logrus.Errorf("ChatService.CloseBookingChatRoom failed to close room: %v", err)
+		return err
+	}
+
+	logrus.Infof("ChatService.CloseBookingChatRoom successfully closed room ID: %d for booking %d", chatRoom.ID, bookingID)
+	return nil
+}
+
+// ValidateChatAccess checks if user can access/send messages in chat room
+func (cs *ChatService) ValidateChatAccess(roomID uint, userID uint, userType string) error {
+	// Get chat room
+	chatRoom, err := cs.chatRoomRepo.GetByID(roomID)
+	if err != nil {
+		return errors.New("chat room not found")
+	}
+
+	// Check if room is active
+	if !chatRoom.IsActive {
+		return errors.New("chat room is closed")
+	}
+
+	// Admin can access all chat rooms
+	if userType == string(models.UserTypeAdmin) {
+		return nil
+	}
+
+	// Get booking details
+	if chatRoom.BookingID == nil {
+		return errors.New("invalid chat room")
+	}
+
+	booking, err := cs.bookingRepo.GetByID(*chatRoom.BookingID)
+	if err != nil {
+		return errors.New("booking not found")
+	}
+
+	// Check if user is booking owner
+	if booking.UserID == userID {
+		return nil
+	}
+
+	// Check if user is assigned worker
+	assignment, err := cs.workerAssignmentRepo.GetByBookingID(*chatRoom.BookingID)
+	if err == nil && assignment.WorkerID == userID {
+		return nil
+	}
+
+	return errors.New("access denied")
+}
+
+// GetUserChatHistory gets both active and closed chat rooms for a user
+func (cs *ChatService) GetUserChatHistory(userID uint, userType string, page, limit int) ([]models.ChatRoom, *repositories.Pagination, error) {
+	// Admin can see all chat rooms
+	if userType == string(models.UserTypeAdmin) {
+		return cs.chatRoomRepo.GetAllRooms(page, limit)
+	}
+
+	// Regular users see their own chat rooms (both active and closed)
+	return cs.chatRoomRepo.GetUserRooms(userID, nil, page, limit)
+}
+
+// GetUserClosedChatRooms gets closed chat rooms for a user
+func (cs *ChatService) GetUserClosedChatRooms(userID uint, userType string, page, limit int) ([]models.ChatRoom, *repositories.Pagination, error) {
+	// Admin can see all closed chat rooms
+	if userType == string(models.UserTypeAdmin) {
+		return cs.chatRoomRepo.GetAllRooms(page, limit)
+	}
+
+	// Regular users see their own closed chat rooms
+	return cs.chatRoomRepo.GetClosedRooms(userID, page, limit)
 }
 
 // validateRoomCreation validates room creation request
