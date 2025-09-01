@@ -16,9 +16,9 @@ type WorkerAssignmentController struct {
 	workerAssignmentService *services.WorkerAssignmentService
 }
 
-func NewWorkerAssignmentController() *WorkerAssignmentController {
+func NewWorkerAssignmentController(workerAssignmentService *services.WorkerAssignmentService) *WorkerAssignmentController {
 	return &WorkerAssignmentController{
-		workerAssignmentService: services.NewWorkerAssignmentService(),
+		workerAssignmentService: workerAssignmentService,
 	}
 }
 
