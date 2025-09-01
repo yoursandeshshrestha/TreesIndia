@@ -56,7 +56,7 @@ func (cmr *ChatMessageRepository) GetRoomMessages(roomID uint, page, limit int) 
 	err = cmr.db.Where("room_id = ?", roomID).
 		Preload("Sender").
 		Preload("ReplyToMessage").
-		Order("created_at DESC").
+		Order("created_at ASC").
 		Offset(offset).
 		Limit(limit).
 		Find(&messages).Error
