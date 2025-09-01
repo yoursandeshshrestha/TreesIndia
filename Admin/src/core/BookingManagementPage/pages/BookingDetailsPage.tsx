@@ -238,6 +238,18 @@ export default function BookingDetailsPage() {
             >
               {booking.status.replace("_", " ").toUpperCase()}
             </span>
+            {/* Chat Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<MessageSquare className="w-4 h-4" />}
+              onClick={() => {
+                // TODO: Open chat modal for this booking
+                toast.info("Chat feature coming soon!");
+              }}
+            >
+              Chat
+            </Button>
           </div>
         </div>
       </div>
