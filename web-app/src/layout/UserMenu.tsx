@@ -9,6 +9,7 @@ import {
   Calendar,
   User as UserIcon,
   Briefcase,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppDispatch } from "@/store/hooks";
@@ -119,6 +120,14 @@ export const UserMenu: React.FC = () => {
                 >
                   <UserIcon className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-700">Profile</span>
+                </button>
+
+                <button
+                  onClick={() => router.push("/chat")}
+                  className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                >
+                  <MessageCircle className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">Messages</span>
                 </button>
 
                 <button className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left">
