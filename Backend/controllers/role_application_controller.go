@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"treesindia/database"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/services"
@@ -39,12 +38,15 @@ func NewRoleApplicationController() *RoleApplicationController {
 	logrus.Info("Services initialized")
 	
 	// Ensure role_applications table exists
+	// DISABLED: Using Goose migrations instead of GORM AutoMigrate
+	/*
 	db := database.GetDB()
 	if err := db.AutoMigrate(&models.RoleApplication{}); err != nil {
 		logrus.Errorf("Failed to auto-migrate role_applications table: %v", err)
 	} else {
 		logrus.Info("Role_applications table auto-migrated successfully")
 	}
+	*/
 	
 	logrus.Info("RoleApplicationController initialization completed")
 	return &RoleApplicationController{

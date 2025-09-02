@@ -54,6 +54,12 @@ type RequestOTPRequest struct {
 type VerifyOTPRequest struct {
 	Phone string `json:"phone" binding:"required,min=13,max=13,startswith=+91"`
 	OTP   string `json:"otp" binding:"required,len=6"`
+	// Optional device registration info
+	DeviceToken string `json:"device_token,omitempty"`
+	Platform    string `json:"platform,omitempty"`
+	AppVersion  string `json:"app_version,omitempty"`
+	DeviceModel string `json:"device_model,omitempty"`
+	OSVersion   string `json:"os_version,omitempty"`
 }
 
 // RefreshTokenRequest represents refresh token request
@@ -342,6 +348,14 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		return
 	}
 
+	// Register device if device token is provided
+	if req.DeviceToken != "" {
+		if err := ac.registerDevice(&user, &req); err != nil {
+			// Log error but don't fail the login
+			fmt.Printf("Failed to register device for user %d: %v\n", user.ID, err)
+		}
+	}
+
 	// Generate JWT tokens
 	accessToken, refreshToken, err := ac.generateTokens(user)
 	if err != nil {
@@ -363,6 +377,128 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		"expires_in":    3600, // 1 hour in seconds
 		"is_new_user":   isNewUser, // Frontend uses this to show onboarding info
 	}))
+}
+
+// registerDevice registers a device for push notifications
+func (ac *AuthController) registerDevice(user *models.User, req *VerifyOTPRequest) error {
+	// Validate token length (FCM tokens are typically 140-160 characters)
+	if len(req.DeviceToken) < 50 || len(req.DeviceToken) > 500 {
+		return fmt.Errorf("invalid token length: token must be between 50 and 500 characters, got %d", len(req.DeviceToken))
+	}
+
+	// Check if user has notification settings, create if not
+	var notificationSettings models.UserNotificationSettings
+	if err := ac.db.Where("user_id = ?", user.ID).First(&notificationSettings).Error; err != nil {
+		// Create default notification settings
+		notificationSettings = models.UserNotificationSettings{
+			UserID:            user.ID,
+			PushNotifications: true,
+			EmailNotifications: true,
+			SMSNotifications:   true,
+			MarketingEmails:    false,
+			BookingReminders:   true,
+			ServiceUpdates:     true,
+		}
+		if err := ac.db.Create(&notificationSettings).Error; err != nil {
+			return fmt.Errorf("failed to create notification settings: %w", err)
+		}
+	}
+
+	// Check if push notifications are enabled
+	if !notificationSettings.PushNotifications {
+		return fmt.Errorf("push notifications are disabled for this user")
+	}
+
+	// Check if token already exists
+	var existingToken models.DeviceToken
+	if err := ac.db.Where("token = ?", req.DeviceToken).First(&existingToken).Error; err == nil {
+		// Token exists, update it
+		updates := map[string]interface{}{
+			"user_id":           user.ID,
+			"platform":          req.Platform,
+			"app_version":       req.AppVersion,
+			"device_model":      req.DeviceModel,
+			"os_version":        req.OSVersion,
+			"is_active":         true,
+			"last_used_at":      time.Now(),
+			"updated_at":        time.Now(),
+		}
+		
+		if err := ac.db.Model(&existingToken).Updates(updates).Error; err != nil {
+			return fmt.Errorf("failed to update existing token: %w", err)
+		}
+		return nil
+	}
+
+	// Create new device token
+	deviceToken := models.DeviceToken{
+		UserID:      user.ID,
+		Token:       req.DeviceToken,
+		Platform:    models.DevicePlatform(req.Platform),
+		AppVersion:  req.AppVersion,
+		DeviceModel: req.DeviceModel,
+		OSVersion:   req.OSVersion,
+		IsActive:    true,
+		LastUsedAt:  &time.Time{},
+	}
+
+	if err := ac.db.Create(&deviceToken).Error; err != nil {
+		return fmt.Errorf("failed to create device token: %w", err)
+	}
+
+	return nil
+}
+
+// RegisterDeviceAfterLogin registers a device after user has already logged in
+func (ac *AuthController) RegisterDeviceAfterLogin(c *gin.Context) {
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	var req struct {
+		DeviceToken string `json:"device_token" binding:"required"`
+		Platform    string `json:"platform" binding:"required"`
+		AppVersion  string `json:"app_version"`
+		DeviceModel string `json:"device_model"`
+		OSVersion   string `json:"os_version"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Validate token length (FCM tokens are typically 140-160 characters)
+	if len(req.DeviceToken) < 50 || len(req.DeviceToken) > 500 {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid token length", fmt.Sprintf("Token must be between 50 and 500 characters, got %d", len(req.DeviceToken))))
+		return
+	}
+
+	// Get user
+	var user models.User
+	if err := ac.db.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
+	// Register device
+	deviceReq := &VerifyOTPRequest{
+		DeviceToken: req.DeviceToken,
+		Platform:    req.Platform,
+		AppVersion:  req.AppVersion,
+		DeviceModel: req.DeviceModel,
+		OSVersion:   req.OSVersion,
+	}
+
+	if err := ac.registerDevice(&user, deviceReq); err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to register device", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Device registered successfully", nil))
 }
 
 // Logout godoc

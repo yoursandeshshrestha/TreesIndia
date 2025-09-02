@@ -78,6 +78,10 @@ type AppConfig struct {
 	SMSProvider      string
 	SMSAPIKey        string
 	SMSSecret        string
+	
+	// FCM Configuration
+	FCMServiceAccountPath string
+	FCMProjectID         string
 }
 
 // LoadConfig loads configuration from environment variables
@@ -156,6 +160,10 @@ func LoadConfig() *AppConfig {
 		SMSProvider: getEnv("SMS_PROVIDER", ""),
 		SMSAPIKey:   getEnv("SMS_API_KEY", ""),
 		SMSSecret:   getEnv("SMS_SECRET", ""),
+		
+		// FCM Configuration
+		FCMServiceAccountPath: getEnv("FCM_SERVICE_ACCOUNT_PATH", "config/treesindia-fcm-firebase-adminsdk-fbsvc-c40fa2011a.json"),
+		FCMProjectID:         getEnv("FCM_PROJECT_ID", "treesindia-fcm"),
 	}
 	
 	return config
@@ -203,6 +211,14 @@ func (ac *AppConfig) GetJWTExpiry() time.Duration {
 // GetRefreshExpiry returns the refresh token expiry duration
 func (ac *AppConfig) GetRefreshExpiry() time.Duration {
 	return time.Duration(ac.RefreshExpiryDays) * 24 * time.Hour
+}
+
+// GetFCMConfig returns the FCM configuration
+func (ac *AppConfig) GetFCMConfig() map[string]string {
+	return map[string]string{
+		"project_id":           ac.FCMProjectID,
+		"service_account_path": ac.FCMServiceAccountPath,
+	}
 }
 
 // Helper functions to get environment variables with defaults

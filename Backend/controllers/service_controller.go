@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-	"treesindia/database"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/services"
@@ -41,12 +40,15 @@ func NewServiceController() *ServiceController {
 	logrus.Info("ServiceService initialized")
 	
 	// Ensure services table exists
+	// DISABLED: Using Goose migrations instead of GORM AutoMigrate
+	/*
 	db := database.GetDB()
 	if err := db.AutoMigrate(&models.Service{}); err != nil {
 		logrus.Errorf("Failed to auto-migrate services table: %v", err)
 	} else {
 		logrus.Info("Services table auto-migrated successfully")
 	}
+	*/
 	
 	logrus.Info("ServiceController initialization completed")
 	return &ServiceController{
