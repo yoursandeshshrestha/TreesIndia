@@ -11,6 +11,8 @@ import AddressModal from "@/components/Models/AddressModal";
 import SlotModal from "@/components/Models/SlotModal";
 import { getTreesIndiaData } from "@/lib/data";
 import { Toaster } from "sonner";
+import NotificationSetup from "@/components/NotificationSetup";
+import NotificationBanner from "@/components/NotificationBanner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -22,6 +24,7 @@ export const metadata: Metadata = {
   title: "TreesIndia - One Platform, All Solutions",
   description:
     "Professional home services including beauty, cleaning, repairs, and more. Book trusted professionals for all your home service needs.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -41,6 +44,12 @@ export default function RootLayout({
           <SubcategoriesModal />
           <AddressModal />
           <SlotModal />
+
+          {/* Notification Setup - Handles permission and device registration */}
+          <NotificationSetup />
+
+          {/* Notification Banner - Shows permission status and allows enabling */}
+          <NotificationBanner />
 
           <div className="flex flex-col min-h-screen">
             {/* Sticky Header */}

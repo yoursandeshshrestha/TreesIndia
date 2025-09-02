@@ -1,3 +1,4 @@
+"use client";
 import HomePage from "@/core/HomePage/HomePage";
 
 export default function Home() {

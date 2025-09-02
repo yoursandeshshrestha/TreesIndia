@@ -1,0 +1,17 @@
+{
+  "name": "TreesIndia",
+  "short_name": "TreesIndia",
+  "description": "Home services platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/icons/home_service.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "gcm_sender_id": "558464277857"
+}
