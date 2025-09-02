@@ -165,5 +165,12 @@
       "real estate",
       "property agents"
     ]
+  },
+  {
+    "id": "notifications",
+    "label": "Notification Management",
+    "description": "Go to notification management",
+    "path": "/dashboard/notifications",
+    "keywords": ["notifications", "notification", "push", "fcm", "messaging", "alerts"]
   }
 ]
