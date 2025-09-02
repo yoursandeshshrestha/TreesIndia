@@ -53,6 +53,9 @@ type User struct {
 	UserSubscriptions        []UserSubscription        `json:"user_subscriptions,omitempty" gorm:"foreignKey:UserID"`
 	SubscriptionWarnings     []SubscriptionWarning     `json:"subscription_warnings,omitempty" gorm:"foreignKey:UserID"`
 	
+	// Push notification devices
+	DeviceTokens            []DeviceToken            `json:"device_tokens,omitempty" gorm:"foreignKey:UserID"`
+	
 	// Worker and Broker relationships
 	Worker                  *Worker                   `json:"worker,omitempty" gorm:"foreignKey:UserID"`
 	Broker                  *Broker                   `json:"broker,omitempty" gorm:"foreignKey:UserID"`

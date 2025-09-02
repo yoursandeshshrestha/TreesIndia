@@ -45,9 +45,12 @@ func (ms *MigrationService) GetMigrations() []MigrationStep {
 // RunMigrations runs all pending migrations
 func (ms *MigrationService) RunMigrations() error {
 	// First, ensure migrations table exists
+	// DISABLED: Using Goose migrations instead of GORM AutoMigrate
+	/*
 	if err := ms.db.AutoMigrate(&models.Migration{}); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
+	*/
 
 	// Get all available migrations
 	availableMigrations := ms.GetMigrations()
@@ -180,6 +183,9 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 	}
 	
 	// Create all tables in one go
+	// DISABLED: Using Goose migrations instead of GORM AutoMigrate
+	// This prevents GORM from overriding the correct schema from migrations
+	/*
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Category{},
@@ -206,6 +212,7 @@ func (ms *MigrationService) migration001CompleteSystemSetup(db *gorm.DB) error {
 		logrus.Errorf("Failed to create tables: %v", err)
 		return err
 	}
+	*/
 	
 	// Re-enable foreign key constraints
 	if err := db.Exec("SET session_replication_role = DEFAULT").Error; err != nil {

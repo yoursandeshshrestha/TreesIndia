@@ -25,5 +25,6 @@ func SetupAuthRoutes(r *gin.RouterGroup) {
 	{
 		protected.GET("/me", authController.GetCurrentUser)
 		protected.POST("/logout", authController.Logout)
+		protected.POST("/register-device", authController.RegisterDeviceAfterLogin)
 	}
 }
