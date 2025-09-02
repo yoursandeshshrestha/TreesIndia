@@ -51,14 +51,20 @@ func initDatabase(appConfig *config.AppConfig) {
 	dsn := appConfig.GetDatabaseURL()
 	
 	// Connect to database
-	
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		// Prevent GORM from auto-creating tables
+		DisableForeignKeyConstraintWhenMigrating: true,
+		// Disable auto-migration
+		SkipDefaultTransaction: true,
+	})
 	if err != nil {
 		logrus.Fatal("Failed to connect to database:", err)
 	}
 
 	// Set the database instance in the database package
 	database.SetDB(db)
+
+	// Database connection established - migrations will be run separately using Goose
 
 	logrus.Info("Database connected successfully")
 }
@@ -142,6 +148,7 @@ func main() {
 	initDatabase(appConfig)
 	
 	// Always run database migrations (both development and production)
+	// IMPORTANT: This must run BEFORE any GORM operations to ensure correct schema
 	log.Println("Running database migrations with Goose...")
 	if err := runMigrations(appConfig); err != nil {
 		log.Fatal("Failed to run migrations:", err)
@@ -187,6 +194,12 @@ func main() {
 	// Handle method not allowed
 	r.NoMethod(middleware.MethodNotAllowedHandler())
 
+	// Initialize FCM service
+	fcmService, err := services.NewFCMService(appConfig.FCMServiceAccountPath)
+	if err != nil {
+		log.Fatal("Failed to initialize FCM service:", err)
+	}
+
 	// Initialize WebSocket service
 	wsService := services.NewWebSocketService()
 	wsController := controllers.NewWebSocketController(wsService)
@@ -195,9 +208,17 @@ func main() {
 	chatService := services.NewChatService(wsService)
 	workerAssignmentService := services.NewWorkerAssignmentService(chatService)
 
+	// Initialize notification services
+	deviceManagementService := services.NewDeviceManagementService(fcmService)
+	enhancedNotificationService := services.NewEnhancedNotificationService(fcmService, deviceManagementService, nil) // Pass nil for email service for now
+
 	// Start cleanup service
 	cleanupService := services.NewCleanupService()
 	cleanupService.StartPeriodicCleanup()
+
+	// Start token cleanup service
+	tokenCleanupService := services.NewTokenCleanupService(deviceManagementService)
+	tokenCleanupService.Start()
 
 	// Setup WebSocket routes (outside of /api/v1 prefix)
 	routes.SetupWebSocketRoutes(r, wsController)
@@ -210,6 +231,10 @@ func main() {
 	bookingGroup := r.Group("/api/v1")
 	bookingGroup.Use(bookingMiddleware.BookingSystem())
 	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService)
+
+	// Setup notification routes
+	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
+	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
 
 	// Start server
 	log.Printf("Server starting on %s:%s", appConfig.ServerHost, appConfig.ServerPort)
