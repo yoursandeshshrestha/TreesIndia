@@ -94,10 +94,10 @@ export const authenticatedFetch = async (
 
   // Only set Content-Type to application/json if not already set and not FormData
   if (
-    !options.headers?.["Content-Type"] &&
+    !(options.headers as Record<string, string>)?.["Content-Type"] &&
     !(options.body instanceof FormData)
   ) {
-    headers["Content-Type"] = "application/json";
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 
   if (accessToken) {

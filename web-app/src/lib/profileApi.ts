@@ -33,7 +33,6 @@ export interface UserProfile {
   notification_settings?: {
     email_notifications: boolean;
     sms_notifications: boolean;
-    push_notifications: boolean;
     marketing_emails: boolean;
     booking_reminders: boolean;
     service_updates: boolean;
@@ -66,7 +65,6 @@ export interface ProfileUpdateRequest {
 export interface NotificationSettings {
   email_notifications: boolean;
   sms_notifications: boolean;
-  push_notifications: boolean;
   marketing_emails: boolean;
   booking_reminders: boolean;
   service_updates: boolean;

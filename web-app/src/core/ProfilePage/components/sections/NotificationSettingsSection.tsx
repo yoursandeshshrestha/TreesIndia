@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Bell,
-  Mail,
-  MessageSquare,
-  Smartphone,
-  Settings,
-  Loader2,
-} from "lucide-react";
+import { Bell, Mail, MessageSquare, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { NotificationSettings } from "@/lib/profileApi";
@@ -100,7 +93,6 @@ export function NotificationSettingsSection() {
   const [settings, setSettings] = useState<NotificationSettings>({
     email_notifications: true,
     sms_notifications: true,
-    push_notifications: true,
     marketing_emails: false,
     booking_reminders: true,
     service_updates: true,
@@ -174,12 +166,6 @@ export function NotificationSettingsSection() {
       description: "Get instant updates and reminders via text message",
     },
     {
-      key: "push_notifications" as keyof NotificationSettings,
-      icon: <Smartphone className="w-5 h-5" />,
-      title: "Push Notifications",
-      description: "Receive real-time notifications on your device",
-    },
-    {
       key: "booking_reminders" as keyof NotificationSettings,
       icon: <Bell className="w-5 h-5" />,
       title: "Booking Reminders",
@@ -201,6 +187,7 @@ export function NotificationSettingsSection() {
 
   return (
     <div className="space-y-6">
+      {/* Other Notification Settings */}
       <div className="divide-y divide-gray-200">
         {notificationItems.map((item) => (
           <NotificationItem
