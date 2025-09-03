@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../../../../../commons/constants/app_colors.dart';
+import '../../../../../../../../../commons/constants/app_spacing.dart';
 import '../../../../../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../domain/entities/wallet_transaction_entity.dart';
 
@@ -14,31 +15,10 @@ class TransactionItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: AppColors.brandNeutral200,
-          width: 1.0,
-        ),
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _getIconBackgroundColor(),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Icon(
-              _getTransactionIcon(),
-              color: _getIconColor(),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,17 +121,19 @@ class TransactionItemWidget extends StatelessWidget {
   }
 
   String _getTransactionTitle() {
-    switch (transaction.type) {
-      case 'wallet_recharge':
-        return 'Wallet Recharge';
-      case 'wallet_debit':
-        return 'Wallet Debit';
-      case 'booking':
-        return 'Service Payment';
-      case 'refund':
-        return 'Refund';
-      default:
-        return 'Transaction';
+    final type = transaction.type.toLowerCase();
+    if (type == 'credit' ||
+        type == 'recharge' ||
+        type == 'wallet_recharge' ||
+        type.contains('recharge')) {
+      return 'Wallet Recharge';
+    } else if (type == 'debit' ||
+        type == 'payment' ||
+        type.contains('debit') ||
+        type.contains('payment')) {
+      return 'Service Payment';
+    } else {
+      return 'Transaction';
     }
   }
 

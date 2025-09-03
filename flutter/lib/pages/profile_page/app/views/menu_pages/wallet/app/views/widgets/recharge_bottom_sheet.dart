@@ -24,6 +24,9 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
   bool _showMinimumError = false;
   final GlobalKey<NumericTextfieldWidgetState> _textFieldKey = GlobalKey();
 
+  // Main app color like navigation bottom
+  static const Color mainAppColor = Color(0xFF055c3a);
+
   void _selectQuickAmount(double amount) {
     setState(() {
       _selectedAmount = amount;
@@ -118,19 +121,19 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.brandPrimary100
+                              ? mainAppColor.withOpacity(0.1)
                               : AppColors.brandNeutral50,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.brandPrimary600
+                                ? mainAppColor
                                 : AppColors.brandNeutral200,
                           ),
                         ),
                         child: B3Medium(
                           text: '₹${amount.toStringAsFixed(0)}',
                           color: isSelected
-                              ? AppColors.brandPrimary600
+                              ? mainAppColor
                               : AppColors.brandNeutral600,
                         ),
                       ),
@@ -167,7 +170,7 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 32),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: SolidButtonWidget(
@@ -177,7 +180,8 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
                     onPressed: _onRecharge,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(
+                    height: 54), // Reduced from 20 to move button higher
               ],
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../../../../../commons/constants/app_colors.dart';
-import '../../../../../../../../../commons/components/text/app/views/custom_text_library.dart';
+import '../../../../../../../../../commons/constants/app_spacing.dart';
 import '../../../domain/entities/wallet_summary_entity.dart';
 
 class WalletBalanceCard extends StatelessWidget {
@@ -17,82 +17,69 @@ class WalletBalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.brandPrimary600,
-            AppColors.brandPrimary700,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandPrimary600.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Balance Content
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  B2Regular(
-                    text: 'Available Balance',
-                    color: AppColors.brandPrimary100,
-                  ),
-                  const SizedBox(height: 8),
-                  H2Bold(
-                    text: '₹${walletSummary.currentBalance.toStringAsFixed(2)}',
-                    color: AppColors.white,
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.brandPrimary500.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+              // Treesindia Cash Label
+              Text(
+                'Treesindia Cash',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.brandNeutral800,
                 ),
-                child: const Icon(
-                  Icons.account_balance_wallet,
-                  color: AppColors.white,
-                  size: 24,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+
+              // Balance Amount
+              Text(
+                '₹${walletSummary.currentBalance.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.brandNeutral900,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+
+              // Explanatory Text
+              Text(
+                'Applicable on all services',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.brandNeutral500,
+                  height: 1.3,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton.icon(
-              onPressed: onRecharge,
-              icon: const Icon(
-                Icons.add,
-                color: AppColors.brandPrimary600,
-                size: 20,
-              ),
-              label: B2Regular(
-                text: 'Recharge Wallet',
-                color: AppColors.brandPrimary600,
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // Recharge Button - Same style as address button
+          GestureDetector(
+            onTap: onRecharge,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.add,
+                  color: Color(0xFF055c3a),
+                  size: 20,
                 ),
-              ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  'Recharge Wallet',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF055c3a),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

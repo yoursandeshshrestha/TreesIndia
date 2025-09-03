@@ -8,11 +8,13 @@ import 'package:trees_india/commons/components/button/app/views/solid_button_wid
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
 import 'package:trees_india/commons/components/textfield/app/views/email_textfield_widget.dart';
+import 'package:trees_india/commons/components/textfield/app/views/numeric_textfield_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -29,6 +31,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   bool _isInitialized = false;
   Key _nameFieldKey = UniqueKey();
   Key _emailFieldKey = UniqueKey();
+
+  // Main brand color used throughout the app
+  static const Color mainColor = Color(0xFF055c3a);
 
   @override
   void initState() {
@@ -88,12 +93,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
 
-    if (name.isEmpty && email.isEmpty) {
+    if (name.isEmpty || email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please fill in all fields'),
+          content: Text('Please fill in all required fields'),
+          backgroundColor: AppColors.stateRed600,
         ),
       );
+      return;
     }
 
     print(
@@ -108,6 +115,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       // Refresh profile data after update
       await ref.read(userProfileProvider.notifier).refreshUserProfile();
 
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: AppColors.stateGreen600,
+          ),
+        );
+      }
+
       // Navigate back to profile page
       if (mounted) {
         context.pop();
@@ -117,7 +134,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update profile: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.stateRed600,
           ),
         );
       }
@@ -138,22 +155,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.brandPrimary600,
-          ),
-          onPressed: () => context.pop(),
-        ),
-        title: H2Bold(
-          text: 'Edit Profile',
-          color: AppColors.brandPrimary600,
-        ),
-        centerTitle: true,
+      backgroundColor: AppColors.white,
+      appBar: const CustomAppBar(
+        title: 'Edit Profile',
+        backgroundColor: AppColors.white,
+        iconColor: AppColors.brandNeutral800,
+        titleColor: AppColors.brandNeutral800,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -161,7 +168,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar Section
+              // Avatar Section with improved styling
               GestureDetector(
                 onTap: profileState.isUploadingAvatar ? null : _pickImage,
                 child: Stack(
@@ -172,9 +179,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.brandPrimary200,
+                          color: mainColor.withOpacity(0.2),
                           width: 3,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: mainColor.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: ClipOval(
                         child: _buildAvatarImage(user),
@@ -185,7 +199,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withOpacity(0.6),
                           ),
                           child: const Center(
                             child: CircularProgressIndicator(
@@ -201,9 +215,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.brandPrimary600,
+                        decoration: BoxDecoration(
+                          color: mainColor,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: mainColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.camera_alt,
@@ -215,150 +236,157 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.xl),
 
-              // Full Name Field
+              // Profile Information Section
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  B3Medium(
-                    text: 'Full Name',
-                    color: AppColors.brandNeutral400,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AlphabeticTextfieldWidget(
-                    key: _nameFieldKey,
-                    initialText: _nameController.text,
-                    hintText: '',
-                    onTextChanged: (value) {
-                      _nameController.text = value;
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.md),
-
-              // Email Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  B3Medium(
-                    text: 'Email Address',
-                    color: AppColors.brandNeutral400,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  EmailTextFieldWidget(
-                    key: _emailFieldKey,
-                    initialText: _emailController.text,
-                    hintText: '',
-                    onTextChanged: (value) {
-                      _emailController.text = value;
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.md),
-
-              // Gender Selection
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  B3Medium(
-                    text: 'Gender',
-                    color: AppColors.brandNeutral400,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
+                  // Full Name Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: B3Regular(text: 'Male'),
-                          value: 'male',
-                          groupValue: _selectedGender,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedGender = value!;
-                            });
-                          },
-                          activeColor: AppColors.brandPrimary600,
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                      B3Medium(
+                        text: 'Full Name *',
+                        color: AppColors.brandNeutral700,
                       ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: B3Regular(text: 'Female'),
-                          value: 'female',
-                          groupValue: _selectedGender,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedGender = value!;
-                            });
-                          },
-                          activeColor: AppColors.brandPrimary600,
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                      const SizedBox(height: AppSpacing.sm),
+                      AlphabeticTextfieldWidget(
+                        key: _nameFieldKey,
+                        initialText: _nameController.text,
+                        hintText: 'Enter your full name',
+                        onTextChanged: (value) {
+                          _nameController.text = value;
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Email Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B3Medium(
+                        text: 'Email Address *',
+                        color: AppColors.brandNeutral700,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      EmailTextFieldWidget(
+                        key: _emailFieldKey,
+                        initialText: _emailController.text,
+                        hintText: 'Enter your email address',
+                        onTextChanged: (value) {
+                          _emailController.text = value;
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Gender Selection with tabs
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B3Medium(
+                        text: 'Gender',
+                        color: AppColors.brandNeutral700,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          _buildGenderTab('male', 'Male'),
+                          _buildGenderTab('female', 'Female'),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Phone Number Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B3Medium(
+                        text: 'Phone Number',
+                        color: AppColors.brandNeutral700,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      NumericTextfieldWidget(
+                        hintText: 'Phone number',
+                        onTextChanged: (value) {
+                          // Phone number is read-only
+                        },
+                        initialText: user?.phone ?? '+91-8617662584',
+                        readOnly: true,
+                        enabled: false,
                       ),
                     ],
                   ),
                 ],
               ),
 
-              const SizedBox(height: AppSpacing.md),
-
-              // Phone Number (Read-only)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  B3Medium(
-                    text: 'Phone Number',
-                    color: AppColors.brandNeutral400,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.brandNeutral100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.brandNeutral300,
-                        width: 1,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: B2Regular(
-                              text: user?.phone ?? '+91-8617662584',
-                              color: AppColors.brandNeutral600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
               const SizedBox(height: AppSpacing.xl * 2),
 
-              // Update Button
+              // Update Button with improved styling
               SizedBox(
                 width: double.infinity,
                 child: SolidButtonWidget(
-                  label: 'Update Now',
-                  backgroundColor: AppColors.accentPurple600,
+                  label: 'Update Profile',
+                  backgroundColor: mainColor,
                   isLoading: profileState.isUpdatingProfile,
                   onPressed: _updateProfile,
                 ),
               ),
+
+              const SizedBox(height: 5),
+
+              // Help text
+              Center(
+                child: B4Regular(
+                  text: 'Tap the camera icon to change your profile picture',
+                  color: AppColors.brandNeutral400,
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderTab(String value, String label) {
+    final isSelected = _selectedGender == value;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedGender = value;
+        });
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? mainColor.withOpacity(0.1)
+              : AppColors.brandNeutral50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? mainColor : AppColors.brandNeutral200,
+          ),
+        ),
+        child: B3Medium(
+          text: label,
+          color: isSelected ? mainColor : AppColors.brandNeutral600,
         ),
       ),
     );
@@ -383,11 +411,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Widget _buildDefaultAvatar() {
     return Container(
-      color: AppColors.brandPrimary100,
-      child: const Icon(
+      color: mainColor.withOpacity(0.1),
+      child: Icon(
         Icons.person,
         size: 60,
-        color: AppColors.brandPrimary600,
+        color: mainColor,
       ),
     );
   }

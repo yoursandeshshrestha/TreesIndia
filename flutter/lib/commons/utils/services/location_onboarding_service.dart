@@ -58,41 +58,57 @@ class LocationOnboardingService {
     }
   }
 
+  // COMMENTED OUT FOR DEVELOPMENT SPEED
+  // Future<LocationEntity> getCurrentLocation() async {
+  //   try {
+  //     // First check and request location permission
+  //     final hasPermission = await _locationService.checkAndRequestPermission();
+  //     if (!hasPermission) {
+  //       throw Exception('Location permission denied');
+  //     }
+
+  //     // Get current coordinates
+  //     final coordinates = await _locationService.getCurrentCoordinates();
+
+  //     // Get address from coordinates using geocoding
+  //     final placemarks = await placemarkFromCoordinates(
+  //       coordinates.$1,
+  //       coordinates.$2,
+  //     );
+
+  //     if (placemarks.isEmpty) {
+  //       throw Exception('Unable to get address from current location');
+  //     }
+
+  //     final placemark = placemarks.first;
+  //     final address = _formatDetailedAddress(placemark);
+
+  //     return LocationEntity(
+  //       address: address,
+  //       latitude: coordinates.$1,
+  //       longitude: coordinates.$2,
+  //       city: placemark.locality,
+  //       state: placemark.administrativeArea,
+  //       country: placemark.country ?? 'Unknown',
+  //     );
+  //   } catch (e) {
+  //     throw Exception('Failed to get current location: $e');
+  //   }
+  // }
+
+  // DEVELOPMENT VERSION - Returns mock location
   Future<LocationEntity> getCurrentLocation() async {
-    try {
-      // First check and request location permission
-      final hasPermission = await _locationService.checkAndRequestPermission();
-      if (!hasPermission) {
-        throw Exception('Location permission denied');
-      }
+    // Return a mock location for development speed
+    await Future.delayed(const Duration(milliseconds: 100)); // Minimal delay
 
-      // Get current coordinates
-      final coordinates = await _locationService.getCurrentCoordinates();
-
-      // Get address from coordinates using geocoding
-      final placemarks = await placemarkFromCoordinates(
-        coordinates.$1,
-        coordinates.$2,
-      );
-
-      if (placemarks.isEmpty) {
-        throw Exception('Unable to get address from current location');
-      }
-
-      final placemark = placemarks.first;
-      final address = _formatDetailedAddress(placemark);
-
-      return LocationEntity(
-        address: address,
-        latitude: coordinates.$1,
-        longitude: coordinates.$2,
-        city: placemark.locality,
-        state: placemark.administrativeArea,
-        country: placemark.country ?? 'Unknown',
-      );
-    } catch (e) {
-      throw Exception('Failed to get current location: $e');
-    }
+    return const LocationEntity(
+      address: 'Development Location',
+      latitude: 0.0,
+      longitude: 0.0,
+      city: 'Dev City',
+      state: 'Dev State',
+      country: 'Dev Country',
+    );
   }
 
   String _formatDetailedAddress(Placemark place) {

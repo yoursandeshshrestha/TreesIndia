@@ -41,9 +41,11 @@ class SolidButtonWidget extends BaseButtonWidget {
       child: ElevatedButton(
         onPressed: entity.isEnabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          disabledBackgroundColor:
-              disableBackgroundColor ?? AppColors.brandPrimary300,
-          backgroundColor: backgroundColor ?? AppColors.brandPrimary600,
+          disabledBackgroundColor: disableBackgroundColor ??
+              const Color(0xFF055c3a)
+                  .withOpacity(0.3), // Main app color with opacity
+          backgroundColor:
+              backgroundColor ?? const Color(0xFF055c3a), // Main app color
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
             side: border ?? BorderSide.none, // Use custom border or none

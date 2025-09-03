@@ -21,46 +21,37 @@ class TransactionsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: AppColors.brandNeutral50,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top separator - big border like home page banner
+        Container(
+          height: 8,
+          color: const Color(0xFFF5F5F5),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                H3Bold(
-                  text: 'Recent Transactions',
-                  color: AppColors.brandNeutral800,
-                ),
-                // if (transactions.isNotEmpty)
-                //   InkWell(
-                //     onTap: () {
-                //       // Navigate to full transactions page
-                //     },
-                //     child: B3Medium(
-                //       text: 'View All',
-                //       color: AppColors.brandPrimary600,
-                //     ),
-                //   ),
-              ],
+
+        // Transactions Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Text(
+            'Recent Transactions',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.brandNeutral800,
             ),
           ),
-          Expanded(
-            child: _buildTransactionsList(),
-          ),
-        ],
-      ),
+        ),
+
+        // Transactions List
+        Expanded(
+          child: _buildTransactionsList(),
+        ),
+      ],
     );
   }
 
@@ -75,15 +66,21 @@ class TransactionsListWidget extends StatelessWidget {
               size: 64,
               color: AppColors.brandNeutral400,
             ),
-            const SizedBox(height: 16),
-            H4Medium(
-              text: 'No Transactions Yet',
-              color: AppColors.brandNeutral600,
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'No Transactions Yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.brandNeutral600,
+              ),
             ),
-            const SizedBox(height: 8),
-            B3Regular(
-              text: 'Your transaction history will appear here',
-              color: AppColors.brandNeutral500,
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Your transaction history will appear here',
+              style: TextStyle(
+                color: AppColors.brandNeutral500,
+              ),
             ),
           ],
         ),
@@ -100,34 +97,31 @@ class TransactionsListWidget extends StatelessWidget {
         return false;
       },
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         itemCount: transactions.length + (hasMoreTransactions ? 1 : 0),
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => Divider(
+          color: AppColors.brandNeutral100,
+          height: 1,
+        ),
         itemBuilder: (context, index) {
           if (index == transactions.length) {
-            return _buildLoadingIndicator();
+            // Load more indicator
+            if (isLoading) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.brandPrimary600,
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
           }
 
-          return TransactionItemWidget(
-            transaction: transactions[index],
-          );
+          final transaction = transactions[index];
+          return TransactionItemWidget(transaction: transaction);
         },
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.brandPrimary600,
-          ),
-        ),
       ),
     );
   }

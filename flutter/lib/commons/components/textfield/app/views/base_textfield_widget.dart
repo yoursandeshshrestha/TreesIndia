@@ -195,11 +195,11 @@ abstract class BaseTextfieldWidgetState<T extends BaseTextfieldWidget>
               color: isPasswordField
                   ? (viewModel.isValid(state.text, context) ||
                           state.text.isEmpty
-                      ? AppColors.brandPrimary600
+                      ? const Color(0xFF055c3a) // Main app color
                       : AppColors.stateRed400)
                   : (validationMessages.isNotEmpty
                       ? AppColors.stateRed400
-                      : AppColors.brandPrimary600),
+                      : const Color(0xFF055c3a)), // Main app color
               width: 1.0,
             ),
           ),

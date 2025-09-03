@@ -23,6 +23,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoggingOut = false;
   String _appVersion = '';
 
+  // Main navigation color
+  static const Color mainColor = Color(0xFF055c3a);
+
   @override
   void initState() {
     super.initState();
@@ -53,7 +56,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.logout,
+                  Icons.logout_outlined,
                   size: 30,
                   color: AppColors.stateRed600,
                 ),
@@ -144,190 +147,202 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         backgroundColor: Colors.white,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Header Section
-                GestureDetector(
-                  onTap: _navigateToEditProfile,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 60,
-                          height: 60,
-                          child: ClipOval(
-                            child: user?.userImage != null &&
-                                    user!.userImage!.isNotEmpty
-                                ? Image.network(
-                                    user.userImage!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return _buildDefaultAvatar();
-                                    },
-                                  )
-                                : _buildDefaultAvatar(),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                // Padded content section
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Header Section
+                      GestureDetector(
+                        onTap: _navigateToEditProfile,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
                             children: [
-                              if (user?.name != null && user!.name!.isNotEmpty)
-                                H2Bold(
-                                  text: user.name!,
-                                  color: AppColors.brandNeutral900,
+                              // Avatar
+                              Container(
+                                width: 60,
+                                height: 60,
+                                child: ClipOval(
+                                  child: user?.userImage != null &&
+                                          user!.userImage!.isNotEmpty
+                                      ? Image.network(
+                                          user.userImage!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return _buildDefaultAvatar();
+                                          },
+                                        )
+                                      : _buildDefaultAvatar(),
                                 ),
-                              if (user?.phone != null &&
-                                  user!.phone!.isNotEmpty)
-                                B2Regular(
-                                  text: user.phone!,
-                                  color: AppColors.brandNeutral600,
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (user?.name != null &&
+                                        user!.name!.isNotEmpty)
+                                      H2Bold(
+                                        text: user.name!,
+                                        color: AppColors.brandNeutral900,
+                                      ),
+                                    if (user?.phone != null &&
+                                        user!.phone!.isNotEmpty)
+                                      B2Regular(
+                                        text: user.phone!,
+                                        color: AppColors.brandNeutral900,
+                                      ),
+                                  ],
                                 ),
+                              ),
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 20,
-                          color: AppColors.brandNeutral600,
-                        ),
-                      ],
-                    ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.lg),
+
+                      // Quick Action Cards
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickActionCard(
+                              icon: Icons.calendar_today_outlined,
+                              label: 'My bookings',
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('My bookings coming soon!')),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          // Expanded(
+                          //   child: _buildQuickActionCard(
+                          //     icon: Icons.devices,
+                          //     label: 'Native devices',
+                          //     onTap: () {
+                          //       ScaffoldMessenger.of(context).showSnackBar(
+                          //         const SnackBar(
+                          //             content: Text('Native devices coming soon!')),
+                          //       );
+                          //     },
+                          //   ),
+                          // ),
+                          // const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: _buildQuickActionCard(
+                              icon: Icons.support_agent_outlined,
+                              label: 'Help & support',
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Help & support coming soon!')),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
 
-                const SizedBox(height: AppSpacing.xl),
-
-                // Quick Action Cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        icon: Icons.assignment,
-                        label: 'My bookings',
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('My bookings coming soon!')),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    // Expanded(
-                    //   child: _buildQuickActionCard(
-                    //     icon: Icons.devices,
-                    //     label: 'Native devices',
-                    //     onTap: () {
-                    //       ScaffoldMessenger.of(context).showSnackBar(
-                    //         const SnackBar(
-                    //             content: Text('Native devices coming soon!')),
-                    //       );
-                    //     },
-                    //   ),
-                    // ),
-                    // const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        icon: Icons.headset_mic,
-                        label: 'Help & support',
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Help & support coming soon!')),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.xl),
-
-                // Menu Items
-                _buildMenuItem(
-                  icon: Icons.description,
-                  label: 'My Plans',
-                  onTap: () {
-                    context.push('/my-plans');
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.account_balance_wallet,
-                  label: 'Wallet',
-                  onTap: () {
-                    context.push('/wallet');
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.star_border,
-                  label: 'Plus membership',
-                  onTap: () {
-                    context.push('/plus-membership');
-                  },
-                ),
-                // _buildMenuItem(
-                //   icon: Icons.star_outline,
-                //   label: 'My rating',
-                //   onTap: () {
-                //     context.push('/my-rating');
-                //   },
-                // ),
-                _buildMenuItem(
-                  icon: Icons.location_on,
-                  label: 'Manage addresses',
-                  onTap: () {
-                    context.push('/manage-addresses');
-                  },
-                ),
-                // _buildMenuItem(
-                //   icon: Icons.credit_card,
-                //   label: 'Manage payment methods',
-                //   onTap: () {
-                //     context.push('/manage-payment-methods');
-                //   },
-                // ),
-                _buildMenuItem(
-                  icon: Icons.settings,
-                  label: 'Settings',
-                  onTap: () {
-                    context.push('/settings');
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.info_outline,
-                  label: 'About TreesIndia',
-                  onTap: () {
-                    context.push('/about-trees-india');
-                  },
-                ),
-
-                const SizedBox(height: AppSpacing.xl),
-
-                // Logout Button
-                SizedBox(
+                // Top separator - big border like home page banner (full width, no padding)
+                Container(
                   width: double.infinity,
-                  child: SolidButtonWidget(
-                    label: 'Logout',
-                    backgroundColor: Colors.white,
-                    labelColor: AppColors.stateRed600,
-                    border: const BorderSide(color: AppColors.stateRed600),
-                    onPressed: _showLogoutConfirmation,
-                  ),
+                  height: 8,
+                  color: const Color(0xFFF5F5F5),
                 ),
 
-                const SizedBox(height: AppSpacing.lg),
+                // Padded content section for menu items
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Menu Items
 
-                // Version
-                Center(
-                  child: B4Regular(
-                    text: _appVersion.isNotEmpty ? _appVersion : '',
-                    color: AppColors.brandNeutral400,
+                      _buildMenuItem(
+                        icon: Icons.account_balance_wallet_outlined,
+                        label: 'Wallet',
+                        onTap: () {
+                          context.push('/wallet');
+                        },
+                      ),
+
+                      _buildMenuItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'Manage addresses',
+                        onTap: () {
+                          context.push('/manage-addresses');
+                        },
+                      ),
+
+                      _buildMenuItem(
+                        icon: Icons.settings_outlined,
+                        label: 'Settings',
+                        onTap: () {
+                          context.push('/settings');
+                        },
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.info_outline,
+                        label: 'About TreesIndia',
+                        onTap: () {
+                          context.push('/about-trees-india');
+                        },
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Logout Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _showLogoutConfirmation,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.stateRed600,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(
+                                color: Color.fromARGB(255, 226, 224, 224),
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.stateRed600,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.lg),
+
+                      // Version
+                      Center(
+                        child: B4Regular(
+                          text: _appVersion.isNotEmpty ? _appVersion : '',
+                          color: AppColors.brandNeutral400,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -346,12 +361,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: AppColors.brandNeutral200,
+            color: const Color(0xFFF5F5F5),
             width: 1,
           ),
         ),
@@ -359,14 +374,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             Icon(
               icon,
-              size: 24,
-              color: AppColors.brandPrimary600,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            B4Medium(
-              text: label,
+              size: 28,
               color: AppColors.brandNeutral700,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              label,
               textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                height: 1.3,
+                letterSpacing: 0.2,
+              ),
             ),
           ],
         ),
@@ -388,18 +409,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Icon(
               icon,
               size: 20,
-              color: AppColors.brandNeutral600,
+              color: AppColors.brandNeutral900,
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: B3Regular(
                 text: label,
-                color: AppColors.brandNeutral700,
+                color: AppColors.brandNeutral900,
               ),
             ),
             const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
+              Icons.arrow_forward_ios_outlined,
+              size: 14,
               color: AppColors.brandNeutral400,
             ),
           ],
@@ -412,7 +433,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Container(
       color: AppColors.brandPrimary100,
       child: const Icon(
-        Icons.person,
+        Icons.person_outline,
         size: 30,
         color: AppColors.brandPrimary600,
       ),

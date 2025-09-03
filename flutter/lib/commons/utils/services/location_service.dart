@@ -5,33 +5,41 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
+  // COMMENTED OUT FOR DEVELOPMENT SPEED
+  // Future<bool> checkAndRequestPermission() async {
+  //   bool serviceEnabled;
+  //   LocationPermission permission;
+
+  //   try {
+  //     serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //     if (!serviceEnabled) {
+  //       return false;
+  //     }
+
+  //     permission = await Geolocator.checkPermission();
+  //     if (permission == LocationPermission.denied) {
+  //       permission = await Geolocator.requestPermission();
+  //       if (permission == LocationPermission.denied) {
+  //         return false;
+  //       }
+  //     }
+
+  //     if (permission == LocationPermission.deniedForever) {
+  //       return false;
+  //     }
+
+  //     return true;
+  //   } catch (e) {
+  //     print('Permission Check Error: $e');
+  //     return false;
+  //   }
+  // }
+
+  // DEVELOPMENT VERSION - Always returns true to skip permission checks
   Future<bool> checkAndRequestPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    try {
-      serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        return false;
-      }
-
-      permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          return false;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        return false;
-      }
-
-      return true;
-    } catch (e) {
-      print('Permission Check Error: $e');
-      return false;
-    }
+    // Skip permission checks for development speed
+    await Future.delayed(const Duration(milliseconds: 50));
+    return true;
   }
 
   // Check if permission is already granted without requesting it
@@ -191,27 +199,35 @@ class LocationService {
 
   //will return the geo location of the user
 
-  Future<(double latitude, double longitude)> getCurrentCoordinates() async {
-    final LocationSettings locationSettings = Platform.isAndroid
-        ? AndroidSettings(
-            accuracy: LocationAccuracy.best,
-            distanceFilter: 0,
-            forceLocationManager: true,
-            intervalDuration: const Duration(seconds: 5),
-          )
-        : AppleSettings(
-            accuracy: LocationAccuracy.best,
-            activityType: ActivityType.fitness,
-            distanceFilter: 0,
-            pauseLocationUpdatesAutomatically: true,
-          );
+  // COMMENTED OUT FOR DEVELOPMENT SPEED
+  // Future<(double latitude, double longitude)> getCurrentCoordinates() async {
+  //   final LocationSettings locationSettings = Platform.isAndroid
+  //       ? AndroidSettings(
+  //           accuracy: LocationAccuracy.best,
+  //           distanceFilter: 0,
+  //           forceLocationManager: true,
+  //           intervalDuration: const Duration(seconds: 5),
+  //         )
+  //       : AppleSettings(
+  //           accuracy: LocationAccuracy.best,
+  //           activityType: ActivityType.fitness,
+  //           distanceFilter: 0,
+  //           pauseLocationUpdatesAutomatically: true,
+  //         );
 
-    final Position position = await Geolocator.getCurrentPosition(
-      locationSettings: locationSettings,
-    );
-    position.latitude;
-    position.longitude;
-    return (position.latitude, position.longitude);
+  //   final Position position = await Geolocator.getCurrentPosition(
+  //     locationSettings: locationSettings,
+  //   );
+  //   position.latitude;
+  //   position.longitude;
+  //   return (position.latitude, position.longitude);
+  // }
+
+  // DEVELOPMENT VERSION - Returns mock coordinates
+  Future<(double latitude, double longitude)> getCurrentCoordinates() async {
+    // Return mock coordinates for development speed
+    await Future.delayed(const Duration(milliseconds: 100));
+    return (0.0, 0.0); // Mock coordinates
   }
 
   Stream<Position> getPositionStream() {

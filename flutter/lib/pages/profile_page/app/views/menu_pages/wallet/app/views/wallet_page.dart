@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import '../../../../../../../../commons/constants/app_colors.dart';
 import '../../../../../../../../commons/components/text/app/views/custom_text_library.dart';
+import '../../../../../../../../commons/components/app_bar/app/views/custom_app_bar.dart';
 import '../providers/wallet_providers.dart';
 import '../viewmodels/wallet_state.dart';
 import 'widgets/wallet_balance_card.dart';
@@ -30,33 +31,12 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     final walletState = ref.watch(walletNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.brandNeutral50,
-      appBar: AppBar(
-        title: H3Bold(
-          text: 'My Wallet',
-          color: AppColors.brandNeutral800,
-        ),
-        backgroundColor: AppColors.brandNeutral50,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.brandNeutral800),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: walletState.isRefreshing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.brandPrimary600,
-                    ),
-                  )
-                : const Icon(Icons.refresh, color: AppColors.brandNeutral800),
-            onPressed: walletState.isRefreshing ? null : () => _refreshWallet(),
-          ),
-        ],
+      backgroundColor: AppColors.white,
+      appBar: const CustomAppBar(
+        title: 'My Wallet',
+        backgroundColor: AppColors.white,
+        iconColor: AppColors.brandNeutral800,
+        titleColor: AppColors.brandNeutral800,
       ),
       body: _buildBody(walletState),
     );
@@ -77,13 +57,20 @@ class _WalletPageState extends ConsumerState<WalletPage> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(20.0),
+        // Wallet Balance Section
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           child: WalletBalanceCard(
             walletSummary: state.walletSummary!,
             onRecharge: _showRechargeBottomSheet,
           ),
         ),
+
+        // Transactions List
         Expanded(
           child: TransactionsListWidget(
             transactions: state.transactions,
