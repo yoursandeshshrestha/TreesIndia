@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/pages/booking_page/app/providers/booking_providers.dart';
-import '../../../../commons/constants/app_colors.dart';
+
 import '../../../services_page/domain/entities/service_detail_entity.dart';
 import 'widgets/fixed_price_booking_widget.dart';
 import 'widgets/inquiry_booking_widget.dart';

@@ -50,12 +50,14 @@ class BookingStepButtonsWidget extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Back',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.brandNeutral700,
+                  child: const FittedBox(
+                    child:  Text(
+                      'Back',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.brandNeutral700,
+                      ),
                     ),
                   ),
                 ),
@@ -86,12 +88,14 @@ class BookingStepButtonsWidget extends ConsumerWidget {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : Text(
-                        continueLabel,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                    : FittedBox(
+                        child: Text(
+                          continueLabel,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
               ),
