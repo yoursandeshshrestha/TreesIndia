@@ -77,4 +77,19 @@ type CustomerLocationResponse struct {
 type LocationCoordinates struct {
 	Latitude   float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`
+	Accuracy   float64 `json:"accuracy,omitempty"` // GPS accuracy in meters
+}
+
+// TrackingStatusResponse represents the tracking status for an assignment
+type TrackingStatusResponse struct {
+	AssignmentID        uint                    `json:"assignment_id"`
+	BookingID           uint                    `json:"booking_id"`
+	WorkerID            uint                    `json:"worker_id"`
+	IsTracking          bool                    `json:"is_tracking"`
+	Status              string                  `json:"status"` // not_started, tracking, completed, stopped, error
+	TrackingStartedAt   *time.Time             `json:"tracking_started_at,omitempty"`
+	LastLocationUpdate  *time.Time             `json:"last_location_update,omitempty"`
+	WorkerLocation      *LocationCoordinates   `json:"worker_location,omitempty"`
+	WorkerName          string                 `json:"worker_name,omitempty"`
+	CustomerName        string                 `json:"customer_name,omitempty"`
 }

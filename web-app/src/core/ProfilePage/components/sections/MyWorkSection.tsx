@@ -16,7 +16,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWorkerAssignments } from "@/hooks/useWorkerAssignments";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { useLocationTracking } from "@/hooks/useLocationTracking";
 import { WorkerAssignmentCard } from "@/components/WorkerAssignmentCard";
 
 type WorkTab = "all" | "assigned" | "accepted" | "in_progress" | "completed";
@@ -77,29 +76,6 @@ export function MyWorkSection() {
     refetchAssignments,
   } = useWorkerAssignments(getFiltersForTab(activeTab));
 
-  // Always call the hook to maintain consistent hook ordering
-  // Use the first assignment ID or a default value, and control behavior with enabled parameter
-  const firstInProgressAssignment = assignments.find(
-    (assignment) => assignment.status === "in_progress"
-  );
-  const locationTrackingHook = useLocationTracking(
-    firstInProgressAssignment?.ID || 0,
-    !!firstInProgressAssignment,
-    true // This is for workers managing their own location tracking
-  );
-
-  // Debug logging for location tracking
-  console.log("Location Tracking Debug:", {
-    assignments: assignments.length,
-    firstInProgressAssignment: firstInProgressAssignment?.ID,
-    locationTrackingHook: {
-      isTracking: locationTrackingHook.isTracking,
-      isLoading: locationTrackingHook.isLoading,
-      error: locationTrackingHook.error,
-      lastUpdate: locationTrackingHook.lastUpdate,
-    },
-  });
-
   // Handle assignment actions
   const handleAcceptAssignment = async (assignmentId: number) => {
     try {
@@ -153,80 +129,6 @@ export function MyWorkSection() {
       refetchAssignments();
     } catch (error) {
       toast.error("Failed to complete assignment");
-    }
-  };
-
-  // Location tracking handlers
-  const handleStartTracking = async (assignmentId: number) => {
-    try {
-      if (firstInProgressAssignment?.ID === assignmentId) {
-        await locationTrackingHook.startTracking(assignmentId);
-        toast.success("Location tracking started");
-      } else {
-        toast.error("Location tracking not available for this assignment");
-      }
-    } catch (error) {
-      toast.error("Failed to start location tracking");
-    }
-  };
-
-  const handleStopTracking = async (assignmentId: number) => {
-    try {
-      if (firstInProgressAssignment?.ID === assignmentId) {
-        await locationTrackingHook.stopTracking(assignmentId);
-        toast.success("Location tracking stopped");
-      } else {
-        toast.error("Location tracking not available for this assignment");
-      }
-    } catch (error) {
-      toast.error("Failed to stop location tracking");
-    }
-  };
-
-  const handleUpdateLocation = async (assignmentId: number) => {
-    try {
-      console.log("Update Location Debug:", {
-        assignmentId,
-        firstInProgressAssignmentId: firstInProgressAssignment?.ID,
-        isMatch: firstInProgressAssignment?.ID === assignmentId,
-        locationTrackingHook: {
-          isTracking: locationTrackingHook.isTracking,
-          isLoading: locationTrackingHook.isLoading,
-        },
-      });
-
-      if (firstInProgressAssignment?.ID === assignmentId) {
-        // Get actual GPS coordinates from the device
-        if (!navigator.geolocation) {
-          toast.error("Geolocation is not supported by this browser");
-          return;
-        }
-
-        console.log("Getting GPS position...");
-        const position = await new Promise<GeolocationPosition>(
-          (resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 30000,
-            });
-          }
-        );
-
-        const location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        };
-        console.log("GPS position obtained:", location);
-        await locationTrackingHook.updateLocation(assignmentId, location);
-        toast.success("Location updated successfully");
-      } else {
-        toast.error("Location tracking not available for this assignment");
-      }
-    } catch (error) {
-      console.error("Failed to update location:", error);
-      toast.error("Failed to update location");
     }
   };
 
@@ -415,19 +317,6 @@ export function MyWorkSection() {
                 isRejecting={isRejectingAssignment}
                 isStarting={isStartingAssignment}
                 isCompleting={isCompletingAssignment}
-                locationTrackingHook={
-                  firstInProgressAssignment?.ID === assignment.ID
-                    ? {
-                        isTracking: locationTrackingHook.isTracking,
-                        isLoading: locationTrackingHook.isLoading,
-                        lastUpdate:
-                          locationTrackingHook.lastUpdate?.toISOString(),
-                        startTracking: handleStartTracking,
-                        stopTracking: handleStopTracking,
-                        updateLocation: handleUpdateLocation,
-                      }
-                    : undefined
-                }
               />
               {index < filteredAssignments.length - 1 && (
                 <div className="border-b border-gray-200 my-4"></div>

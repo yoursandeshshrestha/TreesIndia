@@ -1,17 +1,9 @@
 "use client";
 
 import React from "react";
-import {
-  MapPin,
-  User,
-  Square,
-  RotateCcw,
-  MessageCircle,
-  Phone,
-  Play,
-} from "lucide-react";
+import { MapPin, User, MessageCircle, Phone } from "lucide-react";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
-import type { LocationUpdate } from "@/types/locationTracking";
+import { toast } from "sonner";
 
 interface WorkerAssignmentCardProps {
   assignment: WorkerAssignment;
@@ -23,17 +15,6 @@ interface WorkerAssignmentCardProps {
   isRejecting?: boolean;
   isStarting?: boolean;
   isCompleting?: boolean;
-  locationTrackingHook?: {
-    isTracking: boolean;
-    isLoading: boolean;
-    lastUpdate?: string;
-    startTracking: (assignmentId: number) => Promise<void>;
-    stopTracking: (assignmentId: number) => Promise<void>;
-    updateLocation: (
-      assignmentId: number,
-      location: LocationUpdate
-    ) => Promise<void>;
-  };
 }
 
 export function WorkerAssignmentCard({
@@ -46,7 +27,6 @@ export function WorkerAssignmentCard({
   isRejecting = false,
   isStarting = false,
   isCompleting = false,
-  locationTrackingHook,
 }: WorkerAssignmentCardProps) {
   // Helper function to parse address JSON
   const parseAddress = (addressString: string) => {
@@ -239,100 +219,6 @@ export function WorkerAssignmentCard({
                   Assigned by:
                 </span>
                 <span>{assignment.assigned_by_user.name}</span>
-              </div>
-            )}
-
-            {/* Location Tracking Section for In Progress Assignments */}
-            {assignment.status === "in_progress" && locationTrackingHook && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">
-                      Location Tracking
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        locationTrackingHook.isTracking
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {locationTrackingHook.isTracking ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-
-                  {locationTrackingHook.isTracking ? (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            locationTrackingHook.stopTracking(assignment.ID)
-                          }
-                          disabled={locationTrackingHook.isLoading}
-                          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                        >
-                          <Square className="w-4 h-4" />
-                          Stop Tracking
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (navigator.geolocation) {
-                              try {
-                                const position =
-                                  await new Promise<GeolocationPosition>(
-                                    (resolve, reject) => {
-                                      navigator.geolocation.getCurrentPosition(
-                                        resolve,
-                                        reject,
-                                        {
-                                          enableHighAccuracy: true,
-                                          timeout: 10000,
-                                          maximumAge: 30000,
-                                        }
-                                      );
-                                    }
-                                  );
-
-                                const location = {
-                                  latitude: position.coords.latitude,
-                                  longitude: position.coords.longitude,
-                                  accuracy: position.coords.accuracy,
-                                };
-
-                                await locationTrackingHook.updateLocation(
-                                  assignment.ID,
-                                  location
-                                );
-                              } catch (error) {
-                                console.error("Failed to get location:", error);
-                              }
-                            }
-                          }}
-                          disabled={
-                            !locationTrackingHook.isTracking ||
-                            locationTrackingHook.isLoading
-                          }
-                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Update Now
-                        </button>
-                      </div>
-                      {locationTrackingHook.lastUpdate && (
-                        <div className="text-xs text-gray-500">
-                          Last updated:{" "}
-                          {new Date(
-                            locationTrackingHook.lastUpdate
-                          ).toLocaleTimeString()}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      Location tracking will be available when assignment starts
-                    </div>
-                  )}
-                </div>
               </div>
             )}
           </div>

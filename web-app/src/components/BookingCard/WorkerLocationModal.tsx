@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { X, MapPin } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import WorkerLocationMap from "@/components/LocationTracking/WorkerLocationMap";
-import { useLocationTracking } from "@/hooks/useLocationTracking";
 
 interface WorkerLocationModalProps {
   isOpen: boolean;
@@ -21,21 +19,6 @@ export function WorkerLocationModal({
   workerName,
   workerPhone,
 }: WorkerLocationModalProps) {
-  console.log("🚀 WorkerLocationModal opened:", {
-    isOpen,
-    assignmentId,
-    workerName,
-    workerPhone,
-    assignmentIdType: typeof assignmentId,
-    assignmentIdValid: assignmentId && assignmentId > 0,
-  });
-
-  const { currentLocation, isLoading, error, lastUpdate } = useLocationTracking(
-    assignmentId,
-    true,
-    false // This is for customers viewing worker location, not workers themselves
-  );
-
   if (!isOpen) return null;
 
   return (
@@ -81,15 +64,17 @@ export function WorkerLocationModal({
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
-              {/* Map Content - Full Width and Height */}
-              <div className="w-full h-full">
-                <WorkerLocationMap
-                  workerLocation={currentLocation}
-                  isLoading={isLoading}
-                  error={error}
-                  lastUpdate={lastUpdate}
-                  className="w-full h-full"
-                />
+              {/* Content - Location tracking has been removed */}
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <p className="text-lg font-medium mb-2">
+                    Location Tracking Unavailable
+                  </p>
+                  <p className="text-sm">
+                    Location tracking functionality has been removed from this
+                    application.
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>

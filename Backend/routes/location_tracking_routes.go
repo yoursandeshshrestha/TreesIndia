@@ -40,6 +40,9 @@ func SetupLocationTrackingRoutes(router *gin.RouterGroup, locationTrackingServic
 	{
 		// GET /api/v1/assignments/:id/worker-location - Get worker location for assignment
 		customerLocationTracking.GET("/:id/worker-location", locationTrackingController.GetWorkerLocation)
+		
+		// GET /api/v1/assignments/:id/tracking-status - Get tracking status for assignment
+		customerLocationTracking.GET("/:id/tracking-status", locationTrackingController.GetTrackingStatus)
 	}
 
 	// Booking-based location routes (authenticated users only)

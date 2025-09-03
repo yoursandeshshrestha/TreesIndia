@@ -32,20 +32,20 @@ func NewLocationTrackingService(wsService *WebSocketService) *LocationTrackingSe
 }
 
 // StartTracking starts location tracking for a worker's assignment
-func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID uint) error {
+func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID uint) (*models.TrackingStatusResponse, error) {
 	// Check if assignment exists and worker is assigned
 	assignment, err := lts.workerAssignmentRepo.GetByID(assignmentID)
 	if err != nil {
-		return errors.New("assignment not found")
+		return nil, errors.New("assignment not found")
 	}
 
 	if assignment.WorkerID != workerID {
-		return errors.New("unauthorized access to assignment")
+		return nil, errors.New("unauthorized access to assignment")
 	}
 
 	// Check if assignment is in progress
 	if assignment.Status != models.AssignmentStatusInProgress {
-		return errors.New("can only track location for assignments in progress")
+		return nil, errors.New("can only track location for assignments in progress")
 	}
 
 	// Check if tracking is already active
@@ -54,13 +54,13 @@ func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID ui
 		logrus.Errorf("Error checking if location tracking is active for assignment %d: %v", assignmentID, err)
 		// Check if it's a table not found error
 		if strings.Contains(err.Error(), "table not found") {
-			return errors.New("location tracking system not initialized - database table missing")
+			return nil, errors.New("location tracking system not initialized - database table missing")
 		}
-		return errors.New("failed to check location tracking status")
+		return nil, errors.New("failed to check location tracking status")
 	}
 	
 	if isActive {
-		return errors.New("location tracking already active for this assignment")
+		return nil, errors.New("location tracking already active for this assignment")
 	}
 
 	// Create initial location record with default coordinates (0,0) to start tracking
@@ -68,11 +68,23 @@ func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID ui
 	err = lts.workerLocationRepo.CreateLocation(workerID, assignmentID, assignment.BookingID, 0, 0, 0)
 	if err != nil {
 		logrus.Errorf("Failed to start location tracking for worker %d, assignment %d: %v", workerID, assignmentID, err)
-		return errors.New("failed to start location tracking")
+		return nil, errors.New("failed to start location tracking")
 	}
 
 	logrus.Infof("Location tracking started for worker %d, assignment %d", workerID, assignmentID)
-	return nil
+	
+	// Return tracking status response
+	now := time.Now()
+	return &models.TrackingStatusResponse{
+		AssignmentID:      assignmentID,
+		BookingID:         assignment.BookingID,
+		WorkerID:          workerID,
+		IsTracking:        true,
+		Status:            "tracking",
+		TrackingStartedAt: &now,
+		WorkerName:        assignment.Worker.Name,
+		CustomerName:      assignment.Booking.User.Name,
+	}, nil
 }
 
 // UpdateLocation updates the worker's location and broadcasts to customer
@@ -177,7 +189,7 @@ func (lts *LocationTrackingService) StopTracking(workerID uint, assignmentID uin
 	// Stop tracking in database
 	err = lts.workerLocationRepo.StopTracking(workerID, assignmentID)
 	if err != nil {
-		logrus.Errorf("Failed to stop location tracking: %v", err)
+		logrus.Errorf("Failed to stop location tracking for worker %d, assignment %d: %v", workerID, assignmentID, err)
 		return errors.New("failed to stop location tracking")
 	}
 
@@ -205,6 +217,58 @@ func (lts *LocationTrackingService) GetWorkerLocation(assignmentID uint) (*model
 	}
 
 	return lts.calculateLocationResponse(location)
+}
+
+// GetTrackingStatus gets the current tracking status for an assignment
+func (lts *LocationTrackingService) GetTrackingStatus(assignmentID uint) (*models.TrackingStatusResponse, error) {
+	// Check if assignment exists
+	assignment, err := lts.workerAssignmentRepo.GetByID(assignmentID)
+	if err != nil {
+		return nil, errors.New("assignment not found")
+	}
+
+	// Check if location tracking is active
+	isActive, err := lts.workerLocationRepo.IsLocationTrackingActive(assignmentID)
+	if err != nil {
+		logrus.Errorf("Error checking tracking status for assignment %d: %v", assignmentID, err)
+		return nil, errors.New("failed to check tracking status")
+	}
+
+	response := &models.TrackingStatusResponse{
+		AssignmentID: assignmentID,
+		BookingID:    assignment.BookingID,
+		WorkerID:     assignment.WorkerID,
+		IsTracking:   isActive,
+		Status:       "not_started",
+	}
+
+	if isActive {
+		// Get active location details
+		location, err := lts.workerLocationRepo.GetActiveLocationByAssignmentID(assignmentID)
+		if err == nil && location != nil {
+			response.Status = location.Status
+			response.TrackingStartedAt = &location.CreatedAt
+			response.LastLocationUpdate = &location.LastUpdated
+			response.WorkerLocation = &models.LocationCoordinates{
+				Latitude:  location.Latitude,
+				Longitude: location.Longitude,
+				Accuracy:  location.Accuracy,
+			}
+		} else {
+			response.Status = "error"
+			logrus.Warnf("Tracking marked as active but no location record found for assignment %d", assignmentID)
+		}
+	}
+
+	// Add worker and customer names if available
+	if assignment.Worker.Name != "" {
+		response.WorkerName = assignment.Worker.Name
+	}
+	if assignment.Booking.User.Name != "" {
+		response.CustomerName = assignment.Booking.User.Name
+	}
+
+	return response, nil
 }
 
 // calculateLocationResponse calculates basic location response without distance/ETA calculations

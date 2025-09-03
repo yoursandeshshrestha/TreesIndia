@@ -28,7 +28,7 @@ func NewLocationTrackingController(locationTrackingService *services.LocationTra
 // @Accept json
 // @Produce json
 // @Param id path int true "Assignment ID"
-// @Success 200 {object} views.Response{data=string}
+// @Success 200 {object} views.Response{data=models.TrackingStatusResponse}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
 // @Router /worker/assignments/{id}/start-tracking [post]
@@ -41,13 +41,14 @@ func (ltc *LocationTrackingController) StartTracking(c *gin.Context) {
 
 	workerID := ltc.GetUserID(c)
 
-	err = ltc.locationTrackingService.StartTracking(uint(workerID), uint(assignmentID))
+	trackingStatus, err := ltc.locationTrackingService.StartTracking(uint(workerID), uint(assignmentID))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"data": trackingStatus,
 		"message": "Location tracking started successfully",
 	})
 }
@@ -211,7 +212,34 @@ func (ltc *LocationTrackingController) GetCustomerLocation(c *gin.Context) {
 	})
 }
 
+// GetTrackingStatus gets the current tracking status for an assignment
+// @Summary Get tracking status
+// @Description Get the current tracking status for an assignment
+// @Tags Location Tracking
+// @Accept json
+// @Produce json
+// @Param id path int true "Assignment ID"
+// @Success 200 {object} views.Response{data=models.TrackingStatusResponse}
+// @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response
+// @Router /assignments/{id}/tracking-status [get]
+func (ltc *LocationTrackingController) GetTrackingStatus(c *gin.Context) {
+	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment ID"})
+		return
+	}
 
+	trackingStatus, err := ltc.locationTrackingService.GetTrackingStatus(uint(assignmentID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": trackingStatus,
+	})
+}
 
 // HealthCheck checks the health of the location tracking system
 // @Summary Location tracking health check

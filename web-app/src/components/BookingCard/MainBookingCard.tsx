@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Clock, MapPin, Phone, Loader2, User, Navigation } from "lucide-react";
+import { Clock, MapPin, Phone, Loader2, User } from "lucide-react";
 import type { Booking } from "@/lib/bookingApi";
-import { WorkerLocationModal } from "./WorkerLocationModal";
+
 
 interface MainBookingCardProps {
   booking: Booking;
@@ -27,7 +27,7 @@ export function MainBookingCard({
   isAcceptingQuote = false,
   isPaying = false,
 }: MainBookingCardProps) {
-  const [showWorkerLocationModal, setShowWorkerLocationModal] = useState(false);
+
   const getStatusConfig = (
     status: string,
     paymentStatus?: string,
@@ -426,30 +426,7 @@ export function MainBookingCard({
                 </div>
               )}
 
-            {/* Worker Location Tracking Button - Show for assigned, accepted, and in_progress assignments */}
-            {["assigned", "accepted", "in_progress"].includes(booking.worker_assignment?.status || "") &&
-              booking.worker_assignment?.ID && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={() => {
-                      if (booking.worker_assignment?.ID) {
-                        console.log("🔍 Track Worker Location clicked:", {
-                          assignmentId: booking.worker_assignment.ID,
-                          workerAssignment: booking.worker_assignment,
-                          booking: booking
-                        });
-                        setShowWorkerLocationModal(true);
-                      } else {
-                        console.error("❌ Cannot open location modal: No valid assignment ID");
-                      }
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    Track Worker Location
-                  </button>
-                </div>
-              )}
+
           </div>
         </div>
 
@@ -569,16 +546,7 @@ export function MainBookingCard({
         </div>
       </div>
 
-      {/* Worker Location Modal */}
-      {showWorkerLocationModal && booking.worker_assignment?.ID && (
-        <WorkerLocationModal
-          isOpen={showWorkerLocationModal}
-          onClose={() => setShowWorkerLocationModal(false)}
-          assignmentId={booking.worker_assignment.ID}
-          workerName={booking.worker_assignment?.worker?.name}
-          workerPhone={booking.worker_assignment?.worker?.phone}
-        />
-      )}
+
     </div>
   );
 }

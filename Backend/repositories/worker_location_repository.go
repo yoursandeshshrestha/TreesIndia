@@ -207,6 +207,18 @@ func (wlr *WorkerLocationRepository) GetLocationHistory(workerID uint, assignmen
 	return locations, err
 }
 
+// GetLastKnownLocationByWorkerID gets the worker's most recent location from any assignment
+func (wlr *WorkerLocationRepository) GetLastKnownLocationByWorkerID(workerID uint) (*models.WorkerLocation, error) {
+	var location models.WorkerLocation
+	err := wlr.db.Where("worker_id = ?", workerID).
+		Order("last_updated DESC").
+		First(&location).Error
+	if err != nil {
+		return nil, err
+	}
+	return &location, nil
+}
+
 // CleanupOldLocations removes old location records (older than 30 days)
 func (wlr *WorkerLocationRepository) CleanupOldLocations() error {
 	thirtyDaysAgo := wlr.db.NowFunc().AddDate(0, 0, -30)
