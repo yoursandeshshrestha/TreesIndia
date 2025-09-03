@@ -34,10 +34,15 @@ type FCMResponse struct {
 }
 
 // NewFCMService creates a new FCM service instance
-func NewFCMService(serviceAccountPath string) (*FCMService, error) {
+func NewFCMService(serviceAccountPath string, projectID string) (*FCMService, error) {
 	opt := option.WithCredentialsFile(serviceAccountPath)
 	
-	app, err := firebase.NewApp(context.Background(), nil, opt)
+	// Create Firebase config with project ID
+	firebaseConfig := &firebase.Config{
+		ProjectID: projectID,
+	}
+	
+	app, err := firebase.NewApp(context.Background(), firebaseConfig, opt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Firebase app: %w", err)
 	}

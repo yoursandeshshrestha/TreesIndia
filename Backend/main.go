@@ -193,7 +193,7 @@ func main() {
 	r.NoMethod(middleware.MethodNotAllowedHandler())
 
 	// Initialize FCM service
-	fcmService, err := services.NewFCMService(appConfig.FCMServiceAccountPath)
+	fcmService, err := services.NewFCMService(appConfig.FCMServiceAccountPath, appConfig.FCMProjectID)
 	if err != nil {
 		log.Fatal("Failed to initialize FCM service:", err)
 	}
