@@ -162,8 +162,8 @@ func LoadConfig() *AppConfig {
 		SMSSecret:   getEnv("SMS_SECRET", ""),
 		
 		// FCM Configuration
-		FCMServiceAccountPath: getEnv("FCM_SERVICE_ACCOUNT_PATH", "config/treesindia-fcm-firebase-adminsdk-fbsvc-c40fa2011a.json"),
-		FCMProjectID:         getEnv("FCM_PROJECT_ID", "treesindia-fcm"),
+		FCMServiceAccountPath: getEnv("FCM_SERVICE_ACCOUNT_PATH", ""),
+		FCMProjectID:         getEnv("FCM_PROJECT_ID", ""),
 	}
 	
 	return config

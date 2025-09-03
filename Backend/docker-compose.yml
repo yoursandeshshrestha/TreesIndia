@@ -8,6 +8,8 @@ services:
     container_name: treesindia-backend
     ports:
       - "8080:8080"
+    volumes:
+      - ./FCM-FIREBASE:/app/FCM-FIREBASE:ro
     networks:
       - treesindia-network
     env_file:
