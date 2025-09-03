@@ -195,17 +195,7 @@ func (e *EnhancedNotificationService) sendPushNotification(req *NotificationRequ
 		}
 	}
 
-	// Log FCM response with more detail
-	if fcmResponse.FailureCount > 0 {
-		fmt.Printf("FCM notification sent with %d failures: %v\n", fcmResponse.FailureCount, fcmResponse.Errors)
-		
-		// If all tokens failed, this might indicate a configuration issue
-		if fcmResponse.SuccessCount == 0 {
-			fmt.Printf("Warning: All FCM notifications failed. This might indicate a Firebase configuration issue.\n")
-		}
-	} else {
-		fmt.Printf("FCM notification sent successfully to %d devices\n", fcmResponse.SuccessCount)
-	}
+
 
 	return nil
 }
@@ -222,19 +212,9 @@ func (e *EnhancedNotificationService) sendEmailNotification(req *NotificationReq
 		return fmt.Errorf("user has no email address")
 	}
 
-	// Create email content based on notification type
-	subject := req.Title
-	body := fmt.Sprintf(`
-		<h2>%s</h2>
-		<p>%s</p>
-		<hr>
-		<p><small>This is an automated notification from TREESINDIA.</small></p>
-	`, req.Title, req.Body)
 
-	// Send email (assuming EmailService has a SendEmail method)
-	// This would need to be implemented based on your existing email service
-	// For now, we'll just log that we would send an email
-	fmt.Printf("Would send email to %s: %s - %s\n", *user.Email, subject, body)
+
+
 
 	return nil
 }

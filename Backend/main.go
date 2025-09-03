@@ -149,13 +149,11 @@ func main() {
 	
 	// Always run database migrations (both development and production)
 	// IMPORTANT: This must run BEFORE any GORM operations to ensure correct schema
-	log.Println("Running database migrations with Goose...")
 	if err := runMigrations(appConfig); err != nil {
 		log.Fatal("Failed to run migrations:", err)
 	}
 	
 	// Always seed initial data (both development and production)
-	log.Println("Seeding initial data...")
 	seedManager := seed.NewSeedManager()
 	if err := seedManager.SeedAll(); err != nil {
 		log.Fatal("Failed to seed initial data:", err)
@@ -206,7 +204,8 @@ func main() {
 
 	// Initialize services with WebSocket service
 	chatService := services.NewChatService(wsService)
-	workerAssignmentService := services.NewWorkerAssignmentService(chatService)
+	locationTrackingService := services.NewLocationTrackingService(wsService)
+	workerAssignmentService := services.NewWorkerAssignmentService(chatService, locationTrackingService)
 
 	// Initialize notification services
 	deviceManagementService := services.NewDeviceManagementService(fcmService)
@@ -232,12 +231,14 @@ func main() {
 	bookingGroup.Use(bookingMiddleware.BookingSystem())
 	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService)
 
+	// Setup location tracking routes
+	routes.SetupLocationTrackingRoutes(r.Group("/api/v1"), locationTrackingService)
+
 	// Setup notification routes
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
 	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
 
 	// Start server
-	log.Printf("Server starting on %s:%s", appConfig.ServerHost, appConfig.ServerPort)
 	if err := r.Run(appConfig.ServerHost + ":" + appConfig.ServerPort); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}

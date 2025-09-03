@@ -156,13 +156,11 @@ func (d *DeviceManagementService) ValidateAndCleanupTokens() error {
 		isValid, err := d.fcmService.ValidateToken(token.Token)
 		if err != nil {
 			// Log error but continue with other tokens - don't mark as invalid for FCM errors
-			fmt.Printf("Warning: FCM validation error for token %s: %v\n", token.Token[:10]+"...", err)
 			continue
 		}
 		
 		if !isValid {
 			invalidTokens = append(invalidTokens, token.ID)
-			fmt.Printf("Invalid token found: %s (user: %d)\n", token.Token[:10]+"...", token.UserID)
 		}
 	}
 
@@ -173,10 +171,6 @@ func (d *DeviceManagementService) ValidateAndCleanupTokens() error {
 			Update("is_active", false).Error; err != nil {
 			return fmt.Errorf("failed to mark invalid tokens as inactive: %w", err)
 		}
-		
-		fmt.Printf("Marked %d invalid tokens as inactive\n", len(invalidTokens))
-	} else {
-		fmt.Printf("No invalid tokens found\n")
 	}
 
 	return nil

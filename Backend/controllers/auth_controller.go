@@ -352,7 +352,6 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	if req.DeviceToken != "" {
 		if err := ac.registerDevice(&user, &req); err != nil {
 			// Log error but don't fail the login
-			fmt.Printf("Failed to register device for user %d: %v\n", user.ID, err)
 		}
 	}
 

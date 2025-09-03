@@ -25,7 +25,11 @@ func NewPromotionBannerController() *PromotionBannerController {
 		logrus.Errorf("Failed to initialize PromotionBannerService: %v", err)
 		logrus.Error("This is likely due to missing Cloudinary configuration")
 		logrus.Error("Please ensure CLOUDINARY_URL is set in your environment variables")
-		panic(err) // This should be handled properly in production
+		return &PromotionBannerController{
+			BaseController:   NewBaseController(),
+			bannerService:    nil,
+			validationHelper: utils.NewValidationHelper(),
+		}
 	}
 	
 	return &PromotionBannerController{

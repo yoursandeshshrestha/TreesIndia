@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -296,7 +295,6 @@ func (ws *WebSocketService) HandleWebSocket(w http.ResponseWriter, r *http.Reque
 	// Upgrade the HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade failed: %v", err)
 		return
 	}
 

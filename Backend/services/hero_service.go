@@ -97,7 +97,7 @@ func (s *HeroService) UpdateHeroImageWithFile(id uint, image *models.HeroImage, 
 		if publicID != "" {
 			// Try to delete from Cloudinary, but don't fail if it doesn't work
 			if deleteErr := s.cloudinaryService.DeleteImage(publicID); deleteErr != nil {
-				fmt.Printf("Warning: Failed to delete old image from Cloudinary: %v\n", deleteErr)
+				// Log error silently
 			}
 		}
 	}
@@ -126,8 +126,7 @@ func (s *HeroService) DeleteHeroImage(id uint) error {
 		if publicID != "" {
 			// Try to delete from Cloudinary, but don't fail if it doesn't work
 			if deleteErr := s.cloudinaryService.DeleteImage(publicID); deleteErr != nil {
-				// Log the error but don't return it since the database deletion was successful
-				fmt.Printf("Warning: Failed to delete image from Cloudinary: %v\n", deleteErr)
+				// Log error silently
 			}
 		}
 	}

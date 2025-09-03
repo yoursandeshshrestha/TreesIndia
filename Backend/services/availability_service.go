@@ -200,9 +200,7 @@ func (as *AvailabilityService) calculateAvailableSlots(
 	// Build a map of busy workers for each time slot
 	busyWorkersMap := as.buildBusyWorkersMap(workerAssignments, parsedDate, totalDurationMinutes, istLocation)
 
-	fmt.Printf("Debug: Total workers: %d\n", totalWorkers)
-	fmt.Printf("Debug: Service duration: %d minutes, Buffer: %d minutes, Total: %d minutes\n", 
-		serviceDurationMinutes, bufferTimeMinutes, totalDurationMinutes)
+
 
 	for currentTime.Before(slotEndTime) {
 		slotKey := currentTime.Format("15:04")
@@ -216,8 +214,7 @@ func (as *AvailabilityService) calculateAvailableSlots(
 		
 		isAvailable := availableWorkers > 0
 		
-		fmt.Printf("Debug: Slot %s: Total Workers: %d, Busy: %d, Available: %d\n", 
-			slotKey, totalWorkers, busyWorkers, availableWorkers)
+
 
 		slot := AvailableSlot{
 			Time:             slotKey,
@@ -288,7 +285,7 @@ func (as *AvailabilityService) buildBusyWorkersMap(assignments []models.WorkerAs
 	// Get all confirmed bookings for this date that don't have worker assignments
 	confirmedBookings, err := as.bookingRepo.GetConfirmedBookingsForDate(date)
 	if err != nil {
-		fmt.Printf("Debug: Error getting confirmed bookings: %v\n", err)
+
 		return busyWorkersMap
 	}
 	

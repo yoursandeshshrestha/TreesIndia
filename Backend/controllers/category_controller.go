@@ -26,7 +26,11 @@ func NewCategoryController() *CategoryController {
 	categoryService, err := services.NewCategoryService()
 	if err != nil {
 		logrus.Errorf("Failed to initialize CategoryService: %v", err)
-		panic(err) // This should be handled properly in production
+		return &CategoryController{
+			BaseController:   NewBaseController(),
+			categoryService:  nil,
+			validationHelper: utils.NewValidationHelper(),
+		}
 	}
 	
 	return &CategoryController{

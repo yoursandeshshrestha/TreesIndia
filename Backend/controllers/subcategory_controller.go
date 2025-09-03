@@ -30,7 +30,11 @@ func NewSubcategoryController() *SubcategoryController {
 		logrus.Errorf("Failed to initialize SubcategoryService: %v", err)
 		logrus.Error("This is likely due to missing Cloudinary configuration")
 		logrus.Error("Please ensure CLOUDINARY_URL is set in your environment variables")
-		panic(err) // This should be handled properly in production
+		return &SubcategoryController{
+			BaseController:     NewBaseController(),
+			subcategoryService: nil,
+			validationHelper:   utils.NewValidationHelper(),
+		}
 	}
 	
 	return &SubcategoryController{
@@ -231,13 +235,7 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			isActiveVal = "true"
 		}
 		
-		// Debug: Log all form fields
-		logrus.Info("Form fields received:")
-		logrus.Info("name:", nameVal)
-		logrus.Info("description:", descriptionVal)
-		logrus.Info("parent_id:", parentIDVal)
-		logrus.Info("is_active:", isActiveVal)
-		logrus.Info("file found:", file.Filename, "size:", file.Size)
+
 		
 		// Validate required fields
 		if nameVal == "" {
@@ -404,17 +402,7 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 			isActiveVal = "true"
 		}
 		
-		// Debug: Log all form fields
-		logrus.Info("Update form fields received:")
-		logrus.Info("name:", nameVal)
-		logrus.Info("description:", descriptionVal)
-		logrus.Info("parent_id:", parentIDVal)
-		logrus.Info("is_active:", isActiveVal)
-		if imageFile != nil {
-			logrus.Info("image file found:", imageFile.Filename, "size:", imageFile.Size)
-		} else {
-			logrus.Info("no image file provided")
-		}
+
 		
 		// Validate required fields
 		if nameVal == "" {

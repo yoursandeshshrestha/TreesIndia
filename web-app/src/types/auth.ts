@@ -2,9 +2,11 @@ export interface AuthUser {
   id: number;
   phone: string;
   name?: string;
-  role: 'admin' | 'user' | 'worker';
+  email?: string | null;
+  user_type: "admin" | "user" | "worker" | "normal" | "broker";
   wallet_balance: number;
-  created_at: string;
+  is_active: boolean;
+  created_at?: string;
 }
 
 export interface AuthTokens {

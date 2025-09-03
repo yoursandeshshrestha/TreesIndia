@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -258,7 +257,7 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Debug: GetAvailableSlots called - Service: %d, Date: %s\n", serviceID, date)
+
 
 	availabilityService := services.NewAvailabilityService()
 	availableSlots, err := availabilityService.GetAvailableSlots(uint(serviceID), date, "")
@@ -318,14 +317,11 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 		return
 	}
 
-	// Log the verification attempt
-	fmt.Printf("Debug: Verifying payment for booking ID %d, order ID %s, payment ID %s\n",
-		req.BookingID, req.RazorpayOrderID, req.RazorpayPaymentID)
+
 
 	booking, err = bc.bookingService.VerifyPayment(&req)
 	if err != nil {
-		// Log the error for debugging
-		fmt.Printf("Debug: Payment verification failed for booking %d: %v\n", req.BookingID, err)
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment verification failed. Please contact support.", "details": err.Error()})
 		return
 	}
@@ -576,13 +572,9 @@ func (bc *BookingController) AdminAssignWorker(c *gin.Context) {
 	// Parse JSON into a map first to handle flexible field names
 	var jsonData map[string]interface{}
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
-		fmt.Printf("Debug: JSON parsing error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
 		return
 	}
-
-	// Debug: Log the parsed JSON
-	fmt.Printf("Debug: Parsed JSON: %+v\n", jsonData)
 
 	// Extract worker_id from the map
 	var workerID uint

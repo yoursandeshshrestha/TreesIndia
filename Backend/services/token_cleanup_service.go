@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"time"
 )
 
@@ -24,13 +23,11 @@ func NewTokenCleanupService(deviceService *DeviceManagementService) *TokenCleanu
 // Start starts the token cleanup service
 func (t *TokenCleanupService) Start() {
 	go t.run()
-	log.Println("Token cleanup service started")
 }
 
 // Stop stops the token cleanup service
 func (t *TokenCleanupService) Stop() {
 	t.stopChan <- true
-	log.Println("Token cleanup service stopped")
 }
 
 // run runs the main cleanup loop
@@ -53,17 +50,9 @@ func (t *TokenCleanupService) run() {
 
 // cleanup performs the actual token cleanup
 func (t *TokenCleanupService) cleanup() {
-	log.Println("Starting token cleanup...")
-	
-	startTime := time.Now()
-	
 	if err := t.deviceService.ValidateAndCleanupTokens(); err != nil {
-		log.Printf("Error during token cleanup: %v", err)
 		return
 	}
-	
-	duration := time.Since(startTime)
-	log.Printf("Token cleanup completed in %v", duration)
 }
 
 // SetInterval sets the cleanup interval

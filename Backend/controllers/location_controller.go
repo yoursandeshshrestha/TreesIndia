@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -19,13 +18,6 @@ type LocationController struct {
 
 // NewLocationController creates a new location controller
 func NewLocationController() *LocationController {
-	// Add panic recovery for service initialization
-	defer func() {
-		if r := recover(); r != nil {
-			panic("Failed to initialize LocationController: " + fmt.Sprintf("%v", r))
-		}
-	}()
-
 	return &LocationController{
 		BaseController:  NewBaseController(),
 		locationService: services.NewLocationService(),

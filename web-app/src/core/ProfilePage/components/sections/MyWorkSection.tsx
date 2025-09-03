@@ -1,11 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Briefcase, Search, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  Briefcase,
+  Search,
+  Clock,
+  CheckCircle,
+  XCircle,
+  MapPin,
+  Play,
+  Square,
+  RotateCcw,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkerAssignments } from "@/hooks/useWorkerAssignments";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { useLocationTracking } from "@/hooks/useLocationTracking";
 
 type WorkTab = "all" | "assigned" | "in_progress" | "completed";
 
@@ -16,9 +27,8 @@ export function MyWorkSection() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
-    type: "accept" | "reject" | "start" | "complete";
+    type: "accept" | "reject" | "complete";
     assignmentId: number;
-    assignment: any;
   } | null>(null);
 
   // Debounce search query to avoid too many API calls
@@ -32,7 +42,7 @@ export function MyWorkSection() {
 
   // Get filters for the active tab
   const getFiltersForTab = (tab: WorkTab) => {
-    const baseFilters: any = {};
+    const baseFilters: { status?: string } = {};
 
     switch (tab) {
       case "assigned":
@@ -54,15 +64,35 @@ export function MyWorkSection() {
     isLoadingAssignments,
     acceptAssignmentAsync,
     rejectAssignmentAsync,
-    startAssignmentAsync,
     completeAssignmentAsync,
     isAcceptingAssignment,
     isRejectingAssignment,
-    isStartingAssignment,
     isCompletingAssignment,
     refetchAssignments,
-    assignmentsError,
   } = useWorkerAssignments(getFiltersForTab(activeTab));
+
+  // Always call the hook to maintain consistent hook ordering
+  // Use the first assignment ID or a default value, and control behavior with enabled parameter
+  const firstInProgressAssignment = assignments.find(
+    (assignment) => assignment.status === "in_progress"
+  );
+  const locationTrackingHook = useLocationTracking(
+    firstInProgressAssignment?.ID || 0,
+    !!firstInProgressAssignment,
+    true // This is for workers managing their own location tracking
+  );
+
+  // Debug logging for location tracking
+  console.log("Location Tracking Debug:", {
+    assignments: assignments.length,
+    firstInProgressAssignment: firstInProgressAssignment?.ID,
+    locationTrackingHook: {
+      isTracking: locationTrackingHook.isTracking,
+      isLoading: locationTrackingHook.isLoading,
+      error: locationTrackingHook.error,
+      lastUpdate: locationTrackingHook.lastUpdate,
+    },
+  });
 
   // Helper function to parse address JSON
   const parseAddress = (addressString: string) => {
@@ -193,14 +223,10 @@ export function MyWorkSection() {
     switch (status) {
       case "assigned":
         return "bg-blue-100 text-blue-800";
-      case "accepted":
-        return "bg-green-100 text-green-800";
       case "in_progress":
         return "bg-yellow-100 text-yellow-800";
       case "completed":
         return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -236,19 +262,6 @@ export function MyWorkSection() {
     }
   };
 
-  const handleStartAssignment = async (assignmentId: number) => {
-    try {
-      await startAssignmentAsync({
-        assignmentId,
-        data: { notes: "" },
-      });
-      toast.success("Assignment started successfully");
-      refetchAssignments();
-    } catch (error) {
-      toast.error("Failed to start assignment");
-    }
-  };
-
   const handleCompleteAssignment = async (assignmentId: number) => {
     try {
       await completeAssignmentAsync({
@@ -259,6 +272,99 @@ export function MyWorkSection() {
       refetchAssignments();
     } catch (error) {
       toast.error("Failed to complete assignment");
+    }
+  };
+
+  // Location tracking handlers
+  const handleStartTracking = async (assignmentId: number) => {
+    try {
+      if (firstInProgressAssignment?.ID === assignmentId) {
+        await locationTrackingHook.startTracking(assignmentId);
+        toast.success("Location tracking started");
+      } else {
+        toast.error("Location tracking not available for this assignment");
+      }
+    } catch (error) {
+      toast.error("Failed to start location tracking");
+    }
+  };
+
+  const handleStopTracking = async (assignmentId: number) => {
+    try {
+      if (firstInProgressAssignment?.ID === assignmentId) {
+        await locationTrackingHook.stopTracking(assignmentId);
+        toast.success("Location tracking stopped");
+      } else {
+        toast.error("Location tracking not available for this assignment");
+      }
+    } catch (error) {
+      toast.error("Failed to stop location tracking");
+    }
+  };
+
+  const handleUpdateLocation = async (assignmentId: number) => {
+    try {
+      console.log("Update Location Debug:", {
+        assignmentId,
+        firstInProgressAssignmentId: firstInProgressAssignment?.ID,
+        isMatch: firstInProgressAssignment?.ID === assignmentId,
+        locationTrackingHook: {
+          isTracking: locationTrackingHook.isTracking,
+          isLoading: locationTrackingHook.isLoading,
+        },
+      });
+
+      if (firstInProgressAssignment?.ID === assignmentId) {
+        // Get actual GPS coordinates from the device
+        if (!navigator.geolocation) {
+          toast.error("Geolocation is not supported by this browser");
+          return;
+        }
+
+        console.log("Getting GPS position...");
+        const position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 30000,
+            });
+          }
+        );
+
+        const location = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        };
+
+        console.log("GPS position obtained:", location);
+        await locationTrackingHook.updateLocation(assignmentId, location);
+        toast.success("Location updated successfully");
+      } else {
+        toast.error("Location tracking not available for this assignment");
+      }
+    } catch (error) {
+      console.error("Update location error:", error);
+      if (error instanceof GeolocationPositionError) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error(
+              "Location permission denied. Please enable location access."
+            );
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast.error("Location information unavailable. Please try again.");
+            break;
+          case error.TIMEOUT:
+            toast.error("Location request timed out. Please try again.");
+            break;
+          default:
+            toast.error("Failed to get location. Please try again.");
+        }
+      } else {
+        toast.error("Failed to update location");
+      }
     }
   };
 
@@ -275,9 +381,6 @@ export function MyWorkSection() {
             confirmAction.assignmentId,
             "Worker rejected"
           );
-          break;
-        case "start":
-          await handleStartAssignment(confirmAction.assignmentId);
           break;
         case "complete":
           await handleCompleteAssignment(confirmAction.assignmentId);
@@ -471,6 +574,79 @@ export function MyWorkSection() {
                           : "Address not available"}
                       </p>
                     </div>
+
+                    {/* Location Tracking - Only show for in_progress assignments */}
+                    {assignment.status === "in_progress" && (
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-green-600" />
+                            Location Tracking
+                          </h4>
+                          {firstInProgressAssignment?.ID === assignment.ID ? (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    locationTrackingHook.isTracking
+                                      ? "bg-green-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                />
+                                <span className="text-sm text-gray-600">
+                                  {locationTrackingHook.isTracking
+                                    ? "Tracking"
+                                    : "Not Tracking"}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                {!locationTrackingHook.isTracking ? (
+                                  <button
+                                    onClick={() =>
+                                      handleStartTracking(assignment.ID)
+                                    }
+                                    disabled={locationTrackingHook.isLoading}
+                                    className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                  >
+                                    <Play className="w-4 h-4" />
+                                    Start Tracking
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      handleStopTracking(assignment.ID)
+                                    }
+                                    disabled={locationTrackingHook.isLoading}
+                                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                                  >
+                                    <Square className="w-4 h-4" />
+                                    Stop Tracking
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() =>
+                                    handleUpdateLocation(assignment.ID)
+                                  }
+                                  disabled={
+                                    !locationTrackingHook.isTracking ||
+                                    locationTrackingHook.isLoading
+                                  }
+                                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                  Update Now
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500">
+                              Location tracking will be available when
+                              assignment starts
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="ml-4 flex flex-col items-end">
@@ -487,7 +663,6 @@ export function MyWorkSection() {
                           setConfirmAction({
                             type: "accept",
                             assignmentId: assignment.ID,
-                            assignment,
                           });
                           setShowConfirmModal(true);
                         }}
@@ -501,7 +676,6 @@ export function MyWorkSection() {
                           setConfirmAction({
                             type: "reject",
                             assignmentId: assignment.ID,
-                            assignment,
                           });
                           setShowConfirmModal(true);
                         }}
@@ -512,29 +686,13 @@ export function MyWorkSection() {
                       </button>
                     </>
                   )}
-                  {assignment.status === "accepted" && (
-                    <button
-                      onClick={() => {
-                        setConfirmAction({
-                          type: "start",
-                          assignmentId: assignment.ID,
-                          assignment,
-                        });
-                        setShowConfirmModal(true);
-                      }}
-                      disabled={isStartingAssignment}
-                      className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
-                    >
-                      {isStartingAssignment ? "Starting..." : "Start Work"}
-                    </button>
-                  )}
+
                   {assignment.status === "in_progress" && (
                     <button
                       onClick={() => {
                         setConfirmAction({
                           type: "complete",
                           assignmentId: assignment.ID,
-                          assignment,
                         });
                         setShowConfirmModal(true);
                       }}
@@ -585,15 +743,19 @@ export function MyWorkSection() {
         onConfirm={handleConfirmAction}
         title={`Confirm ${confirmAction?.type || "action"}`}
         message={`Are you sure you want to ${
-          confirmAction?.type || "perform this action"
+          confirmAction?.type === "accept"
+            ? "accept"
+            : confirmAction?.type === "reject"
+            ? "reject"
+            : confirmAction?.type === "complete"
+            ? "complete"
+            : "perform this action"
         }?`}
         confirmText={
           confirmAction?.type === "accept"
             ? "Accept"
             : confirmAction?.type === "reject"
             ? "Reject"
-            : confirmAction?.type === "start"
-            ? "Start"
             : confirmAction?.type === "complete"
             ? "Complete"
             : "Confirm"

@@ -101,7 +101,7 @@ func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes str
 
 // VerifyPayment verifies Razorpay payment signature
 func (rs *RazorpayService) VerifyPayment(paymentID, orderID, signature string) (bool, error) {
-	// Debug: Check if keys are loaded
+
 	if rs.keySecret == "" {
 		return false, fmt.Errorf("razorpay key secret is not configured")
 	}
