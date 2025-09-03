@@ -12,7 +12,6 @@ import SlotModal from "@/components/Models/SlotModal";
 import { getTreesIndiaData } from "@/lib/data";
 import { Toaster } from "sonner";
 import NotificationSetup from "@/components/NotificationSetup";
-import NotificationBanner from "@/components/NotificationBanner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -47,9 +46,6 @@ export default function RootLayout({
 
           {/* Notification Setup - Handles permission and device registration */}
           <NotificationSetup />
-
-          {/* Notification Banner - Shows permission status and allows enabling */}
-          <NotificationBanner />
 
           <div className="flex flex-col min-h-screen">
             {/* Sticky Header */}

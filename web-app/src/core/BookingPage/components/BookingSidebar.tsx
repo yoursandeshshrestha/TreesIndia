@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { RootState } from "@/store/store";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
-import { MapPin, Clock, CreditCard, Phone, User } from "lucide-react";
+import { MapPin, Clock, CreditCard, Phone, User, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { openAddressModal } from "@/store/slices/addressModalSlice";
 import { openSlotModal } from "@/store/slices/slotModalSlice";
 import { openContactInfoModal } from "@/store/slices/contactInfoModalSlice";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { formatDateAndTime } from "@/utils/dateTimeUtils";
 import { formatAmount } from "@/utils/formatters";
 import { BookingSuccess } from "./BookingSuccess";
+import { PaymentMethodModal } from "./PaymentMethodModal";
 
 interface BookingSidebarProps {
   service?: {
@@ -67,6 +69,7 @@ export function BookingSidebar({
     createInquiryBookingWithWalletMutation.isPending;
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   // Calculate total amount
   const itemTotal = service?.price || 0;
@@ -98,8 +101,10 @@ export function BookingSidebar({
   // Reset booking state when service changes (this is handled in BookingPage component)
   // No need for duplicate reset here since BookingPage handles it
 
-  const handlePayNow = async () => {
-    if (!selectedPaymentMethod) {
+  const handlePayNow = async (paymentMethod?: string) => {
+    const methodToUse = paymentMethod || selectedPaymentMethod;
+
+    if (!methodToUse) {
       toast.error("Please select a payment method");
       return;
     }
@@ -118,7 +123,7 @@ export function BookingSidebar({
     setIsProcessingPayment(true);
 
     try {
-      if (selectedPaymentMethod === "wallet") {
+      if (methodToUse === "wallet") {
         // Validate wallet balance
         if (isWalletDisabled) {
           toast.error(
@@ -188,7 +193,7 @@ export function BookingSidebar({
           setShowSuccess(true);
           setIsProcessingPayment(false);
         }
-      } else if (selectedPaymentMethod === "razorpay") {
+      } else if (methodToUse === "razorpay") {
         if (isInquiryService) {
           // Handle inquiry booking
           const inquiryBookingData = {
@@ -607,63 +612,20 @@ export function BookingSidebar({
           </div>
         </div>
 
-        {/* Payment Method Buttons */}
+        {/* Pay Now Button */}
         {selectedAddress &&
           (isInquiryService
             ? bookingForm.contact_person
               ? true
               : false
             : selectedDate && selectedTimeSlot) && (
-            <div className="space-y-2 mb-4">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedPaymentMethod("wallet")}
-                  disabled={isWalletDisabled}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer border ${
-                    selectedPaymentMethod === "wallet"
-                      ? "bg-white text-[#00a871] border-[#00a871]"
-                      : isWalletDisabled
-                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <span>Pay with Wallet</span>
-                    <span className="text-xs text-gray-500">
-                      Balance:{" "}
-                      {formatAmount(walletSummary?.current_balance || 0)}
-                      {isWalletDisabled && (
-                        <span className="text-red-600 ml-1">
-                          (Insufficient)
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setSelectedPaymentMethod("razorpay")}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer border ${
-                    selectedPaymentMethod === "razorpay"
-                      ? "bg-white text-[#00a871] border-[#00a871]"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  Pay with Razorpay
-                </button>
-              </div>
-
-              {/* Pay Now Button */}
-              {selectedPaymentMethod && (
-                <button
-                  onClick={handlePayNow}
-                  disabled={isProcessingPayment || isWalletBookingLoading}
-                  className="w-full bg-[#00a871] hover:bg-[#009a65] text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isProcessingPayment || isWalletBookingLoading
-                    ? "Processing..."
-                    : "Pay Now"}
-                </button>
-              )}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowPaymentMethodModal(true)}
+                className="w-full bg-[#00a871] hover:bg-[#009a65] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
+                Pay Now
+              </button>
             </div>
           )}
       </div>
@@ -700,6 +662,24 @@ export function BookingSidebar({
             resetBookingData();
             router.push("/profile/my-bookings");
           }}
+        />
+      )}
+
+      {/* Payment Method Modal */}
+      {showPaymentMethodModal && (
+        <PaymentMethodModal
+          isOpen={showPaymentMethodModal}
+          onClose={() => setShowPaymentMethodModal(false)}
+          onPaymentMethodSelect={(method) => {
+            setSelectedPaymentMethod(method);
+            setShowPaymentMethodModal(false);
+            // Call handlePayNow directly with the selected method
+            handlePayNow(method);
+          }}
+          service={service}
+          totalAmount={totalAmount}
+          isWalletDisabled={isWalletDisabled}
+          walletBalance={walletSummary?.current_balance || 0}
         />
       )}
     </div>

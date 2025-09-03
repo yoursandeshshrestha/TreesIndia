@@ -27,6 +27,19 @@ interface CategoryProps {
 const CategoryCard = ({ name, icon, href, categoryId }: CategoryProps) => {
   const dispatch = useAppDispatch();
 
+  // Get the appropriate fallback icon based on category name
+  const getFallbackIcon = (categoryName: string) => {
+    const lowerName = categoryName.toLowerCase();
+    if (lowerName.includes("home")) {
+      return "/images/main-icons/home_service.png";
+    } else if (lowerName.includes("construction")) {
+      return "/images/main-icons/construction_service.png";
+    } else if (lowerName.includes("marketplace")) {
+      return "/images/main-icons/marketplace.png";
+    }
+    return `/images/main-icons/test-${categoryId}.png`;
+  };
+
   const handleClick = () => {
     // Only open modal for Home Service and Construction Service
     if (categoryId === 1 || categoryId === 2) {
@@ -40,7 +53,7 @@ const CategoryCard = ({ name, icon, href, categoryId }: CategoryProps) => {
     <div className="group cursor-pointer" onClick={handleClick}>
       <div className="bg-[#f5f5f5] rounded-xl p-4 mb-3  transition-colors">
         <Image
-          src={icon}
+          src={icon || getFallbackIcon(name)}
           alt={name}
           width={50}
           height={50}
@@ -48,8 +61,9 @@ const CategoryCard = ({ name, icon, href, categoryId }: CategoryProps) => {
           onError={(e) => {
             // Fallback to default icon if the uploaded icon fails to load
             const target = e.target as HTMLImageElement;
-            if (!target.src.includes("test-")) {
-              target.src = `/images/main-icons/test-${categoryId}.png`;
+            const fallbackIcon = getFallbackIcon(name);
+            if (target.src !== fallbackIcon) {
+              target.src = fallbackIcon;
             }
           }}
         />
@@ -99,12 +113,27 @@ export default function HeroSection({
 
   // Map category icons to the expected format
   const categories: CategoryProps[] = categoryIcons.map(
-    (icon: HomepageCategoryIcon, index: number) => ({
-      name: icon.name,
-      icon: icon.icon_url || `/images/main-icons/test-${index + 1}.png`,
-      href: `#${icon.name.toLowerCase().replace(/\s+/g, "-")}`,
-      categoryId: index + 1,
-    })
+    (icon: HomepageCategoryIcon, index: number) => {
+      // Get the appropriate fallback icon based on category name
+      const getFallbackIcon = (categoryName: string) => {
+        const lowerName = categoryName.toLowerCase();
+        if (lowerName.includes("home")) {
+          return "/images/main-icons/home_service.png";
+        } else if (lowerName.includes("construction")) {
+          return "/images/main-icons/construction_service.png";
+        } else if (lowerName.includes("marketplace")) {
+          return "/images/main-icons/marketplace.png";
+        }
+        return `/images/main-icons/test-${index + 1}.png`;
+      };
+
+      return {
+        name: icon.name,
+        icon: icon.icon_url || getFallbackIcon(icon.name),
+        href: `#${icon.name.toLowerCase().replace(/\s+/g, "-")}`,
+        categoryId: index + 1,
+      };
+    }
   );
 
   // Show loading state if data is being fetched

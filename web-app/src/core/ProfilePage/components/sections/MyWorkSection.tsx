@@ -17,8 +17,9 @@ import { useWorkerAssignments } from "@/hooks/useWorkerAssignments";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
+import { WorkerAssignmentCard } from "@/components/WorkerAssignmentCard";
 
-type WorkTab = "all" | "assigned" | "in_progress" | "completed";
+type WorkTab = "all" | "assigned" | "accepted" | "in_progress" | "completed";
 
 export function MyWorkSection() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -27,7 +28,7 @@ export function MyWorkSection() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
-    type: "accept" | "reject" | "complete";
+    type: "accept" | "reject" | "start" | "complete";
     assignmentId: number;
   } | null>(null);
 
@@ -48,6 +49,9 @@ export function MyWorkSection() {
       case "assigned":
         baseFilters.status = "assigned";
         break;
+      case "accepted":
+        baseFilters.status = "accepted";
+        break;
       case "in_progress":
         baseFilters.status = "in_progress";
         break;
@@ -64,9 +68,11 @@ export function MyWorkSection() {
     isLoadingAssignments,
     acceptAssignmentAsync,
     rejectAssignmentAsync,
+    startAssignmentAsync,
     completeAssignmentAsync,
     isAcceptingAssignment,
     isRejectingAssignment,
+    isStartingAssignment,
     isCompletingAssignment,
     refetchAssignments,
   } = useWorkerAssignments(getFiltersForTab(activeTab));
@@ -94,144 +100,6 @@ export function MyWorkSection() {
     },
   });
 
-  // Helper function to parse address JSON
-  const parseAddress = (addressString: string) => {
-    try {
-      const address = JSON.parse(addressString);
-      return {
-        house_number: address.house_number || "",
-        address: address.address || "",
-        landmark: address.landmark || "",
-        city: address.city || "",
-        state: address.state || "",
-        postal_code: address.postal_code || "",
-      };
-    } catch (error) {
-      return {
-        house_number: "",
-        address: addressString,
-        landmark: "",
-        city: "",
-        state: "",
-        postal_code: "",
-      };
-    }
-  };
-
-  // Helper function to format date
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch (error) {
-      return "Invalid date";
-    }
-  };
-
-  // Helper function to format time
-  const formatTime = (timeString: string) => {
-    try {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (error) {
-      return "Invalid time";
-    }
-  };
-
-  // Client-side filtering for search (temporary until backend supports search)
-  const filteredAssignments = assignments.filter((assignment) => {
-    if (!debouncedSearchQuery.trim()) return true;
-
-    const searchLower = debouncedSearchQuery.toLowerCase();
-    const contactPerson =
-      assignment.booking?.contact_person ||
-      assignment.booking?.user?.name ||
-      "";
-    const contactPhone =
-      assignment.booking?.contact_phone ||
-      assignment.booking?.user?.phone ||
-      "";
-
-    return (
-      assignment.booking?.service?.name?.toLowerCase().includes(searchLower) ||
-      assignment.booking?.booking_reference
-        .toLowerCase()
-        .includes(searchLower) ||
-      contactPerson.toLowerCase().includes(searchLower) ||
-      contactPhone.includes(debouncedSearchQuery)
-    );
-  });
-
-  const tabs = [
-    {
-      id: "all" as WorkTab,
-      label: "All Work",
-      count: assignments.length,
-    },
-    {
-      id: "assigned" as WorkTab,
-      label: "Assigned",
-      count: assignments.filter((w) => w.status === "assigned").length,
-    },
-    {
-      id: "in_progress" as WorkTab,
-      label: "In Progress",
-      count: assignments.filter((w) => w.status === "in_progress").length,
-    },
-    {
-      id: "completed" as WorkTab,
-      label: "Completed",
-      count: assignments.filter((w) => w.status === "completed").length,
-    },
-  ];
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "assigned":
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case "in_progress":
-        return <Briefcase className="w-4 h-4 text-yellow-500" />;
-      case "completed":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      default:
-        return <XCircle className="w-4 h-4 text-red-500" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "assigned":
-        return "Assigned";
-      case "in_progress":
-        return "In Progress";
-      case "completed":
-        return "Completed";
-      default:
-        return "Unknown";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "assigned":
-        return "bg-blue-100 text-blue-800";
-      case "in_progress":
-        return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   // Handle assignment actions
   const handleAcceptAssignment = async (assignmentId: number) => {
     try {
@@ -248,17 +116,30 @@ export function MyWorkSection() {
 
   const handleRejectAssignment = async (
     assignmentId: number,
-    reason: string
+    reason?: string
   ) => {
     try {
       await rejectAssignmentAsync({
         assignmentId,
-        data: { reason, notes: "" },
+        data: { reason: reason || "Worker rejected", notes: "" },
       });
       toast.success("Assignment rejected successfully");
       refetchAssignments();
     } catch (error) {
       toast.error("Failed to reject assignment");
+    }
+  };
+
+  const handleStartAssignment = async (assignmentId: number) => {
+    try {
+      await startAssignmentAsync({
+        assignmentId,
+        data: { notes: "" },
+      });
+      toast.success("Work started successfully");
+      refetchAssignments();
+    } catch (error) {
+      toast.error("Failed to start work");
     }
   };
 
@@ -337,7 +218,6 @@ export function MyWorkSection() {
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
         };
-
         console.log("GPS position obtained:", location);
         await locationTrackingHook.updateLocation(assignmentId, location);
         toast.success("Location updated successfully");
@@ -345,26 +225,8 @@ export function MyWorkSection() {
         toast.error("Location tracking not available for this assignment");
       }
     } catch (error) {
-      console.error("Update location error:", error);
-      if (error instanceof GeolocationPositionError) {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast.error(
-              "Location permission denied. Please enable location access."
-            );
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.error("Location information unavailable. Please try again.");
-            break;
-          case error.TIMEOUT:
-            toast.error("Location request timed out. Please try again.");
-            break;
-          default:
-            toast.error("Failed to get location. Please try again.");
-        }
-      } else {
-        toast.error("Failed to update location");
-      }
+      console.error("Failed to update location:", error);
+      toast.error("Failed to update location");
     }
   };
 
@@ -377,10 +239,10 @@ export function MyWorkSection() {
           await handleAcceptAssignment(confirmAction.assignmentId);
           break;
         case "reject":
-          await handleRejectAssignment(
-            confirmAction.assignmentId,
-            "Worker rejected"
-          );
+          await handleRejectAssignment(confirmAction.assignmentId);
+          break;
+        case "start":
+          await handleStartAssignment(confirmAction.assignmentId);
           break;
         case "complete":
           await handleCompleteAssignment(confirmAction.assignmentId);
@@ -414,6 +276,58 @@ export function MyWorkSection() {
       </div>
     );
   }
+
+  // Client-side filtering for search (temporary until backend supports search)
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (!debouncedSearchQuery.trim()) return true;
+
+    const searchLower = debouncedSearchQuery.toLowerCase();
+    const contactPerson =
+      assignment.booking?.contact_person ||
+      assignment.booking?.user?.name ||
+      "";
+    const contactPhone =
+      assignment.booking?.contact_phone ||
+      assignment.booking?.user?.phone ||
+      "";
+
+    return (
+      assignment.booking?.service?.name?.toLowerCase().includes(searchLower) ||
+      assignment.booking?.booking_reference
+        .toLowerCase()
+        .includes(searchLower) ||
+      contactPerson.toLowerCase().includes(searchLower) ||
+      contactPhone.includes(debouncedSearchQuery)
+    );
+  });
+
+  const tabs = [
+    {
+      id: "all" as WorkTab,
+      label: "All Work",
+      count: assignments.length,
+    },
+    {
+      id: "assigned" as WorkTab,
+      label: "Assigned",
+      count: assignments.filter((w) => w.status === "assigned").length,
+    },
+    {
+      id: "accepted" as WorkTab,
+      label: "Accepted",
+      count: assignments.filter((w) => w.status === "accepted").length,
+    },
+    {
+      id: "in_progress" as WorkTab,
+      label: "In Progress",
+      count: assignments.filter((w) => w.status === "in_progress").length,
+    },
+    {
+      id: "completed" as WorkTab,
+      label: "Completed",
+      count: assignments.filter((w) => w.status === "completed").length,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -467,248 +381,54 @@ export function MyWorkSection() {
       <div className="space-y-4">
         {isLoadingAssignments ? (
           // Skeleton for loading state
-          [1, 2, 3].map((i) => (
-            <div key={i}>
-              <div className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-                      <div className="h-5 bg-gray-200 rounded w-16"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded"></div>
+                  <div className="flex-1 space-y-3">
+                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : filteredAssignments.length > 0 ? (
           filteredAssignments.map((assignment, index) => (
             <div key={assignment.ID}>
-              <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {assignment.booking?.service?.name || "Service"}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          assignment.status
-                        )}`}
-                      >
-                        {getStatusText(assignment.status)}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div>
-                        <p>
-                          <strong>Booking Ref:</strong>{" "}
-                          {assignment.booking?.booking_reference}
-                        </p>
-                        <p>
-                          <strong>Customer:</strong>{" "}
-                          {assignment.booking?.contact_person ||
-                            assignment.booking?.user?.name ||
-                            "Not provided"}
-                        </p>
-                        <p>
-                          <strong>Phone:</strong>{" "}
-                          {assignment.booking?.contact_phone ||
-                            assignment.booking?.user?.phone ||
-                            "Not provided"}
-                        </p>
-                      </div>
-                      <div>
-                        <p>
-                          <strong>Date:</strong>{" "}
-                          {assignment.booking?.scheduled_date
-                            ? formatDate(assignment.booking.scheduled_date)
-                            : "Not scheduled"}
-                        </p>
-                        <p>
-                          <strong>Time:</strong>{" "}
-                          {assignment.booking?.scheduled_time
-                            ? formatTime(assignment.booking.scheduled_time)
-                            : "Not scheduled"}
-                        </p>
-                        <p>
-                          <strong>Amount:</strong> ₹
-                          {assignment.booking?.service?.price || 0}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-600">
-                        <strong>Address:</strong>{" "}
-                        {assignment.booking?.address
-                          ? (() => {
-                              const parsedAddress = parseAddress(
-                                assignment.booking.address
-                              );
-                              return `${
-                                parsedAddress.house_number
-                                  ? parsedAddress.house_number + ", "
-                                  : ""
-                              }${parsedAddress.address}${
-                                parsedAddress.landmark
-                                  ? ", " + parsedAddress.landmark
-                                  : ""
-                              }, ${parsedAddress.city}, ${
-                                parsedAddress.state
-                              } - ${parsedAddress.postal_code}`;
-                            })()
-                          : "Address not available"}
-                      </p>
-                    </div>
-
-                    {/* Location Tracking - Only show for in_progress assignments */}
-                    {assignment.status === "in_progress" && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-green-600" />
-                            Location Tracking
-                          </h4>
-                          {firstInProgressAssignment?.ID === assignment.ID ? (
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className={`w-3 h-3 rounded-full ${
-                                    locationTrackingHook.isTracking
-                                      ? "bg-green-500"
-                                      : "bg-gray-400"
-                                  }`}
-                                />
-                                <span className="text-sm text-gray-600">
-                                  {locationTrackingHook.isTracking
-                                    ? "Tracking"
-                                    : "Not Tracking"}
-                                </span>
-                              </div>
-                              <div className="flex gap-2">
-                                {!locationTrackingHook.isTracking ? (
-                                  <button
-                                    onClick={() =>
-                                      handleStartTracking(assignment.ID)
-                                    }
-                                    disabled={locationTrackingHook.isLoading}
-                                    className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                                  >
-                                    <Play className="w-4 h-4" />
-                                    Start Tracking
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleStopTracking(assignment.ID)
-                                    }
-                                    disabled={locationTrackingHook.isLoading}
-                                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                  >
-                                    <Square className="w-4 h-4" />
-                                    Stop Tracking
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() =>
-                                    handleUpdateLocation(assignment.ID)
-                                  }
-                                  disabled={
-                                    !locationTrackingHook.isTracking ||
-                                    locationTrackingHook.isLoading
-                                  }
-                                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                >
-                                  <RotateCcw className="w-4 h-4" />
-                                  Update Now
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">
-                              Location tracking will be available when
-                              assignment starts
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="ml-4 flex flex-col items-end">
-                    {getStatusIcon(assignment.status)}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                  {assignment.status === "assigned" && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setConfirmAction({
-                            type: "accept",
-                            assignmentId: assignment.ID,
-                          });
-                          setShowConfirmModal(true);
-                        }}
-                        disabled={isAcceptingAssignment}
-                        className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors disabled:opacity-50"
-                      >
-                        {isAcceptingAssignment ? "Accepting..." : "Accept"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setConfirmAction({
-                            type: "reject",
-                            assignmentId: assignment.ID,
-                          });
-                          setShowConfirmModal(true);
-                        }}
-                        disabled={isRejectingAssignment}
-                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors disabled:opacity-50"
-                      >
-                        {isRejectingAssignment ? "Rejecting..." : "Decline"}
-                      </button>
-                    </>
-                  )}
-
-                  {assignment.status === "in_progress" && (
-                    <button
-                      onClick={() => {
-                        setConfirmAction({
-                          type: "complete",
-                          assignmentId: assignment.ID,
-                        });
-                        setShowConfirmModal(true);
-                      }}
-                      disabled={isCompletingAssignment}
-                      className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors disabled:opacity-50"
-                    >
-                      {isCompletingAssignment ? "Completing..." : "Complete"}
-                    </button>
-                  )}
-                  {assignment.status === "completed" && (
-                    <button className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors">
-                      View Details
-                    </button>
-                  )}
-                </div>
-              </div>
+              <WorkerAssignmentCard
+                assignment={assignment}
+                onAccept={handleAcceptAssignment}
+                onReject={handleRejectAssignment}
+                onStart={handleStartAssignment}
+                onComplete={handleCompleteAssignment}
+                isAccepting={isAcceptingAssignment}
+                isRejecting={isRejectingAssignment}
+                isStarting={isStartingAssignment}
+                isCompleting={isCompletingAssignment}
+                locationTrackingHook={
+                  firstInProgressAssignment?.ID === assignment.ID
+                    ? {
+                        isTracking: locationTrackingHook.isTracking,
+                        isLoading: locationTrackingHook.isLoading,
+                        lastUpdate:
+                          locationTrackingHook.lastUpdate?.toISOString(),
+                        startTracking: handleStartTracking,
+                        stopTracking: handleStopTracking,
+                        updateLocation: handleUpdateLocation,
+                      }
+                    : undefined
+                }
+              />
               {index < filteredAssignments.length - 1 && (
                 <div className="border-b border-gray-200 my-4"></div>
               )}
@@ -747,6 +467,8 @@ export function MyWorkSection() {
             ? "accept"
             : confirmAction?.type === "reject"
             ? "reject"
+            : confirmAction?.type === "start"
+            ? "start work for"
             : confirmAction?.type === "complete"
             ? "complete"
             : "perform this action"
@@ -756,6 +478,8 @@ export function MyWorkSection() {
             ? "Accept"
             : confirmAction?.type === "reject"
             ? "Reject"
+            : confirmAction?.type === "start"
+            ? "Start Work"
             : confirmAction?.type === "complete"
             ? "Complete"
             : "Confirm"

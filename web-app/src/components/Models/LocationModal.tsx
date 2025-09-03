@@ -11,6 +11,7 @@ import {
   Target,
   Search,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -83,6 +84,11 @@ export default function LocationModal() {
       if (detectedLocation) {
         // Add to recent locations
         addToRecentLocations(detectedLocation);
+
+        // Show success toast
+        toast.success(
+          `Location detected: ${detectedLocation.city}, ${detectedLocation.state}`
+        );
       }
 
       // Close modal after successful location detection
@@ -273,7 +279,7 @@ export default function LocationModal() {
                   <button
                     onClick={handleDetectLocation}
                     disabled={isLoading}
-                    className="w-full flex items-center space-x-3 text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                    className="w-full flex items-center space-x-3 text-[var(--color-brand-main)] hover:bg-[var(--color-brand-light)] p-2 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <Target className="w-5 h-5" />
                     <span className="font-medium">
