@@ -68,7 +68,6 @@ export function useWebSocket({
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("WebSocket connected for room:", roomId);
         setIsConnected(true);
         setIsConnecting(false);
         reconnectAttempts.current = 0;
@@ -78,7 +77,6 @@ export function useWebSocket({
       ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          console.log("WebSocket message received:", message);
           onMessageRef.current?.(message);
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -86,7 +84,6 @@ export function useWebSocket({
       };
 
       ws.onclose = (event) => {
-        console.log("WebSocket disconnected:", event.code, event.reason);
         setIsConnected(false);
         setIsConnecting(false);
         onDisconnectRef.current?.();

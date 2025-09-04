@@ -224,7 +224,7 @@ func (was *WorkerAssignmentService) StartAssignment(assignmentID uint, workerID 
 
 	// Start location tracking when assignment starts
 	if was.locationTrackingService != nil {
-		err = was.locationTrackingService.StartTracking(workerID, assignmentID)
+		_, err = was.locationTrackingService.StartTracking(workerID, assignmentID)
 		if err != nil {
 			logrus.Errorf("Failed to start location tracking for assignment %d: %v", assignmentID, err)
 			// Don't fail the assignment start if location tracking fails

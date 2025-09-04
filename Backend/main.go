@@ -198,13 +198,18 @@ func main() {
 		log.Fatal("Failed to initialize FCM service:", err)
 	}
 
-	// Initialize WebSocket service
-	wsService := services.NewWebSocketService()
+	// Initialize location tracking service first (without WebSocket service initially)
+	locationTrackingService := services.NewLocationTrackingService(nil)
+	
+	// Initialize WebSocket service with location tracking service
+	wsService := services.NewWebSocketService(locationTrackingService)
 	wsController := controllers.NewWebSocketController(wsService)
+
+	// Update location tracking service with WebSocket service
+	locationTrackingService.SetWebSocketService(wsService)
 
 	// Initialize services with WebSocket service
 	chatService := services.NewChatService(wsService)
-	locationTrackingService := services.NewLocationTrackingService(wsService)
 	workerAssignmentService := services.NewWorkerAssignmentService(chatService, locationTrackingService)
 
 	// Initialize notification services
@@ -220,7 +225,9 @@ func main() {
 	tokenCleanupService.Start()
 
 	// Setup WebSocket routes (outside of /api/v1 prefix)
+	fmt.Println("Setting up WebSocket routes...")
 	routes.SetupWebSocketRoutes(r, wsController)
+	fmt.Println("WebSocket routes setup completed")
 
 	// Setup chat routes with WebSocket service
 	routes.SetupChatRoutes(r.Group("/api/v1"), chatService)

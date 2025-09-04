@@ -130,7 +130,6 @@ class FCMApi {
     }
 
     const responseData = await response.json();
-    console.log("✅ FCM API: Device unregistered successfully:", responseData);
     return responseData;
   }
 
@@ -158,7 +157,6 @@ class FCMApi {
     }
 
     const responseData = await response.json();
-    console.log("✅ FCM API: Notification sent successfully:", responseData);
     return responseData;
   }
 

@@ -110,7 +110,6 @@ export const FCMNotification: React.FC<FCMNotificationProps> = ({
 
     unregisterDevice(fcmToken, {
       onSuccess: () => {
-        console.log("✅ FCM Component: Device unregistered successfully");
         toast.success("Device unregistered successfully!");
       },
       onError: (error) => {

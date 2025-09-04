@@ -19,6 +19,12 @@ export function BookingsSection() {
   const [activeTab, setActiveTab] = useState<BookingTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client-side flag to prevent hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Debounce search query to avoid too many API calls
   useEffect(() => {
@@ -261,7 +267,7 @@ export function BookingsSection() {
 
       {/* Bookings List */}
       <div className="space-y-4">
-        {isLoadingBookings ? (
+        {!isClient || isLoadingBookings ? (
           <BookingsSectionSkeleton />
         ) : filteredBookings.length > 0 ? (
           filteredBookings.map((booking, index) => (

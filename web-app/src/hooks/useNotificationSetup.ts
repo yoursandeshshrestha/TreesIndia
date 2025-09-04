@@ -48,7 +48,6 @@ export function useNotificationSetup() {
         // Request FCM token
         await requestPermission();
       } else {
-        console.log("Notification permission denied by user");
       }
     } catch (error) {
       console.error("Error setting up notifications:", error);

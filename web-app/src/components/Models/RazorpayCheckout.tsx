@@ -59,7 +59,6 @@ export default function RazorpayCheckout({
   }, [order.id, order.amount, order.currency, order.key_id]);
 
   const initializeRazorpay = () => {
-    console.log("Initializing Razorpay with order:", order);
 
     if (!window.Razorpay) {
       console.error("Razorpay not loaded");
@@ -115,9 +114,7 @@ export default function RazorpayCheckout({
     };
 
     try {
-      console.log("Creating Razorpay instance with options:", options);
       razorpayRef.current = new window.Razorpay(options);
-      console.log("Razorpay instance created, opening modal...");
       razorpayRef.current.open();
     } catch (error) {
       console.error("Error initializing Razorpay:", error);

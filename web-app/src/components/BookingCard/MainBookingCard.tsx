@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Clock, MapPin, Phone, Loader2, User } from "lucide-react";
+import { Clock, MapPin, Phone, Loader2, User, Navigation } from "lucide-react";
 import type { Booking } from "@/lib/bookingApi";
-
+import { LocationTrackingModal } from "@/components/LocationTrackingModal/LocationTrackingModal";
 
 interface MainBookingCardProps {
   booking: Booking;
@@ -27,6 +27,7 @@ export function MainBookingCard({
   isAcceptingQuote = false,
   isPaying = false,
 }: MainBookingCardProps) {
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const getStatusConfig = (
     status: string,
@@ -425,8 +426,6 @@ export function MainBookingCard({
                     )}
                 </div>
               )}
-
-
           </div>
         </div>
 
@@ -541,12 +540,33 @@ export function MainBookingCard({
                   </div>
                 </div>
               )}
+
+              {/* Location Tracking Button - Show for in_progress bookings */}
+              {booking.worker_assignment?.status === "in_progress" && (
+                <button
+                  onClick={() => setIsLocationModalOpen(true)}
+                  className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Navigation className="w-4 h-4" />
+                    Track Worker Location
+                  </div>
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
 
-
+      {/* Location Tracking Modal */}
+      {booking.worker_assignment?.status === "in_progress" && (
+        <LocationTrackingModal
+          isOpen={isLocationModalOpen}
+          onClose={() => setIsLocationModalOpen(false)}
+          assignment={booking.worker_assignment}
+          booking={booking}
+        />
+      )}
     </div>
   );
 }

@@ -140,12 +140,6 @@ export default function EditAddressModal({
           ? formData.customName.trim() || "Other"
           : formData.name;
 
-      console.log("EditAddressModal - Edit mode sending:", {
-        name: nameToSend,
-        customName: formData.customName,
-        originalName: formData.name,
-      });
-
       await updateAddressAsync({
         addressId: address.id,
         addressData: {

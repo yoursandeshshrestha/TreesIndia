@@ -160,19 +160,36 @@ func (wlr *WorkerLocationRepository) UpdateLocation(workerID uint, assignmentID 
 
 // CreateLocation creates a new location record for a worker's assignment
 func (wlr *WorkerLocationRepository) CreateLocation(workerID uint, assignmentID uint, bookingID uint, latitude, longitude, accuracy float64) error {
-	location := &models.WorkerLocation{
-		WorkerID:     workerID,
-		AssignmentID: assignmentID,
-		BookingID:    bookingID,
-		Latitude:     latitude,
-		Longitude:    longitude,
-		Accuracy:     accuracy,
-		Status:       "tracking",
-		LastUpdated:  wlr.db.NowFunc(),
-		IsActive:     true,
-	}
+	// Use a transaction to handle the unique constraint properly
+	return wlr.db.Transaction(func(tx *gorm.DB) error {
+		// First, deactivate any existing active location for this worker and assignment
+		err := tx.Model(&models.WorkerLocation{}).
+			Where("worker_id = ? AND assignment_id = ? AND is_active = ?", workerID, assignmentID, true).
+			Update("is_active", false).Error
+		if err != nil {
+			return fmt.Errorf("failed to deactivate existing location: %w", err)
+		}
 
-	return wlr.db.Create(location).Error
+		// Create new location record
+		location := &models.WorkerLocation{
+			WorkerID:     workerID,
+			AssignmentID: assignmentID,
+			BookingID:    bookingID,
+			Latitude:     latitude,
+			Longitude:    longitude,
+			Accuracy:     accuracy,
+			Status:       "tracking",
+			LastUpdated:  tx.NowFunc(),
+			IsActive:     true,
+		}
+
+		err = tx.Create(location).Error
+		if err != nil {
+			return fmt.Errorf("failed to create location record: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // UpdateExistingLocation updates an existing location record
@@ -189,13 +206,26 @@ func (wlr *WorkerLocationRepository) UpdateExistingLocation(locationID uint, lat
 
 // StopTracking stops location tracking for a worker's assignment
 func (wlr *WorkerLocationRepository) StopTracking(workerID uint, assignmentID uint) error {
-	return wlr.db.Model(&models.WorkerLocation{}).
+	// Simply update the existing active record to mark it as stopped
+	result := wlr.db.Model(&models.WorkerLocation{}).
 		Where("worker_id = ? AND assignment_id = ? AND is_active = ?", workerID, assignmentID, true).
 		Updates(map[string]interface{}{
-			"is_active":     false,
 			"status":        "stopped",
 			"last_updated":  wlr.db.NowFunc(),
-		}).Error
+			"is_active":     false,
+		})
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to stop location tracking: %w", result.Error)
+	}
+
+	// Check if any records were updated
+	if result.RowsAffected == 0 {
+		// No active tracking found, nothing to stop
+		return nil
+	}
+
+	return nil
 }
 
 // GetLocationHistory gets location history for a worker's assignment

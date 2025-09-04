@@ -11,6 +11,7 @@ import quoteAcceptanceReducer from "./slices/quoteAcceptanceSlice";
 import workerApplicationReducer from "./slices/workerApplicationSlice";
 import brokerApplicationReducer from "./slices/brokerApplicationSlice";
 import workerAssignmentReducer from "./slices/workerAssignmentSlice";
+import locationTrackingReducer from "./slices/locationTrackingSlice";
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     workerApplication: workerApplicationReducer,
     brokerApplication: brokerApplicationReducer,
     workerAssignment: workerAssignmentReducer,
+    locationTracking: locationTrackingReducer,
   },
 });
 

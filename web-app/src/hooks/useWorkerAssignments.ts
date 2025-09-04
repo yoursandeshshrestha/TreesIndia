@@ -27,9 +27,6 @@ export function useWorkerAssignments(filters?: WorkerAssignmentFilters) {
   });
 
   // Debug logging
-  console.log("Worker Assignments Data:", assignmentsData);
-  console.log("Worker Assignments Error:", assignmentsError);
-  console.log("Is Loading:", isLoadingAssignments);
 
   // Accept assignment mutation
   const acceptAssignmentMutation = useMutation({
