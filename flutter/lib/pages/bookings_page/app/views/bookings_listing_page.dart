@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
@@ -114,7 +115,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.brandPrimary500,
+                        color: Color(0xFF055c3a),
                       ),
                     )
                   : const Icon(Icons.refresh, color: AppColors.brandNeutral800),
@@ -125,9 +126,13 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
           ],
           bottom: TabBar(
             controller: _tabController,
-            labelColor: AppColors.brandPrimary600,
+            labelColor: const Color(0xFF055c3a),
+            labelStyle: TextStyles.b4Medium(),
             unselectedLabelColor: AppColors.brandNeutral600,
-            indicatorColor: AppColors.brandPrimary600,
+            unselectedLabelStyle: TextStyles.b4Regular(),
+            indicatorColor: const Color(0xFF055c3a),
+            dividerColor: AppColors.brandNeutral300,
+            indicatorSize: TabBarIndicatorSize.tab,
             tabs: const [
               Tab(text: 'All'),
               Tab(text: 'Upcoming'),
@@ -160,7 +165,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
     if (state.status == BookingsStatus.loading && bookings.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(
-          color: AppColors.brandPrimary500,
+          color: Color(0xFF055c3a),
         ),
       );
     }
@@ -251,7 +256,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
       onRefresh: () async {
         ref.read(bookingsNotifierProvider.notifier).refresh();
       },
-      color: AppColors.brandPrimary500,
+      color: const Color(0xFF055c3a),
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -262,7 +267,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
               padding: EdgeInsets.all(AppSpacing.md),
               child: Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.brandPrimary500,
+                  color: const Color(0xFF055c3a),
                 ),
               ),
             );
