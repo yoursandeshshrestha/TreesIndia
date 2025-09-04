@@ -40,6 +40,9 @@ class ApiEndpoints {
     createAddress,
     updateAddress,
     deleteAddress,
+    registerDevice,
+    getUserDevices,
+    unregisterDevice,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -214,6 +217,21 @@ class ApiEndpoints {
 
   static ApiEndpoint deleteAddress = ApiEndpoint(
     path: '/addresses/{addressId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint registerDevice = ApiEndpoint(
+    path: '/notifications/register-device',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getUserDevices = ApiEndpoint(
+    path: '/notifications/devices',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint unregisterDevice = ApiEndpoint(
+    path: '/notifications/unregister-device',
     requiresAuth: true,
   );
 
