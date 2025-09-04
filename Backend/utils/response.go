@@ -63,3 +63,13 @@ func (rh *ResponseHandler) ValidationError(c *gin.Context, message string, error
 		"errors":  errors,
 	})
 }
+
+// ErrorResponse sends an error response with custom status code
+func ErrorResponse(c *gin.Context, statusCode int, message string) {
+	c.JSON(statusCode, views.CreateErrorResponse(message, ""))
+}
+
+// SuccessResponse sends a success response with custom status code
+func SuccessResponse(c *gin.Context, statusCode int, message string, data interface{}) {
+	c.JSON(statusCode, views.CreateSuccessResponse(message, data))
+}

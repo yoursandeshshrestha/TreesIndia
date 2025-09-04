@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { MapPin, User, MessageCircle, Phone, Play, Square } from "lucide-react";
+import { MapPin, User, MessageCircle, Play, Square } from "lucide-react";
+import { CallButton } from "@/components/CallButton/CallButton";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import { toast } from "sonner";
 import { locationTrackingWebSocket } from "@/services/websocketService";
@@ -385,21 +386,13 @@ export function WorkerAssignmentCard({
                   <MessageCircle className="w-5 h-5" />
                 </button>
 
-                <button
-                  onClick={() => {
-                    if (assignment.booking?.user?.phone) {
-                      window.open(
-                        `tel:${assignment.booking.user.phone}`,
-                        "_self"
-                      );
-                    }
-                  }}
-                  disabled={!assignment.booking?.user?.phone}
-                  className="p-2 text-gray-800 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Call customer"
-                >
-                  <Phone className="w-5 h-5" />
-                </button>
+                <CallButton
+                  bookingId={assignment.booking?.id || 0}
+                  userType="worker"
+                  size="sm"
+                  variant="ghost"
+                  className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
+                />
               </div>
             </div>
           )}

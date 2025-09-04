@@ -17,6 +17,7 @@ type WorkerAssignmentService struct {
 	notificationService  *NotificationService
 	chatService          *ChatService
 	locationTrackingService *LocationTrackingService
+	callMaskingService   *CallMaskingService
 }
 
 func NewWorkerAssignmentService(chatService *ChatService, locationTrackingService *LocationTrackingService) *WorkerAssignmentService {
@@ -28,6 +29,7 @@ func NewWorkerAssignmentService(chatService *ChatService, locationTrackingServic
 		notificationService:  NewNotificationService(),
 		chatService:          chatService,
 		locationTrackingService: locationTrackingService,
+		callMaskingService:   NewCallMaskingService(),
 	}
 }
 
@@ -121,6 +123,9 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 		// Don't fail the acceptance if chat room creation fails
 	}
 
+	// Enable call masking when worker accepts assignment
+	go was.callMaskingService.EnableCallMasking(assignment.BookingID)
+
 	// Send notification
 	go was.notificationService.SendWorkerAssignmentAcceptedNotification(assignment)
 
@@ -171,6 +176,9 @@ func (was *WorkerAssignmentService) RejectAssignment(assignmentID uint, workerID
 		logrus.Errorf("Failed to update booking status: %v", err)
 		return nil, errors.New("failed to update booking status")
 	}
+
+	// Disable call masking when assignment is rejected
+	go was.callMaskingService.DisableCallMasking(assignment.BookingID)
 
 	// Send notification
 	go was.notificationService.SendWorkerAssignmentRejectedNotification(assignment)
@@ -287,6 +295,9 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 		logrus.Errorf("Failed to update booking status: %v", err)
 		return nil, errors.New("failed to update booking status")
 	}
+
+	// Disable call masking when assignment is completed
+	go was.callMaskingService.DisableCallMasking(assignment.BookingID)
 
 	// Update worker statistics
 	worker, err := was.workerRepo.GetByUserID(assignment.WorkerID)

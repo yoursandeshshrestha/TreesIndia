@@ -245,6 +245,12 @@ func main() {
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
 	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
 
+	// Setup call masking routes
+	routes.SetupCallMaskingRoutes(r.Group("/api/v1"))
+
+	// Setup test routes (for development)
+	routes.SetupTestRoutes(r.Group("/api/v1"))
+
 	// Start server
 	if err := r.Run(appConfig.ServerHost + ":" + appConfig.ServerPort); err != nil {
 		log.Fatal("Failed to start server:", err)

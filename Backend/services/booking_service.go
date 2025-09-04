@@ -749,6 +749,10 @@ func (bs *BookingService) CleanupExpiredTemporaryHolds() error {
 			// Log error but continue with other bookings
 			continue
 		}
+
+		// Disable call masking for expired bookings
+		callMaskingService := NewCallMaskingService()
+		go callMaskingService.DisableCallMasking(booking.ID)
 	}
 
 	return nil
@@ -786,6 +790,10 @@ func (bs *BookingService) CancelUserBooking(userID uint, bookingID uint, req *mo
 	if err != nil {
 		return nil, err
 	}
+
+	// 3. Disable call masking if it exists
+	callMaskingService := NewCallMaskingService()
+	go callMaskingService.DisableCallMasking(bookingID)
 
 
 
