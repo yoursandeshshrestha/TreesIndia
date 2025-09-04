@@ -24,7 +24,7 @@ export default function PopularServices() {
   } = usePopularServices({
     city: location?.city,
     state: location?.state,
-    enabled: !locationLoading && location !== undefined,
+    enabled: !locationLoading, // Allow fetching even without location - backend will show all services
   });
 
   const services = response?.data || [];
