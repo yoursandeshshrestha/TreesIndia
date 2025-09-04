@@ -49,5 +49,10 @@
 	<string>This app needs location access to provide better recommendations and services based on your location.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs location access to provide better recommendations and services based on your location.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-fetch</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
