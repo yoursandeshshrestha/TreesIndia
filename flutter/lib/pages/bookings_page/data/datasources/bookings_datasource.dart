@@ -105,4 +105,62 @@ class BookingsDatasource {
       throw Exception('Error cancelling booking.');
     }
   }
+
+  Future<void> rejectQuote({
+    required int bookingId,
+    String reason = "Quote rejected via mobile app",
+  }) async {
+    final url = ApiEndpoints.rejectQuote.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    final payload = <String, dynamic>{
+      'reason': reason,
+    };
+
+    try {
+      final response = await dioClient.dio.post(url, data: payload);
+
+      if (response.statusCode == 200) {
+        print('📍 Quote rejected successfully: $bookingId');
+      } else {
+        throw Exception('Failed to reject quote. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error rejecting quote.');
+    }
+  }
+
+  Future<void> acceptQuote({
+    required int bookingId,
+    String notes = "Quote accepted via mobile app",
+  }) async {
+    final url = ApiEndpoints.acceptQuote.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    final payload = <String, dynamic>{
+      'notes': notes,
+    };
+
+    try {
+      final response = await dioClient.dio.post(url, data: payload);
+
+      if (response.statusCode == 200) {
+        print('📍 Quote accepted successfully: $bookingId');
+      } else {
+        throw Exception('Failed to accept quote. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error accepting quote.');
+    }
+  }
 }

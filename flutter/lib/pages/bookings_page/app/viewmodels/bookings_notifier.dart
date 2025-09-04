@@ -2,17 +2,23 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/usecases/reject_quote_usecase.dart';
+import '../../domain/usecases/accept_quote_usecase.dart';
 import '../../domain/entities/booking_details_entity.dart';
 import 'bookings_state.dart';
 
 class BookingsNotifier extends StateNotifier<BookingsState> {
   final GetBookingsUseCase getBookingsUseCase;
   final CancelBookingUseCase cancelBookingUseCase;
+  final RejectQuoteUseCase rejectQuoteUseCase;
+  final AcceptQuoteUseCase acceptQuoteUseCase;
   Timer? _autoRefreshTimer;
 
   BookingsNotifier({
     required this.getBookingsUseCase,
     required this.cancelBookingUseCase,
+    required this.rejectQuoteUseCase,
+    required this.acceptQuoteUseCase,
   }) : super(const BookingsState()) {
     _startAutoRefresh();
   }
@@ -190,29 +196,74 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
       );
 
       // Update the booking status in all relevant tab lists
-      final updatedAllBookings = state.allBookings.map((booking) {
-        if (booking.id == bookingId) {
-          return booking.copyWith(status: 'cancelled');
-        }
-        return booking;
-      }).toList();
-
-      final updatedUpcomingBookings = state.upcomingBookings.map((booking) {
-        if (booking.id == bookingId) {
-          return booking.copyWith(status: 'cancelled');
-        }
-        return booking;
-      }).toList();
-
-      state = state.copyWith(
-        allBookings: updatedAllBookings,
-        upcomingBookings: updatedUpcomingBookings,
-        isCancelling: false,
-        errorMessage: '',
-      );
+      refresh();
     } catch (e) {
       state = state.copyWith(
         isCancelling: false,
+        errorMessage: e.toString(),
+      );
+      rethrow;
+    } finally {
+      state = state.copyWith(isCancelling: false);
+    }
+  }
+
+  Future<void> rejectQuote({
+    required int bookingId,
+    String reason = "Quote rejected via mobile app",
+  }) async {
+    state = state.copyWith(
+      isRejectingQuote: true,
+      errorMessage: '',
+    );
+
+    try {
+      await rejectQuoteUseCase.call(
+        bookingId: bookingId,
+        reason: reason,
+      );
+
+      state = state.copyWith(
+        isRejectingQuote: false,
+        errorMessage: '',
+      );
+
+      // Refresh the current tab to get updated data
+      refresh();
+    } catch (e) {
+      state = state.copyWith(
+        isRejectingQuote: false,
+        errorMessage: e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> acceptQuote({
+    required int bookingId,
+    String notes = "Quote accepted via mobile app",
+  }) async {
+    state = state.copyWith(
+      isAcceptingQuote: true,
+      errorMessage: '',
+    );
+
+    try {
+      await acceptQuoteUseCase.call(
+        bookingId: bookingId,
+        notes: notes,
+      );
+
+      state = state.copyWith(
+        isAcceptingQuote: false,
+        errorMessage: '',
+      );
+
+      // Refresh the current tab to get updated data
+      refresh();
+    } catch (e) {
+      state = state.copyWith(
+        isAcceptingQuote: false,
         errorMessage: e.toString(),
       );
       rethrow;

@@ -13,4 +13,14 @@ abstract class BookingsRepository {
     required String reason,
     String? cancellationReason,
   });
+
+  Future<void> rejectQuote({
+    required int bookingId,
+    String reason,
+  });
+
+  Future<void> acceptQuote({
+    required int bookingId,
+    String notes,
+  });
 }

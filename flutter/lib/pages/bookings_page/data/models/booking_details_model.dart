@@ -2,6 +2,7 @@ import '../../../services_page/data/models/service_model.dart';
 import '../../domain/entities/booking_details_entity.dart';
 import 'address_model.dart';
 import 'payment_model.dart';
+import 'worker_assignment_model.dart';
 
 class BookingDetailsModel extends BookingDetailsEntity {
   const BookingDetailsModel({
@@ -36,6 +37,7 @@ class BookingDetailsModel extends BookingDetailsEntity {
     super.quoteExpiresAt,
     required super.service,
     super.payment,
+    super.workerAssignment,
   });
 
   factory BookingDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -95,6 +97,9 @@ class BookingDetailsModel extends BookingDetailsEntity {
       payment: json['payment'] != null
           ? PaymentModel.fromJson(json['payment'] as Map<String, dynamic>)
           : null,
+      workerAssignment: json['worker_assignment'] != null
+          ? WorkerAssignmentModel.fromJson(json['worker_assignment'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -131,6 +136,7 @@ class BookingDetailsModel extends BookingDetailsEntity {
       'quote_expires_at': quoteExpiresAt?.toIso8601String(),
       'service': (service as ServiceModel).toJson(),
       'payment': payment != null ? (payment as PaymentModel).toJson() : null,
+      'worker_assignment': workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toJson() : null,
     };
   }
 
@@ -167,6 +173,7 @@ class BookingDetailsModel extends BookingDetailsEntity {
       quoteExpiresAt: quoteExpiresAt,
       service: (service as ServiceModel).toEntity(),
       payment: payment != null ? (payment as PaymentModel).toEntity() : null,
+      workerAssignment: workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toEntity() : null,
     );
   }
 
@@ -239,6 +246,9 @@ class BookingDetailsModel extends BookingDetailsEntity {
       service: ServiceModel.fromEntity(entity.service),
       payment: entity.payment != null
           ? PaymentModel.fromEntity(entity.payment!)
+          : null,
+      workerAssignment: entity.workerAssignment != null
+          ? WorkerAssignmentModel.fromEntity(entity.workerAssignment!)
           : null,
     );
   }
