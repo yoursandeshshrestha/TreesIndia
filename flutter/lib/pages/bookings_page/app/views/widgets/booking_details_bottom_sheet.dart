@@ -93,12 +93,12 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
                         _buildActualTimingSection(),
                       ],
                       const SizedBox(height: AppSpacing.xl),
-                      if (booking.status.toLowerCase() != 'cancelled' &&
-                          booking.status.toLowerCase() != 'assigned') ...[
-                        _buildCancelButton(
-                            context, bookingsNotifier, bookingsState),
-                        const SizedBox(height: AppSpacing.lg),
-                      ],
+                      // if (booking.status.toLowerCase() != 'cancelled' &&
+                      //     booking.status.toLowerCase() != 'assigned') ...[
+                      //   _buildCancelButton(
+                      //       context, bookingsNotifier, bookingsState),
+                      //   const SizedBox(height: AppSpacing.lg),
+                      // ],
                     ],
                   ),
                 ),
@@ -588,63 +588,63 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
     }
   }
 
-  Widget _buildCancelButton(BuildContext context,
-      BookingsNotifier bookingsNotifier, BookingsState bookingsState) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: bookingsState.isCancelling
-            ? null
-            : () async {
-                final result = await CancelBookingBottomSheet.show(
-                  context,
-                  booking.bookingReference,
-                );
+  // Widget _buildCancelButton(BuildContext context,
+  //     BookingsNotifier bookingsNotifier, BookingsState bookingsState) {
+  //   return SizedBox(
+  //     width: double.infinity,
+  //     child: ElevatedButton(
+  //       onPressed: bookingsState.isCancelling
+  //           ? null
+  //           : () async {
+  //               final result = await CancelBookingBottomSheet.show(
+  //                 context,
+  //                 booking.bookingReference,
+  //               );
 
-                if (result != null && context.mounted) {
-                  try {
-                    await bookingsNotifier.cancelBooking(
-                      bookingId: booking.id,
-                      reason: result['reason']!,
-                      cancellationReason: result['cancellation_reason']!.isEmpty
-                          ? null
-                          : result['cancellation_reason'],
-                    );
-                    if (context.mounted) {
-                      Navigator.of(context).pop(); // Close the bottom sheet
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Booking cancelled successfully'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Failed to cancel booking: ${e.toString()}'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.stateRed600,
-          foregroundColor: AppColors.white,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: B2Bold(
-          text: 'Cancel Booking',
-          color: AppColors.white,
-        ),
-      ),
-    );
-  }
+  //               if (result != null && context.mounted) {
+  //                 try {
+  //                   await bookingsNotifier.cancelBooking(
+  //                     bookingId: booking.id,
+  //                     reason: result['reason']!,
+  //                     cancellationReason: result['cancellation_reason']!.isEmpty
+  //                         ? null
+  //                         : result['cancellation_reason'],
+  //                   );
+  //                   if (context.mounted) {
+  //                     Navigator.of(context).pop(); // Close the bottom sheet
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                         content: Text('Booking cancelled successfully'),
+  //                         backgroundColor: Colors.green,
+  //                       ),
+  //                     );
+  //                   }
+  //                 } catch (e) {
+  //                   if (context.mounted) {
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       SnackBar(
+  //                         content:
+  //                             Text('Failed to cancel booking: ${e.toString()}'),
+  //                         backgroundColor: Colors.red,
+  //                       ),
+  //                     );
+  //                   }
+  //                 }
+  //               }
+  //             },
+  //       style: ElevatedButton.styleFrom(
+  //         backgroundColor: AppColors.stateRed600,
+  //         foregroundColor: AppColors.white,
+  //         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //         ),
+  //       ),
+  //       child: B2Bold(
+  //         text: 'Cancel Booking',
+  //         color: AppColors.white,
+  //       ),
+  //     ),
+  //   );
+  // }
 }

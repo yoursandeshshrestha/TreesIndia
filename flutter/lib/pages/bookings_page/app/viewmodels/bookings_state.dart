@@ -1,4 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:trees_india/pages/booking_page/domain/entities/available_slot_entity.dart';
+import 'package:trees_india/pages/booking_page/domain/entities/booking_config_entity.dart';
+import 'package:trees_india/pages/bookings_page/domain/entities/quote_payment_response_entity.dart';
 import '../../domain/entities/booking_details_entity.dart';
 
 enum BookingsStatus { initial, loading, success, failure }
@@ -33,6 +36,14 @@ class BookingsState extends Equatable {
   final bool isCancelling;
   final bool isRejectingQuote;
   final bool isAcceptingQuote;
+  final bool isSlotsFetching;
+  final bool isConfigLoading;
+  final bool isPaymentProcessing;
+  final bool isWalletPaymentSuccess;
+  final bool isRazorpayPaymentSuccess;
+  final BookingConfigEntity? bookingConfig;
+  final AvailableSlotsResponseEntity? availableSlots;
+  final QuotePaymentResponseEntity? quotePaymentResponse;
   final String errorMessage;
 
   const BookingsState({
@@ -57,7 +68,15 @@ class BookingsState extends Equatable {
     this.isCancelling = false,
     this.isRejectingQuote = false,
     this.isAcceptingQuote = false,
+    this.isSlotsFetching = false,
+    this.isConfigLoading = false,
+    this.isPaymentProcessing = false,
+    this.isWalletPaymentSuccess = false,
+    this.isRazorpayPaymentSuccess = false,
     this.errorMessage = '',
+    this.bookingConfig,
+    this.availableSlots,
+    this.quotePaymentResponse,
   });
 
   // Getter for current tab's bookings
@@ -124,7 +143,15 @@ class BookingsState extends Equatable {
     bool? isCancelling,
     bool? isRejectingQuote,
     bool? isAcceptingQuote,
+    bool? isSlotsFetching,
+    bool? isConfigLoading,
+    bool? isPaymentProcessing,
+    bool? isWalletPaymentSuccess,
+    bool? isRazorpayPaymentSuccess,
     String? errorMessage,
+    BookingConfigEntity? bookingConfig,
+    AvailableSlotsResponseEntity? availableSlots,
+    QuotePaymentResponseEntity? quotePaymentResponse,
   }) {
     return BookingsState(
       status: status ?? this.status,
@@ -148,7 +175,15 @@ class BookingsState extends Equatable {
       isCancelling: isCancelling ?? this.isCancelling,
       isRejectingQuote: isRejectingQuote ?? this.isRejectingQuote,
       isAcceptingQuote: isAcceptingQuote ?? this.isAcceptingQuote,
+      isSlotsFetching: isSlotsFetching ?? this.isSlotsFetching,
+      isConfigLoading: isConfigLoading ?? this.isConfigLoading,
+      isPaymentProcessing: isPaymentProcessing ?? this.isPaymentProcessing,
+      isWalletPaymentSuccess: isWalletPaymentSuccess ?? this.isWalletPaymentSuccess,
+      isRazorpayPaymentSuccess: isRazorpayPaymentSuccess ?? this.isRazorpayPaymentSuccess,
       errorMessage: errorMessage ?? this.errorMessage,
+      bookingConfig: bookingConfig ?? this.bookingConfig,
+      availableSlots: availableSlots ?? this.availableSlots,
+      quotePaymentResponse: quotePaymentResponse ?? this.quotePaymentResponse,
     );
   }
 
@@ -175,6 +210,14 @@ class BookingsState extends Equatable {
         isCancelling,
         isRejectingQuote,
         isAcceptingQuote,
+        isSlotsFetching,
+        isConfigLoading,
+        isPaymentProcessing,
+        isWalletPaymentSuccess,
+        isRazorpayPaymentSuccess,
         errorMessage,
+        bookingConfig,
+        availableSlots,
+        quotePaymentResponse,
       ];
 }

@@ -33,6 +33,9 @@ class ApiEndpoints {
     cancelBooking,
     rejectQuote,
     acceptQuote,
+    createQuotePayment,
+    verifyQuotePayment,
+    walletQuotePayment,
     addresses,
     createAddress,
     updateAddress,
@@ -176,6 +179,21 @@ class ApiEndpoints {
 
   static ApiEndpoint acceptQuote = ApiEndpoint(
     path: '/bookings/{bookingId}/accept-quote',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/create-quote-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifyQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/verify-quote-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint walletQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/wallet-payment',
     requiresAuth: true,
   );
 
