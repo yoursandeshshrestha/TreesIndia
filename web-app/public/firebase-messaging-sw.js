@@ -7,13 +7,13 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDFBfvJKLeD2MxQdkLWnt2-A4apHC-UX3o",
-  authDomain: "treesindia-fcm.firebaseapp.com",
-  projectId: "treesindia-fcm",
-  storageBucket: "treesindia-fcm.firebasestorage.app",
-  messagingSenderId: "558464277857",
-  appId: "1:558464277857:web:2bea62b4e47f1833ea3920",
-  measurementId: "G-FH0PVFRW1V",
+  apiKey: "undefined",
+  authDomain: "undefined",
+  projectId: "undefined",
+  storageBucket: "undefined",
+  messagingSenderId: "undefined",
+  appId: "undefined",
+  measurementId: "",
 });
 
 const messaging = firebase.messaging();

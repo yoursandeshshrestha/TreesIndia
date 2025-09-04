@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../../services_page/domain/entities/service_detail_entity.dart';
 import 'address_entity.dart';
 import 'payment_entity.dart';
+import 'worker_assignment_entity.dart';
 
 class BookingDetailsEntity extends Equatable {
   final int id;
@@ -35,6 +36,7 @@ class BookingDetailsEntity extends Equatable {
   final DateTime? quoteExpiresAt;
   final ServiceDetailEntity service;
   final PaymentEntity? payment;
+  final WorkerAssignmentEntity? workerAssignment;
 
   const BookingDetailsEntity({
     required this.id,
@@ -68,6 +70,7 @@ class BookingDetailsEntity extends Equatable {
     this.quoteExpiresAt,
     required this.service,
     this.payment,
+    this.workerAssignment,
   });
 
   @override
@@ -103,6 +106,7 @@ class BookingDetailsEntity extends Equatable {
         quoteExpiresAt,
         service,
         payment,
+        workerAssignment,
       ];
 
   BookingDetailsEntity copyWith({
@@ -137,6 +141,7 @@ class BookingDetailsEntity extends Equatable {
     DateTime? quoteExpiresAt,
     ServiceDetailEntity? service,
     PaymentEntity? payment,
+    WorkerAssignmentEntity? workerAssignment,
   }) {
     return BookingDetailsEntity(
       id: id ?? this.id,
@@ -171,6 +176,7 @@ class BookingDetailsEntity extends Equatable {
       quoteExpiresAt: quoteExpiresAt ?? this.quoteExpiresAt,
       service: service ?? this.service,
       payment: payment ?? this.payment,
+      workerAssignment: workerAssignment ?? this.workerAssignment,
     );
   }
 }

@@ -31,6 +31,8 @@ class ApiEndpoints {
     verifyInquiryPayment,
     bookings,
     cancelBooking,
+    rejectQuote,
+    acceptQuote,
     addresses,
     createAddress,
     updateAddress,
@@ -164,6 +166,16 @@ class ApiEndpoints {
 
   static ApiEndpoint cancelBooking = ApiEndpoint(
     path: '/bookings/{bookingId}/cancel',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint rejectQuote = ApiEndpoint(
+    path: '/bookings/{bookingId}/reject-quote',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint acceptQuote = ApiEndpoint(
+    path: '/bookings/{bookingId}/accept-quote',
     requiresAuth: true,
   );
 

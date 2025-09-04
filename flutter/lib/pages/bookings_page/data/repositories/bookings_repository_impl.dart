@@ -34,4 +34,26 @@ class BookingsRepositoryImpl implements BookingsRepository {
       cancellationReason: cancellationReason,
     );
   }
+
+  @override
+  Future<void> rejectQuote({
+    required int bookingId,
+    String reason = "Quote rejected via mobile app",
+  }) async {
+    await datasource.rejectQuote(
+      bookingId: bookingId,
+      reason: reason,
+    );
+  }
+
+  @override
+  Future<void> acceptQuote({
+    required int bookingId,
+    String notes = "Quote accepted via mobile app",
+  }) async {
+    await datasource.acceptQuote(
+      bookingId: bookingId,
+      notes: notes,
+    );
+  }
 }

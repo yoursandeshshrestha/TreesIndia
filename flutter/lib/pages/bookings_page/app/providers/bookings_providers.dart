@@ -6,6 +6,8 @@ import '../../data/repositories/bookings_repository_impl.dart';
 import '../../domain/repositories/bookings_repository.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/usecases/reject_quote_usecase.dart';
+import '../../domain/usecases/accept_quote_usecase.dart';
 import '../viewmodels/bookings_notifier.dart';
 import '../viewmodels/bookings_state.dart';
 
@@ -37,13 +39,29 @@ final cancelBookingUseCaseProvider = Provider<CancelBookingUseCase>((ref) {
   return CancelBookingUseCase(repository: repository);
 });
 
+final rejectQuoteUseCaseProvider = Provider<RejectQuoteUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return RejectQuoteUseCase(repository: repository);
+});
+
+final acceptQuoteUseCaseProvider = Provider<AcceptQuoteUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return AcceptQuoteUseCase(repository: repository);
+});
+
 final bookingsNotifierProvider =
     StateNotifierProvider<BookingsNotifier, BookingsState>((ref) {
   final getBookingsUseCase = ref.read(getBookingsUseCaseProvider);
   final cancelBookingUseCase = ref.read(cancelBookingUseCaseProvider);
+  final rejectQuoteUseCase = ref.read(rejectQuoteUseCaseProvider);
+  final acceptQuoteUseCase = ref.read(acceptQuoteUseCaseProvider);
 
   return BookingsNotifier(
     getBookingsUseCase: getBookingsUseCase,
     cancelBookingUseCase: cancelBookingUseCase,
+    rejectQuoteUseCase: rejectQuoteUseCase,
+    acceptQuoteUseCase: acceptQuoteUseCase,
   );
 });
