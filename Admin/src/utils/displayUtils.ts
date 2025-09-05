@@ -49,6 +49,7 @@ export const displayDate = (
       options || defaultOptions
     );
   } catch (error) {
+    console.error("Error formatting date:", error);
     return "Invalid Date";
   }
 };
@@ -67,6 +68,7 @@ export const displayTime = (timeString: string | null | undefined): string => {
       minute: "2-digit",
     });
   } catch (error) {
+    console.error("Error formatting time:", error);
     return "Invalid Time";
   }
 };
@@ -90,6 +92,7 @@ export const displayDateTime = (
       minute: "2-digit",
     });
   } catch (error) {
+    console.error("Error formatting date/time:", error);
     return "Invalid Date/Time";
   }
 };
