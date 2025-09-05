@@ -12,7 +12,6 @@ import {
   UpdateSubcategoryRequest,
   Category,
 } from "../types";
-import Image from "next/image";
 
 interface SubcategoryModalProps {
   isOpen: boolean;
@@ -38,7 +37,7 @@ export function SubcategoryModal({
 }: SubcategoryModalProps) {
   const [formData, setFormData] = useState<CreateSubcategoryRequest>({
     name: "",
-    image: "",
+    icon: "",
     parent_id: 0,
     is_active: true,
   });
@@ -52,16 +51,16 @@ export function SubcategoryModal({
     if (subcategory) {
       setFormData({
         name: subcategory.name,
-        image: subcategory.image || "",
+        icon: subcategory.icon || "",
         parent_id: subcategory.parent_id,
         is_active: subcategory.is_active,
       });
-      setImagePreview(subcategory.image || "");
+      setImagePreview(subcategory.icon || "");
       setSelectedFile(null);
     } else {
       setFormData({
         name: "",
-        image: "",
+        icon: "",
         parent_id: parentCategory?.id || 0,
         is_active: true,
       });
