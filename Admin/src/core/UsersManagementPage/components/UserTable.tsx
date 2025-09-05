@@ -6,7 +6,6 @@ import {
   Mail,
   Wallet,
   Calendar,
-  User as UserIcon,
 } from "lucide-react";
 import Table from "@/components/Table/Table";
 import { User } from "@/types/user";
@@ -280,7 +279,7 @@ const UserTable = ({
           actions={[
             {
               label: () => "View Details",
-              onClick: (row: User) => onRowClick(row),
+              onClick: () => {},
               className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
               icon: <Eye size={14} />,
               disabled: () => selectionMode,
@@ -304,7 +303,7 @@ const UserTable = ({
                 selectionMode || row.user_type === "admin",
             },
             {
-              label: (row: User) => `Delete`,
+              label: "Delete",
               onClick: (row: User) => onDeleteUser(row),
               className: "text-red-700 bg-red-100 hover:bg-red-200",
               icon: <Trash2 size={14} />,

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   HeroImage,
-  CreateHeroImageRequest,
   UpdateHeroImageRequest,
 } from "../types";
 import { apiClient } from "@/lib/api-client";

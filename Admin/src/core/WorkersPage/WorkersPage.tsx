@@ -39,7 +39,6 @@ function WorkersPage() {
   // State management
   const [workers, setWorkers] = useState<EnhancedWorker[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -96,7 +95,6 @@ function WorkersPage() {
 
   const loadWorkers = async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -174,8 +172,8 @@ function WorkersPage() {
       setWorkers(transformedWorkers);
       setTotalPages(response?.data?.pagination?.total_pages || 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load workers");
       toast.error("Error loading workers");
+      console.error("Failed to load workers", err);
     } finally {
       setIsLoading(false);
     }
@@ -189,6 +187,7 @@ function WorkersPage() {
       setSelectedWorker(null);
       loadWorkers();
     } catch (err) {
+      console.error("Failed to delete worker", err);
       toast.error("Failed to delete worker");
     }
   };
@@ -276,10 +275,6 @@ function WorkersPage() {
 
       <WorkerTable
         workers={filteredWorkers}
-        selectionMode={false}
-        selectedWorkers={[]}
-        onSelectionChange={() => {}}
-        onRowClick={() => {}}
         onDeleteWorker={handleDeleteWorkerClick}
       />
 

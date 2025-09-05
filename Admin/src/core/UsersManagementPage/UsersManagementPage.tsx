@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
@@ -32,13 +32,11 @@ function UsersManagementPage() {
   // State management
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
-  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectionMode] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   // Modal states
@@ -90,14 +88,8 @@ function UsersManagementPage() {
     }
   }, [debouncedSearch, filters.search]);
 
-  // Load users when filters or pagination changes
-  useEffect(() => {
-    loadUsers();
-  }, [currentPage, itemsPerPage, filters]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -119,14 +111,18 @@ function UsersManagementPage() {
       const response = apiResponse.data;
       setUsers(response?.users || []);
       setTotalPages(response?.pagination?.total_pages || 1);
-      setTotalItems(response?.pagination?.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users");
+      console.error("Failed to load users", err);
       toast.error("Error loading users");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, filters]);
+
+  // Load users when filters or pagination changes
+  useEffect(() => {
+    loadUsers();
+  }, [currentPage, itemsPerPage, filters, loadUsers]);
 
   const handleCreateUser = async (userData: Partial<User>) => {
     try {
@@ -135,6 +131,7 @@ function UsersManagementPage() {
       setIsCreateModalOpen(false);
       loadUsers();
     } catch (err) {
+      console.error("Failed to create user", err);
       toast.error("Failed to create user");
     }
   };
@@ -149,6 +146,7 @@ function UsersManagementPage() {
       setSelectedUser(null);
       loadUsers();
     } catch (err) {
+      console.error("Failed to update user", err);
       toast.error("Failed to update user");
     }
   };
@@ -161,6 +159,7 @@ function UsersManagementPage() {
       setSelectedUser(null);
       loadUsers();
     } catch (err) {
+      console.error("Failed to delete user", err);
       toast.error("Failed to delete user");
     }
   };
@@ -178,6 +177,7 @@ function UsersManagementPage() {
       );
       loadUsers();
     } catch (err) {
+      console.error("Failed to toggle user activation", err);
       toast.error("Failed to toggle user activation");
     }
   };
@@ -185,19 +185,6 @@ function UsersManagementPage() {
   const handleDeleteUserClick = (user: User) => {
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      user_type: "",
-      is_active: "",
-      has_active_subscription: "",
-      date_from: "",
-      date_to: "",
-    });
-    setLocalSearch("");
-    setCurrentPage(1);
   };
 
   // Filter users based on current filters
@@ -221,10 +208,7 @@ function UsersManagementPage() {
         : !user.has_active_subscription);
 
     return (
-      matchesSearch &&
-      matchesUserType &&
-      matchesActive &&
-      matchesSubscription
+      matchesSearch && matchesUserType && matchesActive && matchesSubscription
     );
   });
 
