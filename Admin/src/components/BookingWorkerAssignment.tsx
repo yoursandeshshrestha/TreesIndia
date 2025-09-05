@@ -1,10 +1,34 @@
 import React, { useState } from "react";
 import { AvailableWorkersSelector } from "./AvailableWorkersSelector";
-import { Button } from "@/components/Button";
-import { Input } from "@/components/Input";
-import { Textarea } from "@/components/Textarea";
-import { Worker } from "@/types/api";
-import { Calendar, Clock, User, CheckCircle } from "lucide-react";
+import Button from "@/components/Button/Base/Button";
+import Input from "@/components/Input/Base/Input";
+import Textarea from "@/components/Textarea/Base/Textarea";
+import { User } from "@/types/user";
+
+interface WorkerUser extends User {
+  worker?: {
+    id: number;
+    user_id: number;
+    service_id: number;
+    hourly_rate: number;
+    is_available: boolean;
+    rating: number;
+    total_bookings: number;
+    worker_type: "treesindia" | "independent";
+    skills?: string;
+    experience_years?: number;
+    service_areas?: string;
+    earnings: number;
+    total_jobs: number;
+    service?: {
+      id: number;
+      name: string;
+      price?: number;
+      category_id: number;
+    };
+  };
+}
+import { Calendar, Clock, User as UserIcon, CheckCircle } from "lucide-react";
 
 interface BookingWorkerAssignmentProps {
   bookingId?: number;
@@ -20,11 +44,11 @@ export const BookingWorkerAssignment: React.FC<
 > = ({ bookingId, onAssignmentComplete }) => {
   const [scheduledTime, setScheduledTime] = useState("");
   const [serviceDuration, setServiceDuration] = useState(120);
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [assignmentNotes, setAssignmentNotes] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
 
-  const handleWorkerSelect = (worker: Worker) => {
+  const handleWorkerSelect = (worker: WorkerUser) => {
     setSelectedWorker(worker);
   };
 
@@ -45,7 +69,7 @@ export const BookingWorkerAssignment: React.FC<
       // For demo purposes, we'll just call the callback
       onAssignmentComplete?.({
         bookingId,
-        workerId: selectedWorker.id,
+        workerId: selectedWorker.ID,
         notes: assignmentNotes,
       });
 
@@ -59,19 +83,11 @@ export const BookingWorkerAssignment: React.FC<
     }
   };
 
-  const formatDateTime = (dateTimeStr: string) => {
-    const date = new Date(dateTimeStr);
-    return date.toLocaleString("en-IN", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  };
-
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-          <User className="w-5 h-5 mr-2" />
+          <UserIcon className="w-5 h-5 mr-2" />
           Assign Worker to Booking
         </h2>
 
@@ -120,7 +136,7 @@ export const BookingWorkerAssignment: React.FC<
             scheduledTime={scheduledTime}
             serviceDuration={serviceDuration}
             onWorkerSelect={handleWorkerSelect}
-            selectedWorkerId={selectedWorker?.id}
+            selectedWorkerId={selectedWorker?.ID}
           />
         </div>
 
@@ -199,7 +215,7 @@ export const BookingWorkerAssignment: React.FC<
           <li>Review the list of available workers</li>
           <li>Click on a worker to select them</li>
           <li>Add optional assignment notes</li>
-          <li>Click "Assign Worker" to complete the assignment</li>
+          <li>Click &quot;Assign Worker&quot; to complete the assignment</li>
         </ol>
       </div>
     </div>

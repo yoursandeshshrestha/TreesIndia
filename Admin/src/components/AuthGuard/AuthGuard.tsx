@@ -23,12 +23,10 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   const [hasAccess, setHasAccess] = useState(false);
 
   const {
-    data: authData,
     isLoading: authLoading,
     error: authError,
   } = useAuth();
   const {
-    data: userData,
     isLoading: userLoading,
     error: userError,
   } = useCurrentUser();
