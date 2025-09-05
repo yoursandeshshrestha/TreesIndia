@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit2, Trash2, Layers, Image } from "lucide-react";
+import { Edit2, Trash2, ImageIcon } from "lucide-react";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { Subcategory } from "../types";
@@ -75,7 +75,11 @@ const SubcategoryTable = ({
                     />
                   ) : (
                     <div className="w-12 h-12 flex items-center justify-center">
-                      <Image size={24} className="text-gray-400" />
+                      <ImageIcon
+                        size={24}
+                        className="text-gray-400"
+                        aria-hidden="true"
+                      />
                     </div>
                   )}
                 </div>

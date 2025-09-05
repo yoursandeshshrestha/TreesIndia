@@ -3,7 +3,6 @@ import {
   Trash2,
   Image as ImageIcon,
   Package,
-  DollarSign,
   MessageSquare,
   ExternalLink,
   IndianRupee,
@@ -115,7 +114,7 @@ export default function ServiceTable({
         <div className="text-sm">
           {service.service_areas && service.service_areas.length > 0 ? (
             <div className="space-y-1">
-              {service.service_areas.slice(0, 2).map((area, index) => (
+              {service.service_areas.slice(0, 2).map((area) => (
                 <div key={area.id} className="text-gray-900">
                   {area.city}, {area.state}
                 </div>

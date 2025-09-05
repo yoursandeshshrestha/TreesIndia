@@ -7,7 +7,6 @@ import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
-import Checkbox from "@/components/Checkbox/Checkbox";
 import DurationPicker from "@/components/DurationPicker";
 import {
   Service,
@@ -51,6 +50,7 @@ export function ServiceModal({
     category_id: 0,
     subcategory_id: 0,
     is_active: true,
+    service_area_ids: [],
   });
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -69,6 +69,7 @@ export function ServiceModal({
         category_id: service.category_id,
         subcategory_id: service.subcategory_id,
         is_active: service.is_active,
+        service_area_ids: service.service_areas?.map((area) => area.id) || [],
       });
       setImagePreviews(service.images || []);
       setSelectedFiles([]);
@@ -88,12 +89,13 @@ export function ServiceModal({
         category_id: 0,
         subcategory_id: 0,
         is_active: true,
+        service_area_ids: [],
       });
       setImagePreviews([]);
       setSelectedFiles([]);
     }
     setErrors({});
-  }, [service, isOpen]);
+  }, [service, isOpen, categories.length, subcategories.length]);
 
   // Additional effect to handle subcategory loading after formData is set
   useEffect(() => {

@@ -7,8 +7,6 @@ import {
   Edit,
   Trash2,
   Package,
-  DollarSign,
-  MessageSquare,
   MapPin,
   Clock,
   Calendar,
@@ -58,6 +56,7 @@ export default function ServiceDetailPage({
   useEffect(() => {
     loadService();
     loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId]);
 
   const loadService = async () => {
@@ -173,6 +172,7 @@ export default function ServiceDetailPage({
       setIsEditModalOpen(false);
       loadService(); // Reload the service data
     } catch (err) {
+      console.error("Failed to update service", err);
       toast.error("Failed to update service. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -194,6 +194,7 @@ export default function ServiceDetailPage({
         } successfully`
       );
     } catch (err) {
+      console.error("Failed to update service status", err);
       toast.error("Failed to update service status");
     } finally {
       setIsToggling(false);
@@ -208,6 +209,7 @@ export default function ServiceDetailPage({
       toast.success("Service deleted successfully");
       router.push("/dashboard/services");
     } catch (err) {
+      console.error("Failed to delete service", err);
       toast.error("Failed to delete service");
     }
   };
@@ -230,23 +232,6 @@ export default function ServiceDetailPage({
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const getPriceTypeBadge = (priceType: string) => {
-    if (priceType === "fixed") {
-      return (
-        <Badge variant="success" className="text-sm">
-          <DollarSign size={14} className="mr-1" />
-          Fixed Price
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="info" className="text-sm">
-        <MessageSquare size={14} className="mr-1" />
-        Inquiry Based
-      </Badge>
-    );
   };
 
   if (isLoading || !isDataReady) {
