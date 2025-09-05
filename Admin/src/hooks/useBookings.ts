@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import {
   getBookings,
@@ -10,24 +10,47 @@ import {
   createBooking,
 } from "@/lib/api-client";
 import {
-  Booking,
   OptimizedBookingResponse,
   DetailedBookingResponse,
   BookingFilterState,
-  BookingsApiResponse,
-  BookingApiResponse,
-  BookingStatsApiResponse,
   BookingDashboardApiResponse,
   UpdateBookingStatusRequest,
   AssignWorkerRequest,
   CreateBookingRequest,
 } from "@/types/booking";
 
+interface BookingStats {
+  overview?: {
+    total_bookings: number;
+    total_revenue: number;
+    active_workers: number;
+  };
+  revenue_analytics?: {
+    monthly: number;
+    weekly: number;
+    daily: number;
+    average_per_booking: number;
+    last_7_days?: Array<{
+      date: string;
+      revenue: number;
+      bookings: number;
+    }>;
+  };
+  status_breakdown?: Record<string, number>;
+}
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
 interface UseBookingsReturn {
   // Data
   bookings: OptimizedBookingResponse[];
   booking: OptimizedBookingResponse | DetailedBookingResponse | null;
-  stats: any;
+  stats: BookingStats | null;
   dashboard: BookingDashboardApiResponse | null;
 
   // Loading states
@@ -44,12 +67,7 @@ interface UseBookingsReturn {
   dashboardError: string | null;
 
   // Pagination
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-  } | null;
+  pagination: PaginationInfo | null;
 
   // Actions
   fetchBookings: (filters?: Partial<BookingFilterState>) => Promise<void>;
@@ -61,7 +79,7 @@ interface UseBookingsReturn {
     data: UpdateBookingStatusRequest
   ) => Promise<void>;
   assignWorker: (bookingId: number, data: AssignWorkerRequest) => Promise<void>;
-  createNewBooking: (data: CreateBookingRequest) => Promise<void>;
+  createNewBooking: (data: CreateBookingRequest) => Promise<unknown>;
   clearError: () => void;
   clearStatsError: () => void;
   clearDashboardError: () => void;
@@ -73,10 +91,10 @@ export const useBookings = (): UseBookingsReturn => {
   const [booking, setBooking] = useState<
     OptimizedBookingResponse | DetailedBookingResponse | null
   >(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<BookingStats | null>(null);
   const [dashboard, setDashboard] =
     useState<BookingDashboardApiResponse | null>(null);
-  const [pagination, setPagination] = useState<any>(null);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
@@ -107,8 +125,9 @@ export const useBookings = (): UseBookingsReturn => {
           setError("Failed to fetch bookings");
           setBookings([]);
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to fetch bookings";
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to fetch bookings";
         setError(errorMessage);
         setBookings([]);
         toast.error(errorMessage);
@@ -128,13 +147,14 @@ export const useBookings = (): UseBookingsReturn => {
       const response = await getBookingById(id);
 
       if (response) {
-        setBooking(response);
+        setBooking(response.booking || response);
       } else {
         setError("Failed to fetch booking");
         setBooking(null);
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to fetch booking";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch booking";
       setError(errorMessage);
       setBooking(null);
       toast.error(errorMessage);
@@ -151,13 +171,14 @@ export const useBookings = (): UseBookingsReturn => {
     try {
       const response = await getBookingStats();
 
-      if (response.stats) {
-        setStats(response.stats);
+      if (response && "stats" in response) {
+        setStats((response as { stats: BookingStats }).stats);
       } else {
         setStatsError("Failed to fetch statistics");
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to fetch statistics";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch statistics";
       setStatsError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -174,12 +195,13 @@ export const useBookings = (): UseBookingsReturn => {
       const response = await getBookingDashboard();
 
       if (response) {
-        setDashboard(response);
+        setDashboard(response as unknown as BookingDashboardApiResponse);
       } else {
         setDashboardError("Failed to fetch dashboard");
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to fetch dashboard";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch dashboard";
       setDashboardError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -204,8 +226,11 @@ export const useBookings = (): UseBookingsReturn => {
           setError("Failed to update booking status");
           toast.error("Failed to update booking status");
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to update booking status";
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to update booking status";
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -232,8 +257,9 @@ export const useBookings = (): UseBookingsReturn => {
           setError("Failed to assign worker");
           toast.error("Failed to assign worker");
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to assign worker";
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to assign worker";
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -250,7 +276,10 @@ export const useBookings = (): UseBookingsReturn => {
       setError(null);
 
       try {
-        const response = await createBooking(data);
+        const response = await createBooking({
+          ...data,
+          address: JSON.stringify(data.address),
+        });
 
         if (response) {
           toast.success("Booking created successfully");
@@ -262,8 +291,9 @@ export const useBookings = (): UseBookingsReturn => {
           toast.error("Failed to create booking");
           return null;
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to create booking";
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to create booking";
         setError(errorMessage);
         toast.error(errorMessage);
         return null;

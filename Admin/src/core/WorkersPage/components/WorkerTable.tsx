@@ -7,19 +7,11 @@ import { EnhancedWorker } from "@/types/worker";
 
 interface WorkerTableProps {
   workers: EnhancedWorker[];
-  selectionMode: boolean;
-  selectedWorkers: string[];
-  onSelectionChange: (selected: EnhancedWorker[]) => void;
-  onRowClick: (worker: EnhancedWorker) => void;
   onDeleteWorker: (worker: EnhancedWorker) => void;
 }
 
 function WorkerTable({
   workers,
-  selectionMode,
-  selectedWorkers,
-  onSelectionChange,
-  onRowClick,
   onDeleteWorker,
 }: WorkerTableProps) {
   const router = useRouter();
@@ -30,7 +22,7 @@ function WorkerTable({
       false: { color: "bg-red-100 text-red-800", label: "Inactive" },
     };
 
-    const config = statusConfig[isActive];
+    const config = statusConfig[String(isActive) as keyof typeof statusConfig];
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
@@ -103,7 +95,7 @@ function WorkerTable({
             <img
               className="h-10 w-10 rounded-full"
               src={getProfilePic(worker)}
-              alt=""
+              alt={worker.user?.name || "Worker avatar"}
             />
           </div>
           <div className="ml-4">

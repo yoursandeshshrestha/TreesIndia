@@ -4,9 +4,6 @@ import {
   fetchChatMessages,
   sendAdminMessage,
   closeChatRoom,
-  type ChatRoomsResponse,
-  type MessagesResponse,
-  type MessageResponse,
 } from "@/lib/chatApi";
 
 // Query keys
