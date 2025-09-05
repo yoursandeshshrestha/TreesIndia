@@ -3,7 +3,7 @@ import Model from "@/components/Model/Base/Model";
 import Button from "@/components/Button/Base/Button";
 import Textarea from "@/components/Textarea/Base/Textarea";
 import { Calendar, User, Package, X, Loader } from "lucide-react";
-import { Booking, getBookingStatusColor } from "@/types/booking";
+import { Booking, BookingStatus, getBookingStatusColor } from "@/types/booking";
 
 interface BookingStatusModalProps {
   booking: Booking;
@@ -47,7 +47,7 @@ const BookingStatusModal: React.FC<BookingStatusModalProps> = ({
     return statusMap[status] || status;
   };
 
-  const bookingStatuses = [
+  const bookingStatuses: { value: BookingStatus; label: string }[] = [
     { value: "pending", label: "Pending" },
     { value: "quote_provided", label: "Quote Provided" },
     { value: "quote_accepted", label: "Quote Accepted" },
@@ -56,7 +56,6 @@ const BookingStatusModal: React.FC<BookingStatusModalProps> = ({
     { value: "assigned", label: "Assigned" },
     { value: "in_progress", label: "In Progress" },
     { value: "completed", label: "Completed" },
-    { value: "temporary_hold", label: "Temporary Hold" },
     { value: "cancelled", label: "Cancelled" },
     { value: "rejected", label: "Rejected" },
   ];

@@ -7,7 +7,6 @@ import {
   User,
   Calendar,
   Clock,
-  Phone,
   Check,
   X,
   MessageSquare,
@@ -22,7 +21,6 @@ import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import Table from "@/components/Table/Table";
-import DualStatusBadge from "@/components/DualStatusBadge";
 import {
   displayValue,
   displayDate,
@@ -66,10 +64,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
     });
   };
 
-  const formatDuration = (duration: string) => {
-    return duration;
-  };
-
   const getBookingTypeColor = (type: string) => {
     return type === "regular"
       ? "bg-blue-100 text-blue-800 border-blue-200"
@@ -89,6 +83,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
       setSelectedBookingId(null);
       toast.success("Worker assigned successfully");
     } catch (error) {
+      console.error(error);
       toast.error("Failed to assign worker");
     }
   };

@@ -9,8 +9,22 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+interface BookingStatsData {
+  overview?: {
+    total_bookings: number;
+    total_revenue: number;
+    active_workers: number;
+  };
+  revenue_analytics?: {
+    monthly: number;
+    weekly: number;
+    daily: number;
+    average_per_booking: number;
+  };
+}
+
 interface BookingStatsProps {
-  stats: any;
+  stats: BookingStatsData | null;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;

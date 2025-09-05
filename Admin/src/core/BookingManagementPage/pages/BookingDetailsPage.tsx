@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -11,13 +11,8 @@ import {
   User,
   Phone,
   FileText,
-  CreditCard,
   UserCheck,
   MessageSquare,
-  Activity,
-  Star,
-  AlertTriangle,
-  CheckCircle,
   XCircle,
   Loader,
 } from "lucide-react";
@@ -35,7 +30,6 @@ import {
   AssignmentStatus,
 } from "@/types/booking";
 import Button from "@/components/Button";
-import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Model from "@/components/Model/Base/Model";
@@ -47,7 +41,6 @@ import {
   displayDateTime,
   displayCurrency,
   displayDuration,
-  displayStatus,
 } from "@/utils/displayUtils";
 
 export default function BookingDetailsPage() {
@@ -62,7 +55,6 @@ export default function BookingDetailsPage() {
   const [isAssigning, setIsAssigning] = useState(false);
   // Modal states
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>("");
 
   const [showWorkerAssignmentModal, setShowWorkerAssignmentModal] =
@@ -92,27 +84,25 @@ export default function BookingDetailsPage() {
     value: worker.ID.toString(),
   }));
 
-  useEffect(() => {
-    if (bookingId) {
-      loadBookingDetails();
-    }
-  }, [bookingId]);
-
-  const loadBookingDetails = async () => {
+  const loadBookingDetails = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       const response = await getBookingById(bookingId, true);
       setBooking(response.booking as DetailedBookingResponse);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load booking details"
-      );
+    } catch {
+      setError("Failed to load booking details");
       toast.error("Error loading booking details");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    if (bookingId) {
+      loadBookingDetails();
+    }
+  }, [bookingId, loadBookingDetails]);
 
   const handleStatusUpdate = async (status: string) => {
     try {
@@ -121,7 +111,7 @@ export default function BookingDetailsPage() {
       toast.success("Booking status updated successfully");
       setShowStatusModal(false);
       loadBookingDetails();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update booking status");
     } finally {
       setIsUpdating(false);
@@ -139,7 +129,7 @@ export default function BookingDetailsPage() {
       toast.success("Worker assigned successfully");
       setSelectedWorkerId("");
       loadBookingDetails();
-    } catch (err) {
+    } catch {
       toast.error("Failed to assign worker");
     } finally {
       setIsAssigning(false);
@@ -161,7 +151,7 @@ export default function BookingDetailsPage() {
       setModalSelectedWorkerId("");
       setShowWorkerAssignmentModal(false);
       loadBookingDetails();
-    } catch (error) {
+    } catch {
       toast.error("Failed to assign worker");
     } finally {
       setIsAssigning(false);
