@@ -5,7 +5,11 @@ import { X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
-import { OptimizedBookingResponse } from "@/types/booking";
+import { PaymentSegmentManager } from "@/components/PaymentSegment";
+import {
+  OptimizedBookingResponse,
+  PaymentSegmentRequest,
+} from "@/types/booking";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -24,10 +28,11 @@ export default function QuoteModal({
 }: QuoteModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    amount: "",
     notes: "",
-    expires_in: "7", // Default 7 days
   });
+  const [segments, setSegments] = useState<PaymentSegmentRequest[]>([
+    { amount: 0, notes: "" },
+  ]);
 
   if (!isOpen || !booking) return null;
 
@@ -35,16 +40,37 @@ export default function QuoteModal({
     e.preventDefault();
     if (!booking) return;
 
+    // Calculate total amount from segments
+    const totalAmount = segments.reduce(
+      (sum, segment) => sum + (segment.amount || 0),
+      0
+    );
+
+    // Validate segments
+    if (totalAmount <= 0) {
+      toast.error("Total quote amount must be greater than 0");
+      return;
+    }
+
+    if (segments.some((segment) => !segment.amount || segment.amount <= 0)) {
+      toast.error("All segments must have a valid amount greater than 0");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await apiClient.post(
-        `/admin/bookings/${booking.id}/provide-quote`,
-        {
-          amount: parseFloat(formData.amount),
-          notes: formData.notes,
-          expires_in: parseInt(formData.expires_in),
-        }
-      );
+      // Convert date format from YYYY-MM-DD to RFC3339 format
+      const formattedSegments = segments.map((segment) => ({
+        ...segment,
+        due_date: segment.due_date
+          ? segment.due_date + "T00:00:00Z"
+          : undefined,
+      }));
+
+      await apiClient.post(`/admin/bookings/${booking.id}/provide-quote`, {
+        notes: formData.notes,
+        segments: formattedSegments,
+      });
 
       toast.success("Quote provided successfully");
       onSuccess();
@@ -63,9 +89,13 @@ export default function QuoteModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleSegmentsChange = (newSegments: PaymentSegmentRequest[]) => {
+    setSegments(newSegments);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99]">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 py-4 border-b rounded-t-lg border-gray-200 bg-white sticky top-0 z-floating">
           <div className="flex items-center">
@@ -73,6 +103,12 @@ export default function QuoteModal({
             <h2 className="text-xl font-semibold text-gray-900">
               Provide Quote
             </h2>
+            <span className="ml-4 text-sm font-medium text-gray-500">
+              Total: ₹
+              {segments
+                .reduce((sum, segment) => sum + (segment.amount || 0), 0)
+                .toFixed(2)}
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -120,23 +156,6 @@ export default function QuoteModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quote Amount (₹) *
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  value={formData.amount}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("amount", e.target.value)
-                  }
-                  placeholder="Enter amount"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Notes
                 </label>
                 <Textarea
@@ -148,22 +167,14 @@ export default function QuoteModal({
                   rows={3}
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expires In (Days)
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={formData.expires_in}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("expires_in", e.target.value)
-                  }
-                  placeholder="7"
-                />
-              </div>
+            {/* Payment Segments */}
+            <div className="space-y-4">
+              <PaymentSegmentManager
+                segments={segments}
+                onSegmentsChange={handleSegmentsChange}
+              />
             </div>
           </form>
         </div>

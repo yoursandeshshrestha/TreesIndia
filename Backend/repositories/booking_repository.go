@@ -38,7 +38,7 @@ func (br *BookingRepository) Create(booking *models.Booking) (*models.Booking, e
 // GetByID gets a booking by ID
 func (br *BookingRepository) GetByID(id uint) (*models.Booking, error) {
 	var booking models.Booking
-	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").Preload("BufferRequests").First(&booking, id).Error
+	err := br.db.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").Preload("BufferRequests").Preload("PaymentSegments").First(&booking, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (br *BookingRepository) GetUserBookings(userID uint, filters *UserBookingFi
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser")
+	query = query.Preload("Service").Preload("WorkerAssignment.Worker").Preload("WorkerAssignment.AssignedByUser").Preload("PaymentSegments")
 
 	// Execute query
 	err = query.Order("created_at DESC").Find(&bookings).Error

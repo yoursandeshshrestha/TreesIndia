@@ -11,14 +11,16 @@ import (
 )
 
 type QuoteService struct {
-	bookingRepo *repositories.BookingRepository
-	userRepo    *repositories.UserRepository
+	bookingRepo           *repositories.BookingRepository
+	userRepo              *repositories.UserRepository
+	paymentSegmentRepo    *repositories.PaymentSegmentRepository
 }
 
 func NewQuoteService() *QuoteService {
 	return &QuoteService{
-		bookingRepo: repositories.NewBookingRepository(),
-		userRepo:    repositories.NewUserRepository(),
+		bookingRepo:        repositories.NewBookingRepository(),
+		userRepo:           repositories.NewUserRepository(),
+		paymentSegmentRepo: repositories.NewPaymentSegmentRepository(),
 	}
 }
 
@@ -39,27 +41,43 @@ func (qs *QuoteService) ProvideQuote(bookingID uint, adminID uint, req *models.P
 		return nil, errors.New("booking is not in pending status")
 	}
 
-	// 3. Set quote details
+	// 3. Validate segments
+	if len(req.Segments) == 0 {
+		return nil, errors.New("at least one payment segment is required")
+	}
+
+	// Calculate total amount from segments
+	var segmentsTotal float64
+	for _, segment := range req.Segments {
+		segmentsTotal += segment.Amount
+	}
+	
+	// Validate that total amount is greater than 0
+	if segmentsTotal <= 0 {
+		return nil, errors.New("total quote amount must be greater than 0")
+	}
+
+	// 4. Set quote details
 	now := time.Now()
-	booking.QuoteAmount = &req.Amount
+	booking.QuoteAmount = &segmentsTotal
 	booking.QuoteNotes = req.Notes
 	booking.QuoteProvidedBy = &adminID
 	booking.QuoteProvidedAt = &now
 	booking.Status = models.BookingStatusQuoteProvided
 
-	// 4. Set quote expiration if provided
-	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
-		expiresAt := now.AddDate(0, 0, *req.ExpiresIn)
-		booking.QuoteExpiresAt = &expiresAt
+	// 5. Create payment segments
+	err = qs.createPaymentSegments(bookingID, req.Segments)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment segments: %v", err)
 	}
 
-	// 5. Update booking
+	// 6. Update booking
 	err = qs.bookingRepo.Update(booking)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
-	logrus.Infof("Quote provided for booking %d: amount=%.2f, admin=%d", bookingID, req.Amount, adminID)
+	logrus.Infof("Quote provided for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
 }
 
@@ -80,17 +98,28 @@ func (qs *QuoteService) UpdateQuote(bookingID uint, adminID uint, req *models.Up
 		return nil, errors.New("booking does not have a quote provided")
 	}
 
-	// 3. Update quote details
+	// 3. Calculate total amount from segments
+	var segmentsTotal float64
+	for _, segment := range req.Segments {
+		segmentsTotal += segment.Amount
+	}
+	
+	// Validate that total amount is greater than 0
+	if segmentsTotal <= 0 {
+		return nil, errors.New("total quote amount must be greater than 0")
+	}
+
+	// 4. Update quote details
 	now := time.Now()
-	booking.QuoteAmount = &req.Amount
+	booking.QuoteAmount = &segmentsTotal
 	booking.QuoteNotes = req.Notes
 	booking.QuoteProvidedBy = &adminID
 	booking.QuoteProvidedAt = &now
 
-	// 4. Update quote expiration if provided
-	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
-		expiresAt := now.AddDate(0, 0, *req.ExpiresIn)
-		booking.QuoteExpiresAt = &expiresAt
+	// 5. Create payment segments
+	err = qs.createPaymentSegments(bookingID, req.Segments)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment segments: %v", err)
 	}
 
 	// 5. Update booking
@@ -99,7 +128,7 @@ func (qs *QuoteService) UpdateQuote(bookingID uint, adminID uint, req *models.Up
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
-	logrus.Infof("Quote updated for booking %d: amount=%.2f, admin=%d", bookingID, req.Amount, adminID)
+	logrus.Infof("Quote updated for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
 }
 
@@ -349,12 +378,7 @@ func (qs *QuoteService) CreateQuotePayment(bookingID uint, userID uint, req *mod
 		return nil, errors.New("quote has not been accepted")
 	}
 
-	// 4. Validate quote amount matches
-	if booking.QuoteAmount == nil || *booking.QuoteAmount != req.Amount {
-		return nil, errors.New("quote amount mismatch")
-	}
-
-	// 5. Parse scheduled date and time
+	// 4. Parse scheduled date and time
 	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
 	if err != nil {
 		return nil, errors.New("invalid scheduled date format")
@@ -365,52 +389,32 @@ func (qs *QuoteService) CreateQuotePayment(bookingID uint, userID uint, req *mod
 		return nil, errors.New("invalid scheduled time format")
 	}
 
-	// 6. Combine date and time
+	// 5. Combine date and time
 	scheduledDateTime := time.Date(
 		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
 		scheduledDate.Location(),
 	)
 
-	// 7. Validate scheduled time is in the future
+	// 6. Validate scheduled time is in the future
 	if scheduledDateTime.Before(time.Now()) {
 		return nil, errors.New("scheduled time must be in the future")
 	}
 
-	// 8. Create Razorpay order using payment service
-	paymentService := NewPaymentService()
-	
-	// Create payment request
-	paymentReq := &models.CreatePaymentRequest{
-		UserID:            userID,
-		Amount:            req.Amount,
-		Currency:          "INR",
-		Type:              "booking",
-		Method:            "razorpay",
-		RelatedEntityType: "booking",
-		RelatedEntityID:   bookingID,
-		Description:       "Quote payment for " + booking.BookingReference,
-		Notes:             "Quote payment for booking",
-	}
-	
-	// Create payment record and Razorpay order
-	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	// 7. Get payment segments to determine payment type
+	segments, err := qs.getPaymentSegments(bookingID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create payment order: %v", err)
+		return nil, fmt.Errorf("failed to get payment segments: %v", err)
 	}
 
-	// 9. Update booking with scheduling details (but keep status as quote_accepted until payment is verified)
-	booking.ScheduledDate = &scheduledDate
-	booking.ScheduledTime = &scheduledDateTime
-
-	// 10. Update booking
-	err = qs.bookingRepo.Update(booking)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update booking: %v", err)
+	// 8. Process payment based on segment count
+	if len(segments) == 1 {
+		// Single segment = Single payment (current behavior)
+		return qs.processSinglePayment(bookingID, userID, req)
+	} else {
+		// Multiple segments = Segmented payment
+		return qs.processSegmentPayment(bookingID, userID, req)
 	}
-
-	logrus.Infof("Payment order created for booking %d: amount=%.2f, order_id=%s", bookingID, req.Amount, paymentOrder["id"])
-	return paymentOrder, nil
 }
 
 // VerifyQuotePayment verifies payment for quote acceptance
@@ -541,4 +545,323 @@ func (qs *QuoteService) WalletPayment(bookingID uint, userID uint, req *models.W
 
 	logrus.Infof("Wallet payment processed for booking %d: amount=%.2f", bookingID, req.Amount)
 	return booking, nil
+}
+
+// createPaymentSegments creates payment segments for a booking
+func (qs *QuoteService) createPaymentSegments(bookingID uint, segments []models.PaymentSegmentRequest) error {
+	var paymentSegments []models.PaymentSegment
+	
+	for i, segmentReq := range segments {
+		segment := models.PaymentSegment{
+			BookingID:     bookingID,
+			SegmentNumber: i + 1,
+			Amount:        segmentReq.Amount,
+			DueDate:       segmentReq.DueDate,
+			Status:        models.PaymentSegmentStatusPending,
+			Notes:         segmentReq.Notes,
+		}
+		paymentSegments = append(paymentSegments, segment)
+	}
+	
+	return qs.paymentSegmentRepo.CreateMultiple(paymentSegments)
+}
+
+// getPaymentSegments gets all payment segments for a booking
+func (qs *QuoteService) getPaymentSegments(bookingID uint) ([]models.PaymentSegment, error) {
+	return qs.paymentSegmentRepo.GetByBookingID(bookingID)
+}
+
+// processSinglePayment processes payment for single segment (current behavior)
+func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *models.CreateQuotePaymentRequest) (map[string]interface{}, error) {
+	// Get the single segment
+	segments, err := qs.getPaymentSegments(bookingID)
+	if err != nil {
+		return nil, err
+	}
+	
+	if len(segments) != 1 {
+		return nil, errors.New("expected single payment segment")
+	}
+	
+	segment := segments[0]
+	
+	// Validate amount matches
+	if segment.Amount != req.Amount {
+		return nil, errors.New("payment amount does not match segment amount")
+	}
+	
+	// Process payment using existing logic
+	paymentService := NewPaymentService()
+	
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            userID,
+		Amount:            req.Amount,
+		Currency:          "INR",
+		Type:              "booking",
+		Method:            "razorpay",
+		RelatedEntityType: "booking",
+		RelatedEntityID:   bookingID,
+		Description:       "Quote payment for booking",
+		Notes:             "Quote payment for booking",
+	}
+	
+	payment, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment order: %v", err)
+	}
+	
+	// Update booking with scheduling details
+	scheduledDate, _ := time.Parse("2006-01-02", req.ScheduledDate)
+	scheduledTime, _ := time.Parse("15:04", req.ScheduledTime)
+	scheduledDateTime := time.Date(
+		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+		scheduledDate.Location(),
+	)
+	
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, err
+	}
+	
+	booking.ScheduledDate = &scheduledDate
+	booking.ScheduledTime = &scheduledDateTime
+	booking.Status = models.BookingStatusConfirmed
+	booking.PaymentStatus = "completed"
+	
+	err = qs.bookingRepo.Update(booking)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update booking: %v", err)
+	}
+	
+	// Mark segment as paid
+	err = qs.paymentSegmentRepo.MarkAsPaid(segment.ID, payment.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark segment as paid: %v", err)
+	}
+	
+	return map[string]interface{}{
+		"payment_order": paymentOrder,
+		"booking":       booking,
+	}, nil
+}
+
+// processSegmentPayment processes payment for a specific segment
+func (qs *QuoteService) processSegmentPayment(bookingID uint, userID uint, req *models.CreateQuotePaymentRequest) (map[string]interface{}, error) {
+	if req.SegmentNumber == nil {
+		return nil, errors.New("segment number is required for segmented payments")
+	}
+	
+	// Get the specific segment
+	segment, err := qs.paymentSegmentRepo.GetByBookingIDAndSegmentNumber(bookingID, *req.SegmentNumber)
+	if err != nil {
+		return nil, errors.New("payment segment not found")
+	}
+	
+	// Validate segment is pending
+	if segment.Status != models.PaymentSegmentStatusPending {
+		return nil, errors.New("payment segment is not pending")
+	}
+	
+	// Validate amount matches
+	if segment.Amount != req.Amount {
+		return nil, errors.New("payment amount does not match segment amount")
+	}
+	
+	// Process payment using existing logic
+	paymentService := NewPaymentService()
+	
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            userID,
+		Amount:            req.Amount,
+		Currency:          "INR",
+		Type:              "booking",
+		Method:            "razorpay",
+		RelatedEntityType: "booking",
+		RelatedEntityID:   bookingID,
+		Description:       fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+		Notes:             fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+	}
+	
+	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment order: %v", err)
+	}
+	
+	// If this is the first segment, update booking scheduling
+	if segment.SegmentNumber == 1 {
+		scheduledDate, _ := time.Parse("2006-01-02", req.ScheduledDate)
+		scheduledTime, _ := time.Parse("15:04", req.ScheduledTime)
+		scheduledDateTime := time.Date(
+			scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+			scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+			scheduledDate.Location(),
+		)
+		
+		booking, err := qs.bookingRepo.GetByID(bookingID)
+		if err != nil {
+			return nil, err
+		}
+		
+		booking.ScheduledDate = &scheduledDate
+		booking.ScheduledTime = &scheduledDateTime
+		
+		// Check if all segments are paid
+		allPaid, err := qs.paymentSegmentRepo.IsAllSegmentsPaid(bookingID)
+		if err != nil {
+			return nil, err
+		}
+		
+		if allPaid {
+			booking.Status = models.BookingStatusConfirmed
+			booking.PaymentStatus = "completed"
+		} else {
+			booking.Status = models.BookingStatusPartiallyPaid
+			booking.PaymentStatus = "partial"
+		}
+		
+		err = qs.bookingRepo.Update(booking)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update booking: %v", err)
+		}
+	}
+	
+	return map[string]interface{}{
+		"payment_order": paymentOrder,
+		"segment":       segment,
+	}, nil
+}
+
+// GetPaymentProgress gets payment progress for a booking
+func (qs *QuoteService) GetPaymentProgress(bookingID uint, userID uint) (*models.PaymentProgress, error) {
+	// Validate booking belongs to user
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// Get payment progress
+	return qs.paymentSegmentRepo.GetPaymentProgress(bookingID)
+}
+
+// CreateSegmentPayment creates payment for a specific segment
+func (qs *QuoteService) CreateSegmentPayment(bookingID uint, userID uint, req *models.CreateSegmentPaymentRequest) (map[string]interface{}, error) {
+	// Get the specific segment
+	segment, err := qs.paymentSegmentRepo.GetByBookingIDAndSegmentNumber(bookingID, req.SegmentNumber)
+	if err != nil {
+		return nil, errors.New("payment segment not found")
+	}
+
+	// Validate segment is pending
+	if segment.Status != models.PaymentSegmentStatusPending {
+		return nil, errors.New("payment segment is not pending")
+	}
+
+	// Validate amount matches
+	if segment.Amount != req.Amount {
+		return nil, errors.New("payment amount does not match segment amount")
+	}
+
+	// Process payment using existing logic
+	paymentService := NewPaymentService()
+	
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            userID,
+		Amount:            req.Amount,
+		Currency:          "INR",
+		Type:              "booking",
+		Method:            "razorpay",
+		RelatedEntityType: "booking",
+		RelatedEntityID:   bookingID,
+		Description:       fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+		Notes:             fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+	}
+	
+	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment order: %v", err)
+	}
+
+	return map[string]interface{}{
+		"payment_order": paymentOrder,
+		"segment":       segment,
+	}, nil
+}
+
+// GetPendingSegments gets all pending segments for a booking
+func (qs *QuoteService) GetPendingSegments(bookingID uint, userID uint) ([]models.PaymentSegmentInfo, error) {
+	// Validate booking belongs to user
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// Get pending segments
+	segments, err := qs.paymentSegmentRepo.GetPendingSegments(bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to segment info
+	var segmentInfos []models.PaymentSegmentInfo
+	for _, segment := range segments {
+		segmentInfo := models.PaymentSegmentInfo{
+			ID:            segment.ID,
+			SegmentNumber: segment.SegmentNumber,
+			Amount:        segment.Amount,
+			DueDate:       segment.DueDate,
+			Status:        segment.Status,
+			PaidAt:        segment.PaidAt,
+			Notes:         segment.Notes,
+			PaymentID:     segment.PaymentID,
+		}
+		segmentInfos = append(segmentInfos, segmentInfo)
+	}
+
+	return segmentInfos, nil
+}
+
+// GetPaidSegments gets all paid segments for a booking
+func (qs *QuoteService) GetPaidSegments(bookingID uint, userID uint) ([]models.PaymentSegmentInfo, error) {
+	// Validate booking belongs to user
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// Get paid segments
+	segments, err := qs.paymentSegmentRepo.GetPaidSegments(bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to segment info
+	var segmentInfos []models.PaymentSegmentInfo
+	for _, segment := range segments {
+		segmentInfo := models.PaymentSegmentInfo{
+			ID:            segment.ID,
+			SegmentNumber: segment.SegmentNumber,
+			Amount:        segment.Amount,
+			DueDate:       segment.DueDate,
+			Status:        segment.Status,
+			PaidAt:        segment.PaidAt,
+			Notes:         segment.Notes,
+			PaymentID:     segment.PaymentID,
+		}
+		segmentInfos = append(segmentInfos, segmentInfo)
+	}
+
+	return segmentInfos, nil
 }

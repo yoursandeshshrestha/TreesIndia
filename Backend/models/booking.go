@@ -15,6 +15,7 @@ const (
 	BookingStatusQuoteAccepted  BookingStatus = "quote_accepted"  // Customer accepted quote
 	BookingStatusConfirmed      BookingStatus = "confirmed"      // Booking confirmed and ready for scheduling
 	BookingStatusScheduled      BookingStatus = "scheduled"      // Service scheduled
+	BookingStatusPartiallyPaid  BookingStatus = "partially_paid" // Partially paid (for segmented payments)
 	BookingStatusAssigned       BookingStatus = "assigned"       // Worker assigned
 	BookingStatusInProgress     BookingStatus = "in_progress"    // Service in progress
 	BookingStatusCompleted      BookingStatus = "completed"      // Service completed
@@ -101,6 +102,7 @@ type Booking struct {
 	WorkerAssignment *WorkerAssignment `json:"worker_assignment,omitempty" gorm:"foreignKey:BookingID"`
 	BufferRequests   []BufferRequest `json:"buffer_requests,omitempty" gorm:"foreignKey:BookingID"`
 	Payment          *Payment       `json:"payment,omitempty" gorm:"-"` // Will be loaded manually
+	PaymentSegments  []PaymentSegment `json:"payment_segments,omitempty" gorm:"foreignKey:BookingID"` // Payment segments for this booking
 }
 
 // TableName returns the table name for Booking
@@ -444,16 +446,14 @@ type Dispute struct {
 
 // ProvideQuoteRequest represents the request to provide a quote for an inquiry booking
 type ProvideQuoteRequest struct {
-	Amount      float64 `json:"amount" binding:"required,min=0"`
-	Notes       string  `json:"notes"`
-	ExpiresIn   *int    `json:"expires_in"` // Days until quote expires (optional)
+	Notes       string                    `json:"notes"`
+	Segments    []PaymentSegmentRequest   `json:"segments" binding:"required,min=1"`
 }
 
 // UpdateQuoteRequest represents the request to update an existing quote
 type UpdateQuoteRequest struct {
-	Amount      float64 `json:"amount" binding:"required,min=0"`
-	Notes       string  `json:"notes"`
-	ExpiresIn   *int    `json:"expires_in"` // Days until quote expires (optional)
+	Notes       string                    `json:"notes"`
+	Segments    []PaymentSegmentRequest   `json:"segments" binding:"required,min=1"`
 }
 
 // AcceptQuoteRequest represents the request to accept a quote
@@ -478,6 +478,9 @@ type CreateQuotePaymentRequest struct {
 	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
 	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
 	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
+	
+	// For segmented payments
+	SegmentNumber *int    `json:"segment_number,omitempty"` // Specific segment to pay (optional)
 }
 
 // VerifyQuotePaymentRequest represents the request to verify payment for quote acceptance
@@ -504,4 +507,69 @@ type QuoteInfo struct {
 	ExpiresAt      *time.Time `json:"expires_at"`
 	IsExpired      bool       `json:"is_expired"`
 	DaysUntilExpiry *int      `json:"days_until_expiry"`
+}
+
+// GetPaymentProgress calculates payment progress for the booking
+func (b *Booking) GetPaymentProgress() *PaymentProgress {
+	if len(b.PaymentSegments) == 0 {
+		return nil
+	}
+
+	var totalAmount, paidAmount float64
+	var totalSegments, paidSegments int
+	var segments []PaymentSegmentInfo
+
+	for _, segment := range b.PaymentSegments {
+		totalAmount += segment.Amount
+		totalSegments++
+
+		segmentInfo := PaymentSegmentInfo{
+			ID:            segment.ID,
+			SegmentNumber: segment.SegmentNumber,
+			Amount:        segment.Amount,
+			DueDate:       segment.DueDate,
+			Status:        segment.Status,
+			PaidAt:        segment.PaidAt,
+			Notes:         segment.Notes,
+			PaymentID:     segment.PaymentID,
+			IsOverdue:     false,
+		}
+
+		// Calculate if overdue
+		if segment.DueDate != nil && segment.Status == PaymentSegmentStatusPending {
+			now := time.Now()
+			if segment.DueDate.Before(now) {
+				segmentInfo.IsOverdue = true
+				segmentInfo.Status = PaymentSegmentStatusOverdue
+			} else {
+				daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
+				segmentInfo.DaysUntilDue = &daysUntilDue
+			}
+		}
+
+		if segment.Status == PaymentSegmentStatusPaid {
+			paidAmount += segment.Amount
+			paidSegments++
+		}
+
+		segments = append(segments, segmentInfo)
+	}
+
+	remainingAmount := totalAmount - paidAmount
+	remainingSegments := totalSegments - paidSegments
+	progressPercentage := float64(0)
+	if totalAmount > 0 {
+		progressPercentage = (paidAmount / totalAmount) * 100
+	}
+
+	return &PaymentProgress{
+		TotalAmount:        totalAmount,
+		PaidAmount:         paidAmount,
+		RemainingAmount:    remainingAmount,
+		TotalSegments:      totalSegments,
+		PaidSegments:       paidSegments,
+		RemainingSegments:  remainingSegments,
+		ProgressPercentage: progressPercentage,
+		Segments:           segments,
+	}
 }

@@ -1,4 +1,10 @@
 import { authenticatedFetch } from "./auth-api";
+import {
+  PaymentProgress,
+  PaymentSegmentInfo,
+  CreateSegmentPaymentRequest,
+  BookingWithPaymentProgress,
+} from "@/types/booking";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
@@ -6,7 +12,7 @@ const API_BASE_URL =
 // Booking API functions for my-bookings functionality
 
 export interface UserBookingsResponse {
-  bookings: Booking[];
+  bookings: BookingWithPaymentProgress[];
   pagination: {
     page: number;
     limit: number;
@@ -311,6 +317,92 @@ export async function rejectQuote(
     return data;
   } catch (error) {
     console.error("Error rejecting quote:", error);
+    throw error;
+  }
+}
+
+// Payment Segment API functions
+
+// Get payment segments for a booking
+export async function getPaymentSegments(
+  bookingId: number
+): Promise<{ success: boolean; data: PaymentProgress }> {
+  try {
+    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments`;
+    const response = await authenticatedFetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching payment segments:", error);
+    throw error;
+  }
+}
+
+// Pay for a specific payment segment
+export async function paySegment(
+  bookingId: number,
+  paymentData: CreateSegmentPaymentRequest
+): Promise<{ success: boolean; data: any }> {
+  try {
+    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pay`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+      body: JSON.stringify(paymentData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error paying segment:", error);
+    throw error;
+  }
+}
+
+// Get pending payment segments
+export async function getPendingSegments(
+  bookingId: number
+): Promise<{ success: boolean; data: PaymentSegmentInfo[] }> {
+  try {
+    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pending`;
+    const response = await authenticatedFetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching pending segments:", error);
+    throw error;
+  }
+}
+
+// Get paid payment segments
+export async function getPaidSegments(
+  bookingId: number
+): Promise<{ success: boolean; data: PaymentSegmentInfo[] }> {
+  try {
+    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/paid`;
+    const response = await authenticatedFetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching paid segments:", error);
     throw error;
   }
 }

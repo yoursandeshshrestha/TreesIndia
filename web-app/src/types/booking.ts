@@ -191,6 +191,10 @@ export interface Booking {
   quote_accepted_at?: string;
   quote_expires_at?: string;
 
+  // Payment segments (for segment-based quotes)
+  payment_segments?: PaymentSegmentInfo[];
+  payment_progress?: PaymentProgress;
+
   // Contact information
   contact_person?: string;
   contact_phone?: string;
@@ -227,6 +231,12 @@ export interface BookingResponse {
   };
   payment_required: boolean;
   payment_type?: string;
+}
+
+// Response structure from backend that includes payment progress
+export interface BookingWithPaymentProgress {
+  booking: Booking;
+  payment_progress?: PaymentProgress;
 }
 
 export interface InquiryBookingResponse {
@@ -312,6 +322,42 @@ export interface RazorpayResponse {
 
 export interface RazorpayInstance {
   open: () => void;
+}
+
+// Payment Segment Types
+export interface PaymentSegmentRequest {
+  amount: number;
+  due_date?: string; // ISO date string
+  notes?: string;
+}
+
+export interface PaymentSegmentInfo {
+  id: number;
+  segment_number: number;
+  amount: number;
+  due_date?: string;
+  status: "pending" | "paid" | "overdue" | "cancelled";
+  paid_at?: string;
+  notes: string;
+  payment_id?: number;
+  is_overdue: boolean;
+  days_until_due?: number;
+}
+
+export interface PaymentProgress {
+  total_amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+  total_segments: number;
+  paid_segments: number;
+  remaining_segments: number;
+  progress_percentage: number;
+  segments: PaymentSegmentInfo[];
+}
+
+export interface CreateSegmentPaymentRequest {
+  segment_number: number;
+  amount: number;
 }
 
 // Global Razorpay declaration

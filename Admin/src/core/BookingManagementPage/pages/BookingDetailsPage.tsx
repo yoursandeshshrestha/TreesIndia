@@ -20,6 +20,7 @@ import {
   getBookingById,
   updateBookingStatus,
   assignWorkerToBooking,
+  getPaymentSegments,
 } from "@/lib/api-client";
 import {
   DetailedBookingResponse,
@@ -28,11 +29,13 @@ import {
   getAssignmentStatusColor,
   PaymentStatus,
   AssignmentStatus,
+  PaymentProgress,
 } from "@/types/booking";
 import Button from "@/components/Button";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Model from "@/components/Model/Base/Model";
+import { PaymentProgress as PaymentProgressComponent } from "@/components/PaymentProgress";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import {
   displayValue,
@@ -61,6 +64,12 @@ export default function BookingDetailsPage() {
     useState(false);
   const [modalSelectedWorkerId, setModalSelectedWorkerId] =
     useState<string>("");
+
+  // Payment progress state
+  const [paymentProgress, setPaymentProgress] =
+    useState<PaymentProgress | null>(null);
+  const [isLoadingPaymentProgress, setIsLoadingPaymentProgress] =
+    useState(false);
 
   // Get available workers
   const scheduledTime = booking?.scheduled_time || "";
@@ -98,11 +107,29 @@ export default function BookingDetailsPage() {
     }
   }, [bookingId]);
 
+  const loadPaymentProgress = useCallback(async () => {
+    if (!bookingId) return;
+
+    try {
+      setIsLoadingPaymentProgress(true);
+      const response = await getPaymentSegments(bookingId);
+      if (response.data) {
+        setPaymentProgress(response.data as unknown as PaymentProgress);
+      }
+    } catch (error) {
+      console.error("Failed to load payment progress:", error);
+      // Don't show error toast as this is optional information
+    } finally {
+      setIsLoadingPaymentProgress(false);
+    }
+  }, [bookingId]);
+
   useEffect(() => {
     if (bookingId) {
       loadBookingDetails();
+      loadPaymentProgress();
     }
-  }, [bookingId, loadBookingDetails]);
+  }, [bookingId, loadBookingDetails, loadPaymentProgress]);
 
   const handleStatusUpdate = async (status: string) => {
     try {
@@ -530,6 +557,25 @@ export default function BookingDetailsPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Payment Progress - Show for segmented payments */}
+            {paymentProgress && paymentProgress.total_segments > 1 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Payment Progress
+                </h2>
+                {isLoadingPaymentProgress ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-600">
+                      Loading payment progress...
+                    </span>
+                  </div>
+                ) : (
+                  <PaymentProgressComponent progress={paymentProgress} />
+                )}
               </div>
             )}
 
