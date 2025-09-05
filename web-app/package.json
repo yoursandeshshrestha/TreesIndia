@@ -3,11 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run generate-sw && next dev --turbopack ",
-    "build": "npm run generate-sw && next build --turbopack",
+    "dev": "next dev --turbopack ",
+    "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint",
-    "generate-sw": "node scripts/generate-sw.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -18,9 +17,9 @@
     "@supabase/supabase-js": "^2.56.1",
     "@tanstack/react-query": "^5.85.5",
     "@types/leaflet": "^1.9.20",
+    "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
-    "firebase": "^12.2.1",
     "framer-motion": "^12.23.12",
     "leaflet": "^1.9.4",
     "lottie-react": "^2.4.1",

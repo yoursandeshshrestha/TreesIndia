@@ -37,7 +37,7 @@ export default function QuoteModal({
 
     setIsSubmitting(true);
     try {
-      const response = await apiClient.post(
+      await apiClient.post(
         `/admin/bookings/${booking.id}/provide-quote`,
         {
           amount: parseFloat(formData.amount),

@@ -3,13 +3,13 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface AddressModalState {
   isOpen: boolean;
   initialModalType?: "list" | "add" | "edit" | "confirm";
-  editingAddress?: any; // Address object to edit
+  editingAddress?: Record<string, unknown>; // Address object to edit
 }
 
 const initialState: AddressModalState = {
   isOpen: false,
   initialModalType: "list",
-  editingAddress: null,
+  editingAddress: undefined,
 };
 
 const addressModalSlice = createSlice({
@@ -20,17 +20,17 @@ const addressModalSlice = createSlice({
       state,
       action: PayloadAction<{
         modalType?: "list" | "add" | "edit" | "confirm";
-        editingAddress?: any;
+        editingAddress?: Record<string, unknown>;
       }>
     ) => {
       state.isOpen = true;
       state.initialModalType = action.payload?.modalType || "list";
-      state.editingAddress = action.payload?.editingAddress || null;
+      state.editingAddress = action.payload?.editingAddress || undefined;
     },
     closeAddressModal: (state) => {
       state.isOpen = false;
       state.initialModalType = "list";
-      state.editingAddress = null;
+      state.editingAddress = undefined;
     },
   },
 });

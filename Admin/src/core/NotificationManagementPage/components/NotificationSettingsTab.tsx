@@ -128,10 +128,10 @@ const NotificationSettingsTab: React.FC = () => {
               <Checkbox
                 id="push_notifications"
                 checked={settings.push_notifications}
-                onChange={(checked: boolean) =>
+                onChange={(e) =>
                   setSettings((prev) => ({
                     ...prev,
-                    push_notifications: checked,
+                    push_notifications: e.target.checked,
                   }))
                 }
               />
@@ -147,10 +147,10 @@ const NotificationSettingsTab: React.FC = () => {
               <Checkbox
                 id="email_notifications"
                 checked={settings.email_notifications}
-                onChange={(checked) =>
+                onChange={(e) =>
                   setSettings((prev) => ({
                     ...prev,
-                    email_notifications: checked,
+                    email_notifications: e.target.checked,
                   }))
                 }
               />
@@ -166,10 +166,10 @@ const NotificationSettingsTab: React.FC = () => {
               <Checkbox
                 id="sms_notifications"
                 checked={settings.sms_notifications}
-                onChange={(checked) =>
+                onChange={(e) =>
                   setSettings((prev) => ({
                     ...prev,
-                    sms_notifications: checked,
+                    sms_notifications: e.target.checked,
                   }))
                 }
               />
@@ -202,8 +202,12 @@ const NotificationSettingsTab: React.FC = () => {
               <div key={option.value} className="flex items-center gap-3">
                 <Checkbox
                   id={option.value}
-                  checked={settings.notification_types.includes(option.value)}
-                  onChange={() => toggleNotificationType(option.value)}
+                  checked={settings.notification_types.includes(
+                    option.value as NotificationType
+                  )}
+                  onChange={() =>
+                    toggleNotificationType(option.value as NotificationType)
+                  }
                 />
                 <label
                   htmlFor={option.value}

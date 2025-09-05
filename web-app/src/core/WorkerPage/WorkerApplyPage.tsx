@@ -11,11 +11,10 @@ import {
 } from "lucide-react";
 import { useWorkerApplication } from "@/hooks/useWorkerApplication";
 import { WorkerApplicationRequest } from "@/types/worker-application";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";
-import Image from "next/image";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 
 // Import step components
 import {
@@ -67,14 +66,8 @@ const steps = [
 ];
 
 export default function WorkerApplyPage() {
-  const {
-    userApplication,
-    isLoadingApplication,
-    applicationError,
-    submitApplication,
-    isSubmitting,
-    submitError,
-  } = useWorkerApplication();
+  const { userApplication, submitApplication, isSubmitting, submitError } =
+    useWorkerApplication();
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<Partial<WorkerApplicationRequest>>({
@@ -309,8 +302,8 @@ export default function WorkerApplyPage() {
   // Show loading state while checking authentication
   if (authLoading) {
     return (
-      <LoadingSpinner 
-        message="Checking authentication..." 
+      <LoadingSpinner
+        message="Checking authentication..."
         variant="fullscreen"
       />
     );

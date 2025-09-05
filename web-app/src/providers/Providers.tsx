@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
 import { store } from "@/store/store";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { initializeAuth } from "@/store/slices/authSlice";
+import { AppDispatch } from "@/store/store";
 
 interface ProvidersProps {
   children: React.ReactNode;
+}
+
+// Component to initialize auth state
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const dispatch = useDispatch<AppDispatch>();
+
+useEffect(() => {
+    // Initialize auth state when the app starts
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  return <>{children}</>;
 }
 
 export default function Providers({ children }: ProvidersProps) {
@@ -26,7 +39,7 @@ export default function Providers({ children }: ProvidersProps) {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthInitializer>{children}</AuthInitializer>
       </QueryClientProvider>
     </Provider>
   );

@@ -6,7 +6,6 @@ import {
   cancelBooking,
   acceptQuote,
   rejectQuote,
-  type Booking,
   type CancelBookingRequest,
 } from "@/lib/bookingApi";
 
@@ -45,7 +44,7 @@ export function useBookings() {
 
   // Accept quote mutation
   const acceptQuoteMutation = useMutation({
-    mutationFn: ({ bookingId, notes }: { bookingId: number; notes?: string }) => 
+    mutationFn: ({ bookingId, notes }: { bookingId: number; notes?: string }) =>
       acceptQuote(bookingId, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userBookings"] });
@@ -57,8 +56,13 @@ export function useBookings() {
 
   // Reject quote mutation
   const rejectQuoteMutation = useMutation({
-    mutationFn: ({ bookingId, reason }: { bookingId: number; reason: string }) => 
-      rejectQuote(bookingId, reason),
+    mutationFn: ({
+      bookingId,
+      reason,
+    }: {
+      bookingId: number;
+      reason: string;
+    }) => rejectQuote(bookingId, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },
@@ -134,7 +138,7 @@ export function useFilteredBookings(filters: {
 
   // Accept quote mutation
   const acceptQuoteMutation = useMutation({
-    mutationFn: ({ bookingId, notes }: { bookingId: number; notes?: string }) => 
+    mutationFn: ({ bookingId, notes }: { bookingId: number; notes?: string }) =>
       acceptQuote(bookingId, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userBookings"] });
@@ -146,8 +150,13 @@ export function useFilteredBookings(filters: {
 
   // Reject quote mutation
   const rejectQuoteMutation = useMutation({
-    mutationFn: ({ bookingId, reason }: { bookingId: number; reason: string }) => 
-      rejectQuote(bookingId, reason),
+    mutationFn: ({
+      bookingId,
+      reason,
+    }: {
+      bookingId: number;
+      reason: string;
+    }) => rejectQuote(bookingId, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     },

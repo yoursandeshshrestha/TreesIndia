@@ -28,9 +28,6 @@ function CategoriesManagementPage() {
   const debouncedSearch = useDebounce(localSearch, 300);
 
   // State management
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
     new Set()
@@ -58,7 +55,6 @@ function CategoriesManagementPage() {
   const {
     categories: apiCategories,
     isLoading: apiLoading,
-    error: apiError,
     createCategory,
     updateCategory,
     deleteCategory,
@@ -74,7 +70,6 @@ function CategoriesManagementPage() {
   useEffect(() => {
     if (debouncedSearch !== filters.search) {
       setFilters((prev) => ({ ...prev, search: debouncedSearch }));
-      setCurrentPage(1);
     }
     // Stop searching when debounced value is applied
     setIsSearching(false);
@@ -86,7 +81,7 @@ function CategoriesManagementPage() {
       toast.success(`Category "${categoryData.name}" created successfully`);
       setIsCategoryModalOpen(false);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to create category. Please try again.");
     }
   };
@@ -95,12 +90,12 @@ function CategoriesManagementPage() {
     if (!selectedCategory) return;
 
     try {
-      await updateCategory(selectedCategory.id, categoryData, imageFile);
+      await updateCategory(selectedCategory.id, categoryData);
       toast.success(`Category "${categoryData.name}" updated successfully`);
       setIsCategoryModalOpen(false);
       setSelectedCategory(null);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update category. Please try again.");
     }
   };
@@ -112,7 +107,7 @@ function CategoriesManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedCategory(null);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete category. Please try again.");
     }
   };
@@ -128,7 +123,7 @@ function CategoriesManagementPage() {
       );
       setIsSubcategoryModalOpen(false);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to create subcategory. Please try again.");
     }
   };
@@ -151,7 +146,7 @@ function CategoriesManagementPage() {
       setIsSubcategoryModalOpen(false);
       setSelectedSubcategory(null);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update subcategory. Please try again.");
     }
   };
@@ -163,7 +158,7 @@ function CategoriesManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedSubcategory(null);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete subcategory. Please try again.");
     }
   };
@@ -173,13 +168,6 @@ function CategoriesManagementPage() {
   const handleToggleCategoryStatus = async (category: Category) => {
     if (togglingItems.has(category.id)) return;
 
-    // Optimistic update - update UI immediately
-    const originalCategories = [...apiCategories];
-    const updatedCategories = apiCategories.map((c) =>
-      c.id === category.id ? { ...c, is_active: !c.is_active } : c
-    );
-    setApiCategories(updatedCategories);
-
     try {
       setTogglingItems((prev) => new Set(prev).add(category.id));
       await toggleCategoryStatus(category.id);
@@ -188,9 +176,7 @@ function CategoriesManagementPage() {
           !category.is_active ? "activated" : "deactivated"
         } successfully`
       );
-    } catch (err) {
-      // Revert optimistic update on error
-      setApiCategories(originalCategories);
+    } catch {
       toast.error("Failed to toggle category status. Please try again.");
     } finally {
       setTogglingItems((prev) => {
@@ -204,17 +190,6 @@ function CategoriesManagementPage() {
   const handleToggleSubcategoryStatus = async (subcategory: Subcategory) => {
     if (togglingItems.has(subcategory.id)) return;
 
-    // Optimistic update - update UI immediately
-    const originalCategories = [...apiCategories];
-    const updatedCategories = apiCategories.map((c) => ({
-      ...c,
-      subcategories:
-        c.subcategories?.map((s) =>
-          s.id === subcategory.id ? { ...s, is_active: !s.is_active } : s
-        ) || [],
-    }));
-    setApiCategories(updatedCategories);
-
     try {
       setTogglingItems((prev) => new Set(prev).add(subcategory.id));
       await toggleSubcategoryStatus(subcategory.id);
@@ -223,9 +198,7 @@ function CategoriesManagementPage() {
           !subcategory.is_active ? "activated" : "deactivated"
         } successfully`
       );
-    } catch (err) {
-      // Revert optimistic update on error
-      setApiCategories(originalCategories);
+    } catch {
       toast.error("Failed to toggle subcategory status. Please try again.");
     } finally {
       setTogglingItems((prev) => {
@@ -274,17 +247,6 @@ function CategoriesManagementPage() {
     setExpandedCategories(newExpanded);
   };
 
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "",
-      sortBy: "name",
-      sortOrder: "asc",
-    });
-    setLocalSearch("");
-    setCurrentPage(1);
-    toast.success("Filters cleared successfully");
-  };
 
   // Filter categories based on current filters
   const filteredCategories = apiCategories.filter((category) => {
@@ -302,7 +264,7 @@ function CategoriesManagementPage() {
     return matchesSearch && matchesStatus;
   });
 
-  if (isLoading && apiCategories.length === 0) {
+  if (apiLoading && apiCategories.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="animate-spin" />
@@ -316,7 +278,6 @@ function CategoriesManagementPage() {
         itemsPerPage={itemsPerPage}
         onItemsPerPageChange={(newItemsPerPage) => {
           setItemsPerPage(newItemsPerPage);
-          setCurrentPage(1);
           fetchCategories();
         }}
         onRefresh={fetchCategories}
@@ -330,17 +291,11 @@ function CategoriesManagementPage() {
           setSelectedCategory(null);
         }}
         category={selectedCategory}
-        onSubmit={async (data, imageFile) => {
+        onSubmit={async (data) => {
           if (selectedCategory) {
-            await handleUpdateCategory(
-              data as CreateCategoryRequest,
-              imageFile
-            );
+            await handleUpdateCategory(data as CreateCategoryRequest);
           } else {
-            await handleCreateCategory(
-              data as CreateCategoryRequest,
-              imageFile
-            );
+            await handleCreateCategory(data as CreateCategoryRequest);
           }
         }}
       />
@@ -406,17 +361,14 @@ function CategoriesManagementPage() {
         }}
         onStatusChange={(value) => {
           setFilters((prev) => ({ ...prev, status: value }));
-          setCurrentPage(1);
           fetchCategories();
         }}
         onSortByChange={(value) => {
           setFilters((prev) => ({ ...prev, sortBy: value }));
-          setCurrentPage(1);
           fetchCategories();
         }}
         onSortOrderChange={(value) => {
           setFilters((prev) => ({ ...prev, sortOrder: value }));
-          setCurrentPage(1);
           fetchCategories();
         }}
         onClear={() => {
@@ -450,7 +402,7 @@ function CategoriesManagementPage() {
         onToggleSubcategoryStatus={handleToggleSubcategoryStatus}
       />
 
-      {filteredCategories.length === 0 && !isLoading && (
+      {filteredCategories.length === 0 && !apiLoading && (
         <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
           <div className="text-center">
             <Tag className="mx-auto h-12 w-12 text-gray-300 mb-4" />

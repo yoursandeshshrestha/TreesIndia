@@ -6,7 +6,10 @@ interface UseSubcategoriesOptions {
   enabled?: boolean;
 }
 
-export function useSubcategories({ categoryId, enabled = true }: UseSubcategoriesOptions) {
+export function useSubcategories({
+  categoryId,
+  enabled = true,
+}: UseSubcategoriesOptions) {
   return useQuery({
     queryKey: ["subcategories", categoryId],
     queryFn: () => fetchSubcategories(categoryId),

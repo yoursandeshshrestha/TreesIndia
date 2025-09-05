@@ -125,21 +125,6 @@ function ServiceSidebarSkeleton() {
   );
 }
 
-function SubcategorySkeleton() {
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="animate-pulse">
-          <div className="bg-gray-100 rounded-xl p-4 mb-3">
-            <div className="w-[50px] h-[50px] bg-gray-200 rounded-lg mx-auto"></div>
-          </div>
-          <div className="h-4 bg-gray-200 rounded mx-auto w-16"></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 interface SubcategoryCardProps {
   subcategory: Subcategory;
   onSelect: (subcategoryId: number) => void;

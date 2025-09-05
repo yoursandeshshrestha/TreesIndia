@@ -9,7 +9,8 @@ export type BookingStatus =
   | "in_progress"
   | "completed"
   | "cancelled"
-  | "rejected";
+  | "rejected"
+  | "temporary_hold";
 
 // Booking Type
 export type BookingType = "regular" | "inquiry";
@@ -52,7 +53,7 @@ export interface BookingAddress {
 }
 
 // Worker Assignment Interface
-export interface OptimizedWorkerAssignment {
+export interface WorkerAssignmentInfo {
   worker_id?: number;
   status?: string;
   worker?: User;
@@ -114,10 +115,20 @@ export interface User {
 
   wallet_balance: number;
   subscription_id: number | null;
-  subscription: any | null;
+  subscription: {
+    id: number;
+    plan_name: string;
+    price: number;
+    duration_days: number;
+    features: string[];
+  } | null;
   has_active_subscription: boolean;
   subscription_expiry_date: string | null;
-  notification_settings: any | null;
+  notification_settings: {
+    push_notifications: boolean;
+    email_notifications: boolean;
+    sms_notifications: boolean;
+  } | null;
 }
 
 // Service Interface (matches API response)
@@ -170,9 +181,7 @@ export interface Service {
 }
 
 // Worker Interface (matches API response - same as User)
-export interface Worker extends User {
-  // Worker extends User with additional worker-specific fields if needed
-}
+export type Worker = User;
 
 // Main Booking Interface (matches API response)
 export interface Booking {
@@ -512,6 +521,7 @@ export interface OptimizedPaymentInfo {
 export interface OptimizedWorkerAssignment {
   worker_id: number | null;
   status: string | null;
+  rejection_reason?: string | null;
   worker?: OptimizedUserInfo;
 }
 
@@ -539,7 +549,7 @@ export interface DetailedBookingResponse {
   contact: OptimizedContactInfo;
   payment: DetailedPaymentInfo | null;
   worker_assignment: DetailedWorkerAssignment | null;
-  buffer_requests: BufferRequest[];
+  buffer_requests: unknown[];
   reviews: Review[];
   chat_messages: ChatMessageInfo[];
   activity_log: ActivityLog[];
@@ -609,7 +619,7 @@ export interface DetailedPaymentInfo {
   razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_signature: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

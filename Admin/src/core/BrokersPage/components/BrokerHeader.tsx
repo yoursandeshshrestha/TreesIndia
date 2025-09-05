@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 

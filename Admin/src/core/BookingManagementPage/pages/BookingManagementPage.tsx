@@ -5,7 +5,7 @@ import { useBookings } from "@/hooks/useBookings";
 import BookingTable from "../components/BookingTable";
 import { OptimizedBookingResponse } from "@/types/booking";
 import { toast } from "sonner";
-import { Loader, Calendar } from "lucide-react";
+import { Loader } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { assignWorkerToBooking } from "@/lib/api-client";
 
@@ -23,12 +23,8 @@ export default function BookingManagementPage() {
   const debouncedSearch = useDebounce(localSearch, 300);
 
   // State management
-  const [selectedBooking, setSelectedBooking] =
-    useState<OptimizedBookingResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
   // Quote modal state
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
@@ -56,16 +52,8 @@ export default function BookingManagementPage() {
   // Load bookings when filters or pagination changes
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, itemsPerPage, filters]);
+  }, [currentPage, itemsPerPage, filters, fetchBookings]);
 
-  const handleBookingSelect = (booking: OptimizedBookingResponse) => {
-    setSelectedBooking(booking);
-    toast.info(`Selected booking: ${booking.booking_reference}`);
-  };
-
-  const handleStatusUpdate = (booking: OptimizedBookingResponse) => {
-    toast.info(`Update status for booking: ${booking.booking_reference}`);
-  };
 
   const handleWorkerAssignment = async (
     bookingId: number,
@@ -75,14 +63,11 @@ export default function BookingManagementPage() {
       await assignWorkerToBooking(bookingId, { worker_id: workerId });
       toast.success("Worker assigned successfully");
       fetchBookings(); // Refresh the bookings list
-    } catch (error) {
+    } catch {
       toast.error("Failed to assign worker");
     }
   };
 
-  const handleDelete = (booking: OptimizedBookingResponse) => {
-    toast.info(`Delete booking: ${booking.booking_reference}`);
-  };
 
   const handleRefresh = () => {
     fetchBookings();

@@ -6,7 +6,6 @@ import {
   uploadAvatar,
   getNotificationSettings,
   updateNotificationSettings,
-  UserProfile,
   ProfileUpdateRequest,
   NotificationSettings,
 } from "@/lib/profileApi";
@@ -46,7 +45,7 @@ export function useProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });
@@ -57,7 +56,7 @@ export function useProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });
@@ -69,7 +68,7 @@ export function useProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notificationSettings"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });

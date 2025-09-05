@@ -7,8 +7,6 @@ import {
   completeWalletRecharge,
   refreshWalletRechargeOrder,
   cancelWalletRecharge,
-  WalletSummary,
-  WalletTransaction,
   RechargeRequest,
 } from "@/lib/walletApi";
 
@@ -48,7 +46,7 @@ export function useWallet() {
       queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
       queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });
@@ -70,7 +68,7 @@ export function useWallet() {
       queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
       queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });
@@ -82,7 +80,7 @@ export function useWallet() {
       queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
       queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });
@@ -94,7 +92,7 @@ export function useWallet() {
       queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
       queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
     },
-    onError: (error) => {
+    onError: () => {
       // Error handled by component
     },
   });

@@ -2,16 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  Send,
-  Users,
-  Target,
-  Clock,
-  Bell,
-  Plus,
-  Save,
-  Trash2,
-} from "lucide-react";
+import { Send, Users, Target, Bell, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api-client";
 
 // Components
@@ -26,9 +17,7 @@ import UserSelector from "./UserSelector";
 
 // Types
 import {
-  NotificationType,
   NotificationTarget,
-  NotificationData,
   SendNotificationRequest,
   NotificationTemplate,
 } from "../types";
@@ -148,7 +137,10 @@ const SendNotificationTab: React.FC = () => {
     setIsLoading(true);
     try {
       // TODO: Replace with actual API call
-      const response = await api.post("/admin/notifications/send", formData);
+      const response = await api.post(
+        "/admin/notifications/send",
+        formData as unknown as Record<string, unknown>
+      );
 
       if (response.success) {
         toast.success("Notification sent successfully!");

@@ -84,6 +84,7 @@ export async function middleware(req: NextRequest) {
           return response;
         }
       } catch (error) {
+        console.error("Refresh token error:", error);
         // Refresh failed, redirect to sign-in
         const response = NextResponse.redirect(
           new URL("/auth/sign-in", req.url)
@@ -110,6 +111,7 @@ export async function middleware(req: NextRequest) {
           return response;
         }
       } catch (error) {
+        console.error("Admin role check error:", error);
         // Invalid user cookie, redirect to sign-in
         const response = NextResponse.redirect(
           new URL("/auth/sign-in", req.url)

@@ -183,8 +183,6 @@ export const useCancelBooking = () => {
 
 // Create quote payment order mutation
 export const useCreateQuotePayment = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       bookingId,

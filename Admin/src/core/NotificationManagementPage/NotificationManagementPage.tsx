@@ -52,7 +52,7 @@ function NotificationManagementPage() {
       <NotificationTabs
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tabId) => setActiveTab(tabId as TabType)}
       />
 
       {/* Tab Content */}

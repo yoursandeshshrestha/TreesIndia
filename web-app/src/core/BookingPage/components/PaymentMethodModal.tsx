@@ -26,7 +26,6 @@ export function PaymentMethodModal({
   isOpen,
   onClose,
   onPaymentMethodSelect,
-  service,
   totalAmount,
   isWalletDisabled,
   walletBalance,

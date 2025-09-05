@@ -2,10 +2,9 @@
 
 import React from "react";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { Shield, Users, Settings, Activity } from "lucide-react";
 
 const DashboardOverviewPage = () => {
-  const { isAdmin, user, isLoading } = useAdminAccess();
+  const { isLoading } = useAdminAccess();
 
   if (isLoading) {
     return (

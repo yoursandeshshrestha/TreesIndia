@@ -6,11 +6,7 @@ import { toast } from "sonner";
 import { useHeroConfig } from "../hooks/useHeroConfig";
 import { useHeroImages } from "../hooks/useHeroImages";
 import { useCategoryIcons } from "../hooks/useCategoryIcons";
-import {
-  UpdateHeroConfigRequest,
-  HeroImage,
-  HomepageCategoryIcon,
-} from "../types";
+import { UpdateHeroConfigRequest, HeroImage } from "../types";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import { ImageUploadCard } from "@/components/FileUpload";
 import Toggle from "@/components/Toggle";

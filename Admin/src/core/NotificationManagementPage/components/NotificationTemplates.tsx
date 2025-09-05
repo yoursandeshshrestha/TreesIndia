@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Plus, Edit, Copy, Check } from "lucide-react";
-import { NotificationTemplate } from "../types";
+import { NotificationTemplate, NotificationType } from "../types";
 import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
@@ -24,7 +24,7 @@ const NotificationTemplates: React.FC<NotificationTemplatesProps> = ({
 
   const [formData, setFormData] = useState({
     name: "",
-    type: "system" as const,
+    type: "system" as NotificationType,
     title: "",
     body: "",
     click_action: "",
@@ -52,8 +52,8 @@ const NotificationTemplates: React.FC<NotificationTemplatesProps> = ({
       type: template.type,
       title: template.title,
       body: template.body,
-      click_action: template.click_action || "",
-      image_url: template.image_url || "",
+      click_action: "",
+      image_url: "",
     });
   };
 
@@ -149,7 +149,10 @@ const NotificationTemplates: React.FC<NotificationTemplatesProps> = ({
                   <Select
                     value={formData.type}
                     onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, type: value as any }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        type: value as NotificationType,
+                      }))
                     }
                     options={[
                       { value: "system", label: "System" },
@@ -266,7 +269,10 @@ const NotificationTemplates: React.FC<NotificationTemplatesProps> = ({
                   <Select
                     value={formData.type}
                     onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, type: value as any }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        type: value as NotificationType,
+                      }))
                     }
                     options={[
                       { value: "system", label: "System" },

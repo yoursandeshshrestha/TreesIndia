@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import { Loader, Tag } from "lucide-react";
@@ -27,9 +27,6 @@ function SubcategoriesManagementPage() {
   const debouncedSearch = useDebounce(localSearch, 300);
 
   // State management
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
@@ -52,7 +49,6 @@ function SubcategoriesManagementPage() {
     subcategories: apiSubcategories,
     categories: apiCategories,
     isLoading: apiLoading,
-    error: apiError,
     createSubcategory,
     updateSubcategory,
     deleteSubcategory,
@@ -65,7 +61,6 @@ function SubcategoriesManagementPage() {
   useEffect(() => {
     if (debouncedSearch !== filters.search) {
       setFilters((prev) => ({ ...prev, search: debouncedSearch }));
-      setCurrentPage(1);
     }
     // Stop searching when debounced value is applied
     setIsSearching(false);
@@ -83,6 +78,7 @@ function SubcategoriesManagementPage() {
       setIsSubcategoryModalOpen(false);
       fetchSubcategories();
     } catch (err) {
+      console.error("Failed to create subcategory", err);
       toast.error("Failed to create subcategory. Please try again.");
     }
   };
@@ -106,6 +102,7 @@ function SubcategoriesManagementPage() {
       setSelectedSubcategory(null);
       fetchSubcategories();
     } catch (err) {
+      console.error("Failed to update subcategory", err);
       toast.error("Failed to update subcategory. Please try again.");
     }
   };
@@ -118,6 +115,7 @@ function SubcategoriesManagementPage() {
       setSelectedSubcategory(null);
       fetchSubcategories();
     } catch (err) {
+      console.error("Failed to delete subcategory", err);
       toast.error("Failed to delete subcategory. Please try again.");
     }
   };
@@ -136,6 +134,7 @@ function SubcategoriesManagementPage() {
         } successfully`
       );
     } catch (err) {
+      console.error("Failed to toggle subcategory status", err);
       toast.error("Failed to toggle subcategory status. Please try again.");
     } finally {
       setTogglingItems((prev) => {
@@ -155,19 +154,6 @@ function SubcategoriesManagementPage() {
   const handleDeleteSubcategoryClick = (subcategory: Subcategory) => {
     setSelectedSubcategory(subcategory);
     setIsDeleteModalOpen(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "",
-      serviceType: "all",
-      sortBy: "name",
-      sortOrder: "asc",
-    });
-    setLocalSearch("");
-    setCurrentPage(1);
-    toast.success("Filters cleared successfully");
   };
 
   // Helper function to determine service type based on category name
@@ -223,7 +209,7 @@ function SubcategoriesManagementPage() {
     return matchesSearch && matchesStatus && matchesServiceType;
   });
 
-  if (isLoading && apiSubcategories.length === 0) {
+  if (apiLoading && apiSubcategories.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="animate-spin" />
@@ -237,7 +223,6 @@ function SubcategoriesManagementPage() {
         itemsPerPage={itemsPerPage}
         onItemsPerPageChange={(newItemsPerPage: number) => {
           setItemsPerPage(newItemsPerPage);
-          setCurrentPage(1);
           fetchSubcategories();
         }}
         onRefresh={fetchSubcategories}
@@ -304,17 +289,14 @@ function SubcategoriesManagementPage() {
         }}
         onStatusChange={(value: string) => {
           setFilters((prev) => ({ ...prev, status: value }));
-          setCurrentPage(1);
           fetchSubcategories();
         }}
         onSortByChange={(value: string) => {
           setFilters((prev) => ({ ...prev, sortBy: value }));
-          setCurrentPage(1);
           fetchSubcategories();
         }}
         onSortOrderChange={(value: string) => {
           setFilters((prev) => ({ ...prev, sortOrder: value }));
-          setCurrentPage(1);
           fetchSubcategories();
         }}
         onClear={() => {
@@ -341,7 +323,6 @@ function SubcategoriesManagementPage() {
           activeTab={filters.serviceType}
           onTabChange={(serviceType) => {
             setFilters((prev) => ({ ...prev, serviceType }));
-            setCurrentPage(1);
           }}
           counts={serviceTypeCounts}
         />
@@ -355,7 +336,7 @@ function SubcategoriesManagementPage() {
         onToggleSubcategoryStatus={handleToggleSubcategoryStatus}
       />
 
-      {filteredSubcategories.length === 0 && !isLoading && (
+      {filteredSubcategories.length === 0 && !apiLoading && (
         <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
           <div className="text-center">
             <Tag className="mx-auto h-12 w-12 text-gray-300 mb-4" />

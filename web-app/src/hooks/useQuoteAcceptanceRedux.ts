@@ -24,11 +24,11 @@ import { Booking } from "@/lib/bookingApi";
 import { AvailableSlot } from "@/types/booking";
 import { useWallet } from "@/hooks/useWallet";
 import { formatAmount } from "@/utils/formatters";
-import { generateDateOptions, BookingConfig } from "@/utils/slotUtils";
+import { generateDateOptions } from "@/utils/dateTimeUtils";
 import {
   getAddressName,
   getAddressDetails,
-} from "@/components/QuoteAcceptanceModal/utils/addressUtils";
+} from "@/core/ProfilePage/components/sections/Booking/components/QuoteAcceptanceModal/utils/addressUtils";
 import {
   useBookingConfig,
   useAvailableSlots,
@@ -226,8 +226,8 @@ export function useQuoteAcceptanceRedux(
         handleSetSuccess("Quote accepted and payment completed successfully!");
         // Close modal after a delay to show success message
         setTimeout(() => {
-          onSuccess();
-          onClose();
+          onSuccess?.();
+          onClose?.();
         }, 2000);
       } else {
         const response = await createQuotePaymentMutation.mutateAsync({
@@ -238,9 +238,9 @@ export function useQuoteAcceptanceRedux(
         const order = response.data.payment_order;
         dispatch(
           setPaymentOrder({
-            id: order.id,
-            amount: order.amount,
-            currency: order.currency,
+            id: order.id as string,
+            amount: order.amount as number,
+            currency: order.currency as string,
             key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
           })
         );
@@ -260,6 +260,9 @@ export function useQuoteAcceptanceRedux(
     processWalletPaymentMutation,
     createQuotePaymentMutation,
     dispatch,
+    handleSetSuccess,
+    onSuccess,
+    onClose,
   ]);
 
   const handleRazorpaySuccess = useCallback(
@@ -284,15 +287,22 @@ export function useQuoteAcceptanceRedux(
         handleSetSuccess("Quote accepted and payment completed successfully!");
         // Close modal after a delay to show success message
         setTimeout(() => {
-          onSuccess();
-          onClose();
+          onSuccess?.();
+          onClose?.();
         }, 2000);
       } catch (error) {
         console.error("Payment verification error:", error);
         handleSetError("Payment verification failed. Please contact support.");
       }
     },
-    [booking, verifyQuotePaymentMutation, handleSetError]
+    [
+      booking,
+      verifyQuotePaymentMutation,
+      handleSetError,
+      handleSetSuccess,
+      onSuccess,
+      onClose,
+    ]
   );
 
   const handleRazorpayFailure = useCallback(

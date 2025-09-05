@@ -144,7 +144,6 @@ export const workerAssignmentApi = {
     assignmentId: number,
     data: AcceptAssignmentRequest
   ): Promise<{ assignment: WorkerAssignment }> => {
-    console.log("Accepting assignment:", assignmentId, "with data:", data);
     const response = await authenticatedFetch(
       `${API_BASE_URL}/worker/assignments/${assignmentId}/accept`,
       {

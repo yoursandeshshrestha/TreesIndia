@@ -6,13 +6,9 @@ import {
   fetchChatMessages,
   sendChatMessage,
   fetchBookingChatRoom,
-  type ChatRoomsResponse,
-  type MessagesResponse,
-  type ChatRoomResponse,
-  type MessageResponse,
 } from "@/lib/chatApi";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 // Query keys
 export const chatKeys = {
@@ -85,7 +81,6 @@ export function useBookingChatRoom(bookingId: number) {
 // Hook for chat mutations (send message, mark as read, etc.)
 export function useChatMutations() {
   const queryClient = useQueryClient();
-  const token = authAPI.getAccessToken();
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -125,7 +120,6 @@ export function useChatMutations() {
 // Combined hook for chat functionality
 export function useChat(roomId?: number, bookingId?: number) {
   const { user } = useAuth();
-  const token = authAPI.getAccessToken();
 
   // Get chat rooms
   const {
@@ -181,7 +175,6 @@ export function useChat(roomId?: number, bookingId?: number) {
     isLoadingMessages,
     isLoadingBookingChatRoom,
     isSendingMessage,
-    isMarkingAsRead,
 
     // Error states
     chatRoomsError,
@@ -189,20 +182,16 @@ export function useChat(roomId?: number, bookingId?: number) {
     messagesError,
     bookingChatRoomError,
     sendMessageError,
-    markAsReadError,
 
     // Actions
     sendMessage,
     sendMessageAsync,
-    markAsRead,
-    markAsReadAsync,
     refetchChatRooms,
     refetchChatHistory,
     refetchMessages,
     refetchBookingChatRoom,
 
     // Helper functions
-    isAuthenticated: !!token,
     currentUser: user,
   };
 }

@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openServiceDetailModal } from "@/store/slices/serviceDetailModalSlice";
 import { Service } from "@/types/api";
 import { Clock } from "lucide-react";
 
@@ -68,9 +69,12 @@ export function ServiceCard({ service, showDivider }: ServiceCardProps) {
           {service.description && (
             <p className="text-sm text-gray-600 mb-3">{service.description}</p>
           )}
-          <a href="#" className="text-[#00a871] underline text-sm">
+          <button
+            onClick={() => dispatch(openServiceDetailModal(service))}
+            className="text-[#00a871] underline text-sm hover:text-[#008f5f] transition-colors"
+          >
             View details
-          </a>
+          </button>
         </div>
         <div className="ml-6 text-center">
           <div className="w-32 h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center transition-all duration-300 hover:shadow-lg">

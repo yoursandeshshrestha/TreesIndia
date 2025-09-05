@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit2, Trash2, Plus, Layers, Image } from "lucide-react";
+import { Edit2, Trash2, Plus, Layers } from "lucide-react";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { Category, Subcategory } from "../types";
@@ -22,7 +22,6 @@ const CategoryTable = ({
   categories,
   expandedCategories,
   togglingItems,
-  onToggleExpansion,
   onEditCategory,
   onDeleteCategory,
   onEditSubcategory,

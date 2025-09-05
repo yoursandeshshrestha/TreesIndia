@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Command } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface SearchButtonProps {
   onClick: () => void;

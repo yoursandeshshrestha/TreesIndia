@@ -23,7 +23,7 @@ export interface UserProfile {
     has_active_subscription: boolean;
     subscription_id: number | null;
     expiry_date: string | null;
-    current_plan: any | null;
+    current_plan: Record<string, unknown> | null;
   };
   role_application: {
     status: string | null;

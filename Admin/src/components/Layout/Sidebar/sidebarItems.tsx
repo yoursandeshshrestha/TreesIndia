@@ -7,7 +7,7 @@ import {
   FileText,
   Shield,
   Calendar,
-  Image,
+  Image as ImageIcon,
   Bell,
 } from "lucide-react";
 
@@ -128,7 +128,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     id: "banners",
     label: "Banner Management",
-    icon: <Image size={16} />,
+    icon: <ImageIcon size={16} />,
     path: "/dashboard/banners",
   },
   {

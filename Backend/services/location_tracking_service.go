@@ -31,6 +31,11 @@ func NewLocationTrackingService(wsService *WebSocketService) *LocationTrackingSe
 	}
 }
 
+// SetWebSocketService sets the WebSocket service after initialization
+func (lts *LocationTrackingService) SetWebSocketService(wsService *WebSocketService) {
+	lts.wsService = wsService
+}
+
 // StartTracking starts location tracking for a worker's assignment
 func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID uint) (*models.TrackingStatusResponse, error) {
 	// Check if assignment exists and worker is assigned
@@ -60,7 +65,25 @@ func (lts *LocationTrackingService) StartTracking(workerID uint, assignmentID ui
 	}
 	
 	if isActive {
-		return nil, errors.New("location tracking already active for this assignment")
+		// If tracking is already active, return the current status instead of error
+		logrus.Infof("Location tracking already active for assignment %d, returning current status", assignmentID)
+		existingLocation, err := lts.workerLocationRepo.GetActiveLocationByAssignmentID(assignmentID)
+		if err != nil {
+			logrus.Errorf("Failed to get existing location for assignment %d: %v", assignmentID, err)
+			return nil, errors.New("location tracking already active but failed to get status")
+		}
+		
+		// Return the existing tracking status
+		return &models.TrackingStatusResponse{
+			AssignmentID:      assignmentID,
+			BookingID:         assignment.BookingID,
+			WorkerID:          workerID,
+			IsTracking:        true,
+			Status:            "tracking",
+			TrackingStartedAt: &existingLocation.CreatedAt,
+			WorkerName:        assignment.Worker.Name,
+			CustomerName:      assignment.Booking.User.Name,
+		}, nil
 	}
 
 	// Create initial location record with default coordinates (0,0) to start tracking
@@ -506,6 +529,11 @@ func (lts *LocationTrackingService) GetAssignmentDetails(assignmentID uint, work
 		},
 		"current_location": currentLocation,
 	}, nil
+}
+
+// GetAssignmentByWorkerAndBooking gets assignment by worker ID and booking ID
+func (lts *LocationTrackingService) GetAssignmentByWorkerAndBooking(workerID uint, bookingID uint) (*models.WorkerAssignment, error) {
+	return lts.workerAssignmentRepo.GetByWorkerAndBooking(workerID, bookingID)
 }
 
 // CheckSystemHealth checks if the location tracking system is working properly

@@ -31,7 +31,6 @@ const isBase64Image = (src: string): boolean => {
 const renderAvatar = (src: string, alt: string, size: number = 96) => {
   if (isBase64Image(src)) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={alt}

@@ -6,7 +6,6 @@ import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
 import Dropdown from "@/components/Dropdown/Dropdown";
-import Checkbox from "@/components/Checkbox/Checkbox";
 import { AdminConfig, AdminConfigCategory } from "../types";
 
 interface AdminConfigModalProps {
@@ -99,7 +98,7 @@ const AdminConfigModal: React.FC<AdminConfigModalProps> = ({
 
       await onSubmit(submitData);
       onClose();
-    } catch (error) {
+    } catch {
       // Error handling is done by the parent component
     } finally {
       setIsSubmitting(false);

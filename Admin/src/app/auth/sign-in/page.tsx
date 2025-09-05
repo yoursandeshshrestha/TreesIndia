@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Phone, Lock, ArrowLeft } from "lucide-react";
+import { Lock, ArrowLeft } from "lucide-react";
 import CustomInput from "@/components/Input/Base/Input";
 import CustomButton from "@/components/Button/Base/Button";
 import { useRequestOTP, useVerifyOTP } from "@/services/api/auth";
@@ -80,7 +80,7 @@ const SignInPage = () => {
           setOtp("");
         }
       }
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation
     }
   };

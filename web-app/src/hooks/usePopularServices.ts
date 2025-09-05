@@ -15,7 +15,7 @@ export function usePopularServices({
   return useQuery({
     queryKey: ["popularServices", city, state],
     queryFn: () => fetchPopularServices(city, state),
-    enabled: enabled && (city !== undefined || state !== undefined),
+    enabled: enabled, // Allow fetching even without location - backend will handle fallback
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

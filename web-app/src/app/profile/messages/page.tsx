@@ -1,7 +1,7 @@
 "use client";
 
-import { ChatList } from "@/components/chat/ChatList";
-import { ChatRoom } from "@/components/chat/ChatRoom";
+import { ChatList } from "@/core/BookingPage/components/chat/ChatList";
+import { ChatRoom } from "@/core/BookingPage/components/chat/ChatRoom";
 import { useState } from "react";
 
 export default function ProfileMessagesPage() {

@@ -3,16 +3,15 @@
 import React, { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
 import { setSelectedService, resetBooking } from "@/store/slices/bookingSlice";
 import { BookingSidebar, MainContent, PriceSummary } from "./components";
 import { useServiceById } from "@/hooks/useServiceById";
 import { Service } from "@/types/booking";
-import Image from "next/image";
-import ContactInfoModalManager from "@/components/ContactInfoModal/ContactInfoModalManager";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import ContactInfoModalManager from "@/core/BookingPage/components/ContactInfoModal/ContactInfoModalManager";
+import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 
 function BookingPage() {
   const router = useRouter();
@@ -71,8 +70,8 @@ function BookingPage() {
   // Show loading state while auth is being checked
   if (authLoading) {
     return (
-      <LoadingSpinner 
-        message="Checking authentication..." 
+      <LoadingSpinner
+        message="Checking authentication..."
         variant="fullscreen"
       />
     );

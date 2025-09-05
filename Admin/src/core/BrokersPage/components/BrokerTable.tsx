@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Eye, Building2, Star } from "lucide-react";
+import { Trash2, Eye, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import Table from "@/components/Table/Table";
 import { EnhancedBroker } from "@/types/broker";
@@ -16,10 +16,7 @@ interface BrokerTableProps {
 
 function BrokerTable({
   brokers,
-  selectionMode,
-  selectedBrokers,
-  onSelectionChange,
-  onRowClick,
+
   onDeleteBroker,
 }: BrokerTableProps) {
   const router = useRouter();
@@ -30,7 +27,7 @@ function BrokerTable({
       false: { color: "bg-red-100 text-red-800", label: "Inactive" },
     };
 
-    const config = statusConfig[isActive];
+    const config = statusConfig[String(isActive) as keyof typeof statusConfig];
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}

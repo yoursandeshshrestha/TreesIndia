@@ -1,7 +1,6 @@
 import {
   WorkerApplicationRequest,
   WorkerApplicationResponse,
-  WorkerApplicationDetail,
 } from "@/types/worker-application";
 import { authenticatedFetch } from "./auth-api";
 import { compressFiles } from "./imageCompression";

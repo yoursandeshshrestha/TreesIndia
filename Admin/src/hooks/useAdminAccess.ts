@@ -3,12 +3,10 @@ import { authUtils } from "@/services/api/auth";
 
 export const useAdminAccess = () => {
   const {
-    data: authData,
     isLoading: authLoading,
     error: authError,
   } = useAuth();
   const {
-    data: userData,
     isLoading: userLoading,
     error: userError,
   } = useCurrentUser();

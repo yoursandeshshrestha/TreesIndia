@@ -47,6 +47,22 @@ func (war *WorkerAssignmentRepository) GetByBookingID(bookingID uint) (*models.W
 	return &assignment, nil
 }
 
+// GetByWorkerAndBooking gets worker assignment by worker ID and booking ID
+func (war *WorkerAssignmentRepository) GetByWorkerAndBooking(workerID uint, bookingID uint) (*models.WorkerAssignment, error) {
+	var assignment models.WorkerAssignment
+	err := war.db.Where("worker_id = ? AND booking_id = ?", workerID, bookingID).
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
+		Preload("Booking.User").
+		Preload("Worker").
+		Preload("AssignedByUser").
+		First(&assignment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &assignment, nil
+}
+
 // Update updates an existing worker assignment
 func (war *WorkerAssignmentRepository) Update(assignment *models.WorkerAssignment) error {
 	return war.db.Save(assignment).Error

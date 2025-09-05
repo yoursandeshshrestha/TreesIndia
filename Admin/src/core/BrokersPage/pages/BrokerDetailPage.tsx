@@ -7,7 +7,8 @@ import { format } from "date-fns";
 import Button from "@/components/Button/Base/Button";
 import { Loader } from "@/components/Loader";
 import { api } from "@/lib/api-client";
-import { EnhancedBroker, User as UserType } from "@/types/broker";
+import { EnhancedBroker } from "@/types/broker";
+import { User as UserType } from "@/types/worker";
 
 export default function BrokerDetailPage() {
   const params = useParams();

@@ -1,18 +1,17 @@
 "use client";
 
 import { useSelector, useDispatch } from "react-redux";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { RootState } from "@/store/store";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
-import { MapPin, Clock, CreditCard, Phone, User, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, Clock, CreditCard, Phone, User } from "lucide-react";
 import { openAddressModal } from "@/store/slices/addressModalSlice";
 import { openSlotModal } from "@/store/slices/slotModalSlice";
 import { openContactInfoModal } from "@/store/slices/contactInfoModalSlice";
 import { resetBooking } from "@/store/slices/bookingSlice";
-import RazorpayCheckout from "@/components/Models/RazorpayCheckout";
+import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
 import { bookingFlowApi } from "@/lib/bookingFlowApi";
 import {
   useCreateBookingWithWallet,
@@ -20,7 +19,6 @@ import {
 } from "@/hooks/useBookingFlow";
 import { toast } from "sonner";
 import { formatDateAndTime } from "@/utils/dateTimeUtils";
-import { formatAmount } from "@/utils/formatters";
 import { BookingSuccess } from "./BookingSuccess";
 import { PaymentMethodModal } from "./PaymentMethodModal";
 
@@ -64,9 +62,6 @@ export function BookingSidebar({
   } | null>(null);
   const [currentBookingId, setCurrentBookingId] = useState<number | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const isWalletBookingLoading =
-    createBookingWithWalletMutation.isPending ||
-    createInquiryBookingWithWalletMutation.isPending;
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
@@ -79,7 +74,7 @@ export function BookingSidebar({
   const isWalletDisabled = (walletSummary?.current_balance || 0) < totalAmount;
 
   // Function to reset all booking data
-  const resetBookingData = () => {
+  const resetBookingData = useCallback(() => {
     // Reset all form data using the correct action
     dispatch(resetBooking());
     setSelectedPaymentMethod(null);
@@ -88,7 +83,7 @@ export function BookingSidebar({
     setCurrentBookingId(null);
     setShowSuccess(false);
     setSuccessMessage("");
-  };
+  }, [dispatch]);
 
   // Reset booking state when component unmounts or user navigates away
   useEffect(() => {
@@ -96,7 +91,7 @@ export function BookingSidebar({
       // Cleanup function - reset booking state when component unmounts
       resetBookingData();
     };
-  }, []);
+  }, [resetBookingData]);
 
   // Reset booking state when service changes (this is handled in BookingPage component)
   // No need for duplicate reset here since BookingPage handles it
@@ -289,7 +284,7 @@ export function BookingSidebar({
     try {
       if (isInquiryService) {
         // Handle inquiry payment verification
-        const verifyResponse = await bookingFlowApi.verifyInquiryPayment({
+        await bookingFlowApi.verifyInquiryPayment({
           service_id: service!.id,
           razorpay_payment_id: paymentData.razorpay_payment_id,
           razorpay_order_id: paymentData.razorpay_order_id,
@@ -307,14 +302,11 @@ export function BookingSidebar({
           return;
         }
 
-        const verifyResponse = await bookingFlowApi.verifyPayment(
-          currentBookingId,
-          {
-            razorpay_payment_id: paymentData.razorpay_payment_id,
-            razorpay_order_id: paymentData.razorpay_order_id,
-            razorpay_signature: paymentData.razorpay_signature,
-          }
-        );
+        await bookingFlowApi.verifyPayment(currentBookingId, {
+          razorpay_payment_id: paymentData.razorpay_payment_id,
+          razorpay_order_id: paymentData.razorpay_order_id,
+          razorpay_signature: paymentData.razorpay_signature,
+        });
 
         setSuccessMessage(
           "Payment successful! Your booking has been confirmed."
@@ -327,12 +319,12 @@ export function BookingSidebar({
       setCurrentBookingId(null);
       setSelectedPaymentMethod(null);
       setIsProcessingPayment(false);
-    } catch (error) {
+    } catch {
       toast.error("Payment verification failed. Please contact support.");
     }
   };
 
-  const handleRazorpayFailure = (error: unknown) => {
+  const handleRazorpayFailure = () => {
     toast.error("Payment failed. Please try again.");
     setShowRazorpayCheckout(false);
     setRazorpayOrder(null);
@@ -622,9 +614,10 @@ export function BookingSidebar({
             <div className="mb-4">
               <button
                 onClick={() => setShowPaymentMethodModal(true)}
-                className="w-full bg-[#00a871] hover:bg-[#009a65] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                disabled={isProcessingPayment}
+                className="w-full bg-[#00a871] hover:bg-[#009a65] disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
               >
-                Pay Now
+                {isProcessingPayment ? "Processing..." : "Pay Now"}
               </button>
             </div>
           )}

@@ -43,7 +43,7 @@ async function fetchReverseGeocode(
         };
       }
     }
-  } catch (backendError) {
+  } catch {
     // Backend geocoding failed, trying Nominatim
   }
 

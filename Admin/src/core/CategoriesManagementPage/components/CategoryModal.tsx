@@ -159,8 +159,8 @@ export function CategoryModal({
               <div>
                 <Checkbox
                   checked={formData.is_active}
-                  onChange={(checked) =>
-                    handleInputChange("is_active", checked)
+                  onChange={(e) =>
+                    handleInputChange("is_active", e.target.checked)
                   }
                   label="Active"
                 />

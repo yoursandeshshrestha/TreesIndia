@@ -1,39 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import { Header as HeaderType } from "@/types/treesindia";
 import { Search, MapPin, ChevronDown } from "lucide-react";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useAppDispatch } from "@/store/hooks";
 import { openLocationModal } from "@/store/slices/locationModalSlice";
-import { useRouter } from "next/navigation";
+import { openSearchModal } from "@/store/slices/searchModalSlice";
 import Link from "next/link";
-import { useState } from "react";
 import { UserMenu } from "./UserMenu";
 
 interface HeaderProps {
-  data: HeaderType;
   className?: string;
 }
 
-export default function Header({ data, className = "" }: HeaderProps) {
+export default function Header({ className = "" }: HeaderProps) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const { location } = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleLocationClick = () => {
+  const handleLocationClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     dispatch(openLocationModal());
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      // Navigate to services page with search query
-      const params = new URLSearchParams();
-      params.set("search", searchQuery.trim());
-      router.push(`/services?${params.toString()}`);
-    }
+    e.stopPropagation();
+    dispatch(openSearchModal());
   };
 
   return (
@@ -75,18 +68,15 @@ export default function Header({ data, className = "" }: HeaderProps) {
             </div>
 
             {/* Search Input */}
-            <form onSubmit={handleSearch} className="flex-1 relative">
-              <div className="relative">
+            <div className="flex-1 relative">
+              <button
+                onClick={handleSearchClick}
+                className="w-full bg-gray-100 text-gray-900 placeholder-gray-500 px-10 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00a871]/20 focus:bg-white transition-all h-12 text-left flex items-center"
+              >
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-                <input
-                  type="text"
-                  placeholder="Search for services..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-100 text-gray-900 placeholder-gray-500 px-10 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00a871]/20 focus:bg-white transition-all h-12"
-                />
-              </div>
-            </form>
+                <span className="text-gray-500">Search for services...</span>
+              </button>
+            </div>
           </div>
 
           {/* Contact Us Button and User Menu */}

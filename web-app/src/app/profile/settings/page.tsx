@@ -1,4 +1,4 @@
-import { SettingsSection } from "@/core/ProfilePage/components/sections/SettingsSection";
+import { SettingsSection } from "@/core/ProfilePage/components/sections/Settings/SettingsSection";
 import React from "react";
 
 export default function SettingsPage() {

@@ -1,15 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ProfileOverview } from "./sections/ProfileOverview";
-import { WalletSection } from "./sections/WalletSection";
-import { BookingsSection } from "./sections/BookingsSection";
-import { MyWorkSection } from "./sections/MyWorkSection";
-import { SubscriptionSection } from "./sections/SubscriptionSection";
-import { RatingsSection } from "./sections/RatingsSection";
-import { SettingsSection } from "./sections/SettingsSection";
-import { AddressSection } from "./sections/AddressSection";
-import { AboutSection } from "./sections/AboutSection";
+import { ProfileOverview } from "./sections/ProfileOverview/ProfileOverview";
+import { WalletSection } from "./sections/Wallet/WalletSection";
+import { BookingsSection } from "./sections/Booking/BookingsSection";
+import { MyWorkSection } from "./sections/MyWork/MyWorkSection";
+import { SubscriptionSection } from "./sections/Subscription/SubscriptionSection";
+import { RatingsSection } from "./sections/Rating/RatingsSection";
+import { SettingsSection } from "./sections/Settings/SettingsSection";
+import { AddressSection } from "./sections/Address/AddressSection";
+import { AboutSection } from "./sections/About/AboutSection";
 
 export function ProfileMainContent() {
   const pathname = usePathname();

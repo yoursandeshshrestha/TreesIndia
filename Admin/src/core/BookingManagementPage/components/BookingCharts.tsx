@@ -1,11 +1,22 @@
 import React from "react";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { Card, CardContent, CardHeader, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { TrendingUp, BarChart3 } from "lucide-react";
 
+interface BookingStats {
+  revenue_analytics?: {
+    last_7_days?: Array<{
+      date: string;
+      revenue: number;
+      bookings: number;
+    }>;
+  };
+  status_breakdown?: Record<string, number>;
+}
+
 interface BookingChartsProps {
-  stats: any;
+  stats: BookingStats | null;
 }
 
 const BookingCharts: React.FC<BookingChartsProps> = ({ stats }) => {
@@ -51,7 +62,8 @@ const BookingCharts: React.FC<BookingChartsProps> = ({ stats }) => {
               {
                 id: "revenueDays",
                 data: revenueData.map((_, index) => index),
-                valueFormatter: (index) => revenueData[index]?.day || "",
+                valueFormatter: (index: number) =>
+                  revenueData[index]?.day || "",
               },
             ]}
             series={[
@@ -85,7 +97,8 @@ const BookingCharts: React.FC<BookingChartsProps> = ({ stats }) => {
               {
                 id: "statusDistribution",
                 data: statusData.map((_, index) => index),
-                valueFormatter: (index) => statusData[index]?.label || "",
+                valueFormatter: (index: number) =>
+                  statusData[index]?.label || "",
               },
             ]}
             series={[

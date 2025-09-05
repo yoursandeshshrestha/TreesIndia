@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
 import bookingReducer from "./slices/bookingSlice";
 import addressModalReducer from "./slices/addressModalSlice";
 import locationModalReducer from "./slices/locationModalSlice";
@@ -11,9 +12,14 @@ import quoteAcceptanceReducer from "./slices/quoteAcceptanceSlice";
 import workerApplicationReducer from "./slices/workerApplicationSlice";
 import brokerApplicationReducer from "./slices/brokerApplicationSlice";
 import workerAssignmentReducer from "./slices/workerAssignmentSlice";
+import locationTrackingReducer from "./slices/locationTrackingSlice";
+import searchReducer from "./slices/searchSlice";
+import searchModalReducer from "./slices/searchModalSlice";
+import serviceDetailModalReducer from "./slices/serviceDetailModalSlice";
 
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     booking: bookingReducer,
     addressModal: addressModalReducer,
     locationModal: locationModalReducer,
@@ -26,6 +32,10 @@ export const store = configureStore({
     workerApplication: workerApplicationReducer,
     brokerApplication: brokerApplicationReducer,
     workerAssignment: workerAssignmentReducer,
+    locationTracking: locationTrackingReducer,
+    search: searchReducer,
+    searchModal: searchModalReducer,
+    serviceDetailModal: serviceDetailModalReducer,
   },
 });
 

@@ -9,6 +9,7 @@ import (
 
 func SetupServiceRoutes(router *gin.RouterGroup) {
 	serviceController := controllers.NewServiceController()
+	searchController := controllers.NewSearchController()
 
 	// Public routes (no authentication required)
 	services := router.Group("/services")
@@ -20,6 +21,11 @@ func SetupServiceRoutes(router *gin.RouterGroup) {
 		services.GET("/categories", serviceController.GetServiceCategories)
 		services.GET("/categories/:id/subcategories", serviceController.GetServiceSubcategories)
 		services.GET("/:id", serviceController.GetServiceByID)
+		
+		// Search routes
+		services.GET("/search/suggestions", searchController.GetSearchSuggestions)
+		services.GET("/search", searchController.SearchServices)
+		services.GET("/search/advanced", searchController.SearchServicesWithFilters)
 	}
 
 	// Admin routes (authentication and admin role required)

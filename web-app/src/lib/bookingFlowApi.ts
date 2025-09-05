@@ -154,7 +154,7 @@ export const bookingFlowApi = {
       scheduled_time: string;
       amount: number;
     }
-  ): Promise<{ data: { payment_order: any } }> => {
+  ): Promise<{ data: { payment_order: Record<string, unknown> } }> => {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/${bookingId}/create-quote-payment`,
       {
@@ -202,7 +202,7 @@ export const bookingFlowApi = {
   // Create booking with wallet payment
   createBookingWithWallet: async (
     bookingData: BookingRequest
-  ): Promise<{ message: string; booking: any }> => {
+  ): Promise<{ message: string; booking: Record<string, unknown> }> => {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/wallet`,
       {
@@ -216,7 +216,7 @@ export const bookingFlowApi = {
   // Create inquiry booking with wallet payment
   createInquiryBookingWithWallet: async (
     bookingData: InquiryBookingRequest
-  ): Promise<{ message: string; booking: any }> => {
+  ): Promise<{ message: string; booking: Record<string, unknown> }> => {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/inquiry/wallet`,
       {

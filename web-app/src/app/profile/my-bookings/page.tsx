@@ -1,4 +1,4 @@
-import { BookingsSection } from "@/core/ProfilePage/components/sections/BookingsSection";
+import { BookingsSection } from "@/core/ProfilePage/components/sections/Booking/BookingsSection";
 import React from "react";
 
 export default function BookingsPage() {
