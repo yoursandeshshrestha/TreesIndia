@@ -4,14 +4,15 @@ import "./globals.css";
 import Providers from "@/providers/Providers";
 import Header from "@/layout/Header";
 import Footer from "@/layout/Footer";
-import LocationModal from "@/components/Models/LocationModal";
+import LocationModal from "@/commonComponents/LocationModel/LocationModal";
 import { AuthModal } from "@/core/AuthRelated";
-import SubcategoriesModal from "@/components/Models/SubcategoriesModal";
-import AddressModal from "@/components/Models/AddressModal";
-import SlotModal from "@/components/Models/SlotModal";
-import { getTreesIndiaData } from "@/lib/data";
+import SubcategoriesModal from "@/core/HomePage/components/SubcategoryOptionModel/SubcategoryOptionModel";
+import AddressModal from "@/commonComponents/AddressModel/AddressModal";
+import SlotModal from "@/core/BookingPage/components/SlotModal";
+import ServiceSearchModal from "@/commonComponents/ServiceSearchModel/ServiceSearchModal";
+import ServiceDetailModalWrapper from "@/commonComponents/ServiceDetailModal/ServiceDetailModalWrapper";
+import AuthLoadingScreen from "@/components/AuthLoadingScreen";
 import { Toaster } from "sonner";
-import NotificationSetup from "@/components/NotificationSetup";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -31,34 +32,33 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const data = getTreesIndiaData();
-
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <Providers>
-          {/* Global Modals */}
-          <LocationModal />
-          <AuthModal />
-          <SubcategoriesModal />
-          <AddressModal />
-          <SlotModal />
+          <AuthLoadingScreen>
+            {/* Global Modals */}
+            <LocationModal />
+            <AuthModal />
+            <SubcategoriesModal />
+            <AddressModal />
+            <SlotModal />
+            <ServiceSearchModal />
+            <ServiceDetailModalWrapper />
 
-          {/* Notification Setup - Handles permission and device registration */}
-          <NotificationSetup />
+            <div className="flex flex-col min-h-screen">
+              {/* Sticky Header */}
+              <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+                <Header />
+              </div>
 
-          <div className="flex flex-col min-h-screen">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
-              <Header data={data.header} />
+              {/* Main Content */}
+              <main className="flex-1 bg-white">{children}</main>
+
+              {/* Global Footer */}
+              <Footer />
             </div>
-
-            {/* Main Content */}
-            <main className="flex-1 bg-white">{children}</main>
-
-            {/* Global Footer */}
-            <Footer />
-          </div>
+          </AuthLoadingScreen>
         </Providers>
 
         {/* Toast Notifications */}
