@@ -14,7 +14,8 @@ import BrokerFilters from "./components/BrokerFilters";
 import BrokerTable from "./components/BrokerTable";
 
 // Types and interfaces
-import { EnhancedBroker, BrokerFilterState, User } from "@/types/broker";
+import { EnhancedBroker, BrokerFilterState } from "@/types/broker";
+import { User } from "@/types/worker";
 
 interface BrokersResponse {
   success: boolean;
@@ -39,7 +40,6 @@ function BrokersPage() {
   // State management
   const [brokers, setBrokers] = useState<EnhancedBroker[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -93,7 +93,6 @@ function BrokersPage() {
 
   const loadBrokers = async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -169,7 +168,6 @@ function BrokersPage() {
       setTotalPages(response.data.pagination.total_pages);
     } catch (error) {
       console.error("Error loading brokers:", error);
-      setError("Failed to load brokers");
       toast.error("Failed to load brokers");
     } finally {
       setIsLoading(false);
