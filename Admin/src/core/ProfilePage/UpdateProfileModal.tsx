@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Upload, User } from "lucide-react";
+import { X } from "lucide-react";
 import Image from "next/image";
 import type { User as UserType } from "@/types/api";
 

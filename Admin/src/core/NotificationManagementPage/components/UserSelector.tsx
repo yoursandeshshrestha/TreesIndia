@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { X, Search, Users, Check, User } from "lucide-react";
-import { api } from "@/lib/api-client";
 import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 
