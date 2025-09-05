@@ -7,7 +7,7 @@ import { Loader, Image as ImageIcon } from "lucide-react";
 
 // Components
 import { BannerHeader } from "./components/BannerHeader";
-import { BannerFilters } from "./components/BannerFilters";
+import { BannerFiltersComponent } from "./components/BannerFilters";
 import { BannerTable } from "./components/BannerTable";
 import { BannerModal } from "./components/BannerModal";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
@@ -26,12 +26,8 @@ function BannerManagementPage() {
   const debouncedSearch = useDebounce(localSearch, 300);
 
   // State management
-  const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,8 +46,6 @@ function BannerManagementPage() {
 
   const {
     banners: apiBanners,
-    isLoading: apiLoading,
-    error: apiError,
     createBanner,
     updateBanner,
     deleteBanner,
@@ -63,7 +57,6 @@ function BannerManagementPage() {
   useEffect(() => {
     if (debouncedSearch !== filters.search) {
       setFilters((prev) => ({ ...prev, search: debouncedSearch }));
-      setCurrentPage(1);
     }
     // Stop searching when debounced value is applied
     setIsSearching(false);
@@ -79,7 +72,7 @@ function BannerManagementPage() {
       toast.success(`Banner "${bannerData.title}" created successfully`);
       setIsModalOpen(false);
       fetchBanners();
-    } catch (err) {
+    } catch {
       toast.error("Failed to create banner. Please try again.");
     } finally {
       setIsCreating(false);
@@ -99,7 +92,7 @@ function BannerManagementPage() {
       setIsModalOpen(false);
       setSelectedBanner(null);
       fetchBanners();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update banner. Please try again.");
     } finally {
       setIsUpdating(false);
@@ -113,7 +106,7 @@ function BannerManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedBanner(null);
       fetchBanners();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete banner. Please try again.");
     }
   };
@@ -123,14 +116,6 @@ function BannerManagementPage() {
   const handleToggleBannerStatus = async (banner: PromotionBanner) => {
     if (togglingItems.has(banner.id)) return;
 
-    // Optimistic update - update UI immediately
-    const originalBanners = [...(apiBanners || [])];
-    const updatedBanners = (apiBanners || []).map((b) =>
-      b.id === banner.id ? { ...b, is_active: !b.is_active } : b
-    );
-    // Note: We can't directly set apiBanners as it comes from the hook
-    // The optimistic update will be handled by the API response
-
     try {
       setTogglingItems((prev) => new Set(prev).add(banner.id));
       await toggleBannerStatus(banner.id);
@@ -139,7 +124,7 @@ function BannerManagementPage() {
           !banner.is_active ? "activated" : "deactivated"
         } successfully`
       );
-    } catch (err) {
+    } catch {
       toast.error("Failed to toggle banner status. Please try again.");
     } finally {
       setTogglingItems((prev) => {
@@ -162,24 +147,11 @@ function BannerManagementPage() {
 
   const handleFiltersChange = (newFilters: BannerFiltersType) => {
     setFilters(newFilters);
-    setCurrentPage(1);
   };
 
   const handleSearch = (search: string) => {
     setLocalSearch(search);
     setIsSearching(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "all",
-      sortBy: "title",
-      sortOrder: "asc",
-    });
-    setLocalSearch("");
-    setCurrentPage(1);
-    toast.success("Filters cleared successfully");
   };
 
   // Filter banners based on current filters
@@ -218,7 +190,7 @@ function BannerManagementPage() {
     }
   });
 
-  if (isLoading && (!apiBanners || apiBanners.length === 0)) {
+  if (!apiBanners || apiBanners.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="animate-spin" />
@@ -231,7 +203,7 @@ function BannerManagementPage() {
       <BannerHeader
         totalBanners={apiBanners?.length || 0}
         activeBanners={(apiBanners || []).filter((b) => b.is_active).length}
-        onCreateBanner={() => setIsModalOpen(true)}
+        onCreateNew={() => setIsModalOpen(true)}
         onRefresh={fetchBanners}
       />
 
@@ -274,7 +246,7 @@ function BannerManagementPage() {
         variant="danger"
       />
 
-      <BannerFilters
+      <BannerFiltersComponent
         filters={filters}
         onFiltersChange={handleFiltersChange}
         onSearch={handleSearch}
@@ -290,7 +262,7 @@ function BannerManagementPage() {
         onToggleBannerStatus={handleToggleBannerStatus}
       />
 
-      {sortedBanners.length === 0 && !isLoading && (
+      {sortedBanners.length === 0 && (
         <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
           <div className="text-center">
             <ImageIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />

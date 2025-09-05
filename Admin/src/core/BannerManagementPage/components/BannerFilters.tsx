@@ -5,7 +5,7 @@ import { Search, X } from "lucide-react";
 import CustomInput from "@/components/Input/Base/Input";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Button from "@/components/Button/Base/Button";
-import { BannerFilters } from "../types";
+import { type BannerFilters } from "../types";
 
 interface BannerFiltersProps {
   filters: BannerFilters;
@@ -15,7 +15,7 @@ interface BannerFiltersProps {
   localSearch?: string;
 }
 
-export const BannerFilters: React.FC<BannerFiltersProps> = ({
+export const BannerFiltersComponent: React.FC<BannerFiltersProps> = ({
   filters,
   onFiltersChange,
   onSearch,

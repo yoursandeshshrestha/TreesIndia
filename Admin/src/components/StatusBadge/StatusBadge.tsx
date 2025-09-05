@@ -90,7 +90,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         type
       )} ${className}`}
     >
-      {getStatusLabel(status, type)}
+      {status ? getStatusLabel(status, type) : "Unknown"}
     </span>
   );
 };
