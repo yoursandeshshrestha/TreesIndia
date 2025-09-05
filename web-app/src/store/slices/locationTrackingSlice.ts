@@ -36,7 +36,7 @@ export const connectToWebSocket = createAsyncThunk(
   }: {
     userId: number;
     roomId: number;
-    userType: "worker" | "user";
+    userType: "worker" | "normal" | "admin";
   }) => {
     return new Promise<void>((resolve, reject) => {
       locationTrackingWebSocket.connect(userId, roomId, userType, {
@@ -65,7 +65,7 @@ export const startLocationTracking = createAsyncThunk(
 export const stopLocationTracking = createAsyncThunk(
   "locationTracking/stopTracking",
   async (assignmentId: number) => {
-    locationTrackingWebSocket.stopLocationTracking(assignmentId);
+    locationTrackingWebSocket.stopLocationTracking();
     return assignmentId;
   }
 );
@@ -148,7 +148,7 @@ const locationTrackingSlice = createSlice({
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
     },
-    resetState: (state) => {
+    resetState: () => {
       return initialState;
     },
   },

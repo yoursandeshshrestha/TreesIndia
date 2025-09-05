@@ -7,7 +7,7 @@ import Lottie from "lottie-react";
 import { X, ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeAuthModal } from "@/store/slices/authModalSlice";
 import { PhoneInput } from "./PhoneInput";
@@ -324,6 +324,7 @@ export const AuthModal: React.FC = () => {
                       duration={60}
                       onResend={handlePhoneSubmit}
                       className="mt-4"
+                      isLoading={isLoading}
                     />
                   </motion.div>
                 )}

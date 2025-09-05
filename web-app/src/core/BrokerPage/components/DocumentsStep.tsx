@@ -3,9 +3,9 @@ import FileUploadItem from "./FileUploadItem";
 
 interface DocumentsStepProps {
   formData: {
-    aadhar_card?: File | null;
-    pan_card?: File | null;
-    profile_pic?: File | null;
+    aadhar_card: File | null;
+    pan_card: File | null;
+    profile_pic: File | null;
   };
   errors: Record<string, string>;
   onFileChange: (field: string, file: File | null) => void;

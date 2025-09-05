@@ -16,11 +16,7 @@ export default function ServicePage() {
   const subcategoryId = searchParams.get("subcategory");
 
   // TanStack Query hooks
-  const {
-    data: categoriesResponse,
-    isLoading: categoriesLoading,
-    error: categoriesError,
-  } = useCategories();
+  const { data: categoriesResponse } = useCategories();
 
   const {
     data: subcategoriesResponse,

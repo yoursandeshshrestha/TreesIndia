@@ -11,7 +11,7 @@ import {
   Briefcase,
   MessageCircle,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
 import { useRouter } from "next/navigation";

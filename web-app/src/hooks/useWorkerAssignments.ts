@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "@/lib/auth-api";
 import {
   workerAssignmentApi,
-  type WorkerAssignment,
   type WorkerAssignmentFilters,
   type AcceptAssignmentRequest,
   type RejectAssignmentRequest,
@@ -126,7 +125,6 @@ export function useWorkerAssignments(filters?: WorkerAssignmentFilters) {
 
 // Hook for getting a specific worker assignment
 export function useWorkerAssignment(assignmentId: number) {
-  const queryClient = useQueryClient();
   const token = authAPI.getAccessToken();
 
   const {

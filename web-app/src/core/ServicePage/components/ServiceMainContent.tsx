@@ -12,7 +12,6 @@ interface ServiceMainContentProps {
 }
 
 export function ServiceMainContent({
-  selectedCategory,
   selectedSubcategory,
   services,
   servicesLoading,

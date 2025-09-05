@@ -4,8 +4,6 @@ import {
   Address,
   BookingRequest,
   AvailableSlot,
-  BookingResponse,
-  PaymentOrderResponse,
 } from "@/types/booking";
 
 // Define specific types for booking result and payment order
@@ -204,7 +202,7 @@ const bookingSlice = createSlice({
     },
 
     // Reset booking state
-    resetBooking: (state) => {
+    resetBooking: () => {
       return initialState;
     },
 

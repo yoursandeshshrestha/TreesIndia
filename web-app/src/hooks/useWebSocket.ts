@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface WebSocketMessage {
   type: string;
   room_id?: number;
   user_id?: number;
   message?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -161,7 +161,7 @@ export function useWebSocket({
     return () => {
       disconnect();
     };
-  }, [enabled, roomId, user?.id]);
+  }, [enabled, roomId, user?.id, connect, disconnect]);
 
   return {
     isConnected,

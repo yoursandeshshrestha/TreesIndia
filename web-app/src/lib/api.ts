@@ -4,6 +4,7 @@ import {
   SubcategoriesResponse,
   CategoriesResponse,
   ServicesResponse,
+  Service,
 } from "@/types/api";
 
 const API_BASE_URL =
@@ -123,7 +124,7 @@ export async function fetchServices(params?: {
 export async function fetchServiceById(id: number): Promise<{
   success: boolean;
   message: string;
-  data: Record<string, unknown>;
+  data: Service;
 }> {
   try {
     const url = `${API_BASE_URL}/services/${id}`;

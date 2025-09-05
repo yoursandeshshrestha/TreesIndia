@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileText } from "lucide-react";
+import Image from "next/image";
 
 interface FileUploadItemProps {
   field: string;
@@ -39,11 +40,13 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
         // Show preview when file is uploaded
         <div className="border-2 border-gray-300 rounded-lg p-4">
           <div className="space-y-3">
-            <div className="relative">
-              <img
+            <div className="relative w-full h-32">
+              <Image
                 src={previewUrl}
                 alt={`${label} preview`}
-                className="w-full h-32 object-cover rounded-lg"
+                fill
+                className="object-cover rounded-lg"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
               <button
                 type="button"

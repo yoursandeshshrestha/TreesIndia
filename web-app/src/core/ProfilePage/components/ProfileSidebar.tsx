@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { useAuth } from "@/hooks/useAuth";
+import { ConfirmModal } from "@/commonComponents/ConfirmModal";
 import {
   User,
   Wallet,

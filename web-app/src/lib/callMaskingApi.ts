@@ -1,4 +1,7 @@
-import { apiClient } from "./api-client";
+import { authenticatedFetch } from "./auth-api";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 export interface CallMaskingStatus {
   available: boolean;
@@ -27,31 +30,65 @@ export interface TestCallResponse {
 export const callMaskingApi = {
   // Initiate a call
   initiateCall: async (bookingId: number): Promise<void> => {
-    const response = await apiClient.post("/call-masking/call", {
-      booking_id: bookingId,
-    });
-    return response.data;
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/call`,
+      {
+        method: "POST",
+        body: JSON.stringify({ booking_id: bookingId }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   },
 
   // Get call logs for a booking
   getCallLogs: async (bookingId: number): Promise<CallLog[]> => {
-    const response = await apiClient.get(`/call-masking/logs/${bookingId}`);
-    return response.data.data;
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/logs/${bookingId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data;
   },
 
   // Get call masking status for a booking
   getCallMaskingStatus: async (
     bookingId: number
   ): Promise<CallMaskingStatus> => {
-    const response = await apiClient.get(`/call-masking/status/${bookingId}`);
-    return response.data.data;
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/status/${bookingId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data;
   },
 
   // Make a test call (for development)
   testCall: async (phoneNumber: string): Promise<TestCallResponse> => {
-    const response = await apiClient.post(
-      `/call-masking/test?phone_number=${phoneNumber}`
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/test?phone_number=${phoneNumber}`,
+      {
+        method: "POST",
+      }
     );
-    return response.data.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data;
   },
 };

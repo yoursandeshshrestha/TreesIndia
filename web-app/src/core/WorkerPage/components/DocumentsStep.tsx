@@ -32,7 +32,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         <FileUploadItem
           field="aadhar_card"
           label="Aadhaar Card"
-          file={formData.aadhar_card}
+          file={formData.aadhar_card ?? null}
           error={errors.aadhar_card}
           onFileChange={onFileChange}
         />
@@ -40,7 +40,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         <FileUploadItem
           field="pan_card"
           label="PAN Card"
-          file={formData.pan_card}
+          file={formData.pan_card ?? null}
           error={errors.pan_card}
           onFileChange={onFileChange}
         />
@@ -48,7 +48,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         <FileUploadItem
           field="profile_pic"
           label="Profile Photo"
-          file={formData.profile_pic}
+          file={formData.profile_pic ?? null}
           error={errors.profile_pic}
           onFileChange={onFileChange}
         />
@@ -56,7 +56,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         <FileUploadItem
           field="police_verification"
           label="Police Verification"
-          file={formData.police_verification}
+          file={formData.police_verification ?? null}
           error={errors.police_verification}
           onFileChange={onFileChange}
         />

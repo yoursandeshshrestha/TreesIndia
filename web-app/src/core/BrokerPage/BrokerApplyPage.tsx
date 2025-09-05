@@ -10,11 +10,10 @@ import {
 } from "lucide-react";
 import { useBrokerApplication } from "@/hooks/useBrokerApplication";
 import { BrokerApplicationRequest } from "@/types/broker-application";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";
-import Image from "next/image";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import LoadingSpinner from "@/commonComponents/LoadingSpinner/LoadingSpinner";
 
 // Import step components
 import {
@@ -59,21 +58,27 @@ const steps = [
 ];
 
 export default function BrokerApplyPage() {
-  const {
-    userApplication,
-    isLoadingApplication,
-    applicationError,
-    submitApplication,
-    isSubmitting,
-    submitError,
-  } = useBrokerApplication();
+  const { userApplication, submitApplication, isSubmitting, submitError } =
+    useBrokerApplication();
 
   const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState<Partial<BrokerApplicationRequest>>({
+  const [formData, setFormData] = useState<
+    Omit<
+      Partial<BrokerApplicationRequest>,
+      "aadhar_card" | "pan_card" | "profile_pic"
+    > & {
+      aadhar_card: File | null;
+      pan_card: File | null;
+      profile_pic: File | null;
+    }
+  >({
     license: "",
     agency: "",
     contact_info: "{}",
     address: "{}",
+    aadhar_card: null,
+    pan_card: null,
+    profile_pic: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successAnimation, setSuccessAnimation] = useState<object | null>(null);
@@ -261,8 +266,8 @@ export default function BrokerApplyPage() {
   // Show loading state while checking authentication
   if (authLoading) {
     return (
-      <LoadingSpinner 
-        message="Checking authentication..." 
+      <LoadingSpinner
+        message="Checking authentication..."
         variant="fullscreen"
       />
     );

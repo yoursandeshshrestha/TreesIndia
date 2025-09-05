@@ -40,7 +40,7 @@ async function fetchReverseGeocode(latitude: number, longitude: number) {
         };
       }
     }
-  } catch (backendError) {
+  } catch {
     // Backend geocoding failed, trying Nominatim
   }
 
@@ -55,8 +55,6 @@ async function fetchReverseGeocode(latitude: number, longitude: number) {
 
   const data = await response.json();
   const address = data.address;
-
-
 
   // Enhanced city extraction logic
   const city =
@@ -160,7 +158,6 @@ export function useLocation() {
       dispatch(setLocationLoading(false));
       return detectedLocation;
     } catch (gpsError) {
-
       // Fallback: try to get location from IP (less accurate but available)
       try {
         const detectedLocation = await fetchIPLocation();
@@ -168,7 +165,7 @@ export function useLocation() {
         localStorage.setItem("userLocation", JSON.stringify(detectedLocation));
         dispatch(setLocationLoading(false));
         return detectedLocation;
-      } catch (ipError) {
+      } catch {
         // IP-based location detection also failed
       }
 
@@ -214,7 +211,7 @@ export function useLocation() {
       try {
         const parsedLocation = JSON.parse(savedLocation);
         dispatch(setLocation(parsedLocation));
-      } catch (err) {
+      } catch {
         localStorage.removeItem("userLocation");
         // Show location modal if saved location is invalid
         dispatch(openLocationModal());

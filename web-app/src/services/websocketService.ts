@@ -642,7 +642,7 @@ class LocationTrackingWebSocketService {
   }
 
   // Send test location update for debugging
-  sendTestLocationUpdate(_assignmentId: number) {
+  sendTestLocationUpdate() {
     if (!this.currentUserId || !this.currentRoomId) {
       console.error("[WebSocket] Not connected to WebSocket");
       return;
@@ -718,7 +718,7 @@ class LocationTrackingWebSocketService {
       };
 
       this.sendMessage(message);
-    } catch (_error) {
+    } catch {
       // Send join message without location if geolocation fails
       const message: WorkerJoinMessage = {
         type: "worker_join",

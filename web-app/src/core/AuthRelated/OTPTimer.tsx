@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 
 interface OTPTimerProps {
   duration: number; // in seconds
   onExpire?: () => void;
   onResend?: () => void;
   className?: string;
+  isLoading?: boolean;
 }
 
 export const OTPTimer: React.FC<OTPTimerProps> = ({
@@ -15,6 +16,7 @@ export const OTPTimer: React.FC<OTPTimerProps> = ({
   onExpire,
   onResend,
   className = "",
+  isLoading = false,
 }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isExpired, setIsExpired] = useState(false);
@@ -59,9 +61,17 @@ export const OTPTimer: React.FC<OTPTimerProps> = ({
       ) : (
         <button
           onClick={handleResend}
-          className="text-sm text-[#006845] hover:text-[#006845]/80 font-medium transition-colors"
+          disabled={isLoading}
+          className="text-sm text-[#006845] hover:text-[#006845]/80 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
         >
-          Resend code
+          {isLoading ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Resending...</span>
+            </>
+          ) : (
+            <span>Resend code</span>
+          )}
         </button>
       )}
     </div>

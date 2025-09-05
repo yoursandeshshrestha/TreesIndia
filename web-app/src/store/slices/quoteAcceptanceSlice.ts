@@ -1,11 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { Booking } from "@/lib/bookingApi";
 import { AvailableSlot } from "@/types/booking";
-import {
-  useCreateQuotePayment,
-  useVerifyQuotePayment,
-  useProcessWalletPayment,
-} from "@/hooks/useBookingFlow";
 
 export type PaymentMethod = "wallet" | "razorpay";
 export type QuoteStep = "date" | "time" | "payment" | "processing";
