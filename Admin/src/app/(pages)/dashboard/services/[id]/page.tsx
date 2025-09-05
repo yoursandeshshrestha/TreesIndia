@@ -1,11 +1,12 @@
 import ServiceDetailPage from "@/core/ServicesManagementPage/components/ServiceDetailPage";
 
 interface ServiceDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ServiceDetailPageRoute({ params }: ServiceDetailPageProps) {
-  return <ServiceDetailPage serviceId={params.id} />;
+export default async function ServiceDetailPageRoute({ params }: ServiceDetailPageProps) {
+  const { id } = await params;
+  return <ServiceDetailPage serviceId={id} />;
 }
