@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
@@ -45,11 +45,9 @@ function ServicesManagementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const isLoadingRef = useRef(false);
 
   // Modal states
@@ -80,23 +78,11 @@ function ServicesManagementPage() {
     }
   }, [debouncedSearch, filters.search]);
 
-  // Load services when filters or pagination changes
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      loadServices();
-    }, 300); // Debounce filter changes
-
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, itemsPerPage, filters]);
-
-  // Remove automatic subcategory loading - will be loaded on dropdown open
-
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     if (isLoadingRef.current) return; // Prevent multiple simultaneous calls
 
     isLoadingRef.current = true;
     setIsLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -129,22 +115,28 @@ function ServicesManagementPage() {
 
         setServices(services);
         setTotalPages(pagination.total_pages || 1);
-        setTotalItems(pagination.total || services.length);
       } else {
         // Fallback for old response structure
         const services = responseData || [];
         setServices(services);
         setTotalPages(1);
-        setTotalItems(services.length);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load services");
+    } catch {
       toast.error("Error loading services");
     } finally {
       setIsLoading(false);
       isLoadingRef.current = false;
     }
-  };
+  }, [currentPage, itemsPerPage, filters]);
+
+  // Load services when filters or pagination changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadServices();
+    }, 300); // Debounce filter changes
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, itemsPerPage, filters, loadServices]);
 
   const loadCategories = async () => {
     setIsLoadingCategories(true);
@@ -152,8 +144,7 @@ function ServicesManagementPage() {
       const response = await apiClient.get("/services/categories");
       const categories = response.data.data || [];
       setCategories(categories);
-    } catch (err) {
-      console.error("Failed to load categories:", err);
+    } catch {
       toast.error("Failed to load categories");
     } finally {
       setIsLoadingCategories(false);
@@ -170,8 +161,7 @@ function ServicesManagementPage() {
       const response = await apiClient.get(url);
       const subcategories = response.data.data || [];
       setSubcategories(subcategories);
-    } catch (err) {
-      console.error("Failed to load subcategories:", err);
+    } catch {
       toast.error("Failed to load subcategories");
     } finally {
       setIsLoadingSubcategories(false);
@@ -192,8 +182,8 @@ function ServicesManagementPage() {
         const response = await apiClient.get("/subcategories");
         const subcategories = response.data.data || [];
         setSubcategories(subcategories);
-      } catch (err) {
-        console.error("Failed to load subcategories:", err);
+      } catch {
+        // Handle error silently for dropdown
       }
     }
   };
@@ -206,7 +196,7 @@ function ServicesManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedService(null);
       loadServices();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete service. Please try again.");
     } finally {
       setIsLoading(false);
@@ -235,7 +225,7 @@ function ServicesManagementPage() {
       );
       // Refresh data to ensure consistency
       loadServices();
-    } catch (err) {
+    } catch {
       // Revert optimistic update on error
       setServices(originalServices);
       toast.error("Failed to toggle service status. Please try again.");
@@ -319,7 +309,7 @@ function ServicesManagementPage() {
       setIsEditModalOpen(false);
       setSelectedService(null);
       loadServices();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update service. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -499,13 +489,7 @@ function ServicesManagementPage() {
             onToggleServiceStatus={handleToggleServiceStatus}
           />
         ) : (
-          <ServiceGrid
-            services={filteredServices}
-            togglingItems={togglingItems}
-            onEditService={handleEditServiceWrapper}
-            onDeleteService={handleDeleteServiceClick}
-            onToggleServiceStatus={handleToggleServiceStatus}
-          />
+          <ServiceGrid services={filteredServices} />
         )}
 
         {filteredServices.length === 0 && !isLoading && (

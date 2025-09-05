@@ -65,14 +65,6 @@ const NotificationStatsTab: React.FC = () => {
     return colors[type as keyof typeof colors] || colors.system;
   };
 
-  const getTrendIcon = (current: number, previous: number) => {
-    if (current > previous) {
-      return <TrendingUp className="text-green-600" size={16} />;
-    } else if (current < previous) {
-      return <TrendingDown className="text-red-600" size={16} />;
-    }
-    return null;
-  };
 
   if (isLoading) {
     return (
@@ -251,7 +243,7 @@ const NotificationStatsTab: React.FC = () => {
         
         <div className="p-6">
           <div className="grid grid-cols-7 gap-4">
-            {stats.by_date.map((day, index) => (
+            {stats.by_date.map((day) => (
               <div key={day.date} className="text-center">
                 <div className="text-sm text-gray-500 mb-2">
                   {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}

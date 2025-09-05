@@ -16,10 +16,7 @@ interface RoleApplicationTableProps {
 
 function RoleApplicationTable({
   applications,
-  selectionMode,
-  selectedApplications,
-  onSelectionChange,
-  onRowClick,
+
   onDeleteApplication,
 }: RoleApplicationTableProps) {
   const router = useRouter();
@@ -87,10 +84,6 @@ function RoleApplicationTable({
       };
     }
     return { city: "Not provided", state: "Not provided" };
-  };
-
-  const getWorkerType = (application: EnhancedRoleApplication) => {
-    return application.worker?.worker_type || "normal";
   };
 
   const columns = [

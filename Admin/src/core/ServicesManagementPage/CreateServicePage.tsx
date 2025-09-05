@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Package, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import DurationPicker from "@/components/DurationPicker";
-import Checkbox from "@/components/Checkbox/Checkbox";
 import { Category, Subcategory, CreateServiceRequest } from "./types";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
@@ -143,7 +142,6 @@ export default function CreateServicePage() {
         service_area_ids: formData.service_area_ids,
       };
 
-      let response;
       if (selectedFiles.length > 0) {
         // Use FormData for file upload
         const formDataToSend = new FormData();
@@ -156,10 +154,10 @@ export default function CreateServicePage() {
           formDataToSend.append("images", file);
         });
 
-        response = await apiClient.post("/admin/services", formDataToSend);
+        await apiClient.post("/admin/services", formDataToSend);
       } else {
         // Use JSON for data without files
-        response = await apiClient.post("/admin/services", serviceData);
+        await apiClient.post("/admin/services", serviceData);
       }
 
       toast.success("Service created successfully!");

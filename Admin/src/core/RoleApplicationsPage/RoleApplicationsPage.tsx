@@ -46,16 +46,13 @@ function RoleApplicationsPage() {
     []
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-
-  const [selectionMode, setSelectionMode] = useState(false);
   const [selectedApplications, setSelectedApplications] = useState<string[]>(
     []
   );
+  const [selectionMode] = useState(false);
 
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -100,14 +97,8 @@ function RoleApplicationsPage() {
     }
   }, [debouncedSearch, filters.search]);
 
-  // Load applications when filters or pagination changes
-  useEffect(() => {
-    loadApplications();
-  }, [currentPage, itemsPerPage, filters]);
-
   const loadApplications = async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -141,16 +132,18 @@ function RoleApplicationsPage() {
 
       setApplications(transformedApplications);
       setTotalPages(response?.data?.pagination?.total_pages || 1);
-      setTotalItems(response?.data?.pagination?.total || 0);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load applications"
-      );
+    } catch {
       toast.error("Error loading applications");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Load applications when filters or pagination changes
+  useEffect(() => {
+    loadApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, filters]);
 
   const handleDeleteApplication = async (
     application: EnhancedRoleApplication
@@ -161,7 +154,7 @@ function RoleApplicationsPage() {
       setIsDeleteModalOpen(false);
       setSelectedApplication(null);
       loadApplications();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete application");
     }
   };
@@ -171,18 +164,6 @@ function RoleApplicationsPage() {
   ) => {
     setSelectedApplication(application);
     setIsDeleteModalOpen(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "",
-      requested_role: "",
-      date_from: "",
-      date_to: "",
-    });
-    setLocalSearch("");
-    setCurrentPage(1);
   };
 
   // Filter applications based on current filters

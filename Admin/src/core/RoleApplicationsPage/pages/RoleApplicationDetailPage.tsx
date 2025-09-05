@@ -5,12 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  User,
   MapPin,
   FileText,
   Briefcase,
   Building,
-  Check,
   XCircle,
   Phone,
   Mail,
@@ -20,7 +18,6 @@ import {
   Shield,
   Award,
   Globe,
-  Navigation,
 } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "@/lib/api-client";
@@ -28,7 +25,7 @@ import { EnhancedRoleApplication } from "@/types/roleApplication";
 import Button from "@/components/Button/Base/Button";
 import { Loader } from "@/components/Loader";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
-import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
+
 import Textarea from "@/components/Textarea/Base/Textarea";
 import Modal from "@/components/Model/Base/Model";
 
@@ -41,8 +38,6 @@ export default function RoleApplicationDetailPage() {
     useState<EnhancedRoleApplication | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -56,6 +51,7 @@ export default function RoleApplicationDetailPage() {
     if (applicationId) {
       loadApplicationDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
   const loadApplicationDetails = async () => {
@@ -97,6 +93,7 @@ export default function RoleApplicationDetailPage() {
       setShowAcceptModal(false);
       loadApplicationDetails();
     } catch (err) {
+      console.error("Failed to approve application", err);
       toast.error("Failed to approve application");
     } finally {
       setIsAccepting(false);
@@ -119,6 +116,7 @@ export default function RoleApplicationDetailPage() {
       setRejectNotes("");
       loadApplicationDetails();
     } catch (err) {
+      console.error("Failed to reject application", err);
       toast.error("Failed to reject application");
     } finally {
       setIsRejecting(false);
@@ -128,15 +126,14 @@ export default function RoleApplicationDetailPage() {
   const handleDeleteApplication = async () => {
     if (!application) return;
 
-    setIsDeleting(true);
     try {
       await api.delete(`/admin/role-applications/${application.ID}`);
       toast.success("Application deleted successfully");
       router.push("/dashboard/role-applications");
     } catch (err) {
+      console.error("Failed to delete application", err);
       toast.error("Failed to delete application");
     } finally {
-      setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
