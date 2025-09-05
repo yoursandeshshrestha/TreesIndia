@@ -2,10 +2,19 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Clock, MapPin, Phone, Loader2, User, Navigation } from "lucide-react";
+import {
+  Clock,
+  MapPin,
+  Phone,
+  Loader2,
+  User,
+  Navigation,
+  CreditCard,
+} from "lucide-react";
 import type { Booking } from "@/lib/bookingApi";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
+import { useBookingPaymentSegments } from "@/hooks/usePaymentSegments";
 
 interface MainBookingCardProps {
   booking: Booking;
@@ -13,6 +22,8 @@ interface MainBookingCardProps {
   onAcceptQuote?: (booking: Booking) => void;
   onRejectQuote?: (booking: Booking) => void;
   onPayNow?: (booking: Booking) => void;
+  onViewPaymentSegments?: (booking: Booking) => void;
+  onPayNextSegment?: (booking: Booking) => void;
   showActions?: boolean;
   isAcceptingQuote?: boolean;
   isPaying?: boolean;
@@ -24,11 +35,24 @@ export function MainBookingCard({
   onAcceptQuote,
   onRejectQuote,
   onPayNow,
+  onViewPaymentSegments,
+  onPayNextSegment,
   showActions = true,
   isAcceptingQuote = false,
   isPaying = false,
 }: MainBookingCardProps) {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+  // Check if this booking has payment segments
+  const { hasPaymentSegments, paymentProgress, isLoadingSegments } =
+    useBookingPaymentSegments(booking.ID || booking.id);
+
+  // Check if there are pending segments to pay
+  const hasPendingSegments =
+    paymentProgress &&
+    paymentProgress.segments.some(
+      (segment) => segment.status === "pending" || segment.status === "overdue"
+    );
 
   const getStatusConfig = (
     status: string,
@@ -497,6 +521,32 @@ export function MainBookingCard({
                   ) : (
                     "Pay Now"
                   )}
+                </button>
+              )}
+
+              {/* Pay Next Segment Button - Show if there are pending segments */}
+              {hasPendingSegments && onPayNextSegment && (
+                <button
+                  onClick={() => onPayNextSegment(booking)}
+                  className="w-full px-3 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Pay Next Segment</span>
+                  </div>
+                </button>
+              )}
+
+              {/* Payment Segments Button - Show if booking has payment segments */}
+              {hasPaymentSegments && onViewPaymentSegments && (
+                <button
+                  onClick={() => onViewPaymentSegments(booking)}
+                  className="w-full px-3 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span>View Payment Segments</span>
+                  </div>
                 </button>
               )}
 

@@ -276,3 +276,26 @@ export const api = {
   delete: <T = ApiResponseData>(url: string, config?: AxiosRequestConfig) =>
     apiClient.delete<T>(url, config).then((response) => response.data),
 };
+
+// Payment Segment API functions
+export const getPaymentSegments = async (bookingId: number) => {
+  return api.get(`/bookings/${bookingId}/payment-segments`);
+};
+
+export const getPendingSegments = async (bookingId: number) => {
+  return api.get(`/bookings/${bookingId}/payment-segments/pending`);
+};
+
+export const getPaidSegments = async (bookingId: number) => {
+  return api.get(`/bookings/${bookingId}/payment-segments/paid`);
+};
+
+export const createSegmentPayment = async (
+  bookingId: number,
+  data: {
+    segment_number: number;
+    amount: number;
+  }
+) => {
+  return api.post(`/bookings/${bookingId}/payment-segments/pay`, data);
+};

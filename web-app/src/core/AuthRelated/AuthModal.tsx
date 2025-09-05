@@ -30,6 +30,7 @@ export const AuthModal: React.FC = () => {
   const [phoneError, setPhoneError] = useState("");
   const [otpError, setOtpError] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 
   // Load success animation
   useEffect(() => {
@@ -45,18 +46,21 @@ export const AuthModal: React.FC = () => {
     loadAnimation();
   }, []);
 
-  // Reset state when modal opens/closes
+  // Reset state when modal closes (not when it opens)
   useEffect(() => {
     if (!isOpen) {
-      setStep("phone");
-      setPhone("");
-      setOtp("");
-      setPhoneError("");
-      setOtpError("");
-      setIsNewUser(false);
-      clearError();
+      // Only reset state when modal is actually closed and not in the middle of OTP verification
+      if (!isVerifyingOTP) {
+        setStep("phone");
+        setPhone("");
+        setOtp("");
+        setPhoneError("");
+        setOtpError("");
+        setIsNewUser(false);
+        clearError();
+      }
     }
-  }, [isOpen, clearError]);
+  }, [isOpen, clearError, isVerifyingOTP]);
 
   // Handle phone number validation
   const validatePhone = (phoneNumber: string): boolean => {
@@ -108,6 +112,7 @@ export const AuthModal: React.FC = () => {
       return;
     }
 
+    setIsVerifyingOTP(true);
     try {
       const fullPhone = countryCode + phone;
       const response = await verifyOTP(fullPhone, otpToUse);
@@ -116,6 +121,7 @@ export const AuthModal: React.FC = () => {
 
       // Auto-close modal and redirect after success
       setTimeout(() => {
+        setIsVerifyingOTP(false);
         dispatch(closeAuthModal());
         if (redirectTo) {
           router.push(redirectTo);
@@ -123,6 +129,8 @@ export const AuthModal: React.FC = () => {
       }, 2000);
     } catch (error) {
       console.error("Error verifying OTP:", error);
+      setIsVerifyingOTP(false);
+      // Don't reset the step on error - stay on OTP step
     }
   };
 
@@ -132,6 +140,7 @@ export const AuthModal: React.FC = () => {
       setStep("phone");
       setOtp("");
       setOtpError("");
+      setIsVerifyingOTP(false);
       clearError();
     }
   };
@@ -139,6 +148,7 @@ export const AuthModal: React.FC = () => {
   // Handle modal close
   const handleClose = () => {
     if (isLoading) return; // Prevent closing while loading
+    setIsVerifyingOTP(false);
     dispatch(closeAuthModal());
   };
 

@@ -1,11 +1,17 @@
 "use client";
 
-import { Wallet, CreditCard } from "lucide-react";
+import { Wallet, CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { Booking } from "@/lib/bookingApi";
-import { AvailableSlot } from "@/types/booking";
+import {
+  AvailableSlot,
+  PaymentProgress,
+  PaymentSegmentInfo,
+} from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
+import { PaymentProgress as PaymentProgressComponent } from "@/commonComponents/PaymentSegment";
+import { usePaymentSegments } from "@/hooks/usePaymentSegments";
 
 type PaymentMethod = "wallet" | "razorpay";
 
@@ -21,6 +27,7 @@ interface PaymentSectionProps {
   getAddressDetails: (
     address: string | Record<string, unknown> | null | undefined
   ) => string;
+  isMultipleSegments?: boolean;
 }
 
 export default function PaymentSection({
@@ -31,9 +38,19 @@ export default function PaymentSection({
   onPaymentMethodSelect,
   getAddressName,
   getAddressDetails,
+  isMultipleSegments = false,
 }: PaymentSectionProps) {
   // Get wallet data from Redux
   const { walletSummary, isWalletDisabled } = useQuoteAcceptanceRedux();
+
+  // Fetch payment segments for this booking
+  const { paymentProgress, isLoadingSegments } = usePaymentSegments(
+    booking.ID || booking.id
+  );
+
+  // Check if this booking has payment segments
+  const hasPaymentSegments =
+    paymentProgress && paymentProgress.segments.length > 0;
 
   return (
     <div className="p-6 h-auto flex flex-col">
@@ -59,8 +76,8 @@ export default function PaymentSection({
           </span>
         </div>
 
-        {/* Date & Time */}
-        {selectedDate && selectedTimeSlot && (
+        {/* Date & Time - Only show for single segment bookings */}
+        {!isMultipleSegments && selectedDate && selectedTimeSlot && (
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600">Date & Time</span>
             <span className="font-medium">
@@ -74,28 +91,94 @@ export default function PaymentSection({
           </div>
         )}
 
+        {/* Multiple Segments Info */}
+        {isMultipleSegments && (
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600">Service Type</span>
+            <span className="font-medium">
+              To be scheduled after first payment
+            </span>
+          </div>
+        )}
+
         {/* Quote Amount */}
         <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600">Quote Amount</span>
+          <span className="text-gray-600">
+            {isMultipleSegments ? "First Payment" : "Quote Amount"}
+          </span>
           <span className="font-medium">
-            {formatAmount(booking.quote_amount || 0)}
+            {isMultipleSegments &&
+            paymentProgress &&
+            paymentProgress.segments.length > 0
+              ? formatAmount(paymentProgress.segments[0].amount)
+              : formatAmount(booking.quote_amount || 0)}
           </span>
         </div>
+
+        {/* Payment Segments Info */}
+        {isLoadingSegments ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              <span className="text-sm text-gray-600">
+                Loading payment segments...
+              </span>
+            </div>
+          </div>
+        ) : hasPaymentSegments && paymentProgress ? (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                Payment Segments Available
+              </span>
+            </div>
+            <div className="text-xs text-blue-700">
+              This quote has been split into {paymentProgress.total_segments}{" "}
+              payment segments. You can pay them individually or all at once.
+            </div>
+          </div>
+        ) : null}
 
         {/* Total */}
         <div className="border-t border-gray-100 pt-3">
           <div className="flex justify-between items-center">
-            <span className="text-gray-900 font-semibold">Payable Amount</span>
+            <span className="text-gray-900 font-semibold">
+              {isMultipleSegments
+                ? "Pay Now"
+                : hasPaymentSegments
+                ? "Total Quote Amount"
+                : "Payable Amount"}
+            </span>
             <span className="text-gray-900 font-semibold text-lg">
-              {formatAmount(booking.quote_amount || 0)}
+              {isMultipleSegments &&
+              paymentProgress &&
+              paymentProgress.segments.length > 0
+                ? formatAmount(paymentProgress.segments[0].amount)
+                : formatAmount(booking.quote_amount || 0)}
             </span>
           </div>
+          {isMultipleSegments && paymentProgress && (
+            <div className="text-sm text-gray-600 mt-1">
+              Total Quote: {formatAmount(booking.quote_amount || 0)} •
+              Remaining:{" "}
+              {formatAmount(
+                paymentProgress.remaining_amount -
+                  paymentProgress.segments[0].amount
+              )}
+            </div>
+          )}
+          {!isMultipleSegments && hasPaymentSegments && paymentProgress && (
+            <div className="text-sm text-gray-600 mt-1">
+              Remaining: {formatAmount(paymentProgress.remaining_amount)}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Payment Method Selection */}
       <h3 className="font-semibold text-gray-900 text-lg mb-4">
-        Select Payment Method
+        {isMultipleSegments ? "Pay First Segment" : "Select Payment Method"}
       </h3>
       <div className="space-y-3 flex-1">
         {/* Wallet Payment Option */}
@@ -162,6 +245,20 @@ export default function PaymentSection({
           </div>
         </button>
       </div>
+
+      {/* Payment Segments Section */}
+      {hasPaymentSegments && paymentProgress && (
+        <div className="mt-6">
+          <h3 className="font-semibold text-gray-900 text-lg mb-4">
+            Payment Segments
+          </h3>
+          <PaymentProgressComponent
+            progress={paymentProgress}
+            showSegments={true}
+            className="border-0 shadow-none"
+          />
+        </div>
+      )}
     </div>
   );
 }

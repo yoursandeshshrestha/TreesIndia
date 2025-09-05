@@ -11,7 +11,6 @@ import AddressModal from "@/commonComponents/AddressModel/AddressModal";
 import SlotModal from "@/core/BookingPage/components/SlotModal";
 import ServiceSearchModal from "@/commonComponents/ServiceSearchModel/ServiceSearchModal";
 import ServiceDetailModalWrapper from "@/commonComponents/ServiceDetailModal/ServiceDetailModalWrapper";
-import AuthLoadingScreen from "@/components/AuthLoadingScreen";
 import { Toaster } from "sonner";
 
 const poppins = Poppins({
@@ -36,29 +35,27 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <Providers>
-          <AuthLoadingScreen>
-            {/* Global Modals */}
-            <LocationModal />
-            <AuthModal />
-            <SubcategoriesModal />
-            <AddressModal />
-            <SlotModal />
-            <ServiceSearchModal />
-            <ServiceDetailModalWrapper />
+          {/* Global Modals */}
+          <LocationModal />
+          <AuthModal />
+          <SubcategoriesModal />
+          <AddressModal />
+          <SlotModal />
+          <ServiceSearchModal />
+          <ServiceDetailModalWrapper />
 
-            <div className="flex flex-col min-h-screen">
-              {/* Sticky Header */}
-              <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
-                <Header />
-              </div>
-
-              {/* Main Content */}
-              <main className="flex-1 bg-white">{children}</main>
-
-              {/* Global Footer */}
-              <Footer />
+          <div className="flex flex-col min-h-screen">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+              <Header />
             </div>
-          </AuthLoadingScreen>
+
+            {/* Main Content */}
+            <main className="flex-1 bg-white">{children}</main>
+
+            {/* Global Footer */}
+            <Footer />
+          </div>
         </Providers>
 
         {/* Toast Notifications */}

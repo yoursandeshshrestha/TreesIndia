@@ -362,8 +362,23 @@ func (bc *BookingController) GetUserBookings(c *gin.Context) {
 		return
 	}
 
+	// Add payment progress to each booking
+	bookingsWithProgress := make([]gin.H, len(bookings))
+	for i, booking := range bookings {
+		bookingData := gin.H{
+			"booking": booking,
+		}
+		
+		// Add payment progress if booking has payment segments
+		if paymentProgress := booking.GetPaymentProgress(); paymentProgress != nil {
+			bookingData["payment_progress"] = paymentProgress
+		}
+		
+		bookingsWithProgress[i] = bookingData
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"bookings":   bookings,
+		"bookings":   bookingsWithProgress,
 		"pagination": pagination,
 	})
 }
@@ -415,9 +430,17 @@ func (bc *BookingController) GetBookingByID(c *gin.Context) {
 		response = optimizedBooking
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	// Add payment progress to response
+	responseData := gin.H{
 		"booking": response,
-	})
+	}
+	
+	// Add payment progress if booking has payment segments
+	if paymentProgress := booking.GetPaymentProgress(); paymentProgress != nil {
+		responseData["payment_progress"] = paymentProgress
+	}
+
+	c.JSON(http.StatusOK, responseData)
 }
 
 // CancelUserBooking cancels a user's booking

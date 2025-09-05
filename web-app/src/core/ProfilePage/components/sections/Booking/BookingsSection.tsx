@@ -8,6 +8,8 @@ import CancelBookingModal from "@/core/BookingPage/components/CancelBookingModal
 import { BookingsSectionSkeleton } from "./components/BookingsSectionSkeleton";
 import { MainBookingCard } from "@/core/ProfilePage/components/sections/Booking/components/BookingCard";
 import { QuoteAcceptanceModal } from "@/core/ProfilePage/components/sections/Booking/components/QuoteAcceptanceModal";
+import { PaymentSegmentsPage } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegmentsPage";
+import { NextSegmentPaymentModal } from "@/commonComponents/PaymentSegment";
 import type { Booking } from "@/lib/bookingApi";
 
 type BookingTab = "all" | "upcoming" | "completed" | "cancelled";
@@ -82,6 +84,12 @@ export function BookingsSection() {
   const [showQuoteAcceptanceModal, setShowQuoteAcceptanceModal] =
     useState(false);
   const [bookingForQuote, setBookingForQuote] = useState<Booking | null>(null);
+  const [showPaymentSegments, setShowPaymentSegments] = useState(false);
+  const [bookingForPaymentSegments, setBookingForPaymentSegments] =
+    useState<Booking | null>(null);
+  const [showNextSegmentModal, setShowNextSegmentModal] = useState(false);
+  const [bookingForNextSegment, setBookingForNextSegment] =
+    useState<Booking | null>(null);
 
   const handleCancelClick = (booking: Booking) => {
     setBookingToCancel(booking);
@@ -155,6 +163,37 @@ export function BookingsSection() {
     // Open quote acceptance modal for payment
     setBookingForQuote(booking);
     setShowQuoteAcceptanceModal(true);
+  };
+
+  const handleViewPaymentSegments = (booking: Booking) => {
+    setBookingForPaymentSegments(booking);
+    setShowPaymentSegments(true);
+  };
+
+  const handlePayNextSegment = (booking: Booking) => {
+    // Open next segment payment modal
+    setBookingForNextSegment(booking);
+    setShowNextSegmentModal(true);
+  };
+
+  const handlePaymentSegmentsBack = () => {
+    setShowPaymentSegments(false);
+    setBookingForPaymentSegments(null);
+  };
+
+  const handlePaymentSegmentsSuccess = () => {
+    // Refresh bookings after successful payment
+    refetchBookings();
+  };
+
+  const handleNextSegmentModalClose = () => {
+    setShowNextSegmentModal(false);
+    setBookingForNextSegment(null);
+  };
+
+  const handleNextSegmentPaymentSuccess = () => {
+    // Refresh bookings after successful payment
+    refetchBookings();
   };
 
   const tabs: { id: BookingTab; label: string; count?: number }[] = [
@@ -253,6 +292,8 @@ export function BookingsSection() {
                 onAcceptQuote={handleAcceptQuote}
                 onRejectQuote={handleRejectQuote}
                 onPayNow={handlePayNow}
+                onViewPaymentSegments={handleViewPaymentSegments}
+                onPayNextSegment={handlePayNextSegment}
                 isAcceptingQuote={isAcceptingQuote}
                 isPaying={false}
               />
@@ -296,6 +337,25 @@ export function BookingsSection() {
         onClose={handleQuoteAcceptanceClose}
         booking={bookingForQuote}
         onSuccess={handleQuoteAcceptanceSuccess}
+      />
+
+      {/* Payment Segments Page */}
+      {showPaymentSegments && bookingForPaymentSegments && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <PaymentSegmentsPage
+            booking={bookingForPaymentSegments}
+            onBack={handlePaymentSegmentsBack}
+            onPaymentSuccess={handlePaymentSegmentsSuccess}
+          />
+        </div>
+      )}
+
+      {/* Next Segment Payment Modal */}
+      <NextSegmentPaymentModal
+        isOpen={showNextSegmentModal}
+        onClose={handleNextSegmentModalClose}
+        booking={bookingForNextSegment}
+        onPaymentSuccess={handleNextSegmentPaymentSuccess}
       />
     </div>
   );
