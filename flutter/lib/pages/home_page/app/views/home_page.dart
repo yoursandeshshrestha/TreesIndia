@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
@@ -203,6 +204,67 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
 
                 const SizedBox(height: AppSpacing.md),
+
+                // User Type Display
+                Consumer(
+                  builder: (context, ref, child) {
+                    final authState = ref.watch(authProvider);
+                    final userType = authState.userType;
+
+                    if (userType != null) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: userType == 'worker'
+                                ? AppColors.brandPrimary50
+                                : AppColors.stateGreen50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: userType == 'worker'
+                                  ? AppColors.brandPrimary200
+                                  : AppColors.stateGreen200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                userType == 'worker'
+                                    ? Icons.work_outline
+                                    : Icons.person_outline,
+                                size: 16,
+                                color: userType == 'worker'
+                                    ? AppColors.brandPrimary600
+                                    : AppColors.stateGreen600,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                userType == 'worker' ? 'Worker' : 'Customer',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: userType == 'worker'
+                                      ? AppColors.brandPrimary600
+                                      : AppColors.stateGreen600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
 
                 // Fixed Search Bar
                 Padding(

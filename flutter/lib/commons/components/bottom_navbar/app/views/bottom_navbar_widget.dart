@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 
-class BottomNavBarWidget extends StatelessWidget {
+class BottomNavBarWidget extends ConsumerWidget {
   final int currentIndex;
   final Function(int) onTap;
 
@@ -12,7 +14,9 @@ class BottomNavBarWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final userType = authState.userType;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -39,8 +43,16 @@ class BottomNavBarWidget extends StatelessWidget {
               _buildNavItem(
                 context,
                 index: 1,
-                icon: Icons.calendar_today_outlined,
-                label: 'Bookings',
+                icon: userType == 'worker'
+                    ? Icons.work_outline
+                    : userType == 'normal'
+                        ? Icons.calendar_today_outlined
+                        : Icons.chat_bubble_outline,
+                label: userType == 'worker'
+                    ? 'My Work'
+                    : userType == 'normal'
+                        ? 'Bookings'
+                        : '',
                 isActive: currentIndex == 1,
               ),
               _buildNavItem(

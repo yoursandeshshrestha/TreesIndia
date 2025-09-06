@@ -1,20 +1,20 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:trees_india/commons/environment/global_environment.dart';
-import '../../domain/usecases/get_bookings_usecase.dart';
-import '../../domain/usecases/cancel_booking_usecase.dart';
-import '../../domain/usecases/reject_quote_usecase.dart';
-import '../../domain/usecases/accept_quote_usecase.dart';
-import '../../domain/usecases/create_quote_payment_usecase.dart';
-import '../../domain/usecases/verify_quote_payment_usecase.dart';
-import '../../domain/usecases/process_wallet_quote_payment_usecase.dart';
-import '../../../booking_page/domain/usecases/get_booking_config_usecase.dart';
+
 import '../../../booking_page/domain/usecases/get_available_slots_usecase.dart';
+import '../../../booking_page/domain/usecases/get_booking_config_usecase.dart';
 import '../../domain/entities/booking_details_entity.dart';
 import '../../domain/entities/quote_payment_response_entity.dart';
-import '../../../booking_page/domain/entities/booking_config_entity.dart';
-import '../../../booking_page/domain/entities/available_slot_entity.dart';
+import '../../domain/usecases/accept_quote_usecase.dart';
+import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/usecases/create_quote_payment_usecase.dart';
+import '../../domain/usecases/get_bookings_usecase.dart';
+import '../../domain/usecases/process_wallet_quote_payment_usecase.dart';
+import '../../domain/usecases/reject_quote_usecase.dart';
+import '../../domain/usecases/verify_quote_payment_usecase.dart';
 import 'bookings_state.dart';
 
 class BookingsNotifier extends StateNotifier<BookingsState> {
@@ -53,7 +53,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
 
   void _startAutoRefresh() {
     _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (state.currentBookings.isNotEmpty) {
         _refreshCurrentTab();
       }
@@ -78,6 +78,8 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
   }
 
   void switchTab(BookingTab tab) {
+    if (state.currentTab == tab) return;
+
     state = state.copyWith(currentTab: tab);
 
     // Load data for the new tab if it's empty

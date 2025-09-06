@@ -5,19 +5,18 @@ import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/components/main_layout/app/views/main_layout_widget.dart';
-import '../providers/bookings_providers.dart';
-import '../viewmodels/bookings_state.dart';
-import 'widgets/booking_card_widget.dart';
+import '../providers/my_works_providers.dart';
+import '../viewmodels/my_works_state.dart';
+import 'widgets/assignment_card_widget.dart';
 
-class BookingsListingPage extends ConsumerStatefulWidget {
-  const BookingsListingPage({super.key});
+class MyWorksPage extends ConsumerStatefulWidget {
+  const MyWorksPage({super.key});
 
   @override
-  ConsumerState<BookingsListingPage> createState() =>
-      _BookingsListingPageState();
+  ConsumerState<MyWorksPage> createState() => _MyWorksPageState();
 }
 
-class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
+class _MyWorksPageState extends ConsumerState<MyWorksPage>
     with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   late TabController _tabController;
@@ -25,11 +24,11 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bookingsNotifierProvider.notifier).getBookings(
-            tab: BookingTab.all,
+      ref.read(myWorksNotifierProvider.notifier).getAssignments(
+            tab: AssignmentTab.all,
             page: 1,
           );
     });
@@ -37,43 +36,47 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         final tab = _getTabFromIndex(_tabController.index);
-        ref.read(bookingsNotifierProvider.notifier).switchTab(tab);
+        ref.read(myWorksNotifierProvider.notifier).switchTab(tab);
       }
     });
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
-        ref.read(bookingsNotifierProvider.notifier).loadMoreBookings();
+        ref.read(myWorksNotifierProvider.notifier).loadMoreAssignments();
       }
     });
   }
 
-  BookingTab _getTabFromIndex(int index) {
+  AssignmentTab _getTabFromIndex(int index) {
     switch (index) {
       case 0:
-        return BookingTab.all;
+        return AssignmentTab.all;
       case 1:
-        return BookingTab.upcoming;
+        return AssignmentTab.assigned;
       case 2:
-        return BookingTab.completed;
+        return AssignmentTab.accepted;
       case 3:
-        return BookingTab.cancelled;
+        return AssignmentTab.inProgress;
+      case 4:
+        return AssignmentTab.completed;
       default:
-        return BookingTab.all;
+        return AssignmentTab.all;
     }
   }
 
-  int _getIndexFromTab(BookingTab tab) {
+  int _getIndexFromTab(AssignmentTab tab) {
     switch (tab) {
-      case BookingTab.all:
+      case AssignmentTab.all:
         return 0;
-      case BookingTab.upcoming:
+      case AssignmentTab.assigned:
         return 1;
-      case BookingTab.completed:
+      case AssignmentTab.accepted:
         return 2;
-      case BookingTab.cancelled:
+      case AssignmentTab.inProgress:
         return 3;
+      case AssignmentTab.completed:
+        return 4;
     }
   }
 
@@ -86,12 +89,12 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
 
   @override
   Widget build(BuildContext context) {
-    final bookingsState = ref.watch(bookingsNotifierProvider);
+    final myWorksState = ref.watch(myWorksNotifierProvider);
 
     // Update tab controller if needed
-    if (_tabController.index != _getIndexFromTab(bookingsState.currentTab)) {
+    if (_tabController.index != _getIndexFromTab(myWorksState.currentTab)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _tabController.animateTo(_getIndexFromTab(bookingsState.currentTab));
+        _tabController.animateTo(_getIndexFromTab(myWorksState.currentTab));
       });
     }
 
@@ -101,7 +104,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
         backgroundColor: AppColors.brandNeutral50,
         appBar: AppBar(
           title: H3Bold(
-            text: 'My Bookings',
+            text: 'My Work',
             color: AppColors.brandNeutral800,
           ),
           backgroundColor: AppColors.brandNeutral50,
@@ -109,7 +112,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
-              icon: bookingsState.isRefreshing
+              icon: myWorksState.isRefreshing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -119,9 +122,9 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
                       ),
                     )
                   : const Icon(Icons.refresh, color: AppColors.brandNeutral800),
-              onPressed: bookingsState.isRefreshing
+              onPressed: myWorksState.isRefreshing
                   ? null
-                  : () => ref.read(bookingsNotifierProvider.notifier).refresh(),
+                  : () => ref.read(myWorksNotifierProvider.notifier).refresh(),
             ),
           ],
           bottom: TabBar(
@@ -133,36 +136,39 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
             indicatorColor: const Color(0xFF055c3a),
             dividerColor: AppColors.brandNeutral300,
             indicatorSize: TabBarIndicatorSize.tab,
+            isScrollable: true,
             tabs: const [
               Tab(text: 'All'),
-              Tab(text: 'Upcoming'),
+              Tab(text: 'Assigned'),
+              Tab(text: 'Accepted'),
+              Tab(text: 'In Progress'),
               Tab(text: 'Completed'),
-              Tab(text: 'Cancelled'),
             ],
           ),
         ),
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildTabContent(bookingsState, BookingTab.all),
-            _buildTabContent(bookingsState, BookingTab.upcoming),
-            _buildTabContent(bookingsState, BookingTab.completed),
-            _buildTabContent(bookingsState, BookingTab.cancelled),
+            _buildTabContent(myWorksState, AssignmentTab.all),
+            _buildTabContent(myWorksState, AssignmentTab.assigned),
+            _buildTabContent(myWorksState, AssignmentTab.accepted),
+            _buildTabContent(myWorksState, AssignmentTab.inProgress),
+            _buildTabContent(myWorksState, AssignmentTab.completed),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTabContent(BookingsState state, BookingTab tab) {
+  Widget _buildTabContent(MyWorksState state, AssignmentTab tab) {
     // Check if this tab is currently active
     if (state.currentTab != tab) {
       return const SizedBox.shrink();
     }
 
-    final bookings = state.currentBookings;
+    final assignments = state.currentAssignments;
 
-    if (state.status == BookingsStatus.loading && bookings.isEmpty) {
+    if (state.status == MyWorksStatus.loading && assignments.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(
           color: Color(0xFF055c3a),
@@ -170,7 +176,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
       );
     }
 
-    if (state.status == BookingsStatus.failure && bookings.isEmpty) {
+    if (state.status == MyWorksStatus.failure && assignments.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -182,7 +188,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
             ),
             const SizedBox(height: AppSpacing.md),
             H4Bold(
-              text: 'Error loading bookings',
+              text: 'Error loading assignments',
               color: AppColors.brandNeutral800,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -196,8 +202,8 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
             const SizedBox(height: AppSpacing.md),
             ElevatedButton(
               onPressed: () => ref
-                  .read(bookingsNotifierProvider.notifier)
-                  .getBookings(tab: tab),
+                  .read(myWorksNotifierProvider.notifier)
+                  .getAssignments(tab: tab),
               child: const Text('Retry'),
             ),
           ],
@@ -205,26 +211,30 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
       );
     }
 
-    if (bookings.isEmpty) {
+    if (assignments.isEmpty) {
       String emptyMessage;
       String emptySubMessage;
 
       switch (tab) {
-        case BookingTab.all:
-          emptyMessage = 'No bookings yet';
-          emptySubMessage = 'Your service bookings will appear here';
+        case AssignmentTab.all:
+          emptyMessage = 'No assignments yet';
+          emptySubMessage = 'Your work assignments will appear here';
           break;
-        case BookingTab.upcoming:
-          emptyMessage = 'No upcoming bookings';
-          emptySubMessage = 'You don\'t have any upcoming service bookings';
+        case AssignmentTab.assigned:
+          emptyMessage = 'No assigned work';
+          emptySubMessage = 'New assignments will appear here';
           break;
-        case BookingTab.completed:
-          emptyMessage = 'No completed bookings';
-          emptySubMessage = 'Your completed service bookings will appear here';
+        case AssignmentTab.accepted:
+          emptyMessage = 'No accepted work';
+          emptySubMessage = 'Accepted assignments will appear here';
           break;
-        case BookingTab.cancelled:
-          emptyMessage = 'No cancelled bookings';
-          emptySubMessage = 'Your cancelled service bookings will appear here';
+        case AssignmentTab.inProgress:
+          emptyMessage = 'No work in progress';
+          emptySubMessage = 'Active assignments will appear here';
+          break;
+        case AssignmentTab.completed:
+          emptyMessage = 'No completed work';
+          emptySubMessage = 'Completed assignments will appear here';
           break;
       }
 
@@ -233,7 +243,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.bookmark_border,
+              Icons.work_outline,
               size: 64,
               color: AppColors.brandNeutral400,
             ),
@@ -254,29 +264,29 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.read(bookingsNotifierProvider.notifier).refresh();
+        ref.read(myWorksNotifierProvider.notifier).refresh();
       },
       color: const Color(0xFF055c3a),
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: bookings.length + (state.isLoadingMore ? 1 : 0),
+        itemCount: assignments.length + (state.isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index == bookings.length) {
+          if (index == assignments.length) {
             return const Padding(
               padding: EdgeInsets.all(AppSpacing.md),
               child: Center(
                 child: CircularProgressIndicator(
-                  color:  Color(0xFF055c3a),
+                  color: Color(0xFF055c3a),
                 ),
               ),
             );
           }
 
-          final booking = bookings[index];
+          final assignment = assignments[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: BookingCardWidget(booking: booking),
+            child: AssignmentCardWidget(assignment: assignment),
           );
         },
       ),

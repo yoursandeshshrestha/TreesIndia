@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/bottom_navbar/app/views/bottom_navbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 
-class MainLayoutWidget extends StatefulWidget {
+class MainLayoutWidget extends ConsumerStatefulWidget {
   final Widget child;
   final int currentIndex;
 
@@ -14,20 +16,27 @@ class MainLayoutWidget extends StatefulWidget {
   });
 
   @override
-  State<MainLayoutWidget> createState() => _MainLayoutWidgetState();
+  ConsumerState<MainLayoutWidget> createState() => _MainLayoutWidgetState();
 }
 
-class _MainLayoutWidgetState extends State<MainLayoutWidget> {
+class _MainLayoutWidgetState extends ConsumerState<MainLayoutWidget> {
   void _onNavItemTapped(int index) {
     if (index == widget.currentIndex) return;
+
+    final authState = ref.read(authProvider);
+    final userType = authState.userType;
 
     switch (index) {
       case 0:
         context.go('/home');
         break;
       case 1:
-        // Navigate to bookings (placeholder)
-        context.go('/bookings');
+        // Navigate based on user type
+        if (userType == 'worker') {
+          context.go('/myworks');
+        } else if (userType == 'normal') {
+          context.go('/bookings');
+        }
         break;
       case 2:
         // Navigate to rewards (placeholder)

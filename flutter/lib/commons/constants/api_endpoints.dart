@@ -43,6 +43,11 @@ class ApiEndpoints {
     registerDevice,
     getUserDevices,
     unregisterDevice,
+    getAssignments,
+    acceptAssignment,
+    rejectAssignment,
+    startWork,
+    completeWork,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -232,6 +237,31 @@ class ApiEndpoints {
 
   static ApiEndpoint unregisterDevice = ApiEndpoint(
     path: '/notifications/unregister-device',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getAssignments = ApiEndpoint(
+    path: '/worker/assignments',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint acceptAssignment = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/accept',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint rejectAssignment = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/reject',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint startWork = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/start',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint completeWork = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/complete',
     requiresAuth: true,
   );
 

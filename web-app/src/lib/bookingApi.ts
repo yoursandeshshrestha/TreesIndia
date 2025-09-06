@@ -12,7 +12,7 @@ const API_BASE_URL =
 // Booking API functions for my-bookings functionality
 
 export interface UserBookingsResponse {
-  bookings: BookingWithPaymentProgress[];
+  bookings: Booking[];
   pagination: {
     page: number;
     limit: number;

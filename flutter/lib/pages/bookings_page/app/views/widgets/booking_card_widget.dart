@@ -17,12 +17,10 @@ import 'quote_acceptance_bottom_sheet.dart';
 
 class BookingCardWidget extends ConsumerWidget {
   final BookingDetailsEntity booking;
-  final VoidCallback? onPayNow;
 
   const BookingCardWidget({
     super.key,
     required this.booking,
-    this.onPayNow,
   });
 
   @override

@@ -7,6 +7,7 @@ import 'package:trees_india/commons/pages/otp_verification_page.dart';
 import 'package:trees_india/commons/utils/services/navigation_service.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
+import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
@@ -230,7 +231,8 @@ class AppRouter {
                   name: 'ServicesPage',
                   builder: (context, state) {
                     final categoryId = state.pathParameters['categoryId']!;
-                    final subcategoryId = state.pathParameters['subcategoryId']!;
+                    final subcategoryId =
+                        state.pathParameters['subcategoryId']!;
                     return ServicesPage(
                       categoryId: categoryId,
                       subcategoryId: subcategoryId,
@@ -242,7 +244,8 @@ class AppRouter {
                   name: 'ServiceDetailPage',
                   builder: (context, state) {
                     final serviceData = state.extra as Map<String, dynamic>;
-                    final service = serviceData['service'] as ServiceDetailEntity;
+                    final service =
+                        serviceData['service'] as ServiceDetailEntity;
                     return ServiceDetailPage(service: service);
                   },
                 ),
@@ -256,9 +259,15 @@ class AppRouter {
                   name: 'BookingPage',
                   builder: (context, state) {
                     final serviceData = state.extra as Map<String, dynamic>;
-                    final service = serviceData['service'] as ServiceDetailEntity;
+                    final service =
+                        serviceData['service'] as ServiceDetailEntity;
                     return BookingPage(service: service);
                   },
+                ),
+                GoRoute(
+                  path: '/myworks',
+                  name: 'MyWorksPage',
+                  builder: (context, state) => const MyWorksPage(),
                 ),
               ],
             ),

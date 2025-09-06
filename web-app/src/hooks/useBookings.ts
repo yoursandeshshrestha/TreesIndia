@@ -73,7 +73,7 @@ export function useBookings() {
 
   return {
     // Data
-    bookings: bookingsData?.bookings?.map((item) => item.booking) || [],
+    bookings: bookingsData?.bookings || [],
     bookingsWithProgress: bookingsData?.bookings || [],
     pagination: bookingsData?.pagination || null,
 
@@ -168,7 +168,7 @@ export function useFilteredBookings(filters: {
 
   return {
     // Data
-    bookings: bookingsData?.bookings?.map((item) => item.booking) || [],
+    bookings: bookingsData?.bookings || [],
     bookingsWithProgress: bookingsData?.bookings || [],
     pagination: bookingsData?.pagination || null,
 
