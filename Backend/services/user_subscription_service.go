@@ -111,16 +111,8 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 	startDate := time.Now()
 	var endDate time.Time
 	
-	switch plan.Duration {
-	case models.DurationMonthly:
-		endDate = startDate.AddDate(0, 1, 0)
-	case models.DurationYearly:
-		endDate = startDate.AddDate(1, 0, 0)
-	case models.DurationOneTime:
-		endDate = startDate.AddDate(10, 0, 0) // 10 years for one-time
-	default:
-		return nil, errors.New("invalid subscription duration")
-	}
+	// Calculate end date based on duration_days
+	endDate = startDate.AddDate(0, 0, plan.DurationDays)
 	
 	// Process payment based on method
 	var paymentID string

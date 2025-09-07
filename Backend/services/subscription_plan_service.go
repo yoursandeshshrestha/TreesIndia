@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strings"
 	"treesindia/models"
 	"treesindia/repositories"
 )
@@ -31,8 +32,16 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 		return nil, errors.New("plan duration is required")
 	}
 	
-	// Validate duration
-	if duration != models.DurationMonthly && duration != models.DurationYearly && duration != models.DurationOneTime {
+	// Convert duration string to days
+	var durationDays int
+	switch duration {
+	case models.DurationMonthly:
+		durationDays = 30
+	case models.DurationYearly:
+		durationDays = 365
+	case models.DurationOneTime:
+		durationDays = 3650 // 10 years for one-time
+	default:
 		return nil, errors.New("invalid duration. Must be monthly, yearly, or one_time")
 	}
 	
@@ -42,14 +51,32 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 	}
 	
 	description, _ := planData["description"].(string)
-	isActive, _ := planData["is_active"].(bool)
+	isActive := true // Default to active for new plans
+	
+	// Handle features - convert array to JSONB
+	var features models.JSONB
+	if featuresArray, ok := planData["features"].([]interface{}); ok && len(featuresArray) > 0 {
+		// Convert features array to bullet points string
+		var featuresList []string
+		for _, feature := range featuresArray {
+			if featureStr, ok := feature.(string); ok && featureStr != "" {
+				featuresList = append(featuresList, featureStr)
+			}
+		}
+		if len(featuresList) > 0 {
+			features = models.JSONB{
+				"description": strings.Join(featuresList, "\n"),
+			}
+		}
+	}
 	
 	plan := &models.SubscriptionPlan{
 		Name:        name,
-		Duration:    duration,
+		DurationDays: durationDays,
 		Price:       price,
 		Description: description,
 		IsActive:    isActive,
+		Features:    features,
 	}
 	
 	if err := sps.planRepo.Create(plan); err != nil {
@@ -87,11 +114,19 @@ func (sps *SubscriptionPlanService) UpdatePlan(id uint, planData map[string]inte
 	}
 	
 	if duration, ok := planData["duration"].(string); ok && duration != "" {
-		// Validate duration
-		if duration != models.DurationMonthly && duration != models.DurationYearly && duration != models.DurationOneTime {
+		// Convert duration string to days
+		var durationDays int
+		switch duration {
+		case models.DurationMonthly:
+			durationDays = 30
+		case models.DurationYearly:
+			durationDays = 365
+		case models.DurationOneTime:
+			durationDays = 3650 // 10 years for one-time
+		default:
 			return nil, errors.New("invalid duration. Must be monthly, yearly, or one_time")
 		}
-		plan.Duration = duration
+		plan.DurationDays = durationDays
 	}
 	
 	if price, ok := planData["price"].(float64); ok && price > 0 {
@@ -102,8 +137,32 @@ func (sps *SubscriptionPlanService) UpdatePlan(id uint, planData map[string]inte
 		plan.Description = description
 	}
 	
+	// Only update is_active if explicitly provided
 	if isActive, ok := planData["is_active"].(bool); ok {
 		plan.IsActive = isActive
+	}
+	
+	// Handle features - convert array to JSONB
+	if featuresArray, ok := planData["features"].([]interface{}); ok {
+		if len(featuresArray) > 0 {
+			// Convert features array to bullet points string
+			var featuresList []string
+			for _, feature := range featuresArray {
+				if featureStr, ok := feature.(string); ok && featureStr != "" {
+					featuresList = append(featuresList, featureStr)
+				}
+			}
+			if len(featuresList) > 0 {
+				plan.Features = models.JSONB{
+					"description": strings.Join(featuresList, "\n"),
+				}
+			} else {
+				plan.Features = nil
+			}
+		} else {
+			// Empty array means clear features
+			plan.Features = nil
+		}
 	}
 	
 	if err := sps.planRepo.Update(plan); err != nil {
