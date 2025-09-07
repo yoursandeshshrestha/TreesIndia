@@ -124,11 +124,6 @@ export interface User {
   } | null;
   has_active_subscription: boolean;
   subscription_expiry_date: string | null;
-  notification_settings: {
-    push_notifications: boolean;
-    email_notifications: boolean;
-    sms_notifications: boolean;
-  } | null;
 }
 
 // Service Interface (matches API response)
@@ -222,6 +217,8 @@ export interface Booking {
   service: Service;
   worker_assignment?: WorkerAssignment;
   payment?: Payment;
+  payment_segments?: PaymentSegmentInfo[];
+  payment_progress?: PaymentProgress;
 }
 
 // Booking Filter State
@@ -470,6 +467,29 @@ export const getPaymentStatusColor = (status: PaymentStatus): string => {
   }
 };
 
+// Payment Segment Status Badge Colors
+export const getPaymentSegmentStatusColor = (
+  status: string,
+  isOverdue: boolean = false
+): string => {
+  if (isOverdue && status === "pending") {
+    return "bg-red-100 text-red-800";
+  }
+
+  switch (status) {
+    case "paid":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "overdue":
+      return "bg-red-100 text-red-800";
+    case "cancelled":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
 // Assignment Status Badge Colors
 export const getAssignmentStatusColor = (status: AssignmentStatus): string => {
   switch (status) {
@@ -512,6 +532,7 @@ export interface OptimizedBookingResponse {
   address: BookingAddress | null;
   contact: OptimizedContactInfo;
   payment: OptimizedPaymentInfo | null;
+  payment_progress?: PaymentProgress;
   worker_assignment: OptimizedWorkerAssignment | null;
 }
 

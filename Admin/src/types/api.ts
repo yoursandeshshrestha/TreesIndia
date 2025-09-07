@@ -69,18 +69,6 @@ export interface User {
     current_plan?: UserSubscription;
   };
 
-
-
-  // Notification Settings
-  notification_settings?: {
-    email_notifications: boolean;
-    sms_notifications: boolean;
-    push_notifications: boolean;
-    marketing_emails: boolean;
-    booking_reminders: boolean;
-    service_updates: boolean;
-  };
-
   // Subscription History (last 5)
   subscription_history?: UserSubscriptionHistory[];
 
