@@ -188,7 +188,7 @@ func (br *BookingRepository) GetBookingsWithFilters(filters *AdminBookingFilters
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker")
+	query = query.Preload("User").Preload("Service").Preload("WorkerAssignment.Worker").Preload("PaymentSegments")
 
 	// Apply sorting
 	if filters.Sort != "" {
@@ -783,6 +783,7 @@ func (br *BookingRepository) convertToOptimizedResponse(booking *models.Booking)
 			SpecialInstructions: booking.SpecialInstructions,
 		},
 		Payment:          payment,
+		PaymentProgress:  booking.PaymentProgress,
 		WorkerAssignment: workerAssignment,
 	}
 }

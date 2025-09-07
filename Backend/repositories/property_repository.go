@@ -92,19 +92,19 @@ func (pr *PropertyRepository) GetBySlug(slug string) (*models.Property, error) {
 }
 
 // GetAll retrieves all properties with pagination and filtering
-func (pr *PropertyRepository) GetAll(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {
+func (pr *PropertyRepository) GetAll(params utils.PaginationParams, filters map[string]interface{}, isAdmin bool) ([]models.Property, utils.PaginationResponse, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Errorf("PropertyRepository.GetAll panic: %v", r)
 		}
 	}()
 	
-	logrus.Infof("PropertyRepository.GetAll called with params: %+v, filters: %+v", params, filters)
+	logrus.Infof("PropertyRepository.GetAll called with params: %+v, filters: %+v, isAdmin: %v", params, filters, isAdmin)
 	
 	query := pr.GetDB().Model(&models.Property{}).Preload("User").Preload("Broker")
 	
 	// Apply filters
-	query = pr.applyFilters(query, filters)
+	query = pr.applyFilters(query, filters, isAdmin)
 	
 	// Apply pagination
 	paginationHelper := utils.NewPaginationHelper()
@@ -179,6 +179,40 @@ func (pr *PropertyRepository) GetByBrokerID(brokerID uint, params utils.Paginati
 	}
 	
 	logrus.Infof("PropertyRepository.GetByBrokerID found %d properties for broker %d", len(properties), brokerID)
+	return properties, pagination, nil
+}
+
+// GetPendingProperties retrieves only pending properties (unapproved user properties) with filters
+func (pr *PropertyRepository) GetPendingProperties(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("PropertyRepository.GetPendingProperties panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("PropertyRepository.GetPendingProperties called with params: %+v, filters: %+v", params, filters)
+	
+	// Base query for pending properties only (unapproved user properties)
+	query := pr.GetDB().Model(&models.Property{}).Where("is_approved = ? AND broker_id IS NULL AND uploaded_by_admin = ?", false, false).Preload("User").Preload("Broker")
+	
+	// Apply custom filters for pending properties (without default admin filters)
+	query = pr.applyPendingFilters(query, filters)
+	
+	// Apply pagination
+	paginationHelper := utils.NewPaginationHelper()
+	pagination, err := paginationHelper.PaginateQuery(query, params, &[]models.Property{})
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPendingProperties pagination error: %v", err)
+		return nil, utils.PaginationResponse{}, err
+	}
+	
+	var properties []models.Property
+	if err := paginationHelper.ApplyPagination(query, params).Find(&properties).Error; err != nil {
+		logrus.Errorf("PropertyRepository.GetPendingProperties database error: %v", err)
+		return nil, utils.PaginationResponse{}, err
+	}
+	
+	logrus.Infof("PropertyRepository.GetPendingProperties found %d pending properties", len(properties))
 	return properties, pagination, nil
 }
 
@@ -277,7 +311,7 @@ func (pr *PropertyRepository) ApproveProperty(id uint, adminID uint) error {
 	return nil
 }
 
-// UpdateExpiredProperties updates expired properties to expired status
+// UpdateExpiredProperties updates expired properties to sold/rented status based on listing type
 func (pr *PropertyRepository) UpdateExpiredProperties() error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -287,12 +321,23 @@ func (pr *PropertyRepository) UpdateExpiredProperties() error {
 	
 	logrus.Infof("PropertyRepository.UpdateExpiredProperties called")
 	
+	// Update sale properties to sold
 	err := pr.GetDB().Model(&models.Property{}).
-		Where("status = ? AND expires_at < ?", models.PropertyStatusAvailable, time.Now()).
-		Update("status", models.PropertyStatusExpired).Error
+		Where("status = ? AND expires_at < ? AND listing_type = ?", models.PropertyStatusAvailable, time.Now(), models.ListingTypeSale).
+		Update("status", models.PropertyStatusSold).Error
 	
 	if err != nil {
-		logrus.Errorf("PropertyRepository.UpdateExpiredProperties database error: %v", err)
+		logrus.Errorf("PropertyRepository.UpdateExpiredProperties sale update error: %v", err)
+		return err
+	}
+	
+	// Update rent properties to rented
+	err = pr.GetDB().Model(&models.Property{}).
+		Where("status = ? AND expires_at < ? AND listing_type = ?", models.PropertyStatusAvailable, time.Now(), models.ListingTypeRent).
+		Update("status", models.PropertyStatusRented).Error
+	
+	if err != nil {
+		logrus.Errorf("PropertyRepository.UpdateExpiredProperties rent update error: %v", err)
 		return err
 	}
 	
@@ -301,7 +346,7 @@ func (pr *PropertyRepository) UpdateExpiredProperties() error {
 }
 
 // applyFilters applies filters to the query
-func (pr *PropertyRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
+func (pr *PropertyRepository) applyFilters(query *gorm.DB, filters map[string]interface{}, isAdmin bool) *gorm.DB {
 	for key, value := range filters {
 		switch key {
 		case "search":
@@ -358,21 +403,212 @@ func (pr *PropertyRepository) applyFilters(query *gorm.DB, filters map[string]in
 			if isApproved, ok := value.(bool); ok {
 				query = query.Where("is_approved = ?", isApproved)
 			}
+		case "state":
+			if state, ok := value.(string); ok && state != "" {
+				query = query.Where("state = ?", state)
+			}
+		case "city":
+			if city, ok := value.(string); ok && city != "" {
+				query = query.Where("city = ?", city)
+			}
+		case "uploaded_by_admin":
+			if uploadedByAdmin, ok := value.(bool); ok {
+				query = query.Where("uploaded_by_admin = ?", uploadedByAdmin)
+			}
+		case "treesindia_assured":
+			if treesIndiaAssured, ok := value.(bool); ok {
+				query = query.Where("treesindia_assured = ?", treesIndiaAssured)
+			}
+		case "sort_by":
+			// Handle sorting - this will be processed after the switch statement
+		case "sort_order":
+			// Handle sorting - this will be processed after the switch statement
 		}
 	}
 	
-	// Only show approved properties by default (unless explicitly filtered)
-	// This ensures user properties need admin approval before showing
-	if _, exists := filters["is_approved"]; !exists {
-		query = query.Where("is_approved = ?", true)
+	// Apply sorting if specified
+	if sortBy, exists := filters["sort_by"]; exists {
+		if sortByStr, ok := sortBy.(string); ok && sortByStr != "" {
+			sortOrder := "ASC"
+			if sortOrderVal, exists := filters["sort_order"]; exists {
+				if sortOrderStr, ok := sortOrderVal.(string); ok && sortOrderStr != "" {
+					sortOrder = strings.ToUpper(sortOrderStr)
+					if sortOrder != "ASC" && sortOrder != "DESC" {
+						sortOrder = "ASC"
+					}
+				}
+			}
+			query = query.Order(sortByStr + " " + sortOrder)
+		}
+	} else {
+		// Default sorting by created_at desc
+		query = query.Order("created_at DESC")
 	}
 	
-	// Only show non-expired properties by default
-	if _, exists := filters["status"]; !exists {
-		query = query.Where("status != ?", models.PropertyStatusExpired)
+	// Apply default filters only for non-admin requests
+	if !isAdmin {
+		// Only show approved properties by default (unless explicitly filtered)
+		// This ensures user properties need admin approval before showing
+		if _, exists := filters["is_approved"]; !exists {
+			query = query.Where("is_approved = ?", true)
+		}
+		
+		// Only show available properties by default (exclude sold/rented)
+		if _, exists := filters["status"]; !exists {
+			query = query.Where("status = ?", models.PropertyStatusAvailable)
+		}
+	} else {
+		// For admin requests, exclude pending properties (unapproved user properties)
+		// This excludes properties that are not approved and not uploaded by admin/broker
+		query = query.Where("(is_approved = ? OR broker_id IS NOT NULL OR uploaded_by_admin = ?)", true, true)
 	}
 	
 	return query
+}
+
+// applyPendingFilters applies filters to pending properties query without default admin filters
+func (pr *PropertyRepository) applyPendingFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
+	for key, value := range filters {
+		switch key {
+		case "search":
+			if searchStr, ok := value.(string); ok && searchStr != "" {
+				query = query.Where("title ILIKE ? OR description ILIKE ?", "%"+searchStr+"%", "%"+searchStr+"%")
+			}
+		case "property_type":
+			if propertyType, ok := value.(string); ok && propertyType != "" {
+				query = query.Where("property_type = ?", propertyType)
+			}
+		case "listing_type":
+			if listingType, ok := value.(string); ok && listingType != "" {
+				query = query.Where("listing_type = ?", listingType)
+			}
+		case "status":
+			if status, ok := value.(string); ok && status != "" {
+				query = query.Where("status = ?", status)
+			}
+		case "min_price":
+			if minPrice, ok := value.(float64); ok && minPrice > 0 {
+				query = query.Where("(sale_price >= ? OR monthly_rent >= ?)", minPrice, minPrice)
+			}
+		case "max_price":
+			if maxPrice, ok := value.(float64); ok && maxPrice > 0 {
+				query = query.Where("(sale_price <= ? OR monthly_rent <= ?)", maxPrice, maxPrice)
+			}
+		case "location":
+			if location, ok := value.(string); ok && location != "" {
+				location = strings.ToLower(location)
+				query = query.Where("LOWER(state) LIKE ? OR LOWER(city) LIKE ? OR LOWER(locality) LIKE ?", 
+					"%"+location+"%", "%"+location+"%", "%"+location+"%")
+			}
+		case "bedrooms":
+			if bedrooms, ok := value.(int); ok && bedrooms > 0 {
+				query = query.Where("bedrooms >= ?", bedrooms)
+			}
+		case "bathrooms":
+			if bathrooms, ok := value.(int); ok && bathrooms > 0 {
+				query = query.Where("bathrooms >= ?", bathrooms)
+			}
+		case "min_area":
+			if minArea, ok := value.(float64); ok && minArea > 0 {
+				query = query.Where("area >= ?", minArea)
+			}
+		case "max_area":
+			if maxArea, ok := value.(float64); ok && maxArea > 0 {
+				query = query.Where("area <= ?", maxArea)
+			}
+		case "furnishing_status":
+			if furnishingStatus, ok := value.(string); ok && furnishingStatus != "" {
+				query = query.Where("furnishing_status = ?", furnishingStatus)
+			}
+		case "state":
+			if state, ok := value.(string); ok && state != "" {
+				query = query.Where("state = ?", state)
+			}
+		case "city":
+			if city, ok := value.(string); ok && city != "" {
+				query = query.Where("city = ?", city)
+			}
+		case "sort_by":
+			// Handle sorting - this will be processed after the switch statement
+		case "sort_order":
+			// Handle sorting - this will be processed after the switch statement
+		}
+	}
+	
+	// Apply sorting if specified
+	if sortBy, exists := filters["sort_by"]; exists {
+		if sortByStr, ok := sortBy.(string); ok && sortByStr != "" {
+			sortOrder := "ASC"
+			if sortOrderVal, exists := filters["sort_order"]; exists {
+				if sortOrderStr, ok := sortOrderVal.(string); ok && sortOrderStr != "" {
+					sortOrder = strings.ToUpper(sortOrderStr)
+					if sortOrder != "ASC" && sortOrder != "DESC" {
+						sortOrder = "ASC"
+					}
+				}
+			}
+			query = query.Order(sortByStr + " " + sortOrder)
+		}
+	} else {
+		// Default sorting by created_at desc
+		query = query.Order("created_at DESC")
+	}
+	
+	// No default filters for pending properties - we want to show all pending properties
+	// regardless of their status (available, sold, rented, etc.)
+	
+	return query
+}
+
+// GetPropertyStats retrieves property statistics for admin dashboard
+func (pr *PropertyRepository) GetPropertyStats() (map[string]interface{}, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("PropertyRepository.GetPropertyStats panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("PropertyRepository.GetPropertyStats called")
+	
+	var totalProperties, approvedProperties, pendingProperties, expiredProperties int64
+	
+	// Get total properties count
+	err := pr.GetDB().Model(&models.Property{}).Count(&totalProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats total count error: %v", err)
+		return nil, err
+	}
+	
+	// Get approved properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("is_approved = ?", true).Count(&approvedProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats approved count error: %v", err)
+		return nil, err
+	}
+	
+	// Get pending properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("is_approved = ?", false).Count(&pendingProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats pending count error: %v", err)
+		return nil, err
+	}
+	
+	// Get sold/rented properties count (previously called expired)
+	err = pr.GetDB().Model(&models.Property{}).Where("status IN (?, ?)", models.PropertyStatusSold, models.PropertyStatusRented).Count(&expiredProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats sold/rented count error: %v", err)
+		return nil, err
+	}
+	
+	stats := map[string]interface{}{
+		"total_properties":    totalProperties,
+		"approved_properties": approvedProperties,
+		"pending_properties":  pendingProperties,
+		"expired_properties":  expiredProperties,
+	}
+	
+	logrus.Infof("PropertyRepository.GetPropertyStats retrieved stats: %+v", stats)
+	return stats, nil
 }
 
 // GetPropertyCountByUserID gets the count of properties for a specific user

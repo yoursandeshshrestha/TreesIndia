@@ -211,6 +211,9 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			return nil, nil, fmt.Errorf("failed to create payment: %v", err)
 		}
 
+		// Calculate payment progress before returning
+		booking.GetPaymentProgress()
+		
 		return booking, razorpayOrder, nil
 
 	} else {
@@ -284,7 +287,10 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 				return nil, nil, fmt.Errorf("failed to create payment: %v", err)
 			}
 
-			return booking, razorpayOrder, nil
+			// Calculate payment progress before returning
+		booking.GetPaymentProgress()
+		
+		return booking, razorpayOrder, nil
 
 		} else {
 			// No inquiry fee required
@@ -321,6 +327,12 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 				return nil, nil, err
 			}
 
+			// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
+				// Calculate payment progress before returning
+			booking.GetPaymentProgress()
+			
 			return booking, nil, nil
 		}
 	}
@@ -464,7 +476,13 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		// 10. Send notification (optional)
 		// bs.notificationService.SendInquiryBookingNotification(booking)
 
-		return booking, nil, nil
+		// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
+				// Calculate payment progress before returning
+			booking.GetPaymentProgress()
+			
+			return booking, nil, nil
 }
 
 
@@ -672,6 +690,9 @@ func (bs *BookingService) VerifyPaymentAndCreateBooking(userID uint, req *models
 		go bs.notificationService.SendBookingConfirmation(booking)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -729,6 +750,9 @@ func (bs *BookingService) VerifyPayment(req *models.VerifyPaymentRequest) (*mode
 	// 7. Send confirmation notifications
 	go bs.notificationService.SendBookingConfirmation(booking)
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -863,6 +887,9 @@ func (bs *BookingService) AssignWorker(bookingID uint, workerID uint, notes stri
 	// 5. Send notification to worker
 	go bs.notificationService.SendWorkerAssignmentNotification(assignment)
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -909,6 +936,9 @@ func (bs *BookingService) UpdateBookingStatus(bookingID uint, status models.Book
 		return nil, err
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -1155,6 +1185,9 @@ func (bs *BookingService) VerifyInquiryPaymentAndCreateBooking(userID uint, req 
 		return nil, fmt.Errorf("failed to update payment with booking link: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -1306,6 +1339,9 @@ func (bs *BookingService) VerifyInquiryPayment(userID uint, req *models.VerifyIn
 	// 8. Send notification (optional)
 	// bs.notificationService.SendInquiryBookingNotification(booking)
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -1412,6 +1448,7 @@ func (bs *BookingService) ConvertToOptimizedBookingResponse(booking *models.Book
 			SpecialInstructions: booking.SpecialInstructions,
 		},
 		Payment:          payment,
+		PaymentProgress:  booking.PaymentProgress,
 		WorkerAssignment: workerAssignment,
 	}
 }
@@ -1507,6 +1544,9 @@ func (bs *BookingService) ConvertToDetailedBookingResponse(booking *models.Booki
 	// Get statistics
 	statistics := bs.getBookingStatistics(booking.ID)
 
+	// Get payment progress
+	paymentProgress := booking.GetPaymentProgress()
+
 	return &models.DetailedBookingResponse{
 		ID:                    booking.ID,
 		BookingReference:      booking.BookingReference,
@@ -1547,6 +1587,7 @@ func (bs *BookingService) ConvertToDetailedBookingResponse(booking *models.Booki
 			SpecialInstructions: booking.SpecialInstructions,
 		},
 		Payment:          payment,
+		PaymentProgress:  paymentProgress,
 		WorkerAssignment: workerAssignment,
 		BufferRequests:   booking.BufferRequests,
 		Reviews:          bs.getBookingReviews(booking.ID),
@@ -1766,6 +1807,9 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 	go bs.notificationService.SendBookingConfirmation(booking)
 
 	logrus.Infof("Wallet payment booking created successfully: booking_id=%d, amount=%.2f", booking.ID, *service.Price)
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
 
@@ -1856,5 +1900,8 @@ func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *model
 	}
 
 	logrus.Infof("Inquiry booking with wallet payment created successfully: booking_id=%d, fee_amount=%.2f", booking.ID, float64(feeAmount))
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	return booking, nil
 }
