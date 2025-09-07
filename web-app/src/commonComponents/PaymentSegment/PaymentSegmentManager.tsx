@@ -38,9 +38,25 @@ export default function PaymentSegmentManager({
 
   const handleSegmentSelect = (segment: PaymentSegmentInfo) => {
     if (segment.status === "pending" || segment.status === "overdue") {
-      setSelectedSegment(segment);
-      setSelectedPaymentMethod(null);
+      // Check if this segment can be paid (sequential payment)
+      if (canPaySegment(segment)) {
+        setSelectedSegment(segment);
+        setSelectedPaymentMethod(null);
+      }
     }
+  };
+
+  const canPaySegment = (segment: PaymentSegmentInfo) => {
+    // Find the first unpaid segment
+    const firstUnpaidSegment = segments.find(
+      (s) => s.status === "pending" || s.status === "overdue"
+    );
+
+    // User can only pay the first unpaid segment
+    return (
+      firstUnpaidSegment &&
+      firstUnpaidSegment.segment_number === segment.segment_number
+    );
   };
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
@@ -106,59 +122,74 @@ export default function PaymentSegmentManager({
     <div className="space-y-6">
       {/* Segments List */}
       <div className="space-y-3">
-        {segments.map((segment) => (
-          <div
-            key={segment.id}
-            className={`border rounded-lg p-4 cursor-pointer transition-all ${
-              selectedSegment?.id === segment.id
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300"
-            } ${segment.status === "paid" ? "opacity-75 cursor-default" : ""}`}
-            onClick={() => handleSegmentSelect(segment)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {getStatusIcon(segment.status)}
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900">
-                      Segment #{segment.segment_number}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                        segment.status
-                      )}`}
-                    >
-                      {segment.status}
-                    </span>
-                  </div>
-                  {segment.due_date && (
-                    <div className="text-sm text-gray-600">
-                      Due:{" "}
-                      {new Date(segment.due_date).toLocaleDateString("en-IN")}
+        {segments.map((segment) => {
+          const isPayable = canPaySegment(segment);
+          const isPaid = segment.status === "paid";
+          const isSelectable = isPayable || isPaid;
+
+          return (
+            <div
+              key={segment.id}
+              className={`border rounded-lg p-4 transition-all ${
+                selectedSegment?.id === segment.id
+                  ? "border-blue-500 bg-blue-50"
+                  : isSelectable
+                  ? "border-gray-200 hover:border-gray-300 cursor-pointer"
+                  : "border-gray-200 opacity-50 cursor-not-allowed"
+              } ${isPaid ? "opacity-75" : ""}`}
+              onClick={() =>
+                isSelectable ? handleSegmentSelect(segment) : undefined
+              }
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  {getStatusIcon(segment.status)}
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-gray-900">
+                        Segment #{segment.segment_number}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                          segment.status
+                        )}`}
+                      >
+                        {segment.status}
+                      </span>
+                      {!isPayable && !isPaid && (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full border bg-gray-100 text-gray-600 border-gray-200">
+                          Pay in order
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {segment.notes && (
-                    <div className="text-sm text-gray-600 mt-1">
-                      {segment.notes}
+                    {segment.due_date && (
+                      <div className="text-sm text-gray-600">
+                        Due:{" "}
+                        {new Date(segment.due_date).toLocaleDateString("en-IN")}
+                      </div>
+                    )}
+                    {segment.notes && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {segment.notes}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-gray-900">
+                    {formatAmount(segment.amount)}
+                  </div>
+                  {segment.status === "paid" && segment.paid_at && (
+                    <div className="text-sm text-green-600">
+                      Paid on{" "}
+                      {new Date(segment.paid_at).toLocaleDateString("en-IN")}
                     </div>
                   )}
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-semibold text-gray-900">
-                  {formatAmount(segment.amount)}
-                </div>
-                {segment.status === "paid" && segment.paid_at && (
-                  <div className="text-sm text-green-600">
-                    Paid on{" "}
-                    {new Date(segment.paid_at).toLocaleDateString("en-IN")}
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Payment Method Selection */}

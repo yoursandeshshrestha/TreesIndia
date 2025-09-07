@@ -1,11 +1,17 @@
 "use client";
 
+// NextSegmentPaymentModal - Updated to fix Razorpay integration
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CreditCard, Wallet, AlertCircle } from "lucide-react";
 import { Booking, PaymentSegmentInfo } from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
-import { usePaymentSegments } from "@/hooks/usePaymentSegments";
+import { useBookings } from "@/hooks/useBookings";
+import { createSegmentPaymentOrder } from "@/lib/bookingApi";
+import { bookingFlowApi } from "@/lib/bookingFlowApi";
+import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface NextSegmentPaymentModalProps {
   isOpen: boolean;
@@ -25,15 +31,64 @@ export default function NextSegmentPaymentModal({
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<{
+    id: string;
+    amount: number;
+    currency: string;
+    key_id: string;
+    payment_id?: number;
+  } | null>(null);
+  const { user } = useAuth();
 
-  const { paymentProgress, paySegment, isPayingSegment } = usePaymentSegments(
-    booking?.ID || booking?.id
-  );
+  // Get payment progress from bookings data
+  const { bookingsWithProgress, refetchBookings } = useBookings();
 
-  // Get the next pending segment
-  const nextSegment = paymentProgress?.segments.find(
-    (segment) => segment.status === "pending" || segment.status === "overdue"
-  );
+  // Try multiple matching strategies (same as MainBookingCard)
+  const bookingWithProgress = bookingsWithProgress.find((item) => {
+    // Primary match: ID comparison
+    if (item.booking.ID === booking?.ID || item.booking.ID === booking?.id) {
+      return true;
+    }
+    // Fallback match: booking reference comparison
+    if (item.booking.booking_reference === booking?.booking_reference) {
+      return true;
+    }
+    return false;
+  });
+
+  // Use payment progress from matched booking, or fallback to booking's own data
+  const paymentProgress =
+    bookingWithProgress?.booking?.payment_progress ||
+    (booking as any)?.payment_progress;
+
+  // Get the next pending segment (sorted by segment number)
+  const nextSegment = paymentProgress?.segments
+    .filter(
+      (segment) => segment.status === "pending" || segment.status === "overdue"
+    )
+    .sort((a, b) => a.segment_number - b.segment_number)[0];
+
+  // Check if this is the first segment (no segments paid yet)
+  const isFirstSegment = paymentProgress && paymentProgress.paid_segments === 0;
+
+  // Debug logging for segment selection
+  if (booking?.booking_reference === "BK20250906113000") {
+    console.log("NextSegmentPaymentModal debug:", {
+      bookingRef: booking.booking_reference,
+      paymentProgress,
+      allSegments: paymentProgress?.segments,
+      pendingSegments: paymentProgress?.segments?.filter(
+        (segment) =>
+          segment.status === "pending" || segment.status === "overdue"
+      ),
+      nextSegment,
+      isFirstSegment,
+      paidSegments: paymentProgress?.paid_segments,
+      dataSource: bookingWithProgress ? "matched_booking" : "booking_fallback",
+      bookingOwnPaymentProgress: (booking as any)?.payment_progress,
+    });
+  }
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
     setSelectedPaymentMethod(method);
@@ -44,16 +99,54 @@ export default function NextSegmentPaymentModal({
 
     setIsProcessing(true);
     try {
-      await paySegment({
-        bookingId: booking?.ID || booking?.id || 0,
-        paymentData: {
-          segment_number: nextSegment.segment_number,
-          amount: nextSegment.amount,
-        },
-      });
+      if (selectedPaymentMethod === "razorpay") {
+        // Create payment order for Razorpay
+        const response = await createSegmentPaymentOrder(
+          booking?.ID || booking?.id || 0,
+          {
+            segment_number: nextSegment.segment_number,
+            amount: nextSegment.amount,
+          }
+        );
 
-      onPaymentSuccess?.();
-      onClose();
+        if (response.success && response.data) {
+          console.log("Segment payment response:", response.data);
+
+          // Try different possible response structures
+          let order = null;
+          let payment = null;
+
+          if (response.data.payment_order?.payment_order) {
+            order = response.data.payment_order.payment_order;
+          } else if (response.data.payment_order) {
+            order = response.data.payment_order;
+          } else if (response.data.order) {
+            order = response.data.order;
+          }
+
+          // Extract payment object if available
+          if (response.data.payment) {
+            payment = response.data.payment;
+          }
+
+          if (order && order.id) {
+            setPaymentOrder({
+              id: order.id as string,
+              amount: order.amount as number,
+              currency: order.currency as string,
+              key_id: order.key_id as string,
+              payment_id: payment?.ID || payment?.id, // Store payment ID for verification
+            });
+            setShowRazorpayCheckout(true);
+          } else {
+            console.error("Invalid payment order structure:", response.data);
+          }
+        }
+      } else if (selectedPaymentMethod === "wallet") {
+        // Handle wallet payment (direct payment)
+        // TODO: Implement wallet payment for segments
+        console.log("Wallet payment not implemented for segments yet");
+      }
     } catch (error) {
       console.error("Payment error:", error);
     } finally {
@@ -63,6 +156,58 @@ export default function NextSegmentPaymentModal({
 
   const canPayWithWallet = (amount: number) => {
     return (booking?.user?.wallet_balance || 0) >= amount;
+  };
+
+  const handleRazorpaySuccess = async (paymentData: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => {
+    try {
+      if (!booking?.ID && !booking?.id) {
+        console.error("Booking ID not found for payment verification");
+        return;
+      }
+
+      const bookingId = booking.ID || booking.id;
+
+      console.log("Attempting payment verification:", {
+        bookingId,
+        bookingStatus: booking.status,
+        paymentData,
+        paymentOrder,
+      });
+
+      // Use dedicated segment payment verification endpoint
+      console.log("Using segment payment verification");
+      await bookingFlowApi.verifySegmentPayment(bookingId, {
+        razorpay_payment_id: paymentData.razorpay_payment_id,
+        razorpay_order_id: paymentData.razorpay_order_id,
+        razorpay_signature: paymentData.razorpay_signature,
+      });
+
+      // Refresh bookings to get updated payment progress
+      await refetchBookings();
+
+      // Show success message
+      toast.success("Payment successful! Segment payment completed.");
+
+      onPaymentSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error("Payment verification failed:", error);
+      toast.error("Payment verification failed. Please contact support.");
+    }
+  };
+
+  const handleRazorpayFailure = (error: Error) => {
+    console.error("Razorpay payment failed:", error);
+    toast.error("Payment failed. Please try again.");
+  };
+
+  const handleRazorpayClose = () => {
+    setShowRazorpayCheckout(false);
+    setPaymentOrder(null);
   };
 
   if (!isOpen || !booking || !nextSegment) return null;
@@ -113,7 +258,7 @@ export default function NextSegmentPaymentModal({
               {/* Header */}
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Pay Next Segment
+                  {isFirstSegment ? "Pay First Segment" : "Pay Next Segment"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
                   Booking #{booking.booking_reference} - {booking.service?.name}
@@ -123,28 +268,68 @@ export default function NextSegmentPaymentModal({
               {/* Content */}
               <div className="p-6">
                 {/* Segment Info */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div
+                  className={`border rounded-lg p-4 mb-6 ${
+                    isFirstSegment
+                      ? "bg-green-50 border-green-200"
+                      : "bg-blue-50 border-blue-200"
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium text-blue-900">
-                        Segment #{nextSegment.segment_number}
+                      <h3
+                        className={`font-medium ${
+                          isFirstSegment ? "text-green-900" : "text-blue-900"
+                        }`}
+                      >
+                        {isFirstSegment
+                          ? "First Payment"
+                          : `Segment #${nextSegment.segment_number}`}
                       </h3>
-                      {nextSegment.due_date && (
-                        <p className="text-sm text-blue-700 mt-1">
-                          Due:{" "}
-                          {new Date(nextSegment.due_date).toLocaleDateString(
-                            "en-IN"
+                      {isFirstSegment ? (
+                        <p
+                          className={`text-sm mt-1 ${
+                            isFirstSegment ? "text-green-700" : "text-blue-700"
+                          }`}
+                        >
+                          Initial payment to start your service
+                        </p>
+                      ) : (
+                        <>
+                          {nextSegment.due_date && (
+                            <p
+                              className={`text-sm mt-1 ${
+                                isFirstSegment
+                                  ? "text-green-700"
+                                  : "text-blue-700"
+                              }`}
+                            >
+                              Due:{" "}
+                              {new Date(
+                                nextSegment.due_date
+                              ).toLocaleDateString("en-IN")}
+                            </p>
                           )}
-                        </p>
-                      )}
-                      {nextSegment.notes && (
-                        <p className="text-sm text-blue-700 mt-1">
-                          {nextSegment.notes}
-                        </p>
+                          {nextSegment.notes && (
+                            <p
+                              className={`text-sm mt-1 ${
+                                isFirstSegment
+                                  ? "text-green-700"
+                                  : "text-blue-700"
+                              }`}
+                            >
+                              {nextSegment.notes}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-900">
+                      <div
+                        className={`text-2xl font-bold ${
+                          isFirstSegment ? "text-green-900" : "text-blue-900"
+                        }`}
+                      >
                         {formatAmount(nextSegment.amount)}
                       </div>
                       {nextSegment.status === "overdue" && (
@@ -159,7 +344,7 @@ export default function NextSegmentPaymentModal({
 
                 {/* Payment Method Selection */}
                 <h4 className="font-medium text-gray-900 mb-3">
-                  Select Payment Method
+                  {isFirstSegment ? "Pay First Segment" : "Pay Next Segment"}
                 </h4>
                 <div className="space-y-3 mb-6">
                   {/* Wallet Payment */}
@@ -236,10 +421,10 @@ export default function NextSegmentPaymentModal({
                 {selectedPaymentMethod && (
                   <button
                     onClick={handlePaySegment}
-                    disabled={isProcessing || isPayingSegment}
+                    disabled={isProcessing}
                     className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isProcessing || isPayingSegment
+                    {isProcessing
                       ? "Processing..."
                       : `Pay ${formatAmount(nextSegment.amount)}`}
                   </button>
@@ -248,6 +433,17 @@ export default function NextSegmentPaymentModal({
             </motion.div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Razorpay Checkout */}
+      {showRazorpayCheckout && paymentOrder && (
+        <RazorpayCheckout
+          order={paymentOrder}
+          description={`Segment ${nextSegment?.segment_number} payment for booking`}
+          onSuccess={handleRazorpaySuccess}
+          onFailure={handleRazorpayFailure}
+          onClose={handleRazorpayClose}
+        />
       )}
     </AnimatePresence>
   );

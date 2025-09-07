@@ -105,6 +105,14 @@ export default function RazorpayCheckout({
   }, [order, description, onSuccess, onFailure, onClose, user]);
 
   useEffect(() => {
+    // Override window.alert to prevent Razorpay's native alerts
+    const originalAlert = window.alert;
+    window.alert = (message: string) => {
+      console.warn("Razorpay alert intercepted:", message);
+      // Don't show the alert, just log it
+      // This prevents Razorpay's native error alerts from showing
+    };
+
     // Load Razorpay script
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -115,6 +123,9 @@ export default function RazorpayCheckout({
     document.body.appendChild(script);
 
     return () => {
+      // Restore original alert function
+      window.alert = originalAlert;
+
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
