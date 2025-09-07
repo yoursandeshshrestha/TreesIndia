@@ -56,9 +56,16 @@ const Sidebar = () => {
     // Find which parent section contains the current route
     for (const item of sidebarItems) {
       if (item.children) {
-        const hasActiveChild = item.children.some(
-          (child) => child.path === currentPath
-        );
+        const hasActiveChild = item.children.some((child) => {
+          if (child.path === currentPath) return true;
+          // Check nested children
+          if (child.children) {
+            return child.children.some(
+              (nestedChild) => nestedChild.path === currentPath
+            );
+          }
+          return false;
+        });
         if (hasActiveChild) {
           // Auto-expand the parent section
           setExpandedItems(new Set([item.id]));
@@ -103,7 +110,16 @@ const Sidebar = () => {
   const isParentActive = (item: SidebarItem) => {
     if (item.path && isActiveRoute(item.path)) return true;
     if (item.children) {
-      return item.children.some((child) => isActiveRoute(child.path));
+      return item.children.some((child) => {
+        if (isActiveRoute(child.path)) return true;
+        // Check nested children
+        if (child.children) {
+          return child.children.some((nestedChild) =>
+            isActiveRoute(nestedChild.path)
+          );
+        }
+        return false;
+      });
     }
     return false;
   };
@@ -115,9 +131,15 @@ const Sidebar = () => {
     const matchesItem = item.label
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
-    const matchesChildren = item.children?.some((child) =>
-      child.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const matchesChildren = item.children?.some((child) => {
+      const matchesChild = child.label
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesNestedChildren = child.children?.some((nestedChild) =>
+        nestedChild.label.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      return matchesChild || matchesNestedChildren;
+    });
 
     return matchesItem || matchesChildren;
   });
@@ -165,19 +187,19 @@ const Sidebar = () => {
               toggleExpand(item.id);
             } else if (item.path) {
               handleNavigation(item.path);
-            } else if (isGroup) {
-              toggleExpand(item.id);
             }
+            // Group items are just labels, no click action needed
           }}
           onKeyDown={(e) => handleKeyDown(e, item, index)}
-          tabIndex={0}
+          tabIndex={isGroup ? -1 : 0}
           className={`
-            relative flex items-center w-full px-3 py-2.5 cursor-pointer
+            relative flex items-center w-full py-2
             transition-all duration-200 ease-out rounded-md
+            ${isGroup ? "cursor-default px-0" : "cursor-pointer px-3"}
             ${!isActive && !isGroup && "hover:translate-x-1"}
             ${
               isGroup
-                ? "text-gray-700 font-semibold text-xs tracking-wider mb-2 mt-3 first:mt-0"
+                ? "text-gray-500 font-medium text-[19px] tracking-wide !pt-4 !pb-1 !py-0  uppercase text-left "
                 : isActive
                 ? "text-blue-600"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -197,7 +219,9 @@ const Sidebar = () => {
 
           {/* Label */}
           <span
-            className={`text-sm font-medium flex-1 transition-all duration-200 ${
+            className={`${
+              isGroup ? "text-[12px]" : "text-sm"
+            } font-medium flex-1 transition-all duration-200 ${
               !isActive && !isGroup && "group-hover:tracking-wide"
             }`}
           >
@@ -244,44 +268,153 @@ const Sidebar = () => {
                 `}
               />
 
-              {item.children?.map((child, childIndex) => (
-                <div
-                  key={child.id}
-                  onClick={() => child.path && handleNavigation(child.path)}
-                  className={`
-                    relative flex items-center px-3 py-2 cursor-pointer group/child
-                    transition-all duration-200 ease-out rounded-md
-                    ${!isActiveRoute(child.path) && "hover:translate-x-1"}
-                    ${
-                      isExpanded
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-[-4px] opacity-0"
-                    }
-                    ${
-                      isActiveRoute(child.path)
-                        ? "text-blue-600 bg-blue-50  border-blue-500"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    }
-                  `}
-                  style={{
-                    transitionDelay: isExpanded
-                      ? `${100 + childIndex * 30}ms`
-                      : "0ms",
-                  }}
-                >
-                  {/* Child Icon */}
-                  <div className="mr-3">{child.icon}</div>
+              {item.children?.map((child, childIndex) => {
+                const hasNestedChildren =
+                  child.children && child.children.length > 0;
+                const isNestedExpanded = expandedItems.has(child.id);
+                const isNestedActive = isParentActive(child);
 
-                  <span
-                    className={`text-sm font-medium transition-all duration-200 ${
-                      !isActiveRoute(child.path) &&
-                      "group-hover/child:tracking-wide"
-                    }`}
-                  >
-                    {child.label}
-                  </span>
-                </div>
-              ))}
+                return (
+                  <div key={child.id}>
+                    {/* Child Item */}
+                    <div
+                      onClick={() => {
+                        if (hasNestedChildren) {
+                          toggleExpand(child.id);
+                        } else if (child.path) {
+                          handleNavigation(child.path);
+                        }
+                      }}
+                      className={`
+                        relative flex items-center px-3 py-2 cursor-pointer group/child
+                        transition-all duration-200 ease-out rounded-md
+                        ${
+                          !isActiveRoute(child.path) &&
+                          !hasNestedChildren &&
+                          "hover:translate-x-1"
+                        }
+                        ${
+                          isExpanded
+                            ? "translate-y-0 opacity-100"
+                            : "translate-y-[-4px] opacity-0"
+                        }
+                        ${
+                          isActiveRoute(child.path) || isNestedActive
+                            ? "text-blue-600 bg-blue-50 border-blue-500"
+                            : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        }
+                      `}
+                      style={{
+                        transitionDelay: isExpanded
+                          ? `${100 + childIndex * 30}ms`
+                          : "0ms",
+                      }}
+                    >
+                      {/* Child Icon */}
+                      <div className="mr-3">{child.icon}</div>
+
+                      <span
+                        className={`text-sm font-medium transition-all duration-200 ${
+                          !isActiveRoute(child.path) &&
+                          !isNestedActive &&
+                          "group-hover/child:tracking-wide"
+                        }`}
+                      >
+                        {child.label}
+                      </span>
+
+                      {/* Chevron for nested children */}
+                      {hasNestedChildren && (
+                        <ChevronRight
+                          size={12}
+                          className={`
+                            ml-auto transition-all duration-200 ease-out
+                            ${isNestedExpanded ? "rotate-90" : ""}
+                            ${
+                              isNestedActive ? "text-blue-600" : "text-gray-400"
+                            }
+                          `}
+                        />
+                      )}
+                    </div>
+
+                    {/* Nested Children */}
+                    {hasNestedChildren && (
+                      <div
+                        className={`
+                          overflow-hidden ml-4
+                          transition-all duration-300 ease-out
+                          ${
+                            isNestedExpanded
+                              ? "max-h-96 opacity-100"
+                              : "max-h-0 opacity-0"
+                          }
+                        `}
+                      >
+                        <div className="relative mt-1 space-y-0.5">
+                          {/* Connection Line for nested */}
+                          <div
+                            className={`
+                              absolute left-[-8px] top-0 bottom-1 w-px bg-gray-200
+                              transition-all duration-300 ease-out delay-200
+                              ${
+                                isNestedExpanded
+                                  ? "opacity-100 scale-y-100"
+                                  : "opacity-0 scale-y-0"
+                              }
+                            `}
+                          />
+
+                          {child.children?.map((nestedChild, nestedIndex) => (
+                            <div
+                              key={nestedChild.id}
+                              onClick={() =>
+                                nestedChild.path &&
+                                handleNavigation(nestedChild.path)
+                              }
+                              className={`
+                                relative flex items-center px-3 py-2 cursor-pointer group/nested
+                                transition-all duration-200 ease-out rounded-md
+                                ${
+                                  !isActiveRoute(nestedChild.path) &&
+                                  "hover:translate-x-1"
+                                }
+                                ${
+                                  isNestedExpanded
+                                    ? "translate-y-0 opacity-100"
+                                    : "translate-y-[-4px] opacity-0"
+                                }
+                                ${
+                                  isActiveRoute(nestedChild.path)
+                                    ? "text-blue-600 bg-blue-50 border-blue-500"
+                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                }
+                              `}
+                              style={{
+                                transitionDelay: isNestedExpanded
+                                  ? `${150 + nestedIndex * 30}ms`
+                                  : "0ms",
+                              }}
+                            >
+                              {/* Nested Child Icon */}
+                              <div className="mr-3">{nestedChild.icon}</div>
+
+                              <span
+                                className={`text-sm font-medium transition-all duration-200 ${
+                                  !isActiveRoute(nestedChild.path) &&
+                                  "group-hover/nested:tracking-wide"
+                                }`}
+                              >
+                                {nestedChild.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
