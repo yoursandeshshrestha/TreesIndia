@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS properties (
     priority_score INTEGER DEFAULT 0,
     subscription_required BOOLEAN DEFAULT false,
     
+    -- TreesIndia Assured Tag
+    treesindia_assured BOOLEAN DEFAULT false,
+    
     -- Images
     images JSONB,
     
@@ -74,6 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_properties_listing_type ON properties(listing_typ
 CREATE INDEX IF NOT EXISTS idx_properties_slug ON properties(slug);
 CREATE INDEX IF NOT EXISTS idx_properties_priority_score ON properties(priority_score);
 CREATE INDEX IF NOT EXISTS idx_properties_expires_at ON properties(expires_at);
+CREATE INDEX IF NOT EXISTS idx_properties_treesindia_assured ON properties(treesindia_assured);
 
 -- Add constraints
 ALTER TABLE properties ADD CONSTRAINT chk_properties_property_type 
@@ -83,7 +87,7 @@ ALTER TABLE properties ADD CONSTRAINT chk_properties_listing_type
     CHECK (listing_type IN ('sale', 'rent'));
 
 ALTER TABLE properties ADD CONSTRAINT chk_properties_status 
-    CHECK (status IN ('available', 'sold', 'rented', 'under_contract', 'off_market', 'expired'));
+    CHECK (status IN ('available', 'sold', 'rented'));
 
 ALTER TABLE properties ADD CONSTRAINT chk_properties_furnishing_status 
     CHECK (furnishing_status IS NULL OR furnishing_status IN ('furnished', 'semi_furnished', 'unfurnished'));

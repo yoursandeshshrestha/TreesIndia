@@ -58,6 +58,13 @@ type CreateSegmentPaymentRequest struct {
 	Amount        float64 `json:"amount" binding:"required,min=0"`
 }
 
+// VerifySegmentPaymentRequest represents the request to verify segment payment
+type VerifySegmentPaymentRequest struct {
+	RazorpayOrderID   string `json:"razorpay_order_id" binding:"required"`
+	RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
+	RazorpaySignature string `json:"razorpay_signature" binding:"required"`
+}
+
 // PaymentSegmentInfo represents payment segment information in responses
 type PaymentSegmentInfo struct {
 	ID            uint                  `json:"id"`

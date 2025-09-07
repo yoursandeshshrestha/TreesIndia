@@ -362,19 +362,15 @@ func (bc *BookingController) GetUserBookings(c *gin.Context) {
 		return
 	}
 
-	// Add payment progress to each booking
+	// Calculate payment progress for each booking
 	bookingsWithProgress := make([]gin.H, len(bookings))
 	for i, booking := range bookings {
-		bookingData := gin.H{
+		// Calculate payment progress and set it on the booking object
+		booking.GetPaymentProgress()
+		
+		bookingsWithProgress[i] = gin.H{
 			"booking": booking,
 		}
-		
-		// Add payment progress if booking has payment segments
-		if paymentProgress := booking.GetPaymentProgress(); paymentProgress != nil {
-			bookingData["payment_progress"] = paymentProgress
-		}
-		
-		bookingsWithProgress[i] = bookingData
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -430,14 +426,11 @@ func (bc *BookingController) GetBookingByID(c *gin.Context) {
 		response = optimizedBooking
 	}
 
-	// Add payment progress to response
+	// Calculate payment progress and set it on the booking object
+	booking.GetPaymentProgress()
+
 	responseData := gin.H{
 		"booking": response,
-	}
-	
-	// Add payment progress if booking has payment segments
-	if paymentProgress := booking.GetPaymentProgress(); paymentProgress != nil {
-		responseData["payment_progress"] = paymentProgress
 	}
 
 	c.JSON(http.StatusOK, responseData)
@@ -505,6 +498,8 @@ func (bc *BookingController) AdminGetAllBookings(c *gin.Context) {
 	// Convert to optimized response
 	optimizedBookings := make([]*models.OptimizedBookingResponse, len(bookings))
 	for i, booking := range bookings {
+		// Calculate payment progress for each booking
+		booking.GetPaymentProgress()
 		optimizedBookings[i] = bc.bookingService.ConvertToOptimizedBookingResponse(&booking)
 	}
 

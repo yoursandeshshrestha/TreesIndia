@@ -28,12 +28,9 @@ const (
 type PropertyStatus string
 
 const (
-	PropertyStatusAvailable    PropertyStatus = "available"
-	PropertyStatusSold         PropertyStatus = "sold"
-	PropertyStatusRented       PropertyStatus = "rented"
-	PropertyStatusUnderContract PropertyStatus = "under_contract"
-	PropertyStatusOffMarket    PropertyStatus = "off_market"
-	PropertyStatusExpired      PropertyStatus = "expired"
+	PropertyStatusAvailable PropertyStatus = "available"
+	PropertyStatusSold      PropertyStatus = "sold"    // For sale listings
+	PropertyStatusRented    PropertyStatus = "rented"  // For rent listings
 )
 
 // FurnishingStatus represents the furnishing status
@@ -115,6 +112,9 @@ type Property struct {
 	PriorityScore        int  `json:"priority_score" gorm:"default:0"`           // Priority for listing order
 	SubscriptionRequired bool `json:"subscription_required" gorm:"default:false"` // If broker needed subscription to post
 	
+	// TreesIndia Assured Tag
+	TreesIndiaAssured    bool `json:"treesindia_assured" gorm:"column:treesindia_assured;default:false"`   // TreesIndia Assured tag for admin-created properties
+	
 	// Images
 	Images           JSONStringArray `json:"images" gorm:"type:json"` // Array of image URLs
 	
@@ -147,6 +147,11 @@ func (p *Property) BeforeCreate(tx *gorm.DB) error {
 		p.IsApproved = true
 		now := time.Now()
 		p.ApprovedAt = &now
+	}
+	
+	// Set TreesIndia Assured tag for admin-created properties
+	if p.UploadedByAdmin {
+		p.TreesIndiaAssured = true
 	}
 	
 	// Set priority score based on property type
