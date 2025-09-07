@@ -8,7 +8,7 @@ import {
   PaymentSegmentManager,
 } from "@/commonComponents/PaymentSegment";
 import { formatAmount } from "@/utils/formatters";
-import { usePaymentSegments } from "@/hooks/usePaymentSegments";
+import { useBookings } from "@/hooks/useBookings";
 
 interface PaymentSegmentsPageProps {
   booking: Booking;
@@ -21,15 +21,19 @@ export default function PaymentSegmentsPage({
   onBack,
   onPaymentSuccess,
 }: PaymentSegmentsPageProps) {
-  const { paymentProgress, isLoadingSegments, segmentsError, refetchSegments } =
-    usePaymentSegments(booking.ID || booking.id);
+  // Get payment progress from bookings data
+  const { bookingsWithProgress, refetchBookings } = useBookings();
+  const bookingWithProgress = bookingsWithProgress.find(
+    (item) => item.booking.ID === booking.ID || item.booking.id === booking.id
+  );
+  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 
-  const loading = isLoadingSegments;
-  const error = segmentsError ? "Failed to load payment segments" : null;
+  const loading = false; // No loading since data comes from cache
+  const error = null; // No error since data comes from cache
 
   const handlePaymentSuccess = (segmentId: number) => {
-    // Refresh the payment segments after successful payment
-    refetchSegments();
+    // Refresh the bookings to get updated payment progress
+    refetchBookings();
     onPaymentSuccess?.();
   };
 
@@ -39,7 +43,7 @@ export default function PaymentSegmentsPage({
   };
 
   const handleRefresh = () => {
-    refetchSegments();
+    refetchBookings();
   };
 
   if (loading) {
