@@ -15,6 +15,7 @@ import {
   MessageSquare,
   XCircle,
   Loader,
+  DollarSign,
 } from "lucide-react";
 import {
   getBookingById,
@@ -27,6 +28,7 @@ import {
   getBookingStatusColor,
   getPaymentStatusColor,
   getAssignmentStatusColor,
+  getPaymentSegmentStatusColor,
   PaymentStatus,
   AssignmentStatus,
   PaymentProgress,
@@ -35,7 +37,6 @@ import Button from "@/components/Button";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Model from "@/components/Model/Base/Model";
-import { PaymentProgress as PaymentProgressComponent } from "@/components/PaymentProgress";
 import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import {
   displayValue,
@@ -313,12 +314,137 @@ export default function BookingDetailsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Completion Type</p>
                     <p className="font-medium">
-                      {displayValue(booking.completion_type, "Not completed")}
+                      {booking.status === "completed"
+                        ? "Completed"
+                        : displayValue(
+                            booking.completion_type,
+                            "Not completed"
+                          )}
                     </p>
                   </div>
                 </div>
+                {paymentProgress && paymentProgress.total_segments > 1 && (
+                  <div className="flex items-center space-x-3">
+                    <DollarSign className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-600">Payment Segments</p>
+                      <p className="font-medium">
+                        {paymentProgress.paid_segments}/
+                        {paymentProgress.total_segments} paid
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({paymentProgress.progress_percentage.toFixed(0)}%)
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Payment Segments - Clean and minimal */}
+            {paymentProgress && paymentProgress.total_segments > 1 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Payment Segments
+                </h2>
+                {isLoadingPaymentProgress ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader className="h-5 w-5 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-600">
+                      Loading...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Progress Overview */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Progress</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {paymentProgress.paid_segments}/
+                          {paymentProgress.total_segments}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${paymentProgress.progress_percentage}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>
+                          {paymentProgress.paid_segments ===
+                          paymentProgress.total_segments
+                            ? "Complete"
+                            : paymentProgress.segments?.some(
+                                (s) => s.is_overdue && s.status === "pending"
+                              )
+                            ? "Overdue"
+                            : "In Progress"}
+                        </span>
+                        <span>
+                          {paymentProgress.progress_percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Individual Segments */}
+                    {paymentProgress.segments &&
+                      paymentProgress.segments.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="border-t border-gray-100 pt-3">
+                            <h3 className="text-sm font-medium text-gray-700 mb-3">
+                              Segments
+                            </h3>
+                            <div className="space-y-2">
+                              {paymentProgress.segments.map(
+                                (segment, index) => (
+                                  <div
+                                    key={segment.id || index}
+                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white border border-gray-200">
+                                        <span className="text-xs font-medium text-gray-600">
+                                          {index + 1}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {displayCurrency(segment.amount)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          Due: {displayDate(segment.due_date)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <span
+                                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md ${getPaymentSegmentStatusColor(
+                                          segment.status,
+                                          segment.is_overdue
+                                        )}`}
+                                      >
+                                        {segment.status === "paid"
+                                          ? "PAID"
+                                          : segment.is_overdue
+                                          ? "OVERDUE"
+                                          : "PENDING"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Service Information */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -560,202 +686,193 @@ export default function BookingDetailsPage() {
               </div>
             )}
 
-            {/* Payment Progress - Show for segmented payments */}
-            {paymentProgress && paymentProgress.total_segments > 1 && (
+            {/* Worker Assignment - Only show if booking is not completed */}
+            {booking.status !== "completed" && (
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Payment Progress
+                  Worker Assignment
                 </h2>
-                {isLoadingPaymentProgress ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-sm text-gray-600">
-                      Loading payment progress...
-                    </span>
+                {booking.worker_assignment ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Status</span>
+                      <span
+                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md border ${getAssignmentStatusColor(
+                          (booking.worker_assignment.status ||
+                            "") as AssignmentStatus
+                        )}`}
+                      >
+                        {(
+                          booking.worker_assignment.status || "UNASSIGNED"
+                        ).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Assigned Worker</p>
+                      <p className="font-medium">
+                        {booking.worker_assignment.worker
+                          ? displayValue(
+                              booking.worker_assignment.worker.name,
+                              "Worker name not provided"
+                            )
+                          : displayValue(null, "No worker assigned")}
+                      </p>
+                      {booking.worker_assignment.worker && (
+                        <p className="text-sm text-gray-600">
+                          {displayValue(
+                            booking.worker_assignment.worker.phone,
+                            "Phone not provided"
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Assigned At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.worker_assignment.assigned_at)}
+                      </p>
+                    </div>
+                    {booking.worker_assignment.accepted_at && (
+                      <div>
+                        <p className="text-sm text-gray-600">Accepted At</p>
+                        <p className="font-medium">
+                          {displayDateTime(
+                            booking.worker_assignment.accepted_at
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    {booking.worker_assignment.acceptance_notes && (
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          Acceptance Notes
+                        </p>
+                        <p className="font-medium">
+                          {booking.worker_assignment.acceptance_notes}
+                        </p>
+                      </div>
+                    )}
+                    {booking.worker_assignment.rejected_at && (
+                      <div>
+                        <p className="text-sm text-gray-600">Rejected At</p>
+                        <p className="font-medium">
+                          {displayDateTime(
+                            booking.worker_assignment.rejected_at
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    {booking.worker_assignment.rejection_reason && (
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          Rejection Reason
+                        </p>
+                        <p className="font-medium text-red-600">
+                          {booking.worker_assignment.rejection_reason}
+                        </p>
+                      </div>
+                    )}
+                    {booking.worker_assignment.rejection_notes && (
+                      <div>
+                        <p className="text-sm text-gray-600">Rejection Notes</p>
+                        <p className="font-medium">
+                          {booking.worker_assignment.rejection_notes}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex space-x-2">
+                      {/* Show reassign button if worker hasn't accepted, is in progress, or completed */}
+                      {booking.worker_assignment.status !== "accepted" &&
+                        booking.worker_assignment.status !== "in_progress" &&
+                        booking.worker_assignment.status !== "completed" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowWorkerAssignmentModal(true)}
+                            disabled={isAssigning}
+                          >
+                            {isAssigning ? "Assigning..." : "Reassign"}
+                          </Button>
+                        )}
+
+                      {/* Show status messages */}
+                      {booking.worker_assignment.status === "accepted" && (
+                        <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                          Worker has accepted the assignment
+                        </div>
+                      )}
+                      {booking.worker_assignment.status === "in_progress" && (
+                        <div className="text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
+                          Service is in progress
+                        </div>
+                      )}
+                      {booking.worker_assignment.status === "completed" && (
+                        <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                          Service completed
+                        </div>
+                      )}
+                      {booking.worker_assignment.status === "rejected" && (
+                        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
+                          Worker rejected assignment - can reassign
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <PaymentProgressComponent progress={paymentProgress} />
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">No worker assigned</p>
+
+                    {/* Worker Selection Dropdown */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Worker
+                      </label>
+                      {workersLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2 text-sm text-gray-600">
+                            Loading workers...
+                          </span>
+                        </div>
+                      ) : workersError ? (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-red-800 text-sm">{workersError}</p>
+                        </div>
+                      ) : workers.length === 0 ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-yellow-800 text-sm">
+                            No workers available
+                          </p>
+                        </div>
+                      ) : (
+                        <SearchableDropdown
+                          options={workerOptions}
+                          value={selectedWorkerId}
+                          onChange={(value) =>
+                            setSelectedWorkerId(value.toString())
+                          }
+                          placeholder="Select a worker..."
+                          className="w-full"
+                        />
+                      )}
+                    </div>
+
+                    {/* Assign Button */}
+                    {selectedWorkerId && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleWorkerAssignment}
+                        disabled={isAssigning}
+                        loading={isAssigning}
+                      >
+                        {isAssigning ? "Assigning..." : "Assign Worker"}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
-
-            {/* Worker Assignment */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Worker Assignment
-              </h2>
-              {booking.worker_assignment ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
-                    <span
-                      className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md border ${getAssignmentStatusColor(
-                        (booking.worker_assignment.status ||
-                          "") as AssignmentStatus
-                      )}`}
-                    >
-                      {(
-                        booking.worker_assignment.status || "UNASSIGNED"
-                      ).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Assigned Worker</p>
-                    <p className="font-medium">
-                      {booking.worker_assignment.worker
-                        ? displayValue(
-                            booking.worker_assignment.worker.name,
-                            "Worker name not provided"
-                          )
-                        : displayValue(null, "No worker assigned")}
-                    </p>
-                    {booking.worker_assignment.worker && (
-                      <p className="text-sm text-gray-600">
-                        {displayValue(
-                          booking.worker_assignment.worker.phone,
-                          "Phone not provided"
-                        )}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Assigned At</p>
-                    <p className="font-medium">
-                      {displayDateTime(booking.worker_assignment.assigned_at)}
-                    </p>
-                  </div>
-                  {booking.worker_assignment.accepted_at && (
-                    <div>
-                      <p className="text-sm text-gray-600">Accepted At</p>
-                      <p className="font-medium">
-                        {displayDateTime(booking.worker_assignment.accepted_at)}
-                      </p>
-                    </div>
-                  )}
-                  {booking.worker_assignment.acceptance_notes && (
-                    <div>
-                      <p className="text-sm text-gray-600">Acceptance Notes</p>
-                      <p className="font-medium">
-                        {booking.worker_assignment.acceptance_notes}
-                      </p>
-                    </div>
-                  )}
-                  {booking.worker_assignment.rejected_at && (
-                    <div>
-                      <p className="text-sm text-gray-600">Rejected At</p>
-                      <p className="font-medium">
-                        {displayDateTime(booking.worker_assignment.rejected_at)}
-                      </p>
-                    </div>
-                  )}
-                  {booking.worker_assignment.rejection_reason && (
-                    <div>
-                      <p className="text-sm text-gray-600">Rejection Reason</p>
-                      <p className="font-medium text-red-600">
-                        {booking.worker_assignment.rejection_reason}
-                      </p>
-                    </div>
-                  )}
-                  {booking.worker_assignment.rejection_notes && (
-                    <div>
-                      <p className="text-sm text-gray-600">Rejection Notes</p>
-                      <p className="font-medium">
-                        {booking.worker_assignment.rejection_notes}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex space-x-2">
-                    {/* Show reassign button if worker hasn't accepted, is in progress, or completed */}
-                    {booking.worker_assignment.status !== "accepted" &&
-                      booking.worker_assignment.status !== "in_progress" &&
-                      booking.worker_assignment.status !== "completed" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowWorkerAssignmentModal(true)}
-                          disabled={isAssigning}
-                        >
-                          {isAssigning ? "Assigning..." : "Reassign"}
-                        </Button>
-                      )}
-
-                    {/* Show status messages */}
-                    {booking.worker_assignment.status === "accepted" && (
-                      <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
-                        Worker has accepted the assignment
-                      </div>
-                    )}
-                    {booking.worker_assignment.status === "in_progress" && (
-                      <div className="text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
-                        Service is in progress
-                      </div>
-                    )}
-                    {booking.worker_assignment.status === "completed" && (
-                      <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
-                        Service completed
-                      </div>
-                    )}
-                    {booking.worker_assignment.status === "rejected" && (
-                      <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
-                        Worker rejected assignment - can reassign
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600">No worker assigned</p>
-
-                  {/* Worker Selection Dropdown */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Worker
-                    </label>
-                    {workersLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span className="ml-2 text-sm text-gray-600">
-                          Loading workers...
-                        </span>
-                      </div>
-                    ) : workersError ? (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-red-800 text-sm">{workersError}</p>
-                      </div>
-                    ) : workers.length === 0 ? (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <p className="text-yellow-800 text-sm">
-                          No workers available
-                        </p>
-                      </div>
-                    ) : (
-                      <SearchableDropdown
-                        options={workerOptions}
-                        value={selectedWorkerId}
-                        onChange={(value) =>
-                          setSelectedWorkerId(value.toString())
-                        }
-                        placeholder="Select a worker..."
-                        className="w-full"
-                      />
-                    )}
-                  </div>
-
-                  {/* Assign Button */}
-                  {selectedWorkerId && (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleWorkerAssignment}
-                      disabled={isAssigning}
-                      loading={isAssigning}
-                    >
-                      {isAssigning ? "Assigning..." : "Assign Worker"}
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
 
             {/* Actions */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
