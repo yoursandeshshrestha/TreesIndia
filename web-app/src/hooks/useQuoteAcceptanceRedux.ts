@@ -2,6 +2,7 @@
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
+import { useBookings } from "@/hooks/useBookings";
 import {
   openModal,
   closeModal,
@@ -69,6 +70,7 @@ export function useQuoteAcceptanceRedux(
       selectedDate || "",
       !!selectedDate && !!booking?.service?.id
     );
+  const { bookingsWithProgress } = useBookings();
 
   const createQuotePaymentMutation = useCreateQuotePayment();
   const verifyQuotePaymentMutation = useVerifyQuotePayment();
@@ -194,11 +196,19 @@ export function useQuoteAcceptanceRedux(
   );
 
   const handleProceedToPayment = useCallback(async () => {
+    // Check if this is multiple segments (no date/time selection required)
+    const bookingWithProgress = bookingsWithProgress.find(
+      (item) =>
+        item.booking.ID === booking?.ID || item.booking.id === booking?.id
+    );
+    const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+    const hasMultipleSegments =
+      paymentProgress && paymentProgress.segments.length > 1;
+
     if (
       !booking ||
-      !selectedDate ||
-      !selectedTimeSlot ||
-      !selectedPaymentMethod
+      !selectedPaymentMethod ||
+      (!hasMultipleSegments && (!selectedDate || !selectedTimeSlot))
     ) {
       handleSetError("Please complete all selections before proceeding");
       return;
@@ -213,9 +223,16 @@ export function useQuoteAcceptanceRedux(
       }
 
       const paymentData = {
-        scheduled_date: selectedDate,
-        scheduled_time: selectedTimeSlot.time,
-        amount: booking.quote_amount || 0,
+        ...(hasMultipleSegments
+          ? {}
+          : {
+              scheduled_date: selectedDate,
+              scheduled_time: selectedTimeSlot?.time,
+            }),
+        amount: hasMultipleSegments
+          ? paymentProgress?.segments[0]?.amount || 0
+          : booking.quote_amount || 0,
+        ...(hasMultipleSegments ? { segment_number: 1 } : {}),
       };
 
       if (selectedPaymentMethod === "wallet") {
@@ -235,13 +252,13 @@ export function useQuoteAcceptanceRedux(
           paymentData,
         });
 
-        const order = response.data.payment_order;
+        const order = response.data.payment_order.payment_order;
         dispatch(
           setPaymentOrder({
             id: order.id as string,
             amount: order.amount as number,
             currency: order.currency as string,
-            key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+            key_id: order.key_id as string,
           })
         );
         dispatch(setShowRazorpayCheckout(true));
@@ -255,6 +272,7 @@ export function useQuoteAcceptanceRedux(
     selectedDate,
     selectedTimeSlot,
     selectedPaymentMethod,
+    bookingsWithProgress,
     handleSetError,
     handleClearError,
     processWalletPaymentMutation,
@@ -279,6 +297,9 @@ export function useQuoteAcceptanceRedux(
           throw new Error("Booking ID not found");
         }
 
+        // Clear any existing errors before processing
+        handleClearError();
+
         await verifyQuotePaymentMutation.mutateAsync({
           bookingId,
           paymentData,
@@ -299,6 +320,7 @@ export function useQuoteAcceptanceRedux(
       booking,
       verifyQuotePaymentMutation,
       handleSetError,
+      handleClearError,
       handleSetSuccess,
       onSuccess,
       onClose,

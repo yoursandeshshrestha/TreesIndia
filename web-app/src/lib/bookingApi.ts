@@ -323,26 +323,6 @@ export async function rejectQuote(
 
 // Payment Segment API functions
 
-// Get payment segments for a booking
-export async function getPaymentSegments(
-  bookingId: number
-): Promise<{ success: boolean; data: PaymentProgress }> {
-  try {
-    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments`;
-    const response = await authenticatedFetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching payment segments:", error);
-    throw error;
-  }
-}
-
 // Pay for a specific payment segment
 export async function paySegment(
   bookingId: number,
@@ -403,6 +383,33 @@ export async function getPaidSegments(
     return data;
   } catch (error) {
     console.error("Error fetching paid segments:", error);
+    throw error;
+  }
+}
+
+// Create segment payment order
+export async function createSegmentPaymentOrder(
+  bookingId: number,
+  paymentData: {
+    segment_number: number;
+    amount: number;
+  }
+): Promise<{ success: boolean; data: any }> {
+  try {
+    const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pay`;
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+      body: JSON.stringify(paymentData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating segment payment order:", error);
     throw error;
   }
 }
