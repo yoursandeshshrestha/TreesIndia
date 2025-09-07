@@ -13,6 +13,7 @@ interface BookingDetailsCardProps {
   currentStep: string;
   getAddressName: (address: Record<string, unknown>) => string;
   getAddressDetails: (address: Record<string, unknown>) => string;
+  hasMultipleSegments?: boolean;
 }
 
 export default function BookingDetailsCard({
@@ -22,6 +23,7 @@ export default function BookingDetailsCard({
   currentStep,
   getAddressName,
   getAddressDetails,
+  hasMultipleSegments = false,
 }: BookingDetailsCardProps) {
   const {
     handleSetCurrentStep,
@@ -69,44 +71,46 @@ export default function BookingDetailsCard({
         </div>
       </div>
 
-      {/* Slot Selection */}
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
-        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-          <Clock className="w-4 h-4 text-gray-600" />
-        </div>
-        <div className="flex-1">
-          <p className="font-semibold text-gray-900 text-sm">Slot</p>
-          {selectedDate && selectedTimeSlot && (
-            <div className="mt-1">
-              <p className="text-gray-900 text-sm font-medium">
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-              <p className="text-gray-900 text-sm font-medium mt-1">
-                at {formatTime12Hour(selectedTimeSlot.time)}
-              </p>
-            </div>
+      {/* Slot Selection - Only show for single segment bookings */}
+      {!hasMultipleSegments && (
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <Clock className="w-4 h-4 text-gray-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-900 text-sm">Slot</p>
+            {selectedDate && selectedTimeSlot && (
+              <div className="mt-1">
+                <p className="text-gray-900 text-sm font-medium">
+                  {new Date(selectedDate).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+                <p className="text-gray-900 text-sm font-medium mt-1">
+                  at {formatTime12Hour(selectedTimeSlot.time)}
+                </p>
+              </div>
+            )}
+          </div>
+          {selectedDate && selectedTimeSlot ? (
+            <button
+              onClick={handleChangeSlot}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer self-center"
+            >
+              Change
+            </button>
+          ) : (
+            <button
+              onClick={handleChangeSlot}
+              className="bg-[#00a871] hover:bg-[#009a65] text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer self-center"
+            >
+              Select slot
+            </button>
           )}
         </div>
-        {selectedDate && selectedTimeSlot ? (
-          <button
-            onClick={handleChangeSlot}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer self-center"
-          >
-            Change
-          </button>
-        ) : (
-          <button
-            onClick={handleChangeSlot}
-            className="bg-[#00a871] hover:bg-[#009a65] text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer self-center"
-          >
-            Select slot
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Payment Method */}
       <div className="flex items-center gap-3">

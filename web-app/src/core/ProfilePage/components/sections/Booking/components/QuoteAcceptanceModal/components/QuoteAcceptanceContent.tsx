@@ -1,8 +1,9 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
-import { usePaymentSegments } from "@/hooks/usePaymentSegments";
+import { useBookings } from "@/hooks/useBookings";
 import BookingDetailsCard from "./BookingDetailsCard";
 import DateTimeSelection from "./DateTimeSelection";
 import PaymentSection from "./PaymentSection";
@@ -22,19 +23,29 @@ export function QuoteAcceptanceContent() {
     handleDateSelect,
     handleTimeSlotSelect,
     handlePaymentMethodSelect,
+    handleSetCurrentStep,
     getAddressName,
     getAddressDetails,
   } = useQuoteAcceptanceRedux();
 
-  // Check if this booking has multiple payment segments
-  const { paymentProgress, isLoadingSegments } = usePaymentSegments(
-    booking?.ID || booking?.id
+  // Get payment progress from bookings data
+  const { bookingsWithProgress } = useBookings();
+  const bookingWithProgress = bookingsWithProgress.find(
+    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.id
   );
+  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 
   const hasMultipleSegments =
     paymentProgress && paymentProgress.segments.length > 1;
   const hasSingleSegment =
     paymentProgress && paymentProgress.segments.length === 1;
+
+  // Auto-set currentStep to "payment" for multiple segments (skip date/time selection)
+  useEffect(() => {
+    if (hasMultipleSegments && currentStep === "date") {
+      handleSetCurrentStep("payment");
+    }
+  }, [hasMultipleSegments, currentStep, handleSetCurrentStep]);
 
   if (!booking) return null;
 
@@ -49,6 +60,7 @@ export function QuoteAcceptanceContent() {
           currentStep={currentStep}
           getAddressName={getAddressName}
           getAddressDetails={getAddressDetails}
+          hasMultipleSegments={hasMultipleSegments}
         />
 
         {/* Processing State */}
@@ -62,14 +74,7 @@ export function QuoteAcceptanceContent() {
 
       {/* Right Side - Summary or Date/Time Selection */}
       <div className="w-2/3 overflow-y-auto">
-        {isLoadingSegments ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-2" />
-              <p className="text-gray-600">Loading payment information...</p>
-            </div>
-          </div>
-        ) : hasMultipleSegments ? (
+        {hasMultipleSegments ? (
           // For multiple segments, skip date/time selection and go directly to payment
           <PaymentSection
             booking={booking}

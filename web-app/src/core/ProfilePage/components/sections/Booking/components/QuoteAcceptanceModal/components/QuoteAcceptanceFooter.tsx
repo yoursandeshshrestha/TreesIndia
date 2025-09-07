@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
+import { useBookings } from "@/hooks/useBookings";
 import { formatAmount } from "@/utils/formatters";
 
 interface QuoteAcceptanceFooterProps {
@@ -17,6 +18,23 @@ export function QuoteAcceptanceFooter({ onClose }: QuoteAcceptanceFooterProps) {
     isWalletDisabled,
     handleProceedToPayment,
   } = useQuoteAcceptanceRedux();
+
+  // Get payment progress to determine the correct amount to show
+  const { bookingsWithProgress } = useBookings();
+  const bookingWithProgress = bookingsWithProgress.find(
+    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.id
+  );
+  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+
+  // Determine the amount to show in the button
+  const getPaymentAmount = () => {
+    if (paymentProgress && paymentProgress.segments.length > 1) {
+      // For multiple segments, show first segment amount
+      return paymentProgress.segments[0].amount;
+    }
+    // For single segment or no segments, show full quote amount
+    return booking?.quote_amount || 0;
+  };
 
   if (!booking) return null;
 
@@ -46,7 +64,7 @@ export function QuoteAcceptanceFooter({ onClose }: QuoteAcceptanceFooterProps) {
                   Processing...
                 </div>
               ) : (
-                `Pay ${formatAmount(booking.quote_amount || 0)}`
+                `Pay ${formatAmount(getPaymentAmount())}`
               )}
             </button>
           )}
