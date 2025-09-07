@@ -48,6 +48,11 @@ class ApiEndpoints {
     rejectAssignment,
     startWork,
     completeWork,
+    chatRooms,
+    chatMessages,
+    sendMessage,
+    markMessageRead,
+    bookingChatRoom,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -262,6 +267,31 @@ class ApiEndpoints {
 
   static ApiEndpoint completeWork = ApiEndpoint(
     path: '/worker/assignments/{assignmentId}/complete',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint chatRooms = ApiEndpoint(
+    path: '/chat/rooms',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint chatMessages = ApiEndpoint(
+    path: '/chat/rooms/{roomId}/messages',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint sendMessage = ApiEndpoint(
+    path: '/chat/rooms/{roomId}/messages',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markMessageRead = ApiEndpoint(
+    path: '/chat/messages/{messageId}/read',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint bookingChatRoom = ApiEndpoint(
+    path: '/chat/bookings/{bookingId}/room',
     requiresAuth: true,
   );
 

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/bottom_navbar/app/views/bottom_navbar_widget.dart';
-import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 
 class MainLayoutWidget extends ConsumerStatefulWidget {
   final Widget child;
@@ -39,12 +38,8 @@ class _MainLayoutWidgetState extends ConsumerState<MainLayoutWidget> {
         }
         break;
       case 2:
-        // Navigate to rewards (placeholder)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const InfoSnackbarWidget(
-            message: 'Rewards page coming soon!',
-          ).createSnackBar(),
-        );
+        // Navigate to chats (placeholder)
+        context.go('/chats');
         break;
       case 3:
         context.go('/profile');

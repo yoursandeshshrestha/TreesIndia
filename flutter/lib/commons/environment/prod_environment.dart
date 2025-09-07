@@ -7,5 +7,6 @@ class ProdEnvironment {
     GlobalEnvironment.enableLogging =
         dotenv.env['PROD_ENABLE_LOGGING']?.toLowerCase() == 'true';
     GlobalEnvironment.razorpayKey = dotenv.env['PROD_RAZORPAY_KEY'] ?? '';
+    GlobalEnvironment.wsBaseUrl = dotenv.env['PROD_WS_BASE_URL'] ?? '';
   }
 }

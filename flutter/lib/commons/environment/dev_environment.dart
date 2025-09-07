@@ -9,5 +9,7 @@ class DevEnvironment {
         dotenv.env['DEV_ENABLE_LOGGING']?.toLowerCase() == 'true';
     GlobalEnvironment.razorpayKey =
         dotenv.env['RAZORPAY_API_KEY'] ?? 'rzp_test_R5AUjoyz0QoYmH';
+    GlobalEnvironment.wsBaseUrl =
+        dotenv.env['DEV_WS_BASE_URL'] ?? 'ws://10.0.2.2:8080';
   }
 }

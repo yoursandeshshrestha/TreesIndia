@@ -7,6 +7,7 @@ import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/components/main_layout/app/views/main_layout_widget.dart';
 import '../providers/my_works_providers.dart';
 import '../viewmodels/my_works_state.dart';
+import '../viewmodels/my_works_notifier.dart';
 import 'widgets/assignment_card_widget.dart';
 
 class MyWorksPage extends ConsumerStatefulWidget {
@@ -20,6 +21,7 @@ class _MyWorksPageState extends ConsumerState<MyWorksPage>
     with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   late TabController _tabController;
+  late MyWorksNotifier _notifier;
 
   @override
   void initState() {
@@ -27,10 +29,12 @@ class _MyWorksPageState extends ConsumerState<MyWorksPage>
     _tabController = TabController(length: 5, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(myWorksNotifierProvider.notifier).getAssignments(
-            tab: AssignmentTab.all,
-            page: 1,
-          );
+      _notifier = ref.read(myWorksNotifierProvider.notifier);
+      _notifier.getAssignments(
+        tab: AssignmentTab.all,
+        page: 1,
+      );
+      _notifier.startAutoRefresh();
     });
 
     _tabController.addListener(() {
@@ -82,6 +86,7 @@ class _MyWorksPageState extends ConsumerState<MyWorksPage>
 
   @override
   void dispose() {
+    _notifier.stopAutoRefresh();
     _scrollController.dispose();
     _tabController.dispose();
     super.dispose();

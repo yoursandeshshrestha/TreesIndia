@@ -7,9 +7,6 @@ import '../../../../../commons/constants/app_spacing.dart';
 import '../../../../../commons/utils/utils.dart';
 import '../../../domain/entities/booking_details_entity.dart';
 import '../../providers/bookings_providers.dart';
-import '../../viewmodels/bookings_notifier.dart';
-import '../../viewmodels/bookings_state.dart';
-import 'cancel_booking_bottom_sheet.dart';
 
 class BookingDetailsBottomSheet extends ConsumerWidget {
   final BookingDetailsEntity booking;

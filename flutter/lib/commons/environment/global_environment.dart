@@ -4,6 +4,7 @@ import 'prod_environment.dart';
 
 class GlobalEnvironment {
   static late String apiBaseUrl;
+  static late String wsBaseUrl;
   static late bool enableLogging;
   static late String razorpayKey;
 

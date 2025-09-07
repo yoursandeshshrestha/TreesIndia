@@ -29,17 +29,20 @@ class MyWorksNotifier extends StateNotifier<MyWorksState> {
         _rejectAssignmentUsecase = rejectAssignmentUsecase,
         _startWorkUsecase = startWorkUsecase,
         _completeWorkUsecase = completeWorkUsecase,
-        super(const MyWorksState()) {
-    _startAutoRefresh();
-  }
+        super(const MyWorksState());
 
-  void _startAutoRefresh() {
+  void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (state.currentAssignments.isNotEmpty) {
         getAssignments(tab: state.currentTab, refresh: true);
       }
     });
+  }
+
+  void stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
   }
 
   /// Get assignments for a specific tab
