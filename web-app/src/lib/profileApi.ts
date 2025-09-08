@@ -20,10 +20,9 @@ export interface UserProfile {
     balance: number;
   };
   subscription: {
-    has_active_subscription: boolean;
-    subscription_id: number | null;
-    expiry_date: string | null;
-    current_plan: Record<string, unknown> | null;
+    start_date: string;
+    end_date: string;
+    status: "active" | "expired" | "cancelled";
   };
   role_application: {
     status: string | null;

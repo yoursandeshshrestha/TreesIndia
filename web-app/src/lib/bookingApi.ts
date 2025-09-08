@@ -1,6 +1,5 @@
 import { authenticatedFetch } from "./auth-api";
 import {
-  PaymentProgress,
   PaymentSegmentInfo,
   CreateSegmentPaymentRequest,
   BookingWithPaymentProgress,
@@ -327,7 +326,7 @@ export async function rejectQuote(
 export async function paySegment(
   bookingId: number,
   paymentData: CreateSegmentPaymentRequest
-): Promise<{ success: boolean; data: any }> {
+): Promise<{ success: boolean; data: PaymentSegmentInfo }> {
   try {
     const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pay`;
     const response = await authenticatedFetch(url, {
@@ -394,7 +393,7 @@ export async function createSegmentPaymentOrder(
     segment_number: number;
     amount: number;
   }
-): Promise<{ success: boolean; data: any }> {
+): Promise<{ success: boolean; data: PaymentSegmentInfo }> {
   try {
     const url = `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pay`;
     const response = await authenticatedFetch(url, {
