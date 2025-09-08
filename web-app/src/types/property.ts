@@ -1,5 +1,10 @@
+import { UserSubscription } from "./subscription";
+
 export interface Property {
-  id: number;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
   title: string;
   description: string;
   property_type: "residential" | "commercial";
@@ -13,7 +18,7 @@ export interface Property {
   area: number | null; // in sq ft
   parking_spaces: number | null;
   floor_number: number | null;
-  age: number | null; // age in years
+  age: string | null; // age as string (e.g., "under_1_year")
   furnishing_status: "furnished" | "semi_furnished" | "unfurnished" | null;
   state: string;
   city: string;
@@ -33,21 +38,41 @@ export interface Property {
   user_id: number;
   broker_id: number | null;
   user?: {
-    id: number;
+    ID: number;
+    CreatedAt: string;
+    UpdatedAt: string;
+    DeletedAt: string | null;
     name: string;
+    email: string | null;
     phone: string;
+    user_type: string;
+    avatar: string;
+    gender: string;
+    is_active: boolean;
+    last_login_at: string;
+    role_application_status: string;
+    application_date: string | null;
+    approval_date: string | null;
+    wallet_balance: number;
+    subscription_id: number | null;
+    subscription: UserSubscription | null;
+    has_active_subscription: boolean;
+    subscription_expiry_date: string | null;
+    notification_settings: Record<string, unknown> | null;
   };
   broker?: {
-    id: number;
+    ID: number;
     name: string;
     phone: string;
   };
   approved_by_user?: {
-    id: number;
+    ID: number;
     name: string;
   };
-  created_at: string;
-  updated_at: string;
+  // Legacy fields for backward compatibility
+  id?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PropertiesResponse {
