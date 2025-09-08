@@ -82,14 +82,6 @@ export default function MarketplaceModal() {
     dispatch(closeMarketplaceModal());
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case "Escape":
-        handleClose();
-        break;
-    }
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (

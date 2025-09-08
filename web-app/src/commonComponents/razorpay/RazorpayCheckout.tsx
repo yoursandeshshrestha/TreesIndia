@@ -90,7 +90,10 @@ export default function RazorpayCheckout({
       },
       modal: {
         ondismiss: function () {
-          onClose();
+          // Add a small delay to prevent race conditions with success/failure callbacks
+          setTimeout(() => {
+            onClose();
+          }, 100);
         },
       },
     };
@@ -111,6 +114,16 @@ export default function RazorpayCheckout({
       console.warn("Razorpay alert intercepted:", message);
       // Don't show the alert, just log it
       // This prevents Razorpay's native error alerts from showing
+
+      // If it's a payment failure alert, trigger the failure callback
+      if (
+        message.toLowerCase().includes("payment") &&
+        (message.toLowerCase().includes("failed") ||
+          message.toLowerCase().includes("error") ||
+          message.toLowerCase().includes("cancelled"))
+      ) {
+        onFailure(new Error(message));
+      }
     };
 
     // Load Razorpay script
@@ -136,6 +149,7 @@ export default function RazorpayCheckout({
     order.currency,
     order.key_id,
     initializeRazorpay,
+    onFailure,
   ]);
 
   return null; // This component doesn't render anything visible

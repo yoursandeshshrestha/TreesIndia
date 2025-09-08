@@ -13,6 +13,10 @@ export default function HorizontalPropertyCard({
   property,
   className = "",
 }: HorizontalPropertyCardProps) {
+  // Ensure property has a valid ID before rendering
+  if (!property || !property.ID) {
+    return null;
+  }
   const formatPrice = (property: Property) => {
     if (property.listing_type === "sale" && property.sale_price) {
       return `₹${property.sale_price.toLocaleString()}`;
@@ -65,11 +69,34 @@ export default function HorizontalPropertyCard({
     return "Property details available on request";
   };
 
+  const formatAge = (age: string | null) => {
+    if (!age) return null;
+
+    switch (age) {
+      case "under_1_year":
+        return "Under 1 year";
+      case "1_year":
+        return "1 year";
+      case "1_2_years":
+        return "1-2 years";
+      case "2_3_years":
+        return "2-3 years";
+      case "3_5_years":
+        return "3-5 years";
+      case "5_10_years":
+        return "5-10 years";
+      case "over_10_years":
+        return "Over 10 years";
+      default:
+        return age.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    }
+  };
+
   const getTimeAgo = () => {
     // Try different date fields that might be available
-    const propertyWithCreatedAt = property as Property & { CreatedAt?: string };
     const dateField =
-      propertyWithCreatedAt.CreatedAt ||
+      property.CreatedAt ||
+      property.UpdatedAt ||
       property.created_at ||
       property.updated_at;
 
@@ -220,7 +247,9 @@ export default function HorizontalPropertyCard({
                     <div className="text-sm font-bold text-gray-900">
                       {property.bedrooms} BHK ({property.bathrooms} Baths)
                     </div>
-                    <div className="text-xs text-gray-600">Ready To Move</div>
+                    <div className="text-xs text-gray-600">
+                      {property.age ? formatAge(property.age) : "Ready To Move"}
+                    </div>
                   </div>
                 )}
               </div>

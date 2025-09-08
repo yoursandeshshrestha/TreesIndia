@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Property } from "@/types/property";
-import { MapPin } from "lucide-react";
+import { MapPin, Bed, Bath, Images } from "lucide-react";
 
 interface PropertyCardProps {
   property: Property;
@@ -15,6 +15,10 @@ export default function PropertyCard({
   className = "",
   onClick,
 }: PropertyCardProps) {
+  // Ensure property has a valid ID before rendering
+  if (!property || !property.ID) {
+    return null;
+  }
   const formatPrice = (property: Property) => {
     if (property.listing_type === "sale" && property.sale_price) {
       return `₹${property.sale_price.toLocaleString()}`;
@@ -29,15 +33,69 @@ export default function PropertyCard({
     return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzE4NS4wNDcgMTUwIDE3MyAxMzcuOTUzIDE3MyAxMjNDMTczIDEwOC4wNDcgMTg1LjA0NyA5NiAyMDAgOTZDMjE0Ljk1MyA5NiAyMjcgMTA4LjA0NyAyMjcgMTIzQzIyNyAxMzcuOTUzIDIxNC45NTMgMTUwIDIwMCAxNTBaIiBmaWxsPSIjOUI5QkEwIi8+CjxwYXRoIGQ9Ik0yMDAgMTgwQzE2NS42NDkgMTgwIDEzNyAxNjUuNjQ5IDEzNyAxNDdDMTM3IDEyOC4zNTEgMTY1LjY0OSAxMTQgMjAwIDExNEMyMzQuMzUxIDExNCAyNjMgMTI4LjM1MSAyNjMgMTQ3QzI2MyAxNjUuNjQ5IDIzNC4zNTEgMTgwIDIwMCAxODBaIiBmaWxsPSIjOUI5QkEwIi8+Cjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5QkEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
   };
 
-  const getListingTypeText = () => {
-    return property.listing_type === "sale" ? "For Sale" : "For Rent";
+  const getStatusBadge = () => {
+    if (property.status === "sold") {
+      return (
+        <div className="absolute top-3 right-3">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-800 border-red-300">
+            Sold
+          </span>
+        </div>
+      );
+    }
+    if (property.status === "rented") {
+      return (
+        <div className="absolute top-3 right-3">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-800 border-blue-300">
+            Rented
+          </span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const getNegotiableBadge = () => {
+    if (property.price_negotiable) {
+      return (
+        <div className="absolute top-3 left-3">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-300">
+            Negotiable
+          </span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const formatAge = (age: string | null) => {
+    if (!age) return null;
+
+    switch (age) {
+      case "under_1_year":
+        return "Under 1 year";
+      case "1_year":
+        return "1 year";
+      case "1_2_years":
+        return "1-2 years";
+      case "2_3_years":
+        return "2-3 years";
+      case "3_5_years":
+        return "3-5 years";
+      case "5_10_years":
+        return "5-10 years";
+      case "over_10_years":
+        return "Over 10 years";
+      default:
+        return age.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    }
   };
 
   return (
     <div className={`group cursor-pointer ${className}`} onClick={onClick}>
-      <div className="bg-white rounded-xl overflow-hidden">
+      <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
         {/* Property Image */}
-        <div className="relative w-full h-60 overflow-hidden rounded-xl">
+        <div className="relative w-full h-60 overflow-hidden">
           <Image
             src={
               property.images && property.images.length > 0
@@ -55,28 +113,68 @@ export default function PropertyCard({
               }
             }}
           />
+          {/* Status Badge */}
+          {getStatusBadge()}
+          {/* Negotiable Badge */}
+          {getNegotiableBadge()}
+
+          {/* Image Count */}
+          {property.images && property.images.length > 1 && (
+            <div className="absolute bottom-3 right-3">
+              <span className="bg-gray-800 bg-opacity-80 text-white text-xs font-medium px-2 py-1 rounded-md flex items-center">
+                <Images className="w-3 h-3 mr-1" />
+                {property.images.length}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Property Details */}
-        <div className="p-3">
-          {/* Property Name */}
-          <h3 className="font-medium text-gray-900 text-base mb-1">
+        <div className="p-4">
+          {/* Property Title */}
+          <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
             {property.title}
           </h3>
 
-          {/* Listing Type and Location */}
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-green-600 text-sm font-medium">
-              {getListingTypeText()}
+          {/* Location */}
+          <div className="flex items-center text-gray-600 text-sm mb-3">
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span className="truncate">
+              {property.city && property.state
+                ? `${property.city}, ${property.state}`
+                : property.city || property.state || "Location not specified"}
             </span>
-            <div className="flex items-center text-gray-500 text-xs">
-              <MapPin className="w-3 h-3 mr-1" />
-              {property.city}
-            </div>
           </div>
 
+          {/* Property Configuration */}
+          {(property.bedrooms || property.bathrooms) && (
+            <div className="flex items-center space-x-4 mb-3">
+              {property.bedrooms && (
+                <div className="flex items-center text-gray-600 text-sm">
+                  <Bed className="w-4 h-4 mr-1" />
+                  <span>{property.bedrooms}</span>
+                </div>
+              )}
+              {property.bathrooms && (
+                <div className="flex items-center text-gray-600 text-sm">
+                  <Bath className="w-4 h-4 mr-1" />
+                  <span>{property.bathrooms}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Price */}
-          <span className="text-gray-600 text-sm">{formatPrice(property)}</span>
+          <div>
+            <div className="text-xl font-bold text-gray-900">
+              {formatPrice(property)}
+            </div>
+            {property.age && (
+              <div className="text-xs text-gray-500 mt-1">
+                {formatAge(property.age)}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -25,9 +25,9 @@ export default function ServiceSearchModal() {
 
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
-  // Fetch search suggestions
+  // Fetch search suggestions only when modal is open
   const { data: suggestionsData, isLoading: isLoadingSuggestions } =
-    useSearchSuggestions();
+    useSearchSuggestions(isOpen);
 
   // Search services when query is long enough
   const { data: searchResults, isLoading: isSearching } = useSearchServices(
