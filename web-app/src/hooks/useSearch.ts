@@ -12,10 +12,11 @@ export const searchKeys = {
 /**
  * Hook to get search suggestions
  */
-export function useSearchSuggestions() {
+export function useSearchSuggestions(enabled: boolean = true) {
   return useQuery({
     queryKey: searchKeys.suggestions(),
     queryFn: searchService.getSuggestions,
+    enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

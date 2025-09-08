@@ -10,7 +10,7 @@ import {
   RechargeRequest,
 } from "@/lib/walletApi";
 
-export function useWallet() {
+export function useWallet(enableTransactions: boolean = false) {
   const queryClient = useQueryClient();
   const token = authAPI.getAccessToken();
 
@@ -26,7 +26,7 @@ export function useWallet() {
     enabled: !!token,
   });
 
-  // Fetch wallet transactions
+  // Fetch wallet transactions only when enabled
   const {
     data: walletTransactions,
     isLoading: isLoadingTransactions,
@@ -35,7 +35,7 @@ export function useWallet() {
   } = useQuery({
     queryKey: ["walletTransactions"],
     queryFn: () => getWalletTransactions(),
-    enabled: !!token,
+    enabled: !!token && enableTransactions,
   });
 
   // Create wallet recharge mutation

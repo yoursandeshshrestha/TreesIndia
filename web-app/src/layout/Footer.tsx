@@ -11,7 +11,7 @@ interface FooterProps {
 export default function Footer({ className = "" }: FooterProps) {
   return (
     <footer
-      className={`bg-[#f5f5f5] text-gray-800 relative overflow-hidden ${className}`}
+      className={`bg-[#f5f5f5] text-gray-800 relative overflow-hidden mt-20 ${className}`}
     >
       {/* Geometric Background Pattern */}
       <div className="absolute inset-0 opacity-5">
