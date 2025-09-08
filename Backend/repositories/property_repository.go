@@ -153,34 +153,6 @@ func (pr *PropertyRepository) GetByUserID(userID uint, params utils.PaginationPa
 	return properties, pagination, nil
 }
 
-// GetByBrokerID retrieves properties by broker ID
-func (pr *PropertyRepository) GetByBrokerID(brokerID uint, params utils.PaginationParams) ([]models.Property, utils.PaginationResponse, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.Errorf("PropertyRepository.GetByBrokerID panic: %v", r)
-		}
-	}()
-	
-	logrus.Infof("PropertyRepository.GetByBrokerID called with brokerID: %d", brokerID)
-	
-	query := pr.GetDB().Model(&models.Property{}).Where("broker_id = ?", brokerID).Preload("User").Preload("Broker")
-	
-	paginationHelper := utils.NewPaginationHelper()
-	pagination, err := paginationHelper.PaginateQuery(query, params, &[]models.Property{})
-	if err != nil {
-		logrus.Errorf("PropertyRepository.GetByBrokerID pagination error: %v", err)
-		return nil, utils.PaginationResponse{}, err
-	}
-	
-	var properties []models.Property
-	if err := paginationHelper.ApplyPagination(query, params).Find(&properties).Error; err != nil {
-		logrus.Errorf("PropertyRepository.GetByBrokerID database error: %v", err)
-		return nil, utils.PaginationResponse{}, err
-	}
-	
-	logrus.Infof("PropertyRepository.GetByBrokerID found %d properties for broker %d", len(properties), brokerID)
-	return properties, pagination, nil
-}
 
 // GetPendingProperties retrieves only pending properties (unapproved user properties) with filters
 func (pr *PropertyRepository) GetPendingProperties(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {

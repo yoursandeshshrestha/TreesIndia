@@ -62,20 +62,12 @@ func (spr *SubscriptionPlanRepository) Delete(id uint) error {
 // GetByDuration retrieves subscription plans by duration
 func (spr *SubscriptionPlanRepository) GetByDuration(duration string) ([]models.SubscriptionPlan, error) {
 	var plans []models.SubscriptionPlan
-	var durationDays int
 	
-	// Convert duration string to days
-	switch duration {
-	case "monthly":
-		durationDays = 30
-	case "yearly":
-		durationDays = 365
-	case "one_time":
-		durationDays = 3650 // 10 years for one-time
-	default:
-		return plans, errors.New("invalid duration")
+	// Validate duration type
+	if duration != models.DurationMonthly && duration != models.DurationYearly {
+		return plans, errors.New("invalid duration. Must be monthly or yearly")
 	}
 	
-	err := spr.db.Where("duration_days = ? AND is_active = ?", durationDays, true).Find(&plans).Error
+	err := spr.db.Where("duration_type = ? AND is_active = ?", duration, true).Find(&plans).Error
 	return plans, err
 }
