@@ -4,6 +4,7 @@ export interface SubscriptionPlan {
   UpdatedAt: string;
   DeletedAt?: string | null;
   name: string;
+  duration_type: "monthly" | "yearly";
   duration_days: number;
   price: number;
   description?: string;
@@ -35,15 +36,23 @@ export interface UserSubscription {
 
 export interface CreateSubscriptionRequest {
   name: string;
-  duration: "monthly" | "yearly" | "one_time";
+  duration_type: "monthly" | "yearly";
   price: number;
+  description?: string;
+  features?: string[];
+}
+
+export interface CreateSubscriptionWithBothDurationsRequest {
+  name: string;
+  monthly_price: number;
+  yearly_price: number;
   description?: string;
   features?: string[];
 }
 
 export interface UpdateSubscriptionRequest {
   name?: string;
-  duration?: "monthly" | "yearly" | "one_time";
+  duration_type?: "monthly" | "yearly";
   price?: number;
   description?: string;
   features?: string[];
@@ -52,7 +61,7 @@ export interface UpdateSubscriptionRequest {
 export interface SubscriptionFilters {
   search?: string;
   status?: "active" | "inactive" | "all";
-  duration?: "monthly" | "yearly" | "one_time" | "all";
+  duration?: "monthly" | "yearly" | "all";
   sortBy?: "name" | "duration" | "price" | "createdAt" | "updatedAt";
   sortOrder?: "asc" | "desc";
 }
@@ -91,7 +100,6 @@ export interface UserSubscriptionApiResponse {
 export const DURATION_OPTIONS = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
-  { value: "one_time", label: "One Time" },
 ] as const;
 
 // Status options for filters
@@ -106,7 +114,6 @@ export const DURATION_FILTER_OPTIONS = [
   { value: "all", label: "All Durations" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
-  { value: "one_time", label: "One Time" },
 ] as const;
 
 // Sort options

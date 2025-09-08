@@ -1,20 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import {
-  X,
-  Upload,
-  MapPin,
-  Home,
-  DollarSign,
-  Bed,
-  Bath,
-  Car,
-  Square,
-  Calendar,
-  User,
-} from "lucide-react";
-import { toast } from "sonner";
+import { X, Upload, MapPin, Home, DollarSign, Square } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
@@ -65,7 +52,6 @@ export function PropertyModal({
     furnishing_status: undefined,
     state: "",
     city: "",
-    locality: "",
     address: "",
     pincode: "",
     status: "available",
@@ -100,7 +86,6 @@ export function PropertyModal({
         furnishing_status: property.furnishing_status,
         state: property.state,
         city: property.city,
-        locality: property.locality || "",
         address: property.address || "",
         pincode: property.pincode || "",
         status: property.status,
@@ -131,7 +116,6 @@ export function PropertyModal({
         furnishing_status: undefined,
         state: "",
         city: "",
-        locality: "",
         address: "",
         pincode: "",
         status: "available",
@@ -147,7 +131,10 @@ export function PropertyModal({
     setErrors({});
   }, [property, isOpen]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (
+    field: string,
+    value: string | number | boolean | undefined
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -251,6 +238,13 @@ export function PropertyModal({
     { value: "furnished", label: "Furnished" },
     { value: "semi_furnished", label: "Semi Furnished" },
     { value: "unfurnished", label: "Unfurnished" },
+  ];
+
+  const ageOptions = [
+    { value: "under_1_year", label: "Under 1 Year" },
+    { value: "1_2_years", label: "1-2 Years" },
+    { value: "2_5_years", label: "2-5 Years" },
+    { value: "10_plus_years", label: "10+ Years" },
   ];
 
   if (!isOpen) return null;
@@ -472,18 +466,23 @@ export function PropertyModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age (years)
+                    Age
                   </label>
-                  <Input
-                    type="number"
+                  <SearchableDropdown
+                    options={ageOptions}
                     value={formData.age || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(value) =>
                       handleInputChange(
                         "age",
-                        e.target.value ? parseInt(e.target.value) : undefined
+                        value as
+                          | "under_1_year"
+                          | "1_2_years"
+                          | "2_5_years"
+                          | "10_plus_years"
                       )
                     }
-                    placeholder="Age in years"
+                    placeholder="Select age"
+                    width="100%"
                   />
                 </div>
               </div>
@@ -596,20 +595,6 @@ export function PropertyModal({
                     }
                     placeholder="Enter city"
                     error={errors.city}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Locality
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.locality}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("locality", e.target.value)
-                    }
-                    placeholder="Enter locality"
                   />
                 </div>
 

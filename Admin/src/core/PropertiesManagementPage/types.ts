@@ -13,11 +13,10 @@ export interface Property {
   area?: number;
   parking_spaces?: number;
   floor_number?: number;
-  age?: number;
+  age?: "under_1_year" | "1_2_years" | "2_5_years" | "10_plus_years";
   furnishing_status?: FurnishingStatus;
   state: string;
   city: string;
-  locality?: string;
   address?: string;
   pincode?: string;
   status: PropertyStatus;
@@ -81,11 +80,10 @@ export interface CreatePropertyRequest {
   area?: number;
   parking_spaces?: number;
   floor_number?: number;
-  age?: number;
+  age?: "under_1_year" | "1_2_years" | "2_5_years" | "10_plus_years";
   furnishing_status?: FurnishingStatus;
   state: string;
   city: string;
-  locality?: string;
   address?: string;
   pincode?: string;
   status: PropertyStatus;
@@ -111,7 +109,7 @@ export interface UpdatePropertyRequest {
   area?: number;
   parking_spaces?: number;
   floor_number?: number;
-  age?: number;
+  age?: "under_1_year" | "1_2_years" | "2_5_years" | "10_plus_years";
   furnishing_status?: FurnishingStatus;
   state?: string;
   city?: string;
@@ -177,11 +175,10 @@ export interface PropertyFormData {
   area?: number;
   parking_spaces?: number;
   floor_number?: number;
-  age?: number;
+  age?: "under_1_year" | "1_2_years" | "2_5_years" | "10_plus_years";
   furnishing_status?: FurnishingStatus;
   state: string;
   city: string;
-  locality?: string;
   address?: string;
   pincode?: string;
   status: PropertyStatus;

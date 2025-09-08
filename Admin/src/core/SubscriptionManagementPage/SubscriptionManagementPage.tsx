@@ -15,6 +15,7 @@ import { useSubscriptions } from "./hooks/useSubscriptions";
 import {
   SubscriptionPlan,
   CreateSubscriptionRequest,
+  CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
 } from "./types";
 
@@ -33,6 +34,7 @@ function SubscriptionManagementPage() {
   const {
     subscriptions: apiSubscriptions,
     createSubscription,
+    createSubscriptionWithBothDurations,
     updateSubscription,
     deleteSubscription,
     toggleSubscriptionStatus,
@@ -41,17 +43,19 @@ function SubscriptionManagementPage() {
     fetchSubscriptions,
   } = useSubscriptions();
 
-  const handleCreateSubscription = async (data: CreateSubscriptionRequest) => {
+  const handleCreateSubscription = async (
+    data: CreateSubscriptionWithBothDurationsRequest
+  ) => {
     try {
       setIsCreating(true);
-      await createSubscription(data);
-      toast.success("Subscription plan created successfully");
+      await createSubscriptionWithBothDurations(data);
+      toast.success("Subscription plans created successfully");
       setIsModalOpen(false);
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to create subscription plan"
+          : "Failed to create subscription plans"
       );
     } finally {
       setIsCreating(false);
@@ -170,14 +174,14 @@ function SubscriptionManagementPage() {
       <SubscriptionHeader onCreateClick={() => setIsModalOpen(true)} />
 
       {/* Cards */}
-        <SubscriptionCards
-          subscriptions={apiSubscriptions}
-          onEdit={handleEditSubscription}
-          onDelete={handleDeleteClick}
-          onToggleStatus={handleToggleStatus}
-          isLoading={isUpdating}
-          togglingItems={togglingItems}
-        />
+      <SubscriptionCards
+        subscriptions={apiSubscriptions}
+        onEdit={handleEditSubscription}
+        onDelete={handleDeleteClick}
+        onToggleStatus={handleToggleStatus}
+        isLoading={isUpdating}
+        togglingItems={togglingItems}
+      />
 
       {/* Create/Edit Modal */}
       <SubscriptionModal

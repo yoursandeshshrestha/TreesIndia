@@ -251,6 +251,13 @@ export default function CreatePropertyPage() {
     { value: "unfurnished", label: "Unfurnished" },
   ];
 
+  const ageOptions = [
+    { value: "under_1_year", label: "Under 1 Year" },
+    { value: "1_2_years", label: "1-2 Years" },
+    { value: "2_5_years", label: "2-5 Years" },
+    { value: "10_plus_years", label: "10+ Years" },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className=" ">
@@ -467,18 +474,23 @@ export default function CreatePropertyPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age (years)
+                    Age
                   </label>
-                  <Input
-                    type="number"
+                  <SearchableDropdown
+                    options={ageOptions}
                     value={formData.age || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(value) =>
                       handleInputChange(
                         "age",
-                        e.target.value ? parseInt(e.target.value) : undefined
+                        value as
+                          | "under_1_year"
+                          | "1_2_years"
+                          | "2_5_years"
+                          | "10_plus_years"
                       )
                     }
-                    placeholder="Age in years"
+                    placeholder="Select age"
+                    width="100%"
                   />
                 </div>
               </div>
@@ -585,20 +597,6 @@ export default function CreatePropertyPage() {
                     }
                     placeholder="Enter city"
                     error={errors.city}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Locality
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.locality}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("locality", e.target.value)
-                    }
-                    placeholder="Enter locality"
                   />
                 </div>
 
