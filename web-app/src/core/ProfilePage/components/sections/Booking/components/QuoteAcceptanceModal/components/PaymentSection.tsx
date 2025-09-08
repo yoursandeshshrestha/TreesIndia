@@ -1,19 +1,14 @@
 "use client";
 
-import { Wallet, CreditCard, Calendar, AlertCircle } from "lucide-react";
+import { Wallet, CreditCard } from "lucide-react";
 import { Booking } from "@/lib/bookingApi";
-import {
-  AvailableSlot,
-  PaymentProgress,
-  PaymentSegmentInfo,
-} from "@/types/booking";
+import { AvailableSlot } from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
-import { PaymentProgress as PaymentProgressComponent } from "@/commonComponents/PaymentSegment";
 import { useBookings } from "@/hooks/useBookings";
 
-type PaymentMethod = "wallet" | "razorpay";
+import { PaymentMethod } from "@/types/payment";
 
 interface PaymentSectionProps {
   booking: Booking;
@@ -46,7 +41,7 @@ export default function PaymentSection({
   // Get payment progress from bookings data
   const { bookingsWithProgress } = useBookings();
   const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking.ID || item.booking.id === booking.id
+    (item) => item.booking.ID === booking.ID
   );
   const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 

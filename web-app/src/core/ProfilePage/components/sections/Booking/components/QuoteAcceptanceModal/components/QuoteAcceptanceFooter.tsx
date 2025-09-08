@@ -22,7 +22,7 @@ export function QuoteAcceptanceFooter({ onClose }: QuoteAcceptanceFooterProps) {
   // Get payment progress to determine the correct amount to show
   const { bookingsWithProgress } = useBookings();
   const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.id
+    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.ID
   );
   const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 

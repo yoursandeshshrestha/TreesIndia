@@ -25,7 +25,7 @@ export function QuoteAcceptanceSuccess({
       }
     };
     loadAnimation();
-  }, []);
+  }, []); // This component is only rendered when showSuccess is true, so it's fine to fetch on mount
 
   return (
     <div className="flex items-center justify-center h-full">
