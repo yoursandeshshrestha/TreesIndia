@@ -45,7 +45,7 @@ export function MainBookingCard({
 
   // Check if this booking has payment segments
   const { hasPaymentSegments, paymentProgress, isLoadingSegments } =
-    useBookingPaymentSegments(booking.ID);
+    useBookingPaymentSegments(booking.ID || booking.id);
 
   // Check if there are pending segments to pay
   const hasPendingSegments =

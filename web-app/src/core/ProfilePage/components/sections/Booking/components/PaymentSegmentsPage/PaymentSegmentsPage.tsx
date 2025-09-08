@@ -22,7 +22,7 @@ export default function PaymentSegmentsPage({
   onPaymentSuccess,
 }: PaymentSegmentsPageProps) {
   const { paymentProgress, isLoadingSegments, segmentsError, refetchSegments } =
-    usePaymentSegments(booking.ID);
+    usePaymentSegments(booking.ID || booking.id);
 
   const loading = isLoadingSegments;
   const error = segmentsError ? "Failed to load payment segments" : null;
@@ -125,7 +125,7 @@ export default function PaymentSegmentsPage({
           Manage Payment Segments
         </h3>
         <PaymentSegmentManager
-          bookingId={booking.ID || 0}
+          bookingId={booking.ID || booking.id || 0}
           segments={paymentProgress.segments}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}

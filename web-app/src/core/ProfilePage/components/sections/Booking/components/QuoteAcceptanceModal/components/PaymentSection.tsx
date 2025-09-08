@@ -45,7 +45,7 @@ export default function PaymentSection({
 
   // Fetch payment segments for this booking
   const { paymentProgress, isLoadingSegments } = usePaymentSegments(
-    booking.ID
+    booking.ID || booking.id
   );
 
   // Check if this booking has payment segments

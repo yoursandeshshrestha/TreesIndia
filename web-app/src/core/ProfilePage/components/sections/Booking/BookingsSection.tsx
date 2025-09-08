@@ -75,10 +75,7 @@ export function BookingsSection() {
       booking.service?.name?.toLowerCase().includes(searchLower) ||
       booking.booking_reference.toLowerCase().includes(searchLower) ||
       booking.contact_person.toLowerCase().includes(searchLower) ||
-      booking.contact_phone.includes(debouncedSearchQuery) ||
-      booking.worker_assignment?.worker?.name
-        .toLowerCase()
-        .includes(searchLower)
+      booking.contact_phone.includes(debouncedSearchQuery)
     );
   });
 

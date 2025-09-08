@@ -16,7 +16,7 @@ export function usePaymentSegments(bookingId?: number) {
     bookings: BookingWithPaymentProgress[];
   }>(["userBookings"]);
   const cachedBooking = cachedBookings?.bookings?.find(
-    (item) => item.booking.ID === bookingId
+    (item) => item.booking.ID === bookingId || item.booking.id === bookingId
   );
 
   // If we have cached payment progress, use it
