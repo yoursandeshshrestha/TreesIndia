@@ -88,7 +88,7 @@ export default function RentalPropertiesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen  py-8">
       <div className="max-w-7xl mx-auto">
         {/* Mobile Filter Toggle */}
         <div className="lg:hidden mb-6">

@@ -17,7 +17,7 @@ import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
 import { useBookings } from "@/hooks/useBookings";
-import { PaymentSegmentsModal } from "@/commonComponents/PaymentSegment";
+import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 
 interface MainBookingCardProps {
   booking: ApiBooking;
@@ -51,10 +51,7 @@ export function MainBookingCard({
   // Try multiple matching strategies
   const bookingWithProgress = bookingsWithProgress.find((item) => {
     // Primary match: ID comparison
-    if (
-      item.booking.ID === booking.ID ||
-      item.booking.ID === (booking as any).id
-    ) {
+    if (item.booking.ID === booking.ID) {
       return true;
     }
     // Fallback match: booking reference comparison
@@ -66,9 +63,7 @@ export function MainBookingCard({
 
   // Use payment progress from matched booking, or fallback to booking's own data
   const paymentProgress: PaymentProgress | null =
-    bookingWithProgress?.booking?.payment_progress ||
-    (booking as any).payment_progress ||
-    null;
+    bookingWithProgress?.booking?.payment_progress || null;
 
   // Debug: Log booking matching
   if (booking.booking_reference === "BK20250906113000") {
@@ -135,8 +130,7 @@ export function MainBookingCard({
       paidSegments: paymentProgress?.paid_segments,
       totalSegments: paymentProgress?.total_segments,
       dataSource: bookingWithProgress ? "matched_booking" : "booking_fallback",
-      bookingOwnPaymentProgress: (booking as any)
-        .payment_progress as PaymentProgress | null,
+      bookingOwnPaymentProgress: null,
     });
   }
 
@@ -462,8 +456,8 @@ export function MainBookingCard({
     quote_provided_at: apiBooking.quote_provided_at || undefined,
     quote_accepted_at: apiBooking.quote_accepted_at || undefined,
     quote_expires_at: apiBooking.quote_expires_at || undefined,
-    payment_segments: (apiBooking as any).payment_segments,
-    payment_progress: (apiBooking as any).payment_progress,
+    payment_segments: undefined,
+    payment_progress: undefined,
     contact_person: apiBooking.contact_person || undefined,
     contact_phone: apiBooking.contact_phone || undefined,
     service: apiBooking.service

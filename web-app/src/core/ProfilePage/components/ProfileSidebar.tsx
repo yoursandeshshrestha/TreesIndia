@@ -16,6 +16,7 @@ import {
   LogOut,
   Briefcase,
   MessageCircle,
+  Home,
 } from "lucide-react";
 
 interface ProfileSidebarItem {
@@ -57,6 +58,12 @@ export function ProfileSidebar() {
         label: "Manage Address",
         icon: <MapPin className="w-5 h-5" />,
         path: "/profile/address",
+      },
+      {
+        id: "my-properties",
+        label: "My Properties",
+        icon: <Home className="w-5 h-5" />,
+        path: "/profile/my-properties",
       },
     ];
 

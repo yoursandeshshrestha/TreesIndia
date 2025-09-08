@@ -2,15 +2,13 @@
 
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useProperties } from "@/hooks/useProperties";
-import { useAppDispatch } from "@/store/hooks";
-import { openLocationModal } from "@/store/slices/locationModalSlice";
+
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/commonComponents/PropertyCard";
 import { PropertyFilters } from "@/types/property";
 
 export default function RentalSection() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const { location, isLoading: locationLoading } = useLocation();
 
@@ -36,6 +34,11 @@ export default function RentalSection() {
   const properties = response?.data || [];
 
   const handlePropertyClick = (propertyId: number) => {
+    // Validate property ID before navigation
+    if (!propertyId || propertyId <= 0) {
+      console.error("Invalid property ID:", propertyId);
+      return;
+    }
     // Navigate to property detail page
     router.push(`/marketplace/properties/${propertyId}`);
   };
@@ -100,8 +103,13 @@ export default function RentalSection() {
     );
   }
 
+  // Don't render the section if there are no properties and not loading/error
+  if (properties.length === 0 && !isLoading && !isError) {
+    return null;
+  }
+
   return (
-    <section className="py-20 px-6 max-w-7xl mx-auto">
+    <section className="px-6 max-w-7xl mx-auto">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-10">
         <h2 className="text-4xl font-semibold text-gray-900 leading-tight">
@@ -118,32 +126,14 @@ export default function RentalSection() {
 
       {/* Properties Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {properties.map((property) => (
+        {properties.map((property, index) => (
           <PropertyCard
-            key={property.id}
+            key={`rental-property-${property.ID}-${index}`}
             property={property}
-            onClick={() => handlePropertyClick(property.id)}
+            onClick={() => handlePropertyClick(property.ID)}
           />
         ))}
       </div>
-
-      {properties.length === 0 && !isLoading && !isError && (
-        <div className="text-center py-12">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
-            <p className="text-gray-500 mb-4">
-              No rental properties available at the moment.
-            </p>
-            {!location?.city && (
-              <button
-                onClick={() => dispatch(openLocationModal())}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-green-600 hover:text-green-700 transition-colors duration-200"
-              >
-                Set Location to See Rentals
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
