@@ -31,14 +31,12 @@ export function QuoteAcceptanceContent() {
   // Get payment progress from bookings data
   const { bookingsWithProgress } = useBookings();
   const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.id
+    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.ID
   );
   const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 
   const hasMultipleSegments =
     paymentProgress && paymentProgress.segments.length > 1;
-  const hasSingleSegment =
-    paymentProgress && paymentProgress.segments.length === 1;
 
   // Auto-set currentStep to "payment" for multiple segments (skip date/time selection)
   useEffect(() => {

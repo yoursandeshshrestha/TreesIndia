@@ -8,7 +8,7 @@ import CancelBookingModal from "@/core/BookingPage/components/CancelBookingModal
 import { BookingsSectionSkeleton } from "./components/BookingsSectionSkeleton";
 import { MainBookingCard } from "@/core/ProfilePage/components/sections/Booking/components/BookingCard";
 import { QuoteAcceptanceModal } from "@/core/ProfilePage/components/sections/Booking/components/QuoteAcceptanceModal";
-import { NextSegmentPaymentModal } from "@/commonComponents/PaymentSegment";
+import { NextSegmentPaymentModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import type { Booking } from "@/lib/bookingApi";
 
 type BookingTab = "all" | "upcoming" | "completed" | "cancelled";
@@ -73,8 +73,8 @@ export function BookingsSection() {
     return (
       booking.service?.name?.toLowerCase().includes(searchLower) ||
       booking.booking_reference.toLowerCase().includes(searchLower) ||
-      booking.contact_person.toLowerCase().includes(searchLower) ||
-      booking.contact_phone.includes(debouncedSearchQuery)
+      booking.contact_person?.toLowerCase().includes(searchLower) ||
+      booking.contact_phone?.includes(debouncedSearchQuery)
     );
   });
 
@@ -268,7 +268,7 @@ export function BookingsSection() {
           filteredBookings.map((booking, index) => (
             <div key={booking.ID || booking.id || `booking-${index}`}>
               <MainBookingCard
-                booking={booking}
+                booking={booking as Booking}
                 onCancel={handleCancelClick}
                 onAcceptQuote={handleAcceptQuote}
                 onRejectQuote={handleRejectQuote}
