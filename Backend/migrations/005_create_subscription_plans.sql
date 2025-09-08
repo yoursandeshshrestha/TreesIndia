@@ -7,10 +7,16 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     deleted_at TIMESTAMPTZ,
     name TEXT NOT NULL,
     description TEXT,
-    price DECIMAL NOT NULL,
-    duration_days INTEGER NOT NULL,
     features JSONB,
-    is_active BOOLEAN DEFAULT true
+    is_active BOOLEAN DEFAULT true,
+    
+    -- Duration and pricing
+    duration_type TEXT NOT NULL,       -- "monthly" or "yearly" only
+    duration_days INTEGER NOT NULL,    -- 30 or 365
+    price DECIMAL NOT NULL,
+    
+    -- Constraints
+    UNIQUE(duration_type)              -- Only one monthly and one yearly record
 );
 
 -- +goose Down

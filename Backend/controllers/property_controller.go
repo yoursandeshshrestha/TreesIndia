@@ -45,7 +45,7 @@ func NewPropertyController() *PropertyController {
 
 // CreateProperty creates a new property listing
 // @Summary Create a new property listing
-// @Description Create a new property listing for sale or rent (supports both JSON and form-data)
+// @Description Create a new property listing for sale or rent (supports both JSON and form-data). Brokers require active subscription. Users with active subscriptions get auto-approval.
 // @Tags properties
 // @Accept json,multipart/form-data
 // @Produce json
@@ -73,7 +73,7 @@ func NewPropertyController() *PropertyController {
 // @Success 201 {object} views.SuccessResponse
 // @Failure 400 {object} views.ErrorResponse
 // @Failure 401 {object} views.ErrorResponse
-// @Router /api/v1/properties [post]
+// @Router /api/v1/user/properties [post]
 func (pc *PropertyController) CreateProperty(c *gin.Context) {
 	logrus.Infof("PropertyController.CreateProperty called")
 	
@@ -467,7 +467,7 @@ func (pc *PropertyController) GetPropertyStats(c *gin.Context) {
 
 // GetUserProperties retrieves properties by user ID
 // @Summary Get user properties
-// @Description Get properties listed by the authenticated user
+// @Description Get properties listed by the authenticated user (works for both users and brokers)
 // @Tags properties
 // @Accept json
 // @Produce json
@@ -509,49 +509,6 @@ func (pc *PropertyController) GetUserProperties(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponseWithPagination("User properties retrieved successfully", properties, paginationView))
 }
 
-// GetBrokerProperties retrieves properties by broker ID
-// @Summary Get broker properties
-// @Description Get properties listed by the authenticated broker
-// @Tags properties
-// @Accept json
-// @Produce json
-// @Param page query int false "Page number (default: 1)"
-// @Param limit query int false "Items per page (default: 20, max: 100)"
-// @Success 200 {object} views.SuccessResponse
-// @Failure 401 {object} views.ErrorResponse
-// @Router /api/v1/broker/properties [get]
-func (pc *PropertyController) GetBrokerProperties(c *gin.Context) {
-	logrus.Infof("PropertyController.GetBrokerProperties called")
-	
-	// Get user ID from context
-	userID, exists := c.Get("user_id")
-	if !exists {
-		logrus.Errorf("PropertyController.GetBrokerProperties user_id not found in context")
-		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
-		return
-	}
-	
-	// Parse pagination parameters
-	paginationHelper := utils.NewPaginationHelper()
-	params := paginationHelper.ParsePaginationParams(c)
-	
-	// Set default limit to 20
-	if params.Limit == 0 {
-		params.Limit = 20
-	}
-	
-	properties, pagination, err := pc.propertyService.GetBrokerProperties(userID.(uint), params)
-	if err != nil {
-		logrus.Errorf("PropertyController.GetBrokerProperties service error: %v", err)
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve properties", "Internal server error"))
-		return
-	}
-	
-	// Convert pagination to views format
-	paginationView := views.CreatePagination(int(pagination.Page), int(pagination.Limit), pagination.Total)
-	
-	c.JSON(http.StatusOK, views.CreateSuccessResponseWithPagination("Broker properties retrieved successfully", properties, paginationView))
-}
 
 // GetPendingProperties retrieves only pending properties for admin
 // @Summary Get pending properties
@@ -708,7 +665,6 @@ func (pc *PropertyController) UpdateProperty(c *gin.Context) {
 	// Check content type to determine how to parse the request
 	contentType := c.GetHeader("Content-Type")
 	
-	var err error
 	if strings.Contains(contentType, "multipart/form-data") {
 		// Handle form-data request
 		err = pc.parseFormDataPropertyUpdate(c, &updates)
@@ -769,6 +725,49 @@ func (pc *PropertyController) DeleteProperty(c *gin.Context) {
 	err = pc.propertyService.DeleteProperty(uint(id), userID.(uint))
 	if err != nil {
 		logrus.Errorf("PropertyController.DeleteProperty service error: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to delete property", err.Error()))
+		return
+	}
+	
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Property deleted successfully", nil))
+}
+
+// DeleteUserProperty deletes a user's own property
+// @Summary Delete user property
+// @Description Delete a property owned by the authenticated user
+// @Tags properties
+// @Accept json
+// @Produce json
+// @Param id path int true "Property ID"
+// @Success 200 {object} views.SuccessResponse
+// @Failure 400 {object} views.ErrorResponse
+// @Failure 401 {object} views.ErrorResponse
+// @Failure 403 {object} views.ErrorResponse
+// @Failure 404 {object} views.ErrorResponse
+// @Router /api/v1/user/properties/{id} [delete]
+// @Security ApiKeyAuth
+func (pc *PropertyController) DeleteUserProperty(c *gin.Context) {
+	logrus.Infof("PropertyController.DeleteUserProperty called")
+	
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Errorf("PropertyController.DeleteUserProperty user_id not found in context")
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+	
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		logrus.Errorf("PropertyController.DeleteUserProperty invalid ID: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid property ID", "ID must be a valid number"))
+		return
+	}
+	
+	err = pc.propertyService.DeleteUserProperty(uint(id), userID.(uint))
+	if err != nil {
+		logrus.Errorf("PropertyController.DeleteUserProperty service error: %v", err)
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to delete property", err.Error()))
 		return
 	}
@@ -969,7 +968,6 @@ func (pc *PropertyController) parseFormDataProperty(c *gin.Context, property *mo
 	property.ListingType = models.ListingType(c.PostForm("listing_type"))
 	property.State = c.PostForm("state")
 	property.City = c.PostForm("city")
-	property.Locality = c.PostForm("locality")
 	property.Address = c.PostForm("address")
 	property.Pincode = c.PostForm("pincode")
 	if furnishingStatus := c.PostForm("furnishing_status"); furnishingStatus != "" {
@@ -1008,11 +1006,6 @@ func (pc *PropertyController) parseFormDataProperty(c *gin.Context, property *mo
 		}
 	}
 	
-	if parkingSpacesStr := c.PostForm("parking_spaces"); parkingSpacesStr != "" {
-		if parkingSpaces, err := strconv.Atoi(parkingSpacesStr); err == nil {
-			property.ParkingSpaces = &parkingSpaces
-		}
-	}
 	
 	if floorNumberStr := c.PostForm("floor_number"); floorNumberStr != "" {
 		if floorNumber, err := strconv.Atoi(floorNumberStr); err == nil {
@@ -1021,9 +1014,8 @@ func (pc *PropertyController) parseFormDataProperty(c *gin.Context, property *mo
 	}
 	
 	if ageStr := c.PostForm("age"); ageStr != "" {
-		if age, err := strconv.Atoi(ageStr); err == nil {
-			property.Age = &age
-		}
+		age := models.PropertyAge(ageStr)
+		property.Age = &age
 	}
 	
 	// Parse boolean fields
@@ -1093,9 +1085,6 @@ func (pc *PropertyController) parseFormDataPropertyUpdate(c *gin.Context, update
 	if city := c.PostForm("city"); city != "" {
 		(*updates)["city"] = city
 	}
-	if locality := c.PostForm("locality"); locality != "" {
-		(*updates)["locality"] = locality
-	}
 	if address := c.PostForm("address"); address != "" {
 		(*updates)["address"] = address
 	}
@@ -1153,9 +1142,7 @@ func (pc *PropertyController) parseFormDataPropertyUpdate(c *gin.Context, update
 	}
 	
 	if ageStr := c.PostForm("age"); ageStr != "" {
-		if age, err := strconv.Atoi(ageStr); err == nil {
-			(*updates)["age"] = age
-		}
+		(*updates)["age"] = ageStr
 	}
 	
 	if priorityScoreStr := c.PostForm("priority_score"); priorityScoreStr != "" {

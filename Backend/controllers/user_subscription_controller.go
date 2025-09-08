@@ -30,6 +30,18 @@ type PurchaseSubscriptionRequest struct {
 	PaymentMethod string `json:"payment_method" binding:"required"`
 }
 
+// CreateSubscriptionPaymentOrderRequest represents subscription payment order request
+type CreateSubscriptionPaymentOrderRequest struct {
+	PlanID uint `json:"plan_id" binding:"required"`
+}
+
+// CompleteSubscriptionPurchaseRequest represents subscription purchase completion request
+type CompleteSubscriptionPurchaseRequest struct {
+	PaymentID         uint   `json:"payment_id" binding:"required"`
+	RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
+	RazorpaySignature string `json:"razorpay_signature" binding:"required"`
+}
+
 // ExtendSubscriptionRequest represents subscription extension request
 type ExtendSubscriptionRequest struct {
 	Days int `json:"days" binding:"required,min=1"`
@@ -69,6 +81,85 @@ func (usc *UserSubscriptionController) PurchaseSubscription(c *gin.Context) {
 	subscription, err := usc.subscriptionService.PurchaseSubscription(userID.(uint), req.PlanID, req.PaymentMethod)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to purchase subscription", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Subscription purchased successfully", subscription))
+}
+
+// CreateSubscriptionPaymentOrder godoc
+// @Summary Create subscription payment order
+// @Description Create a Razorpay payment order for subscription purchase
+// @Tags User Subscriptions
+// @Accept json
+// @Produce json
+// @Param request body CreateSubscriptionPaymentOrderRequest true "Payment order request"
+// @Success 200 {object} models.Response "Payment order created successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /subscriptions/create-payment-order [post]
+func (usc *UserSubscriptionController) CreateSubscriptionPaymentOrder(c *gin.Context) {
+	var req CreateSubscriptionPaymentOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
+		return
+	}
+
+	payment, razorpayOrder, err := usc.subscriptionService.CreateSubscriptionPaymentOrder(userID.(uint), req.PlanID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create payment order", err.Error()))
+		return
+	}
+
+	response := map[string]interface{}{
+		"payment": payment,
+		"order":   razorpayOrder,
+		"key_id":  razorpayOrder["key_id"],
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Payment order created successfully", response))
+}
+
+// CompleteSubscriptionPurchase godoc
+// @Summary Complete subscription purchase
+// @Description Complete subscription purchase with verified Razorpay payment
+// @Tags User Subscriptions
+// @Accept json
+// @Produce json
+// @Param request body CompleteSubscriptionPurchaseRequest true "Purchase completion request"
+// @Success 200 {object} models.Response "Subscription purchased successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /subscriptions/complete-purchase [post]
+func (usc *UserSubscriptionController) CompleteSubscriptionPurchase(c *gin.Context) {
+	var req CompleteSubscriptionPurchaseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not authenticated", "Please login to continue"))
+		return
+	}
+
+	subscription, err := usc.subscriptionService.CompleteSubscriptionPurchase(
+		userID.(uint),
+		req.PaymentID,
+		req.RazorpayPaymentID,
+		req.RazorpaySignature,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to complete subscription purchase", err.Error()))
 		return
 	}
 

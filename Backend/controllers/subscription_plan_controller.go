@@ -51,6 +51,33 @@ func (spc *SubscriptionPlanController) CreatePlan(c *gin.Context) {
 	c.JSON(http.StatusCreated, views.CreateSuccessResponse("Subscription plan created successfully", plan))
 }
 
+// CreatePlanWithBothDurations godoc
+// @Summary Create subscription plan with both monthly and yearly pricing
+// @Description Create a subscription plan with both monthly and yearly pricing options (Admin only)
+// @Tags Subscription Plans
+// @Accept json
+// @Produce json
+// @Param plan body map[string]interface{} true "Plan data with monthly_price and yearly_price"
+// @Success 201 {object} models.Response "Plans created successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /admin/subscription-plans/both [post]
+func (spc *SubscriptionPlanController) CreatePlanWithBothDurations(c *gin.Context) {
+	var planData map[string]interface{}
+	if err := c.ShouldBindJSON(&planData); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	plans, err := spc.planService.CreatePlanWithBothDurations(planData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create plans", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusCreated, views.CreateSuccessResponse("Subscription plans created successfully", plans))
+}
+
 // GetPlanByID godoc
 // @Summary Get subscription plan by ID
 // @Description Get a subscription plan by ID
@@ -96,6 +123,25 @@ func (spc *SubscriptionPlanController) GetAllPlans(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plans retrieved successfully", plans))
+}
+
+// GetGroupedPlans godoc
+// @Summary Get grouped subscription plans
+// @Description Get subscription plans grouped with monthly and yearly options
+// @Tags Subscription Plans
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.Response "Grouped plans retrieved successfully"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /subscription-plans/grouped [get]
+func (spc *SubscriptionPlanController) GetGroupedPlans(c *gin.Context) {
+	groupedPlan, err := spc.planService.GetGroupedPlans()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve grouped plans", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Grouped plans retrieved successfully", groupedPlan))
 }
 
 // GetActivePlans godoc
@@ -187,7 +233,7 @@ func (spc *SubscriptionPlanController) DeletePlan(c *gin.Context) {
 // @Tags Subscription Plans
 // @Accept json
 // @Produce json
-// @Param duration path string true "Duration (monthly, yearly, one_time)"
+// @Param duration path string true "Duration (monthly, yearly)"
 // @Success 200 {object} models.Response "Plans retrieved successfully"
 // @Failure 400 {object} models.Response "Invalid duration"
 // @Failure 500 {object} models.Response "Internal server error"
@@ -196,8 +242,8 @@ func (spc *SubscriptionPlanController) GetPlansByDuration(c *gin.Context) {
 	duration := c.Param("duration")
 	
 	// Validate duration
-	if duration != models.DurationMonthly && duration != models.DurationYearly && duration != models.DurationOneTime {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid duration", "Duration must be monthly, yearly, or one_time"))
+	if duration != models.DurationMonthly && duration != models.DurationYearly {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid duration", "Duration must be monthly or yearly"))
 		return
 	}
 

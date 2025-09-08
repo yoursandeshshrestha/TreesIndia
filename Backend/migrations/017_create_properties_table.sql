@@ -23,15 +23,13 @@ CREATE TABLE IF NOT EXISTS properties (
     bedrooms INTEGER,
     bathrooms INTEGER,
     area DECIMAL,
-    parking_spaces INTEGER,
     floor_number INTEGER,
-    age INTEGER,
+    age TEXT,
     furnishing_status TEXT,
     
     -- Location Information
     state TEXT NOT NULL,
     city TEXT NOT NULL,
-    locality TEXT,
     address TEXT,
     pincode TEXT,
     
@@ -91,6 +89,9 @@ ALTER TABLE properties ADD CONSTRAINT chk_properties_status
 
 ALTER TABLE properties ADD CONSTRAINT chk_properties_furnishing_status 
     CHECK (furnishing_status IS NULL OR furnishing_status IN ('furnished', 'semi_furnished', 'unfurnished'));
+
+ALTER TABLE properties ADD CONSTRAINT chk_properties_age 
+    CHECK (age IS NULL OR age IN ('under_1_year', '1_2_years', '2_5_years', '10_plus_years'));
 
 -- +goose Down
 -- Drop properties table

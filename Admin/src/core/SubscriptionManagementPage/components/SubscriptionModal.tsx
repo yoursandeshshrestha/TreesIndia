@@ -10,6 +10,7 @@ import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdo
 import {
   SubscriptionPlan,
   CreateSubscriptionRequest,
+  CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
   DURATION_OPTIONS,
 } from "../types";
@@ -31,33 +32,36 @@ export function SubscriptionModal({
   onSubmit,
   isLoading = false,
 }: SubscriptionModalProps) {
-  const [formData, setFormData] = useState<CreateSubscriptionRequest>({
-    name: "",
-    duration: "monthly",
-    price: 0,
-    description: "",
-    features: [],
-  });
+  const [formData, setFormData] =
+    useState<CreateSubscriptionWithBothDurationsRequest>({
+      name: "",
+      monthly_price: 0,
+      yearly_price: 0,
+      description: "",
+      features: [],
+    });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!subscription;
 
-  // Helper function to convert duration_days back to duration string
-  const getDurationFromDays = (
-    durationDays: number
-  ): "monthly" | "yearly" | "one_time" => {
-    if (durationDays <= 30) return "monthly";
-    if (durationDays <= 365) return "yearly";
-    return "one_time";
+  // Helper function to get pricing from existing subscriptions
+  const getExistingPricing = (subscriptions: SubscriptionPlan[]) => {
+    const monthly = subscriptions.find((s) => s.duration_type === "monthly");
+    const yearly = subscriptions.find((s) => s.duration_type === "yearly");
+    return { monthly, yearly };
   };
 
   useEffect(() => {
     if (subscription) {
+      // For editing, we'll need to get both monthly and yearly pricing
+      // This would require fetching all subscriptions with the same name
       setFormData({
         name: subscription.name,
-        duration: getDurationFromDays(subscription.duration_days),
-        price: subscription.price,
+        monthly_price:
+          subscription.duration_type === "monthly" ? subscription.price : 0,
+        yearly_price:
+          subscription.duration_type === "yearly" ? subscription.price : 0,
         description: subscription.description || "",
         features:
           subscription.features && subscription.features.description
@@ -69,8 +73,8 @@ export function SubscriptionModal({
     } else {
       setFormData({
         name: "",
-        duration: "monthly",
-        price: 0,
+        monthly_price: 0,
+        yearly_price: 0,
         description: "",
         features: [],
       });
@@ -89,8 +93,12 @@ export function SubscriptionModal({
       newErrors.name = "Name must be less than 100 characters";
     }
 
-    if (formData.price <= 0) {
-      newErrors.price = "Price must be greater than 0";
+    if (formData.monthly_price <= 0) {
+      newErrors.monthly_price = "Monthly price must be greater than 0";
+    }
+
+    if (formData.yearly_price <= 0) {
+      newErrors.yearly_price = "Yearly price must be greater than 0";
     }
 
     setErrors(newErrors);
@@ -196,35 +204,53 @@ export function SubscriptionModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration *
-                </label>
-                <SearchableDropdown
-                  options={DURATION_OPTIONS}
-                  value={formData.duration}
-                  onChange={(value) => handleInputChange("duration", value)}
-                  placeholder="Select duration"
-                  disabled={isSubmitting}
-                />
-                {errors.duration && (
-                  <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price (₹) *
+                  Monthly Price (₹) *
                 </label>
                 <Input
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.price.toString()}
+                  value={formData.monthly_price.toString()}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("price", parseFloat(e.target.value) || 0)
+                    handleInputChange(
+                      "monthly_price",
+                      parseFloat(e.target.value) || 0
+                    )
                   }
-                  placeholder="Enter price in rupees"
-                  error={errors.price}
+                  placeholder="Enter monthly price in rupees"
+                  error={errors.monthly_price}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Yearly Price (₹) *
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.yearly_price.toString()}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange(
+                      "yearly_price",
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
+                  placeholder="Enter yearly price in rupees"
+                  error={errors.yearly_price}
+                />
+                {formData.monthly_price > 0 && formData.yearly_price > 0 && (
+                  <p className="mt-1 text-sm text-green-600">
+                    Yearly savings:{" "}
+                    {Math.round(
+                      (1 -
+                        formData.yearly_price / (formData.monthly_price * 12)) *
+                        100
+                    )}
+                    %
+                  </p>
+                )}
               </div>
 
               <div>

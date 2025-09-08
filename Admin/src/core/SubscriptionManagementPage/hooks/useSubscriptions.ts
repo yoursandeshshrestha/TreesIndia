@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   SubscriptionPlan,
   CreateSubscriptionRequest,
+  CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
 } from "../types";
 import { apiClient } from "@/lib/api-client";
@@ -60,6 +61,26 @@ export function useSubscriptions() {
     }
   };
 
+  const createSubscriptionWithBothDurations = async (
+    data: CreateSubscriptionWithBothDurationsRequest
+  ): Promise<SubscriptionPlan[]> => {
+    try {
+      const response = await apiClient.post(
+        "/admin/subscription-plans/both",
+        data
+      );
+      const newSubscriptions = response.data.data;
+      setSubscriptions((prev) => [...prev, ...newSubscriptions]);
+      return newSubscriptions;
+    } catch (err) {
+      throw new Error(
+        err instanceof Error
+          ? err.message
+          : "Failed to create subscription plans"
+      );
+    }
+  };
+
   const updateSubscription = async (
     id: number,
     data: UpdateSubscriptionRequest
@@ -106,7 +127,6 @@ export function useSubscriptions() {
       if (!subscription) throw new Error("Subscription not found");
 
       // Optimistic update - update UI immediately
-      const originalSubscriptions = [...subscriptions];
       const updatedSubscriptions = subscriptions.map((s) =>
         s.ID === id ? { ...s, is_active: !s.is_active } : s
       );
@@ -190,6 +210,7 @@ export function useSubscriptions() {
     error,
     fetchSubscriptions,
     createSubscription,
+    createSubscriptionWithBothDurations,
     updateSubscription,
     deleteSubscription,
     toggleSubscriptionStatus,
