@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { formatDateAndTime } from "@/utils/dateTimeUtils";
 import { BookingSuccess } from "./BookingSuccess";
-import { PaymentMethodModal } from "./PaymentMethodModal";
+import { PaymentMethodModal } from "../../../commonComponents/PaymentMethodModel/PaymentMethodModal";
 
 interface BookingSidebarProps {
   service?: {
@@ -44,7 +44,7 @@ export function BookingSidebar({
   const { selectedAddress, selectedDate, selectedTimeSlot, bookingForm } =
     useSelector((state: RootState) => state.booking);
   const { user } = useAuth();
-  const { walletSummary } = useWallet();
+  const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
 
   // Wallet booking mutations
   const createBookingWithWalletMutation = useCreateBookingWithWallet();

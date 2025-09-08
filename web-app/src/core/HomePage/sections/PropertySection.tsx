@@ -2,15 +2,13 @@
 
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useProperties } from "@/hooks/useProperties";
-import { useAppDispatch } from "@/store/hooks";
-import { openLocationModal } from "@/store/slices/locationModalSlice";
+
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/commonComponents/PropertyCard";
 import { PropertyFilters } from "@/types/property";
 
 export default function PropertySection() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const { location, isLoading: locationLoading } = useLocation();
 
@@ -36,12 +34,17 @@ export default function PropertySection() {
   const properties = response?.data || [];
 
   const handlePropertyClick = (propertyId: number) => {
+    // Validate property ID before navigation
+    if (!propertyId || propertyId <= 0) {
+      console.error("Invalid property ID:", propertyId);
+      return;
+    }
     // Navigate to property detail page
     router.push(`/marketplace/properties/${propertyId}`);
   };
 
   const handleViewAllProperties = () => {
-    router.push("/marketplace/properties");
+    router.push("/marketplace/rental-properties");
   };
 
   const getSectionTitle = () => {
@@ -133,8 +136,13 @@ export default function PropertySection() {
     );
   }
 
+  // Don't render the section if there are no properties and not loading/error
+  if (properties.length === 0 && !isLoading && !isError) {
+    return null;
+  }
+
   return (
-    <section className="py-20 px-6 max-w-7xl mx-auto">
+    <section className="px-6 max-w-7xl mx-auto">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-10">
         <h2 className="text-4xl font-semibold text-gray-900 leading-tight">
@@ -151,41 +159,14 @@ export default function PropertySection() {
 
       {/* Properties Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {properties.map((property) => (
+        {properties.map((property, index) => (
           <PropertyCard
-            key={property.id}
+            key={`sale-property-${property.ID}-${index}`}
             property={property}
-            onClick={() => handlePropertyClick(property.id)}
+            onClick={() => handlePropertyClick(property.ID)}
           />
         ))}
       </div>
-
-      {properties.length === 0 && !isLoading && !isError && (
-        <div className="text-center py-16">
-          <div className="max-w-lg mx-auto">
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">
-              {location?.city && location?.state
-                ? `No properties available in ${location.city}`
-                : "No properties available"}
-            </h3>
-            <p className="text-gray-600 text-base leading-relaxed">
-              {location?.city && location?.state
-                ? `We don't have any properties available in ${location.city}, ${location.state} at the moment. Please try selecting a different location or check back later.`
-                : "No properties are currently available. Please check back later."}
-            </p>
-            {location?.city && location?.state && (
-              <div className="mt-6">
-                <button
-                  onClick={() => dispatch(openLocationModal())}
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-                >
-                  Try Different Location
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

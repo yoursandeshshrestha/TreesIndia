@@ -10,17 +10,19 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Promotional Banner */}
-      <PromotionalBanner />
+      <div className="space-y-20">
+        {/* Promotional Banner */}
+        <PromotionalBanner />
 
-      {/* Popular Services */}
-      <PopularServices />
+        {/* Popular Services */}
+        <PopularServices />
 
-      {/* Listed Properties */}
-      <PropertySection />
+        {/* Listed Properties */}
+        <PropertySection />
 
-      {/* Listed Rentals */}
-      <RentalSection />
+        {/* Listed Rentals */}
+        <RentalSection />
+      </div>
     </>
   );
 }
