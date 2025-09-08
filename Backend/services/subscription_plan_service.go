@@ -27,22 +27,20 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 		return nil, errors.New("plan name is required")
 	}
 	
-	duration, ok := planData["duration"].(string)
-	if !ok || duration == "" {
-		return nil, errors.New("plan duration is required")
+	durationType, ok := planData["duration_type"].(string)
+	if !ok || durationType == "" {
+		return nil, errors.New("plan duration_type is required")
 	}
 	
-	// Convert duration string to days
+	// Validate duration type
 	var durationDays int
-	switch duration {
+	switch durationType {
 	case models.DurationMonthly:
-		durationDays = 30
+		durationDays = models.DurationDaysMonthly
 	case models.DurationYearly:
-		durationDays = 365
-	case models.DurationOneTime:
-		durationDays = 3650 // 10 years for one-time
+		durationDays = models.DurationDaysYearly
 	default:
-		return nil, errors.New("invalid duration. Must be monthly, yearly, or one_time")
+		return nil, errors.New("invalid duration_type. Must be monthly or yearly")
 	}
 	
 	price, ok := planData["price"].(float64)
@@ -71,12 +69,13 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 	}
 	
 	plan := &models.SubscriptionPlan{
-		Name:        name,
+		Name:         name,
+		DurationType: durationType,
 		DurationDays: durationDays,
-		Price:       price,
-		Description: description,
-		IsActive:    isActive,
-		Features:    features,
+		Price:        price,
+		Description:  description,
+		IsActive:     isActive,
+		Features:     features,
 	}
 	
 	if err := sps.planRepo.Create(plan); err != nil {
@@ -113,19 +112,18 @@ func (sps *SubscriptionPlanService) UpdatePlan(id uint, planData map[string]inte
 		plan.Name = name
 	}
 	
-	if duration, ok := planData["duration"].(string); ok && duration != "" {
-		// Convert duration string to days
+	if durationType, ok := planData["duration_type"].(string); ok && durationType != "" {
+		// Validate and convert duration type
 		var durationDays int
-		switch duration {
+		switch durationType {
 		case models.DurationMonthly:
-			durationDays = 30
+			durationDays = models.DurationDaysMonthly
 		case models.DurationYearly:
-			durationDays = 365
-		case models.DurationOneTime:
-			durationDays = 3650 // 10 years for one-time
+			durationDays = models.DurationDaysYearly
 		default:
-			return nil, errors.New("invalid duration. Must be monthly, yearly, or one_time")
+			return nil, errors.New("invalid duration_type. Must be monthly or yearly")
 		}
+		plan.DurationType = durationType
 		plan.DurationDays = durationDays
 	}
 	
@@ -182,4 +180,114 @@ func (sps *SubscriptionPlanService) DeletePlan(id uint) error {
 // GetPlansByDuration retrieves subscription plans by duration
 func (sps *SubscriptionPlanService) GetPlansByDuration(duration string) ([]models.SubscriptionPlan, error) {
 	return sps.planRepo.GetByDuration(duration)
+}
+
+// GroupedPlan represents a plan with both monthly and yearly options
+type GroupedPlan struct {
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Features    models.JSONB           `json:"features"`
+	IsActive    bool                   `json:"is_active"`
+	Monthly     *models.SubscriptionPlan `json:"monthly,omitempty"`
+	Yearly      *models.SubscriptionPlan `json:"yearly,omitempty"`
+}
+
+// GetGroupedPlans retrieves plans grouped by name with monthly and yearly options
+func (sps *SubscriptionPlanService) GetGroupedPlans() (*GroupedPlan, error) {
+	plans, err := sps.planRepo.GetActive()
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := &GroupedPlan{}
+	
+	for _, plan := range plans {
+		if plan.DurationType == models.DurationMonthly {
+			grouped.Monthly = &plan
+			grouped.Name = plan.Name
+			grouped.Description = plan.Description
+			grouped.Features = plan.Features
+			grouped.IsActive = plan.IsActive
+		} else if plan.DurationType == models.DurationYearly {
+			grouped.Yearly = &plan
+			if grouped.Name == "" {
+				grouped.Name = plan.Name
+				grouped.Description = plan.Description
+				grouped.Features = plan.Features
+				grouped.IsActive = plan.IsActive
+			}
+		}
+	}
+
+	return grouped, nil
+}
+
+// CreatePlanWithBothDurations creates both monthly and yearly plans
+func (sps *SubscriptionPlanService) CreatePlanWithBothDurations(planData map[string]interface{}) ([]models.SubscriptionPlan, error) {
+	// Validate required fields
+	name, ok := planData["name"].(string)
+	if !ok || name == "" {
+		return nil, errors.New("plan name is required")
+	}
+	
+	monthlyPrice, ok := planData["monthly_price"].(float64)
+	if !ok || monthlyPrice <= 0 {
+		return nil, errors.New("monthly price must be greater than 0")
+	}
+	
+	yearlyPrice, ok := planData["yearly_price"].(float64)
+	if !ok || yearlyPrice <= 0 {
+		return nil, errors.New("yearly price must be greater than 0")
+	}
+	
+	description, _ := planData["description"].(string)
+	
+	// Handle features - convert array to JSONB
+	var features models.JSONB
+	if featuresArray, ok := planData["features"].([]interface{}); ok && len(featuresArray) > 0 {
+		var featuresList []string
+		for _, feature := range featuresArray {
+			if featureStr, ok := feature.(string); ok && featureStr != "" {
+				featuresList = append(featuresList, featureStr)
+			}
+		}
+		if len(featuresList) > 0 {
+			features = models.JSONB{
+				"description": strings.Join(featuresList, "\n"),
+			}
+		}
+	}
+	
+	// Create monthly plan
+	monthlyPlan := &models.SubscriptionPlan{
+		Name:         name,
+		DurationType: models.DurationMonthly,
+		DurationDays: models.DurationDaysMonthly,
+		Price:        monthlyPrice,
+		Description:  description,
+		IsActive:     true,
+		Features:     features,
+	}
+	
+	// Create yearly plan
+	yearlyPlan := &models.SubscriptionPlan{
+		Name:         name,
+		DurationType: models.DurationYearly,
+		DurationDays: models.DurationDaysYearly,
+		Price:        yearlyPrice,
+		Description:  description,
+		IsActive:     true,
+		Features:     features,
+	}
+	
+	// Save both plans
+	if err := sps.planRepo.Create(monthlyPlan); err != nil {
+		return nil, err
+	}
+	
+	if err := sps.planRepo.Create(yearlyPlan); err != nil {
+		return nil, err
+	}
+	
+	return []models.SubscriptionPlan{*monthlyPlan, *yearlyPlan}, nil
 }

@@ -39,6 +39,20 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 		return fmt.Errorf("user not found")
 	}
 	
+	// Check if broker has active subscription
+	if user.UserType == models.UserTypeBroker {
+		if !user.HasActiveSubscription {
+			logrus.Errorf("PropertyService.CreateProperty broker %d does not have active subscription", userID)
+			return fmt.Errorf("active subscription required for brokers to create properties")
+		}
+		
+		// Check if subscription is not expired
+		if user.SubscriptionExpiryDate != nil && user.SubscriptionExpiryDate.Before(time.Now()) {
+			logrus.Errorf("PropertyService.CreateProperty broker %d subscription expired", userID)
+			return fmt.Errorf("subscription has expired, please renew to create properties")
+		}
+	}
+	
 	// Set user ID
 	property.UserID = userID
 	
@@ -50,6 +64,11 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 	// Set admin upload flag if user is admin
 	if user.UserType == models.UserTypeAdmin {
 		property.UploadedByAdmin = true
+	}
+	
+	// Set subscription required flag if user has active subscription (for auto-approval)
+	if user.HasActiveSubscription && user.SubscriptionExpiryDate != nil && user.SubscriptionExpiryDate.After(time.Now()) {
+		property.SubscriptionRequired = true
 	}
 	
 	// Generate slug
@@ -231,23 +250,6 @@ func (ps *PropertyService) GetUserProperties(userID uint, params utils.Paginatio
 	return properties, pagination, nil
 }
 
-// GetBrokerProperties retrieves properties by broker ID
-func (ps *PropertyService) GetBrokerProperties(brokerID uint, params utils.PaginationParams) ([]models.Property, utils.PaginationResponse, error) {
-	logrus.Infof("PropertyService.GetBrokerProperties called for broker ID: %d", brokerID)
-	
-	// Set default limit to 20 if not specified
-	if params.Limit == 0 {
-		params.Limit = 20
-	}
-	
-	properties, pagination, err := ps.propertyRepo.GetByBrokerID(brokerID, params)
-	if err != nil {
-		logrus.Errorf("PropertyService.GetBrokerProperties repository error: %v", err)
-		return nil, utils.PaginationResponse{}, err
-	}
-	
-	return properties, pagination, nil
-}
 
 // GetPendingProperties retrieves only pending properties (unapproved user properties)
 func (ps *PropertyService) GetPendingProperties(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {
@@ -359,14 +361,6 @@ func (ps *PropertyService) UpdateProperty(id uint, updates map[string]interface{
 			property.Area = nil
 		}
 	}
-	if parkingSpaces, exists := updates["parking_spaces"]; exists {
-		if parkingSpaces != nil {
-			parkingInt := int(parkingSpaces.(float64))
-			property.ParkingSpaces = &parkingInt
-		} else {
-			property.ParkingSpaces = nil
-		}
-	}
 	if floorNumber, exists := updates["floor_number"]; exists {
 		if floorNumber != nil {
 			floorInt := int(floorNumber.(float64))
@@ -377,8 +371,8 @@ func (ps *PropertyService) UpdateProperty(id uint, updates map[string]interface{
 	}
 	if age, exists := updates["age"]; exists {
 		if age != nil {
-			ageInt := int(age.(float64))
-			property.Age = &ageInt
+			ageEnum := models.PropertyAge(age.(string))
+			property.Age = &ageEnum
 		} else {
 			property.Age = nil
 		}
@@ -396,9 +390,6 @@ func (ps *PropertyService) UpdateProperty(id uint, updates map[string]interface{
 	}
 	if city, exists := updates["city"]; exists {
 		property.City = city.(string)
-	}
-	if locality, exists := updates["locality"]; exists {
-		property.Locality = locality.(string)
 	}
 	if address, exists := updates["address"]; exists {
 		property.Address = address.(string)
@@ -465,6 +456,34 @@ func (ps *PropertyService) DeleteProperty(id uint, adminID uint) error {
 	}
 	
 	logrus.Infof("PropertyService.DeleteProperty successfully deleted property ID: %d", id)
+	return nil
+}
+
+// DeleteUserProperty deletes a user's own property
+func (ps *PropertyService) DeleteUserProperty(id uint, userID uint) error {
+	logrus.Infof("PropertyService.DeleteUserProperty called for property ID: %d by user ID: %d", id, userID)
+	
+	// Check if property exists and belongs to the user
+	property, err := ps.propertyRepo.GetByID(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.DeleteUserProperty property not found: %v", err)
+		return err
+	}
+	
+	// Check if property belongs to the user
+	if property.UserID != userID {
+		logrus.Errorf("PropertyService.DeleteUserProperty property does not belong to user: property user ID %d, requesting user ID %d", property.UserID, userID)
+		return fmt.Errorf("property does not belong to you")
+	}
+	
+	// Delete property
+	err = ps.propertyRepo.Delete(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.DeleteUserProperty repository error: %v", err)
+		return err
+	}
+	
+	logrus.Infof("PropertyService.DeleteUserProperty successfully deleted property ID: %d", id)
 	return nil
 }
 
@@ -547,6 +566,26 @@ func (ps *PropertyService) validateProperty(property *models.Property) error {
 		}
 	}
 	
+	// Validate age if provided
+	if property.Age != nil {
+		validAges := []models.PropertyAge{
+			models.PropertyAgeUnder1Year,
+			models.PropertyAge1To2Years,
+			models.PropertyAge2To5Years,
+			models.PropertyAge10PlusYears,
+		}
+		valid := false
+		for _, validAge := range validAges {
+			if *property.Age == validAge {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid age value")
+		}
+	}
+	
 	return nil
 }
 
@@ -623,6 +662,17 @@ func (ps *PropertyService) processFilters(filters map[string]interface{}) map[st
 				}
 			} else if area, ok := value.(float64); ok && area > 0 {
 				processed[key] = area
+			}
+		case "age":
+			if str, ok := value.(string); ok {
+				// Validate age enum value
+				validAges := []string{"under_1_year", "1_2_years", "2_5_years", "10_plus_years"}
+				for _, validAge := range validAges {
+					if str == validAge {
+						processed[key] = str
+						break
+					}
+				}
 			}
 		default:
 			processed[key] = value

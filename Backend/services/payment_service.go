@@ -132,11 +132,17 @@ func (ps *PaymentService) VerifyAndCompletePayment(paymentID uint, razorpayPayme
 		return nil, fmt.Errorf("failed to update payment status: %v", err)
 	}
 
-	// Handle segment payment logic if this is a booking payment
+	// Handle payment completion based on type
 	if payment.RelatedEntityType == "booking" && payment.RelatedEntityID != 0 {
 		err = ps.handleBookingPaymentCompletion(payment)
 		if err != nil {
 			logrus.Errorf("Failed to handle booking payment completion: %v", err)
+			// Don't fail the payment verification, just log the error
+		}
+	} else if payment.Type == models.PaymentTypeSubscription {
+		err = ps.handleSubscriptionPaymentCompletion(payment)
+		if err != nil {
+			logrus.Errorf("Failed to handle subscription payment completion: %v", err)
 			// Don't fail the payment verification, just log the error
 		}
 	}
@@ -238,6 +244,15 @@ func (ps *PaymentService) handleRegularBookingPaymentCompletion(booking *models.
 		return fmt.Errorf("failed to update booking status: %v", err)
 	}
 
+	return nil
+}
+
+// handleSubscriptionPaymentCompletion handles subscription payment completion
+func (ps *PaymentService) handleSubscriptionPaymentCompletion(payment *models.Payment) error {
+	// For subscription payments, we don't need to do anything here
+	// The subscription creation is handled in the CompleteSubscriptionPurchase method
+	// This is just for logging and potential future enhancements
+	logrus.Infof("Subscription payment completed: Payment ID %d, Amount ₹%.2f", payment.ID, payment.Amount)
 	return nil
 }
 

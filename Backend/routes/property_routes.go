@@ -19,20 +19,13 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 		properties.GET("/slug/:slug", propertyController.GetPropertyBySlug)       // Get property by slug
 	}
 	
-	// User routes (authentication required)
+	// User routes (authentication required - for both users and brokers)
 	userProperties := router.Group("/user/properties")
 	userProperties.Use(middleware.AuthMiddleware())
 	{
-		userProperties.POST("", propertyController.CreateProperty)                // Create property listing
-		userProperties.GET("", propertyController.GetUserProperties)              // Get user's properties
-	}
-	
-	// Broker routes (broker authentication required)
-	brokerProperties := router.Group("/broker/properties")
-	brokerProperties.Use(middleware.AuthMiddleware())
-	{
-		brokerProperties.POST("", propertyController.CreateProperty)              // Create property listing (brokers)
-		brokerProperties.GET("", propertyController.GetBrokerProperties)          // Get broker's properties
+		userProperties.POST("", propertyController.CreateProperty)                // Create property listing (users and brokers)
+		userProperties.GET("", propertyController.GetUserProperties)              // Get user's properties (works for both users and brokers)
+		userProperties.DELETE("/:id", propertyController.DeleteUserProperty)      // Delete user's property
 	}
 	
 	// Admin routes (admin authentication required)

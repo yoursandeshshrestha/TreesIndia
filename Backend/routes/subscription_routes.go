@@ -14,6 +14,7 @@ func SetupSubscriptionRoutes(router *gin.RouterGroup) {
 	planRoutes := router.Group("/subscription-plans")
 	{
 		planRoutes.GET("", subscriptionPlanController.GetAllPlans)
+		planRoutes.GET("/grouped", subscriptionPlanController.GetGroupedPlans)
 		planRoutes.GET("/active", subscriptionPlanController.GetActivePlans)
 		planRoutes.GET("/duration/:duration", subscriptionPlanController.GetPlansByDuration)
 		planRoutes.GET("/:id", subscriptionPlanController.GetPlanByID)
@@ -25,6 +26,8 @@ func SetupSubscriptionRoutes(router *gin.RouterGroup) {
 	subscriptionRoutes.Use(middleware.AuthMiddleware())
 	{
 		subscriptionRoutes.POST("/purchase", userSubscriptionController.PurchaseSubscription)
+		subscriptionRoutes.POST("/create-payment-order", userSubscriptionController.CreateSubscriptionPaymentOrder)
+		subscriptionRoutes.POST("/complete-purchase", userSubscriptionController.CompleteSubscriptionPurchase)
 		subscriptionRoutes.GET("/my-subscription", userSubscriptionController.GetUserSubscription)
 		subscriptionRoutes.GET("/history", userSubscriptionController.GetUserSubscriptionHistory)
 	}
@@ -38,6 +41,7 @@ func SetupAdminSubscriptionRoutes(router *gin.RouterGroup) {
 	adminPlanRoutes.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
 	{
 		adminPlanRoutes.POST("", subscriptionPlanController.CreatePlan)
+		adminPlanRoutes.POST("/both", subscriptionPlanController.CreatePlanWithBothDurations)
 		adminPlanRoutes.PUT("/:id", subscriptionPlanController.UpdatePlan)
 		adminPlanRoutes.DELETE("/:id", subscriptionPlanController.DeletePlan)
 	}
