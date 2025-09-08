@@ -4,8 +4,10 @@ import {
   fetchPropertyById,
   fetchPropertyBySlug,
   fetchFeaturedProperties,
+  fetchUserProperties,
 } from "@/lib/propertyApi";
 import { PropertyFilters } from "@/types/property";
+import { authAPI } from "@/lib/auth-api";
 
 export function useProperties(filters: PropertyFilters = {}) {
   return useQuery({
@@ -46,5 +48,17 @@ export function useFeaturedProperties(
     queryFn: () => fetchFeaturedProperties(limit, city, state),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+}
+
+export function useUserProperties(page: number = 1, limit: number = 20) {
+  const token = authAPI.getAccessToken();
+
+  return useQuery({
+    queryKey: ["userProperties", page, limit],
+    queryFn: () => fetchUserProperties(page, limit),
+    enabled: !!token,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }

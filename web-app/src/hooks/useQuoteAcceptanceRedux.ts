@@ -18,9 +18,9 @@ import {
   setSuccess,
   clearSuccess,
   resetState,
-  type PaymentMethod,
   type QuoteStep,
 } from "@/store/slices/quoteAcceptanceSlice";
+import { type PaymentMethod } from "@/types/payment";
 import { Booking } from "@/lib/bookingApi";
 import { AvailableSlot } from "@/types/booking";
 import { useWallet } from "@/hooks/useWallet";
@@ -37,6 +37,7 @@ import {
   useVerifyQuotePayment,
   useProcessWalletPayment,
 } from "@/hooks/useBookingFlow";
+import { usePaymentSegments } from "@/hooks/usePaymentSegments";
 import { useCallback } from "react";
 
 export function useQuoteAcceptanceRedux(
@@ -62,7 +63,7 @@ export function useQuoteAcceptanceRedux(
   } = useSelector((state: RootState) => state.quoteAcceptance);
 
   // Wallet and API hooks
-  const { walletSummary } = useWallet();
+  const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
   const { data: bookingConfigData } = useBookingConfig();
   const { data: availableSlotsData, isLoading: isLoadingSlots } =
     useAvailableSlots(
@@ -75,6 +76,7 @@ export function useQuoteAcceptanceRedux(
   const createQuotePaymentMutation = useCreateQuotePayment();
   const verifyQuotePaymentMutation = useVerifyQuotePayment();
   const processWalletPaymentMutation = useProcessWalletPayment();
+  const { paySegment } = usePaymentSegments(booking?.ID);
 
   // Computed values
   const dateOptions = bookingConfigData?.data
@@ -199,7 +201,7 @@ export function useQuoteAcceptanceRedux(
     // Check if this is multiple segments (no date/time selection required)
     const bookingWithProgress = bookingsWithProgress.find(
       (item) =>
-        item.booking.ID === booking?.ID || item.booking.id === booking?.id
+        item.booking.ID === booking?.ID || item.booking.id === booking?.ID
     );
     const paymentProgress = bookingWithProgress?.booking?.payment_progress;
     const hasMultipleSegments =
@@ -222,24 +224,25 @@ export function useQuoteAcceptanceRedux(
         throw new Error("Booking ID not found");
       }
 
-      const paymentData = {
-        ...(hasMultipleSegments
-          ? {}
-          : {
-              scheduled_date: selectedDate,
-              scheduled_time: selectedTimeSlot?.time,
-            }),
-        amount: hasMultipleSegments
-          ? paymentProgress?.segments[0]?.amount || 0
-          : booking.quote_amount || 0,
-        ...(hasMultipleSegments ? { segment_number: 1 } : {}),
-      };
-
       if (selectedPaymentMethod === "wallet") {
-        await processWalletPaymentMutation.mutateAsync({
-          bookingId,
-          paymentData,
-        });
+        if (hasMultipleSegments) {
+          await paySegment({
+            bookingId,
+            paymentData: {
+              segment_number: 1,
+              amount: paymentProgress?.segments[0]?.amount || 0,
+            },
+          });
+        } else {
+          await processWalletPaymentMutation.mutateAsync({
+            bookingId,
+            paymentData: {
+              scheduled_date: selectedDate!,
+              scheduled_time: selectedTimeSlot!.time,
+              amount: booking.quote_amount || 0,
+            },
+          });
+        }
         handleSetSuccess("Quote accepted and payment completed successfully!");
         // Close modal after a delay to show success message
         setTimeout(() => {
@@ -247,21 +250,48 @@ export function useQuoteAcceptanceRedux(
           onClose?.();
         }, 2000);
       } else {
-        const response = await createQuotePaymentMutation.mutateAsync({
-          bookingId,
-          paymentData,
-        });
+        if (hasMultipleSegments) {
+          await paySegment({
+            bookingId,
+            paymentData: {
+              segment_number: 1,
+              amount: paymentProgress?.segments[0]?.amount || 0,
+            },
+          });
+          handleSetSuccess(
+            "Quote accepted and payment completed successfully!"
+          );
+          setTimeout(() => {
+            onSuccess?.();
+            onClose?.();
+          }, 2000);
+        } else {
+          const response = await createQuotePaymentMutation.mutateAsync({
+            bookingId,
+            paymentData: {
+              scheduled_date: selectedDate!,
+              scheduled_time: selectedTimeSlot!.time,
+              amount: booking.quote_amount || 0,
+            },
+          });
 
-        const order = response.data.payment_order.payment_order;
-        dispatch(
-          setPaymentOrder({
-            id: order.id as string,
-            amount: order.amount as number,
-            currency: order.currency as string,
-            key_id: order.key_id as string,
-          })
-        );
-        dispatch(setShowRazorpayCheckout(true));
+          const order = (
+            response as {
+              data: {
+                payment_order: { payment_order: Record<string, unknown> };
+              };
+            }
+          ).data.payment_order.payment_order;
+          dispatch(
+            setPaymentOrder({
+              id: order.id as string,
+              amount: order.amount as number,
+              currency: order.currency as string,
+              key_id: order.key_id as string,
+            })
+          );
+          dispatch(setShowRazorpayCheckout(true));
+        }
       }
     } catch (error) {
       console.error("Payment processing error:", error);
@@ -277,6 +307,7 @@ export function useQuoteAcceptanceRedux(
     handleClearError,
     processWalletPaymentMutation,
     createQuotePaymentMutation,
+    paySegment,
     dispatch,
     handleSetSuccess,
     onSuccess,

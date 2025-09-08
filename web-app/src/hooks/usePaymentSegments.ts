@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { paySegment, type CreateSegmentPaymentRequest } from "@/lib/bookingApi";
-import { BookingWithPaymentProgress } from "@/types/booking";
+import { paySegment } from "@/lib/bookingApi";
+import {
+  BookingWithPaymentProgress,
+  CreateSegmentPaymentRequest,
+} from "@/types/booking";
 
 export function usePaymentSegments(bookingId?: number) {
   const queryClient = useQueryClient();
