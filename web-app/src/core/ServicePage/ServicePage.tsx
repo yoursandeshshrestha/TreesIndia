@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCategories } from "@/hooks/useCategories";
 import { useSubcategories } from "@/hooks/useSubcategories";
@@ -8,7 +9,7 @@ import { ServiceSidebar } from "./components/ServiceSidebar";
 import { ServiceMainContent } from "./components/ServiceMainContent";
 import { ServicePromises } from "./components/ServicePromises";
 
-export default function ServicePage() {
+function ServicePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -84,5 +85,18 @@ export default function ServicePage() {
         <ServicePromises />
       </div>
     </div>
+  );
+}
+
+export default function ServicePage() {
+  return (
+    <Suspense fallback={
+      <div className="pt-8 min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-500">Loading...</span>
+      </div>
+    }>
+      <ServicePageContent />
+    </Suspense>
   );
 }
