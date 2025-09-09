@@ -542,7 +542,8 @@ func (pr *PropertyRepository) GetPropertyStats() (map[string]interface{}, error)
 	
 	logrus.Infof("PropertyRepository.GetPropertyStats called")
 	
-	var totalProperties, approvedProperties, pendingProperties, expiredProperties int64
+	var totalProperties, approvedProperties, pendingProperties, soldProperties, rentedProperties, treesindiaAssuredProperties int64
+	var residentialProperties, commercialProperties, saleProperties, rentProperties int64
 	
 	// Get total properties count
 	err := pr.GetDB().Model(&models.Property{}).Count(&totalProperties).Error
@@ -565,18 +566,68 @@ func (pr *PropertyRepository) GetPropertyStats() (map[string]interface{}, error)
 		return nil, err
 	}
 	
-	// Get sold/rented properties count (previously called expired)
-	err = pr.GetDB().Model(&models.Property{}).Where("status IN (?, ?)", models.PropertyStatusSold, models.PropertyStatusRented).Count(&expiredProperties).Error
+	// Get sold properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("status = ?", models.PropertyStatusSold).Count(&soldProperties).Error
 	if err != nil {
-		logrus.Errorf("PropertyRepository.GetPropertyStats sold/rented count error: %v", err)
+		logrus.Errorf("PropertyRepository.GetPropertyStats sold count error: %v", err)
+		return nil, err
+	}
+	
+	// Get rented properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("status = ?", models.PropertyStatusRented).Count(&rentedProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats rented count error: %v", err)
+		return nil, err
+	}
+	
+	// Get Trees India Assured properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("treesindia_assured = ?", true).Count(&treesindiaAssuredProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats treesindia assured count error: %v", err)
+		return nil, err
+	}
+	
+	// Get residential properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("property_type = ?", models.PropertyTypeResidential).Count(&residentialProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats residential count error: %v", err)
+		return nil, err
+	}
+	
+	// Get commercial properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("property_type = ?", models.PropertyTypeCommercial).Count(&commercialProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats commercial count error: %v", err)
+		return nil, err
+	}
+	
+	// Get sale properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("listing_type = ?", models.ListingTypeSale).Count(&saleProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats sale count error: %v", err)
+		return nil, err
+	}
+	
+	// Get rent properties count
+	err = pr.GetDB().Model(&models.Property{}).Where("listing_type = ?", models.ListingTypeRent).Count(&rentProperties).Error
+	if err != nil {
+		logrus.Errorf("PropertyRepository.GetPropertyStats rent count error: %v", err)
 		return nil, err
 	}
 	
 	stats := map[string]interface{}{
-		"total_properties":    totalProperties,
-		"approved_properties": approvedProperties,
-		"pending_properties":  pendingProperties,
-		"expired_properties":  expiredProperties,
+		"total_properties":            totalProperties,
+		"approved_properties":         approvedProperties,
+		"pending_properties":          pendingProperties,
+		"sold_properties":             soldProperties,
+		"rented_properties":           rentedProperties,
+		"treesindia_assured_properties": treesindiaAssuredProperties,
+		"residential_properties":      residentialProperties,
+		"commercial_properties":       commercialProperties,
+		"sale_properties":             saleProperties,
+		"rent_properties":             rentProperties,
+		// Keep backward compatibility
+		"expired_properties":          soldProperties + rentedProperties,
 	}
 	
 	logrus.Infof("PropertyRepository.GetPropertyStats retrieved stats: %+v", stats)

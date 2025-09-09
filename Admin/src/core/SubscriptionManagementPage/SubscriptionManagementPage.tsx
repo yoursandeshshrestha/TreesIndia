@@ -14,7 +14,6 @@ import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import {
   SubscriptionPlan,
-  CreateSubscriptionRequest,
   CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
 } from "./types";
@@ -33,7 +32,6 @@ function SubscriptionManagementPage() {
 
   const {
     subscriptions: apiSubscriptions,
-    createSubscription,
     createSubscriptionWithBothDurations,
     updateSubscription,
     deleteSubscription,
@@ -190,8 +188,19 @@ function SubscriptionManagementPage() {
         subscription={selectedSubscription}
         onSubmit={
           selectedSubscription
-            ? handleUpdateSubscription
-            : handleCreateSubscription
+            ? (
+                data:
+                  | CreateSubscriptionWithBothDurationsRequest
+                  | UpdateSubscriptionRequest
+              ) => handleUpdateSubscription(data as UpdateSubscriptionRequest)
+            : (
+                data:
+                  | CreateSubscriptionWithBothDurationsRequest
+                  | UpdateSubscriptionRequest
+              ) =>
+                handleCreateSubscription(
+                  data as CreateSubscriptionWithBothDurationsRequest
+                )
         }
         isLoading={isCreating || isUpdating}
       />

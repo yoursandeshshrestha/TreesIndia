@@ -43,7 +43,6 @@ export default function CreatePropertyPage() {
     furnishing_status: undefined,
     state: "",
     city: "",
-    locality: "",
     address: "",
     pincode: "",
     status: "available",

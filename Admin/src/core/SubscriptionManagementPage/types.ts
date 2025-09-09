@@ -9,7 +9,7 @@ export interface SubscriptionPlan {
   price: number;
   description?: string;
   is_active: boolean;
-  features?: Record<string, any> | null;
+  features?: Record<string, unknown> | null;
   user_subscriptions?: UserSubscription[];
 }
 

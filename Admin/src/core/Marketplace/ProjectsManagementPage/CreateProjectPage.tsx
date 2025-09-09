@@ -171,7 +171,7 @@ export default function CreateProjectPage() {
 
       if (response.data.success) {
         toast.success("Project created successfully");
-        router.push("/dashboard/marketplace/projects/all");
+        router.push("/dashboard/marketplace/projects");
       } else {
         throw new Error(response.data.message || "Failed to create project");
       }
@@ -591,7 +591,7 @@ export default function CreateProjectPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/dashboard/marketplace/projects/all")}
+                onClick={() => router.push("/dashboard/marketplace/projects")}
               >
                 Cancel
               </Button>

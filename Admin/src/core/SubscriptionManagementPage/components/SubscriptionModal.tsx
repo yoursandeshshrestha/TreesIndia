@@ -6,13 +6,12 @@ import { toast } from "sonner";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
-import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
+
 import {
   SubscriptionPlan,
   CreateSubscriptionRequest,
   CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
-  DURATION_OPTIONS,
 } from "../types";
 
 interface SubscriptionModalProps {
@@ -30,7 +29,6 @@ export function SubscriptionModal({
   onClose,
   subscription,
   onSubmit,
-  isLoading = false,
 }: SubscriptionModalProps) {
   const [formData, setFormData] =
     useState<CreateSubscriptionWithBothDurationsRequest>({
@@ -45,13 +43,6 @@ export function SubscriptionModal({
 
   const isEditing = !!subscription;
 
-  // Helper function to get pricing from existing subscriptions
-  const getExistingPricing = (subscriptions: SubscriptionPlan[]) => {
-    const monthly = subscriptions.find((s) => s.duration_type === "monthly");
-    const yearly = subscriptions.find((s) => s.duration_type === "yearly");
-    return { monthly, yearly };
-  };
-
   useEffect(() => {
     if (subscription) {
       // For editing, we'll need to get both monthly and yearly pricing
@@ -64,7 +55,10 @@ export function SubscriptionModal({
           subscription.duration_type === "yearly" ? subscription.price : 0,
         description: subscription.description || "",
         features:
-          subscription.features && subscription.features.description
+          subscription.features &&
+          typeof subscription.features === "object" &&
+          "description" in subscription.features &&
+          typeof subscription.features.description === "string"
             ? subscription.features.description
                 .split("\n")
                 .filter((line) => line.trim() !== "")
@@ -126,7 +120,7 @@ export function SubscriptionModal({
   };
 
   const handleInputChange = (
-    field: keyof CreateSubscriptionRequest,
+    field: keyof CreateSubscriptionWithBothDurationsRequest,
     value: string | number | string[]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -136,21 +130,24 @@ export function SubscriptionModal({
   };
 
   const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...formData.features];
+    const newFeatures = [...(formData.features || [])];
     newFeatures[index] = value;
     setFormData((prev) => ({ ...prev, features: newFeatures }));
   };
 
   const addFeature = () => {
-    setFormData((prev) => ({ ...prev, features: [...prev.features, ""] }));
+    setFormData((prev) => ({
+      ...prev,
+      features: [...(prev.features || []), ""],
+    }));
   };
 
   const removeFeature = (index: number) => {
-    const newFeatures = formData.features.filter((_, i) => i !== index);
+    const newFeatures = (formData.features || []).filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, features: newFeatures }));
   };
 
-  const handleFeatureKeyPress = (e: React.KeyboardEvent, index: number) => {
+  const handleFeatureKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       addFeature();
@@ -272,7 +269,7 @@ export function SubscriptionModal({
                   Features
                 </label>
                 <div className="space-y-2">
-                  {formData.features.map((feature, index) => (
+                  {(formData.features || []).map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0"></div>
                       <Input
@@ -281,14 +278,14 @@ export function SubscriptionModal({
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleFeatureChange(index, e.target.value)
                         }
-                        onKeyPress={(e) => handleFeatureKeyPress(e, index)}
+                        onKeyPress={handleFeatureKeyPress}
                         placeholder={
                           index === 0
                             ? "Enter key features of this plan..."
                             : "Enter another feature..."
                         }
                       />
-                      {formData.features.length > 1 && (
+                      {(formData.features || []).length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeFeature(index)}
@@ -312,7 +309,7 @@ export function SubscriptionModal({
                       )}
                     </div>
                   ))}
-                  {formData.features.length === 0 && (
+                  {(formData.features || []).length === 0 && (
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0"></div>
                       <Input
@@ -323,7 +320,7 @@ export function SubscriptionModal({
                             handleFeatureChange(0, e.target.value);
                           }
                         }}
-                        onKeyPress={(e) => handleFeatureKeyPress(e, 0)}
+                        onKeyPress={handleFeatureKeyPress}
                         placeholder="Enter key features of this plan..."
                       />
                     </div>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Edit, Trash2, Calendar, Clock, CreditCard, Edit2 } from "lucide-react";
+import { Trash2, CreditCard, Edit2 } from "lucide-react";
 import Toggle from "@/components/Toggle";
 import Button from "@/components/Button";
 import { SubscriptionPlan } from "../types";
@@ -30,32 +29,10 @@ export function SubscriptionCards({
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const getDurationLabel = (durationDays: number) => {
     if (durationDays <= 30) return "Monthly";
     if (durationDays <= 365) return "Yearly";
     return "One-time";
-  };
-
-  const getDurationIcon = (durationDays: number) => {
-    if (durationDays <= 30) return <Calendar className="h-4 w-4" />;
-    if (durationDays <= 365) return <Clock className="h-4 w-4" />;
-    return <CreditCard className="h-4 w-4" />;
-  };
-
-  const getStatusIcon = (isActive: boolean) => {
-    return isActive ? (
-      <ToggleRight className="h-4 w-4 text-gray-600" />
-    ) : (
-      <ToggleLeft className="h-4 w-4 text-gray-400" />
-    );
   };
 
   if (subscriptions.length === 0) {
@@ -139,21 +116,22 @@ export function SubscriptionCards({
               <div className="border-t border-gray-200 my-4"></div>
 
               {/* Features */}
-              {subscription.features && subscription.features.description && (
-                <div className="space-y-2 mb-4">
-                  {subscription.features.description
-                    .split("\n")
-                    .filter((line) => line.trim() !== "")
-                    .map((feature, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0 mt-2"></div>
-                        <span className="text-base text-gray-900 font-medium">
-                          {feature.trim()}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              )}
+              {subscription.features &&
+                typeof subscription.features.description === "string" && (
+                  <div className="space-y-2 mb-4">
+                    {subscription.features.description
+                      .split("\n")
+                      .filter((line) => line.trim() !== "")
+                      .map((feature, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0 mt-2"></div>
+                          <span className="text-base text-gray-900 font-medium">
+                            {feature.trim()}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
             </div>
 
             {/* Action Buttons - Always at Bottom */}

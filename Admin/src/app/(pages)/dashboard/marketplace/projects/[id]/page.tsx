@@ -1,11 +1,20 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import AuthGuard from "@/components/AuthGuard/AuthGuard";
 import ProjectDetailPage from "@/core/Marketplace/ProjectsManagementPage/ProjectDetailPage";
 
-export default function ProjectDetailPageRoute() {
-  const params = useParams();
-  const projectId = parseInt(params.id as string, 10);
+interface ProjectDetailRouteProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
 
-  return <ProjectDetailPage projectId={projectId} />;
+export default async function ProjectDetailRoute({
+  params,
+}: ProjectDetailRouteProps) {
+  const { id } = await params;
+
+  return (
+    <AuthGuard requireAdmin={true}>
+      <ProjectDetailPage projectId={parseInt(id)} />
+    </AuthGuard>
+  );
 }

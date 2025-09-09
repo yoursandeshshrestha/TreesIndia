@@ -36,9 +36,7 @@ interface PropertyCardsProps {
 export default function PropertyCards({
   properties,
   isLoading,
-  onViewProperty,
   onApproveProperty,
-  onRejectProperty,
 }: PropertyCardsProps) {
   const router = useRouter();
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -132,10 +130,6 @@ export default function PropertyCards({
   const getPlaceholderImage = (property: Property) => {
     // Generate a placeholder image URL based on property details
     const title = encodeURIComponent(property.title);
-    const price = property.sale_price || property.monthly_rent || 0;
-    const bedrooms = property.bedrooms || 0;
-    const bathrooms = property.bathrooms || 0;
-    const area = property.area || 0;
 
     // Use a placeholder service that can generate property images
     return `https://via.placeholder.com/400x300/4F46E5/FFFFFF?text=${title}`;
@@ -285,9 +279,9 @@ export default function PropertyCards({
                   <div>
                     {property.city}, {property.state}
                   </div>
-                  {property.locality && (
+                  {property.address && (
                     <div className="text-xs text-gray-500">
-                      {property.locality}
+                      {property.address}
                     </div>
                   )}
                 </div>
@@ -422,7 +416,7 @@ export default function PropertyCards({
         message={`Are you sure you want to approve "${selectedProperty?.title}"? This action will make the property visible to users.`}
         confirmText="Approve"
         cancelText="Cancel"
-        variant="success"
+        variant="default"
       />
     </div>
   );

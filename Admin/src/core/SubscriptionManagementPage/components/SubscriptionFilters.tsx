@@ -22,12 +22,11 @@ export function SubscriptionFilters({
   onFiltersChange,
   localSearch,
   onLocalSearchChange,
-  isSearching,
   onSearchingChange,
 }: SubscriptionFiltersProps) {
   const handleFilterChange = (
     key: keyof SubscriptionFiltersType,
-    value: any
+    value: unknown
   ) => {
     onFiltersChange({
       ...filters,
@@ -41,7 +40,12 @@ export function SubscriptionFilters({
 
     onFiltersChange({
       ...filters,
-      sortBy: sortBy as any,
+      sortBy: sortBy as
+        | "name"
+        | "duration"
+        | "price"
+        | "createdAt"
+        | "updatedAt",
       sortOrder: newSortOrder,
     });
   };
@@ -174,7 +178,7 @@ export function SubscriptionFilters({
           <div className="flex flex-wrap gap-2">
             {filters.search && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                Search: "{filters.search}"
+                Search: &quot;{filters.search}&quot;
                 <button
                   onClick={() => {
                     onLocalSearchChange("");

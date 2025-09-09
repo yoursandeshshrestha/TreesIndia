@@ -39,6 +39,7 @@ func RunMigrations() error {
 		&SubscriptionPlan{},
 		&UserSubscription{},
 		&SubscriptionWarning{},
+		&Project{},
 	}
 
 	// Run migrations for each model
@@ -113,6 +114,23 @@ func CreateIndexes() error {
 		return err
 	}
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_user_subscriptions_end_date ON user_subscriptions(end_date)").Error; err != nil {
+		return err
+	}
+
+	// Project indexes
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_projects_project_type ON projects(project_type)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_projects_state_city ON projects(state, city)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug)").Error; err != nil {
 		return err
 	}
 

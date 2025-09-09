@@ -95,7 +95,7 @@ const createApiClient = (): AxiosInstance => {
     (response: AxiosResponse) => {
       return response;
     },
-    (error) => {
+    async (error) => {
       // Handle different types of errors
       if (error.response) {
         // Server responded with error status
@@ -109,7 +109,45 @@ const createApiClient = (): AxiosInstance => {
 
         // Handle specific error cases
         if (status === 401) {
-          // Unauthorized - redirect to login or refresh token
+          // Unauthorized - try to refresh token first
+          const refreshToken = getCookie("treesindia_refresh_token");
+          if (refreshToken) {
+            // Try to refresh token
+            try {
+              const refreshResponse = await fetch(
+                `${API_BASE_URL}/auth/refresh-token`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ refresh_token: refreshToken }),
+                }
+              );
+
+              if (refreshResponse.ok) {
+                const data = await refreshResponse.json();
+                const newAccessToken = data.data.access_token;
+                const newRefreshToken = data.data.refresh_token;
+
+                // Update cookies
+                document.cookie = `treesindia_access_token=${newAccessToken}; path=/; max-age=${
+                  60 * 60
+                }`; // 1 hour
+                document.cookie = `treesindia_refresh_token=${newRefreshToken}; path=/; max-age=${
+                  60 * 60 * 24 * 30
+                }`; // 30 days
+
+                // Retry the original request with new token
+                const originalRequest = error.config;
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return apiClient(originalRequest);
+              }
+            } catch (refreshError) {
+              console.error("Token refresh failed:", refreshError);
+            }
+          }
+          // If refresh fails or no refresh token, logout
           autoSignOut();
         }
 

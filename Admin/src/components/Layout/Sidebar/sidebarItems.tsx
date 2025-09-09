@@ -195,7 +195,7 @@ export const sidebarItems: SidebarItem[] = [
     createMenuItem(
       "all-projects",
       "All Projects",
-      "/dashboard/marketplace/projects/all"
+      "/dashboard/marketplace/projects"
     ),
     createMenuItem(
       "create-project",

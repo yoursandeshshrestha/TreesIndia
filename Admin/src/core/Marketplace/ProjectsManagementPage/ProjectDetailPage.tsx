@@ -166,7 +166,7 @@ export default function ProjectDetailPage({
     try {
       await deleteProject(projectId);
       toast.success("Project deleted successfully");
-      router.push("/dashboard/marketplace/projects/all");
+      router.push("/dashboard/marketplace/projects");
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project");
@@ -238,7 +238,7 @@ export default function ProjectDetailPage({
         </p>
         <Button
           variant="primary"
-          onClick={() => router.push("/dashboard/marketplace/projects/all")}
+          onClick={() => router.push("/dashboard/marketplace/projects")}
           leftIcon={<ArrowLeft size={16} />}
         >
           Back to Projects
@@ -257,7 +257,7 @@ export default function ProjectDetailPage({
               variant="ghost"
               size="sm"
               leftIcon={<ArrowLeft className="w-4 h-4" />}
-              onClick={() => router.push("/dashboard/marketplace/projects/all")}
+              onClick={() => router.push("/dashboard/marketplace/projects")}
             >
               Back
             </Button>
@@ -512,7 +512,7 @@ export default function ProjectDetailPage({
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      router.push("/dashboard/marketplace/projects/all")
+                      router.push("/dashboard/marketplace/projects")
                     }
                     className="w-full"
                     leftIcon={<ArrowLeft size={16} />}

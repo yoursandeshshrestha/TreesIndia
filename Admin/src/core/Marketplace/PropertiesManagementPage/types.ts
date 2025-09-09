@@ -154,12 +154,15 @@ export interface PropertyStats {
   total_properties: number;
   approved_properties: number;
   pending_properties: number;
+  sold_properties: number;
+  rented_properties: number;
+  treesindia_assured_properties: number;
   residential_properties: number;
   commercial_properties: number;
   sale_properties: number;
   rent_properties: number;
+  // Keep backward compatibility
   expired_properties: number;
-  treesindia_assured_properties: number;
 }
 
 export interface PropertyFormData {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import {
@@ -11,6 +11,26 @@ import {
   PropertyResponse,
   PropertyStatsResponse,
 } from "../types";
+
+// Helper function to extract error message from unknown error
+const getErrorMessage = (err: unknown, fallback: string): string => {
+  if (err && typeof err === "object") {
+    const errorObj = err as Record<string, unknown>;
+    if (errorObj.response && typeof errorObj.response === "object") {
+      const response = errorObj.response as Record<string, unknown>;
+      if (response.data && typeof response.data === "object") {
+        const data = response.data as Record<string, unknown>;
+        if (typeof data.message === "string") {
+          return data.message;
+        }
+      }
+    }
+    if (typeof errorObj.message === "string") {
+      return errorObj.message;
+    }
+  }
+  return fallback;
+};
 
 interface UsePropertiesReturn {
   properties: Property[];
@@ -119,11 +139,8 @@ export const useProperties = (): UsePropertiesReturn => {
             response.data.message || "Failed to fetch properties"
           );
         }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to fetch properties";
+      } catch (err: unknown) {
+        const errorMessage = getErrorMessage(err, "Failed to fetch properties");
         setError(errorMessage);
         setProperties([]); // Ensure properties is always an array
         toast.error(errorMessage);
@@ -146,11 +163,8 @@ export const useProperties = (): UsePropertiesReturn => {
         } else {
           throw new Error(response.data.message || "Failed to fetch property");
         }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to fetch property";
+      } catch (err: unknown) {
+        const errorMessage = getErrorMessage(err, "Failed to fetch property");
         toast.error(errorMessage);
         return null;
       }
@@ -211,11 +225,8 @@ export const useProperties = (): UsePropertiesReturn => {
         } else {
           throw new Error(response.data.message || "Failed to create property");
         }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to create property";
+      } catch (err: unknown) {
+        const errorMessage = getErrorMessage(err, "Failed to create property");
         toast.error(errorMessage);
         return null;
       }
@@ -277,11 +288,8 @@ export const useProperties = (): UsePropertiesReturn => {
         } else {
           throw new Error(response.data.message || "Failed to update property");
         }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to update property";
+      } catch (err: unknown) {
+        const errorMessage = getErrorMessage(err, "Failed to update property");
         toast.error(errorMessage);
         return null;
       }
@@ -299,11 +307,8 @@ export const useProperties = (): UsePropertiesReturn => {
       } else {
         throw new Error("Failed to delete property");
       }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to delete property";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Failed to delete property");
       toast.error(errorMessage);
       return false;
     }
@@ -319,11 +324,8 @@ export const useProperties = (): UsePropertiesReturn => {
       } else {
         throw new Error("Failed to approve property");
       }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to approve property";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Failed to approve property");
       toast.error(errorMessage);
       return false;
     }
@@ -342,11 +344,8 @@ export const useProperties = (): UsePropertiesReturn => {
       } else {
         throw new Error("Failed to reject property");
       }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to reject property";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Failed to reject property");
       toast.error(errorMessage);
       return false;
     }
@@ -377,11 +376,11 @@ export const useProperties = (): UsePropertiesReturn => {
         } else {
           throw new Error("Failed to toggle property status");
         }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to toggle property status";
+      } catch (err: unknown) {
+        const errorMessage = getErrorMessage(
+          err,
+          "Failed to toggle property status"
+        );
         toast.error(errorMessage);
         return false;
       }
@@ -402,7 +401,7 @@ export const useProperties = (): UsePropertiesReturn => {
           response.data.message || "Failed to fetch property stats"
         );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch property stats:", err);
     }
   }, []);
