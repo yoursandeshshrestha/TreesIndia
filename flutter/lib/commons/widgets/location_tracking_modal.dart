@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -120,6 +121,10 @@ class _LocationTrackingModalState extends ConsumerState<LocationTrackingModal> {
     });
   }
 
+  void _animateToCenterWithZoom(LatLng center, double zoom) {
+    _animateToLocation(center, zoom);
+  }
+
   void _refreshMapTiles() {
     // Force map refresh by incrementing key and rebuilding
     setState(() {
@@ -142,6 +147,36 @@ class _LocationTrackingModalState extends ConsumerState<LocationTrackingModal> {
         _mapController.move(currentCenter, currentZoom);
       });
     });
+  }
+
+  // Calculate appropriate zoom level based on distance between two points
+  double _calculateZoomForDistance(LatLng point1, LatLng point2) {
+    final double distance = Geolocator.distanceBetween(
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
+    );
+
+    // Calculate zoom based on distance (meters)
+    // These values are calibrated for good visibility
+    if (distance < 100) return 17.0; // Very close (< 100m)
+    if (distance < 500) return 15.0; // Close (100m - 500m)
+    if (distance < 1000) return 14.0; // Medium (500m - 1km)
+    if (distance < 2000) return 13.0; // Far (1km - 2km)
+    if (distance < 5000) return 12.0; // Very far (2km - 5km)
+    if (distance < 10000) return 11.0; // Distant (5km - 10km)
+    if (distance < 20000) return 10.0; // Very distant (> 10km)
+    if (distance < 50000) return 9.0; // Extremely distant (> 50km)
+    if (distance < 100000) return 8.0; // Extremely distant (> 100km)
+    return 7.0;
+  }
+
+  // Calculate center point between two locations
+  LatLng _calculateCenterPoint(LatLng point1, LatLng point2) {
+    final double centerLat = (point1.latitude + point2.latitude) / 2;
+    final double centerLng = (point1.longitude + point2.longitude) / 2;
+    return LatLng(centerLat, centerLng);
   }
 
   @override
@@ -341,21 +376,28 @@ class _LocationTrackingModalState extends ConsumerState<LocationTrackingModal> {
         ),
       );
 
-      // Update center to focus on worker location when available
-      center = workerLocation;
+      // Calculate optimal zoom and center to show both locations
+      final customerLocation = center;
+      final optimalZoom =
+          _calculateZoomForDistance(customerLocation, workerLocation);
+      final optimalCenter =
+          _calculateCenterPoint(customerLocation, workerLocation);
 
-      // Move map to show worker location with smooth animation
-      if (_lastAnimatedLocation != workerLocation) {
+      // Update center to show both locations optimally
+      center = optimalCenter;
+
+      // Move map to show both locations with optimal zoom
+      if (_lastAnimatedLocation != optimalCenter) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           try {
-            _animateToLocation(workerLocation, 15.0);
+            _animateToCenterWithZoom(optimalCenter, optimalZoom);
           } catch (e) {
-            debugPrint('Error moving map to worker location: $e');
+            debugPrint('Error moving map to show both locations: $e');
           }
         });
       }
     } else {
-      // When worker stops sharing, move back to customer location with smooth animation
+      // When worker stops sharing, move back to customer location with appropriate zoom
       LatLng targetLocation = siliguriCenter; // Default fallback
 
       // Use customer location if coordinates are available
@@ -367,7 +409,8 @@ class _LocationTrackingModalState extends ConsumerState<LocationTrackingModal> {
       if (_lastAnimatedLocation != targetLocation) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           try {
-            _animateToLocation(targetLocation, 15.0);
+            _animateToCenterWithZoom(
+                targetLocation, 15.0); // Use standard zoom for single location
           } catch (e) {
             debugPrint('Error moving map to customer location: $e');
           }
