@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../constants/app_colors.dart';
 import '../../../../constants/app_spacing.dart';
 import '../../../../components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/service_card/app/views/service_card_widget.dart';
+import 'package:trees_india/pages/home_page/app/providers/home_page_providers.dart';
 
-class PopularServicesWidget extends StatelessWidget {
+class PopularServicesWidget extends ConsumerWidget {
   final VoidCallback? onSeeAllTap;
 
   const PopularServicesWidget({
@@ -13,7 +15,9 @@ class PopularServicesWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final homePageState = ref.watch(homePageNotifierProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
@@ -43,82 +47,55 @@ class PopularServicesWidget extends StatelessWidget {
 
           // Service Cards
           SizedBox(
-            height: 206, // Increased height to fix 6px overflow
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                ServiceCardWidget(
-                  props: const ServiceCardProps(
-                    image: 'assets/images/maid3.jpg',
-                    title: 'Pest control (includes utensil re...)',
-                    type: ServiceType.fixed,
-                    duration: '2-3 hours',
-                    price: '₹1,098',
-                    rating: '4.79',
-                    reviewCount: '116K',
-                  ),
-                  onTap: () {
-                    // Handle tap
-                  },
-                ),
-                const SizedBox(width: 12),
-                ServiceCardWidget(
-                  props: const ServiceCardProps(
-                    image: 'assets/images/maid2.jpg',
-                    title: 'Apartment pest control (includes ut...)',
-                    type: ServiceType.inquiry,
-                    duration: '1-2 hours',
-                    price: '₹1,498',
-                    rating: '4.80',
-                    reviewCount: '52K',
-                  ),
-                  onTap: () {
-                    // Handle tap
-                  },
-                ),
-                const SizedBox(width: 12),
-                ServiceCardWidget(
-                  props: const ServiceCardProps(
-                    image: 'assets/images/maid4.jpg',
-                    title: 'Bed bug',
-                    type: ServiceType.fixed,
-                    duration: '1-3 hours',
-                    price: '₹1,599',
-                    rating: '4.77',
-                    reviewCount: '2K',
-                  ),
-                  onTap: () {
-                    // Handle tap
-                  },
-                ),
-                const SizedBox(width: 12),
-                ServiceCardWidget(
-                  props: const ServiceCardProps(
-                    image: 'assets/images/worker.png',
-                    title: 'Carpentry',
-                    type: ServiceType.inquiry,
-                    duration: '2-4 hours',
-                    price: '₹499',
-                  ),
-                  onTap: () {
-                    // Handle tap
-                  },
-                ),
-                const SizedBox(width: 12),
-                ServiceCardWidget(
-                  props: const ServiceCardProps(
-                    image: 'assets/images/construction.png',
-                    title: 'Construction',
-                    type: ServiceType.fixed,
-                    duration: '4-6 hours',
-                    price: '₹899',
-                  ),
-                  onTap: () {
-                    // Handle tap
-                  },
-                ),
-              ],
-            ),
+            height: 206,
+            child: homePageState.isLoadingPopularServices
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF055c3a),
+                    ),
+                  )
+                : homePageState.popularServices.isEmpty
+                    ? Center(
+                        child: B2Regular(
+                          text: 'No popular services available',
+                          color: AppColors.brandNeutral600,
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: homePageState.popularServices.length,
+                        itemBuilder: (context, index) {
+                          final service = homePageState.popularServices[index];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: index <
+                                      homePageState.popularServices.length - 1
+                                  ? AppSpacing.sm
+                                  : 0,
+                            ),
+                            child: ServiceCardWidget(
+                              props: ServiceCardProps(
+                                image: service.images?.isNotEmpty == true
+                                    ? service.images!.first
+                                    : 'assets/images/placeholder.svg',
+                                title: service.name,
+                                type: service.priceType == 'fixed'
+                                    ? ServiceType.fixed
+                                    : ServiceType.inquiry,
+                                duration: service.duration ?? '2-3 hours',
+                                price: service.price != null
+                                    ? '₹${service.price}'
+                                    : 'Inquiry',
+                                rating: '4.79',
+                                reviewCount: '116K',
+                              ),
+                              onTap: () {
+                                print('Service tapped: ${service.name}');
+                              },
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

@@ -85,12 +85,13 @@ class _MessageInputState extends State<MessageInput> {
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
                   onSubmitted: (_) => _sendMessage(),
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 ),
               ),
             ),
             const SizedBox(width: 8),
             Material(
-              color: _hasText && widget.isEnabled 
+              color: _hasText && widget.isEnabled
                   ? Theme.of(context).primaryColor
                   : Colors.grey[300],
               borderRadius: BorderRadius.circular(24),
@@ -102,8 +103,8 @@ class _MessageInputState extends State<MessageInput> {
                   height: 48,
                   child: Icon(
                     Icons.send,
-                    color: _hasText && widget.isEnabled 
-                        ? Colors.white 
+                    color: _hasText && widget.isEnabled
+                        ? Colors.white
                         : Colors.grey[500],
                     size: 20,
                   ),

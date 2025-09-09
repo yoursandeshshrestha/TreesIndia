@@ -140,6 +140,7 @@ class _ManualLocationPageState extends ConsumerState<ManualLocationPage> {
             .read(locationOnboardingNotifierProvider.notifier)
             .searchLocations(value);
       },
+      onTapOutside: (_) => FocusScope.of(context).unfocus(),
     );
   }
 

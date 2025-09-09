@@ -137,6 +137,7 @@ class _CancelBookingBottomSheetState extends State<CancelBookingBottomSheet> {
                       const SizedBox(height: AppSpacing.sm),
                       TextField(
                         controller: additionalReasonController,
+                        onTapOutside: (_) => FocusScope.of(context).unfocus(),
                         maxLines: 3,
                         decoration: InputDecoration(
                           hintText: 'Enter additional details...',

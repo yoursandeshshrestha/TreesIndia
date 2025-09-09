@@ -29,6 +29,7 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
+import 'package:trees_india/pages/search_page/app/views/search_page.dart';
 import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
@@ -212,6 +213,11 @@ class AppRouter {
                   path: '/home',
                   name: 'HomePage',
                   builder: (context, state) => const HomePage(),
+                ),
+                GoRoute(
+                  path: '/search',
+                  name: 'SearchPage',
+                  builder: (context, state) => const SearchPage(),
                 ),
                 GoRoute(
                   path: '/profile',

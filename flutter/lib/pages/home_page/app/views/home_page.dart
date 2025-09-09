@@ -10,21 +10,18 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
-import 'package:trees_india/pages/home_page/app/views/widgets/service_banner_widget.dart';
-
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
 import '../providers/subcategory_providers.dart';
+import '../providers/home_page_providers.dart';
 import '../../../services_page/app/providers/service_providers.dart';
 import '../viewmodels/subcategory_state.dart';
-import 'widgets/service_banner_list_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
 import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
 import 'widgets/popular_categories_widget.dart';
-import '../../../../../commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
 import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -41,6 +38,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _loadCurrentLocation();
+    // Load popular services when the page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+    });
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -206,65 +207,65 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const SizedBox(height: AppSpacing.md),
 
                 // User Type Display
-                Consumer(
-                  builder: (context, ref, child) {
-                    final authState = ref.watch(authProvider);
-                    final userType = authState.userType;
+                // Consumer(
+                //   builder: (context, ref, child) {
+                //     final authState = ref.watch(authProvider);
+                //     final userType = authState.userType;
 
-                    if (userType != null) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: userType == 'worker'
-                                ? AppColors.brandPrimary50
-                                : AppColors.stateGreen50,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: userType == 'worker'
-                                  ? AppColors.brandPrimary200
-                                  : AppColors.stateGreen200,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                userType == 'worker'
-                                    ? Icons.work_outline
-                                    : Icons.person_outline,
-                                size: 16,
-                                color: userType == 'worker'
-                                    ? AppColors.brandPrimary600
-                                    : AppColors.stateGreen600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                userType == 'worker' ? 'Worker' : 'Customer',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: userType == 'worker'
-                                      ? AppColors.brandPrimary600
-                                      : AppColors.stateGreen600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                //     if (userType != null) {
+                //       return Padding(
+                //         padding: const EdgeInsets.symmetric(
+                //             horizontal: AppSpacing.lg),
+                //         child: Container(
+                //           padding: const EdgeInsets.symmetric(
+                //             horizontal: 12,
+                //             vertical: 8,
+                //           ),
+                //           decoration: BoxDecoration(
+                //             color: userType == 'worker'
+                //                 ? AppColors.brandPrimary50
+                //                 : AppColors.stateGreen50,
+                //             borderRadius: BorderRadius.circular(20),
+                //             border: Border.all(
+                //               color: userType == 'worker'
+                //                   ? AppColors.brandPrimary200
+                //                   : AppColors.stateGreen200,
+                //               width: 1,
+                //             ),
+                //           ),
+                //           child: Row(
+                //             mainAxisSize: MainAxisSize.min,
+                //             children: [
+                //               Icon(
+                //                 userType == 'worker'
+                //                     ? Icons.work_outline
+                //                     : Icons.person_outline,
+                //                 size: 16,
+                //                 color: userType == 'worker'
+                //                     ? AppColors.brandPrimary600
+                //                     : AppColors.stateGreen600,
+                //               ),
+                //               const SizedBox(width: 4),
+                //               Text(
+                //                 userType == 'worker' ? 'Worker' : 'Customer',
+                //                 style: TextStyle(
+                //                   fontSize: 12,
+                //                   fontWeight: FontWeight.w500,
+                //                   color: userType == 'worker'
+                //                       ? AppColors.brandPrimary600
+                //                       : AppColors.stateGreen600,
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //         ),
+                //       );
+                //     }
+                //     return const SizedBox.shrink();
+                //   },
+                // ),
 
-                const SizedBox(height: AppSpacing.sm),
+                // const SizedBox(height: AppSpacing.sm),
 
                 // Fixed Search Bar
                 Padding(
@@ -308,9 +309,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                           vertical: 12,
                         ),
                       ),
-                      onChanged: (value) {
-                        // TODO: Handle search
-                        print('Search: $value');
+                      readOnly: true,
+                      onTap: () {
+                        // Load search suggestions and navigate to search page
+                        ref
+                            .read(homePageNotifierProvider.notifier)
+                            .loadSearchSuggestions();
+                        context.push('/search');
                       },
                     ),
                   ),

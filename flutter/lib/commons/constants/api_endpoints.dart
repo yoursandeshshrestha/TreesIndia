@@ -14,6 +14,8 @@ class ApiEndpoints {
     categories,
     subcategories,
     services,
+    searchSuggestions,
+    popularServices,
     walletSummary,
     walletTransactions,
     walletTransactionsByType,
@@ -103,6 +105,16 @@ class ApiEndpoints {
 
   static ApiEndpoint services = ApiEndpoint(
     path: '/services',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint searchSuggestions = ApiEndpoint(
+    path: '/services/search/suggestions',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint popularServices = ApiEndpoint(
+    path: '/services/popular',
     requiresAuth: false,
   );
 
