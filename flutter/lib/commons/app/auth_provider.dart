@@ -48,7 +48,7 @@ class AuthState {
 
   @override
   toString() {
-    return 'AuthState(isLoggedIn: $isLoggedIn, token: ${token != null ? 'present' : 'null'}, userType: $userType)';
+    return 'AuthState(isLoggedIn: $isLoggedIn, token: ${token != null ? '$token' : 'null'}, userType: $userType)';
   }
 }
 
@@ -123,13 +123,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
             // Load profile data separately to get userType
             await ref.read(userProfileProvider.notifier).loadUserProfile();
-            
+
             // Get userType from profile
             final userProfile = ref.read(userProfileProvider).user;
             final userType = userProfile?.userType;
-            
-            state = AuthState(isLoggedIn: true, token: tokenEntity, userType: userType);
-            debugPrint('Auth state set to true - valid token found, userType: $userType');
+
+            state = AuthState(
+                isLoggedIn: true, token: tokenEntity, userType: userType);
+            debugPrint(
+                'Auth state set to true - valid token found, userType: $userType');
             return;
           }
         } catch (e) {
@@ -183,7 +185,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         final tokenEntity =
             userModel.token!.toEntity(userId: userModel.userId?.toString());
-        state = AuthState(isLoggedIn: true, token: tokenEntity, userType: userModel.userType);
+        state = AuthState(
+            isLoggedIn: true, token: tokenEntity, userType: userModel.userType);
         debugPrint('User logged in and auth state updated');
         _authStatusController.add(true);
       }

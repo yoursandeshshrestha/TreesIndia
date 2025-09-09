@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/presenters/providers/location_tracking_provider.dart';
 
 import '../../../domain/entities/assignment_entity.dart';
 import '../../providers/my_works_providers.dart';
@@ -490,6 +492,10 @@ class AssignmentCardWidget extends ConsumerWidget {
         );
 
       case 'in_progress':
+        final locationState = ref.watch(locationTrackingNotifierProvider);
+        final isCurrentAssignmentTracking = locationState.isTrackingLocation &&
+            locationState.currentAssignmentId == assignment.id;
+
         return Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -531,25 +537,33 @@ class AssignmentCardWidget extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Handle start tracking functionality
-                },
+                onPressed: isCurrentAssignmentTracking
+                    ? () => _stopLocationTracking(ref)
+                    : () => _startLocationTracking(ref, assignment),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brandPrimary600,
+                  backgroundColor: isCurrentAssignmentTracking
+                      ? AppColors.stateRed600
+                      : AppColors.brandPrimary600,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.play_arrow, size: 16),
-                    SizedBox(width: 4),
+                    Icon(
+                        isCurrentAssignmentTracking
+                            ? Icons.stop
+                            : Icons.play_arrow,
+                        size: 16),
+                    const SizedBox(width: 4),
                     Text(
-                      'Start Tracking',
-                      style: TextStyle(
+                      isCurrentAssignmentTracking
+                          ? 'Stop Tracking'
+                          : 'Start Tracking',
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -614,6 +628,49 @@ class AssignmentCardWidget extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _startLocationTracking(
+      WidgetRef ref, AssignmentEntity assignment) async {
+    try {
+      final locationNotifier =
+          ref.read(locationTrackingNotifierProvider.notifier);
+      final profileState = ref.read(userProfileProvider);
+      debugPrint('Auth state: ${profileState.toString()}');
+      final bookingId = assignment.booking.id;
+      debugPrint('Booking ID: $bookingId');
+
+      // First connect as a worker
+      final userId = profileState.user?.userId;
+      final roomId = bookingId;
+
+      if (userId == null) {
+        debugPrint('User ID not available, skipping location tracking');
+        return;
+      }
+
+      await locationNotifier.connectForWorker(
+        userId: userId,
+        roomId: roomId,
+      );
+
+      // Then start location sharing
+      await locationNotifier.startLocationSharing(assignment.id);
+    } catch (e) {
+      debugPrint('Error starting location tracking: $e');
+      // You could show a snackbar or error dialog here
+    }
+  }
+
+  void _stopLocationTracking(WidgetRef ref) async {
+    try {
+      final locationNotifier =
+          ref.read(locationTrackingNotifierProvider.notifier);
+      await locationNotifier.stopLocationSharing();
+    } catch (e) {
+      debugPrint('Error stopping location tracking: $e');
+      // You could show a snackbar or error dialog here
+    }
   }
 
   String _formatDateTime(DateTime date, DateTime time) {

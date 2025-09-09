@@ -218,13 +218,17 @@ func (lts *LocationTrackingService) StopTracking(workerID uint, assignmentID uin
 
 	// Broadcast tracking stopped via WebSocket
 	if lts.wsService != nil && lts.wsService.hub != nil {
-		lts.wsService.hub.BroadcastMessage(assignment.BookingID, "location_update", map[string]interface{}{
-			"type": "tracking_stopped",
-			"data": map[string]interface{}{
+		lts.wsService.hub.BroadcastMessage(assignment.BookingID, "tracking_status", map[string]interface{}{
+			"tracking_status": map[string]interface{}{
 				"assignment_id": assignmentID,
+				"booking_id":    assignment.BookingID,
 				"worker_id":     workerID,
+				"is_tracking":   false,
 				"status":        "stopped",
+				"worker_name":   assignment.Worker.Name,
+				"customer_name": assignment.Booking.User.Name,
 			},
+			"type": "tracking_stopped",
 		})
 	}
 

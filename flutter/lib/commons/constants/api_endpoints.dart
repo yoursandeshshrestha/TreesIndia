@@ -53,6 +53,7 @@ class ApiEndpoints {
     sendMessage,
     markMessageRead,
     bookingChatRoom,
+    getTrackingStatus,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -292,6 +293,12 @@ class ApiEndpoints {
 
   static ApiEndpoint bookingChatRoom = ApiEndpoint(
     path: '/chat/bookings/{bookingId}/room',
+    requiresAuth: true,
+  );
+
+  // Location Tracking Endpoints
+  static ApiEndpoint getTrackingStatus = ApiEndpoint(
+    path: '/assignments/{assignmentId}/tracking-status',
     requiresAuth: true,
   );
 

@@ -6,6 +6,7 @@ import 'package:trees_india/commons/components/snackbar/app/views/success_snackb
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_notifier.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_state.dart';
+import 'package:trees_india/commons/widgets/location_tracking_modal.dart';
 
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -727,6 +728,37 @@ class BookingCardWidget extends ConsumerWidget {
       ];
     }
 
+    // Add Track Worker Location button for in_progress bookings
+    if (status == 'in_progress' && 
+        booking.workerAssignment?.status == 'in_progress') {
+      buttons.add(
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              _showLocationTrackingModal(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brandPrimary600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.location_on, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('Track Worker Location'),
+              ],
+            ),
+          ),
+        ),
+      );
+      buttons.add(const SizedBox(height: AppSpacing.xs));
+    }
+
     // Add cancel button for cancellable statuses
     if ([
       'pending',
@@ -792,6 +824,13 @@ class BookingCardWidget extends ConsumerWidget {
     }
 
     return buttons;
+  }
+
+  void _showLocationTrackingModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => LocationTrackingModal(booking: booking),
+    );
   }
 
   String _formatDateTime(DateTime date, DateTime time) {
