@@ -28,12 +28,9 @@ const (
 type PropertyStatus string
 
 const (
-	PropertyStatusAvailable    PropertyStatus = "available"
-	PropertyStatusSold         PropertyStatus = "sold"
-	PropertyStatusRented       PropertyStatus = "rented"
-	PropertyStatusUnderContract PropertyStatus = "under_contract"
-	PropertyStatusOffMarket    PropertyStatus = "off_market"
-	PropertyStatusExpired      PropertyStatus = "expired"
+	PropertyStatusAvailable PropertyStatus = "available"
+	PropertyStatusSold      PropertyStatus = "sold"    // For sale listings
+	PropertyStatusRented    PropertyStatus = "rented"  // For rent listings
 )
 
 // FurnishingStatus represents the furnishing status
@@ -43,6 +40,16 @@ const (
 	FurnishingStatusFurnished      FurnishingStatus = "furnished"
 	FurnishingStatusSemiFurnished  FurnishingStatus = "semi_furnished"
 	FurnishingStatusUnfurnished    FurnishingStatus = "unfurnished"
+)
+
+// PropertyAge represents the age of the property
+type PropertyAge string
+
+const (
+	PropertyAgeUnder1Year PropertyAge = "under_1_year"
+	PropertyAge1To2Years  PropertyAge = "1_2_years"
+	PropertyAge2To5Years  PropertyAge = "2_5_years"
+	PropertyAge10PlusYears PropertyAge = "10_plus_years"
 )
 
 // JSONStringArray represents a JSON array of strings
@@ -92,15 +99,13 @@ type Property struct {
 	Bedrooms        *int              `json:"bedrooms"`
 	Bathrooms       *int              `json:"bathrooms"`
 	Area            *float64          `json:"area"`              // in sq ft
-	ParkingSpaces   *int              `json:"parking_spaces"`
 	FloorNumber     *int              `json:"floor_number"`
-	Age             *int              `json:"age"`               // age in years
+	Age             *PropertyAge      `json:"age"`               // property age enum
 	FurnishingStatus *FurnishingStatus `json:"furnishing_status"`
 	
 	// Location Information
 	State   string `json:"state" gorm:"not null"`
 	City    string `json:"city" gorm:"not null"`
-	Locality string `json:"locality"`
 	Address string `json:"address"`
 	Pincode string `json:"pincode"`
 	
@@ -114,6 +119,9 @@ type Property struct {
 	// Priority and Subscription
 	PriorityScore        int  `json:"priority_score" gorm:"default:0"`           // Priority for listing order
 	SubscriptionRequired bool `json:"subscription_required" gorm:"default:false"` // If broker needed subscription to post
+	
+	// TreesIndia Assured Tag
+	TreesIndiaAssured    bool `json:"treesindia_assured" gorm:"column:treesindia_assured;default:false"`   // TreesIndia Assured tag for admin-created properties
 	
 	// Images
 	Images           JSONStringArray `json:"images" gorm:"type:json"` // Array of image URLs
@@ -142,20 +150,29 @@ func (p *Property) BeforeCreate(tx *gorm.DB) error {
 	expiryDate := time.Now().AddDate(0, 0, 30)
 	p.ExpiresAt = &expiryDate
 	
-	// Auto-approve if listed by broker or admin
-	if p.BrokerID != nil || p.UploadedByAdmin {
+	// Auto-approve if listed by broker, admin, or user with active subscription
+	if p.BrokerID != nil || p.UploadedByAdmin || p.SubscriptionRequired {
 		p.IsApproved = true
 		now := time.Now()
 		p.ApprovedAt = &now
 	}
 	
-	// Set priority score based on property type
+	// Set TreesIndia Assured tag for admin-created properties
+	if p.UploadedByAdmin {
+		p.TreesIndiaAssured = true
+	}
+	
+	// Set priority score and subscription required flag based on property type
 	if p.BrokerID != nil {
 		p.PriorityScore = 100 // Broker properties get high priority
+		p.SubscriptionRequired = true // Broker properties require subscription
 	} else if p.UploadedByAdmin {
 		p.PriorityScore = 50 // Admin properties get medium priority
+		p.SubscriptionRequired = false // Admin properties don't require subscription
+	} else if p.SubscriptionRequired {
+		p.PriorityScore = 75 // Normal user properties with subscription get high-medium priority
 	} else {
-		p.PriorityScore = 0 // Normal user properties get low priority
+		p.PriorityScore = 0 // Normal user properties without subscription get low priority
 	}
 	
 	return nil

@@ -77,6 +77,9 @@ func (qs *QuoteService) ProvideQuote(bookingID uint, adminID uint, req *models.P
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Quote provided for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
 }
@@ -128,6 +131,9 @@ func (qs *QuoteService) UpdateQuote(bookingID uint, adminID uint, req *models.Up
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Quote updated for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
 }
@@ -170,6 +176,9 @@ func (qs *QuoteService) AcceptQuote(bookingID uint, userID uint, req *models.Acc
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Quote accepted for booking %d by user %d", bookingID, userID)
 	return booking, nil
 }
@@ -211,6 +220,9 @@ func (qs *QuoteService) RejectQuote(bookingID uint, userID uint, req *models.Rej
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Quote rejected for booking %d by user %d: reason=%s", bookingID, userID, req.Reason)
 	return booking, nil
 }
@@ -271,6 +283,9 @@ func (qs *QuoteService) ScheduleAfterQuote(bookingID uint, userID uint, req *mod
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Booking %d scheduled after quote acceptance: date=%s, time=%s", bookingID, req.ScheduledDate, req.ScheduledTime)
 	return booking, nil
 }
@@ -378,41 +393,45 @@ func (qs *QuoteService) CreateQuotePayment(bookingID uint, userID uint, req *mod
 		return nil, errors.New("quote has not been accepted")
 	}
 
-	// 4. Parse scheduled date and time
-	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
-	if err != nil {
-		return nil, errors.New("invalid scheduled date format")
-	}
-
-	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
-	if err != nil {
-		return nil, errors.New("invalid scheduled time format")
-	}
-
-	// 5. Combine date and time
-	scheduledDateTime := time.Date(
-		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
-		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
-		scheduledDate.Location(),
-	)
-
-	// 6. Validate scheduled time is in the future
-	if scheduledDateTime.Before(time.Now()) {
-		return nil, errors.New("scheduled time must be in the future")
-	}
-
-	// 7. Get payment segments to determine payment type
+	// 4. Get payment segments to determine payment type
 	segments, err := qs.getPaymentSegments(bookingID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get payment segments: %v", err)
 	}
 
-	// 8. Process payment based on segment count
+	// 5. Process payment based on segment count
 	if len(segments) == 1 {
-		// Single segment = Single payment (current behavior)
+		// Single segment = Single payment (requires scheduled date/time)
+		if req.ScheduledDate == nil || req.ScheduledTime == nil {
+			return nil, errors.New("scheduled date and time are required for single segment payments")
+		}
+
+		// Parse scheduled date and time
+		scheduledDate, err := time.Parse("2006-01-02", *req.ScheduledDate)
+		if err != nil {
+			return nil, errors.New("invalid scheduled date format")
+		}
+
+		scheduledTime, err := time.Parse("15:04", *req.ScheduledTime)
+		if err != nil {
+			return nil, errors.New("invalid scheduled time format")
+		}
+
+		// Combine date and time
+		scheduledDateTime := time.Date(
+			scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+			scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+			scheduledDate.Location(),
+		)
+
+		// Validate scheduled time is in the future
+		if scheduledDateTime.Before(time.Now()) {
+			return nil, errors.New("scheduled time must be in the future")
+		}
+
 		return qs.processSinglePayment(bookingID, userID, req)
 	} else {
-		// Multiple segments = Segmented payment
+		// Multiple segments = Segmented payment (no scheduled date/time required)
 		return qs.processSegmentPayment(bookingID, userID, req)
 	}
 }
@@ -468,6 +487,23 @@ func (qs *QuoteService) VerifyQuotePayment(bookingID uint, userID uint, req *mod
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// 8. Mark payment segment as paid (if this is a segmented payment)
+	segments, err := qs.getPaymentSegments(bookingID)
+	if err == nil && len(segments) > 0 {
+		// For single segment payments, mark the first segment as paid
+		if len(segments) == 1 {
+			err = qs.paymentSegmentRepo.MarkAsPaid(segments[0].ID, payment.ID)
+			if err != nil {
+				logrus.Errorf("Failed to mark segment as paid: %v", err)
+			}
+		}
+		// For multiple segments, we would need to determine which segment this payment is for
+		// This would require additional logic based on the payment amount or segment number
+	}
+
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Payment verified for booking %d: payment_id=%s", bookingID, req.RazorpayPaymentID)
 	return booking, nil
 }
@@ -543,6 +579,9 @@ func (qs *QuoteService) WalletPayment(bookingID uint, userID uint, req *models.W
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 
+	// Calculate payment progress before returning
+	booking.GetPaymentProgress()
+	
 	logrus.Infof("Wallet payment processed for booking %d: amount=%.2f", bookingID, req.Amount)
 	return booking, nil
 }
@@ -605,14 +644,26 @@ func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *m
 		Notes:             "Quote payment for booking",
 	}
 	
-	payment, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create payment order: %v", err)
 	}
 	
-	// Update booking with scheduling details
-	scheduledDate, _ := time.Parse("2006-01-02", req.ScheduledDate)
-	scheduledTime, _ := time.Parse("15:04", req.ScheduledTime)
+	// Update booking with scheduling details (but don't mark as completed yet)
+	if req.ScheduledDate == nil || req.ScheduledTime == nil {
+		return nil, errors.New("scheduled date and time are required for single segment payments")
+	}
+	
+	scheduledDate, err := time.Parse("2006-01-02", *req.ScheduledDate)
+	if err != nil {
+		return nil, errors.New("invalid scheduled date format")
+	}
+	
+	scheduledTime, err := time.Parse("15:04", *req.ScheduledTime)
+	if err != nil {
+		return nil, errors.New("invalid scheduled time format")
+	}
+	
 	scheduledDateTime := time.Date(
 		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
@@ -624,21 +675,17 @@ func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *m
 		return nil, err
 	}
 	
+	// Only update scheduling details, keep status as quote_accepted until payment is verified
 	booking.ScheduledDate = &scheduledDate
 	booking.ScheduledTime = &scheduledDateTime
-	booking.Status = models.BookingStatusConfirmed
-	booking.PaymentStatus = "completed"
+	// Don't update status or payment_status here - that should happen in VerifyQuotePayment
 	
 	err = qs.bookingRepo.Update(booking)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update booking: %v", err)
 	}
 	
-	// Mark segment as paid
-	err = qs.paymentSegmentRepo.MarkAsPaid(segment.ID, payment.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to mark segment as paid: %v", err)
-	}
+	// Don't mark segment as paid yet - that should happen in VerifyQuotePayment
 	
 	return map[string]interface{}{
 		"payment_order": paymentOrder,
@@ -688,10 +735,10 @@ func (qs *QuoteService) processSegmentPayment(bookingID uint, userID uint, req *
 		return nil, fmt.Errorf("failed to create payment order: %v", err)
 	}
 	
-	// If this is the first segment, update booking scheduling
-	if segment.SegmentNumber == 1 {
-		scheduledDate, _ := time.Parse("2006-01-02", req.ScheduledDate)
-		scheduledTime, _ := time.Parse("15:04", req.ScheduledTime)
+	// If this is the first segment, update booking scheduling (only if scheduled date/time provided)
+	if segment.SegmentNumber == 1 && req.ScheduledDate != nil && req.ScheduledTime != nil {
+		scheduledDate, _ := time.Parse("2006-01-02", *req.ScheduledDate)
+		scheduledTime, _ := time.Parse("15:04", *req.ScheduledTime)
 		scheduledDateTime := time.Date(
 			scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 			scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
@@ -748,6 +795,18 @@ func (qs *QuoteService) GetPaymentProgress(bookingID uint, userID uint) (*models
 	return qs.paymentSegmentRepo.GetPaymentProgress(bookingID)
 }
 
+// GetPaymentProgressForAdmin gets payment progress for a booking (admin access)
+func (qs *QuoteService) GetPaymentProgressForAdmin(bookingID uint) (*models.PaymentProgress, error) {
+	// Validate booking exists
+	_, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// Get payment progress (no user validation for admin)
+	return qs.paymentSegmentRepo.GetPaymentProgress(bookingID)
+}
+
 // CreateSegmentPayment creates payment for a specific segment
 func (qs *QuoteService) CreateSegmentPayment(bookingID uint, userID uint, req *models.CreateSegmentPaymentRequest) (map[string]interface{}, error) {
 	// Get the specific segment
@@ -789,6 +848,54 @@ func (qs *QuoteService) CreateSegmentPayment(bookingID uint, userID uint, req *m
 	return map[string]interface{}{
 		"payment_order": paymentOrder,
 		"segment":       segment,
+	}, nil
+}
+
+// VerifySegmentPayment verifies payment for a specific segment
+func (qs *QuoteService) VerifySegmentPayment(bookingID uint, userID uint, req *models.VerifySegmentPaymentRequest) (map[string]interface{}, error) {
+	// 1. Get booking
+	booking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate booking belongs to user
+	if booking.UserID != userID {
+		return nil, errors.New("unauthorized access to booking")
+	}
+
+	// 3. Validate booking is inquiry type
+	if booking.BookingType != models.BookingTypeInquiry {
+		return nil, errors.New("booking is not inquiry type")
+	}
+
+	// 4. Find payment by Razorpay order ID
+	paymentRepo := repositories.NewPaymentRepository()
+	payment, err := paymentRepo.GetByRazorpayOrderID(req.RazorpayOrderID)
+	if err != nil {
+		return nil, fmt.Errorf("payment not found: %v", err)
+	}
+
+	// 5. Verify payment with Razorpay using payment service
+	paymentService := NewPaymentService()
+	_, err = paymentService.VerifyAndCompletePayment(payment.ID, req.RazorpayPaymentID, req.RazorpaySignature)
+	if err != nil {
+		return nil, fmt.Errorf("payment verification failed: %v", err)
+	}
+
+	// 6. Get updated booking with payment progress
+	updatedBooking, err := qs.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated booking: %v", err)
+	}
+
+	// Calculate payment progress before returning
+	updatedBooking.GetPaymentProgress()
+	
+	logrus.Infof("Segment payment verified for booking %d: payment_id=%s", bookingID, req.RazorpayPaymentID)
+	return map[string]interface{}{
+		"booking": updatedBooking,
+		"payment": payment,
 	}, nil
 }
 

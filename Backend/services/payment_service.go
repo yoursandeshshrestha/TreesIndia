@@ -2,9 +2,13 @@ package services
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 	"treesindia/models"
 	"treesindia/repositories"
+
+	"github.com/sirupsen/logrus"
 )
 
 type PaymentService struct {
@@ -128,7 +132,128 @@ func (ps *PaymentService) VerifyAndCompletePayment(paymentID uint, razorpayPayme
 		return nil, fmt.Errorf("failed to update payment status: %v", err)
 	}
 
+	// Handle payment completion based on type
+	if payment.RelatedEntityType == "booking" && payment.RelatedEntityID != 0 {
+		err = ps.handleBookingPaymentCompletion(payment)
+		if err != nil {
+			logrus.Errorf("Failed to handle booking payment completion: %v", err)
+			// Don't fail the payment verification, just log the error
+		}
+	} else if payment.Type == models.PaymentTypeSubscription {
+		err = ps.handleSubscriptionPaymentCompletion(payment)
+		if err != nil {
+			logrus.Errorf("Failed to handle subscription payment completion: %v", err)
+			// Don't fail the payment verification, just log the error
+		}
+	}
+
 	return payment, nil
+}
+
+// handleBookingPaymentCompletion handles booking-specific payment completion logic
+func (ps *PaymentService) handleBookingPaymentCompletion(payment *models.Payment) error {
+	// Get booking
+	bookingRepo := repositories.NewBookingRepository()
+	booking, err := bookingRepo.GetByID(payment.RelatedEntityID)
+	if err != nil {
+		return fmt.Errorf("failed to get booking: %v", err)
+	}
+
+	// Check if this is a segment payment by looking at the payment description
+	if strings.Contains(payment.Description, "Segment") {
+		// This is a segment payment
+		err = ps.handleSegmentPaymentCompletion(booking, payment)
+		if err != nil {
+			return fmt.Errorf("failed to handle segment payment completion: %v", err)
+		}
+	} else {
+		// This is a regular booking payment
+		err = ps.handleRegularBookingPaymentCompletion(booking, payment)
+		if err != nil {
+			return fmt.Errorf("failed to handle regular booking payment completion: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// handleSegmentPaymentCompletion handles segment payment completion
+func (ps *PaymentService) handleSegmentPaymentCompletion(booking *models.Booking, payment *models.Payment) error {
+	// Extract segment number from payment description
+	// Format: "Segment X payment for booking"
+	segmentNumberStr := strings.TrimSpace(strings.Split(payment.Description, "Segment")[1])
+	segmentNumberStr = strings.Split(segmentNumberStr, " ")[0]
+	segmentNumber, err := strconv.Atoi(segmentNumberStr)
+	if err != nil {
+		return fmt.Errorf("failed to parse segment number: %v", err)
+	}
+
+	// Update the specific segment as paid
+	paymentSegmentRepo := repositories.NewPaymentSegmentRepository()
+	segment, err := paymentSegmentRepo.GetByBookingIDAndSegmentNumber(booking.ID, segmentNumber)
+	if err != nil {
+		return fmt.Errorf("failed to get payment segment: %v", err)
+	}
+
+	// Update segment status
+	segment.Status = models.PaymentSegmentStatusPaid
+	segment.PaymentID = &payment.ID
+	now := time.Now()
+	segment.PaidAt = &now
+
+	err = paymentSegmentRepo.Update(segment)
+	if err != nil {
+		return fmt.Errorf("failed to update segment status: %v", err)
+	}
+
+	// Check if all segments are paid
+	allPaid, err := paymentSegmentRepo.IsAllSegmentsPaid(booking.ID)
+	if err != nil {
+		return fmt.Errorf("failed to check if all segments are paid: %v", err)
+	}
+
+	// Update booking status
+	bookingRepo := repositories.NewBookingRepository()
+	if allPaid {
+		// All segments paid - booking is confirmed
+		booking.Status = models.BookingStatusConfirmed
+		booking.PaymentStatus = "completed"
+	} else {
+		// Some segments still pending - booking is partially paid
+		booking.Status = models.BookingStatusPartiallyPaid
+		booking.PaymentStatus = "partial"
+	}
+
+	err = bookingRepo.Update(booking)
+	if err != nil {
+		return fmt.Errorf("failed to update booking status: %v", err)
+	}
+
+	return nil
+}
+
+// handleRegularBookingPaymentCompletion handles regular booking payment completion
+func (ps *PaymentService) handleRegularBookingPaymentCompletion(booking *models.Booking, payment *models.Payment) error {
+	// For regular bookings, just confirm the booking
+	booking.Status = models.BookingStatusConfirmed
+	booking.PaymentStatus = "completed"
+
+	bookingRepo := repositories.NewBookingRepository()
+	err := bookingRepo.Update(booking)
+	if err != nil {
+		return fmt.Errorf("failed to update booking status: %v", err)
+	}
+
+	return nil
+}
+
+// handleSubscriptionPaymentCompletion handles subscription payment completion
+func (ps *PaymentService) handleSubscriptionPaymentCompletion(payment *models.Payment) error {
+	// For subscription payments, we don't need to do anything here
+	// The subscription creation is handled in the CompleteSubscriptionPurchase method
+	// This is just for logging and potential future enhancements
+	logrus.Infof("Subscription payment completed: Payment ID %d, Amount ₹%.2f", payment.ID, payment.Amount)
+	return nil
 }
 
 // GetPaymentByID gets a payment by ID

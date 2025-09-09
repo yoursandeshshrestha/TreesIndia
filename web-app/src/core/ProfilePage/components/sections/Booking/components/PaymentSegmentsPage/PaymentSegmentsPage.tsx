@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
-import { Booking, PaymentProgress } from "@/types/booking";
+import { Booking } from "@/lib/bookingApi";
 import {
   PaymentProgress as PaymentProgressComponent,
   PaymentSegmentManager,
-} from "@/commonComponents/PaymentSegment";
-import { formatAmount } from "@/utils/formatters";
-import { usePaymentSegments } from "@/hooks/usePaymentSegments";
+} from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
+import { useBookings } from "@/hooks/useBookings";
 
 interface PaymentSegmentsPageProps {
   booking: Booking;
@@ -21,15 +20,19 @@ export default function PaymentSegmentsPage({
   onBack,
   onPaymentSuccess,
 }: PaymentSegmentsPageProps) {
-  const { paymentProgress, isLoadingSegments, segmentsError, refetchSegments } =
-    usePaymentSegments(booking.ID || booking.id);
+  // Get payment progress from bookings data
+  const { bookingsWithProgress, refetchBookings } = useBookings();
+  const bookingWithProgress = bookingsWithProgress.find(
+    (item) => item.booking.ID === booking.ID || item.booking.id === booking.ID
+  );
+  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
 
-  const loading = isLoadingSegments;
-  const error = segmentsError ? "Failed to load payment segments" : null;
+  const loading = false; // No loading since data comes from cache
+  const error = null; // No error since data comes from cache
 
-  const handlePaymentSuccess = (segmentId: number) => {
-    // Refresh the payment segments after successful payment
-    refetchSegments();
+  const handlePaymentSuccess = () => {
+    // Refresh the bookings to get updated payment progress
+    refetchBookings();
     onPaymentSuccess?.();
   };
 
@@ -39,7 +42,7 @@ export default function PaymentSegmentsPage({
   };
 
   const handleRefresh = () => {
-    refetchSegments();
+    refetchBookings();
   };
 
   if (loading) {
@@ -125,7 +128,7 @@ export default function PaymentSegmentsPage({
           Manage Payment Segments
         </h3>
         <PaymentSegmentManager
-          bookingId={booking.ID || booking.id || 0}
+          bookingId={booking.ID || booking.ID || 0}
           segments={paymentProgress.segments}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}

@@ -24,7 +24,7 @@ export function BookingSuccess({ message, onClose }: BookingSuccessProps) {
       }
     };
     loadAnimation();
-  }, []);
+  }, []); // This component is only rendered when showSuccess is true, so it's fine to fetch on mount
 
   // Auto close after 3 seconds
   useEffect(() => {

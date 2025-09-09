@@ -121,6 +121,36 @@ export const bookingFlowApi = {
     return handleApiResponse(response);
   },
 
+  // Verify payment by payment ID (for segment payments)
+  verifyPaymentById: async (
+    paymentId: number,
+    paymentData: PaymentVerificationRequest
+  ): Promise<PaymentVerificationResponse> => {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/payments/${paymentId}/verify`,
+      {
+        method: "POST",
+        body: JSON.stringify(paymentData),
+      }
+    );
+    return handleApiResponse(response);
+  },
+
+  // Verify segment payment (dedicated endpoint for segment payments)
+  verifySegmentPayment: async (
+    bookingId: number,
+    paymentData: PaymentVerificationRequest
+  ): Promise<PaymentVerificationResponse> => {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/bookings/${bookingId}/payment-segments/verify`,
+      {
+        method: "POST",
+        body: JSON.stringify(paymentData),
+      }
+    );
+    return handleApiResponse(response);
+  },
+
   // Get booking by ID
   getBookingById: async (bookingId: number): Promise<BookingResponse> => {
     const response = await authenticatedFetch(

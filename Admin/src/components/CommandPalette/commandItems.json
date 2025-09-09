@@ -56,13 +56,6 @@
     "keywords": ["properties", "property", "real estate", "listings"]
   },
   {
-    "id": "pending-properties",
-    "label": "Pending Properties",
-    "description": "Go to pending properties",
-    "path": "/dashboard/properties/pending",
-    "keywords": ["pending", "approval", "review", "properties"]
-  },
-  {
     "id": "locations",
     "label": "Locations",
     "description": "Go to locations",
@@ -167,10 +160,17 @@
     ]
   },
   {
-    "id": "notifications",
-    "label": "Notification Management",
-    "description": "Go to notification management",
-    "path": "/dashboard/notifications",
-    "keywords": ["notifications", "notification", "push", "fcm", "messaging", "alerts"]
+    "id": "subscription-management",
+    "label": "Subscription Management",
+    "description": "Go to subscription management",
+    "path": "/dashboard/subscription-management",
+    "keywords": [
+      "subscription",
+      "subscriptions",
+      "plans",
+      "billing",
+      "payment",
+      "pricing"
+    ]
   }
 ]

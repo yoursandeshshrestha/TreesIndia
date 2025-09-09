@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"treesindia/database"
 	"treesindia/models"
 
@@ -61,6 +62,12 @@ func (spr *SubscriptionPlanRepository) Delete(id uint) error {
 // GetByDuration retrieves subscription plans by duration
 func (spr *SubscriptionPlanRepository) GetByDuration(duration string) ([]models.SubscriptionPlan, error) {
 	var plans []models.SubscriptionPlan
-	err := spr.db.Where("duration = ? AND is_active = ?", duration, true).Find(&plans).Error
+	
+	// Validate duration type
+	if duration != models.DurationMonthly && duration != models.DurationYearly {
+		return plans, errors.New("invalid duration. Must be monthly or yearly")
+	}
+	
+	err := spr.db.Where("duration_type = ? AND is_active = ?", duration, true).Find(&plans).Error
 	return plans, err
 }

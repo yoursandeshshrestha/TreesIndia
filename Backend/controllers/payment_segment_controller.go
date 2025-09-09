@@ -48,8 +48,23 @@ func (psc *PaymentSegmentController) GetPaymentSegments(c *gin.Context) {
 		return
 	}
 
-	// Get payment progress
-	progress, err := psc.quoteService.GetPaymentProgress(uint(bookingID), userID.(uint))
+	// Get user type from context (set by auth middleware)
+	userType, exists := c.Get("user_type")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User type not found"})
+		return
+	}
+
+	// Get payment progress - allow admin access
+	var progress *models.PaymentProgress
+	if userType == "admin" {
+		// Admin can access any booking's payment segments
+		progress, err = psc.quoteService.GetPaymentProgressForAdmin(uint(bookingID))
+	} else {
+		// Regular users can only access their own booking's payment segments
+		progress, err = psc.quoteService.GetPaymentProgress(uint(bookingID), userID.(uint))
+	}
+
 	if err != nil {
 		logrus.Errorf("Failed to get payment progress for booking %d: %v", bookingID, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Payment segments not found"})
@@ -102,6 +117,56 @@ func (psc *PaymentSegmentController) PaySegment(c *gin.Context) {
 	result, err := psc.quoteService.CreateSegmentPayment(uint(bookingID), userID.(uint), &req)
 	if err != nil {
 		logrus.Errorf("Failed to create segment payment for booking %d: %v", bookingID, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
+	})
+}
+
+// VerifySegmentPayment verifies payment for a specific segment
+// @Summary Verify segment payment
+// @Description Verify payment for a specific payment segment using Razorpay order ID
+// @Tags Payment Segments
+// @Accept json
+// @Produce json
+// @Param id path int true "Booking ID"
+// @Param request body models.VerifySegmentPaymentRequest true "Payment verification details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /bookings/{id}/payment-segments/verify [post]
+func (psc *PaymentSegmentController) VerifySegmentPayment(c *gin.Context) {
+	// Get booking ID from URL
+	bookingIDStr := c.Param("id")
+	bookingID, err := strconv.ParseUint(bookingIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid booking ID"})
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Parse request body
+	var req models.VerifySegmentPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify segment payment
+	result, err := psc.quoteService.VerifySegmentPayment(uint(bookingID), userID.(uint), &req)
+	if err != nil {
+		logrus.Errorf("Failed to verify segment payment for booking %d: %v", bookingID, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

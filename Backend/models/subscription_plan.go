@@ -1,17 +1,49 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+
 	"gorm.io/gorm"
 )
+
+// JSONB represents a JSONB field that can be null
+type JSONB map[string]interface{}
+
+// Value implements the driver.Valuer interface
+func (j JSONB) Value() (driver.Value, error) {
+	if j == nil {
+		return nil, nil
+	}
+	return json.Marshal(j)
+}
+
+// Scan implements the sql.Scanner interface
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("cannot scan non-byte value into JSONB")
+	}
+	
+	return json.Unmarshal(bytes, j)
+}
 
 // SubscriptionPlan represents available subscription plans
 type SubscriptionPlan struct {
 	gorm.Model
-	Name        string  `json:"name" gorm:"not null"`        // "Monthly Broker", "Yearly Broker", "One-time Broker"
-	Duration    string  `json:"duration" gorm:"not null"`    // "monthly", "yearly", "one_time"
-	Price       float64 `json:"price" gorm:"not null"`       // Admin set price
-	IsActive    bool    `json:"is_active" gorm:"default:true"` // Admin can enable/disable
-	Description string  `json:"description"`                 // Plan description
+	Name         string  `json:"name" gorm:"not null"`                    // "Broker Plan"
+	DurationType string  `json:"duration_type" gorm:"not null;unique"`    // "monthly" or "yearly"
+	DurationDays int     `json:"duration_days" gorm:"not null"`           // Duration in days (30 or 365)
+	Price        float64 `json:"price" gorm:"not null"`                   // Admin set price
+	IsActive     bool    `json:"is_active" gorm:"default:true"`           // Admin can enable/disable
+	Description  string  `json:"description"`                             // Plan description
+	Features     JSONB   `json:"features" gorm:"type:jsonb"`              // Plan features as JSON
 	
 	// Relationships
 	UserSubscriptions []UserSubscription `json:"user_subscriptions,omitempty" gorm:"foreignKey:PlanID"`
@@ -24,7 +56,12 @@ func (SubscriptionPlan) TableName() string {
 
 // Duration constants
 const (
-	DurationMonthly  = "monthly"
-	DurationYearly   = "yearly"
-	DurationOneTime  = "one_time"
+	DurationMonthly = "monthly"
+	DurationYearly  = "yearly"
+)
+
+// Duration days constants
+const (
+	DurationDaysMonthly = 30
+	DurationDaysYearly  = 365
 )

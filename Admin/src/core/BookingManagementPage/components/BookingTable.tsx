@@ -135,13 +135,9 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 {displayValue(booking.service.price, "Price not set")}
               </div>
             )}
-            {booking.service.duration ? (
+            {booking.service.duration && (
               <div className="text-xs text-gray-400">
                 {displayDuration(booking.service.duration)}
-              </div>
-            ) : (
-              <div className="text-xs text-gray-400">
-                {displayValue(booking.service.duration, "Duration not set")}
               </div>
             )}
           </div>
@@ -255,6 +251,60 @@ const BookingTable: React.FC<BookingTableProps> = ({
                   booking.payment.currency
                 )}
               </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      header: "Segments",
+      accessor: (booking: OptimizedBookingResponse) => {
+        if (
+          !booking.payment_progress ||
+          booking.payment_progress.total_segments <= 1
+        ) {
+          return <div className="text-xs text-gray-400">Single Payment</div>;
+        }
+
+        const { paid_segments, total_segments, progress_percentage } =
+          booking.payment_progress;
+        const isComplete = paid_segments === total_segments;
+        const hasOverdue = booking.payment_progress.segments?.some(
+          (segment) => segment.is_overdue && segment.status === "pending"
+        );
+
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-medium ${
+                  isComplete
+                    ? "text-green-600"
+                    : hasOverdue
+                    ? "text-red-600"
+                    : "text-blue-600"
+                }`}
+              >
+                {paid_segments}/{total_segments}
+              </span>
+              <span className="text-xs text-gray-500">
+                {progress_percentage.toFixed(0)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  isComplete
+                    ? "bg-green-500"
+                    : hasOverdue
+                    ? "bg-red-500"
+                    : "bg-blue-500"
+                }`}
+                style={{ width: `${progress_percentage}%` }}
+              />
+            </div>
+            {hasOverdue && (
+              <div className="text-xs text-red-600 font-medium">Overdue</div>
             )}
           </div>
         );

@@ -25,5 +25,8 @@ func SetupPaymentSegmentRoutes(router *gin.RouterGroup) {
 		
 		// Pay for a specific segment
 		paymentSegmentRoutes.POST("/pay", paymentSegmentController.PaySegment)
+		
+		// Verify segment payment
+		paymentSegmentRoutes.POST("/verify", paymentSegmentController.VerifySegmentPayment)
 	}
 }

@@ -20,7 +20,6 @@ export interface User {
   subscription?: unknown | null;
   has_active_subscription: boolean;
   subscription_expiry_date?: string | null;
-  notification_settings?: unknown | null;
 
   // Worker and Broker relationships
   worker?: Worker | null;

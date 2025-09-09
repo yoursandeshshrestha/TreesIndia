@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, PanelLeft, PanelRight, Menu, Search } from "lucide-react";
+import { PanelLeft, PanelRight, Menu, Search } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/app/store";
 import { useRouter } from "next/navigation";
 import { toggleSidebar, selectIsSidebarOpen, open } from "@/app/store";
@@ -153,13 +153,6 @@ const Header: React.FC<HeaderProps> = ({
           <div className="md:hidden">
             <SearchButton onClick={() => dispatch(open())} />
           </div>
-
-          {/* Notifications */}
-          <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell size={18} className="text-gray-600" />
-            {/* Notification dot */}
-            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-          </button>
 
           {/* User Profile Dropdown */}
           {userLoading ? (

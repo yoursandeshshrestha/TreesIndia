@@ -103,6 +103,7 @@ type Booking struct {
 	BufferRequests   []BufferRequest `json:"buffer_requests,omitempty" gorm:"foreignKey:BookingID"`
 	Payment          *Payment       `json:"payment,omitempty" gorm:"-"` // Will be loaded manually
 	PaymentSegments  []PaymentSegment `json:"payment_segments,omitempty" gorm:"foreignKey:BookingID"` // Payment segments for this booking
+	PaymentProgress  *PaymentProgress `json:"payment_progress,omitempty" gorm:"-"` // Calculated payment progress
 }
 
 // TableName returns the table name for Booking
@@ -218,6 +219,7 @@ type OptimizedBookingResponse struct {
 	Address               *BookingAddress         `json:"address"`
 	Contact               *OptimizedContactInfo   `json:"contact"`
 	Payment               *OptimizedPaymentInfo   `json:"payment"`
+	PaymentProgress       *PaymentProgress        `json:"payment_progress,omitempty"`
 	WorkerAssignment      *OptimizedWorkerAssignment `json:"worker_assignment"`
 }
 
@@ -287,6 +289,7 @@ type DetailedBookingResponse struct {
 	Address               *BookingAddress         `json:"address"`
 	Contact               *OptimizedContactInfo   `json:"contact"`
 	Payment               *DetailedPaymentInfo    `json:"payment"`
+	PaymentProgress       *PaymentProgress        `json:"payment_progress"`
 	WorkerAssignment      *DetailedWorkerAssignment `json:"worker_assignment"`
 	BufferRequests        []BufferRequest         `json:"buffer_requests"`
 	Reviews               []Review                `json:"reviews"`
@@ -475,8 +478,8 @@ type ScheduleAfterQuoteRequest struct {
 
 // CreateQuotePaymentRequest represents the request to create payment for quote acceptance
 type CreateQuotePaymentRequest struct {
-	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
-	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
+	ScheduledDate *string `json:"scheduled_date,omitempty"` // YYYY-MM-DD format (optional for multiple segments)
+	ScheduledTime *string `json:"scheduled_time,omitempty"` // HH:MM format (optional for multiple segments)
 	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
 	
 	// For segmented payments
@@ -562,7 +565,7 @@ func (b *Booking) GetPaymentProgress() *PaymentProgress {
 		progressPercentage = (paidAmount / totalAmount) * 100
 	}
 
-	return &PaymentProgress{
+	paymentProgress := &PaymentProgress{
 		TotalAmount:        totalAmount,
 		PaidAmount:         paidAmount,
 		RemainingAmount:    remainingAmount,
@@ -572,4 +575,8 @@ func (b *Booking) GetPaymentProgress() *PaymentProgress {
 		ProgressPercentage: progressPercentage,
 		Segments:           segments,
 	}
+
+	// Set the payment progress on the booking object
+	b.PaymentProgress = paymentProgress
+	return paymentProgress
 }

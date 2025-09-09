@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"mime/multipart"
 	"strconv"
 	"strings"
 	"time"
@@ -13,14 +14,16 @@ import (
 )
 
 type PropertyService struct {
-	propertyRepo *repositories.PropertyRepository
-	userRepo     *repositories.UserRepository
+	propertyRepo     *repositories.PropertyRepository
+	userRepo         *repositories.UserRepository
+	cloudinary       *CloudinaryService
 }
 
-func NewPropertyService() *PropertyService {
+func NewPropertyService(cloudinaryService *CloudinaryService) *PropertyService {
 	return &PropertyService{
 		propertyRepo: repositories.NewPropertyRepository(),
 		userRepo:     repositories.NewUserRepository(),
+		cloudinary:   cloudinaryService,
 	}
 }
 
@@ -36,6 +39,20 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 		return fmt.Errorf("user not found")
 	}
 	
+	// Check if broker has active subscription
+	if user.UserType == models.UserTypeBroker {
+		if !user.HasActiveSubscription {
+			logrus.Errorf("PropertyService.CreateProperty broker %d does not have active subscription", userID)
+			return fmt.Errorf("active subscription required for brokers to create properties")
+		}
+		
+		// Check if subscription is not expired
+		if user.SubscriptionExpiryDate != nil && user.SubscriptionExpiryDate.Before(time.Now()) {
+			logrus.Errorf("PropertyService.CreateProperty broker %d subscription expired", userID)
+			return fmt.Errorf("subscription has expired, please renew to create properties")
+		}
+	}
+	
 	// Set user ID
 	property.UserID = userID
 	
@@ -47,6 +64,11 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 	// Set admin upload flag if user is admin
 	if user.UserType == models.UserTypeAdmin {
 		property.UploadedByAdmin = true
+	}
+	
+	// Set subscription required flag if user has active subscription (for auto-approval)
+	if user.HasActiveSubscription && user.SubscriptionExpiryDate != nil && user.SubscriptionExpiryDate.After(time.Now()) {
+		property.SubscriptionRequired = true
 	}
 	
 	// Generate slug
@@ -75,6 +97,34 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 	return nil
 }
 
+// UploadPropertyImages uploads property images to Cloudinary
+func (ps *PropertyService) UploadPropertyImages(imageFiles []*multipart.FileHeader) ([]string, error) {
+	logrus.Infof("PropertyService.UploadPropertyImages called with %d images", len(imageFiles))
+	
+	// Upload images to Cloudinary
+	var imageURLs []string
+	if ps.cloudinary != nil {
+		for _, file := range imageFiles {
+			if file != nil {
+				logrus.Infof("PropertyService.UploadPropertyImages uploading image: %s", file.Filename)
+				url, err := ps.cloudinary.UploadImage(file, "properties")
+				if err != nil {
+					logrus.Errorf("PropertyService.UploadPropertyImages image upload error: %v", err)
+					return nil, err
+				}
+				imageURLs = append(imageURLs, url)
+				logrus.Infof("PropertyService.UploadPropertyImages image uploaded: %s", url)
+			}
+		}
+	} else {
+		logrus.Warn("PropertyService.UploadPropertyImages cloudinary service is nil, skipping image upload")
+		return nil, fmt.Errorf("cloudinary service not available")
+	}
+	
+	logrus.Infof("PropertyService.UploadPropertyImages successfully uploaded %d images", len(imageURLs))
+	return imageURLs, nil
+}
+
 // GetPropertyByID retrieves a property by ID
 func (ps *PropertyService) GetPropertyByID(id uint) (*models.Property, error) {
 	logrus.Infof("PropertyService.GetPropertyByID called with ID: %d", id)
@@ -87,7 +137,11 @@ func (ps *PropertyService) GetPropertyByID(id uint) (*models.Property, error) {
 	
 	// Check if property is expired and update status if needed
 	if property.ShouldExpire() {
-		property.Status = models.PropertyStatusExpired
+		if property.ListingType == models.ListingTypeSale {
+			property.Status = models.PropertyStatusSold
+		} else {
+			property.Status = models.PropertyStatusRented
+		}
 		ps.propertyRepo.Update(property)
 	}
 	
@@ -106,7 +160,11 @@ func (ps *PropertyService) GetPropertyBySlug(slug string) (*models.Property, err
 	
 	// Check if property is expired and update status if needed
 	if property.ShouldExpire() {
-		property.Status = models.PropertyStatusExpired
+		if property.ListingType == models.ListingTypeSale {
+			property.Status = models.PropertyStatusSold
+		} else {
+			property.Status = models.PropertyStatusRented
+		}
 		ps.propertyRepo.Update(property)
 	}
 	
@@ -125,7 +183,7 @@ func (ps *PropertyService) GetAllProperties(params utils.PaginationParams, filte
 	// Validate and convert filter values
 	processedFilters := ps.processFilters(filters)
 	
-	properties, pagination, err := ps.propertyRepo.GetAll(params, processedFilters)
+	properties, pagination, err := ps.propertyRepo.GetAll(params, processedFilters, false)
 	if err != nil {
 		logrus.Errorf("PropertyService.GetAllProperties repository error: %v", err)
 		return nil, utils.PaginationResponse{}, err
@@ -135,6 +193,43 @@ func (ps *PropertyService) GetAllProperties(params utils.PaginationParams, filte
 	ps.updateExpiredProperties(properties)
 	
 	return properties, pagination, nil
+}
+
+// GetAllPropertiesForAdmin retrieves all properties with pagination and filtering for admin (no default filters)
+func (ps *PropertyService) GetAllPropertiesForAdmin(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {
+	logrus.Infof("PropertyService.GetAllPropertiesForAdmin called with params: %+v", params)
+	
+	// Set default limit to 20 if not specified
+	if params.Limit == 0 {
+		params.Limit = 20
+	}
+	
+	// Validate and convert filter values
+	processedFilters := ps.processFilters(filters)
+	
+	properties, pagination, err := ps.propertyRepo.GetAll(params, processedFilters, true)
+	if err != nil {
+		logrus.Errorf("PropertyService.GetAllPropertiesForAdmin repository error: %v", err)
+		return nil, utils.PaginationResponse{}, err
+	}
+	
+	// Update expired properties
+	ps.updateExpiredProperties(properties)
+	
+	return properties, pagination, nil
+}
+
+// GetPropertyStats retrieves property statistics for admin dashboard
+func (ps *PropertyService) GetPropertyStats() (map[string]interface{}, error) {
+	logrus.Infof("PropertyService.GetPropertyStats called")
+	
+	stats, err := ps.propertyRepo.GetPropertyStats()
+	if err != nil {
+		logrus.Errorf("PropertyService.GetPropertyStats repository error: %v", err)
+		return nil, err
+	}
+	
+	return stats, nil
 }
 
 // GetUserProperties retrieves properties by user ID
@@ -155,20 +250,27 @@ func (ps *PropertyService) GetUserProperties(userID uint, params utils.Paginatio
 	return properties, pagination, nil
 }
 
-// GetBrokerProperties retrieves properties by broker ID
-func (ps *PropertyService) GetBrokerProperties(brokerID uint, params utils.PaginationParams) ([]models.Property, utils.PaginationResponse, error) {
-	logrus.Infof("PropertyService.GetBrokerProperties called for broker ID: %d", brokerID)
+
+// GetPendingProperties retrieves only pending properties (unapproved user properties)
+func (ps *PropertyService) GetPendingProperties(params utils.PaginationParams, filters map[string]interface{}) ([]models.Property, utils.PaginationResponse, error) {
+	logrus.Infof("PropertyService.GetPendingProperties called with params: %+v", params)
 	
 	// Set default limit to 20 if not specified
 	if params.Limit == 0 {
 		params.Limit = 20
 	}
 	
-	properties, pagination, err := ps.propertyRepo.GetByBrokerID(brokerID, params)
+	// Validate and convert filter values
+	processedFilters := ps.processFilters(filters)
+	
+	properties, pagination, err := ps.propertyRepo.GetPendingProperties(params, processedFilters)
 	if err != nil {
-		logrus.Errorf("PropertyService.GetBrokerProperties repository error: %v", err)
+		logrus.Errorf("PropertyService.GetPendingProperties repository error: %v", err)
 		return nil, utils.PaginationResponse{}, err
 	}
+	
+	// Update expired properties
+	ps.updateExpiredProperties(properties)
 	
 	return properties, pagination, nil
 }
@@ -235,8 +337,83 @@ func (ps *PropertyService) UpdateProperty(id uint, updates map[string]interface{
 	if priceNegotiable, exists := updates["price_negotiable"]; exists {
 		property.PriceNegotiable = priceNegotiable.(bool)
 	}
+	if bedrooms, exists := updates["bedrooms"]; exists {
+		if bedrooms != nil {
+			bedroomsInt := int(bedrooms.(float64))
+			property.Bedrooms = &bedroomsInt
+		} else {
+			property.Bedrooms = nil
+		}
+	}
+	if bathrooms, exists := updates["bathrooms"]; exists {
+		if bathrooms != nil {
+			bathroomsInt := int(bathrooms.(float64))
+			property.Bathrooms = &bathroomsInt
+		} else {
+			property.Bathrooms = nil
+		}
+	}
+	if area, exists := updates["area"]; exists {
+		if area != nil {
+			areaFloat := area.(float64)
+			property.Area = &areaFloat
+		} else {
+			property.Area = nil
+		}
+	}
+	if floorNumber, exists := updates["floor_number"]; exists {
+		if floorNumber != nil {
+			floorInt := int(floorNumber.(float64))
+			property.FloorNumber = &floorInt
+		} else {
+			property.FloorNumber = nil
+		}
+	}
+	if age, exists := updates["age"]; exists {
+		if age != nil {
+			ageEnum := models.PropertyAge(age.(string))
+			property.Age = &ageEnum
+		} else {
+			property.Age = nil
+		}
+	}
+	if furnishingStatus, exists := updates["furnishing_status"]; exists {
+		if furnishingStatus != nil {
+			status := models.FurnishingStatus(furnishingStatus.(string))
+			property.FurnishingStatus = &status
+		} else {
+			property.FurnishingStatus = nil
+		}
+	}
+	if state, exists := updates["state"]; exists {
+		property.State = state.(string)
+	}
+	if city, exists := updates["city"]; exists {
+		property.City = city.(string)
+	}
+	if address, exists := updates["address"]; exists {
+		property.Address = address.(string)
+	}
+	if pincode, exists := updates["pincode"]; exists {
+		property.Pincode = pincode.(string)
+	}
 	if status, exists := updates["status"]; exists {
 		property.Status = models.PropertyStatus(status.(string))
+	}
+	if isApproved, exists := updates["is_approved"]; exists {
+		property.IsApproved = isApproved.(bool)
+	}
+	if uploadedByAdmin, exists := updates["uploaded_by_admin"]; exists {
+		property.UploadedByAdmin = uploadedByAdmin.(bool)
+	}
+	if priorityScore, exists := updates["priority_score"]; exists {
+		property.PriorityScore = int(priorityScore.(float64))
+	}
+	if subscriptionRequired, exists := updates["subscription_required"]; exists {
+		property.SubscriptionRequired = subscriptionRequired.(bool)
+	}
+	if treesIndiaAssured, exists := updates["treesindia_assured"]; exists {
+		property.TreesIndiaAssured = treesIndiaAssured.(bool)
 	}
 	if images, exists := updates["images"]; exists {
 		if imageArray, ok := images.([]string); ok {
@@ -279,6 +456,34 @@ func (ps *PropertyService) DeleteProperty(id uint, adminID uint) error {
 	}
 	
 	logrus.Infof("PropertyService.DeleteProperty successfully deleted property ID: %d", id)
+	return nil
+}
+
+// DeleteUserProperty deletes a user's own property
+func (ps *PropertyService) DeleteUserProperty(id uint, userID uint) error {
+	logrus.Infof("PropertyService.DeleteUserProperty called for property ID: %d by user ID: %d", id, userID)
+	
+	// Check if property exists and belongs to the user
+	property, err := ps.propertyRepo.GetByID(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.DeleteUserProperty property not found: %v", err)
+		return err
+	}
+	
+	// Check if property belongs to the user
+	if property.UserID != userID {
+		logrus.Errorf("PropertyService.DeleteUserProperty property does not belong to user: property user ID %d, requesting user ID %d", property.UserID, userID)
+		return fmt.Errorf("property does not belong to you")
+	}
+	
+	// Delete property
+	err = ps.propertyRepo.Delete(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.DeleteUserProperty repository error: %v", err)
+		return err
+	}
+	
+	logrus.Infof("PropertyService.DeleteUserProperty successfully deleted property ID: %d", id)
 	return nil
 }
 
@@ -361,6 +566,26 @@ func (ps *PropertyService) validateProperty(property *models.Property) error {
 		}
 	}
 	
+	// Validate age if provided
+	if property.Age != nil {
+		validAges := []models.PropertyAge{
+			models.PropertyAgeUnder1Year,
+			models.PropertyAge1To2Years,
+			models.PropertyAge2To5Years,
+			models.PropertyAge10PlusYears,
+		}
+		valid := false
+		for _, validAge := range validAges {
+			if *property.Age == validAge {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid age value")
+		}
+	}
+	
 	return nil
 }
 
@@ -438,6 +663,17 @@ func (ps *PropertyService) processFilters(filters map[string]interface{}) map[st
 			} else if area, ok := value.(float64); ok && area > 0 {
 				processed[key] = area
 			}
+		case "age":
+			if str, ok := value.(string); ok {
+				// Validate age enum value
+				validAges := []string{"under_1_year", "1_2_years", "2_5_years", "10_plus_years"}
+				for _, validAge := range validAges {
+					if str == validAge {
+						processed[key] = str
+						break
+					}
+				}
+			}
 		default:
 			processed[key] = value
 		}
@@ -450,7 +686,11 @@ func (ps *PropertyService) processFilters(filters map[string]interface{}) map[st
 func (ps *PropertyService) updateExpiredProperties(properties []models.Property) {
 	for i := range properties {
 		if properties[i].ShouldExpire() {
-			properties[i].Status = models.PropertyStatusExpired
+			if properties[i].ListingType == models.ListingTypeSale {
+				properties[i].Status = models.PropertyStatusSold
+			} else {
+				properties[i].Status = models.PropertyStatusRented
+			}
 			ps.propertyRepo.Update(&properties[i])
 		}
 	}

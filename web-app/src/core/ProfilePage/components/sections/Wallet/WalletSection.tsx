@@ -44,7 +44,7 @@ export function WalletSection() {
     refreshRechargeAsync,
     refetchWalletSummary,
     refetchTransactions,
-  } = useWallet();
+  } = useWallet(true); // Enable transactions fetching for wallet page
 
   useEffect(() => {
     setIsClient(true);

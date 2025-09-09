@@ -234,9 +234,9 @@ export interface BookingResponse {
 }
 
 // Response structure from backend that includes payment progress
+// Note: payment_progress is now included inside the booking object
 export interface BookingWithPaymentProgress {
   booking: Booking;
-  payment_progress?: PaymentProgress;
 }
 
 export interface InquiryBookingResponse {

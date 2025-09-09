@@ -12,6 +12,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Crown,
+  Calendar,
 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -143,6 +145,32 @@ export function ProfileOverview() {
         return "text-amber-700 bg-amber-100 border-amber-300";
       default:
         return "text-gray-700 bg-gray-100 border-gray-300";
+    }
+  };
+
+  const getSubscriptionStatusIcon = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Crown className="w-5 h-5 text-green-600" />;
+      case "expired":
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case "cancelled":
+        return <AlertCircle className="w-5 h-5 text-gray-600" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const getSubscriptionStatusText = (status: string) => {
+    switch (status) {
+      case "active":
+        return "Active";
+      case "expired":
+        return "Expired";
+      case "cancelled":
+        return "Cancelled";
+      default:
+        return "Unknown";
     }
   };
 
@@ -449,6 +477,71 @@ export function ProfileOverview() {
           </div>
         )}
       </div>
+
+      {/* Subscription Status Card */}
+      {userProfile?.subscription && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Subscription Status
+            </h3>
+            <p className="text-gray-600 text-sm mt-1">
+              Your current subscription details
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Status Display */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 mt-1">
+                {getSubscriptionStatusIcon(userProfile.subscription.status)}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg font-semibold text-gray-900">
+                    {getSubscriptionStatusText(userProfile.subscription.status)}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {userProfile.subscription.status === "active" &&
+                    "Your subscription is currently active and you have access to all premium features."}
+                  {userProfile.subscription.status === "expired" &&
+                    "Your subscription has expired. Renew to continue enjoying premium features."}
+                  {userProfile.subscription.status === "cancelled" &&
+                    "Your subscription has been cancelled. You can reactivate it anytime."}
+                </p>
+              </div>
+            </div>
+
+            {/* Subscription Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Start Date
+                </label>
+                <p className="font-semibold text-gray-900">
+                  {userProfile.subscription.start_date
+                    ? formatDate(userProfile.subscription.start_date)
+                    : "Not available"}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  End Date
+                </label>
+                <p className="font-semibold text-gray-900">
+                  {userProfile.subscription.end_date
+                    ? formatDate(userProfile.subscription.end_date)
+                    : "Not available"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Role Application Status Card */}
       {userProfile?.role_application &&

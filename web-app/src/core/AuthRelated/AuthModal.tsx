@@ -32,8 +32,10 @@ export const AuthModal: React.FC = () => {
   const [isNewUser, setIsNewUser] = useState(false);
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 
-  // Load success animation
+  // Load success animation only when step is success
   useEffect(() => {
+    if (step !== "success") return;
+
     const loadAnimation = async () => {
       try {
         const response = await fetch("/images/auth/success.json");
@@ -44,7 +46,7 @@ export const AuthModal: React.FC = () => {
       }
     };
     loadAnimation();
-  }, []);
+  }, [step]);
 
   // Reset state when modal closes (not when it opens)
   useEffect(() => {

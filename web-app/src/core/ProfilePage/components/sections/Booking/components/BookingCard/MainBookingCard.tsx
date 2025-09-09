@@ -11,19 +11,21 @@ import {
   Navigation,
   CreditCard,
 } from "lucide-react";
-import type { Booking } from "@/lib/bookingApi";
+import type { Booking as ApiBooking } from "@/lib/bookingApi";
+import type { Booking as TypeBooking } from "@/types/booking";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
+import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
-import { useBookingPaymentSegments } from "@/hooks/usePaymentSegments";
+import { useBookings } from "@/hooks/useBookings";
+import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 
 interface MainBookingCardProps {
-  booking: Booking;
-  onCancel?: (booking: Booking) => void;
-  onAcceptQuote?: (booking: Booking) => void;
-  onRejectQuote?: (booking: Booking) => void;
-  onPayNow?: (booking: Booking) => void;
-  onViewPaymentSegments?: (booking: Booking) => void;
-  onPayNextSegment?: (booking: Booking) => void;
+  booking: ApiBooking;
+  onCancel?: (booking: ApiBooking) => void;
+  onAcceptQuote?: (booking: ApiBooking) => void;
+  onRejectQuote?: (booking: ApiBooking) => void;
+  onPayNow?: (booking: ApiBooking) => void;
+  onPayNextSegment?: (booking: ApiBooking) => void;
   showActions?: boolean;
   isAcceptingQuote?: boolean;
   isPaying?: boolean;
@@ -35,29 +37,107 @@ export function MainBookingCard({
   onAcceptQuote,
   onRejectQuote,
   onPayNow,
-  onViewPaymentSegments,
   onPayNextSegment,
   showActions = true,
   isAcceptingQuote = false,
   isPaying = false,
 }: MainBookingCardProps) {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isSegmentsModalOpen, setIsSegmentsModalOpen] = useState(false);
+
+  // Get payment progress from bookings data
+  const { bookingsWithProgress } = useBookings();
+
+  // Try multiple matching strategies
+  const bookingWithProgress = bookingsWithProgress.find((item) => {
+    // Primary match: ID comparison
+    if (item.booking.ID === booking.ID) {
+      return true;
+    }
+    // Fallback match: booking reference comparison
+    if (item.booking.booking_reference === booking.booking_reference) {
+      return true;
+    }
+    return false;
+  });
+
+  // Use payment progress from matched booking, or fallback to booking's own data
+  const paymentProgress: PaymentProgress | null =
+    bookingWithProgress?.booking?.payment_progress || null;
+
+  // Debug: Log booking matching
+  if (booking.booking_reference === "BK20250906113000") {
+    console.log("Booking matching debug:", {
+      currentBookingId: booking.ID,
+      currentBookingRef: booking.booking_reference,
+      currentBookingStatus: booking.status,
+      foundBookingWithProgress: bookingWithProgress
+        ? {
+            id: bookingWithProgress.booking.ID,
+            ref: bookingWithProgress.booking.booking_reference,
+            status: bookingWithProgress.booking.status,
+            paymentProgress: bookingWithProgress.booking.payment_progress,
+          }
+        : null,
+      allBookings: bookingsWithProgress.map((b) => ({
+        id: b.booking.ID,
+        ref: b.booking.booking_reference,
+        status: b.booking.status,
+        paidSegments: b.booking.payment_progress?.paid_segments,
+        totalAmount: b.booking.payment_progress?.total_amount,
+        quoteAmount: b.booking.quote_amount,
+      })),
+    });
+  }
 
   // Check if this booking has payment segments
-  const { hasPaymentSegments, paymentProgress, isLoadingSegments } =
-    useBookingPaymentSegments(booking.ID || booking.id);
+  const hasPaymentSegments =
+    paymentProgress && paymentProgress.segments.length > 0;
 
   // Check if there are pending segments to pay
   const hasPendingSegments =
     paymentProgress &&
     paymentProgress.segments.some(
-      (segment) => segment.status === "pending" || segment.status === "overdue"
+      (segment: PaymentSegmentInfo) =>
+        segment.status === "pending" || segment.status === "overdue"
     );
+
+  // Check if this is the first segment (no segments paid yet) and quote is accepted
+  const isFirstSegment =
+    paymentProgress &&
+    paymentProgress.paid_segments === 0 &&
+    hasPendingSegments &&
+    booking.status === "quote_accepted";
+
+  // Check if this is a next segment (some segments already paid) and booking is in progress
+  const isNextSegment =
+    paymentProgress &&
+    paymentProgress.paid_segments > 0 &&
+    hasPendingSegments &&
+    (booking.status === "quote_accepted" ||
+      booking.status === "partially_paid" ||
+      booking.status === "confirmed");
+
+  // Debug logging
+  if (booking.booking_reference === "BK20250906113000") {
+    console.log("Debug for BK20250906113000:", {
+      bookingId: booking.ID,
+      status: booking.status,
+      paymentProgress,
+      hasPaymentSegments,
+      isFirstSegment,
+      isNextSegment,
+      paidSegments: paymentProgress?.paid_segments,
+      totalSegments: paymentProgress?.total_segments,
+      dataSource: bookingWithProgress ? "matched_booking" : "booking_fallback",
+      bookingOwnPaymentProgress: null,
+    });
+  }
 
   const getStatusConfig = (
     status: string,
     paymentStatus?: string,
-    booking?: Booking
+    booking?: ApiBooking
   ) => {
     // Special case: pending status with completed payment
     if (status === "pending" && paymentStatus === "completed") {
@@ -356,6 +436,42 @@ export function MainBookingCard({
     booking
   );
 
+  // Convert ApiBooking to TypeBooking for PaymentSegmentsModal
+  const convertToTypeBooking = (apiBooking: ApiBooking): TypeBooking => ({
+    id: apiBooking.ID,
+    ID: apiBooking.ID,
+    booking_reference: apiBooking.booking_reference,
+    status: apiBooking.status,
+    payment_status: apiBooking.payment_status,
+    booking_type: apiBooking.booking_type,
+    scheduled_date: apiBooking.scheduled_date || undefined,
+    scheduled_time: apiBooking.scheduled_time || undefined,
+    total_amount: apiBooking.quote_amount || undefined,
+    address: apiBooking.address,
+    description: apiBooking.description,
+    CreatedAt: apiBooking.CreatedAt,
+    UpdatedAt: apiBooking.UpdatedAt,
+    quote_amount: apiBooking.quote_amount || undefined,
+    quote_notes: apiBooking.quote_notes || undefined,
+    quote_provided_at: apiBooking.quote_provided_at || undefined,
+    quote_accepted_at: apiBooking.quote_accepted_at || undefined,
+    quote_expires_at: apiBooking.quote_expires_at || undefined,
+    payment_segments: undefined,
+    payment_progress: undefined,
+    contact_person: apiBooking.contact_person || undefined,
+    contact_phone: apiBooking.contact_phone || undefined,
+    service: apiBooking.service
+      ? {
+          id: apiBooking.service.id,
+          name: apiBooking.service.name,
+          price_type: apiBooking.service.price_type,
+          price: apiBooking.service.price || undefined,
+          duration: apiBooking.service.duration || undefined,
+        }
+      : undefined,
+    user: apiBooking.user,
+  });
+
   return (
     <div className="bg-gray-50 rounded-lg overflow-hidden">
       <div className="flex">
@@ -458,7 +574,7 @@ export function MainBookingCard({
         <div className="w-64 border-l border-gray-200 p-6">
           {/* Payment Info */}
           <div className="mb-4">
-            {booking.payment && (
+            {booking.payment && !hasPaymentSegments && (
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Total Amount</span>
                 <span className="text-sm font-medium text-gray-900">
@@ -507,25 +623,40 @@ export function MainBookingCard({
                   </>
                 )}
 
-              {booking.status === "quote_accepted" && onPayNow && (
+              {booking.status === "quote_accepted" &&
+                !hasPaymentSegments &&
+                onPayNow && (
+                  <button
+                    onClick={() => onPayNow(booking)}
+                    disabled={isPaying}
+                    className="w-full px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPaying ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Processing...</span>
+                      </div>
+                    ) : (
+                      "Pay Now"
+                    )}
+                  </button>
+                )}
+
+              {/* Pay First Segment Button - Show if this is the first segment */}
+              {isFirstSegment && onPayNextSegment && (
                 <button
-                  onClick={() => onPayNow(booking)}
-                  disabled={isPaying}
-                  className="w-full px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => onPayNextSegment(booking)}
+                  className="w-full px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  {isPaying ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing...</span>
-                    </div>
-                  ) : (
-                    "Pay Now"
-                  )}
+                  <div className="flex items-center justify-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Pay First Segment</span>
+                  </div>
                 </button>
               )}
 
-              {/* Pay Next Segment Button - Show if there are pending segments */}
-              {hasPendingSegments && onPayNextSegment && (
+              {/* Pay Next Segment Button - Show if this is a next segment */}
+              {isNextSegment && onPayNextSegment && (
                 <button
                   onClick={() => onPayNextSegment(booking)}
                   className="w-full px-3 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
@@ -537,18 +668,22 @@ export function MainBookingCard({
                 </button>
               )}
 
-              {/* Payment Segments Button - Show if booking has payment segments */}
-              {hasPaymentSegments && onViewPaymentSegments && (
-                <button
-                  onClick={() => onViewPaymentSegments(booking)}
-                  className="w-full px-3 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    <span>View Payment Segments</span>
-                  </div>
-                </button>
-              )}
+              {/* View Segments Button - Show if booking has payment segments */}
+              {hasPaymentSegments &&
+                (booking.status === "quote_provided" ||
+                  booking.status === "quote_accepted" ||
+                  booking.status === "partially_paid" ||
+                  booking.status === "confirmed") && (
+                  <button
+                    onClick={() => setIsSegmentsModalOpen(true)}
+                    className="w-full px-3 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <CreditCard className="w-4 h-4" />
+                      <span>View Segments</span>
+                    </div>
+                  </button>
+                )}
 
               {[
                 "pending",
@@ -619,6 +754,14 @@ export function MainBookingCard({
             booking={booking}
           />
         )}
+
+      {/* Payment Segments Modal */}
+      <PaymentSegmentsModal
+        isOpen={isSegmentsModalOpen}
+        onClose={() => setIsSegmentsModalOpen(false)}
+        booking={convertToTypeBooking(booking)}
+        paymentProgress={paymentProgress}
+      />
     </div>
   );
 }

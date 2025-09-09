@@ -1,6 +1,8 @@
 import HeroSection from "./sections/HeroSection";
 import PromotionalBanner from "./sections/PromotionalBanner";
 import PopularServices from "./sections/PopularServices";
+import PropertySection from "./sections/PropertySection";
+import RentalSection from "./sections/RentalSection";
 
 export default function HomePage() {
   return (
@@ -8,11 +10,19 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Promotional Banner */}
-      <PromotionalBanner />
+      <div className="space-y-20">
+        {/* Promotional Banner */}
+        <PromotionalBanner />
 
-      {/* Popular Services */}
-      <PopularServices />
+        {/* Popular Services */}
+        <PopularServices />
+
+        {/* Listed Properties */}
+        <PropertySection />
+
+        {/* Listed Rentals */}
+        <RentalSection />
+      </div>
     </>
   );
 }

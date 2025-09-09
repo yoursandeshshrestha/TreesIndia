@@ -71,12 +71,10 @@ type RequestDeleteOTPRequest struct {
 func (uc *UserController) GetUserProfile(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
-	// Get user with all related data
+	// Get user with only necessary related data
 	var user models.User
 	if err := uc.db.Preload("UserNotificationSettings").
 		Preload("Subscription").
-		Preload("UserSubscriptions").
-		Preload("SubscriptionWarnings").
 		First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User does not exist"))
@@ -86,7 +84,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	// Prepare comprehensive response data
+	// Prepare optimized response data
 	responseData := gin.H{
 		// Basic Information
 		"id":         user.ID,
@@ -104,14 +102,6 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 		// Wallet Information
 		"wallet": gin.H{
 			"balance": user.WalletBalance,
-		},
-		
-		// Subscription Information
-		"subscription": gin.H{
-			"has_active_subscription": user.HasActiveSubscription,
-			"subscription_id":         user.SubscriptionID,
-			"expiry_date":             user.SubscriptionExpiryDate,
-			"current_plan":            user.Subscription,
 		},
 		
 		// Role Application Information
@@ -134,40 +124,18 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 		}
 	}
 
-	// Add subscription history (last 5 subscriptions)
-	if len(user.UserSubscriptions) > 0 {
-		// Sort by created_at descending and take last 5
-		subscriptionHistory := make([]gin.H, 0)
-		for i := len(user.UserSubscriptions) - 1; i >= 0 && len(subscriptionHistory) < 5; i-- {
-			sub := user.UserSubscriptions[i]
-			subscriptionHistory = append(subscriptionHistory, gin.H{
-				"id":            sub.ID,
-				"plan_id":       sub.PlanID,
-				"start_date":    sub.StartDate,
-				"end_date":      sub.EndDate,
-				"status":        sub.Status,
-				"amount":        sub.Amount,
-				"payment_method": sub.PaymentMethod,
-				"created_at":    sub.CreatedAt,
-			})
+	// Add simplified subscription information
+	if user.Subscription != nil {
+		responseData["subscription"] = gin.H{
+			"start_date": user.Subscription.StartDate,
+			"end_date":   user.Subscription.EndDate,
+			"status":     user.Subscription.Status,
 		}
-		responseData["subscription_history"] = subscriptionHistory
-	}
-
-	// Add active subscription warnings
-	if len(user.SubscriptionWarnings) > 0 {
-		activeWarnings := make([]gin.H, 0)
-		for _, warning := range user.SubscriptionWarnings {
-			activeWarnings = append(activeWarnings, gin.H{
-				"id":           warning.ID,
-				"days_left":    warning.DaysLeft,
-				"warning_date": warning.WarningDate,
-				"sent_via":     warning.SentVia,
-				"created_at":   warning.CreatedAt,
-			})
-		}
-		if len(activeWarnings) > 0 {
-			responseData["subscription_warnings"] = activeWarnings
+	} else {
+		responseData["subscription"] = gin.H{
+			"start_date": nil,
+			"end_date":   nil,
+			"status":     "inactive",
 		}
 	}
 

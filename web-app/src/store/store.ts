@@ -16,6 +16,7 @@ import locationTrackingReducer from "./slices/locationTrackingSlice";
 import searchReducer from "./slices/searchSlice";
 import searchModalReducer from "./slices/searchModalSlice";
 import serviceDetailModalReducer from "./slices/serviceDetailModalSlice";
+import marketplaceModalReducer from "./slices/marketplaceModalSlice";
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +37,7 @@ export const store = configureStore({
     search: searchReducer,
     searchModal: searchModalReducer,
     serviceDetailModal: serviceDetailModalReducer,
+    marketplaceModal: marketplaceModalReducer,
   },
 });
 

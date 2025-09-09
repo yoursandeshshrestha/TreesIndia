@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAppDispatch } from "@/store/hooks";
 import { openSubcategoriesModal } from "@/store/slices/subcategoriesModalSlice";
+import { openMarketplaceModal } from "@/store/slices/marketplaceModalSlice";
 import {
   useHeroConfig,
   useCategoryIcons,
@@ -38,9 +39,13 @@ const CategoryCard = ({ name, icon, categoryId }: CategoryProps) => {
   };
 
   const handleClick = () => {
-    // Only open modal for Home Service and Construction Service
+    // Open subcategories modal for Home Service and Construction Service
     if (categoryId === 1 || categoryId === 2) {
       dispatch(openSubcategoriesModal({ categoryId, categoryName: name }));
+    }
+    // Open marketplace modal for Marketplace
+    else if (name.toLowerCase().includes("marketplace")) {
+      dispatch(openMarketplaceModal());
     } else {
       // For other categories, you can add different logic here
     }

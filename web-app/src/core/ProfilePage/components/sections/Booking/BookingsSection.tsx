@@ -8,8 +8,7 @@ import CancelBookingModal from "@/core/BookingPage/components/CancelBookingModal
 import { BookingsSectionSkeleton } from "./components/BookingsSectionSkeleton";
 import { MainBookingCard } from "@/core/ProfilePage/components/sections/Booking/components/BookingCard";
 import { QuoteAcceptanceModal } from "@/core/ProfilePage/components/sections/Booking/components/QuoteAcceptanceModal";
-import { PaymentSegmentsPage } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegmentsPage";
-import { NextSegmentPaymentModal } from "@/commonComponents/PaymentSegment";
+import { NextSegmentPaymentModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import type { Booking } from "@/lib/bookingApi";
 
 type BookingTab = "all" | "upcoming" | "completed" | "cancelled";
@@ -74,8 +73,8 @@ export function BookingsSection() {
     return (
       booking.service?.name?.toLowerCase().includes(searchLower) ||
       booking.booking_reference.toLowerCase().includes(searchLower) ||
-      booking.contact_person.toLowerCase().includes(searchLower) ||
-      booking.contact_phone.includes(debouncedSearchQuery)
+      booking.contact_person?.toLowerCase().includes(searchLower) ||
+      booking.contact_phone?.includes(debouncedSearchQuery)
     );
   });
 
@@ -84,9 +83,6 @@ export function BookingsSection() {
   const [showQuoteAcceptanceModal, setShowQuoteAcceptanceModal] =
     useState(false);
   const [bookingForQuote, setBookingForQuote] = useState<Booking | null>(null);
-  const [showPaymentSegments, setShowPaymentSegments] = useState(false);
-  const [bookingForPaymentSegments, setBookingForPaymentSegments] =
-    useState<Booking | null>(null);
   const [showNextSegmentModal, setShowNextSegmentModal] = useState(false);
   const [bookingForNextSegment, setBookingForNextSegment] =
     useState<Booking | null>(null);
@@ -165,25 +161,10 @@ export function BookingsSection() {
     setShowQuoteAcceptanceModal(true);
   };
 
-  const handleViewPaymentSegments = (booking: Booking) => {
-    setBookingForPaymentSegments(booking);
-    setShowPaymentSegments(true);
-  };
-
   const handlePayNextSegment = (booking: Booking) => {
     // Open next segment payment modal
     setBookingForNextSegment(booking);
     setShowNextSegmentModal(true);
-  };
-
-  const handlePaymentSegmentsBack = () => {
-    setShowPaymentSegments(false);
-    setBookingForPaymentSegments(null);
-  };
-
-  const handlePaymentSegmentsSuccess = () => {
-    // Refresh bookings after successful payment
-    refetchBookings();
   };
 
   const handleNextSegmentModalClose = () => {
@@ -285,14 +266,13 @@ export function BookingsSection() {
           <BookingsSectionSkeleton />
         ) : filteredBookings.length > 0 ? (
           filteredBookings.map((booking, index) => (
-            <div key={booking.ID}>
+            <div key={booking.ID || booking.id || `booking-${index}`}>
               <MainBookingCard
-                booking={booking}
+                booking={booking as Booking}
                 onCancel={handleCancelClick}
                 onAcceptQuote={handleAcceptQuote}
                 onRejectQuote={handleRejectQuote}
                 onPayNow={handlePayNow}
-                onViewPaymentSegments={handleViewPaymentSegments}
                 onPayNextSegment={handlePayNextSegment}
                 isAcceptingQuote={isAcceptingQuote}
                 isPaying={false}
@@ -338,17 +318,6 @@ export function BookingsSection() {
         booking={bookingForQuote}
         onSuccess={handleQuoteAcceptanceSuccess}
       />
-
-      {/* Payment Segments Page */}
-      {showPaymentSegments && bookingForPaymentSegments && (
-        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-          <PaymentSegmentsPage
-            booking={bookingForPaymentSegments}
-            onBack={handlePaymentSegmentsBack}
-            onPaymentSuccess={handlePaymentSegmentsSuccess}
-          />
-        </div>
-      )}
 
       {/* Next Segment Payment Modal */}
       <NextSegmentPaymentModal

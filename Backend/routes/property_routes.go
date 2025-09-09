@@ -19,29 +19,27 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 		properties.GET("/slug/:slug", propertyController.GetPropertyBySlug)       // Get property by slug
 	}
 	
-	// User routes (authentication required)
+	// User routes (authentication required - for both users and brokers)
 	userProperties := router.Group("/user/properties")
 	userProperties.Use(middleware.AuthMiddleware())
 	{
-		userProperties.POST("", propertyController.CreateProperty)                // Create property listing
-		userProperties.GET("", propertyController.GetUserProperties)              // Get user's properties
-	}
-	
-	// Broker routes (broker authentication required)
-	brokerProperties := router.Group("/broker/properties")
-	brokerProperties.Use(middleware.AuthMiddleware())
-	{
-		brokerProperties.POST("", propertyController.CreateProperty)              // Create property listing (brokers)
-		brokerProperties.GET("", propertyController.GetBrokerProperties)          // Get broker's properties
+		userProperties.POST("", propertyController.CreateProperty)                // Create property listing (users and brokers)
+		userProperties.GET("", propertyController.GetUserProperties)              // Get user's properties (works for both users and brokers)
+		userProperties.DELETE("/:id", propertyController.DeleteUserProperty)      // Delete user's property
 	}
 	
 	// Admin routes (admin authentication required)
 	adminProperties := router.Group("/admin/properties")
 	adminProperties.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
 	{
+		adminProperties.GET("", propertyController.GetAllPropertiesForAdmin)      // Get all properties (admin only - shows all statuses)
+		adminProperties.GET("/:id", propertyController.GetPropertyByID)           // Get property by ID (admin only)
+		adminProperties.GET("/stats", propertyController.GetPropertyStats)        // Get property statistics (admin only)
 		adminProperties.POST("", propertyController.CreateAdminProperty)          // Create property (admin only)
-		adminProperties.GET("/pending", propertyController.GetPendingApproval)    // Get pending approval properties
+		adminProperties.GET("/pending", propertyController.GetPendingProperties)  // Get pending properties only (admin only)
+		adminProperties.GET("/pending-approval", propertyController.GetPendingApproval) // Get pending approval properties (legacy)
 		adminProperties.PUT("/:id", propertyController.UpdateProperty)            // Update property (admin only)
+		adminProperties.PATCH("/:id/status", propertyController.UpdatePropertyStatus) // Update property status (admin only)
 		adminProperties.DELETE("/:id", propertyController.DeleteProperty)         // Delete property (admin only)
 		adminProperties.POST("/:id/approve", propertyController.ApproveProperty)  // Approve property (admin only)
 	}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"time"
 	"treesindia/database"
 	"treesindia/models"
@@ -83,7 +84,134 @@ func (uss *UserSubscriptionService) CheckAndUpdateSubscriptionStatus(userID uint
 	return user, nil
 }
 
-// PurchaseSubscription purchases a subscription for a user
+// CreateSubscriptionPaymentOrder creates a payment order for subscription purchase
+func (uss *UserSubscriptionService) CreateSubscriptionPaymentOrder(userID uint, planID uint) (*models.Payment, map[string]interface{}, error) {
+	// Check current subscription status before purchasing
+	user, err := uss.CheckAndUpdateSubscriptionStatus(userID)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	// Check if user already has active subscription
+	if user.HasActiveSubscription {
+		return nil, nil, errors.New("user already has active subscription")
+	}
+	
+	// Get subscription plan
+	planService := NewSubscriptionPlanService()
+	plan, err := planService.GetPlanByID(planID)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	if !plan.IsActive {
+		return nil, nil, errors.New("subscription plan is not active")
+	}
+	
+	// Create payment request
+	paymentService := NewPaymentService()
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:           userID,
+		Amount:           plan.Price,
+		Currency:         "INR",
+		Type:             models.PaymentTypeSubscription,
+		Method:           models.PaymentMethodRazorpay,
+		RelatedEntityType: "subscription",
+		RelatedEntityID:   planID,
+		Description:      fmt.Sprintf("Subscription purchase: %s", plan.Name),
+		Notes:            fmt.Sprintf("Subscription plan: %s (Duration: %d days)", plan.Name, plan.DurationDays),
+	}
+	
+	// Create Razorpay order
+	payment, razorpayOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create payment order: %v", err)
+	}
+	
+	return payment, razorpayOrder, nil
+}
+
+// CompleteSubscriptionPurchase completes subscription purchase with verified payment
+func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, paymentID uint, razorpayPaymentID, razorpaySignature string) (*models.UserSubscription, error) {
+	// Verify payment first
+	paymentService := NewPaymentService()
+	payment, err := paymentService.VerifyAndCompletePayment(paymentID, razorpayPaymentID, razorpaySignature)
+	if err != nil {
+		return nil, fmt.Errorf("payment verification failed: %v", err)
+	}
+	
+	// Check if this is a subscription payment
+	if payment.Type != models.PaymentTypeSubscription {
+		return nil, errors.New("invalid payment type for subscription")
+	}
+	
+	// Get subscription plan
+	planService := NewSubscriptionPlanService()
+	plan, err := planService.GetPlanByID(payment.RelatedEntityID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Check current subscription status
+	user, err := uss.CheckAndUpdateSubscriptionStatus(userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Check if user already has active subscription
+	if user.HasActiveSubscription {
+		return nil, errors.New("user already has active subscription")
+	}
+	
+	// Calculate subscription dates
+	startDate := time.Now()
+	var endDate time.Time
+	endDate = startDate.AddDate(0, 0, plan.DurationDays)
+	
+	// Create subscription
+	subscription := &models.UserSubscription{
+		UserID:        userID,
+		PlanID:        plan.ID,
+		StartDate:     startDate,
+		EndDate:       endDate,
+		Status:        models.SubscriptionStatusActive,
+		PaymentMethod: models.PaymentMethodRazorpay,
+		PaymentID:     razorpayPaymentID,
+		Amount:        plan.Price,
+	}
+	
+	// Save subscription and update user in transaction
+	err = database.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(subscription).Error; err != nil {
+			return err
+		}
+		
+		// Update user subscription status
+		user.HasActiveSubscription = true
+		user.SubscriptionExpiryDate = &endDate
+		user.SubscriptionID = &subscription.ID
+		
+		if err := tx.Save(user).Error; err != nil {
+			return err
+		}
+		
+		return nil
+	})
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	// Invalidate cache
+	uss.subscriptionCache.Invalidate(userID)
+	
+	// Send confirmation notification
+	go uss.notificationService.SendSubscriptionConfirmationNotification(user, subscription)
+	
+	return subscription, nil
+}
+
+// PurchaseSubscription purchases a subscription for a user (wallet only)
 func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uint, paymentMethod string) (*models.UserSubscription, error) {
 	// Check current subscription status before purchasing
 	user, err := uss.CheckAndUpdateSubscriptionStatus(userID)
@@ -111,16 +239,8 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 	startDate := time.Now()
 	var endDate time.Time
 	
-	switch plan.Duration {
-	case models.DurationMonthly:
-		endDate = startDate.AddDate(0, 1, 0)
-	case models.DurationYearly:
-		endDate = startDate.AddDate(1, 0, 0)
-	case models.DurationOneTime:
-		endDate = startDate.AddDate(10, 0, 0) // 10 years for one-time
-	default:
-		return nil, errors.New("invalid subscription duration")
-	}
+	// Calculate end date based on duration_days
+	endDate = startDate.AddDate(0, 0, plan.DurationDays)
 	
 	// Process payment based on method
 	var paymentID string
@@ -136,8 +256,9 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 			return nil, err
 		}
 	} else if paymentMethod == models.PaymentMethodRazorpay {
-		// TODO: Implement Razorpay payment processing
-		paymentID = "razorpay_payment_id" // Placeholder
+		// For Razorpay, we need to create a payment order first
+		// This method should only be called after payment verification
+		return nil, errors.New("razorpay payment must be processed through payment verification flow")
 	} else {
 		return nil, errors.New("invalid payment method")
 	}
