@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Trash2, Calendar, FileText } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { BaseInput as Input } from "@/components/Input";
-import Textarea from "@/components/Textarea/Base/Textarea";
 import Button from "@/components/Button/Base/Button";
 import { PaymentSegmentRequest } from "@/types/booking";
 
