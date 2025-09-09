@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import PropertyDetailPage from "@/core/PropertiesManagementPage/components/PropertyDetailPage";
+import PropertyDetailPage from "@/core/Marketplace/PropertiesManagementPage/components/PropertyDetailPage";
 
 export default function PropertyDetailRoute() {
   const params = useParams();
