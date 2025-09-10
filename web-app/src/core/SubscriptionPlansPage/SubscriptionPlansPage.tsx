@@ -91,7 +91,7 @@ export const SubscriptionPlansPage: React.FC = () => {
           amount: paymentData.order.amount,
           currency: paymentData.order.currency,
           key_id: paymentData.key_id,
-          payment_id: parseInt(paymentData.payment.id),
+          payment_id: paymentData.payment.ID,
         });
 
         setShowPaymentModal(false);
@@ -361,14 +361,14 @@ export const SubscriptionPlansPage: React.FC = () => {
         )}
 
         {/* Plan Card */}
-        {groupedPlan && (
+        {groupedPlan && (groupedPlan.monthly || groupedPlan.yearly) ? (
           <div className="flex justify-center items-center mb-12">
             <div className="w-full max-w-md">
               <SubscriptionPlanCard
                 plan={
                   selectedDuration === "monthly"
-                    ? groupedPlan.monthly!
-                    : groupedPlan.yearly!
+                    ? groupedPlan.monthly || null
+                    : groupedPlan.yearly || null
                 }
                 onSelect={handleSelectPlan}
                 onAuthRequired={
@@ -376,6 +376,26 @@ export const SubscriptionPlansPage: React.FC = () => {
                 }
                 isPopular={false}
               />
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center mb-12">
+            <div className="w-full max-w-md">
+              <div className="bg-gray-50 rounded-lg p-8 text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Subscription Plans Available
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  We're currently setting up our subscription plans. Please
+                  check back later or contact support for assistance.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -231,6 +231,14 @@ export const sidebarItems: SidebarItem[] = [
     <CreditCard size={16} />
   ),
 
+  // Transaction Management
+  createMenuItem(
+    "transaction-management",
+    "Transaction Management",
+    "/dashboard/transactions",
+    <CreditCard size={16} />
+  ),
+
   // System Section
   createSectionLabel("System"),
 

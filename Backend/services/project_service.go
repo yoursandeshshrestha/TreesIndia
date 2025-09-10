@@ -360,17 +360,7 @@ func (ps *ProjectService) SearchProjects(userID uint, query string, limit, offse
 
 // GetProjectStats returns project statistics
 func (ps *ProjectService) GetProjectStats(userID uint) (map[string]interface{}, error) {
-	// Check if user has active subscription (except for admin users)
-	var user models.User
-	err := ps.userRepo.FindByID(&user, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
-	}
-
-	// Admin users can view any stats
-	if user.UserType != models.UserTypeAdmin && !user.HasActiveSubscription {
-		return nil, errors.New("active subscription required to view project statistics")
-	}
+	// No subscription check required - stats are publicly available
 
 	// Get counts
 	totalCount, err := ps.projectRepo.Count()

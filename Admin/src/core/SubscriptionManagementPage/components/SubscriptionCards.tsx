@@ -2,7 +2,7 @@
 
 import { Trash2, CreditCard, Edit2 } from "lucide-react";
 import Toggle from "@/components/Toggle";
-import Button from "@/components/Button";
+import { Button } from "@/components/Button";
 import { SubscriptionPlan } from "../types";
 
 interface SubscriptionCardsProps {

@@ -397,13 +397,12 @@ func (pc *ProjectController) SearchProjects(c *gin.Context) {
 
 // GetProjectStats godoc
 // @Summary Get project statistics
-// @Description Get project statistics. Users need active subscription to view statistics (except admin users).
+// @Description Get project statistics. Statistics are publicly available to all authenticated users.
 // @Tags Projects
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} models.Response{data=map[string]interface{}} "Project statistics retrieved successfully"
 // @Failure 401 {object} models.Response "Unauthorized"
-// @Failure 403 {object} models.Response "Subscription required"
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /projects/stats [get]
 func (pc *ProjectController) GetProjectStats(c *gin.Context) {
@@ -411,10 +410,6 @@ func (pc *ProjectController) GetProjectStats(c *gin.Context) {
 
 	stats, err := pc.projectService.GetProjectStats(userID)
 	if err != nil {
-		if err.Error() == "active subscription required to view project statistics" {
-			c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
-			return
-		}
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get project statistics", err.Error()))
 		return
 	}

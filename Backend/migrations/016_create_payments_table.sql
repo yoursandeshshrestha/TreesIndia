@@ -66,10 +66,10 @@ ALTER TABLE payments ADD CONSTRAINT chk_payments_status
     CHECK (status IN ('pending', 'completed', 'failed', 'refunded', 'cancelled'));
 
 ALTER TABLE payments ADD CONSTRAINT chk_payments_type 
-    CHECK (type IN ('booking', 'subscription', 'wallet_recharge', 'wallet_debit', 'refund'));
+    CHECK (type IN ('booking', 'subscription', 'wallet_recharge', 'wallet_debit', 'refund', 'segment_pay', 'quote'));
 
 ALTER TABLE payments ADD CONSTRAINT chk_payments_method 
-    CHECK (method IN ('razorpay', 'wallet', 'cash'));
+    CHECK (method IN ('razorpay', 'wallet', 'cash', 'admin'));
 
 ALTER TABLE payments ADD CONSTRAINT chk_payments_amount 
     CHECK (amount > 0);

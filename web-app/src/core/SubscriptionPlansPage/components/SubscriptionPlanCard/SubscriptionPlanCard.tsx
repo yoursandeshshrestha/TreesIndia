@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { SubscriptionPlan } from "@/types/subscription";
 
 interface SubscriptionPlanCardProps {
-  plan: SubscriptionPlan;
+  plan: SubscriptionPlan | null;
   isSelected?: boolean;
   onSelect: (plan: SubscriptionPlan) => void;
   onAuthRequired?: () => void;
@@ -18,8 +18,24 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   onAuthRequired,
   isPopular = false,
 }) => {
+  // Early return if plan is undefined, null, or has no name
+  if (!plan || !plan.name || plan.name.trim() === "") {
+    return (
+      <div
+        className="relative rounded-2xl p-8 text-white"
+        style={{ backgroundColor: "#00a871" }}
+      >
+        <div className="text-center">
+          <p className="text-white">No subscription plan available</p>
+          <p className="text-green-100 text-sm mt-2">
+            Please contact support for assistance
+          </p>
+        </div>
+      </div>
+    );
+  }
   const getPlanPrice = () => {
-    const basePrice = plan.price;
+    const basePrice = plan.price || 0;
     // For yearly plans, show the actual yearly price
     // For monthly plans, show monthly price
     // For one-time plans, show the one-time price
@@ -27,11 +43,12 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   };
 
   const getPlanDuration = () => {
-    if (plan.duration_days === 30) return "month";
-    if (plan.duration_days === 365) return "year";
-    if (plan.duration_days === 3650) return "lifetime"; // One-time plan
-    if (plan.duration_days === 1) return "day";
-    return `${plan.duration_days} days`;
+    const duration = plan.duration_days || 30; // Default to 30 days if not specified
+    if (duration === 30) return "month";
+    if (duration === 365) return "year";
+    if (duration === 3650) return "lifetime"; // One-time plan
+    if (duration === 1) return "day";
+    return `${duration} days`;
   };
 
   const getPlanFeatures = () => {
@@ -116,7 +133,7 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   };
 
   const getPlanDescription = () => {
-    // Use the description from backend if available
+    // Use the description from backend if available and not empty
     if (plan.description && plan.description.trim() !== "") {
       return plan.description;
     }
