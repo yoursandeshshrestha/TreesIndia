@@ -1,41 +1,42 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { HorizontalPropertyCard } from "@/commonComponents/PropertyCard";
+import { Vendor, VendorFilters } from "@/types/vendor";
+import { VendorCard } from "@/commonComponents/VendorCard";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { openAuthModal } from "@/store/slices/authModalSlice";
 import {
-  Home,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
   ChevronUp,
   Plus,
+  Building2,
 } from "lucide-react";
-import {
-  Property,
-  PropertiesResponse,
-  PropertyFilters,
-} from "@/types/property";
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useAppDispatch } from "@/store/hooks";
-import { openAuthModal } from "@/store/slices/authModalSlice";
+import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 
-interface RentalPropertiesContentProps {
-  properties: Property[];
-  pagination?: PropertiesResponse["pagination"];
+interface VendorsContentProps {
+  vendors: Vendor[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
   isLoading: boolean;
   isError: boolean;
   error: unknown;
   onPageChange: (page: number) => void;
   onClearFilters: () => void;
-  filters: PropertyFilters;
-  selectedBedrooms: number[];
-  selectedPropertyTypes: string[];
-  selectedFurnishingStatus: string[];
+  filters: VendorFilters;
+  selectedBusinessTypes: string[];
+  selectedServices: string[];
 }
 
-export function RentalPropertiesContent({
-  properties,
+export function VendorsContent({
+  vendors,
   pagination,
   isLoading,
   isError,
@@ -43,10 +44,9 @@ export function RentalPropertiesContent({
   onPageChange,
   onClearFilters,
   filters,
-  selectedBedrooms,
-  selectedPropertyTypes,
-  selectedFurnishingStatus, // eslint-disable-line @typescript-eslint/no-unused-vars
-}: RentalPropertiesContentProps) {
+  selectedBusinessTypes,
+  selectedServices,
+}: VendorsContentProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const dispatch = useAppDispatch();
@@ -68,30 +68,29 @@ export function RentalPropertiesContent({
     };
   }, []);
 
-  const handlePropertyClick = (propertyId: number) => {
-    // Validate property ID before navigation
-    if (!propertyId || propertyId <= 0) {
-      console.error("Invalid property ID:", propertyId);
+  const handleVendorClick = (vendorId: number) => {
+    // Validate vendor ID before navigation
+    if (!vendorId || vendorId <= 0) {
+      console.error("Invalid vendor ID:", vendorId);
       return;
     }
-    router.push(`/marketplace/properties/${propertyId}`);
+    router.push(`/marketplace/vendors/${vendorId}`);
   };
 
-  const handleCreateProperty = () => {
+  const handleCreateVendorProfile = () => {
     if (!isAuthenticated) {
-      dispatch(openAuthModal({ redirectTo: "/marketplace/properties/create" }));
+      dispatch(openAuthModal({ redirectTo: "/marketplace/vendors/create" }));
     } else {
-      router.push("/marketplace/properties/create");
+      router.push("/marketplace/vendors/create");
     }
   };
 
   const sortOptions = [
     { value: "relevance", label: "Relevance" },
     { value: "newest", label: "Newest first" },
-    { value: "price_low", label: "Price Low to High" },
-    { value: "price_high", label: "Price High to Low" },
-    { value: "price_per_sqft_low", label: "Price / sq.ft. : Low to High" },
-    { value: "price_per_sqft_high", label: "Price / sq.ft. : High to Low" },
+    { value: "oldest", label: "Oldest first" },
+    { value: "name_asc", label: "Name A-Z" },
+    { value: "name_desc", label: "Name Z-A" },
   ];
 
   // Generate dynamic header text based on filters
@@ -99,22 +98,22 @@ export function RentalPropertiesContent({
     const totalResults = pagination?.total || 0;
     const parts = [];
 
-    // Add bedroom info if selected
-    if (selectedBedrooms.length > 0) {
-      const bedroomText =
-        selectedBedrooms.length === 1
-          ? `${selectedBedrooms[0]} BHK`
-          : `${selectedBedrooms.join(", ")} BHK`;
-      parts.push(bedroomText);
+    // Add business type info if selected
+    if (selectedBusinessTypes.length > 0) {
+      const businessTypeText =
+        selectedBusinessTypes.length === 1
+          ? selectedBusinessTypes[0]
+          : selectedBusinessTypes.join(", ");
+      parts.push(businessTypeText);
     }
 
-    // Add property type if selected
-    if (selectedPropertyTypes.length > 0) {
-      const propertyTypeText =
-        selectedPropertyTypes.length === 1
-          ? selectedPropertyTypes[0]
-          : selectedPropertyTypes.join(", ");
-      parts.push(propertyTypeText);
+    // Add services if selected
+    if (selectedServices.length > 0) {
+      const serviceText =
+        selectedServices.length === 1
+          ? selectedServices[0]
+          : selectedServices.join(", ");
+      parts.push(serviceText);
     }
 
     // Add location if available
@@ -122,26 +121,10 @@ export function RentalPropertiesContent({
       parts.push(`in ${filters.location}`);
     }
 
-    // Add listing type
-    let listingType;
-    if (filters.uploaded_by_admin) {
-      // When "Assured by Trees India" is applied, always show "rental and properties"
-      listingType = "rental and properties";
-    } else if (!filters.listing_type) {
-      listingType = "rental and properties"; // All
-    } else if (filters.listing_type === "sale") {
-      listingType = "Properties"; // Properties tab
-    } else {
-      listingType = "Properties"; // Rental tab
-    }
-    parts.push(listingType);
+    // Add vendor type
+    parts.push("vendors");
 
-    // Add "assured by trees india" if the filter is applied
-    if (filters.uploaded_by_admin) {
-      parts.push("assured by trees india");
-    }
-
-    const filterText = parts.length > 0 ? parts.join(" ") : "Properties";
+    const filterText = parts.length > 0 ? parts.join(" ") : "Vendors";
     const resultText = totalResults === 1 ? "result" : "results";
 
     return `${totalResults.toLocaleString()} ${resultText} | ${filterText}`;
@@ -149,35 +132,8 @@ export function RentalPropertiesContent({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        {/* Loading Skeleton */}
-        <div className="space-y-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse"
-            >
-              <div className="flex flex-col md:flex-row">
-                <div className="w-full md:w-80 h-48 md:h-64 bg-gray-200"></div>
-                <div className="flex-1 p-6">
-                  <div className="space-y-3">
-                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="flex space-x-4">
-                      <div className="h-4 bg-gray-200 rounded w-16"></div>
-                      <div className="h-4 bg-gray-200 rounded w-16"></div>
-                      <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="h-8 bg-gray-200 rounded w-32"></div>
-                      <div className="h-10 bg-gray-200 rounded w-24"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner />
       </div>
     );
   }
@@ -187,14 +143,14 @@ export function RentalPropertiesContent({
       <div className="text-center py-12">
         <div className="bg-red-50 border border-red-200 rounded-lg p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Home className="w-8 h-8 text-red-600" />
+            <Building2 className="w-8 h-8 text-red-600" />
           </div>
           <h3 className="text-xl font-semibold text-red-800 mb-2">
-            Failed to Load Properties
+            Failed to Load Vendors
           </h3>
           <p className="text-red-600 mb-6">
             {(error as { message?: string })?.message ||
-              "Something went wrong while loading rental properties. Please try again."}
+              "Something went wrong while loading vendors. Please try again."}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -207,7 +163,7 @@ export function RentalPropertiesContent({
     );
   }
 
-  if (properties.length === 0) {
+  if (vendors.length === 0) {
     return (
       <div className="space-y-6">
         {/* Results Header */}
@@ -219,13 +175,13 @@ export function RentalPropertiesContent({
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* List My Properties Button */}
+            {/* Create Vendor Profile Button */}
             <button
-              onClick={handleCreateProperty}
+              onClick={handleCreateVendorProfile}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
-              <span>List My Properties</span>
+              <span>Create Vendor Profile</span>
             </button>
           </div>
         </div>
@@ -234,10 +190,10 @@ export function RentalPropertiesContent({
         <div className="text-center py-12">
           <div className="p-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              No Properties Found
+              No Vendors Found
             </h3>
             <p className="text-gray-600 mb-6">
-              We couldn&apos;t find any properties matching your criteria. Try
+              We couldn&apos;t find any vendors matching your criteria. Try
               adjusting your search filters or check back later.
             </p>
             <button
@@ -310,28 +266,26 @@ export function RentalPropertiesContent({
               )}
             </div>
 
-            {/* List My Properties Button */}
+            {/* Create Vendor Profile Button */}
             <button
-              onClick={handleCreateProperty}
+              onClick={handleCreateVendorProfile}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
-              <span>List My Properties</span>
+              <span>Create Vendor Profile</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Properties List */}
-      <div className="space-y-4">
-        {properties.map((property, index) => (
-          <div
-            key={`property-${property.ID}-${index}`}
-            onClick={() => handlePropertyClick(property.ID)}
-            className="cursor-pointer"
-          >
-            <HorizontalPropertyCard property={property} />
-          </div>
+      {/* Vendors Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {vendors.map((vendor) => (
+          <VendorCard
+            key={vendor.ID || vendor.id}
+            vendor={vendor}
+            onClick={handleVendorClick}
+          />
         ))}
       </div>
 
@@ -398,7 +352,7 @@ export function RentalPropertiesContent({
       {/* Results Summary */}
       <div className="text-center text-sm text-gray-500 pt-4">
         Page {pagination?.page || 1} of {pagination?.total_pages || 1} • Total{" "}
-        {pagination?.total || 0} properties found
+        {pagination?.total || 0} vendors found
       </div>
     </div>
   );

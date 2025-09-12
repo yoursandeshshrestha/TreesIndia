@@ -1,0 +1,182 @@
+"use client";
+
+import { useState } from "react";
+import { useVendors, useVendorStats } from "@/hooks/useVendors";
+import { useProfile } from "@/hooks/useProfile";
+import { VendorFilters } from "@/types/vendor";
+import { Filter, X } from "lucide-react";
+import { VendorsSidebar, VendorsContent } from "./components";
+import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
+
+export default function VendorsPage() {
+  const [filters, setFilters] = useState<VendorFilters>({
+    page: 1,
+    limit: 12,
+    is_active: true,
+  });
+  const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>(
+    []
+  );
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // First, fetch user profile to check subscription status
+  const { userProfile, isLoadingProfile } = useProfile();
+
+  // Check if user has active subscription
+  const hasActiveSubscription = userProfile?.subscription?.status === "active";
+
+  // Fetch vendor stats (always fetch, even without subscription to show in UI)
+  const { data: statsResponse } = useVendorStats(true);
+
+  // Only fetch vendors if user has active subscription
+  const {
+    data: response,
+    isLoading,
+    error,
+    isError,
+  } = useVendors(filters, hasActiveSubscription);
+
+  const vendors = Array.isArray(response?.data?.vendors)
+    ? response.data.vendors
+    : [];
+  const pagination = response?.data?.pagination;
+
+  // Show loading state while checking profile
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show subscription required UI if user doesn't have active subscription
+  if (!hasActiveSubscription) {
+    return (
+      <SubscriptionRequired
+        title="Subscription Required for Vendors"
+        description="You need an active subscription to view and access vendor profiles."
+        features={[
+          "Access to detailed vendor information",
+          "Contact details of vendors",
+          "Business gallery and portfolio",
+          "Service offerings and pricing",
+          "Priority customer support",
+        ]}
+        vendorStats={statsResponse?.data}
+      />
+    );
+  }
+
+  const handleFilterChange = (
+    key: keyof VendorFilters,
+    value: string | number | boolean | undefined
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      page: 1, // Reset to first page when filters change
+    }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handleBusinessTypeToggle = (businessType: string) => {
+    setSelectedBusinessTypes((prev) => {
+      if (prev.includes(businessType)) {
+        return prev.filter((type) => type !== businessType);
+      } else {
+        return [...prev, businessType];
+      }
+    });
+  };
+
+  const handleServiceToggle = (service: string) => {
+    setSelectedServices((prev) => {
+      if (prev.includes(service)) {
+        return prev.filter((s) => s !== service);
+      } else {
+        return [...prev, service];
+      }
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      page: 1,
+      limit: 12,
+      is_active: true,
+    });
+    setSelectedBusinessTypes([]);
+    setSelectedServices([]);
+  };
+
+  return (
+    <div className="min-h-screen ">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Mobile Filter Toggle */}
+        <div className="lg:hidden mb-6">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors duration-200"
+          >
+            <Filter className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Filters</span>
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div
+            className={`lg:w-96 flex-shrink-0 ${
+              showMobileFilters ? "block" : "hidden lg:block"
+            }`}
+          >
+            <div className="lg:sticky lg:top-8">
+              <VendorsSidebar
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                selectedBusinessTypes={selectedBusinessTypes}
+                selectedServices={selectedServices}
+                onBusinessTypeToggle={handleBusinessTypeToggle}
+                onServiceToggle={handleServiceToggle}
+                onClearFilters={handleClearFilters}
+                onCloseMobileFilters={() => setShowMobileFilters(false)}
+              />
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <VendorsContent
+              vendors={vendors}
+              pagination={pagination}
+              isLoading={isLoading}
+              isError={isError}
+              error={error}
+              onPageChange={handlePageChange}
+              onClearFilters={handleClearFilters}
+              filters={filters}
+              selectedBusinessTypes={selectedBusinessTypes}
+              selectedServices={selectedServices}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Filter Overlay */}
+        {showMobileFilters && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setShowMobileFilters(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
