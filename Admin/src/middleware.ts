@@ -62,14 +62,23 @@ export async function middleware(req: NextRequest) {
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
           const newAccessToken = data.data.access_token;
+          const newRefreshToken = data.data.refresh_token;
 
-          // Create response with new token
+          // Create response with new tokens
           const response = NextResponse.next();
           response.cookies.set("treesindia_access_token", newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 7, // 7 days
+            maxAge: 60 * 60, // 1 hour (matches backend token expiration)
+          });
+
+          // Update refresh token as well
+          response.cookies.set("treesindia_refresh_token", newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 30, // 30 days (matches backend refresh token expiration)
           });
 
           return response;

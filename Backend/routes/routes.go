@@ -41,6 +41,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupRoleApplicationRoutes(v1)
 		SetupUserRoutes(v1)
 		SetupPropertyRoutes(v1)
+		SetupProjectRoutes(v1)
 		SetupSubscriptionRoutes(v1)
 		SetupWalletRoutes(v1)
 		SetupRazorpayRoutes(v1)
@@ -60,6 +61,7 @@ func SetupRoutes(r *gin.Engine) {
 		// Payment routes
 		SetupPaymentRoutes(v1)
 		SetupPaymentSegmentRoutes(v1)
+		SetupAdminPaymentRoutes(v1)
 	}
 }
 

@@ -63,6 +63,7 @@ export default function PropertyDetailPage({
 
   useEffect(() => {
     loadProperty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId]);
 
   const loadProperty = async () => {
@@ -572,9 +573,7 @@ export default function PropertyDetailPage({
                       <div className="text-sm text-gray-600">Address</div>
                       <div className="text-gray-900">
                         {property.address ||
-                          `${property.locality || ""}, ${property.city}, ${
-                            property.state
-                          }`}
+                          `${property.city}, ${property.state}`}
                       </div>
                     </div>
                   </div>
@@ -900,7 +899,7 @@ export default function PropertyDetailPage({
         message={`Are you sure you want to approve "${property?.title}"? This action will make the property visible to users.`}
         confirmText="Approve"
         cancelText="Cancel"
-        variant="success"
+        variant="default"
       />
     </div>
   );

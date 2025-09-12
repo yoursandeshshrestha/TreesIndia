@@ -30,5 +30,8 @@ func SetupAdminRoutes(r *gin.RouterGroup) {
 		
 		// Subscription admin routes
 		SetupAdminSubscriptionRoutes(admin)
+		
+		// Project management routes
+		SetupAdminProjectRoutes(admin)
 	}
 }

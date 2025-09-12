@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -352,4 +353,152 @@ func (ps *PaymentService) generatePaymentReference() string {
 	// Generate a unique sequence number using current time in nanoseconds
 	sequence := time.Now().UnixNano() % 1000000 // Use last 6 digits of nanoseconds
 	return fmt.Sprintf("PAY%s%06d", timestamp, sequence)
+}
+
+// Admin Methods
+
+// GetAdminPayments gets payments with comprehensive admin filters
+func (ps *PaymentService) GetAdminPayments(filters *models.AdminPaymentFilters) ([]models.Payment, *repositories.Pagination, error) {
+	return ps.paymentRepo.GetAdminPayments(filters)
+}
+
+// GetAdminTransactionStats gets comprehensive transaction statistics for admin dashboard
+func (ps *PaymentService) GetAdminTransactionStats() (*models.AdminTransactionStats, error) {
+	return ps.paymentRepo.GetAdminTransactionStats()
+}
+
+// GetPaymentsForExport gets payments for export with comprehensive data
+func (ps *PaymentService) GetPaymentsForExport(filters *models.AdminPaymentFilters) ([]models.Payment, error) {
+	return ps.paymentRepo.GetPaymentsForExport(filters)
+}
+
+// ExportTransactionsToCSV exports transactions to CSV format
+func (ps *PaymentService) ExportTransactionsToCSV(filters *models.AdminPaymentFilters, includeUserDetails, includeMetadata bool) ([]byte, error) {
+	payments, err := ps.GetPaymentsForExport(filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get payments for export: %v", err)
+	}
+
+	var csvData strings.Builder
+	
+	// CSV Header
+	headers := []string{
+		"Payment ID", "Payment Reference", "User ID", "Amount", "Currency", 
+		"Status", "Type", "Method", "Related Entity Type", "Related Entity ID",
+		"Description", "Notes", "Initiated At", "Completed At", "Failed At", "Refunded At",
+	}
+	
+	if includeUserDetails {
+		headers = append(headers, "User Name", "User Email", "User Phone")
+	}
+	
+	if includeMetadata {
+		headers = append(headers, "Metadata")
+	}
+	
+	// Write headers
+	csvData.WriteString(strings.Join(headers, ",") + "\n")
+	
+	// Write data rows
+	for _, payment := range payments {
+		row := []string{
+			fmt.Sprintf("%d", payment.ID),
+			payment.PaymentReference,
+			fmt.Sprintf("%d", payment.UserID),
+			fmt.Sprintf("%.2f", payment.Amount),
+			payment.Currency,
+			string(payment.Status),
+			string(payment.Type),
+			payment.Method,
+			payment.RelatedEntityType,
+			fmt.Sprintf("%d", payment.RelatedEntityID),
+			strings.ReplaceAll(payment.Description, ",", ";"), // Replace commas to avoid CSV issues
+			strings.ReplaceAll(payment.Notes, ",", ";"),
+			payment.InitiatedAt.Format("2006-01-02 15:04:05"),
+		}
+		
+		// Add completion timestamps
+		if payment.CompletedAt != nil {
+			row = append(row, payment.CompletedAt.Format("2006-01-02 15:04:05"))
+		} else {
+			row = append(row, "")
+		}
+		
+		if payment.FailedAt != nil {
+			row = append(row, payment.FailedAt.Format("2006-01-02 15:04:05"))
+		} else {
+			row = append(row, "")
+		}
+		
+		if payment.RefundedAt != nil {
+			row = append(row, payment.RefundedAt.Format("2006-01-02 15:04:05"))
+		} else {
+			row = append(row, "")
+		}
+		
+		// Add user details if requested
+		if includeUserDetails {
+			email := ""
+			if payment.User.Email != nil {
+				email = *payment.User.Email
+			}
+			row = append(row, 
+				strings.ReplaceAll(payment.User.Name, ",", ";"),
+				email,
+				payment.User.Phone,
+			)
+		}
+		
+		// Add metadata if requested
+		if includeMetadata && payment.Metadata != nil {
+			metadataStr := ""
+			if payment.Metadata != nil {
+				// Convert metadata to string representation
+				metadataBytes, _ := json.Marshal(payment.Metadata)
+				metadataStr = strings.ReplaceAll(string(metadataBytes), ",", ";")
+			}
+			row = append(row, metadataStr)
+		}
+		
+		csvData.WriteString(strings.Join(row, ",") + "\n")
+	}
+	
+	return []byte(csvData.String()), nil
+}
+
+// GetTransactionDashboardData gets dashboard data for admin
+func (ps *PaymentService) GetTransactionDashboardData() (map[string]interface{}, error) {
+	// Get transaction statistics
+	stats, err := ps.GetAdminTransactionStats()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction stats: %v", err)
+	}
+	
+	// Get recent transactions (last 10)
+	recentFilters := &models.AdminPaymentFilters{
+		PaymentFilters: models.PaymentFilters{
+			Page:  1,
+			Limit: 10,
+		},
+		SortBy:    "created_at",
+		SortOrder: "desc",
+	}
+	
+	recentPayments, _, err := ps.GetAdminPayments(recentFilters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent payments: %v", err)
+	}
+	
+	dashboardData := map[string]interface{}{
+		"overview": map[string]interface{}{
+			"total_transactions": stats.TotalTransactions,
+			"total_amount": stats.TotalAmount,
+			"completed_transactions": stats.CompletedTransactions,
+			"pending_transactions": stats.PendingTransactions,
+			"failed_transactions": stats.FailedTransactions,
+		},
+		"recent_transactions": recentPayments,
+	}
+	
+	return dashboardData, nil
 }

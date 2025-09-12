@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"strings"
 	"time"
 	"treesindia/database"
 	"treesindia/models"
@@ -287,5 +288,199 @@ func (pr *PaymentRepository) GetAbandonedWalletPayments(cutoffTime time.Time) ([
 		cutoffTime).
 		Find(&payments).Error
 	
+	return payments, err
+}
+
+// GetAdminPayments gets payments with comprehensive admin filters
+func (pr *PaymentRepository) GetAdminPayments(filters *models.AdminPaymentFilters) ([]models.Payment, *Pagination, error) {
+	var payments []models.Payment
+	var total int64
+
+	query := pr.db.Model(&models.Payment{}).Joins("LEFT JOIN users ON payments.user_id = users.id")
+
+	// Apply filters
+	if filters.UserID != nil {
+		query = query.Where("payments.user_id = ?", *filters.UserID)
+	}
+	if filters.Status != "" {
+		query = query.Where("payments.status = ?", filters.Status)
+	}
+	if filters.Type != "" {
+		query = query.Where("payments.type = ?", filters.Type)
+	}
+	if filters.Method != "" {
+		query = query.Where("payments.method = ?", filters.Method)
+	}
+	if filters.RelatedEntityType != "" {
+		query = query.Where("payments.related_entity_type = ?", filters.RelatedEntityType)
+	}
+	if filters.RelatedEntityID != nil {
+		query = query.Where("payments.related_entity_id = ?", *filters.RelatedEntityID)
+	}
+	if filters.StartDate != "" {
+		query = query.Where("payments.created_at >= ?", filters.StartDate)
+	}
+	if filters.EndDate != "" {
+		query = query.Where("payments.created_at <= ?", filters.EndDate)
+	}
+	if filters.MinAmount != nil {
+		query = query.Where("payments.amount >= ?", *filters.MinAmount)
+	}
+	if filters.MaxAmount != nil {
+		query = query.Where("payments.amount <= ?", *filters.MaxAmount)
+	}
+	if filters.UserEmail != "" {
+		query = query.Where("users.email ILIKE ?", "%"+filters.UserEmail+"%")
+	}
+	if filters.UserPhone != "" {
+		query = query.Where("users.phone ILIKE ?", "%"+filters.UserPhone+"%")
+	}
+	if filters.Search != "" {
+		searchTerm := "%" + filters.Search + "%"
+		query = query.Where(
+			"payments.payment_reference ILIKE ? OR payments.description ILIKE ? OR users.name ILIKE ? OR users.email ILIKE ?",
+			searchTerm, searchTerm, searchTerm, searchTerm,
+		)
+	}
+
+	// Count total
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Apply pagination
+	page := filters.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := filters.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+	query = query.Offset(offset).Limit(limit)
+
+	// Apply sorting
+	sortBy := filters.SortBy
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+	sortOrder := filters.SortOrder
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	query = query.Order("payments." + sortBy + " " + strings.ToUpper(sortOrder))
+
+	// Preload relationships
+	query = query.Preload("User")
+
+	// Execute query
+	err = query.Find(&payments).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Calculate pagination
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+	pagination := &Pagination{
+		Page:       page,
+		Limit:      limit,
+		Total:      int(total),
+		TotalPages: totalPages,
+	}
+
+	return payments, pagination, nil
+}
+
+// GetAdminTransactionStats gets essential transaction statistics for admin dashboard
+func (pr *PaymentRepository) GetAdminTransactionStats() (*models.AdminTransactionStats, error) {
+	stats := &models.AdminTransactionStats{}
+	
+	// Single optimized query to get all essential stats
+	err := pr.db.Model(&models.Payment{}).Select(`
+		COUNT(*) as total_transactions,
+		COALESCE(SUM(amount), 0) as total_amount,
+		COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_transactions,
+		COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_transactions,
+		COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_transactions
+	`).Scan(stats).Error
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return stats, nil
+}
+
+// GetPaymentsForExport gets payments for export with comprehensive data
+func (pr *PaymentRepository) GetPaymentsForExport(filters *models.AdminPaymentFilters) ([]models.Payment, error) {
+	query := pr.db.Model(&models.Payment{}).Joins("LEFT JOIN users ON payments.user_id = users.id")
+
+	// Apply same filters as GetAdminPayments but without pagination
+	if filters.UserID != nil {
+		query = query.Where("payments.user_id = ?", *filters.UserID)
+	}
+	if filters.Status != "" {
+		query = query.Where("payments.status = ?", filters.Status)
+	}
+	if filters.Type != "" {
+		query = query.Where("payments.type = ?", filters.Type)
+	}
+	if filters.Method != "" {
+		query = query.Where("payments.method = ?", filters.Method)
+	}
+	if filters.RelatedEntityType != "" {
+		query = query.Where("payments.related_entity_type = ?", filters.RelatedEntityType)
+	}
+	if filters.RelatedEntityID != nil {
+		query = query.Where("payments.related_entity_id = ?", *filters.RelatedEntityID)
+	}
+	if filters.StartDate != "" {
+		query = query.Where("payments.created_at >= ?", filters.StartDate)
+	}
+	if filters.EndDate != "" {
+		query = query.Where("payments.created_at <= ?", filters.EndDate)
+	}
+	if filters.MinAmount != nil {
+		query = query.Where("payments.amount >= ?", *filters.MinAmount)
+	}
+	if filters.MaxAmount != nil {
+		query = query.Where("payments.amount <= ?", *filters.MaxAmount)
+	}
+	if filters.UserEmail != "" {
+		query = query.Where("users.email ILIKE ?", "%"+filters.UserEmail+"%")
+	}
+	if filters.UserPhone != "" {
+		query = query.Where("users.phone ILIKE ?", "%"+filters.UserPhone+"%")
+	}
+	if filters.Search != "" {
+		searchTerm := "%" + filters.Search + "%"
+		query = query.Where(
+			"payments.payment_reference ILIKE ? OR payments.description ILIKE ? OR users.name ILIKE ? OR users.email ILIKE ?",
+			searchTerm, searchTerm, searchTerm, searchTerm,
+		)
+	}
+
+	// Apply sorting
+	sortBy := filters.SortBy
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+	sortOrder := filters.SortOrder
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	query = query.Order("payments." + sortBy + " " + strings.ToUpper(sortOrder))
+
+	// Preload relationships
+	query = query.Preload("User")
+
+	var payments []models.Payment
+	err := query.Find(&payments).Error
 	return payments, err
 }

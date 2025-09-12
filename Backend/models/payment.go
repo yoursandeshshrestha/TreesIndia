@@ -17,7 +17,10 @@ const (
 	PaymentTypeWalletRecharge PaymentType = "wallet_recharge"
 	PaymentTypeWalletDebit PaymentType = "wallet_debit"
 	PaymentTypeRefund      PaymentType = "refund"
+	PaymentTypeSegmentPay  PaymentType = "segment_pay"
+	PaymentTypeQuote       PaymentType = "quote"
 )
+
 
 
 
@@ -145,4 +148,33 @@ type PaymentFilters struct {
 	EndDate           string         `json:"end_date"`
 	Page              int            `json:"page"`
 	Limit             int            `json:"limit"`
+}
+
+// AdminPaymentFilters represents comprehensive filters for admin payment queries
+type AdminPaymentFilters struct {
+	PaymentFilters
+	Search            string         `json:"search"`            // Search in payment reference, description, user name
+	MinAmount         *float64       `json:"min_amount"`        // Minimum amount filter
+	MaxAmount         *float64       `json:"max_amount"`        // Maximum amount filter
+	UserEmail         string         `json:"user_email"`        // Filter by user email
+	UserPhone         string         `json:"user_phone"`        // Filter by user phone
+	SortBy            string         `json:"sort_by"`           // Sort field (amount, created_at, etc.)
+	SortOrder         string         `json:"sort_order"`        // Sort order (asc, desc)
+}
+
+// AdminTransactionStats represents essential transaction statistics for admin dashboard
+type AdminTransactionStats struct {
+	TotalTransactions     int64   `json:"total_transactions"`
+	TotalAmount           float64 `json:"total_amount"`
+	CompletedTransactions int64   `json:"completed_transactions"`
+	PendingTransactions   int64   `json:"pending_transactions"`
+	FailedTransactions    int64   `json:"failed_transactions"`
+}
+
+// TransactionExportRequest represents request for exporting transactions
+type TransactionExportRequest struct {
+	Filters            AdminPaymentFilters `json:"filters"`
+	Format             string              `json:"format"`              // csv, excel
+	IncludeUserDetails bool                `json:"include_user_details"` // Include user name, email, phone
+	IncludeMetadata    bool                `json:"include_metadata"`    // Include payment metadata
 }

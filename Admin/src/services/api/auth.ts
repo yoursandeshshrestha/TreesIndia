@@ -108,18 +108,18 @@ export const authApi = {
       cookieUtils.setCookie(
         COOKIE_NAMES.accessToken,
         response.data.access_token,
-        1
-      ); // 1 day
+        1 / 24
+      ); // 1 hour (1/24 of a day)
       cookieUtils.setCookie(
         COOKIE_NAMES.refreshToken,
         response.data.refresh_token,
-        7
-      ); // 7 days
+        30
+      ); // 30 days
       cookieUtils.setCookie(
         COOKIE_NAMES.user,
         JSON.stringify(response.data.user),
-        7
-      );
+        30
+      ); // 30 days
     }
 
     return response;
@@ -156,18 +156,18 @@ export const authApi = {
       cookieUtils.setCookie(
         COOKIE_NAMES.accessToken,
         response.data.access_token,
-        1
-      );
+        1 / 24
+      ); // 1 hour (1/24 of a day)
       cookieUtils.setCookie(
         COOKIE_NAMES.refreshToken,
         response.data.refresh_token,
-        7
-      );
+        30
+      ); // 30 days
       cookieUtils.setCookie(
         COOKIE_NAMES.user,
         JSON.stringify(response.data.user),
-        7
-      );
+        30
+      ); // 30 days
     }
 
     return response;

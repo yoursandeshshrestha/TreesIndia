@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, Calculator } from "lucide-react";
+import { Plus } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import PaymentSegment from "./PaymentSegment";
 import { PaymentSegmentRequest } from "@/types/booking";
@@ -16,7 +16,6 @@ interface PaymentSegmentManagerProps {
 export default function PaymentSegmentManager({
   segments,
   onSegmentsChange,
-  totalAmount = 0, // Default value
   onTotalAmountChange = () => {}, // Default empty function
 }: PaymentSegmentManagerProps) {
   const addSegment = () => {

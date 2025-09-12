@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import Pagination from "@/components/Pagination/Pagination";
 
@@ -266,6 +265,7 @@ function PropertiesManagementPage() {
           setFilters((prev) => ({ ...prev, activeTab: tab }));
           setCurrentPage(1);
         }}
+        stats={stats || undefined}
       />
 
       {/* Properties Cards */}

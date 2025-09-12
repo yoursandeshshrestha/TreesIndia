@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
-import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
 import { PaymentSegmentManager } from "@/components/PaymentSegment";
 import {

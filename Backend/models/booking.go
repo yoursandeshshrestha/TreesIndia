@@ -40,6 +40,7 @@ const (
 	PaymentStatusCompleted PaymentStatus = "completed" // Payment completed
 	PaymentStatusFailed    PaymentStatus = "failed"    // Payment failed
 	PaymentStatusRefunded  PaymentStatus = "refunded"  // Payment refunded
+	PaymentStatusCancelled PaymentStatus = "cancelled" // Payment cancelled
 	PaymentStatusAbandoned PaymentStatus = "abandoned" // Payment abandoned
 	PaymentStatusExpired   PaymentStatus = "expired"   // Payment expired
 	PaymentStatusHold      PaymentStatus = "hold"      // Payment on hold (for inquiry fees)

@@ -191,12 +191,18 @@ export const sidebarItems: SidebarItem[] = [
       <Truck size={16} />
     ),
   ]),
-  createMenuItem(
-    "projects",
-    "Projects",
-    "/dashboard/marketplace/projects",
-    <Building size={16} />
-  ),
+  createMenuWithChildren("projects", "Projects", <Building size={16} />, [
+    createMenuItem(
+      "all-projects",
+      "All Projects",
+      "/dashboard/marketplace/projects"
+    ),
+    createMenuItem(
+      "create-project",
+      "Create New Project",
+      "/dashboard/marketplace/projects/create"
+    ),
+  ]),
 
   // Other Section
   createSectionLabel("Other"),
@@ -222,6 +228,14 @@ export const sidebarItems: SidebarItem[] = [
     "subscription-management",
     "Subscription Management",
     "/dashboard/subscription-management",
+    <CreditCard size={16} />
+  ),
+
+  // Transaction Management
+  createMenuItem(
+    "transaction-management",
+    "Transaction Management",
+    "/dashboard/transactions",
     <CreditCard size={16} />
   ),
 
