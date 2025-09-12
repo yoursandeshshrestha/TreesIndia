@@ -138,6 +138,38 @@ export const formatDateOnly = (
 };
 
 /**
+ * Formats a date to "19 June 2029" format
+ * @param dateString - Date string
+ * @returns Formatted date string in "19 June 2029" format
+ */
+export const formatDateLong = (
+  dateString: string | null | undefined
+): string => {
+  if (!dateString) {
+    return "Date not available";
+  }
+
+  try {
+    const date = new Date(dateString);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid date";
+    }
+
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+
+    return date.toLocaleDateString("en-GB", options);
+  } catch {
+    return "Date not available";
+  }
+};
+
+/**
  * Formats a date and time for display
  * @param dateString - Date string
  * @returns Formatted date and time string
