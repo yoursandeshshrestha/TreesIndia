@@ -29,6 +29,12 @@ const marketplaceOptions: MarketplaceOption[] = [
     route: "/marketplace/projects",
   },
   {
+    id: "vendors",
+    name: "Vendors",
+    icon: "/images/main-icons/vendors.png",
+    route: "/marketplace/vendors",
+  },
+  {
     id: "workforce",
     name: "Workforce",
     icon: "/images/main-icons/workforce.png",

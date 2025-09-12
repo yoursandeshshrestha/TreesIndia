@@ -203,67 +203,109 @@ export function ProjectsContent({
 
   if (projects.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 mb-6">
-          <p className="text-lg font-medium mb-2">No projects found</p>
-          <p className="text-sm">
-            Try adjusting your filters or search criteria
-          </p>
+      <div className="space-y-6">
+        {/* Results Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {generateHeaderText()}
+            </h2>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {/* Create Project Button */}
+            <button
+              onClick={handleCreateProject}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Project</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={onClearFilters}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-        >
-          Clear Filters
-        </button>
+
+        {/* No Results Message */}
+        <div className="text-center py-12">
+          <div className="p-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              No Projects Found
+            </h3>
+            <p className="text-gray-600 mb-6">
+              We couldn&apos;t find any projects matching your criteria. Try
+              adjusting your search filters or check back later.
+            </p>
+            <button
+              onClick={onClearFilters}
+              className="inline-flex items-center px-6 py-3 text-sm font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Sort and View Options */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            {generateHeaderText()}
-          </h2>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* Sort Dropdown */}
-          <div className="relative" ref={sortRef}>
-            <button
-              onClick={() => setIsSortOpen(!isSortOpen)}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <span>Sort: {selectedSort}</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-
-            {isSortOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleSortChange(option.value, option.label)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
+      {/* Results Header */}
+      <div className="relative">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {generateHeaderText()}
+            </h2>
           </div>
 
-          {/* Create Project Button */}
-          <button
-            onClick={handleCreateProject}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Project</span>
-          </button>
+          <div className="flex items-center space-x-4">
+            {/* Sort Dropdown */}
+            <div className="relative" ref={sortRef}>
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+              >
+                <span className="text-sm font-medium text-gray-700">
+                  Sort by: {selectedSort}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </button>
+
+              {isSortOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                  <div className="py-1">
+                    {sortOptions.map((option) => (
+                      <div key={option.value} className="relative">
+                        <button
+                          onClick={() =>
+                            handleSortChange(option.value, option.label)
+                          }
+                          className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
+                            selectedSort === option.label
+                              ? "bg-green-50 text-green-700 font-medium"
+                              : ""
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          {selectedSort === option.label && (
+                            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Create Project Button */}
+            <button
+              onClick={handleCreateProject}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Project</span>
+            </button>
+          </div>
         </div>
       </div>
 

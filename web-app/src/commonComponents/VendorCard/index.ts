@@ -1,0 +1,1 @@
+export { VendorCard } from "./VendorCard";
