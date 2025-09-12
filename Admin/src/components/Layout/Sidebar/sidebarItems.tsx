@@ -177,17 +177,17 @@ export const sidebarItems: SidebarItem[] = [
       ),
     ]
   ),
-  createMenuWithChildren("manforce", "Manforce", <HardHat size={16} />, [
+  createMenuWithChildren("work-force", "Work Force", <HardHat size={16} />, [
     createMenuItem(
       "workers",
       "Workers",
-      "/dashboard/marketplace/manforce/workers",
+      "/dashboard/marketplace/workforce/workers",
       <UserCheck size={16} />
     ),
     createMenuItem(
       "vendors",
       "Vendors",
-      "/dashboard/marketplace/manforce/vendors",
+      "/dashboard/marketplace/workforce/vendors",
       <Truck size={16} />
     ),
   ]),
