@@ -86,6 +86,17 @@ export function SubscriptionSection() {
         </p>
       </div>
 
+      {/* Add Subscription Button */}
+      <div className="py-6 border-t border-b border-gray-200">
+        <button
+          onClick={handleBuySubscription}
+          className="flex items-center gap-2 py-2 text-green-600 hover:text-green-700 cursor-pointer rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Buy Subscription
+        </button>
+      </div>
+
       {/* Current Subscription Card or No Subscription */}
       {currentSubscription ? (
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -138,26 +149,12 @@ export function SubscriptionSection() {
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No Active Subscription
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-              Get a subscription to unlock premium features and auto-approval
-              for property listings
-            </p>
-            <button
-              onClick={handleBuySubscription}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Get Subscription</span>
-            </button>
-          </div>
+        <div className="text-center py-8">
+          <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">No active subscriptions yet</p>
+          <p className="text-sm text-gray-500 mt-1 mb-4">
+            Click the + button to buy your first subscription
+          </p>
         </div>
       )}
 

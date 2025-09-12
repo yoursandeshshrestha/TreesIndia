@@ -535,6 +535,20 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
+	// Check subscription status
+	subscriptionService := services.NewUserSubscriptionService()
+	userWithSubscription, err := subscriptionService.CheckAndUpdateSubscriptionStatus(userID)
+	if err != nil {
+		// If subscription check fails, use the original user data
+		userWithSubscription = &user
+	}
+
+	// Determine subscription status
+	subscriptionStatus := "inactive"
+	if userWithSubscription.HasActiveSubscription {
+		subscriptionStatus = "active"
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User information retrieved successfully", gin.H{
 		"id":                user.ID,
 		"name":              user.Name,
@@ -543,6 +557,7 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		"user_type":         user.UserType,
 		"is_active":         user.IsActive,
 		"wallet_balance":    user.WalletBalance,
+		"subscription":      subscriptionStatus,
 	}))
 }
 

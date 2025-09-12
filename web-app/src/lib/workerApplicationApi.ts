@@ -12,9 +12,24 @@ const API_BASE_URL =
 const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `HTTP error! status: ${response.status}`
-    );
+    console.error("API Error Response:", {
+      status: response.status,
+      statusText: response.statusText,
+      errorData: errorData,
+    });
+
+    // Extract the specific error message from the backend response
+    let errorMessage = `HTTP error! status: ${response.status}`;
+
+    if (errorData.error) {
+      // Backend returns error in 'error' field
+      errorMessage = errorData.error;
+    } else if (errorData.message) {
+      // Backend returns error in 'message' field
+      errorMessage = errorData.message;
+    }
+
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -24,16 +39,6 @@ export const workerApplicationApi = {
   submitWorkerApplication: async (
     applicationData: WorkerApplicationRequest
   ): Promise<WorkerApplicationResponse> => {
-    // Compress files to reduce upload size
-    const filesToCompress: { [key: string]: File } = {
-      aadhar_card: applicationData.aadhar_card,
-      pan_card: applicationData.pan_card,
-      profile_pic: applicationData.profile_pic,
-      police_verification: applicationData.police_verification,
-    };
-
-    const compressedFiles = await compressFiles(filesToCompress);
-
     const formData = new FormData();
 
     // Add basic fields
@@ -46,11 +51,11 @@ export const workerApplicationApi = {
     formData.append("address", applicationData.address);
     formData.append("banking_info", applicationData.banking_info);
 
-    // Add compressed documents
-    formData.append("aadhar_card", compressedFiles.aadhar_card);
-    formData.append("pan_card", compressedFiles.pan_card);
-    formData.append("profile_pic", compressedFiles.profile_pic);
-    formData.append("police_verification", compressedFiles.police_verification);
+    // Add files directly (temporarily removing compression for debugging)
+    formData.append("aadhar_card", applicationData.aadhar_card);
+    formData.append("pan_card", applicationData.pan_card);
+    formData.append("profile_pic", applicationData.profile_pic);
+    formData.append("police_verification", applicationData.police_verification);
 
     const response = await authenticatedFetch(
       `${API_BASE_URL}/role-applications/worker`,

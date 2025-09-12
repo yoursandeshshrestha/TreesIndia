@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { ConfirmModal } from "@/commonComponents/ConfirmModal";
 import {
   User,
@@ -30,6 +31,7 @@ export function ProfileSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, user } = useAuth();
+  const { userProfile } = useProfile();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Create sidebar items based on user type
@@ -65,13 +67,17 @@ export function ProfileSidebar() {
         icon: <Home className="w-5 h-5" />,
         path: "/profile/my-properties",
       },
-      {
+    ];
+
+    // Only add "My Vendor Profile" if user has active subscription
+    if (userProfile?.subscription?.status === "active") {
+      baseItems.push({
         id: "my-vendors",
         label: "My Vendor Profile",
         icon: <Building2 className="w-5 h-5" />,
         path: "/profile/my-vendors",
-      },
-    ];
+      });
+    }
 
     // Add work/bookings item based on user type
     const workOrBookingsItem =

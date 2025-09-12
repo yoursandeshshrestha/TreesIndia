@@ -1,20 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  ChevronLeft,
-  User,
-  FileText,
-  Briefcase,
-  CreditCard,
-  CheckCircle,
-} from "lucide-react";
+import { ChevronRight, CheckCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { useWorkerApplication } from "@/hooks/useWorkerApplication";
 import { WorkerApplicationRequest } from "@/types/worker-application";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";
 import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
+import { WorkerApplySidebar } from "./components";
+import { useWorkerForm } from "./hooks/useWorkerForm";
+import { toast } from "sonner";
 
 // Import step components
 import {
@@ -26,61 +22,51 @@ import {
   ReviewStep,
 } from "./components";
 
-const steps = [
-  {
-    id: 0,
-    title: "Personal Information",
-    icon: User,
-    description: "Contact details",
-  },
-  {
-    id: 1,
-    title: "Documents Upload",
-    icon: FileText,
-    description: "Required documents",
-  },
-  {
-    id: 2,
-    title: "Address Information",
-    icon: User,
-    description: "Residential address",
-  },
-  {
-    id: 3,
-    title: "Skills & Experience",
-    icon: Briefcase,
-    description: "Work experience",
-  },
-  {
-    id: 4,
-    title: "Banking Information",
-    icon: CreditCard,
-    description: "Payment details",
-  },
-  {
-    id: 5,
-    title: "Review & Submit",
-    icon: CheckCircle,
-    description: "Final review",
-  },
-];
-
-export default function WorkerApplyPage() {
-  const { userApplication, submitApplication, isSubmitting, submitError } =
-    useWorkerApplication();
-
-  const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState<Partial<WorkerApplicationRequest>>({
-    experience_years: 0,
-    skills: "[]",
-    contact_info: "{}",
-    address: "{}",
-    banking_info: "{}",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [successAnimation, setSuccessAnimation] = useState<object | null>(null);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+function WorkerApplyPage() {
   const router = useRouter();
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successAnimation, setSuccessAnimation] = useState<object | null>(null);
+
+  const {
+    userApplication,
+    submitApplication,
+    isSubmitting,
+    submitError: hookSubmitError,
+  } = useWorkerApplication();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const {
+    formState,
+    steps: baseSteps,
+    currentStep,
+    updateFormData,
+    canProceedToNext,
+    goToStep,
+    nextStep,
+    previousStep,
+    getStepErrors,
+  } = useWorkerForm();
+
+  // Create steps with current status
+  const steps = baseSteps.map((step, index) => ({
+    ...step,
+    status:
+      index < formState.currentStep
+        ? ("completed" as const)
+        : index === formState.currentStep
+        ? ("active" as const)
+        : ("pending" as const),
+  }));
+
+  const handleStepClick = (stepId: string) => {
+    const stepIndex = parseInt(stepId) - 1;
+    goToStep(stepIndex);
+  };
+
+  const handleEditStep = (stepId: string) => {
+    const stepIndex = parseInt(stepId) - 1;
+    goToStep(stepIndex);
+  };
 
   // Check authentication
   useEffect(() => {
@@ -110,194 +96,136 @@ export default function WorkerApplyPage() {
     }
   }, [userApplication]);
 
-  const handleNext = () => {
-    if (validateStep(activeStep)) {
-      setActiveStep((prevStep) => prevStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
-  };
-
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    switch (step) {
-      case 0: // Personal Information
-        const contactInfo = formData.contact_info
-          ? JSON.parse(formData.contact_info)
-          : {};
-        if (!contactInfo.alternative_number?.trim()) {
-          newErrors.contact_info = "Alternative phone number is required";
-        } else if (!/^\d{10}$/.test(contactInfo.alternative_number)) {
-          newErrors.contact_info = "Please enter a valid 10-digit phone number";
-        }
-        break;
-
-      case 1: // Documents Upload
-        if (!formData.aadhar_card) {
-          newErrors.aadhar_card = "Aadhaar card is required";
-        }
-        if (!formData.pan_card) {
-          newErrors.pan_card = "PAN card is required";
-        }
-        if (!formData.profile_pic) {
-          newErrors.profile_pic = "Profile photo is required";
-        }
-        if (!formData.police_verification) {
-          newErrors.police_verification = "Police verification is required";
-        }
-        break;
-
-      case 2: // Address Information
-        const address = formData.address ? JSON.parse(formData.address) : {};
-        if (!address.street?.trim()) {
-          newErrors.address = "Street address is required";
-        } else if (!address.city?.trim()) {
-          newErrors.address = "City is required";
-        } else if (!address.state?.trim()) {
-          newErrors.address = "State is required";
-        } else if (!address.pincode?.trim()) {
-          newErrors.address = "Pincode is required";
-        } else if (!/^\d{6}$/.test(address.pincode)) {
-          newErrors.address = "Please enter a valid 6-digit pincode";
-        }
-        break;
-
-      case 3: // Skills & Experience
-        if (!formData.experience_years || formData.experience_years < 0) {
-          newErrors.experience_years =
-            "Experience years is required and must be positive";
-        }
-        try {
-          const skills = JSON.parse(formData.skills || "[]");
-          if (!Array.isArray(skills) || skills.length === 0) {
-            newErrors.skills = "At least one skill is required";
-          }
-        } catch {
-          newErrors.skills = "Invalid skills format";
-        }
-        break;
-
-      case 4: // Banking Information
-        try {
-          const bankingInfo = JSON.parse(formData.banking_info || "{}");
-          if (!bankingInfo.account_number) {
-            newErrors.banking_info = "Account number is required";
-          }
-          if (!bankingInfo.ifsc_code) {
-            newErrors.banking_info = "IFSC code is required";
-          }
-          if (!bankingInfo.bank_name) {
-            newErrors.banking_info = "Bank name is required";
-          }
-          if (!bankingInfo.account_holder_name) {
-            newErrors.banking_info = "Account holder name is required";
-          }
-        } catch {
-          newErrors.banking_info = "Invalid banking info format";
-        }
-        break;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleFieldChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    updateFormData(field, value);
   };
 
   const handleFileChange = (field: string, file: File | null) => {
-    setFormData((prev) => ({ ...prev, [field]: file }));
-    // Clear error for this field when user uploads a file
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    updateFormData(field, file);
   };
 
-  const handleSubmit = () => {
-    if (validateStep(activeStep)) {
-      const completeFormData: WorkerApplicationRequest = {
-        experience_years: formData.experience_years!,
-        skills: formData.skills!,
-        contact_info: formData.contact_info!,
-        address: formData.address!,
-        banking_info: formData.banking_info!,
-        aadhar_card: formData.aadhar_card!,
-        pan_card: formData.pan_card!,
-        profile_pic: formData.profile_pic!,
-        police_verification: formData.police_verification!,
-      };
+  const handleSubmit = async () => {
+    setIsSuccess(false);
 
-      submitApplication(completeFormData);
-    }
+    // Convert form data to the format expected by the API
+    const applicationData: WorkerApplicationRequest = {
+      experience_years: formState.formData.experience_years!,
+      skills: formState.formData.skills!,
+      contact_info: formState.formData.contact_info!,
+      address: formState.formData.address!,
+      banking_info: formState.formData.banking_info!,
+      aadhar_card: formState.formData.aadhar_card!,
+      pan_card: formState.formData.pan_card!,
+      profile_pic: formState.formData.profile_pic!,
+      police_verification: formState.formData.police_verification!,
+    };
+
+    submitApplication(applicationData, {
+      onSuccess: async () => {
+        // Load success animation
+        try {
+          const response = await fetch("/images/auth/celebration.json");
+          const animation = await response.json();
+          setSuccessAnimation(animation);
+        } catch (error) {
+          console.error("Error loading celebration animation:", error);
+        }
+
+        toast.success("Worker application submitted successfully!");
+        setIsSuccess(true);
+      },
+      onError: (error) => {
+        console.error("Error submitting worker application:", error);
+
+        // Parse error message for better user experience
+        let errorMessage = "Failed to submit application";
+
+        if (error.message) {
+          if (error.message.includes("email already exists")) {
+            errorMessage =
+              "This email address is already registered. Please use a different email or contact support.";
+          } else if (error.message.includes("Missing required fields")) {
+            errorMessage =
+              "Please fill in all required fields before submitting.";
+          } else if (error.message.includes("Invalid")) {
+            errorMessage = "Please check your information and try again.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+
+        toast.error(errorMessage);
+      },
+    });
   };
 
   const handleBackToHome = () => {
     router.push("/");
   };
 
-  const renderStepContent = (step: number) => {
-    switch (step) {
+  const renderCurrentStep = () => {
+    const stepErrors = getStepErrors(currentStep.id);
+    // Convert string array to Record<string, string> format
+    const errorsRecord: Record<string, string> = {};
+    stepErrors.forEach((error, index) => {
+      errorsRecord[`error_${index}`] = error;
+    });
+
+    switch (formState.currentStep) {
       case 0:
         return (
           <PersonalInfoStep
-            formData={formData}
-            errors={errors}
+            formData={formState.formData}
+            errors={errorsRecord}
             onFieldChange={handleFieldChange}
           />
         );
       case 1:
         return (
           <DocumentsStep
-            formData={formData}
-            errors={errors}
+            formData={formState.formData}
+            errors={errorsRecord}
             onFileChange={handleFileChange}
           />
         );
       case 2:
         return (
           <AddressStep
-            formData={formData}
-            errors={errors}
+            formData={formState.formData}
+            errors={errorsRecord}
             onFieldChange={handleFieldChange}
           />
         );
       case 3:
         return (
           <SkillsStep
-            formData={formData}
-            errors={errors}
+            formData={formState.formData}
+            errors={errorsRecord}
             onFieldChange={handleFieldChange}
           />
         );
       case 4:
         return (
           <BankingStep
-            formData={formData}
-            errors={errors}
+            formData={formState.formData}
+            errors={errorsRecord}
             onFieldChange={handleFieldChange}
           />
         );
       case 5:
         return (
-          <ReviewStep
-            formData={formData}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmit}
-          />
+          <ReviewStep formData={formState.formData} errors={errorsRecord} />
         );
       default:
         return null;
     }
   };
+
+  const canProceed = () => {
+    return canProceedToNext(formState.currentStep);
+  };
+
+  const isLastStep = formState.currentStep === steps.length - 1;
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -314,13 +242,13 @@ export default function WorkerApplyPage() {
     return (
       <div className="min-h-screen bg-white">
         {/* Header */}
-        <div className="bg-white ">
+        <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <button
               onClick={handleBackToHome}
               className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
               <span>Back to home</span>
             </button>
           </div>
@@ -404,132 +332,97 @@ export default function WorkerApplyPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={handleBackToHome}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Back to home</span>
-          </button>
+  // Success state
+  if (isSuccess) {
+    return (
+      <div className="max-w-7xl mx-auto py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Application Submitted Successfully!
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Your worker application has been submitted and is under review.
+          </p>
+          <p className="text-sm text-gray-500">Redirecting to home...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto flex gap-6">
-        {/* Left Sidebar */}
-        <div className="w-80 bg-white p-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-            <h2 className="font-semibold text-gray-900 mb-4">
-              Application Progress
-            </h2>
+  return (
+    <div className="max-w-7xl mx-auto py-8">
+      {/* Top Back Button */}
+      <div className="mb-6">
+        <button
+          onClick={handleBackToHome}
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Go Back</span>
+        </button>
+      </div>
 
-            <div className="space-y-4">
-              {steps.map((step, index) => {
-                const isCompleted = index < activeStep;
-                const isCurrent = index === activeStep;
-                const Icon = step.icon;
-
-                return (
-                  <div key={step.id} className="flex items-start gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isCompleted
-                          ? "bg-green-100"
-                          : isCurrent
-                          ? "bg-blue-100"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      <Icon
-                        className={`w-4 h-4 ${
-                          isCompleted
-                            ? "text-green-600"
-                            : isCurrent
-                            ? "text-blue-600"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          isCompleted
-                            ? "text-green-900"
-                            : isCurrent
-                            ? "text-blue-900"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {step.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Application Info */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">
-              Application Info
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>• All fields marked with * are required</p>
-              <p>• Documents should be clear and readable</p>
-              <p>• Application will be reviewed within 24-48 hours</p>
-              <p>• You&apos;ll receive updates via SMS/Email</p>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <WorkerApplySidebar
+            steps={steps}
+            onStepClick={handleStepClick}
+            onEditStep={handleEditStep}
+          />
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 pt-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            {submitError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <p className="text-red-800 text-sm">{submitError.message}</p>
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <div className="bg-white pl-2">
+            {/* Step Back Button - Show after first step */}
+            {formState.currentStep > 0 && (
+              <div className="mb-6">
+                <button
+                  onClick={previousStep}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-sm font-medium">Previous Step</span>
+                </button>
               </div>
             )}
 
-            {renderStepContent(activeStep)}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-              <button
-                onClick={handleBack}
-                disabled={activeStep === 0}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Back
-              </button>
-
-              <div>
-                {activeStep === steps.length - 1 ? (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit Application"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleNext}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                  >
-                    Next
-                  </button>
-                )}
+            {hookSubmitError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-800 text-sm">{hookSubmitError}</p>
               </div>
+            )}
+            {renderCurrentStep()}
+
+            {/* Continue/Submit Button */}
+            <div className="flex justify-start mt-8">
+              {isLastStep ? (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!canProceed() || isSubmitting}
+                  className="flex items-center space-x-2 px-6 py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Submitting Application...</span>
+                    </>
+                  ) : (
+                    <span>Submit Application</span>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={nextStep}
+                  disabled={!canProceed()}
+                  className="flex items-center space-x-2 px-6 py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>Continue</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -537,3 +430,5 @@ export default function WorkerApplyPage() {
     </div>
   );
 }
+
+export default WorkerApplyPage;

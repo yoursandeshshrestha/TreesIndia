@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { TextField, Box, Typography } from "@mui/material";
 
 interface BankingStepProps {
   formData: {
@@ -23,103 +26,68 @@ const BankingStep: React.FC<BankingStepProps> = ({
   };
 
   return (
-    <div className="space-y-6 text-black">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Banking Information
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Please provide your bank account details for payments.
-        </p>
-      </div>
+    <Box sx={{ maxWidth: 600 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+      >
+        Banking Information
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+        Please provide your bank account details for payments.
+      </Typography>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Account Holder Name *
-          </label>
-          <input
-            type="text"
-            value={bankingInfo.account_holder_name || ""}
-            onChange={(e) =>
-              handleBankingInfoChange("account_holder_name", e.target.value)
-            }
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.banking_info ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter account holder name"
-          />
-        </div>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <TextField
+          label="Account Holder Name"
+          required
+          type="text"
+          value={bankingInfo.account_holder_name || ""}
+          onChange={(e) =>
+            handleBankingInfoChange("account_holder_name", e.target.value)
+          }
+          placeholder="Enter account holder name"
+          error={!!errors.banking_info}
+          helperText={errors.banking_info}
+          fullWidth
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Account Number *
-          </label>
-          <input
-            type="text"
-            value={bankingInfo.account_number || ""}
-            onChange={(e) =>
-              handleBankingInfoChange("account_number", e.target.value)
-            }
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.banking_info ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter account number"
-          />
-        </div>
+        <TextField
+          label="Account Number"
+          required
+          type="text"
+          value={bankingInfo.account_number || ""}
+          onChange={(e) =>
+            handleBankingInfoChange("account_number", e.target.value)
+          }
+          placeholder="Enter account number"
+          error={!!errors.banking_info}
+          fullWidth
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              IFSC Code *
-            </label>
-            <input
-              type="text"
-              value={bankingInfo.ifsc_code || ""}
-              onChange={(e) =>
-                handleBankingInfoChange("ifsc_code", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter IFSC code"
-            />
-          </div>
+        <TextField
+          label="IFSC Code"
+          required
+          type="text"
+          value={bankingInfo.ifsc_code || ""}
+          onChange={(e) => handleBankingInfoChange("ifsc_code", e.target.value)}
+          placeholder="Enter IFSC code"
+          error={!!errors.banking_info}
+          fullWidth
+        />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bank Name *
-            </label>
-            <input
-              type="text"
-              value={bankingInfo.bank_name || ""}
-              onChange={(e) =>
-                handleBankingInfoChange("bank_name", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter bank name"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Bank Branch
-          </label>
-          <input
-            type="text"
-            value={bankingInfo.bank_branch || ""}
-            onChange={(e) =>
-              handleBankingInfoChange("bank_branch", e.target.value)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="Enter bank branch (optional)"
-          />
-        </div>
-
-        {errors.banking_info && (
-          <p className="text-red-600 text-sm">{errors.banking_info}</p>
-        )}
-      </div>
-    </div>
+        <TextField
+          label="Bank Name"
+          required
+          type="text"
+          value={bankingInfo.bank_name || ""}
+          onChange={(e) => handleBankingInfoChange("bank_name", e.target.value)}
+          placeholder="Enter bank name"
+          error={!!errors.banking_info}
+          fullWidth
+        />
+      </Box>
+    </Box>
   );
 };
 

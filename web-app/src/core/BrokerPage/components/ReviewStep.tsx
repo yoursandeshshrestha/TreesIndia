@@ -12,16 +12,9 @@ interface ReviewStepProps {
     profile_pic?: File | null;
   };
   errors: Record<string, string>;
-  isSubmitting: boolean;
-  onSubmit: () => void;
 }
 
-const ReviewStep: React.FC<ReviewStepProps> = ({
-  formData,
-  errors,
-  isSubmitting,
-  onSubmit,
-}) => {
+const ReviewStep: React.FC<ReviewStepProps> = ({ formData, errors }) => {
   const contactInfo = formData.contact_info
     ? JSON.parse(formData.contact_info)
     : {};
@@ -189,21 +182,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-end space-x-4 pt-6">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting || hasErrors}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            isSubmitting || hasErrors
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-        >
-          {isSubmitting ? "Submitting..." : "Submit Application"}
-        </button>
       </div>
     </div>
   );

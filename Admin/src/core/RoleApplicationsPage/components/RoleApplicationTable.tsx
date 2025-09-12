@@ -61,6 +61,11 @@ function RoleApplicationTable({
   };
 
   const getProfilePic = (application: EnhancedRoleApplication) => {
+    // First try to get avatar from user object
+    if (application.user?.avatar) {
+      return application.user.avatar;
+    }
+    // Fallback to documents profile pic
     if (application.worker?.documents?.profile_pic) {
       return application.worker.documents.profile_pic;
     }

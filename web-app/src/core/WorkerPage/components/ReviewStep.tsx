@@ -14,16 +14,9 @@ interface ReviewStepProps {
     police_verification?: File | null;
   };
   errors: Record<string, string>;
-  isSubmitting: boolean;
-  onSubmit: () => void;
 }
 
-const ReviewStep: React.FC<ReviewStepProps> = ({
-  formData,
-  errors,
-  isSubmitting,
-  onSubmit,
-}) => {
+const ReviewStep: React.FC<ReviewStepProps> = ({ formData, errors }) => {
   const contactInfo = formData.contact_info
     ? JSON.parse(formData.contact_info)
     : {};
@@ -80,6 +73,34 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </div>
         </div>
 
+        {/* Skills & Experience */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="text-md font-semibold text-gray-900 mb-3">
+            Skills & Experience
+          </h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Experience:</span>
+              <span className="text-sm font-medium text-gray-900">
+                {formData.experience_years || 0} years
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Skills:</span>
+              <div className="flex flex-wrap gap-1">
+                {skills.map((skill: string) => (
+                  <span
+                    key={skill}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Address Information */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-md font-semibold text-gray-900 mb-3">
@@ -121,27 +142,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </div>
         </div>
 
-        {/* Skills & Experience */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-md font-semibold text-gray-900 mb-3">
-            Skills & Experience
-          </h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Experience Years:</span>
-              <span className="text-sm font-medium text-gray-900">
-                {formData.experience_years || 0} years
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Skills:</span>
-              <span className="text-sm font-medium text-gray-900">
-                {skills.length > 0 ? skills.join(", ") : "Not provided"}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Banking Information */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-md font-semibold text-gray-900 mb-3">
@@ -172,14 +172,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 {bankingInfo.bank_name || "Not provided"}
               </span>
             </div>
-            {bankingInfo.bank_branch && (
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Bank Branch:</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {bankingInfo.bank_branch}
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -253,21 +245,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-end space-x-4 pt-6">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting || hasErrors}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            isSubmitting || hasErrors
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-        >
-          {isSubmitting ? "Submitting..." : "Submit Application"}
-        </button>
       </div>
     </div>
   );

@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { TextField, Box, Typography } from "@mui/material";
 
 interface BrokerDetailsStepProps {
   formData: {
@@ -15,54 +18,43 @@ const BrokerDetailsStep: React.FC<BrokerDetailsStepProps> = ({
   onFieldChange,
 }) => {
   return (
-    <div className="space-y-6 text-black">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Broker Details
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Please provide your broker license and agency information.
-        </p>
-      </div>
+    <Box sx={{ maxWidth: 600 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+      >
+        Broker Details
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+        Please provide your broker license and agency information.
+      </Typography>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            License Number *
-          </label>
-          <input
-            type="text"
-            value={formData.license}
-            onChange={(e) => onFieldChange("license", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.license ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter your broker license number"
-          />
-          {errors.license && (
-            <p className="text-red-600 text-sm mt-1">{errors.license}</p>
-          )}
-        </div>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <TextField
+          label="License Number"
+          required
+          type="text"
+          value={formData.license || ""}
+          onChange={(e) => onFieldChange("license", e.target.value)}
+          placeholder="Enter your broker license number"
+          error={!!errors.license}
+          helperText={errors.license}
+          fullWidth
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Agency Name *
-          </label>
-          <input
-            type="text"
-            value={formData.agency}
-            onChange={(e) => onFieldChange("agency", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.agency ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter your agency name"
-          />
-          {errors.agency && (
-            <p className="text-red-600 text-sm mt-1">{errors.agency}</p>
-          )}
-        </div>
-      </div>
-    </div>
+        <TextField
+          label="Agency Name"
+          required
+          type="text"
+          value={formData.agency || ""}
+          onChange={(e) => onFieldChange("agency", e.target.value)}
+          placeholder="Enter your agency name"
+          error={!!errors.agency}
+          helperText={errors.agency}
+          fullWidth
+        />
+      </Box>
+    </Box>
   );
 };
 

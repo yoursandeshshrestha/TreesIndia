@@ -127,24 +127,41 @@ export async function fetchUserVendors(
   page: number = 1,
   limit: number = 20
 ): Promise<UserVendorsResponse> {
-  const searchParams = new URLSearchParams();
-  searchParams.append("page", page.toString());
-  searchParams.append("limit", limit.toString());
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.append("page", page.toString());
+    searchParams.append("limit", limit.toString());
 
-  const url = `${API_BASE_URL}/vendors?${searchParams.toString()}`;
+    const url = `${API_BASE_URL}/vendors?${searchParams.toString()}`;
 
-  const response = await authenticatedFetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+    const response = await authenticatedFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user vendors: ${response.statusText}`);
+    if (!response.ok) {
+      // Try to parse the error response to get the actual error message
+      try {
+        const errorData = await response.json();
+        if (errorData && typeof errorData === "object") {
+          throw new Error(
+            errorData.message || errorData.error || `HTTP error! status: ${response.status}`
+          );
+        }
+      } catch (parseError) {
+        // If parsing fails, fall back to status text
+        throw new Error(`Failed to fetch user vendors: ${response.statusText}`);
+      }
+      throw new Error(`Failed to fetch user vendors: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching user vendors:", error);
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function createVendor(vendorData: CreateVendorRequest): Promise<{

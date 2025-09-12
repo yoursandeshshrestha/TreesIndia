@@ -8,6 +8,7 @@ interface FileUploadItemProps {
   error?: string;
   file: File | null;
   onFileChange: (field: string, file: File | null) => void;
+  maxSize?: number; // in MB
 }
 
 const FileUploadItem: React.FC<FileUploadItemProps> = ({
@@ -16,8 +17,37 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
   error,
   file,
   onFileChange,
+  maxSize,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // Handle file selection with size validation
+  const handleFileChange = (selectedFile: File | null) => {
+    // Clear any previous errors
+    setFileError(null);
+
+    if (selectedFile && maxSize) {
+      const fileSizeMB = selectedFile.size / (1024 * 1024);
+      if (fileSizeMB > maxSize) {
+        // Show error immediately and prevent file selection
+        setFileError(
+          `File size must be less than ${maxSize}MB (Selected: ${fileSizeMB.toFixed(
+            2
+          )}MB)`
+        );
+        // Clear the input value to prevent the file from being selected
+        const input = document.getElementById(field) as HTMLInputElement;
+        if (input) {
+          input.value = "";
+        }
+        return;
+      }
+    }
+
+    // Only call onFileChange if file passes validation
+    onFileChange(field, selectedFile);
+  };
 
   // Create preview URL when file changes
   useEffect(() => {
@@ -79,11 +109,17 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
         </div>
       ) : (
         // Show upload area when no file
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
+        <div
+          className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+            fileError
+              ? "border-red-300 bg-red-50"
+              : "border-gray-300 hover:border-green-500"
+          }`}
+        >
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => onFileChange(field, e.target.files?.[0] || null)}
+            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
             className="hidden"
             id={field}
           />
@@ -103,7 +139,12 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
         </div>
       )}
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {fileError && (
+        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-600 text-sm font-medium">{fileError}</p>
+        </div>
+      )}
     </div>
   );
 };

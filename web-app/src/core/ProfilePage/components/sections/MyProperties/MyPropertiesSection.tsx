@@ -93,19 +93,21 @@ export function MyPropertiesSection() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            My Properties
-          </h2>
-          <p className="text-gray-600 mt-1">Manage your property listings</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-semibold text-gray-900">My Properties</h2>
+        <p className="text-gray-600 mt-1">
+          Manage your property listings and bookings
+        </p>
+      </div>
+
+      {/* Add Property Button */}
+      <div className="py-6 border-t border-b border-gray-200">
         <button
           onClick={handleCreateProperty}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+          className="flex items-center gap-2 py-2 text-green-600 hover:text-green-700 cursor-pointer rounded-lg transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          List New Property
+          <Plus className="w-4 h-4" />
+          Add Property
         </button>
       </div>
 
@@ -137,24 +139,12 @@ export function MyPropertiesSection() {
 
       {/* Empty State */}
       {!isLoading && !isError && properties.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Home className="w-16 h-16 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Properties Listed
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              You haven&apos;t listed any properties yet. Start by creating your
-              first property listing.
-            </p>
-          </div>
-          <button
-            onClick={handleCreateProperty}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            List Your First Property
-          </button>
+        <div className="text-center py-8">
+          <Home className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">No saved properties</p>
+          <p className="text-sm text-gray-500 mt-1 mb-4">
+            Click the + button to add your first property
+          </p>
         </div>
       )}
 

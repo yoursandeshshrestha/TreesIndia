@@ -1,4 +1,8 @@
+"use client";
+
 import React, { useState } from "react";
+import { TextField, Box, Typography, Chip, Button, Grid } from "@mui/material";
+import { Add } from "@mui/icons-material";
 
 interface SkillsStepProps {
   formData: {
@@ -48,139 +52,109 @@ const SkillsStep: React.FC<SkillsStepProps> = ({
   };
 
   const handleAddCustomSkill = () => {
-    if (customSkill.trim()) {
-      const trimmedSkill = customSkill.trim();
-      const skillExists = skills.some(
-        (skill: string) => skill.toLowerCase() === trimmedSkill.toLowerCase()
-      );
-
-      if (!skillExists) {
-        const newSkills = [...skills, trimmedSkill];
-        onFieldChange("skills", JSON.stringify(newSkills));
-        setCustomSkill("");
-      }
+    if (customSkill.trim() && !skills.includes(customSkill.trim())) {
+      const newSkills = [...skills, customSkill.trim()];
+      onFieldChange("skills", JSON.stringify(newSkills));
+      setCustomSkill("");
     }
   };
 
-  const handleCustomSkillKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddCustomSkill();
-    }
+  const handleRemoveSkill = (skillToRemove: string) => {
+    const newSkills = skills.filter((s: string) => s !== skillToRemove);
+    onFieldChange("skills", JSON.stringify(newSkills));
   };
 
   return (
-    <div className="space-y-6 text-black">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Skills & Experience
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Select your skills and provide your work experience.
-        </p>
-      </div>
+    <Box sx={{ maxWidth: 600 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+      >
+        Skills & Experience
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+        Tell us about your skills and work experience.
+      </Typography>
 
-      <div className="space-y-6">
-        {/* Experience Years */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Years of Experience *
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="50"
-            value={formData.experience_years || 0}
-            onChange={(e) => onFieldChange("experience_years", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.experience_years ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter years of experience"
-          />
-          {errors.experience_years && (
-            <p className="text-red-600 text-sm mt-1">
-              {errors.experience_years}
-            </p>
-          )}
-        </div>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <TextField
+          label="Years of Experience"
+          required
+          type="number"
+          value={formData.experience_years || ""}
+          onChange={(e) => onFieldChange("experience_years", e.target.value)}
+          placeholder="Enter years of experience"
+          error={!!errors.experience_years}
+          helperText={errors.experience_years}
+          fullWidth
+        />
 
-        {/* Skills Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Skills *
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+            Select Your Skills
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
             {skillOptions.map((skill) => (
-              <button
+              <Chip
                 key={skill}
-                type="button"
+                label={skill}
                 onClick={() => handleSkillToggle(skill)}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                  skills.includes(skill)
-                    ? "bg-green-100 border-green-500 text-green-700"
-                    : "bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {skill}
-              </button>
+                color={skills.includes(skill) ? "primary" : "default"}
+                variant={skills.includes(skill) ? "filled" : "outlined"}
+              />
             ))}
-          </div>
-          {errors.skills && (
-            <p className="text-red-600 text-sm mt-2">{errors.skills}</p>
-          )}
-        </div>
+          </Box>
+        </Box>
 
-        {/* Custom Skill Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
             Add Custom Skill
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              label="Custom Skill"
               value={customSkill}
               onChange={(e) => setCustomSkill(e.target.value)}
-              onKeyPress={handleCustomSkillKeyPress}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter custom skill"
+              placeholder="Enter a custom skill"
+              fullWidth
             />
-            <button
-              type="button"
+            <Button
+              variant="outlined"
               onClick={handleAddCustomSkill}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              startIcon={<Add />}
+              disabled={!customSkill.trim()}
             >
               Add
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Box>
 
-        {/* Selected Skills Display */}
         {skills.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              Selected Skills ({skills.length})
-            </h4>
-            <div className="flex flex-wrap gap-2">
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+              Selected Skills
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {skills.map((skill: string) => (
-                <span
+                <Chip
                   key={skill}
-                  className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full flex items-center gap-1"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => handleSkillToggle(skill)}
-                    className="text-green-600 hover:text-green-800"
-                  >
-                    ×
-                  </button>
-                </span>
+                  label={skill}
+                  onDelete={() => handleRemoveSkill(skill)}
+                  color="primary"
+                  variant="filled"
+                />
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
-      </div>
-    </div>
+
+        {errors.skills && (
+          <Typography color="error" variant="body2">
+            {errors.skills}
+          </Typography>
+        )}
+      </Box>
+    </Box>
   );
 };
 

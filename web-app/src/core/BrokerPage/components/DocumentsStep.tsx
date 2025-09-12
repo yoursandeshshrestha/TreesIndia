@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { Box, Typography } from "@mui/material";
 import FileUploadItem from "./FileUploadItem";
 
 interface DocumentsStepProps {
@@ -17,42 +20,46 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
   onFileChange,
 }) => {
   return (
-    <div className="space-y-6 text-black">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Document Upload
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Please upload the required documents for verification.
-        </p>
-      </div>
+    <Box sx={{ maxWidth: 600 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+      >
+        Document Upload
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+        Please upload the required documents for verification.
+      </Typography>
 
-      <div className="space-y-6">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         <FileUploadItem
           field="aadhar_card"
-          label="Aadhaar Card"
-          file={formData.aadhar_card}
+          label="Aadhaar Card (Max 1MB)"
+          file={formData.aadhar_card ?? null}
           error={errors.aadhar_card}
           onFileChange={onFileChange}
+          maxSize={1}
         />
 
         <FileUploadItem
           field="pan_card"
-          label="PAN Card"
-          file={formData.pan_card}
+          label="PAN Card (Max 1MB)"
+          file={formData.pan_card ?? null}
           error={errors.pan_card}
           onFileChange={onFileChange}
+          maxSize={1}
         />
 
         <FileUploadItem
           field="profile_pic"
-          label="Profile Photo"
-          file={formData.profile_pic}
+          label="Profile Photo (Max 1MB)"
+          file={formData.profile_pic ?? null}
           error={errors.profile_pic}
           onFileChange={onFileChange}
+          maxSize={1}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

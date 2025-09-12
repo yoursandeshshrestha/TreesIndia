@@ -8,9 +8,24 @@ import { authenticatedFetch } from "./auth-api";
 const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `HTTP error! status: ${response.status}`
-    );
+    console.error("API Error Response:", {
+      status: response.status,
+      statusText: response.statusText,
+      errorData: errorData,
+    });
+
+    // Extract the specific error message from the backend response
+    let errorMessage = `HTTP error! status: ${response.status}`;
+
+    if (errorData.error) {
+      // Backend returns error in 'error' field
+      errorMessage = errorData.error;
+    } else if (errorData.message) {
+      // Backend returns error in 'message' field
+      errorMessage = errorData.message;
+    }
+
+    throw new Error(errorMessage);
   }
   return response.json();
 };

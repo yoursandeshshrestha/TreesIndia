@@ -28,5 +28,6 @@ func SetupRoleApplicationRoutes(group *gin.RouterGroup) {
 		adminApplications.GET("/pending", applicationController.GetPendingApplications)
 		adminApplications.GET("/:id", applicationController.GetApplication)
 		adminApplications.PUT("/:id", applicationController.UpdateApplication)
+		adminApplications.DELETE("/:id", applicationController.DeleteApplication)
 	}
 }

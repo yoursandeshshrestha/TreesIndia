@@ -63,7 +63,7 @@ func NewRoleApplicationController() *RoleApplicationController {
 // @Produce json
 // @Param experience_years formData int true "Years of experience"
 // @Param skills formData string true "JSON array of skills"
-// @Param contact_info formData string true "JSON object with alternative_number"
+// @Param contact_info formData string true "JSON object with name, email, phone, alternative_number"
 // @Param address formData string true "JSON object with address details"
 // @Param banking_info formData string true "JSON object with banking details"
 // @Param aadhar_card formData file true "Aadhar card document"
@@ -155,13 +155,13 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 	}
 	documents["pan_card"] = panURL
 
-	// Upload profile picture
+	// Upload profile picture to user avatars folder
 	profileFile, err := ctx.FormFile("profile_pic")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing profile picture", "Profile picture file is required"))
 		return
 	}
-	profileURL, err := c.cloudinaryService.UploadImage(profileFile, "role-applications/worker/documents")
+	profileURL, err := c.cloudinaryService.UploadImage(profileFile, "users/avatars")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to upload profile picture", err.Error()))
 		return
@@ -188,6 +188,26 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 		return
 	}
 
+	// Parse contact info to extract user updates
+	var userUpdates *models.User
+	var contactInfo map[string]interface{}
+	if err := json.Unmarshal([]byte(contactInfoStr), &contactInfo); err == nil {
+		userUpdates = &models.User{}
+		
+		// Extract name if provided
+		if name, ok := contactInfo["name"].(string); ok && name != "" {
+			userUpdates.Name = name
+		}
+		
+		// Extract email if provided
+		if email, ok := contactInfo["email"].(string); ok && email != "" {
+			userUpdates.Email = &email
+		}
+		
+		// Set avatar from uploaded profile picture
+		userUpdates.Avatar = profileURL
+	}
+
 	// Create worker data
 	workerData := &models.Worker{
 		Experience: experienceYears,
@@ -198,7 +218,7 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 		Documents:   string(documentsJSON),
 	}
 
-	application, err := c.applicationService.SubmitWorkerApplication(userID, workerData)
+	application, err := c.applicationService.SubmitWorkerApplication(userID, workerData, userUpdates)
 	if err != nil {
 		logrus.Errorf("Failed to submit worker application: %v", err)
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to submit application", err.Error()))
@@ -216,7 +236,7 @@ func (c *RoleApplicationController) SubmitWorkerApplication(ctx *gin.Context) {
 // @Produce json
 // @Param license formData string true "Broker license number"
 // @Param agency formData string true "Broker agency name"
-// @Param contact_info formData string true "JSON object with alternative_number"
+// @Param contact_info formData string true "JSON object with name, email, phone, alternative_number"
 // @Param address formData string true "JSON object with address details"
 // @Param aadhar_card formData file true "Aadhar card document"
 // @Param pan_card formData file true "PAN card document"
@@ -290,24 +310,43 @@ func (c *RoleApplicationController) SubmitBrokerApplication(ctx *gin.Context) {
 	}
 	documents["pan_card"] = panURL
 
-	// Upload profile picture
+	// Upload profile picture to user avatars folder
 	profileFile, err := ctx.FormFile("profile_pic")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Missing profile picture", "Profile picture file is required"))
 		return
 	}
-	profileURL, err := c.cloudinaryService.UploadImage(profileFile, "role-applications/broker/documents")
+	profileURL, err := c.cloudinaryService.UploadImage(profileFile, "users/avatars")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to upload profile picture", err.Error()))
 		return
 	}
-	documents["profile_pic"] = profileURL
 
 	// Convert documents to JSON string
 	documentsJSON, err := json.Marshal(documents)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process documents", "Error processing document data"))
 		return
+	}
+
+	// Parse contact info to extract user updates
+	var userUpdates *models.User
+	var contactInfo map[string]interface{}
+	if err := json.Unmarshal([]byte(contactInfoStr), &contactInfo); err == nil {
+		userUpdates = &models.User{}
+		
+		// Extract name if provided
+		if name, ok := contactInfo["name"].(string); ok && name != "" {
+			userUpdates.Name = name
+		}
+		
+		// Extract email if provided
+		if email, ok := contactInfo["email"].(string); ok && email != "" {
+			userUpdates.Email = &email
+		}
+		
+		// Set avatar from uploaded profile picture
+		userUpdates.Avatar = profileURL
 	}
 
 	// Create broker data
@@ -319,7 +358,7 @@ func (c *RoleApplicationController) SubmitBrokerApplication(ctx *gin.Context) {
 		Documents:   string(documentsJSON),
 	}
 
-	application, err := c.applicationService.SubmitBrokerApplication(userID, brokerData)
+	application, err := c.applicationService.SubmitBrokerApplication(userID, brokerData, userUpdates)
 	if err != nil {
 		logrus.Errorf("Failed to submit broker application: %v", err)
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to submit application", err.Error()))
@@ -602,4 +641,34 @@ func (c *RoleApplicationController) GetApplicationsWithFilters(ctx *gin.Context)
 	}
 	
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Applications retrieved successfully", response))
+}
+
+// DeleteApplication deletes a role application (admin only)
+// @Summary Delete application
+// @Description Delete a role application (admin only)
+// @Tags role-applications
+// @Produce json
+// @Param id path int true "Application ID"
+// @Success 200 {object} views.Response
+// @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response
+// @Failure 403 {object} views.Response
+// @Failure 404 {object} views.Response
+// @Router /admin/role-applications/{id} [delete]
+func (c *RoleApplicationController) DeleteApplication(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid application ID", "Application ID must be a valid number"))
+		return
+	}
+
+	err = c.applicationService.DeleteApplication(uint(id))
+	if err != nil {
+		logrus.Errorf("Failed to delete application: %v", err)
+		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Application not found", "Application with the specified ID does not exist"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Application deleted successfully", nil))
 }

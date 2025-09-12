@@ -5,3 +5,4 @@ export { default as AddressStep } from "./AddressStep";
 export { default as SkillsStep } from "./SkillsStep";
 export { default as BankingStep } from "./BankingStep";
 export { default as ReviewStep } from "./ReviewStep";
+export { default as WorkerApplySidebar } from "./WorkerApplySidebar";

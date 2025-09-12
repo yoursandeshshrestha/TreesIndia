@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { Plus, Building2 } from "lucide-react";
-import { useUserVendors } from "@/hooks/useVendors";
+import { useUserVendors, useVendorStats } from "@/hooks/useVendors";
+import { useProfile } from "@/hooks/useProfile";
 import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 import { ConfirmModal } from "@/commonComponents/ConfirmModal";
+import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 import { deleteVendor } from "@/lib/vendorApi";
 import { useRouter } from "next/navigation";
+import { isSubscriptionRequiredError } from "@/utils/subscriptionUtils";
 import MyVendorCard from "./MyVendorCard";
 
 export function MyVendorsSection() {
   const router = useRouter();
+  const { userProfile, isLoadingProfile } = useProfile();
   const {
     data: response,
     isLoading,
@@ -19,7 +23,16 @@ export function MyVendorsSection() {
     refetch,
   } = useUserVendors();
 
+  // Fetch vendor stats for subscription required UI
+  const { data: statsResponse } = useVendorStats(true);
+
   const vendors = response?.data || [];
+
+  // Check if the error is a subscription required error
+  const isSubscriptionError = isSubscriptionRequiredError(error);
+
+  // Check if user has active subscription
+  const hasActiveSubscription = userProfile?.subscription?.status === "active";
 
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState<{
@@ -84,11 +97,56 @@ export function MyVendorsSection() {
     });
   };
 
+  // Show loading state while checking profile
+  if (isLoadingProfile) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Show subscription required UI if user doesn't have active subscription
+  if (!hasActiveSubscription) {
+    return (
+      <SubscriptionRequired
+        title="Subscription Required to View My Vendors"
+        description="You need an active subscription to view and manage your vendor profiles."
+        features={[
+          "View all your vendor profiles",
+          "Manage vendor information",
+          "Update business details and gallery",
+          "Monitor vendor performance",
+          "Priority customer support",
+        ]}
+        vendorStats={statsResponse?.data}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
         <LoadingSpinner size="lg" />
       </div>
+    );
+  }
+
+  // Show subscription required UI if the error is subscription related
+  if (isError && isSubscriptionError) {
+    return (
+      <SubscriptionRequired
+        title="Subscription Required to View My Vendors"
+        description="You need an active subscription to view and manage your vendor profiles."
+        features={[
+          "View all your vendor profiles",
+          "Manage vendor information",
+          "Update business details and gallery",
+          "Monitor vendor performance",
+          "Priority customer support",
+        ]}
+        vendorStats={statsResponse?.data}
+      />
     );
   }
 
@@ -118,44 +176,34 @@ export function MyVendorsSection() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            My Vendor Profile
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage your vendor listings and business profiles
-          </p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-semibold text-gray-900">
+          My Vendor Profile
+        </h2>
+        <p className="text-gray-600 mt-1">
+          Manage your vendor listings and business profiles
+        </p>
+      </div>
+
+      {/* Add Vendor Profile Button */}
+      <div className="py-6 border-t border-b border-gray-200">
         <button
           onClick={handleCreateVendor}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+          className="flex items-center gap-2 py-2 text-green-600 hover:text-green-700 cursor-pointer rounded-lg transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Add Vendor Profile
         </button>
       </div>
 
       {/* Empty State */}
       {!isLoading && !isError && vendors.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Building2 className="w-16 h-16 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Vendor Profile Listed
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              You haven&apos;t created any vendor profile yet. Start by creating
-              your first vendor profile.
-            </p>
-          </div>
-          <button
-            onClick={handleCreateVendor}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create Your First Vendor Profile
-          </button>
+        <div className="text-center py-8">
+          <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">No saved vendor profiles</p>
+          <p className="text-sm text-gray-500 mt-1 mb-4">
+            Click the + button to add your first vendor profile
+          </p>
         </div>
       )}
 

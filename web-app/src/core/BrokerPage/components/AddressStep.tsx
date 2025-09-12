@@ -1,4 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { TextField, Box, Typography, Grid, Button } from "@mui/material";
+import { Target, Loader2 } from "lucide-react";
+import { useLocation } from "@/hooks/useLocationRedux";
+import { toast } from "sonner";
 
 interface AddressStepProps {
   formData: {
@@ -13,6 +19,8 @@ const AddressStep: React.FC<AddressStepProps> = ({
   errors,
   onFieldChange,
 }) => {
+  const { detectLocation } = useLocation();
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const address = formData.address ? JSON.parse(formData.address) : {};
 
   const handleAddressChange = (field: string, value: string) => {
@@ -20,94 +28,147 @@ const AddressStep: React.FC<AddressStepProps> = ({
     onFieldChange("address", JSON.stringify(updatedAddress));
   };
 
+  const handleDetectLocation = async () => {
+    setIsDetectingLocation(true);
+
+    try {
+      const detectedLocation = await detectLocation();
+
+      if (detectedLocation) {
+        const updatedAddress = {
+          ...address,
+          street: detectedLocation.address || "",
+          city: detectedLocation.city,
+          state: detectedLocation.state,
+          pincode: detectedLocation.postal_code || "",
+        };
+        onFieldChange("address", JSON.stringify(updatedAddress));
+        toast.success("Location detected successfully!");
+      }
+    } catch (error) {
+      console.error("Location detection error:", error);
+      toast.error("Failed to detect location. Please enter address manually.");
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 text-black">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Address Information
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Please provide your complete residential address.
-        </p>
-      </div>
+    <Box sx={{ maxWidth: 600 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+      >
+        Address Information
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 3, color: "#666" }}>
+        Please provide your complete residential address.
+      </Typography>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Street Address *
-          </label>
-          <input
-            type="text"
-            value={address.street || ""}
-            onChange={(e) => handleAddressChange("street", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              errors.address ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter street address"
-          />
-        </div>
+      {/* Fetch Current Location Button */}
+      <Box sx={{ mb: 4 }}>
+        <Button
+          onClick={handleDetectLocation}
+          disabled={isDetectingLocation}
+          variant="outlined"
+          startIcon={
+            isDetectingLocation ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Target className="w-4 h-4" />
+            )
+          }
+          sx={{
+            borderColor: "#00a871",
+            color: "#00a871",
+            textTransform: "none",
+            fontWeight: 500,
+            borderRadius: 2,
+            px: 3,
+            py: 1.5,
+            "&:hover": {
+              borderColor: "#008f5f",
+              backgroundColor: "#f0fdf4",
+            },
+            "&:disabled": {
+              borderColor: "#e0e0e0",
+              color: "#9e9e9e",
+              backgroundColor: "#f5f5f5",
+            },
+          }}
+        >
+          {isDetectingLocation
+            ? "Detecting location..."
+            : "Use Current Location"}
+        </Button>
+      </Box>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City *
-            </label>
-            <input
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <TextField
+          label="Street Address"
+          required
+          type="text"
+          value={address.street || ""}
+          onChange={(e) => handleAddressChange("street", e.target.value)}
+          placeholder="Enter street address"
+          error={!!errors.address}
+          helperText={errors.address}
+          fullWidth
+        />
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="City"
+              required
               type="text"
               value={address.city || ""}
               onChange={(e) => handleAddressChange("city", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               placeholder="Enter city"
+              error={!!errors.address}
+              fullWidth
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              State *
-            </label>
-            <input
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="State"
+              required
               type="text"
               value={address.state || ""}
               onChange={(e) => handleAddressChange("state", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               placeholder="Enter state"
+              error={!!errors.address}
+              fullWidth
             />
-          </div>
-        </div>
+          </Grid>
+        </Grid>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pincode *
-            </label>
-            <input
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Pincode"
+              required
               type="text"
               value={address.pincode || ""}
               onChange={(e) => handleAddressChange("pincode", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               placeholder="Enter pincode"
+              error={!!errors.address}
+              fullWidth
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Landmark
-            </label>
-            <input
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Landmark (Optional)"
               type="text"
               value={address.landmark || ""}
               onChange={(e) => handleAddressChange("landmark", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter landmark (optional)"
+              placeholder="Enter landmark"
+              fullWidth
             />
-          </div>
-        </div>
-
-        {errors.address && (
-          <p className="text-red-600 text-sm">{errors.address}</p>
-        )}
-      </div>
-    </div>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
   );
 };
 
