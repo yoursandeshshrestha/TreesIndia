@@ -5,8 +5,8 @@ import { ProfileOverview } from "./sections/ProfileOverview/ProfileOverview";
 import { WalletSection } from "./sections/Wallet/WalletSection";
 import { BookingsSection } from "./sections/Booking/BookingsSection";
 import { MyWorkSection } from "./sections/MyWork/MyWorkSection";
+import { MyVendorsSection } from "./sections/MyVendors/MyVendorsSection";
 import { SubscriptionSection } from "./sections/Subscription/SubscriptionSection";
-import { RatingsSection } from "./sections/Rating/RatingsSection";
 import { SettingsSection } from "./sections/Settings/SettingsSection";
 import { AddressSection } from "./sections/Address/AddressSection";
 import { AboutSection } from "./sections/About/AboutSection";
@@ -24,10 +24,10 @@ export function ProfileMainContent() {
         return <BookingsSection />;
       case "/profile/my-work":
         return <MyWorkSection />;
+      case "/profile/my-vendors":
+        return <MyVendorsSection />;
       case "/profile/subscription":
         return <SubscriptionSection />;
-      case "/profile/ratings":
-        return <RatingsSection />;
       case "/profile/settings":
         return <SettingsSection />;
       case "/profile/address":

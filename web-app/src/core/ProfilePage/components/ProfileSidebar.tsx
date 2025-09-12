@@ -9,7 +9,6 @@ import {
   Wallet,
   Calendar,
   CreditCard,
-  Star,
   Settings,
   MapPin,
   Info,
@@ -17,6 +16,7 @@ import {
   Briefcase,
   MessageCircle,
   Home,
+  Building2,
 } from "lucide-react";
 
 interface ProfileSidebarItem {
@@ -65,6 +65,12 @@ export function ProfileSidebar() {
         icon: <Home className="w-5 h-5" />,
         path: "/profile/my-properties",
       },
+      {
+        id: "my-vendors",
+        label: "My Vendor Profile",
+        icon: <Building2 className="w-5 h-5" />,
+        path: "/profile/my-vendors",
+      },
     ];
 
     // Add work/bookings item based on user type
@@ -89,12 +95,6 @@ export function ProfileSidebar() {
         label: "My Subscription",
         icon: <CreditCard className="w-5 h-5" />,
         path: "/profile/subscription",
-      },
-      {
-        id: "ratings",
-        label: "My Ratings",
-        icon: <Star className="w-5 h-5" />,
-        path: "/profile/ratings",
       },
       {
         id: "settings",

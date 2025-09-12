@@ -8,12 +8,24 @@ import PhotosStep from "./components/steps/PhotosStep";
 import { ChevronRight, CheckCircle, ArrowLeft } from "lucide-react";
 import { createProject } from "@/lib/projectApi";
 import { useRouter } from "next/navigation";
+import { useProfile } from "@/hooks/useProfile";
+import { useProjectStats } from "@/hooks/useProjects";
+import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 
 function ProjectCreatePage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // First, fetch user profile to check subscription status
+  const { userProfile, isLoadingProfile } = useProfile();
+
+  // Check if user has active subscription
+  const hasActiveSubscription = userProfile?.subscription?.status === "active";
+
+  // Fetch project stats (always fetch, even without subscription to show in UI)
+  const { data: statsResponse } = useProjectStats(true);
 
   const {
     formState,
@@ -36,6 +48,36 @@ function ProjectCreatePage() {
     const stepIndex = parseInt(stepId) - 1;
     goToStep(stepIndex);
   };
+
+  // Show loading state while checking profile
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show subscription required UI if user doesn't have active subscription
+  if (!hasActiveSubscription) {
+    return (
+      <SubscriptionRequired
+        title="Subscription Required to Create Projects"
+        description="You need an active subscription to create and manage projects."
+        features={[
+          "Create and manage your projects",
+          "Upload project images and details",
+          "Set project timelines and status",
+          "Manage project contact information",
+          "Priority customer support",
+        ]}
+        projectStats={statsResponse?.data}
+      />
+    );
+  }
 
   const renderCurrentStep = () => {
     const stepErrors = getStepErrors(currentStep.id);
