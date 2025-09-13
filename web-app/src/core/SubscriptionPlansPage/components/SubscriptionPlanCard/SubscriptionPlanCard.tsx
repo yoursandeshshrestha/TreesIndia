@@ -35,18 +35,48 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     );
   }
   const getPlanPrice = () => {
-    const basePrice = plan.price || 0;
-    // For yearly plans, show the actual yearly price
-    // For monthly plans, show monthly price
-    // For one-time plans, show the one-time price
-    return basePrice;
+    // Handle new pricing array structure
+    if (plan.pricing && plan.pricing.length > 0) {
+      // If there's only one pricing option, show it
+      if (plan.pricing.length === 1) {
+        return plan.pricing[0].price;
+      }
+      // If there are multiple pricing options, show the minimum price
+      const prices = plan.pricing.map((p) => p.price);
+      return Math.min(...prices);
+    }
+
+    // Fallback to legacy price field
+    return plan.price || 0;
   };
 
   const getPlanDuration = () => {
-    const duration = plan.duration_days || 30; // Default to 30 days if not specified
+    // Handle new pricing array structure
+    if (plan.pricing && plan.pricing.length > 0) {
+      // If there's only one pricing option, use its duration
+      if (plan.pricing.length === 1) {
+        const duration = plan.pricing[0].duration_days;
+        if (duration === 30) return "month";
+        if (duration === 365) return "year";
+        if (duration === 3650) return "lifetime";
+        if (duration === 1) return "day";
+        return `${duration} days`;
+      }
+      // If there are multiple pricing options, show the shortest duration
+      const durations = plan.pricing.map((p) => p.duration_days);
+      const minDuration = Math.min(...durations);
+      if (minDuration === 30) return "month";
+      if (minDuration === 365) return "year";
+      if (minDuration === 3650) return "lifetime";
+      if (minDuration === 1) return "day";
+      return `${minDuration} days`;
+    }
+
+    // Fallback to legacy duration_days field
+    const duration = plan.duration_days || 30;
     if (duration === 30) return "month";
     if (duration === 365) return "year";
-    if (duration === 3650) return "lifetime"; // One-time plan
+    if (duration === 3650) return "lifetime";
     if (duration === 1) return "day";
     return `${duration} days`;
   };
@@ -178,15 +208,22 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       )}
 
       <div className="text-left">
-        <h3 className="text-xl font-bold mb-2 text-white">{plan.name}</h3>
+        <h3 className="text-xl font-bold mb-2 text-white">
+          {plan.name} -{" "}
+          {getPlanDuration().charAt(0).toUpperCase() +
+            getPlanDuration().slice(1)}
+        </h3>
 
         <p className="text-sm mb-6 text-green-100">{getPlanDescription()}</p>
 
         <div className="mb-6">
-          <span className="text-4xl font-bold text-white">
-            ₹{getPlanPrice()}
-          </span>
-          <span className="ml-1 text-green-100">/ {getPlanDuration()}</span>
+          {/* Always show single price since we're now separating monthly/yearly plans */}
+          <div>
+            <span className="text-4xl font-bold text-white">
+              ₹{getPlanPrice()}
+            </span>
+            <span className="ml-1 text-green-100">/ {getPlanDuration()}</span>
+          </div>
         </div>
 
         <button

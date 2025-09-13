@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -13,7 +13,10 @@ import { PaymentMethodModal } from "@/commonComponents/PaymentMethodModel/Paymen
 import { SuccessModal } from "@/commonComponents/SuccessModal";
 import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
 import { useWallet } from "@/hooks/useWallet";
-import { SubscriptionPlan } from "@/types/subscription";
+import {
+  SubscriptionPlan,
+  GroupedSubscriptionPlan,
+} from "@/types/subscription";
 
 export const SubscriptionPlansPage: React.FC = () => {
   const router = useRouter();
@@ -21,11 +24,13 @@ export const SubscriptionPlansPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const {
     groupedPlan,
+    groupedPlans,
     loading,
     error,
     purchase,
     createPaymentOrder,
     completePurchase,
+    fetchAllGroupedPlans,
   } = useSubscription();
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
 
@@ -49,6 +54,11 @@ export const SubscriptionPlansPage: React.FC = () => {
     payment_id?: number;
   } | null>(null);
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+
+  // Fetch grouped plans when component mounts
+  useEffect(() => {
+    fetchAllGroupedPlans();
+  }, [fetchAllGroupedPlans]);
 
   const handleAuthRequired = () => {
     dispatch(openAuthModal({ redirectTo: "/subscription-plans" }));
@@ -84,7 +94,17 @@ export const SubscriptionPlansPage: React.FC = () => {
         setShowSuccessModal(true);
       } else if (method === "razorpay") {
         // Handle Razorpay payment
-        const paymentData = await createPaymentOrder(selectedPlan.ID);
+        // Determine duration type from the selected plan
+        const durationType =
+          selectedPlan.duration_type ||
+          (selectedPlan.pricing && selectedPlan.pricing.length > 0
+            ? selectedPlan.pricing[0].duration_type
+            : "monthly");
+
+        const paymentData = await createPaymentOrder(
+          selectedPlan.ID,
+          durationType
+        );
 
         setPaymentOrder({
           id: paymentData.order.id,
@@ -320,62 +340,87 @@ export const SubscriptionPlansPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Duration Toggle */}
-        {groupedPlan && (
-          <div className="flex justify-center mb-8">
-            <div className="bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => handleDurationChange("monthly")}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                  selectedDuration === "monthly"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => handleDurationChange("yearly")}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                  selectedDuration === "yearly"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Yearly
-                {groupedPlan.yearly && groupedPlan.monthly && (
-                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    Save{" "}
+        {/* Savings Info */}
+        {groupedPlans.length > 0 &&
+          groupedPlans[0].monthly &&
+          groupedPlans[0].yearly && (
+            <div className="flex justify-center mb-8">
+              <div className="bg-green-50 border border-green-200 rounded-lg px-6 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-800 font-medium">
+                    💰 Save{" "}
                     {Math.round(
                       (1 -
-                        groupedPlan.yearly.price /
-                          (groupedPlan.monthly.price * 12)) *
+                        groupedPlans[0].yearly.price /
+                          (groupedPlans[0].monthly.price * 12)) *
                         100
                     )}
-                    %
+                    % with Yearly Plan
                   </span>
-                )}
-              </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Plan Cards - Show both Monthly and Yearly side by side */}
+        {groupedPlans.length > 0 ? (
+          <div className="flex justify-center mb-12">
+            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
+              {groupedPlans.map((groupedPlan, index) => (
+                <React.Fragment key={`${groupedPlan.name}-container`}>
+                  {/* Monthly Plan */}
+                  {groupedPlan.monthly && (
+                    <SubscriptionPlanCard
+                      key={`${groupedPlan.name}-monthly`}
+                      plan={groupedPlan.monthly}
+                      onSelect={handleSelectPlan}
+                      onAuthRequired={
+                        !isAuthenticated ? handleAuthRequired : undefined
+                      }
+                      isPopular={false}
+                    />
+                  )}
+
+                  {/* Yearly Plan */}
+                  {groupedPlan.yearly && (
+                    <SubscriptionPlanCard
+                      key={`${groupedPlan.name}-yearly`}
+                      plan={groupedPlan.yearly}
+                      onSelect={handleSelectPlan}
+                      onAuthRequired={
+                        !isAuthenticated ? handleAuthRequired : undefined
+                      }
+                      isPopular={true} // Mark yearly as popular for savings
+                    />
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           </div>
-        )}
-
-        {/* Plan Card */}
-        {groupedPlan && (groupedPlan.monthly || groupedPlan.yearly) ? (
+        ) : groupedPlan && (groupedPlan.monthly || groupedPlan.yearly) ? (
+          // Fallback to single plan display for backward compatibility
           <div className="flex justify-center items-center mb-12">
-            <div className="w-full max-w-md">
-              <SubscriptionPlanCard
-                plan={
-                  selectedDuration === "monthly"
-                    ? groupedPlan.monthly || null
-                    : groupedPlan.yearly || null
-                }
-                onSelect={handleSelectPlan}
-                onAuthRequired={
-                  !isAuthenticated ? handleAuthRequired : undefined
-                }
-                isPopular={false}
-              />
+            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
+              {groupedPlan.monthly && (
+                <SubscriptionPlanCard
+                  plan={groupedPlan.monthly}
+                  onSelect={handleSelectPlan}
+                  onAuthRequired={
+                    !isAuthenticated ? handleAuthRequired : undefined
+                  }
+                  isPopular={false}
+                />
+              )}
+              {groupedPlan.yearly && (
+                <SubscriptionPlanCard
+                  plan={groupedPlan.yearly}
+                  onSelect={handleSelectPlan}
+                  onAuthRequired={
+                    !isAuthenticated ? handleAuthRequired : undefined
+                  }
+                  isPopular={true}
+                />
+              )}
             </div>
           </div>
         ) : (

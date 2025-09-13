@@ -5,6 +5,9 @@ import { MapPin, User, MessageCircle, Play, Square, Phone } from "lucide-react";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import { toast } from "sonner";
 import { locationTrackingWebSocket } from "@/services/websocketService";
+import { useAppDispatch } from "@/store/hooks";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WorkerAssignmentCardProps {
   assignment: WorkerAssignment;
@@ -29,6 +32,8 @@ export function WorkerAssignmentCard({
   isStarting = false,
   isCompleting = false,
 }: WorkerAssignmentCardProps) {
+  const dispatch = useAppDispatch();
+  const { user: currentUser } = useAuth();
   const [isTracking, setIsTracking] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -376,8 +381,18 @@ export function WorkerAssignmentCard({
               <div className="flex gap-6 justify-center">
                 <button
                   onClick={() => {
-                    // TODO: Implement chat functionality
-                    console.log("Open chat for assignment:", assignment.ID);
+                    if (assignment.booking?.user?.ID && currentUser?.id) {
+                      dispatch(
+                        openChatModalWithUser({
+                          user_id: assignment.booking.user.ID,
+                          worker_id: currentUser.id,
+                        })
+                      );
+                    } else {
+                      toast.error(
+                        "Unable to start chat - missing user information"
+                      );
+                    }
                   }}
                   className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
                   title="Chat with customer"
