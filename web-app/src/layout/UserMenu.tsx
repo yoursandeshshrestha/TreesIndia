@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   LogOut,
@@ -14,12 +14,112 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModal } from "@/store/slices/chatModalSlice";
+import { conversationStore } from "@/utils/conversationStore";
+import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
+import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
 import { useRouter } from "next/navigation";
 
 export const UserMenu: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
+    useState<number | null>(null);
+
+  // Load total unread count using the dedicated API (same as admin)
+  const loadTotalUnreadCount = async () => {
+    try {
+      const response = await getTotalUnreadCount();
+      setTotalUnreadCount(response.total_unread_count);
+      conversationStore.setCurrentUnreadCount(response.total_unread_count);
+    } catch (error) {
+      console.error("Failed to load unread count:", error);
+    }
+  };
+
+  // WebSocket connection for real-time unread count updates (same as admin)
+  useConversationWebSocket({
+    onMessage: (message) => {
+      // Emit message updates to conversation store for other components (same as admin)
+      conversationStore.emitUpdate(
+        message as { conversation_id: number; message: Record<string, unknown> }
+      );
+    },
+    onStatusUpdate: (status) => {
+      // Handle status updates if needed
+    },
+    onTotalUnreadCount: (count) => {
+      // Update total unread count directly from WebSocket
+      setTotalUnreadCount(count);
+      conversationStore.setCurrentUnreadCount(count);
+    },
+    onConversationUnreadCount: (conversationId, count) => {
+      // Emit conversation unread count updates to conversation store (same as admin)
+      conversationStore.emitConversationUnreadCountUpdate(
+        conversationId,
+        count
+      );
+    },
+  });
+
+  // Subscribe to open conversation changes
+  useEffect(() => {
+    const unsubscribeOpenConversation =
+      conversationStore.subscribeToOpenConversation((conversationId) => {
+        setCurrentlyOpenConversationId(conversationId);
+      });
+    return () => {
+      unsubscribeOpenConversation();
+    };
+  }, []);
+
+  // Load total unread count on component mount
+  useEffect(() => {
+    loadTotalUnreadCount();
+  }, []);
+
+  // Listen for read status updates to reload total count (same as admin)
+  useEffect(() => {
+    const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
+      () => {
+        // Reload total unread count when a conversation is marked as read
+        loadTotalUnreadCount();
+      }
+    );
+
+    const unsubscribeConversationList =
+      conversationStore.subscribeToConversationList((conversations) => {
+        // Calculate total unread count excluding currently open conversation (same as admin)
+        const filteredCount = conversations.reduce((total, conv) => {
+          if (conv.id !== currentlyOpenConversationId) {
+            return total + (conv.unread_count || 0);
+          }
+          return total;
+        }, 0);
+        setTotalUnreadCount(filteredCount);
+      });
+
+    const unsubscribeConversationUnreadCount =
+      conversationStore.subscribeToConversationUnreadCount(() => {
+        // When individual conversation unread count changes, reload total count
+        // This ensures real-time updates
+        loadTotalUnreadCount();
+      });
+
+    const unsubscribeRefresh = conversationStore.subscribeToRefresh(() => {
+      // When chat modal opens, refresh the total unread count
+      loadTotalUnreadCount();
+    });
+
+    return () => {
+      unsubscribeReadStatus();
+      unsubscribeConversationList();
+      unsubscribeConversationUnreadCount();
+      unsubscribeRefresh();
+    };
+  }, [currentlyOpenConversationId]);
 
   const handleLogout = async () => {
     await logout();
@@ -53,6 +153,23 @@ export const UserMenu: React.FC = () => {
             <span className="text-sm font-medium">
               {user.user_type === "worker" ? "My Work" : "My Bookings"}
             </span>
+          </button>
+
+          {/* Chat Button */}
+          <button
+            onClick={() => dispatch(openChatModal())}
+            className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">Messages</span>
+            {totalUnreadCount !== undefined &&
+              totalUnreadCount !== null &&
+              Number(totalUnreadCount) > 0 &&
+              currentlyOpenConversationId === null && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                  {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                </span>
+              )}
           </button>
 
           {/* User Menu Dropdown */}
@@ -120,14 +237,6 @@ export const UserMenu: React.FC = () => {
                 >
                   <UserIcon className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-700">Profile</span>
-                </button>
-
-                <button
-                  onClick={() => router.push("/profile/messages")}
-                  className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                >
-                  <MessageCircle className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">Messages</span>
                 </button>
 
                 <button className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left">
