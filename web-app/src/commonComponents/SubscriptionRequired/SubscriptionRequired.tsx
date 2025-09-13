@@ -4,6 +4,7 @@ import { Lock, ArrowRight, Building, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProjectStats } from "@/types/project";
 import { VendorStats } from "@/types/vendor";
+import { WorkerStats } from "@/types/worker";
 import { SubscriptionPlanCard } from "@/core/SubscriptionPlansPage/components/SubscriptionPlanCard";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -14,6 +15,7 @@ interface SubscriptionRequiredProps {
   onGetSubscription?: () => void;
   projectStats?: ProjectStats;
   vendorStats?: VendorStats;
+  workerStats?: WorkerStats;
 }
 
 export function SubscriptionRequired({
@@ -22,6 +24,7 @@ export function SubscriptionRequired({
   onGetSubscription,
   projectStats,
   vendorStats,
+  workerStats,
 }: SubscriptionRequiredProps) {
   const router = useRouter();
   const { groupedPlan, loading: subscriptionLoading } = useSubscription();
@@ -83,6 +86,21 @@ export function SubscriptionRequired({
                     {vendorStats.total_vendors}
                   </p>
                   <p className="text-lg text-gray-600">Vendors Available</p>
+                </div>
+              </div>
+            )}
+
+            {/* Worker Stats */}
+            {workerStats && (
+              <div className="mb-8">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">
+                    {workerStats.total}
+                  </p>
+                  <p className="text-lg text-gray-600">Workers Available</p>
                 </div>
               </div>
             )}
