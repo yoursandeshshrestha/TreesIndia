@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"treesindia/models"
 	"treesindia/services"
 	"treesindia/views"
@@ -28,11 +27,13 @@ func NewUserSubscriptionController() *UserSubscriptionController {
 type PurchaseSubscriptionRequest struct {
 	PlanID        uint   `json:"plan_id" binding:"required"`
 	PaymentMethod string `json:"payment_method" binding:"required"`
+	DurationType  string `json:"duration_type" binding:"required"`
 }
 
 // CreateSubscriptionPaymentOrderRequest represents subscription payment order request
 type CreateSubscriptionPaymentOrderRequest struct {
-	PlanID uint `json:"plan_id" binding:"required"`
+	PlanID       uint   `json:"plan_id" binding:"required"`
+	DurationType string `json:"duration_type" binding:"required"`
 }
 
 // CompleteSubscriptionPurchaseRequest represents subscription purchase completion request
@@ -78,7 +79,7 @@ func (usc *UserSubscriptionController) PurchaseSubscription(c *gin.Context) {
 		return
 	}
 
-	subscription, err := usc.subscriptionService.PurchaseSubscription(userID.(uint), req.PlanID, req.PaymentMethod)
+	subscription, err := usc.subscriptionService.PurchaseSubscription(userID.(uint), req.PlanID, req.PaymentMethod, req.DurationType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to purchase subscription", err.Error()))
 		return
@@ -112,7 +113,7 @@ func (usc *UserSubscriptionController) CreateSubscriptionPaymentOrder(c *gin.Con
 		return
 	}
 
-	payment, razorpayOrder, err := usc.subscriptionService.CreateSubscriptionPaymentOrder(userID.(uint), req.PlanID)
+	payment, razorpayOrder, err := usc.subscriptionService.CreateSubscriptionPaymentOrder(userID.(uint), req.PlanID, req.DurationType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create payment order", err.Error()))
 		return
@@ -231,109 +232,6 @@ func (usc *UserSubscriptionController) GetUserSubscriptionHistory(c *gin.Context
 // @Failure 400 {object} models.Response "Invalid request data"
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /admin/subscriptions/users/{user_id}/extend [put]
-func (usc *UserSubscriptionController) ExtendSubscription(c *gin.Context) {
-	userIDStr := c.Param("user_id")
-	userID, err := strconv.ParseUint(userIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid user ID", err.Error()))
-		return
-	}
 
-	var req ExtendSubscriptionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-		return
-	}
 
-	err = usc.subscriptionService.ExtendSubscription(uint(userID), req.Days)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to extend subscription", err.Error()))
-		return
-	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Subscription extended successfully", nil))
-}
-
-// RefreshUserSubscriptionStatus godoc
-// @Summary Refresh user subscription status
-// @Description Manually refresh user subscription status (Admin only)
-// @Tags User Subscriptions
-// @Accept json
-// @Produce json
-// @Param user_id path int true "User ID"
-// @Success 200 {object} models.Response "Subscription status refreshed successfully"
-// @Failure 400 {object} models.Response "Invalid user ID"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /admin/subscriptions/users/{user_id}/refresh-status [put]
-func (usc *UserSubscriptionController) RefreshUserSubscriptionStatus(c *gin.Context) {
-	userIDStr := c.Param("user_id")
-	userID, err := strconv.ParseUint(userIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid user ID", err.Error()))
-		return
-	}
-
-	user, err := usc.subscriptionService.CheckAndUpdateSubscriptionStatus(uint(userID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to refresh status", err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Subscription status refreshed successfully", user))
-}
-
-// GetAllSubscriptions godoc
-// @Summary Get all subscriptions
-// @Description Get all user subscriptions with pagination (Admin only)
-// @Tags User Subscriptions
-// @Accept json
-// @Produce json
-// @Param page query int false "Page number (default: 1)"
-// @Param page_size query int false "Page size (default: 10)"
-// @Success 200 {object} models.Response "Subscriptions retrieved successfully"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /admin/subscriptions [get]
-func (usc *UserSubscriptionController) GetAllSubscriptions(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
-
-	subscriptions, total, err := usc.subscriptionService.GetAllSubscriptions(page, pageSize)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve subscriptions", err.Error()))
-		return
-	}
-
-	response := map[string]interface{}{
-		"subscriptions": subscriptions,
-		"pagination": map[string]interface{}{
-			"page":       page,
-			"page_size":  pageSize,
-			"total":      total,
-			"total_pages": (int(total) + pageSize - 1) / pageSize,
-		},
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Subscriptions retrieved successfully", response))
-}
-
-// GetExpiringSubscriptions godoc
-// @Summary Get expiring subscriptions
-// @Description Get subscriptions expiring within specified days (Admin only)
-// @Tags User Subscriptions
-// @Accept json
-// @Produce json
-// @Param days query int false "Days before expiry (default: 7)"
-// @Success 200 {object} models.Response "Expiring subscriptions retrieved successfully"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /admin/subscriptions/expiring [get]
-func (usc *UserSubscriptionController) GetExpiringSubscriptions(c *gin.Context) {
-	days, _ := strconv.Atoi(c.DefaultQuery("days", "7"))
-
-	subscriptions, err := usc.subscriptionService.GetExpiringSubscriptions(days)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve expiring subscriptions", err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Expiring subscriptions retrieved successfully", subscriptions))
-}

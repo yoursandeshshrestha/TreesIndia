@@ -3,7 +3,6 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"treesindia/models"
 	"treesindia/services"
 	"treesindia/views"
 
@@ -25,12 +24,12 @@ func NewSubscriptionPlanController() *SubscriptionPlanController {
 }
 
 // CreatePlan godoc
-// @Summary Create subscription plan
-// @Description Create a new subscription plan (Admin only)
+// @Summary Create subscription plan with multiple pricing options
+// @Description Create a new subscription plan with multiple pricing options (Admin only)
 // @Tags Subscription Plans
 // @Accept json
 // @Produce json
-// @Param plan body map[string]interface{} true "Plan data"
+// @Param plan body map[string]interface{} true "Plan data with pricing array"
 // @Success 201 {object} models.Response "Plan created successfully"
 // @Failure 400 {object} models.Response "Invalid request data"
 // @Failure 500 {object} models.Response "Internal server error"
@@ -42,7 +41,7 @@ func (spc *SubscriptionPlanController) CreatePlan(c *gin.Context) {
 		return
 	}
 
-	plan, err := spc.planService.CreatePlan(planData)
+	plan, err := spc.planService.CreatePlanWithPricing(planData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create plan", err.Error()))
 		return
@@ -51,31 +50,33 @@ func (spc *SubscriptionPlanController) CreatePlan(c *gin.Context) {
 	c.JSON(http.StatusCreated, views.CreateSuccessResponse("Subscription plan created successfully", plan))
 }
 
-// CreatePlanWithBothDurations godoc
-// @Summary Create subscription plan with both monthly and yearly pricing
-// @Description Create a subscription plan with both monthly and yearly pricing options (Admin only)
+// TogglePlanStatus godoc
+// @Summary Toggle subscription plan status
+// @Description Toggle the active status of a subscription plan (Admin only)
 // @Tags Subscription Plans
 // @Accept json
 // @Produce json
-// @Param plan body map[string]interface{} true "Plan data with monthly_price and yearly_price"
-// @Success 201 {object} models.Response "Plans created successfully"
-// @Failure 400 {object} models.Response "Invalid request data"
+// @Param id path int true "Plan ID"
+// @Success 200 {object} models.Response "Plan status toggled successfully"
+// @Failure 400 {object} models.Response "Invalid plan ID"
+// @Failure 404 {object} models.Response "Plan not found"
 // @Failure 500 {object} models.Response "Internal server error"
-// @Router /admin/subscription-plans/both [post]
-func (spc *SubscriptionPlanController) CreatePlanWithBothDurations(c *gin.Context) {
-	var planData map[string]interface{}
-	if err := c.ShouldBindJSON(&planData); err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-		return
-	}
-
-	plans, err := spc.planService.CreatePlanWithBothDurations(planData)
+// @Router /admin/subscription-plans/{id}/toggle [patch]
+func (spc *SubscriptionPlanController) TogglePlanStatus(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create plans", err.Error()))
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid plan ID", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusCreated, views.CreateSuccessResponse("Subscription plans created successfully", plans))
+	plan, err := spc.planService.TogglePlanStatus(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to toggle plan status", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plan status toggled successfully", plan))
 }
 
 // GetPlanByID godoc
@@ -89,22 +90,6 @@ func (spc *SubscriptionPlanController) CreatePlanWithBothDurations(c *gin.Contex
 // @Failure 404 {object} models.Response "Plan not found"
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /subscription-plans/{id} [get]
-func (spc *SubscriptionPlanController) GetPlanByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid plan ID", err.Error()))
-		return
-	}
-
-	plan, err := spc.planService.GetPlanByID(uint(id))
-	if err != nil {
-		c.JSON(http.StatusNotFound, views.CreateErrorResponse("Plan not found", err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plan retrieved successfully", plan))
-}
 
 // GetAllPlans godoc
 // @Summary Get all subscription plans
@@ -125,43 +110,7 @@ func (spc *SubscriptionPlanController) GetAllPlans(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plans retrieved successfully", plans))
 }
 
-// GetGroupedPlans godoc
-// @Summary Get grouped subscription plans
-// @Description Get subscription plans grouped with monthly and yearly options
-// @Tags Subscription Plans
-// @Accept json
-// @Produce json
-// @Success 200 {object} models.Response "Grouped plans retrieved successfully"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /subscription-plans/grouped [get]
-func (spc *SubscriptionPlanController) GetGroupedPlans(c *gin.Context) {
-	groupedPlan, err := spc.planService.GetGroupedPlans()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve grouped plans", err.Error()))
-		return
-	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Grouped plans retrieved successfully", groupedPlan))
-}
-
-// GetActivePlans godoc
-// @Summary Get active subscription plans
-// @Description Get all active subscription plans
-// @Tags Subscription Plans
-// @Accept json
-// @Produce json
-// @Success 200 {object} models.Response "Active plans retrieved successfully"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /subscription-plans/active [get]
-func (spc *SubscriptionPlanController) GetActivePlans(c *gin.Context) {
-	plans, err := spc.planService.GetActivePlans()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve active plans", err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Active plans retrieved successfully", plans))
-}
 
 // UpdatePlan godoc
 // @Summary Update subscription plan
@@ -227,31 +176,3 @@ func (spc *SubscriptionPlanController) DeletePlan(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plan deleted successfully", nil))
 }
 
-// GetPlansByDuration godoc
-// @Summary Get subscription plans by duration
-// @Description Get subscription plans filtered by duration
-// @Tags Subscription Plans
-// @Accept json
-// @Produce json
-// @Param duration path string true "Duration (monthly, yearly)"
-// @Success 200 {object} models.Response "Plans retrieved successfully"
-// @Failure 400 {object} models.Response "Invalid duration"
-// @Failure 500 {object} models.Response "Internal server error"
-// @Router /subscription-plans/duration/{duration} [get]
-func (spc *SubscriptionPlanController) GetPlansByDuration(c *gin.Context) {
-	duration := c.Param("duration")
-	
-	// Validate duration
-	if duration != models.DurationMonthly && duration != models.DurationYearly {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid duration", "Duration must be monthly or yearly"))
-		return
-	}
-
-	plans, err := spc.planService.GetPlansByDuration(duration)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to retrieve plans", err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Plans retrieved successfully", plans))
-}
