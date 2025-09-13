@@ -34,16 +34,47 @@ func (j *JSONB) Scan(value interface{}) error {
 	return json.Unmarshal(bytes, j)
 }
 
+// PricingOptionsJSONB represents a JSONB field for pricing options array
+type PricingOptionsJSONB []PricingOption
+
+// Value implements the driver.Valuer interface
+func (p PricingOptionsJSONB) Value() (driver.Value, error) {
+	if p == nil {
+		return nil, nil
+	}
+	return json.Marshal(p)
+}
+
+// Scan implements the sql.Scanner interface
+func (p *PricingOptionsJSONB) Scan(value interface{}) error {
+	if value == nil {
+		*p = nil
+		return nil
+	}
+	
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("cannot scan non-byte value into PricingOptionsJSONB")
+	}
+	
+	return json.Unmarshal(bytes, p)
+}
+
+// PricingOption represents a pricing option for a subscription plan
+type PricingOption struct {
+	DurationType string  `json:"duration_type"` // "monthly" or "yearly"
+	DurationDays int     `json:"duration_days"` // Duration in days (30 or 365)
+	Price        float64 `json:"price"`         // Price for this duration
+}
+
 // SubscriptionPlan represents available subscription plans
 type SubscriptionPlan struct {
 	gorm.Model
-	Name         string  `json:"name" gorm:"not null"`                    // "Broker Plan"
-	DurationType string  `json:"duration_type" gorm:"not null;unique"`    // "monthly" or "yearly"
-	DurationDays int     `json:"duration_days" gorm:"not null"`           // Duration in days (30 or 365)
-	Price        float64 `json:"price" gorm:"not null"`                   // Admin set price
-	IsActive     bool    `json:"is_active" gorm:"default:true"`           // Admin can enable/disable
-	Description  string  `json:"description"`                             // Plan description
-	Features     JSONB   `json:"features" gorm:"type:jsonb"`              // Plan features as JSON
+	Name        string               `json:"name" gorm:"not null;unique"`                    // "Growth Plan"
+	IsActive    bool                 `json:"is_active" gorm:"default:true"`                  // Admin can enable/disable
+	Description string               `json:"description"`                                    // Plan description
+	Features    JSONB                `json:"features" gorm:"type:jsonb"`                     // Plan features as JSON
+	Pricing     PricingOptionsJSONB  `json:"pricing" gorm:"type:jsonb"`                      // Pricing options as JSON array
 	
 	// Relationships
 	UserSubscriptions []UserSubscription `json:"user_subscriptions,omitempty" gorm:"foreignKey:PlanID"`

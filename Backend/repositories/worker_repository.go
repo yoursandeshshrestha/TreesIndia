@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"strings"
 	"treesindia/database"
 	"treesindia/models"
 
@@ -74,14 +75,88 @@ func (wr *WorkerRepository) GetAllWorkers(filters *WorkerFilters) ([]models.Work
 
 	if filters != nil {
 		if filters.IsActive != nil {
-			query = query.Where("is_active = ?", *filters.IsActive)
+			query = query.Where("workers.is_active = ?", *filters.IsActive)
 		}
 		if filters.IsAvailable != nil {
-			query = query.Where("is_available = ?", *filters.IsAvailable)
+			query = query.Where("workers.is_available = ?", *filters.IsAvailable)
 		}
 		if filters.WorkerType != "" {
-			query = query.Where("worker_type = ?", filters.WorkerType)
+			query = query.Where("workers.worker_type = ?", filters.WorkerType)
 		}
+		
+		// Search filter - simple substring matching in worker name, skills, and address
+		if filters.Search != "" {
+			searchTerm := "%" + strings.ToLower(filters.Search) + "%"
+			query = query.Where("LOWER(workers.contact_info::text) ILIKE ? OR LOWER(workers.skills::text) ILIKE ? OR LOWER(workers.address::text) ILIKE ?", 
+				searchTerm, searchTerm, searchTerm)
+		}
+		
+		// Skills filter - simple substring matching in skills JSON array
+		if filters.Skills != "" {
+			// Split skills by comma and create OR conditions for each skill
+			skills := strings.Split(filters.Skills, ",")
+			var skillConditions []string
+			var skillArgs []interface{}
+			
+			for _, skill := range skills {
+				skill = strings.TrimSpace(skill)
+				if skill != "" {
+					// Simple substring search in skills
+					skillConditions = append(skillConditions, "LOWER(workers.skills::text) ILIKE ?")
+					skillArgs = append(skillArgs, "%"+strings.ToLower(skill)+"%")
+				}
+			}
+			
+			if len(skillConditions) > 0 {
+				query = query.Where(strings.Join(skillConditions, " OR "), skillArgs...)
+			}
+		}
+		
+		// Experience range filters
+		if filters.MinExperience != nil {
+			query = query.Where("workers.experience_years >= ?", *filters.MinExperience)
+		}
+		if filters.MaxExperience != nil {
+			query = query.Where("workers.experience_years <= ?", *filters.MaxExperience)
+		}
+		
+		// Location filters
+		if filters.State != "" {
+			query = query.Where("workers.address::text ILIKE ?", "%\"state\":\""+filters.State+"\"%")
+		}
+		if filters.City != "" {
+			query = query.Where("workers.address::text ILIKE ?", "%\"city\":\""+filters.City+"\"%")
+		}
+		
+		// Sorting
+		if filters.SortBy != "" {
+			order := "ASC"
+			if filters.SortOrder == "desc" {
+				order = "DESC"
+			}
+			
+			switch filters.SortBy {
+			case "newest", "oldest":
+				query = query.Order("workers.created_at " + order)
+			case "highest_experience", "lowest_experience":
+				query = query.Order("workers.experience_years " + order)
+			case "rating":
+				query = query.Order("workers.rating " + order)
+			case "total_bookings":
+				query = query.Order("workers.total_bookings " + order)
+			case "earnings":
+				query = query.Order("workers.earnings " + order)
+			default:
+				// Default sorting by created_at DESC
+				query = query.Order("workers.created_at DESC")
+			}
+		} else {
+			// Default sorting by created_at DESC
+			query = query.Order("workers.created_at DESC")
+		}
+	} else {
+		// Default sorting when no filters
+		query = query.Order("workers.created_at DESC")
 	}
 
 	err := query.Find(&workers).Error
@@ -90,7 +165,15 @@ func (wr *WorkerRepository) GetAllWorkers(filters *WorkerFilters) ([]models.Work
 
 // WorkerFilters represents filters for worker queries
 type WorkerFilters struct {
-	IsActive    *bool              `json:"is_active"`
-	IsAvailable *bool              `json:"is_available"`
-	WorkerType  models.WorkerType  `json:"worker_type"`
+	IsActive      *bool              `json:"is_active"`
+	IsAvailable   *bool              `json:"is_available"`
+	WorkerType    models.WorkerType  `json:"worker_type"`
+	Search        string             `json:"search"`
+	Skills        string             `json:"skills"`
+	MinExperience *int               `json:"min_experience"`
+	MaxExperience *int               `json:"max_experience"`
+	State         string             `json:"state"`
+	City          string             `json:"city"`
+	SortBy        string             `json:"sort_by"`
+	SortOrder     string             `json:"sort_order"`
 }

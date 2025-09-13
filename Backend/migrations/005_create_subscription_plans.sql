@@ -5,18 +5,14 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,         -- Plan name (unique)
     description TEXT,
     features JSONB,
     is_active BOOLEAN DEFAULT true,
-    
-    -- Duration and pricing
-    duration_type TEXT NOT NULL,       -- "monthly" or "yearly" only
-    duration_days INTEGER NOT NULL,    -- 30 or 365
-    price DECIMAL NOT NULL,
+    pricing JSONB NOT NULL,            -- Pricing options array: [{"duration_type": "monthly", "duration_days": 30, "price": 599}, {"duration_type": "yearly", "duration_days": 365, "price": 4999}]
     
     -- Constraints
-    UNIQUE(duration_type)              -- Only one monthly and one yearly record
+    CONSTRAINT valid_pricing_structure CHECK (jsonb_typeof(pricing) = 'array')
 );
 
 -- +goose Down
