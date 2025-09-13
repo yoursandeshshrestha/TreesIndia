@@ -429,6 +429,7 @@ func (c *RoleApplicationController) GetApplication(ctx *gin.Context) {
 type UpdateApplicationRequest struct {
 	Status     string `json:"status" binding:"required,oneof=approved rejected"`
 	AdminNotes string `json:"admin_notes,omitempty"`
+	WorkerType string `json:"worker_type,omitempty"` // For worker applications: "normal" or "treesindia_worker"
 }
 
 // UpdateApplication updates a role application (admin only)
@@ -439,6 +440,7 @@ type UpdateApplicationRequest struct {
 // @Produce json
 // @Param id path int true "Application ID"
 // @Param request body UpdateApplicationRequest true "Update application request"
+// @Param worker_type body string false "Worker type for worker applications (normal, treesindia_worker)"
 // @Success 200 {object} views.Response{data=models.RoleApplication}
 // @Failure 400 {object} views.Response
 // @Failure 401 {object} views.Response
@@ -482,7 +484,17 @@ func (c *RoleApplicationController) UpdateApplication(ctx *gin.Context) {
 		return
 	}
 
-	application, err := c.applicationService.UpdateApplication(uint(id), adminID, applicationStatus)
+	// Validate worker_type if provided
+	var workerType models.WorkerType
+	if req.WorkerType != "" {
+		if req.WorkerType != "normal" && req.WorkerType != "treesindia_worker" {
+			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid worker type", "worker_type must be 'normal' or 'treesindia_worker'"))
+			return
+		}
+		workerType = models.WorkerType(req.WorkerType)
+	}
+
+	application, err := c.applicationService.UpdateApplication(uint(id), adminID, applicationStatus, &workerType)
 	if err != nil {
 		logrus.Errorf("Failed to update application: %v", err)
 		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Application not found", "Application with the specified ID does not exist"))

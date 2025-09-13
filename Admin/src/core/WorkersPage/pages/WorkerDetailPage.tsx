@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, Phone, Mail, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Calendar, Copy } from "lucide-react";
 import { format } from "date-fns";
 import Button from "@/components/Button/Base/Button";
 import { Loader } from "@/components/Loader";
@@ -17,6 +17,15 @@ export default function WorkerDetailPage() {
   const [worker, setWorker] = useState<EnhancedWorker | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here if you have one
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -197,22 +206,44 @@ export default function WorkerDetailPage() {
                     {worker.user?.phone && (
                       <div className="flex items-center space-x-3">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">Phone</p>
-                          <p className="font-medium">{worker.user.phone}</p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium">{worker.user.phone}</p>
+                            <button
+                              onClick={() => copyToClipboard(worker.user.phone)}
+                              className="p-1 hover:bg-gray-100 rounded transition-colors"
+                              title="Copy phone number"
+                            >
+                              <Copy className="h-3 w-3 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
                     {worker.contact_info?.alternative_number && (
                       <div className="flex items-center space-x-3">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">
                             Alternative Phone
                           </p>
-                          <p className="font-medium">
-                            {worker.contact_info.alternative_number}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium">
+                              {worker.contact_info.alternative_number}
+                            </p>
+                            <button
+                              onClick={() =>
+                                copyToClipboard(
+                                  worker.contact_info.alternative_number
+                                )
+                              }
+                              className="p-1 hover:bg-gray-100 rounded transition-colors"
+                              title="Copy alternative phone number"
+                            >
+                              <Copy className="h-3 w-3 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}

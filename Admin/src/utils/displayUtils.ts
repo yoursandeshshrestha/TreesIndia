@@ -98,6 +98,34 @@ export const displayDateTime = (
 };
 
 /**
+ * Formats a date and time string in chat format: "01:09 PM | 9 Mar"
+ */
+export const displayChatDateTime = (
+  dateTimeString: string | null | undefined
+): string => {
+  if (!dateTimeString) {
+    return "Not Provided";
+  }
+
+  try {
+    const date = new Date(dateTimeString);
+    const time = date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const dateStr = date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    });
+    return `${time} | ${dateStr}`;
+  } catch (error) {
+    console.error("Error formatting chat date/time:", error);
+    return "Invalid Date/Time";
+  }
+};
+
+/**
  * Formats currency, returns "Not Provided" if null/undefined
  */
 export const displayCurrency = (

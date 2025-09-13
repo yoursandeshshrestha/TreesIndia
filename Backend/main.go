@@ -10,6 +10,7 @@ import (
 	"treesindia/controllers"
 	"treesindia/database"
 	"treesindia/middleware"
+	"treesindia/repositories"
 	"treesindia/routes"
 	"treesindia/seed"
 	"treesindia/services"
@@ -205,12 +206,26 @@ func main() {
 	wsService := services.NewWebSocketService(locationTrackingService)
 	wsController := controllers.NewWebSocketController(wsService)
 
+	// Initialize Simple Conversation WebSocket service
+	simpleConversationWsService := services.NewSimpleConversationWebSocketService()
+
 	// Update location tracking service with WebSocket service
 	locationTrackingService.SetWebSocketService(wsService)
 
 	// Initialize services with WebSocket service
 	chatService := services.NewChatService(wsService)
 	workerAssignmentService := services.NewWorkerAssignmentService(chatService, locationTrackingService)
+
+	// Initialize Simple Conversation services
+	simpleConversationRepo := repositories.NewSimpleConversationRepository(db)
+	simpleConversationMessageRepo := repositories.NewSimpleConversationMessageRepository(db)
+	userRepo := repositories.NewUserRepository()
+	simpleConversationService := services.NewSimpleConversationService(
+		simpleConversationRepo,
+		simpleConversationMessageRepo,
+		userRepo,
+		simpleConversationWsService,
+	)
 
 	// Initialize notification services
 	deviceManagementService := services.NewDeviceManagementService(fcmService)
@@ -224,13 +239,18 @@ func main() {
 	tokenCleanupService := services.NewTokenCleanupService(deviceManagementService)
 	tokenCleanupService.Start()
 
+	// Start Simple Conversation WebSocket service
+	go simpleConversationWsService.Start()
+
 	// Setup WebSocket routes (outside of /api/v1 prefix)
-	fmt.Println("Setting up WebSocket routes...")
 	routes.SetupWebSocketRoutes(r, wsController)
-	fmt.Println("WebSocket routes setup completed")
 
 	// Setup chat routes with WebSocket service
 	routes.SetupChatRoutes(r.Group("/api/v1"), chatService)
+
+	// Setup simple conversation routes
+	routes.SetupSimpleConversationRoutes(r.Group("/api/v1"), simpleConversationService)
+	routes.SetupSimpleConversationWebSocketRoutes(r.Group("/api/v1"), simpleConversationWsService)
 
 	// Setup worker assignment routes with chat service
 	bookingMiddleware := middleware.NewDynamicConfigMiddleware()
