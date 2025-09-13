@@ -50,12 +50,6 @@ export function ProfileSidebar() {
         path: "/profile/wallet",
       },
       {
-        id: "messages",
-        label: "Messages",
-        icon: <MessageCircle className="w-5 h-5" />,
-        path: "/profile/messages",
-      },
-      {
         id: "address",
         label: "Manage Address",
         icon: <MapPin className="w-5 h-5" />,

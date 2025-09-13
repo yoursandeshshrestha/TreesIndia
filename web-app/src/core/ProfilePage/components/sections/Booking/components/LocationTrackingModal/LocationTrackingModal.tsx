@@ -7,9 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import type { WorkerLocation } from "@/types/location-tracking";
 import { locationTrackingWebSocket } from "@/services/websocketService";
-import { useBookingChatRoom } from "@/hooks/useChat";
 import { LocationMap } from "./LocationMap";
-import { RealTimeChat } from "./RealTimeChat";
+import { SimpleRealTimeChat } from "./SimpleRealTimeChat";
 
 interface LocationTrackingModalProps {
   isOpen: boolean;
@@ -29,12 +28,9 @@ export function LocationTrackingModal({
   onClose,
   assignment,
 }: LocationTrackingModalProps) {
-  // Get chat room for this booking
-  const { data: bookingChatRoomData } = useBookingChatRoom(
-    assignment.booking_id
-  );
-
-  const chatRoom = bookingChatRoomData?.chat_room;
+  // For now, we'll use a simple conversation system
+  // In the future, this could be enhanced to create booking-specific conversations
+  const [conversationId, setConversationId] = useState<number | null>(null);
 
   // Add CSS for pulsing animation
   React.useEffect(() => {
@@ -373,16 +369,18 @@ export function LocationTrackingModal({
 
                 {/* Right Side - Chat */}
                 <div className="w-96 border-l border-gray-200">
-                  {chatRoom ? (
-                    <RealTimeChat
-                      roomId={chatRoom.id}
+                  {conversationId ? (
+                    <SimpleRealTimeChat
+                      conversationId={conversationId}
                       connectionError={connectionError}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       <div className="text-center">
-                        <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
-                        <p className="text-sm">Loading chat...</p>
+                        <p className="text-sm">Chat feature coming soon</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Use the main chat modal for communication
+                        </p>
                       </div>
                     </div>
                   )}
