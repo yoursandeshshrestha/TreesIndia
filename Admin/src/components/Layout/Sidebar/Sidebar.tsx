@@ -6,6 +6,9 @@ import { usePathname } from "next/navigation";
 import { useAppDispatch } from "@/app/store";
 import { setSidebarOpen } from "@/app/store";
 import ProfileCard from "./ProfileCard";
+import { useAdminConversationWebSocket } from "@/hooks/useAdminConversationWebSocket";
+import { conversationApi } from "@/core/ChatManagementPage/services/conversationApi";
+import { conversationStore } from "@/utils/conversationStore";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -16,6 +19,101 @@ const Sidebar = () => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [isMobile, setIsMobile] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Real-time conversation state
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
+    useState<number | null>(null);
+
+  // WebSocket for all real-time updates - single connection for the entire app
+  useAdminConversationWebSocket({
+    onTotalUnreadCount: (count) => {
+      // Use the backend total unread count as a fallback
+      // The conversation list subscription will override this with filtered count
+      setTotalUnreadCount(count);
+    },
+    onMessage: (message) => {
+      // Emit message updates to conversation store for other components
+      conversationStore.emitUpdate(
+        message as { conversation_id: number; message: Record<string, unknown> }
+      );
+    },
+    onStatusUpdate: (status) => {
+      // Handle status updates if needed
+      console.log("Status update:", status);
+    },
+    onConversationUnreadCount: (conversationId, count) => {
+      // Emit conversation unread count updates to conversation store
+      conversationStore.emitConversationUnreadCountUpdate(
+        conversationId,
+        count
+      );
+    },
+  });
+
+  // Listen for open conversation changes to adjust total count
+  useEffect(() => {
+    const unsubscribeOpenConversation =
+      conversationStore.subscribeToOpenConversation((conversationId) => {
+        setCurrentlyOpenConversationId(conversationId);
+      });
+
+    return () => {
+      unsubscribeOpenConversation();
+    };
+  }, []);
+
+  // Load total unread count using the dedicated API
+  const loadTotalUnreadCount = async () => {
+    try {
+      const response = await conversationApi.getAdminTotalUnreadCount();
+      // For now, we'll use the backend count directly
+      // The backend should ideally filter out the currently open conversation
+      setTotalUnreadCount(response.total_unread_count);
+    } catch (error) {
+      console.error("Failed to load unread count:", error);
+    }
+  };
+
+  // Load total unread count on component mount
+  useEffect(() => {
+    loadTotalUnreadCount();
+  }, []);
+
+  // Listen for read status updates to reload total count
+  useEffect(() => {
+    const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
+      () => {
+        // Reload total unread count when a conversation is marked as read
+        loadTotalUnreadCount();
+      }
+    );
+
+    const unsubscribeConversationList =
+      conversationStore.subscribeToConversationList((conversations) => {
+        // Calculate total unread count excluding currently open conversation
+        const filteredCount = conversations.reduce((total, conv) => {
+          if (conv.id !== currentlyOpenConversationId) {
+            return total + (conv.unread_count || 0);
+          }
+          return total;
+        }, 0);
+        setTotalUnreadCount(filteredCount);
+      });
+
+    const unsubscribeConversationUnreadCount =
+      conversationStore.subscribeToConversationUnreadCount(() => {
+        // When individual conversation unread count changes, reload total count
+        // This ensures real-time updates
+        loadTotalUnreadCount();
+      });
+
+    return () => {
+      unsubscribeReadStatus();
+      unsubscribeConversationList();
+      unsubscribeConversationUnreadCount();
+    };
+  }, [currentlyOpenConversationId]);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -227,6 +325,13 @@ const Sidebar = () => {
           >
             {item.label}
           </span>
+
+          {/* Unread Count Badge for Chat */}
+          {item.id === "chat" && totalUnreadCount > 0 && (
+            <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+              {totalUnreadCount >= 100 ? "100+" : totalUnreadCount}
+            </span>
+          )}
 
           {/* Chevron */}
           {hasChildren && (

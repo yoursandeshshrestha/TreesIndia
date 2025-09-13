@@ -14,6 +14,7 @@ import {
   Building,
   UserCheck,
   Truck,
+  MessageCircle,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -203,6 +204,15 @@ export const sidebarItems: SidebarItem[] = [
       "/dashboard/marketplace/projects/create"
     ),
   ]),
+
+  // Communication Section
+  createSectionLabel("Communication"),
+  createMenuItem(
+    "chat",
+    "Chat",
+    "/dashboard/communication/chat",
+    <MessageCircle size={16} />
+  ),
 
   // Other Section
   createSectionLabel("Other"),
