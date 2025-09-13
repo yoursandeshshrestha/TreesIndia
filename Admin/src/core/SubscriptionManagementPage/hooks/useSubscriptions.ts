@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   SubscriptionPlan,
+  GroupedSubscriptionPlan,
+  CreateSubscriptionPlanRequest,
   CreateSubscriptionRequest,
   CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
@@ -9,10 +11,13 @@ import { apiClient } from "@/lib/api-client";
 
 export function useSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionPlan[]>([]);
+  const [groupedSubscriptions, setGroupedSubscriptions] = useState<
+    GroupedSubscriptionPlan[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -29,9 +34,12 @@ export function useSubscriptions() {
         subscriptionsData = response.data;
       }
 
-      setSubscriptions(
-        Array.isArray(subscriptionsData) ? subscriptionsData : []
-      );
+      const plans = Array.isArray(subscriptionsData) ? subscriptionsData : [];
+      setSubscriptions(plans);
+
+      // Convert individual plans to grouped format
+      const grouped = convertToGroupedPlans(plans);
+      setGroupedSubscriptions(grouped);
     } catch (err) {
       console.error("Error fetching subscriptions:", err);
       setError(
@@ -42,6 +50,28 @@ export function useSubscriptions() {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Helper function to convert individual plans to grouped format - DEPRECATED
+  // With the new single plan structure, we no longer need this function
+  const convertToGroupedPlans = (
+    plans: SubscriptionPlan[]
+  ): GroupedSubscriptionPlan[] => {
+    // Convert single plans to grouped format for backward compatibility
+    return plans.map((plan) => ({
+      name: plan.name,
+      description: plan.description || "",
+      is_active: plan.is_active,
+      features: plan.features,
+      monthly:
+        plan.pricing && plan.pricing.find((p) => p.duration_type === "monthly")
+          ? plan
+          : undefined,
+      yearly:
+        plan.pricing && plan.pricing.find((p) => p.duration_type === "yearly")
+          ? plan
+          : undefined,
+    }));
   };
 
   const createSubscription = async (
@@ -61,22 +91,63 @@ export function useSubscriptions() {
     }
   };
 
-  const createSubscriptionWithBothDurations = async (
-    data: CreateSubscriptionWithBothDurationsRequest
+  // New method for creating subscription plans with the new structure
+  const createSubscriptionPlan = async (
+    data: CreateSubscriptionPlanRequest
   ): Promise<SubscriptionPlan[]> => {
     try {
+      // Create both monthly and yearly plans using the existing endpoint
+      const planData = {
+        name: data.name,
+        monthly_price:
+          data.pricing.find((p) => p.duration_type === "monthly")?.price || 0,
+        yearly_price:
+          data.pricing.find((p) => p.duration_type === "yearly")?.price || 0,
+        description: data.description,
+        features: data.features,
+      };
+
       const response = await apiClient.post(
         "/admin/subscription-plans/both",
-        data
+        planData
       );
       const newSubscriptions = response.data.data;
       setSubscriptions((prev) => [...prev, ...newSubscriptions]);
+
+      // Refresh grouped subscriptions
+      const allPlans = [...subscriptions, ...newSubscriptions];
+      const grouped = convertToGroupedPlans(allPlans);
+      setGroupedSubscriptions(grouped);
+
       return newSubscriptions;
     } catch (err) {
       throw new Error(
         err instanceof Error
           ? err.message
           : "Failed to create subscription plans"
+      );
+    }
+  };
+
+  const createSubscriptionWithBothDurations = async (
+    data: CreateSubscriptionWithBothDurationsRequest
+  ): Promise<SubscriptionPlan> => {
+    try {
+      const response = await apiClient.post("/admin/subscription-plans", data);
+      const newSubscription = response.data.data;
+      setSubscriptions((prev) => [...prev, newSubscription]);
+
+      // Refresh grouped subscriptions
+      const allPlans = [...subscriptions, newSubscription];
+      const grouped = convertToGroupedPlans(allPlans);
+      setGroupedSubscriptions(grouped);
+
+      return newSubscription;
+    } catch (err) {
+      throw new Error(
+        err instanceof Error
+          ? err.message
+          : "Failed to create subscription plan"
       );
     }
   };
@@ -132,10 +203,8 @@ export function useSubscriptions() {
       );
       setSubscriptions(updatedSubscriptions);
 
-      const updatedData = { is_active: !subscription.is_active };
-      const response = await apiClient.put(
-        `/admin/subscription-plans/${id}`,
-        updatedData
+      const response = await apiClient.patch(
+        `/admin/subscription-plans/${id}/toggle`
       );
       const updatedSubscription = response.data.data;
 
@@ -202,14 +271,16 @@ export function useSubscriptions() {
 
   useEffect(() => {
     fetchSubscriptions();
-  }, []);
+  }, [fetchSubscriptions]);
 
   return {
     subscriptions,
+    groupedSubscriptions,
     isLoading,
     error,
     fetchSubscriptions,
     createSubscription,
+    createSubscriptionPlan,
     createSubscriptionWithBothDurations,
     updateSubscription,
     deleteSubscription,

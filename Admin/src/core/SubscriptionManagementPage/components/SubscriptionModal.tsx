@@ -9,6 +9,9 @@ import Textarea from "@/components/Textarea/Base/Textarea";
 
 import {
   SubscriptionPlan,
+  GroupedSubscriptionPlan,
+  CreateSubscriptionPlanRequest,
+  UpdateSubscriptionPlanRequest,
   CreateSubscriptionRequest,
   CreateSubscriptionWithBothDurationsRequest,
   UpdateSubscriptionRequest,
@@ -19,7 +22,11 @@ interface SubscriptionModalProps {
   onClose: () => void;
   subscription?: SubscriptionPlan | null;
   onSubmit: (
-    data: CreateSubscriptionRequest | UpdateSubscriptionRequest
+    data:
+      | CreateSubscriptionPlanRequest
+      | UpdateSubscriptionPlanRequest
+      | CreateSubscriptionRequest
+      | UpdateSubscriptionRequest
   ) => Promise<void>;
   isLoading?: boolean;
 }
@@ -30,14 +37,16 @@ export function SubscriptionModal({
   subscription,
   onSubmit,
 }: SubscriptionModalProps) {
-  const [formData, setFormData] =
-    useState<CreateSubscriptionWithBothDurationsRequest>({
-      name: "",
-      monthly_price: 0,
-      yearly_price: 0,
-      description: "",
-      features: [],
-    });
+  const [formData, setFormData] = useState<CreateSubscriptionPlanRequest>({
+    name: "",
+    description: "",
+    is_active: true,
+    features: [],
+    pricing: [
+      { duration_type: "monthly", duration_days: 30, price: 0 },
+      { duration_type: "yearly", duration_days: 365, price: 0 },
+    ],
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -45,15 +54,18 @@ export function SubscriptionModal({
 
   useEffect(() => {
     if (subscription) {
-      // For editing, we'll need to get both monthly and yearly pricing
-      // This would require fetching all subscriptions with the same name
+      // Extract pricing from the subscription plan
+      const monthlyPricing = subscription.pricing.find(
+        (p) => p.duration_type === "monthly"
+      );
+      const yearlyPricing = subscription.pricing.find(
+        (p) => p.duration_type === "yearly"
+      );
+
       setFormData({
         name: subscription.name,
-        monthly_price:
-          subscription.duration_type === "monthly" ? subscription.price : 0,
-        yearly_price:
-          subscription.duration_type === "yearly" ? subscription.price : 0,
         description: subscription.description || "",
+        is_active: subscription.is_active,
         features:
           subscription.features &&
           typeof subscription.features === "object" &&
@@ -63,14 +75,29 @@ export function SubscriptionModal({
                 .split("\n")
                 .filter((line) => line.trim() !== "")
             : [],
+        pricing: [
+          {
+            duration_type: "monthly",
+            duration_days: 30,
+            price: monthlyPricing?.price || 0,
+          },
+          {
+            duration_type: "yearly",
+            duration_days: 365,
+            price: yearlyPricing?.price || 0,
+          },
+        ],
       });
     } else {
       setFormData({
         name: "",
-        monthly_price: 0,
-        yearly_price: 0,
         description: "",
+        is_active: true,
         features: [],
+        pricing: [
+          { duration_type: "monthly", duration_days: 30, price: 0 },
+          { duration_type: "yearly", duration_days: 365, price: 0 },
+        ],
       });
     }
     setErrors({});
@@ -87,11 +114,21 @@ export function SubscriptionModal({
       newErrors.name = "Name must be less than 100 characters";
     }
 
-    if (formData.monthly_price <= 0) {
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    // Validate pricing
+    const monthlyPrice =
+      formData.pricing.find((p) => p.duration_type === "monthly")?.price || 0;
+    const yearlyPrice =
+      formData.pricing.find((p) => p.duration_type === "yearly")?.price || 0;
+
+    if (monthlyPrice <= 0) {
       newErrors.monthly_price = "Monthly price must be greater than 0";
     }
 
-    if (formData.yearly_price <= 0) {
+    if (yearlyPrice <= 0) {
       newErrors.yearly_price = "Yearly price must be greater than 0";
     }
 
@@ -120,12 +157,30 @@ export function SubscriptionModal({
   };
 
   const handleInputChange = (
-    field: keyof CreateSubscriptionWithBothDurationsRequest,
-    value: string | number | string[]
+    field: keyof CreateSubscriptionPlanRequest,
+    value: string | number | string[] | boolean
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handlePricingChange = (
+    durationType: "monthly" | "yearly",
+    value: number
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      pricing: prev.pricing.map((p) =>
+        p.duration_type === durationType ? { ...p, price: value } : p
+      ),
+    }));
+
+    // Clear related error
+    const errorKey = `${durationType}_price` as keyof typeof errors;
+    if (errors[errorKey]) {
+      setErrors((prev) => ({ ...prev, [errorKey]: "" }));
     }
   };
 
@@ -207,10 +262,14 @@ export function SubscriptionModal({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.monthly_price.toString()}
+                  value={
+                    formData.pricing
+                      .find((p) => p.duration_type === "monthly")
+                      ?.price.toString() || "0"
+                  }
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange(
-                      "monthly_price",
+                    handlePricingChange(
+                      "monthly",
                       parseFloat(e.target.value) || 0
                     )
                   }
@@ -227,32 +286,45 @@ export function SubscriptionModal({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.yearly_price.toString()}
+                  value={
+                    formData.pricing
+                      .find((p) => p.duration_type === "yearly")
+                      ?.price.toString() || "0"
+                  }
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange(
-                      "yearly_price",
+                    handlePricingChange(
+                      "yearly",
                       parseFloat(e.target.value) || 0
                     )
                   }
                   placeholder="Enter yearly price in rupees"
                   error={errors.yearly_price}
                 />
-                {formData.monthly_price > 0 && formData.yearly_price > 0 && (
-                  <p className="mt-1 text-sm text-green-600">
-                    Yearly savings:{" "}
-                    {Math.round(
-                      (1 -
-                        formData.yearly_price / (formData.monthly_price * 12)) *
-                        100
-                    )}
-                    %
-                  </p>
-                )}
+                {(() => {
+                  const monthlyPrice =
+                    formData.pricing.find((p) => p.duration_type === "monthly")
+                      ?.price || 0;
+                  const yearlyPrice =
+                    formData.pricing.find((p) => p.duration_type === "yearly")
+                      ?.price || 0;
+                  return (
+                    monthlyPrice > 0 &&
+                    yearlyPrice > 0 && (
+                      <p className="mt-1 text-sm text-green-600">
+                        Yearly savings:{" "}
+                        {Math.round(
+                          (1 - yearlyPrice / (monthlyPrice * 12)) * 100
+                        )}
+                        %
+                      </p>
+                    )
+                  );
+                })()}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  Description *
                 </label>
                 <Textarea
                   value={formData.description}
@@ -261,7 +333,26 @@ export function SubscriptionModal({
                   }
                   placeholder="Describe the benefits of this plan..."
                   rows={3}
+                  error={errors.description}
                 />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("is_active", e.target.checked)
+                  }
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="is_active"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Active Plan
+                </label>
               </div>
 
               <div>

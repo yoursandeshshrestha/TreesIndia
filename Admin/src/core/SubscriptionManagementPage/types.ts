@@ -1,16 +1,32 @@
+// Individual subscription plan (as stored in database)
 export interface SubscriptionPlan {
   ID: number;
   CreatedAt: string;
   UpdatedAt: string;
   DeletedAt?: string | null;
   name: string;
-  duration_type: "monthly" | "yearly";
-  duration_days: number;
-  price: number;
   description?: string;
   is_active: boolean;
   features?: Record<string, unknown> | null;
+  pricing: PricingOption[];
   user_subscriptions?: UserSubscription[];
+}
+
+// Pricing option for a subscription plan
+export interface PricingOption {
+  duration_type: "monthly" | "yearly";
+  duration_days: number;
+  price: number;
+}
+
+// Grouped subscription plan (logical grouping for UI) - DEPRECATED: Use SubscriptionPlan with pricing array instead
+export interface GroupedSubscriptionPlan {
+  name: string;
+  description: string;
+  is_active: boolean;
+  features?: Record<string, unknown> | null;
+  monthly?: SubscriptionPlan;
+  yearly?: SubscriptionPlan;
 }
 
 export interface UserSubscription {
@@ -34,6 +50,24 @@ export interface UserSubscription {
   plan?: SubscriptionPlan;
 }
 
+// New structure for creating subscription plans (matches our backend seeding structure)
+export interface CreateSubscriptionPlanRequest {
+  name: string;
+  description: string;
+  is_active: boolean;
+  features: string[];
+  pricing: PricingOption[];
+}
+
+export interface UpdateSubscriptionPlanRequest {
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+  features?: string[];
+  pricing?: PricingOption[];
+}
+
+// Legacy types for backward compatibility (will be removed)
 export interface CreateSubscriptionRequest {
   name: string;
   duration_type: "monthly" | "yearly";
@@ -78,6 +112,13 @@ export interface SubscriptionStats {
 
 export interface SubscriptionApiResponse {
   data: SubscriptionPlan[];
+  message?: string;
+  success: boolean;
+  timestamp?: string;
+}
+
+export interface GroupedSubscriptionApiResponse {
+  data: GroupedSubscriptionPlan;
   message?: string;
   success: boolean;
   timestamp?: string;

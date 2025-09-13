@@ -1,11 +1,17 @@
 import React from "react";
-import { X, Mail, Phone, Wallet, Clock, User, Shield } from "lucide-react";
+import {
+  X,
+  Mail,
+  Phone,
+  Wallet,
+  Clock,
+  User,
+  Shield,
+  Copy,
+} from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Image from "next/image";
-import {
-  User as UserType,
-  UserType as UserTypeEnum,
-} from "@/types/user";
+import { User as UserType, UserType as UserTypeEnum } from "@/types/user";
 import {
   getUserTypeIcon,
   getUserTypeColor,
@@ -56,6 +62,15 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
 }) => {
   if (!isOpen || !user) return null;
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here if you have one
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
   const getUserTypeBadge = (userType: UserTypeEnum) => {
     const IconComponent = getUserTypeIcon(userType);
     return (
@@ -81,8 +96,6 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
       </span>
     );
   };
-
-
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99]">
@@ -133,6 +146,13 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
                 <div className="flex items-center space-x-2">
                   <Phone className="h-4 w-4" />
                   <span>{user.phone}</span>
+                  <button
+                    onClick={() => copyToClipboard(user.phone)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    title="Copy phone number"
+                  >
+                    <Copy className="h-3 w-3 text-gray-500 hover:text-gray-700" />
+                  </button>
                 </div>
                 {user.gender && (
                   <div className="flex items-center space-x-2">
@@ -243,7 +263,6 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
                     {user.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
-
               </div>
             </div>
 
