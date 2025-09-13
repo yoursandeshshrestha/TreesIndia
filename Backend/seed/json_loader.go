@@ -102,3 +102,10 @@ func (jl *JSONLoader) LoadServiceAreaAssociations() (map[string]interface{}, err
 	err := jl.LoadJSONFile("service_area_associations.json", &data)
 	return data, err
 }
+
+// LoadSubscriptionPlans loads subscription plans from JSON file
+func (jl *JSONLoader) LoadSubscriptionPlans() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("subscription_plans.json", &data)
+	return data, err
+}

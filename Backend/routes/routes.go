@@ -46,10 +46,12 @@ func SetupRoutes(r *gin.Engine) {
 		SetupWalletRoutes(v1)
 		SetupRazorpayRoutes(v1)
 		// Chat routes will be set up in main.go with WebSocket service
+		// Simple conversation routes will be set up in main.go with WebSocket service
 		SetupPromotionBannerRoutes(v1)
 		SetupHeroRoutes(v1)
 		SetupHomepageCategoryIconRoutes(v1)
 		SetupVendorRoutes(v1)
+		SetupWorkerRoutes(v1)
 		
 		// Booking routes with booking system middleware
 		bookingMiddleware := middleware.NewDynamicConfigMiddleware()

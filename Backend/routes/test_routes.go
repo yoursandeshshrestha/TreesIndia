@@ -2,6 +2,8 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
+	"treesindia/repositories"
 	"treesindia/services"
 	"treesindia/utils"
 
@@ -23,6 +25,9 @@ func SetupTestRoutes(router *gin.RouterGroup) {
 		
 		// Test webhook endpoint
 		test.POST("/webhook/exotel", testController.TestExotelWebhook)
+		
+		// Test auto-approval functionality
+		test.GET("/auto-approval/:user_id", testController.TestAutoApproval)
 	}
 }
 
@@ -120,4 +125,30 @@ func (tc *TestController) TestExotelWebhook(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Webhook processed successfully", nil)
+}
+
+// TestAutoApproval tests the auto-approval functionality for a user
+func (tc *TestController) TestAutoApproval(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	// Initialize subscription repository to test
+	subscriptionRepo := repositories.NewUserSubscriptionRepository()
+	hasActive, err := subscriptionRepo.HasActiveSubscription(uint(userID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to check subscription: "+err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"user_id": userID,
+		"has_active_subscription": hasActive,
+		"auto_approval_eligible": hasActive,
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Auto-approval check completed", response)
 }

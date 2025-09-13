@@ -14,10 +14,6 @@ func SetupSubscriptionRoutes(router *gin.RouterGroup) {
 	planRoutes := router.Group("/subscription-plans")
 	{
 		planRoutes.GET("", subscriptionPlanController.GetAllPlans)
-		planRoutes.GET("/grouped", subscriptionPlanController.GetGroupedPlans)
-		planRoutes.GET("/active", subscriptionPlanController.GetActivePlans)
-		planRoutes.GET("/duration/:duration", subscriptionPlanController.GetPlansByDuration)
-		planRoutes.GET("/:id", subscriptionPlanController.GetPlanByID)
 	}
 
 	// User subscription routes (authenticated)
@@ -41,19 +37,9 @@ func SetupAdminSubscriptionRoutes(router *gin.RouterGroup) {
 	adminPlanRoutes.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
 	{
 		adminPlanRoutes.POST("", subscriptionPlanController.CreatePlan)
-		adminPlanRoutes.POST("/both", subscriptionPlanController.CreatePlanWithBothDurations)
 		adminPlanRoutes.PUT("/:id", subscriptionPlanController.UpdatePlan)
 		adminPlanRoutes.DELETE("/:id", subscriptionPlanController.DeletePlan)
+		adminPlanRoutes.PATCH("/:id/toggle", subscriptionPlanController.TogglePlanStatus)
 	}
 
-	// Admin user subscription routes
-	userSubscriptionController := controllers.NewUserSubscriptionController()
-	adminSubscriptionRoutes := router.Group("/subscriptions")
-	adminSubscriptionRoutes.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
-	{
-		adminSubscriptionRoutes.GET("", userSubscriptionController.GetAllSubscriptions)
-		adminSubscriptionRoutes.GET("/expiring", userSubscriptionController.GetExpiringSubscriptions)
-		adminSubscriptionRoutes.PUT("/users/:user_id/extend", userSubscriptionController.ExtendSubscription)
-		adminSubscriptionRoutes.PUT("/users/:user_id/refresh-status", userSubscriptionController.RefreshUserSubscriptionStatus)
-	}
 }
