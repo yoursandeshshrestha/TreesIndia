@@ -2,6 +2,7 @@ package seed
 
 import (
 	"fmt"
+	"strings"
 	"treesindia/models"
 
 	"github.com/sirupsen/logrus"
@@ -846,5 +847,141 @@ func (js *JSONBasedSeeder) SeedServiceAreaAssociations() error {
 	}
 
 	logrus.Info("Service area associations seeded successfully")
+	return nil
+}
+
+// SeedSubscriptionPlans seeds all subscription plans from JSON
+func (js *JSONBasedSeeder) SeedSubscriptionPlans() error {
+	logrus.Info("Seeding subscription plans...")
+
+	// Load subscription plans from JSON
+	jsonLoader := NewJSONLoader()
+	data, err := jsonLoader.LoadSubscriptionPlans()
+	if err != nil {
+		logrus.Errorf("Failed to load subscription plans JSON: %v", err)
+		return err
+	}
+
+	// Parse subscription plans from JSON
+	plansData, ok := data["subscription_plans"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid subscription plans JSON structure")
+	}
+
+	// Get existing subscription plans
+	var existingPlans []models.SubscriptionPlan
+	if err := js.sm.db.Find(&existingPlans).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing subscription plans: %v", err)
+		return err
+	}
+
+	// Create a map for quick lookup by name
+	existingMap := make(map[string]bool)
+	for _, plan := range existingPlans {
+		existingMap[plan.Name] = true
+	}
+
+	createdCount := 0
+
+	// Process each plan
+	for _, planData := range plansData {
+		planMap, ok := planData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		name := planMap["name"].(string)
+		description := planMap["description"].(string)
+		isActive := planMap["is_active"].(bool)
+
+		// Check if this plan already exists
+		if existingMap[name] {
+			logrus.Debugf("Subscription plan already exists: %s", name)
+			continue
+		}
+
+		// Parse features
+		var features models.JSONB
+		if featuresArray, ok := planMap["features"].([]interface{}); ok && len(featuresArray) > 0 {
+			featuresList := make([]string, 0, len(featuresArray))
+			for _, feature := range featuresArray {
+				if featureStr, ok := feature.(string); ok && featureStr != "" {
+					featuresList = append(featuresList, featureStr)
+				}
+			}
+			if len(featuresList) > 0 {
+				features = models.JSONB{
+					"description": strings.Join(featuresList, "\n"),
+				}
+			}
+		}
+
+		// Parse pricing array
+		pricingArray, ok := planMap["pricing"].([]interface{})
+		if !ok {
+			logrus.Warnf("No pricing found for plan: %s", name)
+			continue
+		}
+
+		var pricingOptions models.PricingOptionsJSONB
+
+		// Process each pricing option
+		for _, pricingData := range pricingArray {
+			pricingMap, ok := pricingData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			durationType := pricingMap["duration_type"].(string)
+			durationDays := int(pricingMap["duration_days"].(float64))
+			price := pricingMap["price"].(float64)
+
+			// Validate duration type and days
+			var expectedDays int
+			switch durationType {
+			case models.DurationMonthly:
+				expectedDays = models.DurationDaysMonthly
+			case models.DurationYearly:
+				expectedDays = models.DurationDaysYearly
+			default:
+				logrus.Warnf("Invalid duration type: %s for plan: %s", durationType, name)
+				continue
+			}
+
+			if durationDays != expectedDays {
+				logrus.Warnf("Duration days mismatch for plan %s (%s): expected %d, got %d", 
+					name, durationType, expectedDays, durationDays)
+				durationDays = expectedDays // Fix the duration days
+			}
+
+			pricingOptions = append(pricingOptions, models.PricingOption{
+				DurationType: durationType,
+				DurationDays: durationDays,
+				Price:        price,
+			})
+		}
+
+		plan := models.SubscriptionPlan{
+			Name:        name,
+			Description: description,
+			IsActive:    isActive,
+			Features:    features,
+			Pricing:     pricingOptions,
+		}
+
+		if err := js.sm.db.Create(&plan).Error; err != nil {
+			// Check if it's a unique constraint violation
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				logrus.Debugf("Subscription plan already exists (skipping): %s", name)
+				continue
+			}
+			logrus.Errorf("Failed to create subscription plan %s: %v", name, err)
+			return err
+		}
+		createdCount++
+	}
+
+	logrus.Infof("Created %d new subscription plans", createdCount)
+	logrus.Info("Subscription plans seeded successfully")
 	return nil
 }

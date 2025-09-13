@@ -1,0 +1,28 @@
+{
+  "subscription_plans": [
+    {
+      "name": "Growth Plan",
+      "description": "Perfect for growing brokers who need essential tools and features to expand their business",
+      "is_active": true,
+      "features": [
+        "Access to premium property listings",
+        "Unlimited listing without any limit",
+        "No approval required for listing",
+        "Advanced search and filtering options",
+        "Priority customer support"
+      ],
+      "pricing": [
+        {
+          "duration_type": "monthly",
+          "duration_days": 30,
+          "price": 599.0
+        },
+        {
+          "duration_type": "yearly",
+          "duration_days": 365,
+          "price": 4999.0
+        }
+      ]
+    }
+  ]
+}

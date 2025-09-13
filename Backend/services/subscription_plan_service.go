@@ -19,33 +19,12 @@ func NewSubscriptionPlanService() *SubscriptionPlanService {
 	}
 }
 
-// CreatePlan creates a new subscription plan
-func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) (*models.SubscriptionPlan, error) {
+// CreatePlanWithPricing creates a single subscription plan with multiple pricing options
+func (sps *SubscriptionPlanService) CreatePlanWithPricing(planData map[string]interface{}) (*models.SubscriptionPlan, error) {
 	// Validate required fields
 	name, ok := planData["name"].(string)
 	if !ok || name == "" {
 		return nil, errors.New("plan name is required")
-	}
-	
-	durationType, ok := planData["duration_type"].(string)
-	if !ok || durationType == "" {
-		return nil, errors.New("plan duration_type is required")
-	}
-	
-	// Validate duration type
-	var durationDays int
-	switch durationType {
-	case models.DurationMonthly:
-		durationDays = models.DurationDaysMonthly
-	case models.DurationYearly:
-		durationDays = models.DurationDaysYearly
-	default:
-		return nil, errors.New("invalid duration_type. Must be monthly or yearly")
-	}
-	
-	price, ok := planData["price"].(float64)
-	if !ok || price <= 0 {
-		return nil, errors.New("plan price must be greater than 0")
 	}
 	
 	description, _ := planData["description"].(string)
@@ -54,7 +33,6 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 	// Handle features - convert array to JSONB
 	var features models.JSONB
 	if featuresArray, ok := planData["features"].([]interface{}); ok && len(featuresArray) > 0 {
-		// Convert features array to bullet points string
 		var featuresList []string
 		for _, feature := range featuresArray {
 			if featureStr, ok := feature.(string); ok && featureStr != "" {
@@ -68,14 +46,55 @@ func (sps *SubscriptionPlanService) CreatePlan(planData map[string]interface{}) 
 		}
 	}
 	
+	// Validate pricing array
+	pricingArray, ok := planData["pricing"].([]interface{})
+	if !ok || len(pricingArray) == 0 {
+		return nil, errors.New("pricing array is required and must not be empty")
+	}
+	
+	var pricingOptions models.PricingOptionsJSONB
+	
+	// Process each pricing option
+	for _, pricingItem := range pricingArray {
+		pricing, ok := pricingItem.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("invalid pricing item format")
+		}
+		
+		durationType, ok := pricing["duration_type"].(string)
+		if !ok || durationType == "" {
+			return nil, errors.New("duration_type is required in pricing")
+		}
+		
+		// Validate duration type
+		var durationDays int
+		switch durationType {
+		case models.DurationMonthly:
+			durationDays = models.DurationDaysMonthly
+		case models.DurationYearly:
+			durationDays = models.DurationDaysYearly
+		default:
+			return nil, errors.New("invalid duration_type. Must be monthly or yearly")
+		}
+		
+		price, ok := pricing["price"].(float64)
+		if !ok || price <= 0 {
+			return nil, errors.New("price must be greater than 0")
+		}
+		
+		pricingOptions = append(pricingOptions, models.PricingOption{
+			DurationType: durationType,
+			DurationDays: durationDays,
+			Price:        price,
+		})
+	}
+	
 	plan := &models.SubscriptionPlan{
-		Name:         name,
-		DurationType: durationType,
-		DurationDays: durationDays,
-		Price:        price,
-		Description:  description,
-		IsActive:     isActive,
-		Features:     features,
+		Name:        name,
+		Description: description,
+		IsActive:    isActive,
+		Features:    features,
+		Pricing:     pricingOptions,
 	}
 	
 	if err := sps.planRepo.Create(plan); err != nil {
@@ -112,25 +131,6 @@ func (sps *SubscriptionPlanService) UpdatePlan(id uint, planData map[string]inte
 		plan.Name = name
 	}
 	
-	if durationType, ok := planData["duration_type"].(string); ok && durationType != "" {
-		// Validate and convert duration type
-		var durationDays int
-		switch durationType {
-		case models.DurationMonthly:
-			durationDays = models.DurationDaysMonthly
-		case models.DurationYearly:
-			durationDays = models.DurationDaysYearly
-		default:
-			return nil, errors.New("invalid duration_type. Must be monthly or yearly")
-		}
-		plan.DurationType = durationType
-		plan.DurationDays = durationDays
-	}
-	
-	if price, ok := planData["price"].(float64); ok && price > 0 {
-		plan.Price = price
-	}
-	
 	if description, ok := planData["description"].(string); ok {
 		plan.Description = description
 	}
@@ -163,6 +163,48 @@ func (sps *SubscriptionPlanService) UpdatePlan(id uint, planData map[string]inte
 		}
 	}
 	
+	// Handle pricing - update the entire pricing array
+	if pricingArray, ok := planData["pricing"].([]interface{}); ok && len(pricingArray) > 0 {
+		var pricingOptions models.PricingOptionsJSONB
+		
+		// Process each pricing option
+		for _, pricingItem := range pricingArray {
+			pricing, ok := pricingItem.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("invalid pricing item format")
+			}
+			
+			durationType, ok := pricing["duration_type"].(string)
+			if !ok || durationType == "" {
+				return nil, errors.New("duration_type is required in pricing")
+			}
+			
+			// Validate duration type
+			var durationDays int
+			switch durationType {
+			case models.DurationMonthly:
+				durationDays = models.DurationDaysMonthly
+			case models.DurationYearly:
+				durationDays = models.DurationDaysYearly
+			default:
+				return nil, errors.New("invalid duration_type. Must be monthly or yearly")
+			}
+			
+			price, ok := pricing["price"].(float64)
+			if !ok || price <= 0 {
+				return nil, errors.New("price must be greater than 0")
+			}
+			
+			pricingOptions = append(pricingOptions, models.PricingOption{
+				DurationType: durationType,
+				DurationDays: durationDays,
+				Price:        price,
+			})
+		}
+		
+		plan.Pricing = pricingOptions
+	}
+	
 	if err := sps.planRepo.Update(plan); err != nil {
 		return nil, err
 	}
@@ -177,117 +219,40 @@ func (sps *SubscriptionPlanService) DeletePlan(id uint) error {
 	return sps.planRepo.Delete(id)
 }
 
-// GetPlansByDuration retrieves subscription plans by duration
-func (sps *SubscriptionPlanService) GetPlansByDuration(duration string) ([]models.SubscriptionPlan, error) {
-	return sps.planRepo.GetByDuration(duration)
-}
-
-// GroupedPlan represents a plan with both monthly and yearly options
-type GroupedPlan struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Features    models.JSONB           `json:"features"`
-	IsActive    bool                   `json:"is_active"`
-	Monthly     *models.SubscriptionPlan `json:"monthly,omitempty"`
-	Yearly      *models.SubscriptionPlan `json:"yearly,omitempty"`
-}
-
-// GetGroupedPlans retrieves plans grouped by name with monthly and yearly options
-func (sps *SubscriptionPlanService) GetGroupedPlans() (*GroupedPlan, error) {
-	plans, err := sps.planRepo.GetActive()
+// TogglePlanStatus toggles the active status of a subscription plan
+func (sps *SubscriptionPlanService) TogglePlanStatus(id uint) (*models.SubscriptionPlan, error) {
+	plan, err := sps.planRepo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
-
-	grouped := &GroupedPlan{}
 	
+	// Toggle the status
+	plan.IsActive = !plan.IsActive
+	
+	if err := sps.planRepo.Update(plan); err != nil {
+		return nil, err
+	}
+	
+	return plan, nil
+}
+
+// GetPlansByDuration retrieves subscription plans that have a specific duration option
+func (sps *SubscriptionPlanService) GetPlansByDuration(duration string) ([]models.SubscriptionPlan, error) {
+	plans, err := sps.planRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	
+	var filteredPlans []models.SubscriptionPlan
 	for _, plan := range plans {
-		if plan.DurationType == models.DurationMonthly {
-			grouped.Monthly = &plan
-			grouped.Name = plan.Name
-			grouped.Description = plan.Description
-			grouped.Features = plan.Features
-			grouped.IsActive = plan.IsActive
-		} else if plan.DurationType == models.DurationYearly {
-			grouped.Yearly = &plan
-			if grouped.Name == "" {
-				grouped.Name = plan.Name
-				grouped.Description = plan.Description
-				grouped.Features = plan.Features
-				grouped.IsActive = plan.IsActive
+		for _, pricing := range plan.Pricing {
+			if pricing.DurationType == duration {
+				filteredPlans = append(filteredPlans, plan)
+				break
 			}
 		}
 	}
-
-	return grouped, nil
+	
+	return filteredPlans, nil
 }
 
-// CreatePlanWithBothDurations creates both monthly and yearly plans
-func (sps *SubscriptionPlanService) CreatePlanWithBothDurations(planData map[string]interface{}) ([]models.SubscriptionPlan, error) {
-	// Validate required fields
-	name, ok := planData["name"].(string)
-	if !ok || name == "" {
-		return nil, errors.New("plan name is required")
-	}
-	
-	monthlyPrice, ok := planData["monthly_price"].(float64)
-	if !ok || monthlyPrice <= 0 {
-		return nil, errors.New("monthly price must be greater than 0")
-	}
-	
-	yearlyPrice, ok := planData["yearly_price"].(float64)
-	if !ok || yearlyPrice <= 0 {
-		return nil, errors.New("yearly price must be greater than 0")
-	}
-	
-	description, _ := planData["description"].(string)
-	
-	// Handle features - convert array to JSONB
-	var features models.JSONB
-	if featuresArray, ok := planData["features"].([]interface{}); ok && len(featuresArray) > 0 {
-		var featuresList []string
-		for _, feature := range featuresArray {
-			if featureStr, ok := feature.(string); ok && featureStr != "" {
-				featuresList = append(featuresList, featureStr)
-			}
-		}
-		if len(featuresList) > 0 {
-			features = models.JSONB{
-				"description": strings.Join(featuresList, "\n"),
-			}
-		}
-	}
-	
-	// Create monthly plan
-	monthlyPlan := &models.SubscriptionPlan{
-		Name:         name,
-		DurationType: models.DurationMonthly,
-		DurationDays: models.DurationDaysMonthly,
-		Price:        monthlyPrice,
-		Description:  description,
-		IsActive:     true,
-		Features:     features,
-	}
-	
-	// Create yearly plan
-	yearlyPlan := &models.SubscriptionPlan{
-		Name:         name,
-		DurationType: models.DurationYearly,
-		DurationDays: models.DurationDaysYearly,
-		Price:        yearlyPrice,
-		Description:  description,
-		IsActive:     true,
-		Features:     features,
-	}
-	
-	// Save both plans
-	if err := sps.planRepo.Create(monthlyPlan); err != nil {
-		return nil, err
-	}
-	
-	if err := sps.planRepo.Create(yearlyPlan); err != nil {
-		return nil, err
-	}
-	
-	return []models.SubscriptionPlan{*monthlyPlan, *yearlyPlan}, nil
-}

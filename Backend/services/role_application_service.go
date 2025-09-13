@@ -12,9 +12,10 @@ import (
 )
 
 type RoleApplicationService struct {
-	applicationRepo *repositories.RoleApplicationRepository
-	userRepo        *repositories.UserRepository
-	db              *gorm.DB
+	applicationRepo     *repositories.RoleApplicationRepository
+	userRepo           *repositories.UserRepository
+	subscriptionRepo   *repositories.UserSubscriptionRepository
+	db                 *gorm.DB
 }
 
 func NewRoleApplicationService(
@@ -24,8 +25,19 @@ func NewRoleApplicationService(
 	return &RoleApplicationService{
 		applicationRepo: applicationRepo,
 		userRepo:        userRepo,
+		subscriptionRepo: repositories.NewUserSubscriptionRepository(),
 		db:              database.GetDB(),
 	}
+}
+
+// hasActiveSubscription checks if a user has an active subscription
+func (s *RoleApplicationService) hasActiveSubscription(userID uint) (bool, error) {
+	hasActive, err := s.subscriptionRepo.HasActiveSubscription(userID)
+	if err != nil {
+		logrus.Errorf("Failed to check active subscription for user %d: %v", userID, err)
+		return false, err
+	}
+	return hasActive, nil
 }
 
 // SubmitWorkerApplication submits a worker application for a user
@@ -126,6 +138,51 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 			err = tx.Create(workerData).Error
 			if err != nil {
 				logrus.Errorf("Failed to create worker record: %v", err)
+				return err
+			}
+		}
+
+		// Check if user has active subscription for auto-approval
+		hasActiveSubscription, err := s.hasActiveSubscription(userID)
+		if err != nil {
+			logrus.Errorf("Failed to check subscription status for auto-approval: %v", err)
+			// Continue with normal flow if subscription check fails
+		} else if hasActiveSubscription {
+			// Auto-approve the application
+			logrus.Infof("Auto-approving worker application for user %d due to active subscription", userID)
+			application.Status = models.ApplicationStatusApproved
+			application.ReviewedAt = &now
+			// Note: ReviewedBy is left nil for auto-approval
+			
+			err = tx.Save(application).Error
+			if err != nil {
+				logrus.Errorf("Failed to save auto-approved application: %v", err)
+				return err
+			}
+			
+			// Activate the worker immediately
+			updates := map[string]interface{}{
+				"is_available": true,
+				"is_active":    true,
+			}
+			err = tx.Model(&models.Worker{}).
+				Where("role_application_id = ?", application.ID).
+				Updates(updates).Error
+			if err != nil {
+				logrus.Errorf("Failed to activate worker record for auto-approval: %v", err)
+				return err
+			}
+			
+			// Update user's role and application status
+			err = tx.Model(&models.User{}).
+				Where("id = ?", userID).
+				Updates(map[string]interface{}{
+					"user_type": models.UserTypeWorker,
+					"role_application_status": "approved",
+					"approval_date": &now,
+				}).Error
+			if err != nil {
+				logrus.Errorf("Failed to update user for auto-approval: %v", err)
 				return err
 			}
 		}
@@ -248,6 +305,49 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 			}
 		}
 
+		// Check if user has active subscription for auto-approval
+		hasActiveSubscription, err := s.hasActiveSubscription(userID)
+		if err != nil {
+			logrus.Errorf("Failed to check subscription status for auto-approval: %v", err)
+			// Continue with normal flow if subscription check fails
+		} else if hasActiveSubscription {
+			// Auto-approve the application
+			logrus.Infof("Auto-approving broker application for user %d due to active subscription", userID)
+			application.Status = models.ApplicationStatusApproved
+			application.ReviewedAt = &now
+			// Note: ReviewedBy is left nil for auto-approval
+			
+			err = tx.Save(application).Error
+			if err != nil {
+				logrus.Errorf("Failed to save auto-approved application: %v", err)
+				return err
+			}
+			
+			// Activate the broker immediately
+			err = tx.Model(&models.Broker{}).
+				Where("role_application_id = ?", application.ID).
+				Updates(map[string]interface{}{
+					"is_active": true,
+				}).Error
+			if err != nil {
+				logrus.Errorf("Failed to activate broker record for auto-approval: %v", err)
+				return err
+			}
+			
+			// Update user's role and application status
+			err = tx.Model(&models.User{}).
+				Where("id = ?", userID).
+				Updates(map[string]interface{}{
+					"user_type": models.UserTypeBroker,
+					"role_application_status": "approved",
+					"approval_date": &now,
+				}).Error
+			if err != nil {
+				logrus.Errorf("Failed to update user for auto-approval: %v", err)
+				return err
+			}
+		}
+
 		// Update user's application status
 		err = s.updateUserApplicationStatusWithTx(tx, userID, &now)
 		if err != nil {
@@ -305,7 +405,7 @@ func (s *RoleApplicationService) GetApplication(id uint) (*models.RoleApplicatio
 }
 
 // UpdateApplication updates a role application (admin only)
-func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status models.ApplicationStatus) (*models.RoleApplication, error) {
+func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status models.ApplicationStatus, workerType *models.WorkerType) (*models.RoleApplication, error) {
 	application, err := s.applicationRepo.GetApplicationByID(id)
 	if err != nil {
 		return nil, err
@@ -338,13 +438,18 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status
 			user.ApprovalDate = &now
 			if application.RequestedRole == "worker" {
 				user.UserType = models.UserTypeWorker
-				// Activate worker record
+				// Activate worker record with worker type
+				updates := map[string]interface{}{
+					"is_available": true,
+					"is_active":    true,
+				}
+				// Set worker type if provided, otherwise keep existing
+				if workerType != nil {
+					updates["worker_type"] = *workerType
+				}
 				err = tx.Model(&models.Worker{}).
 					Where("role_application_id = ?", application.ID).
-					Updates(map[string]interface{}{
-						"is_available": true,
-						"is_active":    true,
-					}).Error
+					Updates(updates).Error
 			} else if application.RequestedRole == "broker" {
 				user.UserType = models.UserTypeBroker
 				// Activate broker record

@@ -39,6 +39,7 @@ func (sm *SeedManager) SeedAll() error {
 		{"Subcategories", jsonSeeder.SeedSubcategories},
 		{"Services", jsonSeeder.SeedServices},
 		{"Service Area Associations", jsonSeeder.SeedServiceAreaAssociations},
+		{"Subscription Plans", jsonSeeder.SeedSubscriptionPlans},
 		{"Workers", jsonSeeder.SeedWorkers},
 		{"Promotion Banners", jsonSeeder.SeedPromotionBanners},
 	}
@@ -82,6 +83,7 @@ func (sm *SeedManager) SeedIndividualComponents(components ...string) error {
 		"subcategories":           jsonSeeder.SeedSubcategories,
 		"services":                jsonSeeder.SeedServices,
 		"service_area_associations": jsonSeeder.SeedServiceAreaAssociations,
+		"subscription_plans":      jsonSeeder.SeedSubscriptionPlans,
 		"workers":                 jsonSeeder.SeedWorkers,
 		"promotion_banners":       jsonSeeder.SeedPromotionBanners,
 	}
