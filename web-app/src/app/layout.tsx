@@ -12,6 +12,7 @@ import SlotModal from "@/core/BookingPage/components/SlotModal";
 import ServiceSearchModal from "@/commonComponents/ServiceSearchModel/ServiceSearchModal";
 
 import MarketplaceModal from "@/commonComponents/MarketplaceModal/MarketplaceModal";
+import ChatModal from "@/commonComponents/ChatModal/ChatModal";
 import { Toaster } from "sonner";
 
 const poppins = Poppins({
@@ -44,6 +45,7 @@ export default function RootLayout({
           <SlotModal />
           <ServiceSearchModal />
           <MarketplaceModal />
+          <ChatModal />
 
           <div className="flex flex-col min-h-screen">
             {/* Sticky Header */}

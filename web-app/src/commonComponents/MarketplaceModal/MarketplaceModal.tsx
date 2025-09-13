@@ -36,7 +36,7 @@ const marketplaceOptions: MarketplaceOption[] = [
   },
   {
     id: "workforce",
-    name: "Workforce",
+    name: "Workers",
     icon: "/images/main-icons/workforce.png",
     route: "/marketplace/workforce",
   },

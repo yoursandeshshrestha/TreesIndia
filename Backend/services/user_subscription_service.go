@@ -85,7 +85,7 @@ func (uss *UserSubscriptionService) CheckAndUpdateSubscriptionStatus(userID uint
 }
 
 // CreateSubscriptionPaymentOrder creates a payment order for subscription purchase
-func (uss *UserSubscriptionService) CreateSubscriptionPaymentOrder(userID uint, planID uint) (*models.Payment, map[string]interface{}, error) {
+func (uss *UserSubscriptionService) CreateSubscriptionPaymentOrder(userID uint, planID uint, durationType string) (*models.Payment, map[string]interface{}, error) {
 	// Check current subscription status before purchasing
 	user, err := uss.CheckAndUpdateSubscriptionStatus(userID)
 	if err != nil {
@@ -108,18 +108,31 @@ func (uss *UserSubscriptionService) CreateSubscriptionPaymentOrder(userID uint, 
 		return nil, nil, errors.New("subscription plan is not active")
 	}
 	
+	// Find the pricing option for the requested duration
+	var selectedPricing *models.PricingOption
+	for _, pricing := range plan.Pricing {
+		if pricing.DurationType == durationType {
+			selectedPricing = &pricing
+			break
+		}
+	}
+	
+	if selectedPricing == nil {
+		return nil, nil, errors.New("invalid duration type for this plan")
+	}
+	
 	// Create payment request
 	paymentService := NewPaymentService()
 	paymentReq := &models.CreatePaymentRequest{
 		UserID:           userID,
-		Amount:           plan.Price,
+		Amount:           selectedPricing.Price,
 		Currency:         "INR",
 		Type:             models.PaymentTypeSubscription,
 		Method:           models.PaymentMethodRazorpay,
 		RelatedEntityType: "subscription",
 		RelatedEntityID:   planID,
 		Description:      fmt.Sprintf("Subscription purchase: %s", plan.Name),
-		Notes:            fmt.Sprintf("Subscription plan: %s (Duration: %d days)", plan.Name, plan.DurationDays),
+		Notes:            fmt.Sprintf("Subscription plan: %s (Duration: %d days)", plan.Name, selectedPricing.DurationDays),
 	}
 	
 	// Create Razorpay order
@@ -163,10 +176,21 @@ func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, pa
 		return nil, errors.New("user already has active subscription")
 	}
 	
+	// Find the pricing option for the payment's related entity
+	var selectedPricing *models.PricingOption
+	for _, pricing := range plan.Pricing {
+		// For now, use the first pricing option or you can store duration type in payment
+		selectedPricing = &pricing
+		break
+	}
+	
+	if selectedPricing == nil {
+		return nil, errors.New("no pricing options found for this plan")
+	}
+	
 	// Calculate subscription dates
 	startDate := time.Now()
-	var endDate time.Time
-	endDate = startDate.AddDate(0, 0, plan.DurationDays)
+	endDate := startDate.AddDate(0, 0, selectedPricing.DurationDays)
 	
 	// Create subscription
 	subscription := &models.UserSubscription{
@@ -177,7 +201,7 @@ func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, pa
 		Status:        models.SubscriptionStatusActive,
 		PaymentMethod: models.PaymentMethodRazorpay,
 		PaymentID:     razorpayPaymentID,
-		Amount:        plan.Price,
+		Amount:        selectedPricing.Price,
 	}
 	
 	// Save subscription and update user in transaction
@@ -212,7 +236,7 @@ func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, pa
 }
 
 // PurchaseSubscription purchases a subscription for a user (wallet only)
-func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uint, paymentMethod string) (*models.UserSubscription, error) {
+func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uint, paymentMethod string, durationType string) (*models.UserSubscription, error) {
 	// Check current subscription status before purchasing
 	user, err := uss.CheckAndUpdateSubscriptionStatus(userID)
 	if err != nil {
@@ -235,23 +259,35 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 		return nil, errors.New("subscription plan is not active")
 	}
 	
+	// Find the pricing option for the requested duration
+	var selectedPricing *models.PricingOption
+	for _, pricing := range plan.Pricing {
+		if pricing.DurationType == durationType {
+			selectedPricing = &pricing
+			break
+		}
+	}
+	
+	if selectedPricing == nil {
+		return nil, errors.New("invalid duration type for this plan")
+	}
+	
 	// Calculate subscription dates
 	startDate := time.Now()
-	var endDate time.Time
 	
 	// Calculate end date based on duration_days
-	endDate = startDate.AddDate(0, 0, plan.DurationDays)
+	endDate := startDate.AddDate(0, 0, selectedPricing.DurationDays)
 	
 	// Process payment based on method
 	var paymentID string
 	if paymentMethod == models.PaymentMethodWallet {
 		// Check wallet balance
-		if user.WalletBalance < plan.Price {
+		if user.WalletBalance < selectedPricing.Price {
 			return nil, errors.New("insufficient wallet balance")
 		}
 		
 		// Deduct from wallet
-		user.WalletBalance -= plan.Price
+		user.WalletBalance -= selectedPricing.Price
 		if err := uss.userRepo.Update(user); err != nil {
 			return nil, err
 		}
@@ -272,7 +308,7 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 		Status:        models.SubscriptionStatusActive,
 		PaymentMethod: paymentMethod,
 		PaymentID:     paymentID,
-		Amount:        plan.Price,
+		Amount:        selectedPricing.Price,
 	}
 	
 	// Save subscription and update user in transaction
