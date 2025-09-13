@@ -17,6 +17,7 @@ import searchReducer from "./slices/searchSlice";
 import searchModalReducer from "./slices/searchModalSlice";
 import serviceDetailModalReducer from "./slices/serviceDetailModalSlice";
 import marketplaceModalReducer from "./slices/marketplaceModalSlice";
+import chatModalReducer from "./slices/chatModalSlice";
 
 export const store = configureStore({
   reducer: {
@@ -38,6 +39,7 @@ export const store = configureStore({
     searchModal: searchModalReducer,
     serviceDetailModal: serviceDetailModalReducer,
     marketplaceModal: marketplaceModalReducer,
+    chatModal: chatModalReducer,
   },
 });
 

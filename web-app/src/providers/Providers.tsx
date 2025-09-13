@@ -15,7 +15,7 @@ interface ProvidersProps {
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch<AppDispatch>();
 
-useEffect(() => {
+  useEffect(() => {
     // Initialize auth state when the app starts
     dispatch(initializeAuth());
   }, [dispatch]);

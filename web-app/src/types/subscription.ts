@@ -1,17 +1,26 @@
 import { PaymentMethod } from "./payment";
 
+// Pricing option for a subscription plan
+export interface PricingOption {
+  duration_type: "monthly" | "yearly";
+  duration_days: number;
+  price: number;
+}
+
 export interface SubscriptionPlan {
   ID: number;
   CreatedAt: string;
   UpdatedAt: string;
   DeletedAt: string | null;
   name: string;
-  duration_type: "monthly" | "yearly";
-  duration_days: number;
-  price: number;
   is_active: boolean;
   description: string;
   features: Record<string, unknown>;
+  pricing: PricingOption[];
+  // Legacy fields for backward compatibility (will be deprecated)
+  duration_type?: "monthly" | "yearly";
+  duration_days?: number;
+  price?: number;
 }
 
 export interface GroupedSubscriptionPlan {
@@ -22,6 +31,9 @@ export interface GroupedSubscriptionPlan {
   monthly?: SubscriptionPlan;
   yearly?: SubscriptionPlan;
 }
+
+// Array of grouped subscription plans (for multiple plan types)
+export type GroupedSubscriptionPlans = GroupedSubscriptionPlan[];
 
 export interface UserSubscription {
   ID: number;
@@ -62,6 +74,13 @@ export interface GroupedSubscriptionPlansResponse {
   success: boolean;
   message: string;
   data: GroupedSubscriptionPlan;
+  timestamp: string;
+}
+
+export interface MultipleGroupedSubscriptionPlansResponse {
+  success: boolean;
+  message: string;
+  data: GroupedSubscriptionPlans;
   timestamp: string;
 }
 
