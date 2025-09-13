@@ -46,6 +46,8 @@ export default function RoleApplicationDetailPage() {
   const [rejectNotes, setRejectNotes] = useState("");
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [selectedWorkerType, setSelectedWorkerType] =
+    useState<string>("normal");
 
   useEffect(() => {
     if (applicationId) {
@@ -84,17 +86,30 @@ export default function RoleApplicationDetailPage() {
         status: "approved",
         admin_notes: "",
         ...(application.requested_role === "worker" && {
-          worker_type: application.worker?.worker_type || "normal",
+          worker_type:
+            application.status === "approved"
+              ? "treesindia_worker"
+              : selectedWorkerType,
         }),
       };
 
       await api.put(`/admin/role-applications/${application.ID}`, payload);
-      toast.success("Application approved successfully");
+
+      if (application.status === "approved") {
+        toast.success("Worker upgraded to TreesIndia Worker successfully");
+      } else {
+        toast.success("Application approved successfully");
+      }
+
       setShowAcceptModal(false);
       loadApplicationDetails();
     } catch (err) {
-      console.error("Failed to approve application", err);
-      toast.error("Failed to approve application");
+      console.error("Failed to approve/upgrade application", err);
+      toast.error(
+        application.status === "approved"
+          ? "Failed to upgrade worker"
+          : "Failed to approve application"
+      );
     } finally {
       setIsAccepting(false);
     }
@@ -184,6 +199,21 @@ export default function RoleApplicationDetailPage() {
         className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md border ${config.color}`}
       >
         {config.label}
+      </span>
+    );
+  };
+
+  const getWorkerTypeBadge = (workerType: string) => {
+    if (workerType === "treesindia_worker") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          TreesIndia Worker
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        Normal Worker
       </span>
     );
   };
@@ -415,12 +445,9 @@ export default function RoleApplicationDetailPage() {
                       <Award className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Worker Type</p>
-                        <p className="font-medium">
-                          {displayValue(
-                            application.worker.worker_type,
-                            "Normal"
-                          )}
-                        </p>
+                        <div className="flex items-center space-x-2">
+                          {getWorkerTypeBadge(application.worker.worker_type)}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -713,6 +740,20 @@ export default function RoleApplicationDetailPage() {
                     </Button>
                   </>
                 )}
+                {application.status === "approved" &&
+                  application.requested_role === "worker" &&
+                  application.worker?.worker_type === "normal" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onClick={() => setShowAcceptModal(true)}
+                      disabled={isAccepting}
+                      className="text-blue-600 hover:text-blue-700 border-blue-200"
+                    >
+                      Make TreesIndia Worker
+                    </Button>
+                  )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -737,17 +778,80 @@ export default function RoleApplicationDetailPage() {
       </div>
 
       {/* Accept Modal */}
-      <ConfirmModal
-        isOpen={showAcceptModal}
-        onClose={() => setShowAcceptModal(false)}
-        onConfirm={handleAcceptApplication}
-        title="Accept Application"
-        message="Are you sure you want to accept this application?"
-        confirmText="Accept"
-        cancelText="Cancel"
-        variant="default"
-        isLoading={isAccepting}
-      />
+      {application?.status === "approved" ? (
+        <ConfirmModal
+          isOpen={showAcceptModal}
+          onClose={() => setShowAcceptModal(false)}
+          onConfirm={handleAcceptApplication}
+          title="Upgrade to TreesIndia Worker"
+          message="Are you sure you want to upgrade this worker to TreesIndia Worker status? TreesIndia workers have special privileges and access to premium services."
+          confirmText="Upgrade to TreesIndia Worker"
+          cancelText="Cancel"
+          variant="default"
+          isLoading={isAccepting}
+        />
+      ) : (
+        <Modal
+          isOpen={showAcceptModal}
+          onClose={() => {
+            setShowAcceptModal(false);
+            setSelectedWorkerType("normal");
+          }}
+          title="Accept Application"
+          size="md"
+          footer={
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowAcceptModal(false);
+                  setSelectedWorkerType("normal");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleAcceptApplication}
+                disabled={isAccepting}
+                loading={isAccepting}
+                className="flex-1"
+              >
+                {isAccepting ? "Accepting..." : "Accept Application"}
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to accept this application?
+            </p>
+
+            {application?.requested_role === "worker" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Worker Type
+                </label>
+                <select
+                  value={selectedWorkerType}
+                  onChange={(e) => setSelectedWorkerType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="normal">Normal Worker</option>
+                  <option value="treesindia_worker">TreesIndia Worker</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  TreesIndia workers have special privileges and access to
+                  premium services.
+                </p>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Reject Modal */}
       <Modal

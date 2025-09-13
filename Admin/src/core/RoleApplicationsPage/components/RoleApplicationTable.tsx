@@ -91,6 +91,21 @@ function RoleApplicationTable({
     return { city: "Not provided", state: "Not provided" };
   };
 
+  const getWorkerTypeBadge = (workerType: string) => {
+    if (workerType === "treesindia_worker") {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          TreesIndia Worker
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        Normal Worker
+      </span>
+    );
+  };
+
   const columns = [
     {
       header: "Applicant",
@@ -121,7 +136,14 @@ function RoleApplicationTable({
     {
       header: "Role",
       accessor: (application: EnhancedRoleApplication) => (
-        <div>{getRoleBadge(application.requested_role)}</div>
+        <div className="space-y-1">
+          <div>{getRoleBadge(application.requested_role)}</div>
+          {application.requested_role === "worker" && application.worker && (
+            <div className="text-xs">
+              {getWorkerTypeBadge(application.worker.worker_type)}
+            </div>
+          )}
+        </div>
       ),
     },
     {

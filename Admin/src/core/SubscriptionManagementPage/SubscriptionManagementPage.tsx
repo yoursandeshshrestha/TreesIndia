@@ -60,12 +60,17 @@ function SubscriptionManagementPage() {
     }
   };
 
-  const handleUpdateSubscription = async (data: UpdateSubscriptionRequest) => {
+  const handleUpdateSubscription = async (
+    data: CreateSubscriptionWithBothDurationsRequest
+  ) => {
     if (!selectedSubscription) return;
 
     try {
       setIsUpdating(true);
+
+      // Update the existing subscription plan
       await updateSubscription(selectedSubscription.ID, data);
+
       toast.success("Subscription plan updated successfully");
       setIsModalOpen(false);
       setSelectedSubscription(null);
@@ -128,6 +133,7 @@ function SubscriptionManagementPage() {
   };
 
   const handleEditSubscription = (subscription: SubscriptionPlan) => {
+    // With the new single plan structure, we can directly use the subscription
     setSelectedSubscription(subscription);
     setIsModalOpen(true);
   };
@@ -188,19 +194,10 @@ function SubscriptionManagementPage() {
         subscription={selectedSubscription}
         onSubmit={
           selectedSubscription
-            ? (
-                data:
-                  | CreateSubscriptionWithBothDurationsRequest
-                  | UpdateSubscriptionRequest
-              ) => handleUpdateSubscription(data as UpdateSubscriptionRequest)
-            : (
-                data:
-                  | CreateSubscriptionWithBothDurationsRequest
-                  | UpdateSubscriptionRequest
-              ) =>
-                handleCreateSubscription(
-                  data as CreateSubscriptionWithBothDurationsRequest
-                )
+            ? (data: CreateSubscriptionWithBothDurationsRequest) =>
+                handleUpdateSubscription(data)
+            : (data: CreateSubscriptionWithBothDurationsRequest) =>
+                handleCreateSubscription(data)
         }
         isLoading={isCreating || isUpdating}
       />

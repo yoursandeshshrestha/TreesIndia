@@ -35,6 +35,31 @@ export function SubscriptionCards({
     return "One-time";
   };
 
+  const getPricingDisplay = (subscription: SubscriptionPlan) => {
+    if (!subscription.pricing || subscription.pricing.length === 0) {
+      return "No pricing available";
+    }
+
+    // If there's only one pricing option, show it
+    if (subscription.pricing.length === 1) {
+      const price = subscription.pricing[0];
+      return `${formatPrice(price.price)} / ${getDurationLabel(
+        price.duration_days
+      ).toLowerCase()}`;
+    }
+
+    // If there are multiple pricing options, show range
+    const prices = subscription.pricing.map((p) => p.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return formatPrice(minPrice);
+    }
+
+    return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+  };
+
   if (subscriptions.length === 0) {
     return (
       <div className="text-center py-12">
@@ -63,18 +88,29 @@ export function SubscriptionCards({
             <div className="p-6 flex-1">
               {/* Top Row: Duration Badge and Toggle */}
               <div className="flex items-center justify-between mb-4">
-                {/* Duration Badge */}
-                <span
-                  className={`text-lg font-bold tracking-wide bg-gradient-to-r bg-clip-text text-transparent ${
-                    subscription.duration_days === 30
-                      ? "from-blue-500 to-blue-700"
-                      : subscription.duration_days === 365
-                      ? "from-green-500 to-green-700"
-                      : "from-purple-500 to-purple-700"
-                  }`}
-                >
-                  {getDurationLabel(subscription.duration_days).toUpperCase()}
-                </span>
+                {/* Duration Badge - Show pricing options */}
+                <div className="flex flex-col gap-1">
+                  {subscription.pricing && subscription.pricing.length > 0 ? (
+                    subscription.pricing.map((price, index) => (
+                      <span
+                        key={index}
+                        className={`text-sm font-bold tracking-wide bg-gradient-to-r bg-clip-text text-transparent ${
+                          price.duration_days === 30
+                            ? "from-blue-500 to-blue-700"
+                            : price.duration_days === 365
+                            ? "from-green-500 to-green-700"
+                            : "from-purple-500 to-purple-700"
+                        }`}
+                      >
+                        {getDurationLabel(price.duration_days).toUpperCase()}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm font-bold text-gray-500">
+                      NO PRICING
+                    </span>
+                  )}
+                </div>
 
                 {/* Status Toggle */}
                 <div
@@ -99,7 +135,7 @@ export function SubscriptionCards({
 
               <div className="mb-4">
                 <span className="text-3xl font-bold text-gray-900">
-                  {formatPrice(subscription.price)}
+                  {getPricingDisplay(subscription)}
                 </span>
               </div>
 
