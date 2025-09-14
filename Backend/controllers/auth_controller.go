@@ -134,6 +134,14 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	// TODO: Integrate with SMS service (Twilio) later
 	// For now, just return success as OTP is hardcoded to "000000"
 	
+	// Send notification about OTP request
+	go services.NotifyOTPRequested(&user, req.Phone)
+	
+	// If new user, also notify admin about new user registration
+	if isNewUser {
+		go services.NotifyUserRegistration(&user)
+	}
+	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
 		"phone":      req.Phone,
 		"expires_in": 60, // 60 seconds
@@ -303,6 +311,12 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 
 	// Verify OTP (hardcoded to "000000" for now)
 	if req.OTP != "000000" {
+		// Try to find user for failed login notification
+		var user models.User
+		if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err == nil {
+			go services.NotifyLoginFailed(&user, req.Phone, "Invalid OTP")
+		}
+		
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", "OTP is incorrect"))
 		return
 	}
@@ -360,6 +374,15 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to generate tokens", err.Error()))
 		return
+	}
+
+	// Send notifications about successful OTP verification and login
+	go services.NotifyOTPVerified(&user, req.Phone)
+	go services.NotifyLoginSuccess(&user, "OTP")
+	
+	// If new user, also notify admin about new user registration
+	if isNewUser {
+		go services.NotifyUserRegistration(&user)
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Login successful", gin.H{

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toggleSidebar, selectIsSidebarOpen, open } from "@/app/store";
 import { SearchButton } from "@/components/CommandPalette";
 import ProfileDropdown from "./ProfileDropdown";
+import NotificationIcon from "./NotificationIcon";
 import {
   selectUser,
   selectUserLoading,
@@ -153,6 +154,9 @@ const Header: React.FC<HeaderProps> = ({
           <div className="md:hidden">
             <SearchButton onClick={() => dispatch(open())} />
           </div>
+
+          {/* Notification Icon */}
+          <NotificationIcon />
 
           {/* User Profile Dropdown */}
           {userLoading ? (

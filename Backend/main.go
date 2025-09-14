@@ -261,9 +261,24 @@ func main() {
 	// Setup location tracking routes
 	routes.SetupLocationTrackingRoutes(r.Group("/api/v1"), locationTrackingService)
 
-	// Setup notification routes
+	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
 	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
+
+	// Setup in-app notification services
+	notificationWsService := services.NewNotificationWebSocketService()
+	inAppNotificationService := services.NewInAppNotificationService(notificationWsService)
+	notificationIntegrationService := services.NewNotificationIntegrationService(inAppNotificationService)
+	
+	// Start WebSocket service in background
+	go notificationWsService.Run()
+	
+	// Setup in-app notification routes
+	routes.SetupInAppNotificationRoutes(r.Group("/api/v1"), notificationWsService, inAppNotificationService)
+	
+	// Store notification integration service globally for use in other services
+	// This will be used by other services to send notifications
+	services.SetGlobalNotificationIntegrationService(notificationIntegrationService)
 
 	// Setup call masking routes
 	routes.SetupCallMaskingRoutes(r.Group("/api/v1"))
