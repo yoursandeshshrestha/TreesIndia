@@ -122,6 +122,9 @@ func (ps *ProjectService) CreateProject(userID uint, req *CreateProjectRequest) 
 	// Load user relationship
 	project.User = &user
 
+	// Send notification to admins about new project
+	go NotifyProjectCreated(project, &user)
+
 	return project, nil
 }
 

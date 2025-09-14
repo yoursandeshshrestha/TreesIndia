@@ -201,6 +201,12 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 		return nil, err
 	}
 
+	// Send notification to admins about new worker application
+	var user models.User
+	if err := s.db.First(&user, userID).Error; err == nil {
+		go NotifyWorkerApplication(&user)
+	}
+
 	return application, nil
 }
 
@@ -360,6 +366,12 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Send notification to admins about new broker application
+	var user models.User
+	if err := s.db.First(&user, userID).Error; err == nil {
+		go NotifyBrokerApplication(&user)
 	}
 
 	return application, nil

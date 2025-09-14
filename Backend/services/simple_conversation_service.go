@@ -70,6 +70,33 @@ func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleC
 	}
 
 	logrus.Infof("SimpleConversationService.CreateConversation successfully created conversation ID: %d", conversation.ID)
+	
+	// Send notification about conversation started
+	// Determine the other participant to notify
+	var otherUserID uint
+	var otherUserName string
+	
+	if req.WorkerID != 0 {
+		otherUserID = req.WorkerID
+		// Get worker name
+		var worker models.User
+		if err := s.userRepo.FindByID(&worker, otherUserID); err == nil {
+			otherUserName = worker.Name
+		}
+	} else if req.AdminID != 0 {
+		otherUserID = req.AdminID
+		// Get admin name
+		var admin models.User
+		if err := s.userRepo.FindByID(&admin, otherUserID); err == nil {
+			otherUserName = admin.Name
+		}
+	}
+	
+	// Notify the other participant about conversation started
+	if otherUserID != 0 && otherUserName != "" {
+		go NotifyConversationStarted(otherUserID, otherUserName, 0) // 0 for booking ID since it's not a booking conversation
+	}
+	
 	return conversation, nil
 }
 
