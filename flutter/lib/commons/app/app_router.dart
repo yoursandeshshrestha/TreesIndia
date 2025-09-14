@@ -5,8 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/pages/otp_verification_page.dart';
 import 'package:trees_india/commons/utils/services/navigation_service.dart';
+import 'package:trees_india/pages/chats_page/domain/entities/chat_room_entity.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
+import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
+import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
+import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
@@ -25,6 +29,7 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
+import 'package:trees_india/pages/search_page/app/views/search_page.dart';
 import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
@@ -42,20 +47,32 @@ class AppRouter {
           navigatorKey: appNavigatorKey,
           observers: [
             NavigatorObserverWrapper(
-              onRouteChanged: (previous, current) {
-                previousRouteName = previous?.settings.name;
-                debugPrint(
-                    '➡️ Moved from $previousRouteName to ${current.settings.name}');
-              },
+              onRouteChanged: (previous, current) {},
             ),
           ],
+          onException: (context, state, router) {
+            debugPrint('🔥 GoRouter Exception: ${state.error}');
+          },
           refreshListenable: GoRouterRefreshStream(
             // Use a short-lived stream to avoid hanging if provider init is slow
             ref.watch(authProvider.notifier).authStatusStream,
           ),
           redirect: (context, state) async {
-            debugPrint(
-                '🔍 Router redirect called for path: ${state.matchedLocation}');
+            // Custom route change logging with push/pop detection
+            if (currentRoutePath != null &&
+                currentRoutePath != state.fullPath) {
+              // This is a push - add to stack
+              if (currentRoutePath != null) {
+                routeStack.add(currentRoutePath!);
+              }
+              debugPrint(
+                  '➡️ Pushed from $currentRoutePath to ${state.fullPath}');
+            } else if (currentRoutePath == null) {
+              // Initial navigation
+              debugPrint('🏁 Initial navigation to ${state.fullPath}');
+            }
+            currentRoutePath = state.fullPath;
+
             final authState = ref.read(authProvider);
             final isAuthenticated = authState.isLoggedIn;
 
@@ -153,6 +170,28 @@ class AppRouter {
             // Protected Routes (Requires authentication)
 
             ShellRoute(
+              observers: [
+                NavigatorObserverWrapper(
+                  onRouteChanged: (previous, current) {},
+                ),
+              ],
+              redirect: (context, state) {
+                // Custom route change logging with push/pop detection
+                if (currentRoutePath != null &&
+                    currentRoutePath != state.fullPath) {
+                  // This is a push - add to stack
+                  if (currentRoutePath != null) {
+                    routeStack.add(currentRoutePath!);
+                  }
+                  debugPrint(
+                      '➡️ Pushed from $currentRoutePath to ${state.fullPath}');
+                } else if (currentRoutePath == null) {
+                  // Initial navigation
+                  debugPrint('🏁 Initial navigation to ${state.fullPath}');
+                }
+                currentRoutePath = state.fullPath;
+                return null;
+              },
               builder: (context, state, child) {
                 return ProviderScope(child: Builder(
                   builder: (context) {
@@ -174,6 +213,11 @@ class AppRouter {
                   path: '/home',
                   name: 'HomePage',
                   builder: (context, state) => const HomePage(),
+                ),
+                GoRoute(
+                  path: '/search',
+                  name: 'SearchPage',
+                  builder: (context, state) => const SearchPage(),
                 ),
                 GoRoute(
                   path: '/profile',
@@ -230,7 +274,8 @@ class AppRouter {
                   name: 'ServicesPage',
                   builder: (context, state) {
                     final categoryId = state.pathParameters['categoryId']!;
-                    final subcategoryId = state.pathParameters['subcategoryId']!;
+                    final subcategoryId =
+                        state.pathParameters['subcategoryId']!;
                     return ServicesPage(
                       categoryId: categoryId,
                       subcategoryId: subcategoryId,
@@ -242,7 +287,8 @@ class AppRouter {
                   name: 'ServiceDetailPage',
                   builder: (context, state) {
                     final serviceData = state.extra as Map<String, dynamic>;
-                    final service = serviceData['service'] as ServiceDetailEntity;
+                    final service =
+                        serviceData['service'] as ServiceDetailEntity;
                     return ServiceDetailPage(service: service);
                   },
                 ),
@@ -256,8 +302,28 @@ class AppRouter {
                   name: 'BookingPage',
                   builder: (context, state) {
                     final serviceData = state.extra as Map<String, dynamic>;
-                    final service = serviceData['service'] as ServiceDetailEntity;
+                    final service =
+                        serviceData['service'] as ServiceDetailEntity;
                     return BookingPage(service: service);
+                  },
+                ),
+                GoRoute(
+                  path: '/myworks',
+                  name: 'MyWorksPage',
+                  builder: (context, state) => const MyWorksPage(),
+                ),
+                GoRoute(
+                  path: '/chats',
+                  name: 'ChatsPage',
+                  builder: (context, state) => const ChatsPage(),
+                ),
+                GoRoute(
+                  path: '/chats/:roomId',
+                  name: 'ChatRoomPage',
+                  builder: (context, state) {
+                    final roomId = int.parse(state.pathParameters['roomId']!);
+                    final chatRoom = state.extra as ChatRoomEntity;
+                    return ChatRoomPage(roomId: roomId, chatRoom: chatRoom);
                   },
                 ),
               ],

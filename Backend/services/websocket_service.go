@@ -553,9 +553,16 @@ func (c *Client) handleStopTracking(wsMsg WSMessage) {
 		RoomID:    c.RoomID,
 		UserID:    c.UserID,
 		Data: map[string]interface{}{
+			"tracking_status": map[string]interface{}{
+				"assignment_id": assignment.ID,
+				"booking_id":    assignment.BookingID,
+				"worker_id":     workerID,
+				"is_tracking":   false,
+				"status":        "stopped",
+				"worker_name":   assignment.Worker.Name,
+				"customer_name": assignment.Booking.User.Name,
+			},
 			"type": "tracking_stopped",
-			"assignment_id": assignment.ID,
-			"worker_id": workerID,
 		},
 		Timestamp: time.Now(),
 	}
@@ -569,9 +576,16 @@ func (c *Client) handleStopTracking(wsMsg WSMessage) {
 		RoomID:    c.RoomID,
 		UserID:    c.UserID,
 		Data: map[string]interface{}{
+			"tracking_status": map[string]interface{}{
+				"assignment_id": assignment.ID,
+				"booking_id":    assignment.BookingID,
+				"worker_id":     workerID,
+				"is_tracking":   false,
+				"status":        "stopped",
+				"worker_name":   assignment.Worker.Name,
+				"customer_name": assignment.Booking.User.Name,
+			},
 			"type": "tracking_stopped",
-			"assignment_id": assignment.ID,
-			"worker_id": workerID,
 		},
 		Timestamp: time.Now(),
 	}

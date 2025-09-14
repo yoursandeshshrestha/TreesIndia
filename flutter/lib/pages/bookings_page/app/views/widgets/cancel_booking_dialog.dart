@@ -158,6 +158,7 @@ class _CancelBookingBottomSheetState extends State<CancelBookingBottomSheet> {
                                 BorderSide(color: AppColors.brandPrimary600),
                           ),
                         ),
+                        onTapOutside: (_) => FocusScope.of(context).unfocus(),
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       Row(

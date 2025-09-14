@@ -3,6 +3,8 @@ import '../../../../commons/constants/api_endpoints.dart';
 import '../../../../commons/utils/services/dio_client.dart';
 import '../../../../commons/utils/error_handler.dart';
 import '../models/bookings_response_model.dart';
+import '../models/quote_payment_request_model.dart';
+import '../models/quote_payment_response_model.dart';
 import '../../app/viewmodels/bookings_state.dart';
 
 class BookingsDatasource {
@@ -161,6 +163,82 @@ class BookingsDatasource {
         errorHandler.handleGenericError(e);
       }
       throw Exception('Error accepting quote.');
+    }
+  }
+
+  Future<QuotePaymentResponseModel> createQuotePayment({
+    required int bookingId,
+    required QuotePaymentRequestModel request,
+  }) async {
+    final url = ApiEndpoints.createQuotePayment.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    try {
+      final response = await dioClient.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200 && response.data != null) {
+        print('📍 Quote payment order created successfully: $bookingId');
+        return QuotePaymentResponseModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to create quote payment. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error creating quote payment.');
+    }
+  }
+
+  Future<void> verifyQuotePayment({
+    required int bookingId,
+    required QuotePaymentVerificationModel verification,
+  }) async {
+    final url = ApiEndpoints.verifyQuotePayment.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    try {
+      final response = await dioClient.dio.post(url, data: verification.toJson());
+
+      if (response.statusCode == 200) {
+        print('📍 Quote payment verified successfully: $bookingId');
+      } else {
+        throw Exception('Failed to verify quote payment. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error verifying quote payment.');
+    }
+  }
+
+  Future<void> processWalletQuotePayment({
+    required int bookingId,
+    required WalletQuotePaymentRequestModel request,
+  }) async {
+    final url = ApiEndpoints.walletQuotePayment.path
+        .replaceAll('{bookingId}', bookingId.toString());
+
+    try {
+      final response = await dioClient.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200) {
+        print('📍 Wallet quote payment processed successfully: $bookingId');
+      } else {
+        throw Exception('Failed to process wallet payment. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error processing wallet quote payment.');
     }
   }
 }

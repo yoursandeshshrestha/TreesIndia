@@ -56,6 +56,9 @@ class DioClient {
         try {
           final requiresAuth = ApiConfig.isAuthRequired(options.path);
 
+          // Store original endpoint for potential retry scenarios
+          options.extra['originalPath'] = options.path;
+          
           options.path = await _apiConfig.getApiUrl(options.path);
           _localStorageService = CentralizedLocalStorageService();
           final fcmtoken = await _localStorageService.getData('FCMTOKEN');
@@ -237,17 +240,55 @@ class DioClient {
               await _ref.read(centralizedDataRepositoryProvider).getAuthToken();
 
           if (newToken != null) {
-            error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+            // Create a fresh request options with original path to avoid double URL concatenation
+            final originalPath = error.requestOptions.extra['originalPath'] as String?;
+            if (originalPath != null) {
+              final retryOptions = RequestOptions(
+                path: originalPath,
+                method: error.requestOptions.method,
+                data: error.requestOptions.data,
+                queryParameters: error.requestOptions.queryParameters,
+                headers: Map<String, dynamic>.from(error.requestOptions.headers)
+                  ..['Authorization'] = 'Bearer $newToken',
+                extra: error.requestOptions.extra,
+                connectTimeout: error.requestOptions.connectTimeout,
+                receiveTimeout: error.requestOptions.receiveTimeout,
+                sendTimeout: error.requestOptions.sendTimeout,
+                responseType: error.requestOptions.responseType,
+                contentType: error.requestOptions.contentType,
+                validateStatus: error.requestOptions.validateStatus,
+                receiveDataWhenStatusError: error.requestOptions.receiveDataWhenStatusError,
+                followRedirects: error.requestOptions.followRedirects,
+                maxRedirects: error.requestOptions.maxRedirects,
+                persistentConnection: error.requestOptions.persistentConnection,
+                requestEncoder: error.requestOptions.requestEncoder,
+                responseDecoder: error.requestOptions.responseDecoder,
+                listFormat: error.requestOptions.listFormat,
+              );
 
-            // Retry the request
-            try {
-              final response = await _dio.fetch(error.requestOptions);
-              handler.resolve(response);
-              return;
-            } catch (retryError) {
-              print("Retry failed: $retryError");
-              handler.next(error);
-              return;
+              // Retry the request with fresh options
+              try {
+                final response = await _dio.fetch(retryOptions);
+                handler.resolve(response);
+                return;
+              } catch (retryError) {
+                print("Retry failed: $retryError");
+                handler.next(error);
+                return;
+              }
+            } else {
+              // Fallback to old method if originalPath is not available
+              error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+              
+              try {
+                final response = await _dio.fetch(error.requestOptions);
+                handler.resolve(response);
+                return;
+              } catch (retryError) {
+                print("Retry failed: $retryError");
+                handler.next(error);
+                return;
+              }
             }
           }
         }

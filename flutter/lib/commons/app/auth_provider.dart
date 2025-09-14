@@ -26,25 +26,29 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 class AuthState {
   final bool isLoggedIn;
   final TokenEntity? token;
+  final String? userType;
 
   const AuthState({
     this.isLoggedIn = false,
     this.token,
+    this.userType,
   });
 
   AuthState copyWith({
     bool? isLoggedIn,
     TokenEntity? token,
+    String? userType,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       token: token ?? this.token,
+      userType: userType ?? this.userType,
     );
   }
 
   @override
   toString() {
-    return 'AuthState(isLoggedIn: $isLoggedIn, token: ${token != null ? 'present' : 'null'})';
+    return 'AuthState(isLoggedIn: $isLoggedIn, token: ${token != null ? '$token' : 'null'}, userType: $userType)';
   }
 }
 
@@ -117,11 +121,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
               }
             }
 
-            state = AuthState(isLoggedIn: true, token: tokenEntity);
-            debugPrint('Auth state set to true - valid token found');
-
-            // Load profile data separately
+            // Load profile data separately to get userType
             await ref.read(userProfileProvider.notifier).loadUserProfile();
+
+            // Get userType from profile
+            final userProfile = ref.read(userProfileProvider).user;
+            final userType = userProfile?.userType;
+
+            state = AuthState(
+                isLoggedIn: true, token: tokenEntity, userType: userType);
+            debugPrint(
+                'Auth state set to true - valid token found, userType: $userType');
             return;
           }
         } catch (e) {
@@ -131,11 +141,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       if (!_mounted) return;
       debugPrint('No valid token found, setting auth state to logged out');
-      state = const AuthState(isLoggedIn: false, token: null);
+      state = const AuthState(isLoggedIn: false, token: null, userType: null);
     } catch (e) {
       if (!_mounted) return;
       debugPrint('Error checking auth state: $e');
-      state = const AuthState(isLoggedIn: false, token: null);
+      state = const AuthState(isLoggedIn: false, token: null, userType: null);
     }
     debugPrint('Auth state is: ${state.isLoggedIn}');
   }
@@ -175,14 +185,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         final tokenEntity =
             userModel.token!.toEntity(userId: userModel.userId?.toString());
-        state = AuthState(isLoggedIn: true, token: tokenEntity);
+        state = AuthState(
+            isLoggedIn: true, token: tokenEntity, userType: userModel.userType);
         debugPrint('User logged in and auth state updated');
         _authStatusController.add(true);
       }
     } catch (e) {
       if (!_mounted) return;
       debugPrint('Error during login: $e');
-      state = const AuthState(isLoggedIn: false, token: null);
+      state = const AuthState(isLoggedIn: false, token: null, userType: null);
       throw Exception('Failed to initialize user session');
     }
   }
@@ -212,7 +223,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       ProviderRegistry.resetAll(ref.container);
 
       if (!_mounted) return;
-      state = const AuthState(isLoggedIn: false, token: null);
+      state = const AuthState(isLoggedIn: false, token: null, userType: null);
 
       _logger.i('✅ [AuthNotifier] User logged out successfully');
       debugPrint('Logout completed successfully');
@@ -221,7 +232,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (!_mounted) return;
       _logger.e('❌ [AuthNotifier] Error during logout: $e');
       debugPrint('Error during logout: $e');
-      state = const AuthState(isLoggedIn: false, token: null);
+      state = const AuthState(isLoggedIn: false, token: null, userType: null);
       throw Exception('Failed to log out. Please try again.');
     }
   }

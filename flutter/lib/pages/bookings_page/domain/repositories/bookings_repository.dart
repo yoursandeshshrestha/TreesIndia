@@ -1,4 +1,6 @@
 import '../entities/bookings_response_entity.dart';
+import '../entities/quote_payment_request_entity.dart';
+import '../entities/quote_payment_response_entity.dart';
 import '../../app/viewmodels/bookings_state.dart';
 
 abstract class BookingsRepository {
@@ -22,5 +24,20 @@ abstract class BookingsRepository {
   Future<void> acceptQuote({
     required int bookingId,
     String notes,
+  });
+
+  Future<QuotePaymentResponseEntity> createQuotePayment({
+    required int bookingId,
+    required QuotePaymentRequestEntity request,
+  });
+
+  Future<void> verifyQuotePayment({
+    required int bookingId,
+    required QuotePaymentVerificationEntity verification,
+  });
+
+  Future<void> processWalletQuotePayment({
+    required int bookingId,
+    required WalletQuotePaymentRequestEntity request,
   });
 }

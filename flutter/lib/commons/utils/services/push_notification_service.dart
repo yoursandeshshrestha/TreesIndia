@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../presenters/providers/local_storage_provider.dart';
 import 'centralized_local_storage_service.dart';
+import 'fcm_auto_registration_service.dart';
 
 const bool _debugNotifications = true;
 const bool _debugNotificationTaps = true; // Specific for tap events
@@ -131,6 +132,17 @@ class PushNotificationService {
           _localStorage = ref.watch(localStorageServiceProvider);
           await _localStorage.saveData('FCMTOKEN', token);
           debugPrint('FCM Token: $token');
+          
+          // Trigger auto-registration with backend
+          try {
+            final autoRegistrationService = FCMAutoRegistrationService();
+            await autoRegistrationService.autoRegisterDevice(
+              widgetRef: ref,
+              fcmToken: token,
+            );
+          } catch (e) {
+            debugPrint('Error during FCM auto-registration: $e');
+          }
         } else {
           debugPrint('FCM token is null');
         }
@@ -475,6 +487,28 @@ class PushNotificationService {
       if (_debugNotifications) {
         debugPrint('📱 Error checking pending notifications: $e');
       }
+    }
+  }
+
+  /// Re-trigger FCM token registration (call this after user login)
+  static Future<void> retriggerRegistration(Ref ref) async {
+    try {
+      _localStorage = ref.watch(localStorageServiceProvider);
+      final token = await _localStorage.getData('FCMTOKEN');
+      
+      if (token != null) {
+        debugPrint('Re-triggering FCM registration with token: ${token.substring(0, 20)}...');
+        
+        final autoRegistrationService = FCMAutoRegistrationService();
+        await autoRegistrationService.autoRegisterDevice(
+          ref: ref,
+          fcmToken: token,
+        );
+      } else {
+        debugPrint('No FCM token found to re-register');
+      }
+    } catch (e) {
+      debugPrint('Error re-triggering FCM registration: $e');
     }
   }
 

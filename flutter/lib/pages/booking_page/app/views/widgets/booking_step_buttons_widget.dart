@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/components/button/app/views/outline_button_widget.dart';
-import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 

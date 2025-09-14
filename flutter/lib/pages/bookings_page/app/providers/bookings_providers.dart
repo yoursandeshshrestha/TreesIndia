@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../../commons/presenters/providers/dio_provider.dart';
 import '../../../../commons/presenters/providers/error_handler_provider.dart';
 import '../../data/datasources/bookings_datasource.dart';
@@ -8,6 +9,10 @@ import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../../domain/usecases/reject_quote_usecase.dart';
 import '../../domain/usecases/accept_quote_usecase.dart';
+import '../../domain/usecases/create_quote_payment_usecase.dart';
+import '../../domain/usecases/verify_quote_payment_usecase.dart';
+import '../../domain/usecases/process_wallet_quote_payment_usecase.dart';
+import '../../../booking_page/app/providers/booking_providers.dart';
 import '../viewmodels/bookings_notifier.dart';
 import '../viewmodels/bookings_state.dart';
 
@@ -51,17 +56,52 @@ final acceptQuoteUseCaseProvider = Provider<AcceptQuoteUseCase>((ref) {
   return AcceptQuoteUseCase(repository: repository);
 });
 
+final createQuotePaymentUseCaseProvider =
+    Provider<CreateQuotePaymentUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return CreateQuotePaymentUseCase(repository: repository);
+});
+
+final verifyQuotePaymentUseCaseProvider =
+    Provider<VerifyQuotePaymentUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return VerifyQuotePaymentUseCase(repository: repository);
+});
+
+final processWalletQuotePaymentUseCaseProvider =
+    Provider<ProcessWalletQuotePaymentUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return ProcessWalletQuotePaymentUseCase(repository: repository);
+});
+
 final bookingsNotifierProvider =
     StateNotifierProvider<BookingsNotifier, BookingsState>((ref) {
   final getBookingsUseCase = ref.read(getBookingsUseCaseProvider);
   final cancelBookingUseCase = ref.read(cancelBookingUseCaseProvider);
   final rejectQuoteUseCase = ref.read(rejectQuoteUseCaseProvider);
   final acceptQuoteUseCase = ref.read(acceptQuoteUseCaseProvider);
-
+  final createQuotePaymentUseCase = ref.read(createQuotePaymentUseCaseProvider);
+  final verifyQuotePaymentUseCase = ref.read(verifyQuotePaymentUseCaseProvider);
+  final processWalletQuotePaymentUseCase =
+      ref.read(processWalletQuotePaymentUseCaseProvider);
+  final getBookingConfigUseCase = ref.read(getBookingConfigUseCaseProvider);
+  final getAvailableSlotsUseCase = ref.read(getAvailableSlotsUseCaseProvider);
+  final razorpayProvider = Provider<Razorpay>((ref) {
+    return Razorpay();
+  });
   return BookingsNotifier(
     getBookingsUseCase: getBookingsUseCase,
     cancelBookingUseCase: cancelBookingUseCase,
     rejectQuoteUseCase: rejectQuoteUseCase,
     acceptQuoteUseCase: acceptQuoteUseCase,
+    createQuotePaymentUseCase: createQuotePaymentUseCase,
+    verifyQuotePaymentUseCase: verifyQuotePaymentUseCase,
+    processWalletQuotePaymentUseCase: processWalletQuotePaymentUseCase,
+    getBookingConfigUseCase: getBookingConfigUseCase,
+    getAvailableSlotsUseCase: getAvailableSlotsUseCase,
+    razorpay: ref.read(razorpayProvider),
   );
 });

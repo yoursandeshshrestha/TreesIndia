@@ -33,7 +33,10 @@ func (crr *ChatRoomRepository) Create(chatRoom *models.ChatRoom) (*models.ChatRo
 func (crr *ChatRoomRepository) GetByID(id uint) (*models.ChatRoom, error) {
 	var chatRoom models.ChatRoom
 	err := crr.db.Preload("Booking.User").
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
+		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages.Sender").
 		First(&chatRoom, id).Error
 	if err != nil {
@@ -47,7 +50,10 @@ func (crr *ChatRoomRepository) GetByBookingID(bookingID uint) (*models.ChatRoom,
 	var chatRoom models.ChatRoom
 	err := crr.db.Where("booking_id = ? AND is_active = ?", bookingID, true).
 		Preload("Booking.User").
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
+		Preload("Booking.WorkerAssignment.AssignedByUser").
 		First(&chatRoom).Error
 	if err != nil {
 		return nil, err
@@ -81,9 +87,12 @@ func (crr *ChatRoomRepository) GetUserRooms(userID uint, roomType *models.RoomTy
 	offset := (page - 1) * limit
 	query = query.Offset(offset).Limit(limit)
 
-	// Preload relationships with booking, user, worker assignment, and worker
+	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
+		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1) // Get last message
 		}).Preload("Messages.Sender")
@@ -152,9 +161,12 @@ func (crr *ChatRoomRepository) GetClosedRooms(userID uint, page, limit int) ([]m
 	offset := (page - 1) * limit
 	query = query.Offset(offset).Limit(limit)
 
-	// Preload relationships with booking, user, worker assignment, and worker
+	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
+		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1) // Get last message
 		}).Preload("Messages.Sender")
@@ -192,9 +204,12 @@ func (crr *ChatRoomRepository) GetAllRooms(page, limit int) ([]models.ChatRoom, 
 	offset := (page - 1) * limit
 	query := crr.db.Offset(offset).Limit(limit)
 
-	// Preload relationships with booking, user, worker assignment, and worker
+	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
+		Preload("Booking.Service.Category").
+		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
+		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1) // Get last message
 		}).Preload("Messages.Sender")

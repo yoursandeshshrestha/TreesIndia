@@ -13,8 +13,11 @@ class BookingsResponseModel extends BookingsResponseEntity {
 
     return BookingsResponseModel(
       bookings: (json['bookings'] as List<dynamic>?)
-              ?.map((booking) =>
-                  BookingDetailsModel.fromJson(booking as Map<String, dynamic>))
+              ?.map((bookingWrapper) {
+                // Each booking is wrapped in a 'booking' key
+                final bookingData = bookingWrapper['booking'] as Map<String, dynamic>;
+                return BookingDetailsModel.fromJson(bookingData);
+              })
               .toList() ??
           [],
       pagination: PaginationModel(

@@ -8,6 +8,7 @@ import 'package:trees_india/commons/presenters/providers/language_provider.dart'
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/theming/app_theme.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/commons/utils/services/push_notification_service.dart';
 
 final appLifecycleProvider = StateProvider<AppLifecycleState?>((ref) {
   return null;
@@ -87,6 +88,17 @@ class _AppInitializerState extends ConsumerState<AppInitializer>
       });
     } catch (e) {
       debugPrint('Auth initialization error: $e');
+    }
+
+    // Initialize push notifications after auth
+    try {
+      if (mounted) {
+        final pushService = PushNotificationService();
+        await pushService.initialize(ref, context, navigatorKey: widget.navigatorKey);
+        debugPrint('Push notifications initialized successfully');
+      }
+    } catch (e) {
+      debugPrint('Push notification initialization error: $e');
     }
 
     setState(() {

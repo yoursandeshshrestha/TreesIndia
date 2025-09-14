@@ -6,6 +6,7 @@ import 'package:trees_india/commons/components/snackbar/app/views/success_snackb
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_notifier.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_state.dart';
+import 'package:trees_india/commons/widgets/location_tracking_modal.dart';
 
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -13,15 +14,14 @@ import '../../../domain/entities/booking_details_entity.dart';
 import '../../providers/bookings_providers.dart';
 import 'booking_details_bottom_sheet.dart';
 import 'cancel_booking_bottom_sheet.dart';
+import 'quote_acceptance_bottom_sheet.dart';
 
 class BookingCardWidget extends ConsumerWidget {
   final BookingDetailsEntity booking;
-  final VoidCallback? onPayNow;
 
   const BookingCardWidget({
     super.key,
     required this.booking,
-    this.onPayNow,
   });
 
   @override
@@ -347,6 +347,27 @@ class BookingCardWidget extends ConsumerWidget {
         );
       case 'confirmed':
       case 'scheduled':
+        // final workerRejected = booking.workerAssignment?.status == "rejected";
+        final hasWorkerAssignment =
+            booking.workerAssignment?.worker?.name != null;
+
+        // If there's a worker assignment and accepted, show worker assigned icon
+        if (hasWorkerAssignment &&
+            booking.workerAssignment?.status == "accepted") {
+          return Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.accentTeal100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.person_outline,
+              color: AppColors.accentTeal600,
+            ),
+          );
+        }
+
         return Container(
           width: 40,
           height: 40,
@@ -360,17 +381,34 @@ class BookingCardWidget extends ConsumerWidget {
           ),
         );
       case 'assigned':
-      case 'in_progress':
         return Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.brandNeutral200,
+            color: AppColors.accentTeal100,
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
-            Icons.work_outline,
-            color: AppColors.brandNeutral600,
+            Icons.person_outline,
+            color: AppColors.accentTeal600,
+          ),
+        );
+      case 'in_progress':
+        final hasStarted = booking.actualStartTime != null;
+        return Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: hasStarted
+                ? AppColors.brandNeutral200
+                : AppColors.accentTeal100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            hasStarted ? Icons.work_outline : Icons.person_outline,
+            color: hasStarted
+                ? AppColors.brandNeutral600
+                : AppColors.accentTeal600,
           ),
         );
       case 'quote_accepted':
@@ -455,11 +493,29 @@ class BookingCardWidget extends ConsumerWidget {
         return 'Service has been completed successfully';
       case 'confirmed':
       case 'scheduled':
-        return 'A professional will be assigned to this booking soon';
+        final workerRejected = booking.workerAssignment?.status == "rejected";
+        final hasWorkerAssignment =
+            booking.workerAssignment?.worker?.name != null;
+
+        // If there's a worker assignment and accepted, show worker assigned status
+        if (hasWorkerAssignment &&
+            booking.workerAssignment?.status == "accepted") {
+          return 'Your service professional is on the way';
+        }
+
+        return workerRejected
+            ? 'A new professional will be assigned to this booking soon'
+            : 'A professional will be assigned to this booking soon';
       case 'assigned':
-        return 'Your service professional is on the way';
+        final workerName = booking.workerAssignment?.worker?.name;
+        return workerName != null
+            ? 'Your service professional is on the way'
+            : 'Your service professional is on the way';
       case 'in_progress':
-        return 'Your service is currently being performed';
+        final hasStarted = booking.actualStartTime != null;
+        return hasStarted
+            ? 'Your service is currently being performed'
+            : 'Your service professional has arrived and is ready to start';
       case 'quote_accepted':
         return 'Please complete the payment to proceed with the booking';
       case 'pending':
@@ -516,6 +572,9 @@ class BookingCardWidget extends ConsumerWidget {
                               message: 'Quote accepted successfully',
                             ).createSnackBar(),
                           );
+                        }
+                        if (context.mounted) {
+                          QuoteAcceptanceBottomSheet.show(context, booking);
                         }
                       } catch (e) {
                         if (context.mounted) {
@@ -594,7 +653,7 @@ class BookingCardWidget extends ConsumerWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: onPayNow,
+            onPressed: () => QuoteAcceptanceBottomSheet.show(context, booking),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateGreen600,
               foregroundColor: Colors.white,
@@ -669,6 +728,37 @@ class BookingCardWidget extends ConsumerWidget {
       ];
     }
 
+    // Add Track Worker Location button for in_progress bookings
+    if (status == 'in_progress' && 
+        booking.workerAssignment?.status == 'in_progress') {
+      buttons.add(
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              _showLocationTrackingModal(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brandPrimary600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.location_on, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('Track Worker Location'),
+              ],
+            ),
+          ),
+        ),
+      );
+      buttons.add(const SizedBox(height: AppSpacing.xs));
+    }
+
     // Add cancel button for cancellable statuses
     if ([
       'pending',
@@ -734,6 +824,13 @@ class BookingCardWidget extends ConsumerWidget {
     }
 
     return buttons;
+  }
+
+  void _showLocationTrackingModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => LocationTrackingModal(booking: booking),
+    );
   }
 
   String _formatDateTime(DateTime date, DateTime time) {

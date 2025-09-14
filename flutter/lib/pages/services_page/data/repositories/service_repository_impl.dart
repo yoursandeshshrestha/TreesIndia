@@ -1,4 +1,6 @@
 import '../../domain/entities/service_response_entity.dart';
+import '../../domain/entities/search_suggestions_response_entity.dart';
+import '../../domain/entities/popular_services_response_entity.dart';
 import '../../domain/repositories/service_repository.dart';
 import '../datasources/service_remote_datasource.dart';
 
@@ -25,5 +27,17 @@ class ServiceRepositoryImpl implements ServiceRepository {
       limit: limit,
     );
     return serviceResponseModel.toEntity();
+  }
+
+  @override
+  Future<SearchSuggestionsResponseEntity> getSearchSuggestions() async {
+    final responseModel = await remoteDataSource.getSearchSuggestions();
+    return responseModel.toEntity();
+  }
+
+  @override
+  Future<PopularServicesResponseEntity> getPopularServices() async {
+    final responseModel = await remoteDataSource.getPopularServices();
+    return responseModel.toEntity();
   }
 }

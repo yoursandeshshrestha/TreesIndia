@@ -385,6 +385,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         BorderSide(color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -408,6 +409,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         BorderSide(color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -432,6 +434,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         BorderSide(color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -456,6 +459,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         BorderSide(color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -609,6 +613,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           color: AppColors.brandNeutral200, width: 1),
                     ),
                   ),
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),

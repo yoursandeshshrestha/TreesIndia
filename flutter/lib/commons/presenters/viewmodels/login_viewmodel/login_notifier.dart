@@ -12,6 +12,7 @@ import 'package:trees_india/commons/domain/usecases/verify_otp_usecase.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
 import 'package:trees_india/commons/utils/services/centralized_local_storage_service.dart';
 import 'package:trees_india/commons/utils/services/notification_service.dart';
+import 'package:trees_india/commons/utils/services/push_notification_service.dart';
 import 'package:trees_india/pages/login_page/domain/entities/login_request_entity.dart';
 import 'package:trees_india/pages/login_page/domain/usecases/login_usecase.dart';
 
@@ -228,6 +229,14 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
         // Use the new login method to save both auth and profile data separately
         await ref.read(authProvider.notifier).login(completeUserModel);
         debugPrint('Complete user profile saved to local storage successfully');
+        
+        // Re-trigger FCM registration now that user is authenticated
+        try {
+          await PushNotificationService.retriggerRegistration(ref);
+          debugPrint('✅ FCM re-registration triggered after login');
+        } catch (e) {
+          debugPrint('❌ Error triggering FCM re-registration: $e');
+        }
       } else {
         debugPrint('Failed to fetch user profile: ${profileResponse.message}');
       }

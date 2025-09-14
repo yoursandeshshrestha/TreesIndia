@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart'; // Import Hive for Flutter
 import 'package:logger/logger.dart';
 import 'package:trees_india/commons/environment/global_environment.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'commons/app/app_initializer.dart';
 import 'commons/utils/global_error_handler.dart';
@@ -23,11 +24,12 @@ void main() async {
   }
 
   // Initialize Firebase before using any Firebase services
-  // try {
-  //   await Firebase.initializeApp();
-  // } catch (e) {
-  //   _logger.w('Firebase.initializeApp failed: $e');
-  // }
+  try {
+    await Firebase.initializeApp();
+    _logger.i('Firebase initialized successfully');
+  } catch (e) {
+    _logger.w('Firebase.initializeApp failed: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

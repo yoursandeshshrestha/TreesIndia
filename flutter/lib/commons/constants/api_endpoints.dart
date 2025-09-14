@@ -14,6 +14,8 @@ class ApiEndpoints {
     categories,
     subcategories,
     services,
+    searchSuggestions,
+    popularServices,
     walletSummary,
     walletTransactions,
     walletTransactionsByType,
@@ -33,10 +35,27 @@ class ApiEndpoints {
     cancelBooking,
     rejectQuote,
     acceptQuote,
+    createQuotePayment,
+    verifyQuotePayment,
+    walletQuotePayment,
     addresses,
     createAddress,
     updateAddress,
     deleteAddress,
+    registerDevice,
+    getUserDevices,
+    unregisterDevice,
+    getAssignments,
+    acceptAssignment,
+    rejectAssignment,
+    startWork,
+    completeWork,
+    chatRooms,
+    chatMessages,
+    sendMessage,
+    markMessageRead,
+    bookingChatRoom,
+    getTrackingStatus,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -86,6 +105,16 @@ class ApiEndpoints {
 
   static ApiEndpoint services = ApiEndpoint(
     path: '/services',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint searchSuggestions = ApiEndpoint(
+    path: '/services/search/suggestions',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint popularServices = ApiEndpoint(
+    path: '/services/popular',
     requiresAuth: false,
   );
 
@@ -179,6 +208,21 @@ class ApiEndpoints {
     requiresAuth: true,
   );
 
+  static ApiEndpoint createQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/create-quote-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifyQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/verify-quote-payment',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint walletQuotePayment = ApiEndpoint(
+    path: '/bookings/{bookingId}/wallet-payment',
+    requiresAuth: true,
+  );
+
   static ApiEndpoint addresses = ApiEndpoint(
     path: '/addresses',
     requiresAuth: true,
@@ -196,6 +240,77 @@ class ApiEndpoints {
 
   static ApiEndpoint deleteAddress = ApiEndpoint(
     path: '/addresses/{addressId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint registerDevice = ApiEndpoint(
+    path: '/notifications/register-device',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getUserDevices = ApiEndpoint(
+    path: '/notifications/devices',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint unregisterDevice = ApiEndpoint(
+    path: '/notifications/unregister-device',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getAssignments = ApiEndpoint(
+    path: '/worker/assignments',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint acceptAssignment = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/accept',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint rejectAssignment = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/reject',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint startWork = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/start',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint completeWork = ApiEndpoint(
+    path: '/worker/assignments/{assignmentId}/complete',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint chatRooms = ApiEndpoint(
+    path: '/chat/rooms',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint chatMessages = ApiEndpoint(
+    path: '/chat/rooms/{roomId}/messages',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint sendMessage = ApiEndpoint(
+    path: '/chat/rooms/{roomId}/messages',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markMessageRead = ApiEndpoint(
+    path: '/chat/messages/{messageId}/read',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint bookingChatRoom = ApiEndpoint(
+    path: '/chat/bookings/{bookingId}/room',
+    requiresAuth: true,
+  );
+
+  // Location Tracking Endpoints
+  static ApiEndpoint getTrackingStatus = ApiEndpoint(
+    path: '/assignments/{assignmentId}/tracking-status',
     requiresAuth: true,
   );
 
