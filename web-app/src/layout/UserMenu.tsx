@@ -19,6 +19,7 @@ import { conversationStore } from "@/utils/conversationStore";
 import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
 import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
 import { useRouter } from "next/navigation";
+import { NotificationIcon } from "@/components/NotificationIcon";
 
 export const UserMenu: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -154,6 +155,9 @@ export const UserMenu: React.FC = () => {
               {user.user_type === "worker" ? "My Work" : "My Bookings"}
             </span>
           </button>
+
+          {/* Notifications */}
+          <NotificationIcon />
 
           {/* Chat Button */}
           <button
