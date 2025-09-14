@@ -1805,6 +1805,9 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 
 	// 14. Send confirmation notification
 	go bs.notificationService.SendBookingConfirmation(booking)
+	
+	// 15. Send in-app notification to admin
+	go bs.sendBookingNotificationToAdmin(booking, service)
 
 	logrus.Infof("Wallet payment booking created successfully: booking_id=%d, amount=%.2f", booking.ID, *service.Price)
 	// Calculate payment progress before returning
@@ -1904,4 +1907,28 @@ func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *model
 	booking.GetPaymentProgress()
 	
 	return booking, nil
+}
+
+// sendBookingNotificationToAdmin sends in-app notification to admin about new booking
+func (bs *BookingService) sendBookingNotificationToAdmin(booking *models.Booking, service *models.Service) {
+	// Get the global notification integration service
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		logrus.Warn("Notification integration service not available")
+		return
+	}
+
+	// Get user details
+	var user models.User
+	err := bs.userRepo.FindByID(&user, booking.UserID)
+	if err != nil {
+		logrus.Errorf("Failed to get user for notification: %v", err)
+		return
+	}
+
+	// Send notification to admin
+	err = notificationService.NotifyBookingCreated(booking, &user, service)
+	if err != nil {
+		logrus.Errorf("Failed to send booking notification to admin: %v", err)
+	}
 }
