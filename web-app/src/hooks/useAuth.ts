@@ -10,6 +10,7 @@ import {
   getCurrentUser,
 } from "@/store/slices/authSlice";
 import { RequestOTPResponse, AuthResponse } from "@/types/auth";
+import { authAPI } from "@/lib/auth-api";
 
 // Custom hook to use auth state and actions
 export const useAuth = () => {
@@ -99,6 +100,7 @@ export const useAuth = () => {
     isAuthenticated: authState.isAuthenticated,
     isLoading: authState.isLoading,
     error: authState.error,
+    token: authAPI.getAccessToken(),
 
     // Actions
     requestOTP: handleRequestOTP,
