@@ -17,21 +17,23 @@ class AddressRepositoryImpl implements AddressRepository {
   }
 
   @override
-  Future<AddressEntity> createAddress(CreateAddressRequestEntity request) async {
+  Future<AddressEntity> createAddress(
+      CreateAddressRequestEntity request) async {
     final requestModel = CreateAddressRequestModel.fromEntity(request);
     final model = await remoteDataSource.createAddress(requestModel);
     return model.toEntity();
   }
 
   @override
-  Future<AddressEntity> updateAddress(UpdateAddressRequestEntity request) async {
+  Future<AddressEntity> updateAddress(
+      UpdateAddressRequestEntity request) async {
     final requestModel = UpdateAddressRequestModel.fromEntity(request);
     final model = await remoteDataSource.updateAddress(requestModel);
     return model.toEntity();
   }
 
   @override
-  Future<void> deleteAddress(int addressId) async {
-    await remoteDataSource.deleteAddress(addressId);
+  Future<String> deleteAddress(int addressId) async {
+    return await remoteDataSource.deleteAddress(addressId);
   }
 }

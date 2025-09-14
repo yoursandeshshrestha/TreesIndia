@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/constants/app_colors.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import 'package:trees_india/commons/widgets/address_selector/domain/entities/address_entity.dart';
+import 'package:trees_india/commons/constants/app_colors.dart';
+import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/providers/address_providers.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/viewmodels/address_state.dart';
-import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
-import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
-import 'package:trees_india/commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
-import 'package:trees_india/commons/components/textfield/app/views/alpha_numeric_textfield_widget.dart';
-import 'package:trees_india/commons/components/textfield/app/views/numeric_textfield_widget.dart';
+import 'package:trees_india/commons/widgets/address_selector/domain/entities/address_entity.dart';
 
 class ManageAddressesPage extends ConsumerStatefulWidget {
   const ManageAddressesPage({super.key});
@@ -62,14 +61,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               onTap: () {
                 _showAddAddressBottomSheet(context);
               },
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.add,
                     color: Color(0xFF055c3a),
                     size: 20,
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  SizedBox(width: AppSpacing.md),
                   Text(
                     'Add another address',
                     style: TextStyle(
@@ -123,16 +122,16 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     }
 
     if (addressState.addresses.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.location_off,
               size: 64,
               color: AppColors.brandNeutral400,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.md),
             Text(
               'No addresses found',
               style: TextStyle(
@@ -141,7 +140,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 color: AppColors.brandNeutral600,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.sm),
             Text(
               'Add your first address to get started',
               style: TextStyle(
@@ -156,7 +155,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       itemCount: addressState.addresses.length,
-      separatorBuilder: (context, index) => Divider(
+      separatorBuilder: (context, index) => const Divider(
         color: AppColors.brandNeutral100,
         height: 1,
       ),
@@ -194,7 +193,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 // Full address
                 Text(
                   address.fullAddress,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.brandNeutral600,
                   ),
@@ -237,11 +236,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               // Warning Icon
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.stateRed50,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.warning_amber_rounded,
                   color: AppColors.stateRed500,
                   size: 32,
@@ -257,7 +256,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               const SizedBox(height: AppSpacing.md),
 
               // Description
-              Text(
+              const Text(
                 'Are you sure you want to delete this address? This action cannot be undone.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -278,12 +277,13 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                       style: OutlinedButton.styleFrom(
                         padding:
                             const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                        side: BorderSide(color: AppColors.brandNeutral300),
+                        side:
+                            const BorderSide(color: AppColors.brandNeutral300),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Cancel',
                         style: TextStyle(
                           color: AppColors.brandNeutral700,
@@ -314,7 +314,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
+                      child: const Text(
                         'Delete',
                         style: TextStyle(
                           fontSize: 16,
@@ -372,17 +372,18 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   hintText: 'City',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -396,17 +397,18 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   hintText: 'State',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -421,17 +423,18 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   hintText: 'Pincode',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -446,17 +449,18 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   hintText: 'Enter your complete address',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.brandNeutral200, width: 1),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -464,7 +468,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               const SizedBox(height: AppSpacing.md),
 
               // Address Label
-              Text(
+              const Text(
                 'Address Label',
                 style: TextStyle(
                   fontSize: 14,
@@ -491,11 +495,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         ),
                         decoration: BoxDecoration(
                           color: nameController.text == 'Home'
-                              ? Color(0xFF055c3a)
+                              ? const Color(0xFF055c3a)
                               : Colors.white,
                           border: Border.all(
                             color: nameController.text == 'Home'
-                                ? Color(0xFF055c3a)
+                                ? const Color(0xFF055c3a)
                                 : AppColors.brandNeutral300,
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -528,11 +532,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         ),
                         decoration: BoxDecoration(
                           color: nameController.text == 'Work'
-                              ? Color(0xFF055c3a)
+                              ? const Color(0xFF055c3a)
                               : Colors.white,
                           border: Border.all(
                             color: nameController.text == 'Work'
-                                ? Color(0xFF055c3a)
+                                ? const Color(0xFF055c3a)
                                 : AppColors.brandNeutral300,
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -565,11 +569,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         ),
                         decoration: BoxDecoration(
                           color: nameController.text == 'Other'
-                              ? Color(0xFF055c3a)
+                              ? const Color(0xFF055c3a)
                               : Colors.white,
                           border: Border.all(
                             color: nameController.text == 'Other'
-                                ? Color(0xFF055c3a)
+                                ? const Color(0xFF055c3a)
                                 : AppColors.brandNeutral300,
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -599,17 +603,17 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     hintText: 'Enter custom label',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                           color: AppColors.brandNeutral200, width: 1),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide:
-                          BorderSide(color: Color(0xFF055c3a), width: 1),
+                          const BorderSide(color: Color(0xFF055c3a), width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                           color: AppColors.brandNeutral200, width: 1),
                     ),
                   ),
@@ -662,11 +666,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
 
                                   // Show success message
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content:
-                                          Text('Address added successfully!'),
-                                      backgroundColor: Colors.green,
-                                    ),
+                                    const SuccessSnackbarWidget(
+                                      message: 'Address added successfully!',
+                                    ).createSnackBar(),
                                   );
 
                                   // Refresh the address list
@@ -676,28 +678,25 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                 } catch (e) {
                                   // Show error message
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Failed to add address: ${e.toString()}'),
-                                      backgroundColor: Colors.red,
-                                    ),
+                                    ErrorSnackbarWidget(
+                                      message:
+                                          'Failed to add address: ${e.toString()}',
+                                    ).createSnackBar(),
                                   );
                                 }
                               } else {
                                 // Show validation error
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text('Please fill all required fields'),
-                                    backgroundColor: Colors.red,
-                                  ),
+                                  const ErrorSnackbarWidget(
+                                    message: 'Please fill all required fields',
+                                  ).createSnackBar(),
                                 );
                               }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: addressState.isCreating
                             ? AppColors.brandNeutral400
-                            : Color(0xFF055c3a),
+                            : const Color(0xFF055c3a),
                         foregroundColor: Colors.white,
                         padding:
                             const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -706,10 +705,10 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         ),
                       ),
                       child: addressState.isCreating
-                          ? Row(
+                          ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const SizedBox(
+                                SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
@@ -718,8 +717,8 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                         Colors.white),
                                   ),
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
-                                const Text(
+                                SizedBox(width: AppSpacing.sm),
+                                Text(
                                   'Adding Address...',
                                   style: TextStyle(
                                     fontSize: 16,

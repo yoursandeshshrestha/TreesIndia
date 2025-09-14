@@ -289,6 +289,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
 
                       _buildMenuItem(
+                        icon: Icons.home_outlined,
+                        label: 'My Properties',
+                        onTap: () {
+                          context.push('/my-properties');
+                        },
+                      ),
+
+                      _buildMenuItem(
                         icon: Icons.settings_outlined,
                         label: 'Settings',
                         onTap: () {

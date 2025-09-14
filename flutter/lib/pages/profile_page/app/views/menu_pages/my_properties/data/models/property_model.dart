@@ -1,0 +1,163 @@
+import '../../domain/entities/property_entity.dart';
+
+class PropertyModel {
+  final int id;
+  final String title;
+  final String? description;
+  final String propertyType;
+  final String listingType;
+  final double? salePrice;
+  final double? monthlyRent;
+  final bool priceNegotiable;
+  final int? bedrooms;
+  final int? bathrooms;
+  final double? area;
+  final int? floorNumber;
+  final String? age;
+  final String? furnishingStatus;
+  final String state;
+  final String city;
+  final String? address;
+  final String? pincode;
+  final List<String> images;
+  final String status;
+  final bool isApproved;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  PropertyModel({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.propertyType,
+    required this.listingType,
+    this.salePrice,
+    this.monthlyRent,
+    required this.priceNegotiable,
+    this.bedrooms,
+    this.bathrooms,
+    this.area,
+    this.floorNumber,
+    this.age,
+    this.furnishingStatus,
+    required this.state,
+    required this.city,
+    this.address,
+    this.pincode,
+    required this.images,
+    required this.status,
+    required this.isApproved,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory PropertyModel.fromJson(Map<String, dynamic> json) {
+    return PropertyModel(
+      id: json['ID'] ?? json['id'],
+      title: json['title'],
+      description: json['description'],
+      propertyType: json['property_type'],
+      listingType: json['listing_type'],
+      salePrice: json['sale_price']?.toDouble(),
+      monthlyRent: json['monthly_rent']?.toDouble(),
+      priceNegotiable: json['price_negotiable'] ?? true,
+      bedrooms: json['bedrooms'],
+      bathrooms: json['bathrooms'],
+      area: json['area']?.toDouble(),
+      floorNumber: json['floor_number'],
+      age: json['age'],
+      furnishingStatus: json['furnishing_status'],
+      state: json['state'],
+      city: json['city'],
+      address: json['address'],
+      pincode: json['pincode'],
+      images: json['images'] != null ? List<String>.from(json['images']) : [],
+      status: json['status'] ?? 'available',
+      isApproved: json['is_approved'] ?? false,
+      createdAt: DateTime.parse(json['created_at'] ?? json['CreatedAt']),
+      updatedAt: DateTime.parse(json['updated_at'] ?? json['UpdatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'property_type': propertyType,
+      'listing_type': listingType,
+      'sale_price': salePrice,
+      'monthly_rent': monthlyRent,
+      'price_negotiable': priceNegotiable,
+      'bedrooms': bedrooms,
+      'bathrooms': bathrooms,
+      'area': area,
+      'floor_number': floorNumber,
+      'age': age,
+      'furnishing_status': furnishingStatus,
+      'state': state,
+      'city': city,
+      'address': address,
+      'pincode': pincode,
+      'images': images,
+      'status': status,
+      'is_approved': isApproved,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  PropertyEntity toEntity() {
+    return PropertyEntity(
+      id: id,
+      title: title,
+      description: description,
+      propertyType: propertyType,
+      listingType: listingType,
+      salePrice: salePrice,
+      monthlyRent: monthlyRent,
+      priceNegotiable: priceNegotiable,
+      bedrooms: bedrooms,
+      bathrooms: bathrooms,
+      area: area,
+      floorNumber: floorNumber,
+      age: age,
+      furnishingStatus: furnishingStatus,
+      state: state,
+      city: city,
+      address: address,
+      pincode: pincode,
+      images: images,
+      status: status,
+      isApproved: isApproved,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+}
+
+class PropertiesResponseModel {
+  final List<PropertyModel> properties;
+  final int total;
+  final int page;
+  final int limit;
+
+  PropertiesResponseModel({
+    required this.properties,
+    required this.total,
+    required this.page,
+    required this.limit,
+  });
+
+  factory PropertiesResponseModel.fromJson(Map<String, dynamic> json) {
+    return PropertiesResponseModel(
+      properties: (json['data'] as List?)
+              ?.map((item) => PropertyModel.fromJson(item))
+              .toList() ??
+          [],
+      total: json['pagination']?['total'] ?? 0,
+      page: json['pagination']?['page'] ?? 1,
+      limit: json['pagination']?['limit'] ?? 20,
+    );
+  }
+}

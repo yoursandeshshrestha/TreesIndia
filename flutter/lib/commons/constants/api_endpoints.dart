@@ -56,6 +56,9 @@ class ApiEndpoints {
     markMessageRead,
     bookingChatRoom,
     getTrackingStatus,
+    getUserProperties,
+    createProperty,
+    deleteProperty,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -311,6 +314,22 @@ class ApiEndpoints {
   // Location Tracking Endpoints
   static ApiEndpoint getTrackingStatus = ApiEndpoint(
     path: '/assignments/{assignmentId}/tracking-status',
+    requiresAuth: true,
+  );
+
+  // Property Endpoints
+  static ApiEndpoint getUserProperties = ApiEndpoint(
+    path: '/user/properties',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createProperty = ApiEndpoint(
+    path: '/user/properties',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint deleteProperty = ApiEndpoint(
+    path: '/user/properties/{propertyId}',
     requiresAuth: true,
   );
 

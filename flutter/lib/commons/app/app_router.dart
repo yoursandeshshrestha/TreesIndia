@@ -11,6 +11,7 @@ import 'package:trees_india/pages/login_page/app/views/login_page.dart';
 import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
@@ -253,6 +254,11 @@ class AppRouter {
                   path: '/manage-addresses',
                   name: 'ManageAddressesPage',
                   builder: (context, state) => const ManageAddressesPage(),
+                ),
+                GoRoute(
+                  path: '/my-properties',
+                  name: 'MyPropertiesPage',
+                  builder: (context, state) => const MyPropertiesPage(),
                 ),
                 GoRoute(
                   path: '/manage-payment-methods',

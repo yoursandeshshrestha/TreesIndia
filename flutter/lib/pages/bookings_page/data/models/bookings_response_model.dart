@@ -13,9 +13,22 @@ class BookingsResponseModel extends BookingsResponseEntity {
 
     return BookingsResponseModel(
       bookings: (json['bookings'] as List<dynamic>?)
-              ?.map((bookingWrapper) {
-                // Each booking is wrapped in a 'booking' key
-                final bookingData = bookingWrapper['booking'] as Map<String, dynamic>;
+              ?.map((bookingItem) {
+                // Handle both development (wrapped in 'booking' key) and production (direct object) formats
+                Map<String, dynamic> bookingData;
+                
+                if (bookingItem is Map<String, dynamic>) {
+                  // Check if this is wrapped format (development)
+                  if (bookingItem.containsKey('booking') && bookingItem['booking'] != null) {
+                    bookingData = bookingItem['booking'] as Map<String, dynamic>;
+                  } else {
+                    // Direct format (production)
+                    bookingData = bookingItem;
+                  }
+                } else {
+                  throw Exception('Invalid booking data format');
+                }
+                
                 return BookingDetailsModel.fromJson(bookingData);
               })
               .toList() ??
