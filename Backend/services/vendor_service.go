@@ -101,6 +101,10 @@ func (vs *VendorService) CreateVendor(userID uint, req *models.CreateVendorReque
 	}
 
 	logrus.Infof("Created vendor profile %d for user %d", vendor.ID, userID)
+	
+	// Send notification to admins about new vendor profile
+	go NotifyVendorProfileCreated(vendor, &user)
+	
 	return vendor, nil
 }
 
