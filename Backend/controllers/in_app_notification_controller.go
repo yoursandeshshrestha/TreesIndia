@@ -30,7 +30,7 @@ func NewInAppNotificationController(notificationService *services.InAppNotificat
 // @Accept json
 // @Produce json
 // @Param limit query int false "Number of notifications to return (default: 20, max: 100)"
-// @Param offset query int false "Number of notifications to skip (default: 0)"
+// @Param page query int false "Page number (default: 1)"
 // @Param type query string false "Filter by notification type"
 // @Param is_read query bool false "Filter by read status"
 // @Success 200 {object} map[string]interface{}
@@ -49,16 +49,16 @@ func (nc *InAppNotificationController) GetNotifications(c *gin.Context) {
 
 	// Parse query parameters
 	limitStr := c.DefaultQuery("limit", "20")
-	offsetStr := c.DefaultQuery("offset", "0")
+	pageStr := c.DefaultQuery("page", "1")
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 {
 		limit = 20
 	}
 
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
 	}
 
 	// Cap limit to prevent abuse
@@ -66,8 +66,11 @@ func (nc *InAppNotificationController) GetNotifications(c *gin.Context) {
 		limit = 100
 	}
 
+	// Calculate offset from page
+	offset := (page - 1) * limit
+
 	// Get notifications
-	notifications, err := nc.notificationService.GetUserNotifications(userID, limit, offset)
+	notifications, pagination, err := nc.notificationService.GetUserNotifications(userID, limit, offset)
 	if err != nil {
 		logrus.Errorf("Failed to get notifications for user %d: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -79,13 +82,9 @@ func (nc *InAppNotificationController) GetNotifications(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    notifications,
-		"pagination": gin.H{
-			"limit":  limit,
-			"offset": offset,
-			"count":  len(notifications),
-		},
+		"success":    true,
+		"data":       notifications,
+		"pagination": pagination,
 	})
 }
 
@@ -205,7 +204,7 @@ func (nc *InAppNotificationController) GetNotificationStats(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param limit query int false "Number of notifications to return (default: 20, max: 100)"
-// @Param offset query int false "Number of notifications to skip (default: 0)"
+// @Param page query int false "Page number (default: 1)"
 // @Param type query string false "Filter by notification type"
 // @Param is_read query bool false "Filter by read status"
 // @Success 200 {object} map[string]interface{}
@@ -235,16 +234,16 @@ func (nc *InAppNotificationController) AdminGetNotifications(c *gin.Context) {
 
 	// Parse query parameters
 	limitStr := c.DefaultQuery("limit", "20")
-	offsetStr := c.DefaultQuery("offset", "0")
+	pageStr := c.DefaultQuery("page", "1")
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 {
 		limit = 20
 	}
 
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
 	}
 
 	// Cap limit to prevent abuse
@@ -252,8 +251,11 @@ func (nc *InAppNotificationController) AdminGetNotifications(c *gin.Context) {
 		limit = 100
 	}
 
+	// Calculate offset from page
+	offset := (page - 1) * limit
+
 	// Get notifications
-	notifications, err := nc.notificationService.GetUserNotifications(userID, limit, offset)
+	notifications, pagination, err := nc.notificationService.GetUserNotifications(userID, limit, offset)
 	if err != nil {
 		logrus.Errorf("Failed to get admin notifications for user %d: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -265,13 +267,9 @@ func (nc *InAppNotificationController) AdminGetNotifications(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    notifications,
-		"pagination": gin.H{
-			"limit":  limit,
-			"offset": offset,
-			"count":  len(notifications),
-		},
+		"success":    true,
+		"data":       notifications,
+		"pagination": pagination,
 	})
 }
 

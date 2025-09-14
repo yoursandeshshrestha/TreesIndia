@@ -107,3 +107,83 @@ func NotifyLoginFailed(user *models.User, phone string, reason string) {
 	
 	service.NotifyLoginFailed(user, phone, reason)
 }
+
+// NotifyVendorProfileCreated notifies admins about new vendor profile
+func NotifyVendorProfileCreated(vendor *models.Vendor, user *models.User) {
+	service := GetGlobalNotificationIntegrationService()
+	if service == nil {
+		return
+	}
+	
+	service.NotifyVendorProfileCreated(vendor, user)
+}
+
+// NotifyWorkerAssignedToWork notifies worker about work assignment
+func NotifyWorkerAssignedToWork(worker *models.User, booking *models.Booking, service *models.Service) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyWorkerAssignedToWork(worker, booking, service)
+}
+
+// NotifyPropertyCreated notifies admins about new property
+func NotifyPropertyCreated(property *models.Property, user *models.User) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyPropertyCreated(property, user)
+}
+
+// NotifyProjectCreated notifies admins about new project
+func NotifyProjectCreated(project *models.Project, user *models.User) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyProjectCreated(project, user)
+}
+
+// NotifyServiceAdded notifies admins about new service
+func NotifyServiceAdded(service *models.Service) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyServiceAdded(service)
+}
+
+// NotifyWorkerApplication notifies admins about new worker application
+func NotifyWorkerApplication(user *models.User) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyWorkerApplication(user)
+}
+
+// NotifyBrokerApplication notifies admins about new broker application
+func NotifyBrokerApplication(user *models.User) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyBrokerApplication(user)
+}
+
+// NotifyConversationStarted notifies user about conversation start
+func NotifyConversationStarted(userID uint, otherUserName string, bookingID uint) {
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		return
+	}
+	
+	notificationService.NotifyConversationStarted(userID, otherUserName, bookingID)
+}

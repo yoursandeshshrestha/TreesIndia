@@ -29,9 +29,13 @@ func SetupInAppNotificationRoutes(router *gin.RouterGroup, wsService *services.N
 		
 		// GET /api/v1/in-app-notifications/stats - Get notification statistics
 		userInAppNotifications.GET("/stats", notificationController.GetNotificationStats)
-		
+	}
+
+	// User WebSocket route (outside auth middleware to handle token via query parameter)
+	userWS := router.Group("/in-app-notifications")
+	{
 		// WS /api/v1/in-app-notifications/ws - WebSocket for real-time updates
-		userInAppNotifications.GET("/ws", wsController.HandleWebSocket)
+		userWS.GET("/ws", wsController.HandleWebSocket)
 	}
 
 	// Admin in-app notification routes (admin authentication required)

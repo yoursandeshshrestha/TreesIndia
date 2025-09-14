@@ -14,6 +14,7 @@ const (
 	InAppNotificationTypeUserRegistered     InAppNotificationType = "user_registered"
 	InAppNotificationTypeWorkerApplication  InAppNotificationType = "worker_application"
 	InAppNotificationTypeBrokerApplication  InAppNotificationType = "broker_application"
+	InAppNotificationTypeWorkerAssignedToWork InAppNotificationType = "worker_assigned_to_work"
 	
 	// Booking & Service Management
 	InAppNotificationTypeBookingCreated     InAppNotificationType = "booking_created"
