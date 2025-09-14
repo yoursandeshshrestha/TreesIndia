@@ -133,7 +133,15 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 
 	// Fetch the created service with service areas
 	logrus.Info("ServiceService.CreateService fetching created service")
-	return ss.serviceRepo.GetByID(service.ID)
+	createdService, err := ss.serviceRepo.GetByID(service.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send notification to admins about new service
+	go NotifyServiceAdded(createdService)
+
+	return createdService, nil
 }
 
 // GetServiceByID retrieves a service by ID
