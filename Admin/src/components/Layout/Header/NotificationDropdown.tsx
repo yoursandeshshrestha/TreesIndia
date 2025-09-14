@@ -8,8 +8,13 @@ import {
   Shield,
   Key,
   AlertCircle,
+  CheckCheck,
 } from "lucide-react";
-import { useNotifications, useUnreadCount } from "@/services/api/notifications";
+import {
+  useNotifications,
+  useUnreadCount,
+  useMarkAllAsRead,
+} from "@/services/api/notifications";
 import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
 import {
   getNotificationIcon,
@@ -30,8 +35,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [currentOffset, setCurrentOffset] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isLoadingMoreRef = useRef(false);
 
   const limit = 10;
 
@@ -42,11 +48,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     refetch,
   } = useNotifications({
     limit,
-    offset: currentOffset,
+    page: currentPage,
   });
 
   const { data: unreadCountData, refetch: refetchUnreadCount } =
     useUnreadCount();
+
+  // Mark all as read hook
+  const markAllAsReadMutation = useMarkAllAsRead();
 
   // WebSocket hook
   const { isConnected } = useNotificationWebSocket({
@@ -85,14 +94,24 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   // Load notifications
   useEffect(() => {
     if (notificationsData?.data) {
-      if (currentOffset === 0) {
+      if (currentPage === 1) {
         setNotifications(notificationsData.data);
       } else {
         setNotifications((prev) => [...prev, ...notificationsData.data]);
       }
-      setHasMore(notificationsData.data.length === limit);
+      // Use pagination metadata to determine if there are more notifications
+      setHasMore(notificationsData.pagination?.has_next || false);
+      // Reset loading ref when data is loaded
+      isLoadingMoreRef.current = false;
     }
-  }, [notificationsData, currentOffset, limit]);
+  }, [notificationsData, currentPage, limit]);
+
+  // Reset loading ref on error
+  useEffect(() => {
+    if (notificationsData === undefined && isLoadingNotifications === false) {
+      isLoadingMoreRef.current = false;
+    }
+  }, [notificationsData, isLoadingNotifications]);
 
   // Update unread count
   useEffect(() => {
@@ -100,6 +119,17 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       setUnreadCount(unreadCountData.unread_count);
     }
   }, [unreadCountData]);
+
+  // Reset state when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setNotifications([]);
+      setCurrentPage(1);
+      setHasMore(true);
+      setIsLoading(false);
+      isLoadingMoreRef.current = false;
+    }
+  }, [isOpen]);
 
   // Handle click outside
   useEffect(() => {
@@ -120,8 +150,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   }, [isOpen, onClose]);
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      setCurrentOffset((prev) => prev + limit);
+    if (
+      !isLoading &&
+      hasMore &&
+      !isLoadingNotifications &&
+      !isLoadingMoreRef.current
+    ) {
+      isLoadingMoreRef.current = true;
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
@@ -129,6 +165,23 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     if (scrollHeight - scrollTop <= clientHeight + 100) {
       handleLoadMore();
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsReadMutation.mutateAsync();
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((notif) => ({
+          ...notif,
+          is_read: true,
+          read_at: new Date().toISOString(),
+        }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
     }
   };
 
@@ -159,25 +212,37 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       }}
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Bell size={16} className="text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Notifications</h3>
-          {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-              {unreadCount}
-            </span>
-          )}
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <Bell size={16} className="text-gray-600" />
+            <h3 className="font-semibold text-gray-900">Notifications</h3>
+            {unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Close"
+            >
+              <X size={16} className="text-gray-600" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+        {unreadCount > 0 && (
           <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            title="Close"
+            onClick={handleMarkAllAsRead}
+            disabled={markAllAsReadMutation.isPending}
+            className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <X size={16} className="text-gray-600" />
+            <CheckCheck size={14} />
+            <span>Mark all as read</span>
           </button>
-        </div>
+        )}
       </div>
 
       {/* Connection Status */}

@@ -31,13 +31,13 @@ export const notificationApi = {
   // Get admin notifications with pagination
   getNotifications: async (params?: {
     limit?: number;
-    offset?: number;
+    page?: number;
     type?: string;
     is_read?: boolean;
   }): Promise<NotificationResponse> => {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.append("limit", params.limit.toString());
-    if (params?.offset) searchParams.append("offset", params.offset.toString());
+    if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.type) searchParams.append("type", params.type);
     if (params?.is_read !== undefined)
       searchParams.append("is_read", params.is_read.toString());
@@ -69,7 +69,7 @@ export const notificationApi = {
 // React Query hooks
 export const useNotifications = (params?: {
   limit?: number;
-  offset?: number;
+  page?: number;
   type?: string;
   is_read?: boolean;
 }) => {

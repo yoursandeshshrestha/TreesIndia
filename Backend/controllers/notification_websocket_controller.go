@@ -41,17 +41,83 @@ var notificationUpgrader = websocket.Upgrader{
 
 // HandleWebSocket handles WebSocket connections for user notifications
 func (nwc *NotificationWebSocketController) HandleWebSocket(c *gin.Context) {
-	userID := nwc.GetUserID(c)
+	logrus.Info("User WebSocket connection attempt")
+	
+	var userID uint
+	var userType string
+	var exists bool
+
+	// Try to get user ID from context (set by auth middleware)
+	userIDInterface, exists := c.Get("user_id")
+	if exists {
+		userID = userIDInterface.(uint)
+		userTypeInterface, typeExists := c.Get("user_type")
+		if typeExists {
+			userType = userTypeInterface.(string)
+		}
+	}
+	
+	// If not found in context, try to authenticate via token query parameter
+	if !exists {
+		token := c.Query("token")
+		if token == "" {
+			logrus.Warn("User WebSocket: No token provided")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token required"})
+			return
+		}
+
+		// Parse and validate JWT token
+		appConfig := config.LoadConfig()
+		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(appConfig.JWTSecret), nil
+		})
+
+		if err != nil || !parsedToken.Valid {
+			logrus.Warnf("User WebSocket: Invalid token: %v", err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+
+		// Extract claims
+		claims, ok := parsedToken.Claims.(jwt.MapClaims)
+		if !ok {
+			logrus.Warn("User WebSocket: Invalid token claims")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			return
+		}
+
+		// Extract user ID and type from claims
+		userIDFloat, ok := claims["user_id"].(float64)
+		if !ok {
+			logrus.Warn("User WebSocket: Invalid user_id in token")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user_id in token"})
+			return
+		}
+		userID = uint(userIDFloat)
+
+		userTypeClaim, ok := claims["user_type"].(string)
+		if !ok {
+			logrus.Warn("User WebSocket: Invalid user_type in token")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user_type in token"})
+			return
+		}
+		userType = userTypeClaim
+	}
+
 	if userID == 0 {
+		logrus.Warn("User WebSocket: User not authenticated")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
 
-	userType := nwc.GetUserType(c)
 	if userType == "" {
 		userType = "user" // Default to user type
 	}
 
+	logrus.Infof("User WebSocket: User %d (%s) authenticated successfully", userID, userType)
 	nwc.handleWebSocketConnection(c, userID, userType)
 }
 

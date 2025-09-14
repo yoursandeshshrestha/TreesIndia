@@ -16,9 +16,12 @@ export interface NotificationResponse {
   success: boolean;
   data: InAppNotification[];
   pagination?: {
+    page: number;
     limit: number;
-    offset: number;
-    count: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
   };
 }
 
