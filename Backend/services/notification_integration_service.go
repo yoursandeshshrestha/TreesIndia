@@ -486,3 +486,43 @@ func (nis *NotificationIntegrationService) NotifyOTPVerifiedToAdmin(user *models
 		data,
 	)
 }
+
+// NotifyVendorProfileCreated notifies admins about new vendor profile
+func (nis *NotificationIntegrationService) NotifyVendorProfileCreated(vendor *models.Vendor, user *models.User) error {
+	message := fmt.Sprintf("New vendor profile created by %s", user.Name)
+	
+	data := map[string]interface{}{
+		"vendor_id":   vendor.ID,
+		"user_name":   user.Name,
+		"user_phone":  user.Phone,
+		"business_name": vendor.VendorName,
+		"business_type": string(vendor.BusinessType),
+	}
+
+	return nis.notificationService.CreateNotificationForAdmins(
+		models.InAppNotificationTypeVendorProfileCreated,
+		"New Vendor Profile",
+		message,
+		data,
+	)
+}
+
+// NotifyWorkerAssignedToWork notifies worker about work assignment
+func (nis *NotificationIntegrationService) NotifyWorkerAssignedToWork(worker *models.User, booking *models.Booking, service *models.Service) error {
+	message := fmt.Sprintf("You have been assigned to work on booking #%s", booking.BookingReference)
+	
+	data := map[string]interface{}{
+		"booking_id":   booking.ID,
+		"booking_ref":  booking.BookingReference,
+		"service_name": service.Name,
+		"customer_id":  booking.UserID,
+	}
+
+	return nis.notificationService.CreateNotificationForUser(
+		worker.ID,
+		models.InAppNotificationTypeWorkerAssignedToWork,
+		"Assigned to Work",
+		message,
+		data,
+	)
+}

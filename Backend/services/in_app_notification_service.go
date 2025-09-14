@@ -94,9 +94,17 @@ func (ns *InAppNotificationService) CreateNotificationForAdmins(notificationType
 }
 
 // GetUserNotifications retrieves notifications for a specific user with pagination
-func (ns *InAppNotificationService) GetUserNotifications(userID uint, limit, offset int) ([]models.InAppNotificationResponse, error) {
+func (ns *InAppNotificationService) GetUserNotifications(userID uint, limit, offset int) ([]models.InAppNotificationResponse, *models.PaginationInfo, error) {
 	var notifications []models.InAppNotification
 	
+	// Get total count first
+	var total int64
+	err := ns.db.Model(&models.InAppNotification{}).Where("user_id = ?", userID).Count(&total).Error
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to count user notifications: %w", err)
+	}
+	
+	// Build query
 	query := ns.db.Where("user_id = ?", userID).Order("created_at DESC")
 	
 	if limit > 0 {
@@ -107,9 +115,9 @@ func (ns *InAppNotificationService) GetUserNotifications(userID uint, limit, off
 		query = query.Offset(offset)
 	}
 	
-	err := query.Find(&notifications).Error
+	err = query.Find(&notifications).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user notifications: %w", err)
+		return nil, nil, fmt.Errorf("failed to get user notifications: %w", err)
 	}
 
 	// Convert to response format
@@ -118,7 +126,26 @@ func (ns *InAppNotificationService) GetUserNotifications(userID uint, limit, off
 		responses = append(responses, notification.ToResponse())
 	}
 
-	return responses, nil
+	// Calculate pagination info
+	page := (offset / limit) + 1
+	if limit == 0 {
+		page = 1
+	}
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+	if limit == 0 {
+		totalPages = 1
+	}
+	
+	pagination := &models.PaginationInfo{
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		HasNext:    offset+limit < int(total),
+		HasPrev:    offset > 0,
+	}
+
+	return responses, pagination, nil
 }
 
 // GetUnreadCount returns the unread notification count for a user

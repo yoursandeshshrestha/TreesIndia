@@ -12,6 +12,7 @@ import (
 	"treesindia/utils"
 
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type BookingService struct {
@@ -214,6 +215,9 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 		// Calculate payment progress before returning
 		booking.GetPaymentProgress()
 		
+		// Send notification to admin about new booking
+		go bs.sendBookingNotificationToAdmin(booking, service)
+		
 		return booking, razorpayOrder, nil
 
 	} else {
@@ -290,6 +294,9 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 			// Calculate payment progress before returning
 		booking.GetPaymentProgress()
 		
+		// Send notification to admin about new booking
+		go bs.sendBookingNotificationToAdmin(booking, service)
+		
 		return booking, razorpayOrder, nil
 
 		} else {
@@ -327,11 +334,14 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 				return nil, nil, err
 			}
 
-			// Calculate payment progress before returning
-	booking.GetPaymentProgress()
+		// Calculate payment progress before returning
+		booking.GetPaymentProgress()
 	
 				// Calculate payment progress before returning
 			booking.GetPaymentProgress()
+			
+			// Send notification to admin about new booking
+			go bs.sendBookingNotificationToAdmin(booking, service)
 			
 			return booking, nil, nil
 		}
@@ -885,7 +895,7 @@ func (bs *BookingService) AssignWorker(bookingID uint, workerID uint, notes stri
 	}
 
 	// 5. Send notification to worker
-	go bs.notificationService.SendWorkerAssignmentNotification(assignment)
+	go bs.sendWorkerAssignmentNotification(assignment)
 
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
@@ -1072,7 +1082,7 @@ func (bs *BookingService) AssignWorkerToBooking(bookingID uint, workerID uint, a
 	}
 
 	// 7. Send notification to worker
-	go bs.notificationService.SendWorkerAssignmentNotification(assignment)
+	go bs.sendWorkerAssignmentNotification(assignment)
 
 	return assignment, nil
 }
@@ -1809,6 +1819,21 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 	// 15. Send in-app notification to admin
 	go bs.sendBookingNotificationToAdmin(booking, service)
 
+	// 16. Send payment notifications
+	// Get user details for notification
+	var user models.User
+	if err := bs.userRepo.FindByID(&user, userID); err == nil {
+		// Create a mock payment object for notification
+		payment := &models.Payment{
+			Model:  gorm.Model{ID: 0}, // Wallet payments don't have a separate payment record
+			UserID: userID,
+			Amount: *service.Price,
+			Type:   models.PaymentTypeBooking,
+			Status: models.PaymentStatusCompleted,
+		}
+		go bs.sendWalletPaymentNotifications(payment, &user)
+	}
+
 	logrus.Infof("Wallet payment booking created successfully: booking_id=%d, amount=%.2f", booking.ID, *service.Price)
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
@@ -1930,5 +1955,64 @@ func (bs *BookingService) sendBookingNotificationToAdmin(booking *models.Booking
 	err = notificationService.NotifyBookingCreated(booking, &user, service)
 	if err != nil {
 		logrus.Errorf("Failed to send booking notification to admin: %v", err)
+	}
+}
+
+// sendWalletPaymentNotifications sends notifications for wallet payments
+func (bs *BookingService) sendWalletPaymentNotifications(payment *models.Payment, user *models.User) {
+	// Get the global notification integration service
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		logrus.Warn("Notification integration service not available")
+		return
+	}
+
+	// Send notification to admin about payment received
+	err := notificationService.NotifyPaymentReceived(payment, user)
+	if err != nil {
+		logrus.Errorf("Failed to send payment received notification to admin: %v", err)
+	}
+
+	// Send notification to user about payment confirmation
+	err = notificationService.NotifyPaymentConfirmation(payment, user)
+	if err != nil {
+		logrus.Errorf("Failed to send payment confirmation notification to user: %v", err)
+	}
+}
+
+// sendWorkerAssignmentNotification sends in-app notification about worker assignment
+func (bs *BookingService) sendWorkerAssignmentNotification(assignment *models.WorkerAssignment) {
+	// Get the global notification integration service
+	notificationService := GetGlobalNotificationIntegrationService()
+	if notificationService == nil {
+		logrus.Warn("Notification integration service not available")
+		return
+	}
+
+	// Get booking and service details
+	booking, err := bs.bookingRepo.GetByID(assignment.BookingID)
+	if err != nil {
+		logrus.Errorf("Failed to get booking for notification: %v", err)
+		return
+	}
+
+	// Get worker details
+	var worker models.User
+	err = bs.userRepo.FindByID(&worker, assignment.WorkerID)
+	if err != nil {
+		logrus.Errorf("Failed to get worker for notification: %v", err)
+		return
+	}
+
+	// Send notification to user about worker assignment
+	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
+	if err != nil {
+		logrus.Errorf("Failed to send worker assignment notification: %v", err)
+	}
+
+	// Send notification to worker about new assignment
+	err = notificationService.NotifyWorkerAssignedToWork(&worker, booking, &booking.Service)
+	if err != nil {
+		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
 	}
 }
