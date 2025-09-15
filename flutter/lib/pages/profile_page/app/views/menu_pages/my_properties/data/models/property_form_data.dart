@@ -181,8 +181,8 @@ class PropertyFormValidation {
 
   // Step 4 validation
   static String? validateImages(List<File> images) {
-    if (images.isEmpty) {
-      return 'At least one image is required';
+    if (images.length < 2) {
+      return 'At least 2 images are required';
     }
     if (images.length > maxImages) {
       return 'Maximum $maxImages images allowed';

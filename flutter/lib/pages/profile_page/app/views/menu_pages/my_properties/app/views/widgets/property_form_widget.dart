@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import '../../providers/property_providers.dart';
+import '../../states/property_form_state.dart';
+import '../../../data/models/property_form_data.dart';
 
 class PropertyFormWidget extends ConsumerStatefulWidget {
   const PropertyFormWidget({super.key});
@@ -12,7 +15,6 @@ class PropertyFormWidget extends ConsumerStatefulWidget {
 
 class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   int currentStep = 0;
-  final PageController _pageController = PageController();
 
   // Form data
   final _titleController = TextEditingController();
@@ -31,8 +33,6 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   final _floorController = TextEditingController();
   String? _age;
   String? _furnishing;
-
-  List<String> _imageNames = [];
 
   final _salePriceController = TextEditingController();
   final _rentController = TextEditingController();
@@ -58,7 +58,6 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     _floorController.dispose();
     _salePriceController.dispose();
     _rentController.dispose();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -71,27 +70,64 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
         // Form content
         Expanded(
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                currentStep = index;
-              });
-            },
-            children: [
-              _buildStep1BasicDetails(),
-              _buildStep2LocationDetails(),
-              _buildStep3PropertyProfile(),
-              _buildStep4Photos(),
-              _buildStep5Pricing(),
-            ],
-          ),
+          child: _buildCurrentStep(),
         ),
 
         // Navigation buttons
         _buildNavigationButtons(),
       ],
     );
+  }
+
+  Widget _buildCurrentStep() {
+    switch (currentStep) {
+      case 0:
+        return _buildStep1BasicDetails();
+      case 1:
+        return _buildStep2LocationDetails();
+      case 2:
+        return _buildStep3PropertyProfile();
+      case 3:
+        return _buildStep4Photos();
+      case 4:
+        return _buildStep5Pricing();
+      default:
+        return _buildStep1BasicDetails();
+    }
+  }
+
+  bool _isCurrentStepValid() {
+    final formData = ref.read(propertyFormNotifierProvider).formData;
+    switch (currentStep) {
+      case 0:
+        return PropertyFormValidation.isStep1Complete(formData);
+      case 1:
+        return PropertyFormValidation.isStep2Complete(formData);
+      case 2:
+        return PropertyFormValidation.isStep3Complete(formData);
+      case 3:
+        return PropertyFormValidation.isStep4Complete(formData);
+      case 4:
+        return PropertyFormValidation.isStep5Complete(formData);
+      default:
+        return false;
+    }
+  }
+
+  void _goToNextStep() {
+    if (currentStep < 4) {
+      setState(() {
+        currentStep++;
+      });
+    }
+  }
+
+  void _goToPreviousStep() {
+    if (currentStep > 0) {
+      setState(() {
+        currentStep--;
+      });
+    }
   }
 
   Widget _buildProgressIndicator() {
@@ -176,7 +212,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   Widget _buildStep1BasicDetails() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -185,6 +221,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
             label: 'Property Title *',
             hintText: 'Enter property title',
             maxLength: 30,
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updateTitle(value),
           ),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
@@ -193,20 +230,27 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
             hintText: 'Describe your property',
             maxLines: 4,
             maxLength: 500,
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updateDescription(value),
           ),
           const SizedBox(height: AppSpacing.md),
           _buildRadioGroup(
             label: 'Property Type *',
             options: {'residential': 'Residential', 'commercial': 'Commercial'},
             value: _propertyType,
-            onChanged: (value) => setState(() => _propertyType = value),
+            onChanged: (value) {
+              setState(() => _propertyType = value);
+              ref.read(propertyFormNotifierProvider.notifier).updatePropertyType(value);
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           _buildRadioGroup(
             label: 'Listing Type *',
             options: {'sale': 'For Sale', 'rent': 'For Rent'},
             value: _listingType,
-            onChanged: (value) => setState(() => _listingType = value),
+            onChanged: (value) {
+              setState(() => _listingType = value);
+              ref.read(propertyFormNotifierProvider.notifier).updateListingType(value);
+            },
           ),
         ],
       ),
@@ -214,20 +258,24 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildStep2LocationDetails() {
+    final propertyFormState = ref.watch(propertyFormNotifierProvider);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
           _buildTextField(
             controller: _stateController,
             label: 'State *',
             hintText: 'Enter state',
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updateState(value),
           ),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
             controller: _cityController,
             label: 'City *',
             hintText: 'Enter city',
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updateCity(value),
           ),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
@@ -235,6 +283,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
             label: 'Address',
             hintText: 'Enter full address',
             maxLines: 2,
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updateAddress(value.isEmpty ? null : value),
           ),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
@@ -242,17 +291,52 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
             label: 'Pincode',
             hintText: 'Enter pincode',
             keyboardType: TextInputType.number,
+            onChanged: (value) => ref.read(propertyFormNotifierProvider.notifier).updatePincode(value.isEmpty ? null : value),
           ),
           const SizedBox(height: AppSpacing.md),
           ElevatedButton.icon(
-            onPressed: () {
-              // TODO: Implement get current location
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Location feature coming soon')),
-              );
-            },
-            icon: const Icon(Icons.my_location),
-            label: const Text('Get Current Location'),
+            onPressed: propertyFormState.status == PropertyFormStatus.loading
+                ? null
+                : () async {
+                    await ref
+                        .read(propertyFormNotifierProvider.notifier)
+                        .getCurrentLocation();
+                    final formData =
+                        ref.read(propertyFormNotifierProvider).formData;
+
+                    if (formData.state.isNotEmpty == true) {
+                      _stateController.text = formData.state;
+                    }
+                    if (formData.city.isNotEmpty == true) {
+                      _cityController.text = formData.city;
+                    }
+                    if (formData.address?.isNotEmpty == true) {
+                      _addressController.text = formData.address!;
+                    }
+                    if (formData.pincode?.isNotEmpty == true) {
+                      _pincodeController.text = formData.pincode!;
+                    }
+
+                    if (mounted &&
+                        propertyFormState.status ==
+                            PropertyFormStatus.failure &&
+                        propertyFormState.errorMessage != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(propertyFormState.errorMessage!)),
+                      );
+                    }
+                  },
+            icon: propertyFormState.status == PropertyFormStatus.loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location),
+            label: Text(propertyFormState.status == PropertyFormStatus.loading
+                ? 'Getting Location...'
+                : 'Get Current Location'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateGreen500,
               foregroundColor: AppColors.white,
@@ -265,20 +349,30 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   Widget _buildStep3PropertyProfile() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
           _buildNumberSelector('Bedrooms', _bedrooms,
-              (value) => setState(() => _bedrooms = value)),
+              (value) {
+                setState(() => _bedrooms = value);
+                ref.read(propertyFormNotifierProvider.notifier).updateBedrooms(value);
+              }),
           const SizedBox(height: AppSpacing.md),
           _buildNumberSelector('Bathrooms', _bathrooms,
-              (value) => setState(() => _bathrooms = value)),
+              (value) {
+                setState(() => _bathrooms = value);
+                ref.read(propertyFormNotifierProvider.notifier).updateBathrooms(value);
+              }),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
             controller: _areaController,
             label: 'Carpet Area (sq.ft)',
             hintText: 'Enter area',
             keyboardType: TextInputType.number,
+            onChanged: (value) {
+              final area = value.isEmpty ? null : double.tryParse(value);
+              ref.read(propertyFormNotifierProvider.notifier).updateArea(area);
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           _buildTextField(
@@ -286,6 +380,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
             label: 'Floor Number',
             hintText: 'Enter floor',
             keyboardType: TextInputType.number,
+            onChanged: (value) {
+              final floor = value.isEmpty ? null : int.tryParse(value);
+              ref.read(propertyFormNotifierProvider.notifier).updateFloorNumber(floor);
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           _buildRadioGroup(
@@ -297,7 +395,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               '10_plus_years': '10+ years',
             },
             value: _age,
-            onChanged: (value) => setState(() => _age = value),
+            onChanged: (value) {
+              setState(() => _age = value);
+              ref.read(propertyFormNotifierProvider.notifier).updateAge(value);
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           _buildRadioGroup(
@@ -308,7 +409,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               'unfurnished': 'Unfurnished',
             },
             value: _furnishing,
-            onChanged: (value) => setState(() => _furnishing = value),
+            onChanged: (value) {
+              setState(() => _furnishing = value);
+              ref.read(propertyFormNotifierProvider.notifier).updateFurnishingStatus(value);
+            },
           ),
         ],
       ),
@@ -316,77 +420,159 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildStep4Photos() {
+    final propertyFormState = ref.watch(propertyFormNotifierProvider);
+    final selectedImages = propertyFormState.formData.images;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
           Container(
-            height: 200,
-            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               border: Border.all(
                   color: AppColors.brandNeutral300, style: BorderStyle.solid),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.cloud_upload,
-                  size: 48,
-                  color: AppColors.brandNeutral500,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  'Upload Property Images',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.brandNeutral700,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Property Images',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.brandNeutral700,
+                      ),
+                    ),
+                    Text(
+                      '${selectedImages.length}/7 images',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.brandNeutral600,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 const Text(
-                  'Max 7 images, 10MB each',
+                  'Min 2 images required, Max 7 images, 10MB each',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.brandNeutral500,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement image picker
-                    setState(() {
-                      _imageNames.add('Sample Image ${_imageNames.length + 1}');
-                    });
-                  },
+                ElevatedButton.icon(
+                  onPressed: propertyFormState.status == PropertyFormStatus.loading
+                      ? null
+                      : () async {
+                          await ref
+                              .read(propertyFormNotifierProvider.notifier)
+                              .pickImages();
+
+                          // Show error message if any
+                          if (mounted &&
+                              propertyFormState.status == PropertyFormStatus.failure &&
+                              propertyFormState.errorMessage != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(propertyFormState.errorMessage!)),
+                            );
+                          }
+                        },
+                  icon: propertyFormState.status == PropertyFormStatus.loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_upload),
+                  label: Text(propertyFormState.status == PropertyFormStatus.loading
+                      ? 'Selecting Images...'
+                      : 'Choose Images'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.stateGreen500,
                     foregroundColor: AppColors.white,
                   ),
-                  child: const Text('Choose Images'),
                 ),
               ],
             ),
           ),
-          if (_imageNames.isNotEmpty) ...[
+          if (selectedImages.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
-            ...(_imageNames.asMap().entries.map((entry) {
-              return ListTile(
-                leading:
-                    const Icon(Icons.image, color: AppColors.stateGreen500),
-                title: Text(entry.value),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: AppColors.error),
-                  onPressed: () {
-                    setState(() {
-                      _imageNames.removeAt(entry.key);
-                    });
-                  },
-                ),
-              );
-            })),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 1,
+              ),
+              itemCount: selectedImages.length,
+              itemBuilder: (context, index) {
+                final image = selectedImages[index];
+                return Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.brandNeutral300,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          image,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppColors.brandNeutral100,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.error,
+                                  size: 32,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          ref
+                              .read(propertyFormNotifierProvider.notifier)
+                              .removeImage(image);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: AppColors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ],
       ),
@@ -395,7 +581,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   Widget _buildStep5Pricing() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
           if (_listingType == 'sale') ...[
@@ -404,6 +590,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               label: 'Sale Price (₹) *',
               hintText: 'Enter sale price',
               keyboardType: TextInputType.number,
+              onChanged: (value) {
+                final price = value.isEmpty ? null : double.tryParse(value);
+                ref.read(propertyFormNotifierProvider.notifier).updateSalePrice(price);
+              },
             ),
           ] else if (_listingType == 'rent') ...[
             _buildTextField(
@@ -411,6 +601,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               label: 'Monthly Rent (₹) *',
               hintText: 'Enter monthly rent',
               keyboardType: TextInputType.number,
+              onChanged: (value) {
+                final rent = value.isEmpty ? null : double.tryParse(value);
+                ref.read(propertyFormNotifierProvider.notifier).updateMonthlyRent(rent);
+              },
             ),
           ] else ...[
             Container(
@@ -432,8 +626,11 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
           CheckboxListTile(
             title: const Text('Price Negotiable'),
             value: _priceNegotiable,
-            onChanged: (value) =>
-                setState(() => _priceNegotiable = value ?? false),
+            onChanged: (value) {
+              final negotiable = value ?? false;
+              setState(() => _priceNegotiable = negotiable);
+              ref.read(propertyFormNotifierProvider.notifier).updatePriceNegotiable(negotiable);
+            },
             activeColor: AppColors.stateGreen500,
             contentPadding: EdgeInsets.zero,
           ),
@@ -449,6 +646,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     int maxLines = 1,
     int? maxLength,
     TextInputType? keyboardType,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,6 +665,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
           maxLines: maxLines,
           maxLength: maxLength,
           keyboardType: keyboardType,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hintText,
             border: OutlineInputBorder(
@@ -578,6 +777,8 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildNavigationButtons() {
+    final isCurrentStepValid = _isCurrentStepValid();
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       decoration: const BoxDecoration(
@@ -590,12 +791,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
           if (currentStep > 0)
             Expanded(
               child: OutlinedButton(
-                onPressed: () {
-                  _pageController.previousPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease,
-                  );
-                },
+                onPressed: _goToPreviousStep,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFF055c3a)),
                   foregroundColor: const Color(0xFF055c3a),
@@ -612,45 +808,74 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
           if (currentStep < 4)
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease,
-                  );
-                },
+                onPressed: isCurrentStepValid ? _goToNextStep : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF055c3a),
                   foregroundColor: AppColors.white,
+                  disabledBackgroundColor: AppColors.brandNeutral300,
+                  disabledForegroundColor: AppColors.brandNeutral500,
                   minimumSize: const Size(double.infinity, 48),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Continue'),
+                child: Text(isCurrentStepValid ? 'Continue' : 'Complete this step'),
               ),
             ),
           if (currentStep == 4)
             Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement form submission
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Property submission coming soon')),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final propertyFormState =
+                      ref.watch(propertyFormNotifierProvider);
+
+                  return ElevatedButton(
+                    onPressed: propertyFormState.isSubmitting
+                        ? null
+                        : () async {
+                            await ref
+                                .read(propertyFormNotifierProvider.notifier)
+                                .submitForm();
+                            final state =
+                                ref.read(propertyFormNotifierProvider);
+
+                            if (mounted) {
+                              if (state.status == PropertyFormStatus.success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Property submitted successfully!')),
+                                );
+                                Navigator.of(context).pop();
+                              } else if (state.status ==
+                                      PropertyFormStatus.failure &&
+                                  state.errorMessage != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(state.errorMessage!)),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF055c3a),
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: propertyFormState.isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Submit Property'),
                   );
-                  Navigator.of(context).pop();
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF055c3a),
-                  foregroundColor: AppColors.white,
-                  minimumSize: const Size(double.infinity, 48),
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('Submit Property'),
               ),
             ),
         ],

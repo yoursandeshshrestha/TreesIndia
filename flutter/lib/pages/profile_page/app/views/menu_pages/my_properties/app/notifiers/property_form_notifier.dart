@@ -2,14 +2,19 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:trees_india/commons/utils/services/location_onboarding_service.dart';
 import '../../data/models/property_form_data.dart';
 import '../states/property_form_state.dart';
 import '../../domain/usecases/create_property_usecase.dart';
 
 class PropertyFormNotifier extends StateNotifier<PropertyFormState> {
   final CreatePropertyUseCase createPropertyUseCase;
+  final LocationOnboardingService locationOnboardingService;
 
-  PropertyFormNotifier({required this.createPropertyUseCase})
+  PropertyFormNotifier(
+      {required this.createPropertyUseCase,
+      required this.locationOnboardingService})
       : super(PropertyFormState(formData: PropertyFormData()));
 
   // Form data updates
@@ -114,6 +119,69 @@ class PropertyFormNotifier extends StateNotifier<PropertyFormState> {
     updateImages(newImages);
   }
 
+  Future<void> pickImages() async {
+    try {
+      // Check if we already have max images
+      if (state.formData.images.length >= 7) {
+        state = state.copyWith(
+          status: PropertyFormStatus.failure,
+          errorMessage: 'Maximum 7 images allowed',
+        );
+        return;
+      }
+
+      final ImagePicker picker = ImagePicker();
+      final List<XFile> pickedFiles = await picker.pickMultiImage(
+        imageQuality: 80,
+      );
+
+      if (pickedFiles.isEmpty) return;
+
+      // Check if adding these images would exceed the limit
+      final totalImages = state.formData.images.length + pickedFiles.length;
+      if (totalImages > 7) {
+        final allowedCount = 7 - state.formData.images.length;
+        state = state.copyWith(
+          status: PropertyFormStatus.failure,
+          errorMessage: 'Can only add $allowedCount more images (max 7 total)',
+        );
+        return;
+      }
+
+      state = state.copyWith(status: PropertyFormStatus.loading);
+
+      // Convert XFile to File and validate
+      for (final XFile pickedFile in pickedFiles) {
+        final File file = File(pickedFile.path);
+
+        // Validate file size (10MB limit)
+        final sizeInBytes = await file.length();
+        final sizeInMB = sizeInBytes / (1024 * 1024);
+
+        if (sizeInMB > 10) {
+          state = state.copyWith(
+            status: PropertyFormStatus.failure,
+            errorMessage: 'Image "${pickedFile.name}" exceeds 10MB limit',
+          );
+          return;
+        }
+
+        // Add the image using existing method
+        addImage(file);
+      }
+
+      state = state.copyWith(
+        status: PropertyFormStatus.success,
+        errorMessage: null,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: PropertyFormStatus.failure,
+        errorMessage: 'Failed to pick images: ${e.toString()}',
+      );
+    }
+  }
+
   void updateSalePrice(double? salePrice) {
     final updatedData = state.formData.copyWith(salePrice: salePrice);
     state = state.copyWith(formData: updatedData);
@@ -162,64 +230,14 @@ class PropertyFormNotifier extends StateNotifier<PropertyFormState> {
     try {
       state = state.copyWith(status: PropertyFormStatus.loading);
 
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        state = state.copyWith(
-          status: PropertyFormStatus.failure,
-          errorMessage:
-              'Location services are disabled. Please enable them in settings.',
-        );
-        return;
-      }
+      final location = await locationOnboardingService.getSavedLocation();
 
-      // Check location permissions
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          state = state.copyWith(
-            status: PropertyFormStatus.failure,
-            errorMessage: 'Location permissions are denied.',
-          );
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        state = state.copyWith(
-          status: PropertyFormStatus.failure,
-          errorMessage:
-              'Location permissions are permanently denied. Please enable them in settings.',
-        );
-        return;
-      }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Get address from coordinates
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        final placemark = placemarks.first;
-
-        final address = [
-          placemark.street,
-          placemark.subLocality,
-          placemark.locality,
-        ].where((element) => element != null && element.isNotEmpty).join(', ');
-
+      if (location != null) {
         final updatedData = state.formData.copyWith(
-          address: address.isNotEmpty ? address : null,
-          city: placemark.locality ?? '',
-          state: placemark.administrativeArea ?? '',
-          pincode: placemark.postalCode,
+          address: location.address.isNotEmpty ? location.address : null,
+          city: location.city ?? '',
+          state: location.state ?? '',
+          pincode: location.postalCode,
         );
 
         state = state.copyWith(

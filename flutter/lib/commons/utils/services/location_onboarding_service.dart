@@ -89,6 +89,7 @@ class LocationOnboardingService {
         city: placemark.locality,
         state: placemark.administrativeArea,
         country: placemark.country ?? 'Unknown',
+        postalCode: placemark.postalCode,
       );
     } catch (e) {
       throw Exception('Failed to get current location: $e');

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import '../../../../../../../../commons/presenters/providers/dio_provider.dart';
 import '../../../../../../../../commons/presenters/providers/error_handler_provider.dart';
 import '../../data/datasources/property_remote_datasource.dart';
@@ -13,7 +14,8 @@ import '../states/my_properties_state.dart';
 import '../states/property_form_state.dart';
 
 // Data Source Provider
-final propertyRemoteDataSourceProvider = Provider<PropertyRemoteDataSource>((ref) {
+final propertyRemoteDataSourceProvider =
+    Provider<PropertyRemoteDataSource>((ref) {
   final dioClient = ref.read(dioClientProvider);
   final errorHandler = ref.read(errorHandlerProvider);
   return PropertyRemoteDataSourceImpl(
@@ -29,7 +31,8 @@ final propertyRepositoryProvider = Provider<PropertyRepository>((ref) {
 });
 
 // Use Case Providers
-final getUserPropertiesUseCaseProvider = Provider<GetUserPropertiesUseCase>((ref) {
+final getUserPropertiesUseCaseProvider =
+    Provider<GetUserPropertiesUseCase>((ref) {
   final repository = ref.read(propertyRepositoryProvider);
   return GetUserPropertiesUseCase(repository);
 });
@@ -45,7 +48,8 @@ final deletePropertyUseCaseProvider = Provider<DeletePropertyUseCase>((ref) {
 });
 
 // Notifier Providers
-final myPropertiesNotifierProvider = StateNotifierProvider<MyPropertiesNotifier, MyPropertiesState>((ref) {
+final myPropertiesNotifierProvider =
+    StateNotifierProvider<MyPropertiesNotifier, MyPropertiesState>((ref) {
   final getUserPropertiesUseCase = ref.read(getUserPropertiesUseCaseProvider);
   final deletePropertyUseCase = ref.read(deletePropertyUseCaseProvider);
   return MyPropertiesNotifier(
@@ -54,7 +58,12 @@ final myPropertiesNotifierProvider = StateNotifierProvider<MyPropertiesNotifier,
   );
 });
 
-final propertyFormNotifierProvider = StateNotifierProvider<PropertyFormNotifier, PropertyFormState>((ref) {
+final propertyFormNotifierProvider =
+    StateNotifierProvider<PropertyFormNotifier, PropertyFormState>((ref) {
   final createPropertyUseCase = ref.read(createPropertyUseCaseProvider);
-  return PropertyFormNotifier(createPropertyUseCase: createPropertyUseCase);
+  final locationOnboardingservice = ref.read(locationOnboardingServiceProvider);
+  return PropertyFormNotifier(
+    createPropertyUseCase: createPropertyUseCase,
+    locationOnboardingService: locationOnboardingservice,
+  );
 });
