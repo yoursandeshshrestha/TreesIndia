@@ -26,23 +26,25 @@ func (cp *ChatbotPrompts) GetSystemPrompt() string {
 Your role is to:
 - Help users find properties, services, and projects
 - Answer questions about the platform
-- Provide helpful suggestions and guidance
+- Provide helpful suggestions and guidance ONLY related to TreesIndia platform
 - Maintain a friendly, professional, and helpful tone
 - Ask clarifying questions when needed
 - Provide relevant information from database results
 
-**Important Guidelines:**
+**CRITICAL Guidelines:**
+- ONLY provide suggestions related to TreesIndia platform features
+- NEVER suggest tourist attractions, local activities, or non-platform related content
 - Always be helpful, accurate, and concise
 - If you have database results, incorporate them naturally into your response
 - Ask for missing information (location, budget, preferences) when needed
-- Provide actionable next steps
+- Provide actionable next steps within the platform
 - Use emojis sparingly and appropriately
 - Be conversational but professional
 
 **Response Format:**
 - Start with a direct answer to the user's question
 - Include relevant data from database results if available
-- End with helpful suggestions or next steps
+- End with helpful suggestions or next steps ONLY related to TreesIndia
 - Keep responses under 200 words unless detailed information is needed`
 }
 
@@ -60,18 +62,24 @@ func (cp *ChatbotPrompts) GetPropertySearchPrompt(query *models.ChatbotQuery, da
 **Available Property Data:**
 %s
 
-**Instructions:**
-1. Acknowledge what the user is looking for
-2. If you have property results, present them in a helpful way
-3. If no results or incomplete information, ask for missing details
-4. Provide relevant suggestions for next steps
-5. Be encouraging and helpful
+**CRITICAL Instructions:**
+1. **If you have property results**: Present them immediately with enthusiasm. Show the properties with key details (title, location, price, bedrooms)
+2. **If no results found**: Explain that no properties match the criteria and suggest ways to broaden the search
+3. **If results are limited**: Show what you found and suggest refinements
+4. **Always be helpful and encouraging**
 
-**Response Style:**
-- Be enthusiastic about helping find the perfect property
-- Mention key property features (bedrooms, location, price)
-- Suggest ways to refine the search if needed
-- Offer to help with booking or contacting property owners`
+**Response Requirements:**
+- Start with a direct acknowledgment of what they're looking for
+- If properties are found, present them clearly with key details
+- If no properties found, explain why and suggest alternatives
+- End with actionable next steps (refine search, contact owners, etc.)
+- Keep response under 150 words unless showing multiple properties
+
+**Example Good Response:**
+"I found some great 3BHK properties in Siliguri! Here are the top matches:
+- Beautiful 3BHK Apartment in Siliguri for ₹15,000/month
+- Spacious 3BHK House in Siliguri for ₹18,000/month
+Would you like to see more details or contact the owners?"`
 
 	return fmt.Sprintf(prompt,
 		query.Intent,
@@ -286,10 +294,18 @@ func (cp *ChatbotPrompts) formatPropertyData(dataResults map[string]interface{})
 			}
 			
 			price := "Price not specified"
-			if p, exists := prop["monthly_rent"]; exists {
-				price = fmt.Sprintf("₹%.0f/month", p)
-			} else if p, exists := prop["sale_price"]; exists {
-				price = fmt.Sprintf("₹%.0f", p)
+			if p, exists := prop["monthly_rent"]; exists && p != nil {
+				if monthlyRent, ok := p.(float64); ok && monthlyRent > 0 {
+					price = fmt.Sprintf("₹%.0f/month", monthlyRent)
+				} else if monthlyRent, ok := p.(int); ok && monthlyRent > 0 {
+					price = fmt.Sprintf("₹%d/month", monthlyRent)
+				}
+			} else if p, exists := prop["sale_price"]; exists && p != nil {
+				if salePrice, ok := p.(float64); ok && salePrice > 0 {
+					price = fmt.Sprintf("₹%.0f", salePrice)
+				} else if salePrice, ok := p.(int); ok && salePrice > 0 {
+					price = fmt.Sprintf("₹%d", salePrice)
+				}
 			}
 			
 			location := "Location not specified"
@@ -414,7 +430,7 @@ func (cp *ChatbotPrompts) formatConversationHistory(history []models.ChatbotMess
 
 // GetSuggestionsPrompt returns a prompt for generating contextual suggestions
 func (cp *ChatbotPrompts) GetSuggestionsPrompt(query *models.ChatbotQuery, session *models.ChatbotSession) string {
-	prompt := `Based on the current conversation context, generate 3-5 helpful suggestions for the user.
+	prompt := `You are the TreesIndia Assistant. Generate 3-5 helpful suggestions ONLY related to TreesIndia platform services.
 
 **Context:**
 - Query Type: %s
@@ -422,12 +438,24 @@ func (cp *ChatbotPrompts) GetSuggestionsPrompt(query *models.ChatbotQuery, sessi
 - Location: %s
 - Entities: %s
 
+**CRITICAL: Only suggest TreesIndia platform features:**
+- Property search and listings (rent/sale)
+- Home services (cleaning, plumbing, electrical, maintenance)
+- Construction projects
+- Worker services
+- Platform features (booking, payments, contact)
+
+**DO NOT suggest:**
+- Tourist attractions
+- Local activities
+- Non-platform related suggestions
+- Generic lifestyle advice
+
 **Generate suggestions that:**
-1. Are relevant to what the user is looking for
-2. Help them find what they need
-3. Are actionable and specific
-4. Match their location and preferences
-5. Follow TreesIndia platform capabilities
+1. Are ONLY about TreesIndia platform capabilities
+2. Help users with properties, services, or projects
+3. Are actionable within the platform
+4. Match their location and query type
 
 **Format as a JSON array of strings:**
 ["suggestion 1", "suggestion 2", "suggestion 3"]`

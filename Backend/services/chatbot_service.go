@@ -19,7 +19,7 @@ import (
 )
 
 type ChatbotService struct {
-	chatbotRepo    *repositories.ChatbotRepository
+	ChatbotRepo    *repositories.ChatbotRepository
 	propertyRepo   *repositories.PropertyRepository
 	serviceRepo    *repositories.ServiceRepository
 	projectRepo    *repositories.ProjectRepository
@@ -62,7 +62,7 @@ type OpenAIResponse struct {
 
 func NewChatbotService() *ChatbotService {
 	return &ChatbotService{
-		chatbotRepo:  repositories.NewChatbotRepository(),
+		ChatbotRepo:  repositories.NewChatbotRepository(),
 		propertyRepo: repositories.NewPropertyRepository(),
 		serviceRepo:  repositories.NewServiceRepository(),
 		projectRepo:  repositories.NewProjectRepository(),
@@ -90,7 +90,7 @@ func (s *ChatbotService) CreateSession(req *models.CreateChatbotSessionRequest) 
 		session.CurrentContext = make(map[string]interface{})
 	}
 	
-	session, err := s.chatbotRepo.CreateSession(session)
+	session, err := s.ChatbotRepo.CreateSession(session)
 	if err != nil {
 		logrus.Errorf("ChatbotService.CreateSession failed: %v", err)
 		return nil, err
@@ -118,7 +118,7 @@ func (s *ChatbotService) SendMessage(sessionID string, req *models.SendChatbotMe
 	startTime := time.Now()
 	
 	// Get or create session
-	session, err := s.chatbotRepo.GetSessionByID(sessionID)
+	session, err := s.ChatbotRepo.GetSessionByID(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %v", err)
 	}
@@ -132,7 +132,7 @@ func (s *ChatbotService) SendMessage(sessionID string, req *models.SendChatbotMe
 		Context:      req.Context,
 	}
 	
-	userMessage, err = s.chatbotRepo.CreateMessage(userMessage)
+	userMessage, err = s.ChatbotRepo.CreateMessage(userMessage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save user message: %v", err)
 	}
@@ -145,7 +145,7 @@ func (s *ChatbotService) SendMessage(sessionID string, req *models.SendChatbotMe
 	}
 	
 	// Get conversation history for context
-	recentMessages, err := s.chatbotRepo.GetRecentMessages(sessionID, 10)
+	recentMessages, err := s.ChatbotRepo.GetRecentMessages(sessionID, 10)
 	if err != nil {
 		logrus.Errorf("Failed to get recent messages: %v", err)
 		recentMessages = []models.ChatbotMessage{}
@@ -179,7 +179,7 @@ func (s *ChatbotService) SendMessage(sessionID string, req *models.SendChatbotMe
 		Suggestions:   response.Suggestions,
 	}
 	
-	assistantMessage, err = s.chatbotRepo.CreateMessage(assistantMessage)
+	assistantMessage, err = s.ChatbotRepo.CreateMessage(assistantMessage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save assistant message: %v", err)
 	}
@@ -189,7 +189,7 @@ func (s *ChatbotService) SendMessage(sessionID string, req *models.SendChatbotMe
 	session.UpdateLastMessageAt()
 	session.CurrentContext = response.Context
 	
-	err = s.chatbotRepo.UpdateSession(session)
+	err = s.ChatbotRepo.UpdateSession(session)
 	if err != nil {
 		logrus.Errorf("Failed to update session: %v", err)
 	}
@@ -273,14 +273,13 @@ func (s *ChatbotService) processMessage(message string, session *models.ChatbotS
 
 // parseQuery uses AI to parse and understand the user query
 func (s *ChatbotService) parseQuery(message string, session *models.ChatbotSession) (*models.ChatbotQuery, error) {
-	prompt := fmt.Sprintf(`Analyze this user query and extract structured information:
+	prompt := fmt.Sprintf(`Analyze this user query and extract structured information for TreesIndia platform.
 
-IMPORTANT: Look for these patterns:
-- "3BHK", "2BHK", "1BHK" = bedrooms (3, 2, 1)
-- "rent", "rental" = listing_type: "rent"
-- "sale", "buy" = listing_type: "sale"
-- City names like "Siliguri", "Delhi", "Mumbai" = location
-- "3bhk rent in siliguri" = property query with 3 bedrooms, rent type, location Siliguri
+IMPORTANT: Only classify as property/service/project if CLEARLY related:
+- Property queries: Must contain "rent", "sale", "buy", "property", "house", "apartment", "BHK", "bedroom"
+- Service queries: Must contain "service", "book", "cleaning", "plumbing", "electrical", "maintenance"
+- Project queries: Must contain "project", "construction", "build", "contractor"
+- General queries: Everything else (greetings, questions, "test", "hello", etc.)
 
 User Query: "%s"
 User Location: "%s"
@@ -334,43 +333,103 @@ func (s *ChatbotService) fallbackParseQuery(message string, session *models.Chat
 	
 	query := models.ChatbotQuery{
 		QueryType:    "general",
-		Intent:       "search",
+		Intent:       "info",
 		Entities:     make(map[string]interface{}),
 		Filters:      make(map[string]interface{}),
 		Confidence:   0.5,
 		OriginalText: message,
 	}
 	
-	// Simple keyword-based classification
-	if strings.Contains(message, "rent") || strings.Contains(message, "rental") || strings.Contains(message, "bhk") {
+	// Enhanced keyword-based classification
+	propertyKeywords := []string{"rent", "rental", "sale", "buy", "property", "house", "apartment", "bhk", "bedroom", "room", "flat", "villa", "home"}
+	propertyCount := 0
+	for _, keyword := range propertyKeywords {
+		if strings.Contains(message, keyword) {
+			propertyCount++
+		}
+	}
+	
+	// More aggressive property detection - if any property keyword is found
+	if propertyCount >= 1 {
 		query.QueryType = "property"
-		query.Entities["listing_type"] = "rent"
-		query.Confidence = 0.9
+		query.Intent = "search"
+		query.Confidence = 0.8
 		
-		// Extract bedroom count
-		if strings.Contains(message, "1bhk") || strings.Contains(message, "1 bhk") {
+		// Determine listing type
+		if strings.Contains(message, "rent") || strings.Contains(message, "rental") {
+			query.Entities["listing_type"] = "rent"
+		} else if strings.Contains(message, "sale") || strings.Contains(message, "buy") {
+			query.Entities["listing_type"] = "sale"
+		} else {
+			// Default to rent if no specific type mentioned
+			query.Entities["listing_type"] = "rent"
+		}
+		
+		// Extract bedroom count - more comprehensive
+		if strings.Contains(message, "1bhk") || strings.Contains(message, "1 bhk") || strings.Contains(message, "1 bedroom") {
 			query.Entities["bedrooms"] = "1"
-		} else if strings.Contains(message, "2bhk") || strings.Contains(message, "2 bhk") {
+		} else if strings.Contains(message, "2bhk") || strings.Contains(message, "2 bhk") || strings.Contains(message, "2 bedroom") {
 			query.Entities["bedrooms"] = "2"
-		} else if strings.Contains(message, "3bhk") || strings.Contains(message, "3 bhk") {
+		} else if strings.Contains(message, "3bhk") || strings.Contains(message, "3 bhk") || strings.Contains(message, "3 bedroom") {
 			query.Entities["bedrooms"] = "3"
-		} else if strings.Contains(message, "4bhk") || strings.Contains(message, "4 bhk") {
+		} else if strings.Contains(message, "4bhk") || strings.Contains(message, "4 bhk") || strings.Contains(message, "4 bedroom") {
 			query.Entities["bedrooms"] = "4"
 		}
-	} else if strings.Contains(message, "sale") || strings.Contains(message, "buy") {
-		query.QueryType = "property"
-		query.Entities["listing_type"] = "sale"
-		query.Confidence = 0.8
-	} else if strings.Contains(message, "service") || strings.Contains(message, "book") {
+		
+		// Extract property type
+		if strings.Contains(message, "commercial") {
+			query.Entities["property_type"] = "commercial"
+		} else {
+			query.Entities["property_type"] = "residential"
+		}
+		
+		// Extract location from message
+		commonCities := []string{"mumbai", "delhi", "bangalore", "chennai", "kolkata", "hyderabad", "pune", "ahmedabad", "jaipur", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam", "pimpri", "patna", "vadodara", "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", "meerut", "rajkot", "kalyan", "vasai", "varanasi", "srinagar", "aurangabad", "noida", "solapur", "ranchi", "howrah", "coimbatore", "raipur", "jabalpur", "gwalior", "vijayawada", "jodhpur", "madurai", "raipur", "kota", "guwahati", "chandigarh", "tiruchirappalli", "mysore", "bhubaneswar", "kochi", "bhavnagar", "salem", "warangal", "guntur", "bhiwandi", "amravati", "nanded", "kolhapur", "sangli", "malegaon", "ulhasnagar", "jalgaon", "latur", "ahmednagar", "chandrapur", "parbhani", "ichalkaranji", "jalna", "ambarnath", "bhusawal", "ratnagiri", "beed", "yavatmal", "kamptee", "gondia", "barshi", "achalpur", "osmanabad", "nandurbar", "wardha", "udgir", "hinganghat", "siliguri"}
+		
+		for _, city := range commonCities {
+			if strings.Contains(message, city) {
+				query.Filters["city"] = city
+				break
+			}
+		}
+		
+		// Extract budget if mentioned
+		if strings.Contains(message, "7k") || strings.Contains(message, "7000") {
+			query.Filters["max_price"] = 7000.0
+		} else if strings.Contains(message, "10k") || strings.Contains(message, "10000") {
+			query.Filters["max_price"] = 10000.0
+		} else if strings.Contains(message, "15k") || strings.Contains(message, "15000") {
+			query.Filters["max_price"] = 15000.0
+		} else if strings.Contains(message, "20k") || strings.Contains(message, "20000") {
+			query.Filters["max_price"] = 20000.0
+		} else if strings.Contains(message, "25k") || strings.Contains(message, "25000") {
+			query.Filters["max_price"] = 25000.0
+		}
+		
+	} else if strings.Contains(message, "service") || strings.Contains(message, "book") || strings.Contains(message, "cleaning") || strings.Contains(message, "plumbing") || strings.Contains(message, "electrical") || strings.Contains(message, "maintenance") {
 		query.QueryType = "service"
+		query.Intent = "search"
 		query.Confidence = 0.7
-	} else if strings.Contains(message, "project") {
+		
+		// Extract service category
+		if strings.Contains(message, "cleaning") {
+			query.Entities["service_category"] = "cleaning"
+		} else if strings.Contains(message, "plumbing") {
+			query.Entities["service_category"] = "plumbing"
+		} else if strings.Contains(message, "electrical") {
+			query.Entities["service_category"] = "electrical"
+		} else if strings.Contains(message, "maintenance") {
+			query.Entities["service_category"] = "maintenance"
+		}
+		
+	} else if strings.Contains(message, "project") || strings.Contains(message, "construction") || strings.Contains(message, "build") {
 		query.QueryType = "project"
+		query.Intent = "search"
 		query.Confidence = 0.7
 	}
 	
-	// Extract location
-	if session.Location != "" {
+	// Set default location if not specified
+	if query.Filters["city"] == nil && session.Location != "" {
 		query.Filters["city"] = session.Location
 	}
 	
@@ -415,9 +474,11 @@ func (s *ChatbotService) fetchPropertyData(query *models.ChatbotQuery, session *
 	var properties []models.Property
 	db := database.GetDB()
 	
-	// Build query
-	queryBuilder := db.Where("is_approved = true AND status = 'available'")
+	// Build query with proper joins and preloading
+	queryBuilder := db.Preload("User").Preload("Broker").
+		Where("is_approved = true AND status = 'available' AND expires_at > ?", time.Now())
 	
+	// Apply filters
 	if listingType, ok := filters["listing_type"].(string); ok {
 		queryBuilder = queryBuilder.Where("listing_type = ?", listingType)
 	}
@@ -430,9 +491,32 @@ func (s *ChatbotService) fetchPropertyData(query *models.ChatbotQuery, session *
 	if city, ok := filters["city"].(string); ok {
 		queryBuilder = queryBuilder.Where("city ILIKE ?", "%"+city+"%")
 	}
-	if maxPrice, ok := filters["max_price"].(float64); ok {
-		queryBuilder = queryBuilder.Where("monthly_rent <= ?", maxPrice)
+	if state, ok := filters["state"].(string); ok {
+		queryBuilder = queryBuilder.Where("state ILIKE ?", "%"+state+"%")
 	}
+	
+	// Price filters - handle both rent and sale
+	if maxPrice, ok := filters["max_price"].(float64); ok {
+		if listingType, ok := filters["listing_type"].(string); ok {
+			if listingType == "rent" {
+				queryBuilder = queryBuilder.Where("monthly_rent <= ?", maxPrice)
+			} else if listingType == "sale" {
+				queryBuilder = queryBuilder.Where("sale_price <= ?", maxPrice)
+			}
+		}
+	}
+	if minPrice, ok := filters["min_price"].(float64); ok {
+		if listingType, ok := filters["listing_type"].(string); ok {
+			if listingType == "rent" {
+				queryBuilder = queryBuilder.Where("monthly_rent >= ?", minPrice)
+			} else if listingType == "sale" {
+				queryBuilder = queryBuilder.Where("sale_price >= ?", minPrice)
+			}
+		}
+	}
+	
+	// Order by priority score and created date
+	queryBuilder = queryBuilder.Order("priority_score DESC, created_at DESC")
 	
 	// Execute query
 	err := queryBuilder.Limit(5).Find(&properties).Error
@@ -445,25 +529,48 @@ func (s *ChatbotService) fetchPropertyData(query *models.ChatbotQuery, session *
 		}, nil
 	}
 	
-	// Convert to interface slice
+	// Convert to interface slice with more detailed information
 	propertyInterfaces := make([]interface{}, len(properties))
 	for i, prop := range properties {
-		propertyInterfaces[i] = map[string]interface{}{
-			"id":           prop.ID,
-			"title":        prop.Title,
-			"description":  prop.Description,
-			"monthly_rent": prop.MonthlyRent,
-			"sale_price":   prop.SalePrice,
-			"bedrooms":     prop.Bedrooms,
-			"bathrooms":    prop.Bathrooms,
-			"area":         prop.Area,
-			"city":         prop.City,
-			"state":        prop.State,
-			"address":      prop.Address,
-			"listing_type": prop.ListingType,
-			"property_type": prop.PropertyType,
-			"images":       prop.Images,
+		propertyData := map[string]interface{}{
+			"id":                prop.ID,
+			"title":             prop.Title,
+			"description":       prop.Description,
+			"listing_type":      prop.ListingType,
+			"property_type":     prop.PropertyType,
+			"bedrooms":          prop.Bedrooms,
+			"bathrooms":         prop.Bathrooms,
+			"area":              prop.Area,
+			"city":              prop.City,
+			"state":             prop.State,
+			"address":           prop.Address,
+			"pincode":           prop.Pincode,
+			"images":            prop.Images,
+			"price_negotiable":  prop.PriceNegotiable,
+			"treesindia_assured": prop.TreesIndiaAssured,
+			"created_at":        prop.CreatedAt,
 		}
+		
+		// Add appropriate price field
+		if prop.ListingType == "rent" && prop.MonthlyRent != nil {
+			propertyData["monthly_rent"] = *prop.MonthlyRent
+		} else if prop.ListingType == "sale" && prop.SalePrice != nil {
+			propertyData["sale_price"] = *prop.SalePrice
+		}
+		
+		// Add user information
+		if prop.User != nil {
+			propertyData["user_name"] = prop.User.Name
+			propertyData["user_phone"] = prop.User.Phone
+		}
+		
+		// Add broker information if available
+		if prop.Broker != nil {
+			propertyData["broker_name"] = prop.Broker.Name
+			propertyData["broker_phone"] = prop.Broker.Phone
+		}
+		
+		propertyInterfaces[i] = propertyData
 	}
 	
 	return map[string]interface{}{
@@ -482,15 +589,115 @@ func (s *ChatbotService) fetchServiceData(query *models.ChatbotQuery, session *m
 		filters[key] = value
 	}
 	
+	// Set default location if not specified
+	if filters["city"] == nil && session.Location != "" {
+		filters["city"] = session.Location
+	}
+	
 	// Set default limit
 	filters["limit"] = 5
 	
-	// Fetch services using existing service
-	// Note: This would need to be adapted based on your existing service structure
-	services := make([]interface{}, 0) // Placeholder for actual service data
+	// Fetch services from database
+	var services []models.Service
+	db := database.GetDB()
+	
+	// Build query with proper joins and preloading
+	queryBuilder := db.Preload("Category").Preload("Subcategory").Preload("ServiceAreas").
+		Where("is_active = true")
+	
+	// Apply filters
+	if city, ok := filters["city"].(string); ok {
+		queryBuilder = queryBuilder.Joins("JOIN service_service_areas ON services.id = service_service_areas.service_id").
+			Joins("JOIN service_areas ON service_service_areas.service_area_id = service_areas.id").
+			Where("service_areas.city ILIKE ?", "%"+city+"%")
+	}
+	if state, ok := filters["state"].(string); ok {
+		queryBuilder = queryBuilder.Joins("JOIN service_service_areas ON services.id = service_service_areas.service_id").
+			Joins("JOIN service_areas ON service_service_areas.service_area_id = service_areas.id").
+			Where("service_areas.state ILIKE ?", "%"+state+"%")
+	}
+	
+	// Filter by category if mentioned in query
+	if categoryName, ok := query.Entities["service_category"].(string); ok {
+		queryBuilder = queryBuilder.Joins("JOIN categories ON services.category_id = categories.id").
+			Where("categories.name ILIKE ? OR categories.slug ILIKE ?", "%"+categoryName+"%", "%"+categoryName+"%")
+	}
+	
+	// Filter by subcategory if mentioned
+	if subcategoryName, ok := query.Entities["service_subcategory"].(string); ok {
+		queryBuilder = queryBuilder.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
+			Where("subcategories.name ILIKE ? OR subcategories.slug ILIKE ?", "%"+subcategoryName+"%", "%"+subcategoryName+"%")
+	}
+	
+	// Filter by price type if mentioned
+	if priceType, ok := query.Entities["price_type"].(string); ok {
+		queryBuilder = queryBuilder.Where("price_type = ?", priceType)
+	}
+	
+	// Order by created date
+	queryBuilder = queryBuilder.Order("created_at DESC")
+	
+	// Execute query
+	err := queryBuilder.Limit(5).Find(&services).Error
+	if err != nil {
+		logrus.Errorf("Failed to fetch services: %v", err)
+		return map[string]interface{}{
+			"services": []interface{}{},
+			"total":    0,
+			"filters":  filters,
+		}, nil
+	}
+	
+	// Convert to interface slice with detailed information
+	serviceInterfaces := make([]interface{}, len(services))
+	for i, service := range services {
+		serviceData := map[string]interface{}{
+			"id":              service.ID,
+			"name":            service.Name,
+			"description":     service.Description,
+			"price_type":      service.PriceType,
+			"price":           service.Price,
+			"duration":        service.Duration,
+			"images":          service.Images,
+			"created_at":      service.CreatedAt,
+		}
+		
+		// Add category information
+		if service.Category.ID != 0 {
+			serviceData["category"] = map[string]interface{}{
+				"id":   service.Category.ID,
+				"name": service.Category.Name,
+				"slug": service.Category.Slug,
+			}
+		}
+		
+		// Add subcategory information
+		if service.Subcategory.ID != 0 {
+			serviceData["subcategory"] = map[string]interface{}{
+				"id":   service.Subcategory.ID,
+				"name": service.Subcategory.Name,
+				"slug": service.Subcategory.Slug,
+			}
+		}
+		
+		// Add service areas
+		if len(service.ServiceAreas) > 0 {
+			areas := make([]interface{}, len(service.ServiceAreas))
+			for j, area := range service.ServiceAreas {
+				areas[j] = map[string]interface{}{
+					"id":    area.ID,
+					"city":  area.City,
+					"state": area.State,
+				}
+			}
+			serviceData["service_areas"] = areas
+		}
+		
+		serviceInterfaces[i] = serviceData
+	}
 	
 	return map[string]interface{}{
-		"services": services,
+		"services": serviceInterfaces,
 		"total":    len(services),
 		"filters":  filters,
 	}, nil
@@ -505,15 +712,80 @@ func (s *ChatbotService) fetchProjectData(query *models.ChatbotQuery, session *m
 		filters[key] = value
 	}
 	
+	// Set default location if not specified
+	if filters["city"] == nil && session.Location != "" {
+		filters["city"] = session.Location
+	}
+	
 	// Set default limit
 	filters["limit"] = 5
 	
-	// Fetch projects using existing service
-	// Note: This would need to be adapted based on your existing project service structure
-	projects := make([]interface{}, 0) // Placeholder for actual project data
+	// Fetch projects from database
+	var projects []models.Project
+	db := database.GetDB()
+	
+	// Build query with proper joins and preloading
+	queryBuilder := db.Preload("User").Where("deleted_at IS NULL")
+	
+	// Apply filters
+	if projectType, ok := query.Entities["project_type"].(string); ok {
+		queryBuilder = queryBuilder.Where("project_type = ?", projectType)
+	}
+	if status, ok := query.Entities["project_status"].(string); ok {
+		queryBuilder = queryBuilder.Where("status = ?", status)
+	}
+	if city, ok := filters["city"].(string); ok {
+		queryBuilder = queryBuilder.Where("city ILIKE ?", "%"+city+"%")
+	}
+	if state, ok := filters["state"].(string); ok {
+		queryBuilder = queryBuilder.Where("state ILIKE ?", "%"+state+"%")
+	}
+	
+	// Order by created date
+	queryBuilder = queryBuilder.Order("created_at DESC")
+	
+	// Execute query
+	err := queryBuilder.Limit(5).Find(&projects).Error
+	if err != nil {
+		logrus.Errorf("Failed to fetch projects: %v", err)
+		return map[string]interface{}{
+			"projects": []interface{}{},
+			"total":    0,
+			"filters":  filters,
+		}, nil
+	}
+	
+	// Convert to interface slice with detailed information
+	projectInterfaces := make([]interface{}, len(projects))
+	for i, project := range projects {
+		projectData := map[string]interface{}{
+			"id":                    project.ID,
+			"title":                 project.Title,
+			"description":           project.Description,
+			"project_type":          project.ProjectType,
+			"status":                project.Status,
+			"city":                  project.City,
+			"state":                 project.State,
+			"address":               project.Address,
+			"pincode":               project.Pincode,
+			"estimated_duration_days": project.EstimatedDuration,
+			"contact_info":          project.ContactInfo,
+			"images":                project.Images,
+			"uploaded_by_admin":     project.UploadedByAdmin,
+			"created_at":            project.CreatedAt,
+		}
+		
+		// Add user information
+		if project.User != nil {
+			projectData["user_name"] = project.User.Name
+			projectData["user_phone"] = project.User.Phone
+		}
+		
+		projectInterfaces[i] = projectData
+	}
 	
 	return map[string]interface{}{
-		"projects": projects,
+		"projects": projectInterfaces,
 		"total":    len(projects),
 		"filters":  filters,
 	}, nil
@@ -658,7 +930,7 @@ func (s *ChatbotService) generateSuggestions(query *models.ChatbotQuery, session
 	}
 	
 	// Fallback to database suggestions
-	dbSuggestions, err := s.chatbotRepo.GetSuggestions(query.QueryType, 5)
+	dbSuggestions, err := s.ChatbotRepo.GetSuggestions(query.QueryType, 5)
 	if err != nil {
 		logrus.Errorf("Failed to get database suggestions: %v", err)
 	}
@@ -727,13 +999,45 @@ func (s *ChatbotService) needsMoreInfo(query *models.ChatbotQuery, dataResults m
 	// Check if we have enough information to provide a meaningful response
 	switch query.QueryType {
 	case "property":
-		// Need location or budget for property searches
+		// Check if we have any property results
+		if properties, ok := dataResults["properties"].([]interface{}); ok && len(properties) > 0 {
+			return false // We have results, no need for more info
+		}
+		
+		// If no results, check if we have basic search criteria
 		hasLocation := query.Filters["city"] != nil || query.Filters["state"] != nil
-		hasBudget := query.Filters["max_price"] != nil || query.Entities["budget"] != nil
-		return !hasLocation && !hasBudget
+		hasBedrooms := query.Entities["bedrooms"] != nil
+		hasListingType := query.Entities["listing_type"] != nil
+		
+		// If we have at least 2 of these criteria, we can search
+		criteriaCount := 0
+		if hasLocation { criteriaCount++ }
+		if hasBedrooms { criteriaCount++ }
+		if hasListingType { criteriaCount++ }
+		
+		return criteriaCount < 2 // Need at least 2 criteria for a meaningful search
+		
 	case "service":
-		// Need location for service searches
-		return query.Filters["city"] == nil && query.Filters["state"] == nil
+		// Check if we have any service results
+		if services, ok := dataResults["services"].([]interface{}); ok && len(services) > 0 {
+			return false // We have results, no need for more info
+		}
+		
+		// If no results, check if we have basic search criteria
+		hasLocation := query.Filters["city"] != nil || query.Filters["state"] != nil
+		hasCategory := query.Entities["service_category"] != nil
+		
+		return !hasLocation && !hasCategory // Need at least location or category
+		
+	case "project":
+		// Check if we have any project results
+		if projects, ok := dataResults["projects"].([]interface{}); ok && len(projects) > 0 {
+			return false // We have results, no need for more info
+		}
+		
+		// For projects, we can search with minimal criteria
+		return false
+		
 	default:
 		return false
 	}
@@ -756,7 +1060,7 @@ func (s *ChatbotService) getNextStep(query *models.ChatbotQuery, needsMoreInfo b
 
 // GetSession retrieves a chatbot session with messages
 func (s *ChatbotService) GetSession(sessionID string) (*models.ChatbotSessionResponse, error) {
-	session, err := s.chatbotRepo.GetSessionWithMessages(sessionID)
+	session, err := s.ChatbotRepo.GetSessionWithMessages(sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -774,7 +1078,7 @@ func (s *ChatbotService) GetSession(sessionID string) (*models.ChatbotSessionRes
 
 // GetSuggestions retrieves contextual suggestions
 func (s *ChatbotService) GetSuggestions(category string, limit int) ([]models.ChatbotSuggestion, error) {
-	return s.chatbotRepo.GetSuggestions(category, limit)
+	return s.ChatbotRepo.GetSuggestions(category, limit)
 }
 
 // Helper function to create int pointer

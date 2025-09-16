@@ -12,12 +12,18 @@ import (
 )
 
 type ChatbotController struct {
-	chatbotService *services.ChatbotService
+	chatbotService    *services.ChatbotService
+	fastChatbotService *services.FastChatbotService
 }
 
 func NewChatbotController() *ChatbotController {
+	// Initialize both services
+	chatbotService := services.NewChatbotService()
+	fastChatbotService := services.NewFastChatbotService(chatbotService.ChatbotRepo, chatbotService)
+	
 	return &ChatbotController{
-		chatbotService: services.NewChatbotService(),
+		chatbotService:    chatbotService,
+		fastChatbotService: fastChatbotService,
 	}
 }
 
@@ -113,7 +119,8 @@ func (cc *ChatbotController) SendMessage(c *gin.Context) {
 	// Set session ID from URL parameter
 	req.SessionID = sessionID
 
-	response, err := cc.chatbotService.SendMessage(sessionID, &req)
+	// Use fast chatbot service for better performance
+	response, err := cc.fastChatbotService.SendMessage(sessionID, &req)
 	if err != nil {
 		logrus.Errorf("ChatbotController.SendMessage service error: %v", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process message", err.Error()))
