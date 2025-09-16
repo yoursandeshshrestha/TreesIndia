@@ -296,6 +296,7 @@ export default function CreatePropertyPage() {
                     }
                     placeholder="Enter property title"
                     error={errors.title}
+                    maxLength={50}
                   />
                 </div>
 
