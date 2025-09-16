@@ -1,5 +1,6 @@
 import { notificationStore } from "@/utils/notificationStore";
 import type { NotificationWebSocketMessage } from "@/types/notification";
+import { playSound } from "@/utils/soundUtils";
 
 class NotificationWebSocketService {
   private ws: WebSocket | null = null;
@@ -113,6 +114,8 @@ class NotificationWebSocketService {
       case "new_notification":
         if (message.data.notification) {
           notificationStore.addNotification(message.data.notification);
+          // Play notification sound for new notifications
+          playSound("notification");
         }
         if (message.data.unread_count !== undefined) {
           notificationStore.setUnreadCount(message.data.unread_count);
