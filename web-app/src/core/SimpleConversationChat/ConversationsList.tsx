@@ -86,21 +86,12 @@ export const ConversationsList = forwardRef<
         }
       }
 
-      // Calculate and emit initial total unread count (filtering out open conversation)
-      const totalUnreadCount = conversationsData.conversations.reduce(
-        (total, conv) => {
-          if (conv.id !== currentlyOpenConversationId) {
-            return total + (conv.unread_count || 0);
-          }
-          return total;
-        },
-        0
+      // Emit conversation list update to the global store
+      // Note: Total unread count is managed by the backend via WebSocket
+      // and handled in UserMenu.tsx to avoid conflicts
+      conversationStore.emitConversationListUpdate(
+        conversationsData.conversations
       );
-
-      // Use setTimeout to defer the state update to avoid render phase issues
-      setTimeout(() => {
-        conversationStore.emitTotalUnreadCountUpdate(totalUnreadCount);
-      }, 0);
     }
   }, [
     conversationsData,
@@ -171,18 +162,10 @@ export const ConversationsList = forwardRef<
         updatedConversations.splice(conversationIndex, 1);
         updatedConversations.unshift(updatedConversation);
 
-        // Calculate and emit total unread count (filtering out open conversation)
-        const totalUnreadCount = updatedConversations.reduce((total, conv) => {
-          if (conv.id !== currentlyOpenConversationId) {
-            return total + (conv.unread_count || 0);
-          }
-          return total;
-        }, 0);
-
-        // Use setTimeout to defer the state update to avoid render phase issues
-        setTimeout(() => {
-          conversationStore.emitTotalUnreadCountUpdate(totalUnreadCount);
-        }, 0);
+        // Emit conversation list update to the global store
+        // Note: Total unread count is managed by the backend via WebSocket
+        // and handled in UserMenu.tsx to avoid conflicts
+        conversationStore.emitConversationListUpdate(updatedConversations);
 
         return updatedConversations;
       });
