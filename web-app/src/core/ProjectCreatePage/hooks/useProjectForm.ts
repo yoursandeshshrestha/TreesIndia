@@ -98,7 +98,7 @@ export function useProjectForm() {
           break;
 
         case 3: // Photos
-          if (formState.formData.images.length === 0) errors.push("images");
+          if (formState.formData.images.length < 2) errors.push("images");
           break;
       }
 

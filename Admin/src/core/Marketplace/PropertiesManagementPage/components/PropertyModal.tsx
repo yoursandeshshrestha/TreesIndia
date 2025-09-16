@@ -172,6 +172,11 @@ export function PropertyModal({
       newErrors.monthly_rent = "Monthly rent is required for rental listings";
     }
 
+    // Validate minimum image requirement
+    if (selectedFiles.length < 2) {
+      newErrors.images = "At least 2 images are required";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -288,6 +293,7 @@ export function PropertyModal({
                     }
                     placeholder="Enter property title"
                     error={errors.title}
+                    maxLength={50}
                   />
                 </div>
 
@@ -679,6 +685,10 @@ export function PropertyModal({
                       </div>
                     ))}
                   </div>
+                )}
+
+                {errors.images && (
+                  <p className="text-red-500 text-sm mt-2">{errors.images}</p>
                 )}
               </div>
             </div>

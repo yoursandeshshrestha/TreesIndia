@@ -12,6 +12,7 @@ import {
   getTotalUnreadCount,
   CreateConversationRequest,
   SendMessageRequest,
+  SimpleConversationMessage,
 } from "@/lib/simpleConversationApi";
 import { conversationStore } from "@/utils/conversationStore";
 
@@ -122,27 +123,14 @@ export function useSendConversationMessage() {
       messageData: SendMessageRequest;
     }) => sendConversationMessage(conversationId, messageData),
     onSuccess: (newMessage, { conversationId }) => {
-      // Invalidate messages for this conversation
-      queryClient.invalidateQueries({
-        queryKey: simpleConversationKeys.messages(conversationId),
-      });
-
       // Invalidate conversations list to update last_message
       queryClient.invalidateQueries({
         queryKey: simpleConversationKeys.lists(),
       });
 
-      // Optimistically add the message to the cache
-      queryClient.setQueryData(
-        simpleConversationKeys.messages(conversationId),
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            messages: [...(oldData.messages || []), newMessage],
-          };
-        }
-      );
+      // Don't optimistically add the message here to avoid duplicates
+      // Let WebSocket handle the message addition for instant updates
+      // The WebSocket will receive the message immediately after sending
     },
   });
 }

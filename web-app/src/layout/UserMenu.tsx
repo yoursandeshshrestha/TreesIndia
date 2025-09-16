@@ -25,7 +25,9 @@ export const UserMenu: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [totalUnreadCount, setTotalUnreadCount] = useState<number | undefined>(
+    undefined
+  );
   const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
     useState<number | null>(null);
 
@@ -41,7 +43,9 @@ export const UserMenu: React.FC = () => {
   };
 
   // WebSocket connection for real-time unread count updates (same as admin)
+  // Keep connection always enabled to ensure real-time updates work properly
   useConversationWebSocket({
+    enabled: true, // Always enabled for real-time updates
     onMessage: (message) => {
       // Emit message updates to conversation store for other components (same as admin)
       conversationStore.emitUpdate(
@@ -92,14 +96,20 @@ export const UserMenu: React.FC = () => {
 
     const unsubscribeConversationList =
       conversationStore.subscribeToConversationList((conversations) => {
-        // Calculate total unread count excluding currently open conversation (same as admin)
+        // Only calculate total unread count if we don't have a backend count
+        // The backend total_unread_count from WebSocket should take precedence
         const filteredCount = conversations.reduce((total, conv) => {
           if (conv.id !== currentlyOpenConversationId) {
             return total + (conv.unread_count || 0);
           }
           return total;
         }, 0);
-        setTotalUnreadCount(filteredCount);
+
+        // Only use calculated count as fallback when backend count is not available
+        setTotalUnreadCount((prevCount) => {
+          // If we have a backend count, use it; otherwise use calculated count
+          return prevCount !== undefined ? prevCount : filteredCount;
+        });
       });
 
     const unsubscribeConversationUnreadCount =

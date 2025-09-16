@@ -141,7 +141,10 @@ export function VendorModal({
   };
 
   const handleAddService = () => {
-    if (newService.trim() && !formData.services_offered.includes(newService.trim())) {
+    if (
+      newService.trim() &&
+      !formData.services_offered.includes(newService.trim())
+    ) {
       setFormData((prev) => ({
         ...prev,
         services_offered: [...prev.services_offered, newService.trim()],
@@ -186,7 +189,10 @@ export function VendorModal({
       newErrors.contact_person_phone = "Contact person phone is required";
     }
 
-    if (formData.contact_person_email && !/\S+@\S+\.\S+/.test(formData.contact_person_email)) {
+    if (
+      formData.contact_person_email &&
+      !/\S+@\S+\.\S+/.test(formData.contact_person_email)
+    ) {
       newErrors.contact_person_email = "Please enter a valid email address";
     }
 
@@ -206,6 +212,13 @@ export function VendorModal({
       newErrors.services_offered = "At least one service is required";
     }
 
+    // Validate minimum gallery images requirement
+    if (selectedFiles.length < 2) {
+      newErrors.gallery = "At least 2 gallery images are required";
+    } else if (selectedFiles.length > 7) {
+      newErrors.gallery = "Maximum 7 gallery images allowed";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -218,7 +231,10 @@ export function VendorModal({
     }
 
     try {
-      await onSubmit(formData, selectedFiles.length > 0 ? selectedFiles : undefined);
+      await onSubmit(
+        formData,
+        selectedFiles.length > 0 ? selectedFiles : undefined
+      );
       onClose();
     } catch (error) {
       console.error("Error submitting vendor:", error);
@@ -257,7 +273,9 @@ export function VendorModal({
                 </label>
                 <Input
                   value={formData.vendor_name}
-                  onChange={(e) => handleInputChange("vendor_name", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("vendor_name", e.target.value)
+                  }
                   placeholder="Enter vendor name"
                   error={errors.vendor_name}
                 />
@@ -270,7 +288,9 @@ export function VendorModal({
                 <SearchableDropdown
                   options={businessTypeOptions}
                   value={formData.business_type}
-                  onChange={(value) => handleInputChange("business_type", value as BusinessType)}
+                  onChange={(value) =>
+                    handleInputChange("business_type", value as BusinessType)
+                  }
                   placeholder="Select business type"
                 />
               </div>
@@ -282,7 +302,9 @@ export function VendorModal({
               </label>
               <Textarea
                 value={formData.business_description}
-                onChange={(e) => handleInputChange("business_description", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("business_description", e.target.value)
+                }
                 placeholder="Enter business description"
                 rows={3}
               />
@@ -296,7 +318,12 @@ export function VendorModal({
                 <Input
                   type="number"
                   value={formData.years_in_business}
-                  onChange={(e) => handleInputChange("years_in_business", parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "years_in_business",
+                      parseInt(e.target.value) || 0
+                    )
+                  }
                   placeholder="0"
                   error={errors.years_in_business}
                 />
@@ -318,7 +345,9 @@ export function VendorModal({
                 </label>
                 <Input
                   value={formData.contact_person_name}
-                  onChange={(e) => handleInputChange("contact_person_name", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contact_person_name", e.target.value)
+                  }
                   placeholder="Enter contact person name"
                   error={errors.contact_person_name}
                 />
@@ -330,7 +359,9 @@ export function VendorModal({
                 </label>
                 <Input
                   value={formData.contact_person_phone}
-                  onChange={(e) => handleInputChange("contact_person_phone", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contact_person_phone", e.target.value)
+                  }
                   placeholder="Enter phone number"
                   error={errors.contact_person_phone}
                 />
@@ -344,7 +375,9 @@ export function VendorModal({
               <Input
                 type="email"
                 value={formData.contact_person_email}
-                onChange={(e) => handleInputChange("contact_person_email", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("contact_person_email", e.target.value)
+                }
                 placeholder="Enter email address"
                 error={errors.contact_person_email}
               />
@@ -365,7 +398,9 @@ export function VendorModal({
                 </label>
                 <Input
                   value={formData.business_address.street || ""}
-                  onChange={(e) => handleAddressChange("street", e.target.value)}
+                  onChange={(e) =>
+                    handleAddressChange("street", e.target.value)
+                  }
                   placeholder="Enter street address"
                 />
               </div>
@@ -402,7 +437,9 @@ export function VendorModal({
                 </label>
                 <Input
                   value={formData.business_address.pincode || ""}
-                  onChange={(e) => handleAddressChange("pincode", e.target.value)}
+                  onChange={(e) =>
+                    handleAddressChange("pincode", e.target.value)
+                  }
                   placeholder="Enter pincode"
                 />
               </div>
@@ -414,7 +451,9 @@ export function VendorModal({
               </label>
               <Input
                 value={formData.business_address.landmark || ""}
-                onChange={(e) => handleAddressChange("landmark", e.target.value)}
+                onChange={(e) =>
+                  handleAddressChange("landmark", e.target.value)
+                }
                 placeholder="Enter landmark"
               />
             </div>
@@ -422,7 +461,9 @@ export function VendorModal({
 
           {/* Services Offered */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Services Offered</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Services Offered
+            </h3>
 
             <div className="flex gap-2">
               <Input
@@ -474,7 +515,9 @@ export function VendorModal({
 
           {/* Image Upload */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Business Gallery</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Business Gallery
+            </h3>
 
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
               <input
@@ -519,6 +562,10 @@ export function VendorModal({
                   </div>
                 ))}
               </div>
+            )}
+
+            {errors.gallery && (
+              <p className="text-red-500 text-sm mt-2">{errors.gallery}</p>
             )}
           </div>
 

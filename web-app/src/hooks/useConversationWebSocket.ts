@@ -8,6 +8,7 @@ interface WebSocketMessage {
 }
 
 interface UseConversationWebSocketProps {
+  enabled?: boolean;
   onMessage?: (message: unknown) => void;
   onStatusUpdate?: (status: unknown) => void;
   onTotalUnreadCount?: (count: number) => void;
@@ -15,6 +16,7 @@ interface UseConversationWebSocketProps {
 }
 
 export const useConversationWebSocket = ({
+  enabled = true,
   onMessage,
   onStatusUpdate,
   onTotalUnreadCount,
@@ -51,7 +53,7 @@ export const useConversationWebSocket = ({
   }, [onConversationUnreadCount]);
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (!enabled || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
@@ -105,7 +107,10 @@ export const useConversationWebSocket = ({
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
 
-          if (message.event === "conversation_message") {
+          if (
+            message.event === "conversation_message" ||
+            message.event === "new_conversation_message"
+          ) {
             // Handle new message
             if (onMessageRef.current) {
               onMessageRef.current(message);
@@ -236,14 +241,18 @@ export const useConversationWebSocket = ({
     reconnectAttempts.current = 0;
   }, []);
 
-  // Connect on mount
+  // Connect on mount and when enabled changes
   useEffect(() => {
-    connect();
+    if (enabled) {
+      connect();
+    } else {
+      disconnect();
+    }
 
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [enabled, connect, disconnect]);
 
   return {
     isConnected,

@@ -500,9 +500,9 @@ func (vc *VendorController) parseFormDataVendor(c *gin.Context, req *models.Crea
 	if form.File != nil && len(form.File["profile_picture"]) > 0 {
 		profileFile := form.File["profile_picture"][0]
 		
-		// Validate file size (2MB limit)
-		if profileFile.Size > 2*1024*1024 {
-			return fmt.Errorf("profile picture file size must be less than 2MB")
+		// Validate file size (1MB limit)
+		if profileFile.Size > 1*1024*1024 {
+			return fmt.Errorf("profile picture file size must be less than 1MB")
 		}
 		
 		// Validate file type
@@ -522,11 +522,14 @@ func (vc *VendorController) parseFormDataVendor(c *gin.Context, req *models.Crea
 		}
 	}
 	
-	// Handle business gallery uploads (max 7 images)
+	// Handle business gallery uploads (min 2, max 7 images)
 	if form.File != nil && len(form.File["business_gallery"]) > 0 {
 		galleryFiles := form.File["business_gallery"]
 		
-		// Validate number of files (max 7)
+		// Validate number of files (min 2, max 7)
+		if len(galleryFiles) < 2 {
+			return fmt.Errorf("at least 2 gallery images are required")
+		}
 		if len(galleryFiles) > 7 {
 			return fmt.Errorf("maximum 7 gallery images allowed")
 		}
@@ -536,9 +539,9 @@ func (vc *VendorController) parseFormDataVendor(c *gin.Context, req *models.Crea
 		
 		if cloudinaryService != nil {
 			for _, file := range galleryFiles {
-				// Validate file size (2MB limit)
-				if file.Size > 2*1024*1024 {
-					return fmt.Errorf("gallery image file size must be less than 2MB")
+				// Validate file size (1MB limit)
+				if file.Size > 1*1024*1024 {
+					return fmt.Errorf("gallery image file size must be less than 1MB")
 				}
 				
 				// Validate file type

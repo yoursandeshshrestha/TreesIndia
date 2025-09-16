@@ -65,7 +65,7 @@ const steps: VendorFormStep[] = [
     title: "Photos",
     description: "Upload business photos",
     status: "pending",
-    required: false,
+    required: true,
     editable: true,
   },
 ];
@@ -142,7 +142,7 @@ export function useVendorForm() {
             formData.business_address.pincode.trim() !== ""
           );
         case 4: // Photos
-          return true; // Photos are optional
+          return formData.business_gallery.length >= 2; // Minimum 2 gallery images required
         default:
           return false;
       }
@@ -195,6 +195,11 @@ export function useVendorForm() {
           }
           if (!formData.business_address.pincode.trim()) {
             errors.push("pincode");
+          }
+          break;
+        case "5": // Photos
+          if (formData.business_gallery.length < 2) {
+            errors.push("business_gallery");
           }
           break;
       }

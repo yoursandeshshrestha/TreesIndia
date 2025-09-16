@@ -46,7 +46,8 @@ export default function PhotosStep({
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Photos</h2>
         <p className="text-gray-600">
-          Upload photos of your property (up to 7 images, max 10MB each)
+          Upload photos of your property (minimum 2, up to 7 images, max 10MB
+          each)
         </p>
       </div>
 
@@ -123,7 +124,7 @@ export default function PhotosStep({
 
         {errors.includes("images") && (
           <p className="text-red-500 text-sm">
-            Please upload at least one photo
+            Please upload at least 2 photos
           </p>
         )}
       </div>

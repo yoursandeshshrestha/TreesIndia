@@ -22,7 +22,7 @@ export default function PhotosStep({
     const files = Array.from(event.target.files || []);
     const validFiles = files.filter((file) => {
       const isValidType = file.type.startsWith("image/");
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      const isValidSize = file.size <= 1 * 1024 * 1024; // 1MB limit
       return isValidType && isValidSize;
     });
 
@@ -46,7 +46,8 @@ export default function PhotosStep({
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Photos</h2>
         <p className="text-gray-600">
-          Upload photos of your project (up to 7 images, max 10MB each)
+          Upload photos of your project (minimum 2, up to 7 images, max 1MB
+          each)
         </p>
       </div>
 
@@ -64,7 +65,7 @@ export default function PhotosStep({
             Click to browse or drag and drop images here
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            PNG, JPG, JPEG up to 10MB each
+            PNG, JPG, JPEG up to 1MB each
           </p>
         </div>
 
@@ -123,7 +124,7 @@ export default function PhotosStep({
 
         {errors.includes("images") && (
           <p className="text-red-500 text-sm">
-            Please upload at least one photo
+            Please upload at least 2 photos
           </p>
         )}
       </div>

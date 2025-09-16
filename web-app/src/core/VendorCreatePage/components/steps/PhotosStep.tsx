@@ -25,12 +25,12 @@ export default function PhotosStep({
     const file = event.target.files?.[0];
     if (file) {
       const isValidType = file.type.startsWith("image/");
-      const isValidSize = file.size <= 2 * 1024 * 1024; // 2MB limit
+      const isValidSize = file.size <= 1 * 1024 * 1024; // 1MB limit
 
       if (isValidType && isValidSize) {
         onUpdate({ profile_picture: file });
       } else {
-        alert("Please select a valid image file under 2MB");
+        alert("Please select a valid image file under 1MB");
       }
     }
   };
@@ -39,7 +39,7 @@ export default function PhotosStep({
     const files = Array.from(event.target.files || []);
     const validFiles = files.filter((file) => {
       const isValidType = file.type.startsWith("image/");
-      const isValidSize = file.size <= 2 * 1024 * 1024; // 2MB limit
+      const isValidSize = file.size <= 1 * 1024 * 1024; // 1MB limit
       return isValidType && isValidSize;
     });
 
@@ -76,7 +76,8 @@ export default function PhotosStep({
           Business Photos
         </h2>
         <p className="text-gray-600">
-          Upload a profile picture and business gallery photos (max 2MB each)
+          Upload a profile picture (1MB max) and business gallery photos
+          (minimum 2, max 7, 1MB each)
         </p>
       </div>
 
@@ -128,7 +129,7 @@ export default function PhotosStep({
             <p className="text-sm font-medium text-gray-900 mb-1">
               Upload Profile Picture
             </p>
-            <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 2MB</p>
+            <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 1MB</p>
           </div>
         )}
 
@@ -148,7 +149,7 @@ export default function PhotosStep({
           Business Gallery
         </h3>
         <p className="text-sm text-gray-600">
-          Upload photos of your business (0-7 images, max 2MB each)
+          Upload photos of your business (minimum 2, max 7 images, 1MB each)
         </p>
 
         {/* Upload Area */}
@@ -164,7 +165,7 @@ export default function PhotosStep({
             Click to browse or drag and drop images here
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            PNG, JPG, JPEG up to 2MB each
+            PNG, JPG, JPEG up to 1MB each
           </p>
         </div>
 
@@ -224,7 +225,7 @@ export default function PhotosStep({
 
         {errors.includes("business_gallery") && (
           <p className="text-red-500 text-sm">
-            Please upload at least one photo
+            Please upload at least 2 business gallery photos
           </p>
         )}
       </div>

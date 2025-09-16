@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { useSimpleConversationWebSocket } from "@/hooks/useSimpleConversationWebSocket";
 import { displayChatDateTime } from "@/utils/displayUtils";
+import { playSound, initializeAudio } from "@/utils/soundUtils";
 
 interface ChatMainAreaProps {
   selectedConversation: Conversation | null;
@@ -107,6 +108,14 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
         if (messageExists) {
           return prev;
         }
+
+        // Play receive sound for messages from other users (not admin)
+        if (message.sender?.user_type !== "admin") {
+          playSound("receive");
+        }
+        // Note: We don't play sound for admin's own messages here since
+        // the send sound is already played in handleSendMessage
+
         return [...prev, message as unknown as Message];
       });
     },
@@ -144,11 +153,16 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
         message: messageText,
       });
 
+      // Play send sound after successful send
+      playSound("send");
+
       // Don't add to messages here - let WebSocket handle it to avoid duplicates
       // The WebSocket will receive the message and add it via onMessage callback
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message");
+      // Play error sound
+      playSound("error");
       // Restore the message if sending failed
       setNewMessage(messageText);
     } finally {
@@ -174,6 +188,23 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
       sendTypingIndicator(false);
     }
   };
+
+  // Initialize audio on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      initializeAudio();
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+
+    document.addEventListener("click", handleFirstInteraction);
+    document.addEventListener("keydown", handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, []);
 
   if (!selectedConversation) {
     return (

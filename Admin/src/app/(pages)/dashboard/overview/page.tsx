@@ -1,7 +1,8 @@
 import React from "react";
+import DashboardManagementPage from "@/core/DashboardManagementPage/DashboardManagementPage";
 
 const DashboardOverviewPage = () => {
-  return <div>DashboardOverviewPage</div>;
+  return <DashboardManagementPage />;
 };
 
 export default DashboardOverviewPage;

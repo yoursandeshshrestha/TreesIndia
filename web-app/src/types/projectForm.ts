@@ -3,7 +3,7 @@ export interface ProjectFormData {
   title: string;
   description: string;
   project_type: "residential" | "commercial" | "infrastructure";
-  status: "starting_soon" | "on_going" | "completed" | "cancelled" | "on_hold";
+  status: "starting_soon" | "on_going";
 
   // Step 2: Location Details
   state: string;
