@@ -14,6 +14,7 @@ import '../../../domain/entities/booking_details_entity.dart';
 import '../../providers/bookings_providers.dart';
 import 'booking_details_bottom_sheet.dart';
 import 'cancel_booking_bottom_sheet.dart';
+import 'payment_segments_bottom_sheet.dart';
 import 'quote_acceptance_bottom_sheet.dart';
 
 class BookingCardWidget extends ConsumerWidget {
@@ -546,6 +547,33 @@ class BookingCardWidget extends ConsumerWidget {
     return timeFormat.format(indianTime);
   }
 
+  bool _hasPaymentSegments(BookingDetailsEntity booking) {
+    return booking.paymentProgress != null &&
+        booking.paymentProgress!.segments.isNotEmpty;
+  }
+
+  bool _hasPendingSegments(BookingDetailsEntity booking) {
+    return booking.paymentProgress != null &&
+        booking.paymentProgress!.segments.any((segment) =>
+            segment.status == 'pending' || segment.status == 'overdue');
+  }
+
+  bool _isFirstSegment(BookingDetailsEntity booking) {
+    return booking.paymentProgress != null &&
+        booking.paymentProgress!.paidSegments == 0 &&
+        _hasPendingSegments(booking) &&
+        booking.status == 'quote_accepted';
+  }
+
+  bool _isNextSegment(BookingDetailsEntity booking) {
+    return booking.paymentProgress != null &&
+        booking.paymentProgress!.paidSegments > 0 &&
+        _hasPendingSegments(booking) &&
+        (booking.status == "quote_accepted" ||
+            booking.status == "partially_paid" ||
+            booking.status == "confirmed");
+  }
+
   List<Widget> _buildActionButtons(BuildContext context,
       BookingsState bookingsState, BookingsNotifier bookingsNotifier) {
     final status = booking.status.toLowerCase();
@@ -648,7 +676,7 @@ class BookingCardWidget extends ConsumerWidget {
     }
 
     // Quote accepted - show pay now button
-    if (status == 'quote_accepted') {
+    if (status == 'quote_accepted' && !_hasPaymentSegments(booking)) {
       buttons.addAll([
         SizedBox(
           width: double.infinity,
@@ -662,6 +690,97 @@ class BookingCardWidget extends ConsumerWidget {
               ),
             ),
             child: const Text('Pay Now'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+      ]);
+    }
+
+    if (_isFirstSegment(booking)) {
+      buttons.addAll([
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              // _showPaymentSegmentsBottomSheet(context);
+            },
+             style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.stateGreen600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.credit_card, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('Pay First Segment'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+      ]);
+    }
+
+    if (_isNextSegment(booking)) {
+      buttons.addAll([
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              // _showPaymentSegmentsBottomSheet(context);
+            },
+             style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.stateRed600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.credit_card, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('Pay Next Segment'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+      ]);
+    }
+
+    if (_hasPaymentSegments(booking) &&
+        (booking.status == "quote_provided" ||
+            booking.status == "quote_accepted" ||
+            booking.status == "partially_paid" ||
+            booking.status == "confirmed")) {
+      buttons.addAll([
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              _showPaymentSegmentsBottomSheet(context);
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.brandPrimary600),
+              foregroundColor: AppColors.brandPrimary600,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.credit_card, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('View Segments'),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -729,7 +848,7 @@ class BookingCardWidget extends ConsumerWidget {
     }
 
     // Add Track Worker Location button for in_progress bookings
-    if (status == 'in_progress' && 
+    if (status == 'in_progress' &&
         booking.workerAssignment?.status == 'in_progress') {
       buttons.add(
         SizedBox(
@@ -831,6 +950,10 @@ class BookingCardWidget extends ConsumerWidget {
       context: context,
       builder: (context) => LocationTrackingModal(booking: booking),
     );
+  }
+
+  void _showPaymentSegmentsBottomSheet(BuildContext context) {
+    PaymentSegmentsBottomSheet.show(context, booking);
   }
 
   String _formatDateTime(DateTime date, DateTime time) {

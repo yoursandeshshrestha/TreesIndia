@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import '../../../services_page/domain/entities/service_detail_entity.dart';
 import 'address_entity.dart';
 import 'payment_entity.dart';
+import 'payment_segment_entity.dart';
+import 'payment_progress_entity.dart';
 import 'worker_assignment_entity.dart';
 
 class BookingDetailsEntity extends Equatable {
@@ -37,6 +39,8 @@ class BookingDetailsEntity extends Equatable {
   final ServiceDetailEntity service;
   final PaymentEntity? payment;
   final WorkerAssignmentEntity? workerAssignment;
+  final List<PaymentSegmentEntity>? paymentSegments;
+  final PaymentProgressEntity? paymentProgress;
 
   const BookingDetailsEntity({
     required this.id,
@@ -71,6 +75,8 @@ class BookingDetailsEntity extends Equatable {
     required this.service,
     this.payment,
     this.workerAssignment,
+    this.paymentSegments,
+    this.paymentProgress,
   });
 
   @override
@@ -107,6 +113,8 @@ class BookingDetailsEntity extends Equatable {
         service,
         payment,
         workerAssignment,
+        paymentSegments,
+        paymentProgress,
       ];
 
   BookingDetailsEntity copyWith({
@@ -142,6 +150,8 @@ class BookingDetailsEntity extends Equatable {
     ServiceDetailEntity? service,
     PaymentEntity? payment,
     WorkerAssignmentEntity? workerAssignment,
+    List<PaymentSegmentEntity>? paymentSegments,
+    PaymentProgressEntity? paymentProgress,
   }) {
     return BookingDetailsEntity(
       id: id ?? this.id,
@@ -177,6 +187,8 @@ class BookingDetailsEntity extends Equatable {
       service: service ?? this.service,
       payment: payment ?? this.payment,
       workerAssignment: workerAssignment ?? this.workerAssignment,
+      paymentSegments: paymentSegments ?? this.paymentSegments,
+      paymentProgress: paymentProgress ?? this.paymentProgress,
     );
   }
 }

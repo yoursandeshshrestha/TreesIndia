@@ -33,7 +33,7 @@ import {
   AssignmentStatus,
   PaymentProgress,
 } from "@/types/booking";
-import Button from "@/components/Button";
+import { Button } from "@/components/Button";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Model from "@/components/Model/Base/Model";

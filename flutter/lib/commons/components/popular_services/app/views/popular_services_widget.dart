@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../constants/app_colors.dart';
 import '../../../../constants/app_spacing.dart';
 import '../../../../components/text/app/views/custom_text_library.dart';
@@ -32,9 +33,9 @@ class PopularServicesWidget extends ConsumerWidget {
               ),
               GestureDetector(
                 onTap: onSeeAllTap,
-                child: Text(
+                child: const Text(
                   'See all',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF055c3a),
@@ -47,7 +48,7 @@ class PopularServicesWidget extends ConsumerWidget {
 
           // Service Cards
           SizedBox(
-            height: 206,
+            height: 200,
             child: homePageState.isLoadingPopularServices
                 ? const Center(
                     child: CircularProgressIndicator(
@@ -90,7 +91,13 @@ class PopularServicesWidget extends ConsumerWidget {
                                 reviewCount: '116K',
                               ),
                               onTap: () {
-                                print('Service tapped: ${service.name}');
+                                context.push(
+                                  '/service-detail/${service.id}',
+                                  extra: {
+                                    'service': service,
+                                  },
+                                );
+                                // print('Service tapped: ${service.name}');
                               },
                             ),
                           );

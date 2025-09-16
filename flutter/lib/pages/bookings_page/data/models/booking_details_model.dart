@@ -2,6 +2,8 @@ import '../../../services_page/data/models/service_model.dart';
 import '../../domain/entities/booking_details_entity.dart';
 import 'address_model.dart';
 import 'payment_model.dart';
+import 'payment_segment_model.dart';
+import 'payment_progress_model.dart';
 import 'worker_assignment_model.dart';
 
 class BookingDetailsModel extends BookingDetailsEntity {
@@ -38,6 +40,8 @@ class BookingDetailsModel extends BookingDetailsEntity {
     required super.service,
     super.payment,
     super.workerAssignment,
+    super.paymentSegments,
+    super.paymentProgress,
   });
 
   factory BookingDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -100,6 +104,14 @@ class BookingDetailsModel extends BookingDetailsEntity {
       workerAssignment: json['worker_assignment'] != null
           ? WorkerAssignmentModel.fromJson(json['worker_assignment'] as Map<String, dynamic>)
           : null,
+      paymentSegments: json['payment_segments'] != null
+          ? (json['payment_segments'] as List<dynamic>)
+              .map((segment) => PaymentSegmentModel.fromJson(segment as Map<String, dynamic>))
+              .toList()
+          : null,
+      paymentProgress: json['payment_progress'] != null
+          ? PaymentProgressModel.fromJson(json['payment_progress'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -137,6 +149,10 @@ class BookingDetailsModel extends BookingDetailsEntity {
       'service': (service as ServiceModel).toJson(),
       'payment': payment != null ? (payment as PaymentModel).toJson() : null,
       'worker_assignment': workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toJson() : null,
+      'payment_segments': paymentSegments?.map((segment) => (segment as PaymentSegmentModel).toJson()).toList(),
+      'payment_progress': paymentProgress != null
+          ? (paymentProgress as PaymentProgressModel).toJson()
+          : null,
     };
   }
 
@@ -174,6 +190,8 @@ class BookingDetailsModel extends BookingDetailsEntity {
       service: (service as ServiceModel).toEntity(),
       payment: payment != null ? (payment as PaymentModel).toEntity() : null,
       workerAssignment: workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toEntity() : null,
+      paymentSegments: paymentSegments?.map((segment) => (segment as PaymentSegmentModel).toEntity()).toList(),
+      paymentProgress: paymentProgress != null ? (paymentProgress as PaymentProgressModel).toEntity() : null,
     );
   }
 
@@ -249,6 +267,10 @@ class BookingDetailsModel extends BookingDetailsEntity {
           : null,
       workerAssignment: entity.workerAssignment != null
           ? WorkerAssignmentModel.fromEntity(entity.workerAssignment!)
+          : null,
+      paymentSegments: entity.paymentSegments?.map((segment) => PaymentSegmentModel.fromEntity(segment)).toList(),
+      paymentProgress: entity.paymentProgress != null
+          ? PaymentProgressModel.fromEntity(entity.paymentProgress!)
           : null,
     );
   }
