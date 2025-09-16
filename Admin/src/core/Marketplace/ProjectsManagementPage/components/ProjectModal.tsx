@@ -166,6 +166,13 @@ export function ProjectModal({
       newErrors["contact_info.phone"] = "Please enter a valid phone number";
     }
 
+    // Validate minimum image requirement
+    if (selectedFiles.length < 2) {
+      newErrors.images = "At least 2 images are required";
+    } else if (selectedFiles.length > 7) {
+      newErrors.images = "Maximum 7 images allowed";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -549,6 +556,10 @@ export function ProjectModal({
                       </div>
                     ))}
                   </div>
+                )}
+
+                {errors.images && (
+                  <p className="text-red-500 text-sm mt-2">{errors.images}</p>
                 )}
               </div>
             </div>
