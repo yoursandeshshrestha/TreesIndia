@@ -412,11 +412,25 @@ func (ps *ProjectService) GetProjectStats(userID uint) (map[string]interface{}, 
 func (ps *ProjectService) UploadProjectImages(imageFiles []*multipart.FileHeader) ([]string, error) {
 	logrus.Infof("ProjectService.UploadProjectImages called with %d images", len(imageFiles))
 	
+	// Validate file count
+	if len(imageFiles) < 2 {
+		return nil, fmt.Errorf("at least 2 images are required")
+	}
+	
+	if len(imageFiles) > 7 {
+		return nil, fmt.Errorf("maximum 7 images allowed")
+	}
+	
 	// Upload images to Cloudinary
 	var imageURLs []string
 	if ps.cloudinary != nil {
 		for _, file := range imageFiles {
 			if file != nil {
+				// Validate file size (1MB limit)
+				if file.Size > 1*1024*1024 {
+					return nil, fmt.Errorf("image file size must be less than 1MB: %s", file.Filename)
+				}
+				
 				logrus.Infof("ProjectService.UploadProjectImages uploading image: %s", file.Filename)
 				url, err := ps.cloudinary.UploadImage(file, "projects")
 				if err != nil {

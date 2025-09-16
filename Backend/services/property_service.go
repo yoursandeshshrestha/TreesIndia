@@ -543,6 +543,10 @@ func (ps *PropertyService) validateProperty(property *models.Property) error {
 		return fmt.Errorf("title is required")
 	}
 	
+	if len(property.Title) > 50 {
+		return fmt.Errorf("title must be 50 characters or less")
+	}
+	
 	if property.PropertyType == "" {
 		return fmt.Errorf("property type is required")
 	}
