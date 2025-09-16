@@ -56,10 +56,10 @@ export default function BasicDetailsStep({
           helperText={
             errors.includes("title")
               ? "Title is required"
-              : `${formData.title.length}/30 characters`
+              : `${formData.title.length}/50 characters`
           }
           inputProps={{
-            maxLength: 30,
+            maxLength: 50,
           }}
           variant="outlined"
           sx={{

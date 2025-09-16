@@ -203,42 +203,6 @@ export default function BasicDetailsStep({
               }
               label="On Going"
             />
-            <FormControlLabel
-              value="completed"
-              control={
-                <Radio
-                  sx={{
-                    color: "#00a871",
-                    "&.Mui-checked": { color: "#00a871" },
-                  }}
-                />
-              }
-              label="Completed"
-            />
-            <FormControlLabel
-              value="cancelled"
-              control={
-                <Radio
-                  sx={{
-                    color: "#00a871",
-                    "&.Mui-checked": { color: "#00a871" },
-                  }}
-                />
-              }
-              label="Cancelled"
-            />
-            <FormControlLabel
-              value="on_hold"
-              control={
-                <Radio
-                  sx={{
-                    color: "#00a871",
-                    "&.Mui-checked": { color: "#00a871" },
-                  }}
-                />
-              }
-              label="On Hold"
-            />
           </RadioGroup>
           {errors.includes("status") && (
             <Typography variant="caption" color="error" sx={{ mt: 1 }}>

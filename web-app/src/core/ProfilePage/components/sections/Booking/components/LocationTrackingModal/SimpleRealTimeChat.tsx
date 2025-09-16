@@ -5,6 +5,7 @@ import { Send, Loader2, MessageCircle } from "lucide-react";
 import { useSimpleConversation } from "@/hooks/useSimpleConversations";
 import { useSimpleConversationWebSocket } from "@/hooks/useSimpleConversationWebSocket";
 import { SimpleConversationMessage } from "@/lib/simpleConversationApi";
+import { playSound } from "@/utils/soundUtils";
 
 interface SimpleRealTimeChatProps {
   conversationId: number;
@@ -36,6 +37,9 @@ export function SimpleRealTimeChat({
       // Mark message as read if it's not from current user
       if (message.sender_id !== currentUser?.id) {
         markMessageRead(message.id);
+
+        // Play receive sound for messages from other users
+        playSound("receive");
       }
     },
     onTyping: (userId: number, isTyping: boolean) => {
@@ -67,6 +71,9 @@ export function SimpleRealTimeChat({
     try {
       await sendMessage({ message: newMessage.trim() });
       setNewMessage("");
+
+      // Play send sound
+      playSound("send");
 
       // Stop typing indicator
       sendTypingIndicator(false);
