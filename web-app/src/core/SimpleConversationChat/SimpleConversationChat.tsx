@@ -5,11 +5,14 @@ import Image from "next/image";
 import { MessageCircle, Send, Loader2, User } from "lucide-react";
 import { useSimpleConversation } from "@/hooks/useSimpleConversations";
 import { useSimpleConversationWebSocket } from "@/hooks/useSimpleConversationWebSocket";
-import { SimpleConversationMessage } from "@/lib/simpleConversationApi";
+import {
+  SimpleConversationMessage,
+  SimpleMessagesResponse,
+} from "@/lib/simpleConversationApi";
 import { displayChatDateTime } from "@/utils/displayUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { simpleConversationKeys } from "@/hooks/useSimpleConversations";
-import { conversationStore } from "@/utils/conversationStore";
+import { playSound } from "@/utils/soundUtils";
 
 interface SimpleConversationChatProps {
   conversationId: number;
@@ -42,14 +45,40 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
     conversationId,
     isConversationOpen: true, // This conversation is currently open
     onMessage: (message: Record<string, unknown>) => {
-      // Invalidate messages query to refetch latest messages
-      queryClient.invalidateQueries({
-        queryKey: simpleConversationKeys.messages(conversationId),
-      });
+      // Update the cache directly to avoid refetch and maintain instant updates
+      queryClient.setQueryData(
+        simpleConversationKeys.messages(conversationId),
+        (oldData: SimpleMessagesResponse | undefined) => {
+          if (!oldData) return oldData;
+
+          // Check if message already exists to prevent duplicates
+          const messageExists = oldData.messages?.some(
+            (msg: SimpleConversationMessage) => msg.id === message.id
+          );
+          if (messageExists) {
+            return oldData;
+          }
+
+          // Backend returns messages in DESC order (latest first)
+          // Add new message at the beginning of the array
+          const updatedMessages = [
+            message as unknown as SimpleConversationMessage,
+            ...(oldData.messages || []),
+          ];
+
+          return {
+            ...oldData,
+            messages: updatedMessages,
+          };
+        }
+      );
 
       // Mark message as read if it's not from current user and not already read
       if (message.sender_id !== currentUser?.id && !message.is_read) {
         markMessageRead(message.id as number);
+
+        // Play receive sound for messages from other users
+        playSound("receive");
       }
     },
     onTyping: (userId: number, isTyping: boolean) => {
@@ -60,20 +89,9 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
     },
   });
 
-  // Listen to global conversation updates for this specific conversation
-  useEffect(() => {
-    const unsubscribe = conversationStore.subscribeToUpdates((data) => {
-      // Only handle updates for this conversation
-      if (data.conversation_id === conversationId) {
-        // Invalidate messages query to refetch latest messages
-        queryClient.invalidateQueries({
-          queryKey: simpleConversationKeys.messages(conversationId),
-        });
-      }
-    });
-
-    return unsubscribe;
-  }, [conversationId, queryClient]);
+  // Note: We don't need to listen to global conversation store updates here
+  // because the WebSocket onMessage handler already handles all message updates
+  // and sound playing. This prevents duplicate sounds and duplicate message processing.
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -102,6 +120,9 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
     try {
       await sendMessage({ message: newMessage.trim() });
       setNewMessage("");
+
+      // Play send sound after successful send
+      playSound("send");
 
       // Stop typing indicator
       sendTypingIndicator(false);
