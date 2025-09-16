@@ -82,6 +82,12 @@ type AppConfig struct {
 	// FCM Configuration
 	FCMServiceAccountPath string
 	FCMProjectID         string
+	
+	// OpenAI Configuration
+	OpenAIAPIKey         string
+	OpenAIModel          string
+	OpenAIMaxTokens      int
+	OpenAITemperature    float64
 }
 
 // LoadConfig loads configuration from environment variables
@@ -90,8 +96,6 @@ func LoadConfig() *AppConfig {
 	if err := godotenv.Load(); err != nil {
 		// .env file not found, continue with environment variables
 	}
-	
-	
 	
 	config := &AppConfig{
 		// Server Configuration
@@ -164,6 +168,12 @@ func LoadConfig() *AppConfig {
 		// FCM Configuration
 		FCMServiceAccountPath: getEnv("FCM_SERVICE_ACCOUNT_PATH", ""),
 		FCMProjectID:         getEnv("FCM_PROJECT_ID", ""),
+		
+		// OpenAI Configuration
+		OpenAIAPIKey:         getEnv("OPENAI_API_KEY", ""),
+		OpenAIModel:          getEnv("OPENAI_MODEL", "gpt-3.5-turbo"),
+		OpenAIMaxTokens:      getEnvAsInt("OPENAI_MAX_TOKENS", 500),
+		OpenAITemperature:    getEnvAsFloat64("OPENAI_TEMPERATURE", 0.7),
 	}
 	
 	return config
@@ -171,8 +181,6 @@ func LoadConfig() *AppConfig {
 
 // GetDatabaseURL returns the database connection URL
 func (ac *AppConfig) GetDatabaseURL() string {
-	
-	
 	// If DATABASE_URL is provided, use it directly
 	if ac.DatabaseURL != "" {
 		// Clean up any line breaks or extra spaces
@@ -223,11 +231,14 @@ func (ac *AppConfig) GetFCMConfig() map[string]string {
 
 // Helper functions to get environment variables with defaults
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		// Clean up any line breaks or extra spaces
-		cleanValue := strings.TrimSpace(value)
-		cleanValue = strings.ReplaceAll(cleanValue, "\n", "")
-		cleanValue = strings.ReplaceAll(cleanValue, "\r", "")
+	value := os.Getenv(key)
+	// Clean up any line breaks or extra spaces first
+	cleanValue := strings.TrimSpace(value)
+	cleanValue = strings.ReplaceAll(cleanValue, "\n", "")
+	cleanValue = strings.ReplaceAll(cleanValue, "\r", "")
+	
+	// Check if the cleaned value is not empty
+	if cleanValue != "" {
 		return cleanValue
 	}
 	return defaultValue
@@ -277,6 +288,15 @@ func getEnvAsSlice(key string, defaultValue []string) []string {
 			values[i] = strings.TrimSpace(v)
 		}
 		return values
+	}
+	return defaultValue
+}
+
+func getEnvAsFloat64(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+			return floatValue
+		}
 	}
 	return defaultValue
 }
