@@ -113,18 +113,9 @@ export function useSimpleConversationWebSocket({
               if (message.message) {
                 onMessageRef.current?.(message.message);
               }
-              // Only update unread count when new message arrives if conversation is not currently open
-              if (!isConversationOpen) {
-                const currentCount =
-                  conversationStore.getCurrentUnreadCount() || 0;
-
-                // Use setTimeout to defer the state update to avoid render phase issues
-                setTimeout(() => {
-                  conversationStore.emitTotalUnreadCountUpdate(
-                    currentCount + 1
-                  );
-                }, 0);
-              }
+              // Note: Unread count updates are handled by the monitor WebSocket connection
+              // (useConversationWebSocket) which receives authoritative total_unread_count events
+              // from the backend. This prevents race conditions and ensures consistency.
               break;
             case "typing":
               if (message.user_id && typeof message.is_typing === "boolean") {
