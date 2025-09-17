@@ -80,6 +80,28 @@ func (qs *QuoteService) ProvideQuote(bookingID uint, adminID uint, req *models.P
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
 	
+	// Send quote provided notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification
+				quote := &models.Quote{
+					ID:         booking.ID, // Using booking ID as quote ID
+					Amount:     segmentsTotal,
+					ValidUntil: time.Now().Add(7 * 24 * time.Hour), // 7 days validity
+				}
+				NotifyQuoteProvided(quote, booking, &user, &service)
+			}
+		}
+	}()
+	
 	logrus.Infof("Quote provided for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
 }
@@ -179,6 +201,27 @@ func (qs *QuoteService) AcceptQuote(bookingID uint, userID uint, req *models.Acc
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
 	
+	// Send quote accepted notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification
+				quote := &models.Quote{
+					ID:     booking.ID, // Using booking ID as quote ID
+					Amount: *booking.QuoteAmount,
+				}
+				NotifyQuoteAccepted(quote, booking, &user, &service)
+			}
+		}
+	}()
+	
 	logrus.Infof("Quote accepted for booking %d by user %d", bookingID, userID)
 	return booking, nil
 }
@@ -222,6 +265,27 @@ func (qs *QuoteService) RejectQuote(bookingID uint, userID uint, req *models.Rej
 
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
+	
+	// Send quote rejected notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification (using previous quote amount if available)
+				quote := &models.Quote{
+					ID:     booking.ID, // Using booking ID as quote ID
+					Amount: 0, // Amount cleared when rejected
+				}
+				NotifyQuoteRejected(quote, booking, &user, &service)
+			}
+		}
+	}()
 	
 	logrus.Infof("Quote rejected for booking %d by user %d: reason=%s", bookingID, userID, req.Reason)
 	return booking, nil

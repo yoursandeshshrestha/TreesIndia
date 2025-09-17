@@ -530,9 +530,5 @@ func (ps *PaymentService) sendPaymentNotifications(payment *models.Payment) {
 		logrus.Errorf("Failed to send payment received notification to admin: %v", err)
 	}
 
-	// Send notification to user about payment confirmation
-	err = notificationService.NotifyPaymentConfirmation(payment, &user)
-	if err != nil {
-		logrus.Errorf("Failed to send payment confirmation notification to user: %v", err)
-	}
+	// Payment confirmation notification removed as per user request
 }

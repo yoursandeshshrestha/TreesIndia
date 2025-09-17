@@ -1,15 +1,22 @@
 package services
 
 import (
+	"fmt"
 	"treesindia/models"
 )
 
 type NotificationService struct {
-	// TODO: Add notification providers (SMS, email, push notifications)
+	inAppNotificationService *InAppNotificationService
 }
 
 func NewNotificationService() *NotificationService {
-	return &NotificationService{}
+	// Initialize the in-app notification service
+	wsService := NewNotificationWebSocketService()
+	inAppService := NewInAppNotificationService(wsService)
+	
+	return &NotificationService{
+		inAppNotificationService: inAppService,
+	}
 }
 
 // SendBookingConfirmation sends booking confirmation notification to user
@@ -53,7 +60,34 @@ func (ns *NotificationService) SendSubscriptionExpiredNotification(user *models.
 
 // SendSubscriptionConfirmationNotification sends subscription confirmation notification
 func (ns *NotificationService) SendSubscriptionConfirmationNotification(user *models.User, subscription *models.UserSubscription) error {
-	// TODO: Implement actual notification sending
+	// Create in-app notification for subscription activation
+	title := "Subscription Activated! 🎉"
+	message := fmt.Sprintf("Your subscription has been successfully activated. You now have access to premium features until %s.", 
+		subscription.EndDate.Format("January 2, 2006"))
+	
+	// Prepare notification data
+	data := map[string]interface{}{
+		"subscription_id": subscription.ID,
+		"plan_id":        subscription.PlanID,
+		"start_date":     subscription.StartDate,
+		"end_date":       subscription.EndDate,
+		"amount":         subscription.Amount,
+		"status":         subscription.Status,
+	}
+	
+	// Create the in-app notification
+	err := ns.inAppNotificationService.CreateNotificationForUser(
+		user.ID,
+		models.InAppNotificationTypeSubscriptionPurchase,
+		title,
+		message,
+		data,
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to create subscription confirmation notification: %w", err)
+	}
+	
 	return nil
 }
 
