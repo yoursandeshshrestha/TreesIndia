@@ -49,7 +49,9 @@ export default function BookingDetailsCard({
           <p className="font-semibold text-gray-900 text-sm">
             Send booking details to
           </p>
-          <p className="text-gray-600 text-sm mt-1">{booking.contact_phone}</p>
+          <p className="text-gray-600 text-sm mt-1">
+            {booking.contact?.person}
+          </p>
         </div>
       </div>
 
@@ -63,9 +65,9 @@ export default function BookingDetailsCard({
           <div className="mt-1">
             <p className="text-gray-600 text-xs">
               <span className="text-gray-900 font-medium">
-                {getAddressName(JSON.parse(booking.address))}
+                {booking.address?.name || "Home"}
               </span>{" "}
-              - {getAddressDetails(JSON.parse(booking.address))}
+              - {booking.address?.address}, {booking.address?.city}
             </p>
           </div>
         </div>

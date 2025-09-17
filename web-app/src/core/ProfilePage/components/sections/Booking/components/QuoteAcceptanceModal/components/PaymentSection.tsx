@@ -67,9 +67,9 @@ export default function PaymentSection({
           <span className="text-gray-600">Address</span>
           <span className="font-medium text-right max-w-xs">
             <span className="text-gray-900 font-medium">
-              {getAddressName(booking.address)}
+              {booking.address?.name || "Home"}
             </span>{" "}
-            - {getAddressDetails(booking.address)}
+            - {booking.address?.address}, {booking.address?.city}
           </span>
         </div>
 
