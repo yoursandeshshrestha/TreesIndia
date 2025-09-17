@@ -39,6 +39,9 @@ const (
 	InAppNotificationTypeWorkerCompleted    InAppNotificationType = "worker_completed"
 	InAppNotificationTypeBookingConfirmed   InAppNotificationType = "booking_confirmed"
 	InAppNotificationTypeQuoteProvided      InAppNotificationType = "quote_provided"
+	InAppNotificationTypeQuoteAccepted      InAppNotificationType = "quote_accepted"
+	InAppNotificationTypeQuoteRejected      InAppNotificationType = "quote_rejected"
+	InAppNotificationTypeQuoteExpired       InAppNotificationType = "quote_expired"
 	
 	// Payment & Subscription for Users
 	InAppNotificationTypePaymentConfirmation InAppNotificationType = "payment_confirmation"

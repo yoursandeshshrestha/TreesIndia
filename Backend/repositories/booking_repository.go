@@ -779,7 +779,7 @@ func (br *BookingRepository) convertToOptimizedResponse(booking *models.Booking)
 		Address: address,
 		Contact: &models.OptimizedContactInfo{
 			Person:              booking.ContactPerson,
-			Phone:               booking.ContactPhone,
+			Description:         booking.Description,
 			SpecialInstructions: booking.SpecialInstructions,
 		},
 		Payment:          payment,
