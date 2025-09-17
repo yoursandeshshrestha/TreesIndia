@@ -1,18 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Bell,
-  User,
-  Calendar,
-  DollarSign,
-  Shield,
-  Key,
-  AlertCircle,
-  CheckCheck,
-  MoreHorizontal,
-  X,
-} from "lucide-react";
+import { Bell, CheckCheck, MoreHorizontal, X } from "lucide-react";
 import { InAppNotification, NOTIFICATION_TYPES } from "@/types/notification";
 import {
   useNotifications,
@@ -20,40 +9,11 @@ import {
   useMarkAllAsRead,
 } from "@/hooks/useNotifications";
 import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
-import { toast } from "sonner";
 
 interface NotificationDropdownProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case NOTIFICATION_TYPES.USER_REGISTERED:
-    case NOTIFICATION_TYPES.WORKER_APPLICATION:
-    case NOTIFICATION_TYPES.BROKER_APPLICATION:
-      return <User className="w-4 h-4" />;
-    case NOTIFICATION_TYPES.BOOKING_CREATED:
-    case NOTIFICATION_TYPES.WORKER_ASSIGNED:
-    case NOTIFICATION_TYPES.WORKER_STARTED:
-    case NOTIFICATION_TYPES.WORKER_COMPLETED:
-      return <Calendar className="w-4 h-4" />;
-    case NOTIFICATION_TYPES.PAYMENT_RECEIVED:
-    case NOTIFICATION_TYPES.PAYMENT_CONFIRMATION:
-    case NOTIFICATION_TYPES.SUBSCRIPTION_PURCHASE:
-      return <DollarSign className="w-4 h-4" />;
-    case NOTIFICATION_TYPES.APPLICATION_ACCEPTED:
-    case NOTIFICATION_TYPES.APPLICATION_REJECTED:
-      return <Shield className="w-4 h-4" />;
-    case NOTIFICATION_TYPES.OTP_REQUESTED:
-    case NOTIFICATION_TYPES.OTP_VERIFIED:
-    case NOTIFICATION_TYPES.LOGIN_SUCCESS:
-    case NOTIFICATION_TYPES.LOGIN_FAILED:
-      return <Key className="w-4 h-4" />;
-    default:
-      return <AlertCircle className="w-4 h-4" />;
-  }
-};
 
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
@@ -103,7 +63,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const { isConnected } = useNotificationWebSocket({
     onNewNotification: (notification) => {
       // New notification will be handled by the store automatically
-      console.log("New notification received:", notification);
     },
     onUnreadCountUpdate: (count) => {
       setUnreadCount(count);
@@ -259,7 +218,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-sm">No notifications yet</p>
             <p className="text-xs text-gray-400 mt-1">
-              You'll see updates about your bookings, payments, and more here
+              You&apos;ll see updates about your bookings, payments, and more
+              here
             </p>
           </div>
         ) : (
@@ -271,18 +231,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   !notification.is_read ? "bg-blue-50" : ""
                 }`}
               >
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        !notification.is_read
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                  </div>
+                <div className="flex items-start">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p

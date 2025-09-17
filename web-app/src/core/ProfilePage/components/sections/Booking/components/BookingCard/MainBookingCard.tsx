@@ -10,6 +10,7 @@ import {
   User,
   Navigation,
   CreditCard,
+  MessageCircle,
 } from "lucide-react";
 import type { Booking as ApiBooking } from "@/lib/bookingApi";
 import type { Booking as TypeBooking } from "@/types/booking";
@@ -18,6 +19,10 @@ import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
 import { useBookings } from "@/hooks/useBookings";
 import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
+import { useAppDispatch } from "@/store/hooks";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface MainBookingCardProps {
   booking: ApiBooking;
@@ -44,6 +49,10 @@ export function MainBookingCard({
 }: MainBookingCardProps) {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isSegmentsModalOpen, setIsSegmentsModalOpen] = useState(false);
+
+  // Redux and auth hooks
+  const dispatch = useAppDispatch();
+  const { user } = useAuth();
 
   // Get payment progress from bookings data
   const { bookingsWithProgress } = useBookings();
@@ -224,21 +233,18 @@ export function MainBookingCard({
           bgColor: "bg-blue-50",
         };
       case "assigned":
-        const workerName = booking?.worker_assignment?.worker?.name;
         return {
           icon: (
             <Image
               src="/icons/worker.png"
-              alt="Worker Assigned"
+              alt="Service Scheduled"
               width={40}
               height={40}
               className="w-10 h-10"
             />
           ),
-          text: workerName
-            ? `Worker assigned - ${workerName}`
-            : "Worker assigned",
-          subtitle: "Your service professional is on the way",
+          text: "Service Scheduled",
+          subtitle: "Your service is scheduled and ready",
           color: "text-blue-600",
           bgColor: "bg-blue-50",
         };
@@ -400,30 +406,24 @@ export function MainBookingCard({
     }
   };
 
-  const formatAddress = (addressString: string) => {
-    try {
-      const address = JSON.parse(addressString);
-      const addressName = address.name || "Home";
-      const addressText = `${address.address}, ${address.city}`;
-      return `${addressName} • ${addressText}`;
-    } catch {
-      return "Address not available";
-    }
+  const formatAddress = (address?: {
+    name: string;
+    address: string;
+    city: string;
+  }) => {
+    if (!address) return "Address not available";
+    const addressName = address.name || "Home";
+    const addressText = `${address.address}, ${address.city}`;
+    return `${addressName} • ${addressText}`;
   };
 
-  const formatContact = (contactPerson: string, contactPhone: string) => {
-    if (!contactPerson && !contactPhone)
-      return "Contact information not available";
-
-    if (contactPerson && contactPhone) {
-      return `${contactPerson} • ${contactPhone}`;
-    } else if (contactPerson) {
-      return contactPerson;
-    } else if (contactPhone) {
-      return contactPhone;
-    }
-
-    return "Contact information not available";
+  const formatContact = (contact?: {
+    person: string;
+    description: string;
+    special_instructions: string;
+  }) => {
+    if (!contact?.person) return "Contact information not available";
+    return contact.person;
   };
 
   const formatAmount = (amount: number) => {
@@ -442,15 +442,15 @@ export function MainBookingCard({
     ID: apiBooking.ID,
     booking_reference: apiBooking.booking_reference,
     status: apiBooking.status,
-    payment_status: apiBooking.payment_status,
-    booking_type: apiBooking.booking_type,
-    scheduled_date: apiBooking.scheduled_date || undefined,
-    scheduled_time: apiBooking.scheduled_time || undefined,
+    payment_status: apiBooking.payment_status || "",
+    booking_type: apiBooking.booking_type || "",
+    scheduled_date: apiBooking.scheduled_date || "",
+    scheduled_time: apiBooking.scheduled_time || "",
     total_amount: apiBooking.quote_amount || undefined,
-    address: apiBooking.address,
-    description: apiBooking.description,
-    CreatedAt: apiBooking.CreatedAt,
-    UpdatedAt: apiBooking.UpdatedAt,
+    address: apiBooking.address ? JSON.stringify(apiBooking.address) : "",
+    description: apiBooking.contact?.description || "",
+    CreatedAt: apiBooking.created_at || "",
+    UpdatedAt: apiBooking.updated_at || "",
     quote_amount: apiBooking.quote_amount || undefined,
     quote_notes: apiBooking.quote_notes || undefined,
     quote_provided_at: apiBooking.quote_provided_at || undefined,
@@ -458,18 +458,26 @@ export function MainBookingCard({
     quote_expires_at: apiBooking.quote_expires_at || undefined,
     payment_segments: undefined,
     payment_progress: undefined,
-    contact_person: apiBooking.contact_person || undefined,
-    contact_phone: apiBooking.contact_phone || undefined,
+    contact_person: apiBooking.contact?.person || undefined,
+    contact_phone: apiBooking.contact?.person || undefined,
     service: apiBooking.service
       ? {
-          id: apiBooking.service.id,
+          id: apiBooking.service.ID,
           name: apiBooking.service.name,
           price_type: apiBooking.service.price_type,
           price: apiBooking.service.price || undefined,
           duration: apiBooking.service.duration || undefined,
         }
       : undefined,
-    user: apiBooking.user,
+    user: apiBooking.user
+      ? {
+          id: apiBooking.user.ID,
+          ID: apiBooking.user.ID,
+          name: apiBooking.user.name,
+          phone: "",
+          user_type: apiBooking.user.user_type,
+        }
+      : undefined,
   });
 
   return (
@@ -539,12 +547,10 @@ export function MainBookingCard({
                 {formatAddress(booking.address)}
               </span>
             </div>
-            {(booking.contact_person || booking.contact_phone) && (
+            {booking.contact?.person && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-500" />
-                <span>
-                  {formatContact(booking.contact_person, booking.contact_phone)}
-                </span>
+                <span>{formatContact(booking.contact)}</span>
               </div>
             )}
             {booking.worker_assignment?.worker &&
@@ -554,11 +560,11 @@ export function MainBookingCard({
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="w-4 h-4 text-gray-500" />
                   <span>
-                    Worker: {booking.worker_assignment.worker.name} (
-                    {booking.worker_assignment.worker.phone})
+                    Worker: {booking.worker_assignment.worker.name}{" "}
+                    {booking.worker_assignment.worker.phone || ""}
                   </span>
                   {booking.worker_assignment.status &&
-                    ["assigned", "accepted", "in_progress"].includes(
+                    ["accepted", "in_progress"].includes(
                       booking.worker_assignment.status
                     ) && (
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -692,7 +698,11 @@ export function MainBookingCard({
                 "quote_provided",
                 "quote_accepted",
               ].includes(booking.status) &&
-                onCancel && (
+                onCancel &&
+                // Don't show cancel button if worker has accepted the assignment
+                !["accepted", "in_progress"].includes(
+                  booking.worker_assignment?.status || ""
+                ) && (
                   <button
                     onClick={() => onCancel(booking)}
                     className="w-full px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
@@ -739,6 +749,57 @@ export function MainBookingCard({
                   </div>
                 </button>
               )}
+
+              {/* Communication Icons - Bottom of Right Side */}
+              {booking.worker_assignment?.worker &&
+                ["accepted", "in_progress"].includes(
+                  booking.worker_assignment.status
+                ) && (
+                  <div className="mt-auto pt-4 border-t border-gray-200">
+                    <div className="text-center text-xs text-gray-500 mb-2">
+                      Quick Actions
+                    </div>
+                    <div className="flex gap-6 justify-center">
+                      <button
+                        onClick={() => {
+                          // TODO: Implement phone call functionality
+                          console.log(
+                            "Phone call clicked for worker:",
+                            booking.worker_assignment?.worker?.name
+                          );
+                        }}
+                        className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
+                        title="Call Worker"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (
+                            booking.worker_assignment?.worker?.ID &&
+                            user?.id
+                          ) {
+                            dispatch(
+                              openChatModalWithUser({
+                                user_id: user.id,
+                                worker_id: booking.worker_assignment.worker.ID,
+                              })
+                            );
+                          } else {
+                            toast.error(
+                              "Unable to start chat - missing user information"
+                            );
+                          }
+                        }}
+                        className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
+                        title="Chat with Worker"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
             </div>
           )}
         </div>
@@ -746,7 +807,7 @@ export function MainBookingCard({
 
       {/* Location Tracking Modal */}
       {booking.worker_assignment?.status === "in_progress" &&
-        booking.worker_assignment?.ID && (
+        booking.worker_assignment?.worker_id && (
           <LocationTrackingModal
             isOpen={isLocationModalOpen}
             onClose={() => setIsLocationModalOpen(false)}

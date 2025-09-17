@@ -14,7 +14,7 @@ import ServiceSearchModal from "@/commonComponents/ServiceSearchModel/ServiceSea
 import MarketplaceModal from "@/commonComponents/MarketplaceModal/MarketplaceModal";
 import ChatModal from "@/commonComponents/ChatModal/ChatModal";
 import ServiceDetailModal from "@/commonComponents/ServiceDetailModal/ServiceDetailModal";
-import { SimpleChatbot } from "@/components/Chatbot";
+// import { SimpleChatbot } from "@/components/Chatbot";
 import { Toaster } from "sonner";
 
 const poppins = Poppins({
@@ -51,7 +51,7 @@ export default function RootLayout({
           <ServiceDetailModal />
 
           {/* Chatbot Widget */}
-          <SimpleChatbot />
+          {/* <SimpleChatbot /> */}
 
           <div className="flex flex-col min-h-screen">
             {/* Sticky Header */}
