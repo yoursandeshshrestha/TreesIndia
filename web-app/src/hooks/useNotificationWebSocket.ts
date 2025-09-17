@@ -44,12 +44,8 @@ export const useNotificationWebSocket = ({
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
     if (isAuthenticated && user && token) {
-      console.log("Connecting to notification WebSocket for user:", user.id);
       notificationWebSocketService.connect(token);
     } else {
-      console.log(
-        "Disconnecting notification WebSocket - user not authenticated"
-      );
       notificationWebSocketService.disconnect();
       notificationStore.clear();
     }

@@ -16,7 +16,6 @@ import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
 import { openChatModal } from "@/store/slices/chatModalSlice";
 import { conversationStore } from "@/utils/conversationStore";
-import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
 import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
 import { useRouter } from "next/navigation";
 import { NotificationIcon } from "@/components/NotificationIcon";
@@ -42,32 +41,7 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // WebSocket connection for real-time unread count updates (same as admin)
-  // Keep connection always enabled to ensure real-time updates work properly
-  useConversationWebSocket({
-    enabled: true, // Always enabled for real-time updates
-    onMessage: (message) => {
-      // Emit message updates to conversation store for other components (same as admin)
-      conversationStore.emitUpdate(
-        message as { conversation_id: number; message: Record<string, unknown> }
-      );
-    },
-    onStatusUpdate: (status) => {
-      // Handle status updates if needed
-    },
-    onTotalUnreadCount: (count) => {
-      // Update total unread count directly from WebSocket
-      setTotalUnreadCount(count);
-      conversationStore.setCurrentUnreadCount(count);
-    },
-    onConversationUnreadCount: (conversationId, count) => {
-      // Emit conversation unread count updates to conversation store (same as admin)
-      conversationStore.emitConversationUnreadCountUpdate(
-        conversationId,
-        count
-      );
-    },
-  });
+  // Note: Conversation WebSocket is now handled globally in NotificationDropdown
 
   // Subscribe to open conversation changes
   useEffect(() => {
