@@ -58,9 +58,11 @@ class LocationTrackingWebSocketService {
     callbacks: WebSocketCallbacks = {}
   ) {
     if (this.isConnecting || this.ws?.readyState === WebSocket.OPEN) {
+      console.log(`[WebSocket] Already connecting or connected for user ${userId} (${userType})`);
       return;
     }
 
+    console.log(`[WebSocket] Connecting user ${userId} (${userType}) to room ${roomId}`);
     this.isConnecting = true;
     this.currentUserId = userId;
     this.currentRoomId = roomId;
@@ -75,7 +77,6 @@ class LocationTrackingWebSocketService {
       this.ws = new WebSocket(wsUrl);
       this.setupWebSocketEventHandlers();
     } catch (error) {
-      console.error("[WebSocket] Failed to create WebSocket:", error);
       this.isConnecting = false;
       const errorMessage =
         error instanceof Error ? error.message : "Unknown connection error";
@@ -102,8 +103,6 @@ class LocationTrackingWebSocketService {
         const message: WebSocketMessage = JSON.parse(event.data);
         this.handleWebSocketMessage(message);
       } catch (error) {
-        console.error("[WebSocket] Failed to parse WebSocket message:", error);
-        console.error("[WebSocket] Raw message data:", event.data);
         this.callbacks.onError?.(
           `Failed to parse WebSocket message: ${
             error instanceof Error ? error.message : "Unknown parsing error"
@@ -146,7 +145,6 @@ class LocationTrackingWebSocketService {
       ) {
         this.scheduleReconnect();
       } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error("[WebSocket] Max reconnection attempts reached");
         this.callbacks.onError?.(
           `Connection lost: ${closeReason}. Max reconnection attempts reached.`
         );
@@ -154,7 +152,6 @@ class LocationTrackingWebSocketService {
     };
 
     this.ws.onerror = (error) => {
-      console.error("[WebSocket] onerror event fired:", error);
       this.isConnecting = false;
       // Properly handle the error event
       const errorMessage =
@@ -168,46 +165,54 @@ class LocationTrackingWebSocketService {
       case "location_update":
         const locationMessage = message as LocationUpdateWebSocketMessage;
 
-        // Validate location data
-        if (
-          locationMessage &&
-          typeof locationMessage === "object" &&
-          "latitude" in locationMessage &&
-          "longitude" in locationMessage &&
-          typeof locationMessage.latitude === "number" &&
-          typeof locationMessage.longitude === "number"
-        ) {
-          // Create WorkerLocation object from flat message
-          const location: WorkerLocation = {
-            worker_id: locationMessage.user_id || 0,
-            assignment_id: locationMessage.room_id || 0, // Use room_id as assignment_id for consistency
-            booking_id: locationMessage.room_id || 0,
-            latitude: locationMessage.latitude,
-            longitude: locationMessage.longitude,
-            accuracy: locationMessage.accuracy || 0,
-            status: locationMessage.status || "active",
-            last_updated: new Date().toISOString(),
-          };
+        // Extract location data - check multiple possible structures
+        let locationData = locationMessage.data || locationMessage;
 
-          // Emit to general location update callback
-          this.callbacks.onLocationUpdate?.(location);
-
-          // Emit to specific callbacks based on user type
-          if (this.currentUserType === "worker") {
-            // Worker sees their own location updates
-            this.callbacks.onMyLocationUpdate?.(location);
-          } else if (this.currentUserType === "normal") {
-            // Customer sees worker location updates
-            this.callbacks.onWorkerLocationUpdate?.(location);
+        // Handle different data structures from backend
+        if (locationData && typeof locationData === "object") {
+          // If data is nested, try to extract the actual location data
+          if (locationData.data && typeof locationData.data === "object") {
+            locationData = locationData.data;
           }
-        } else {
-          console.error("[WebSocket] Invalid location data structure:", {
-            locationMessage,
-            hasLatitude: "latitude" in (locationMessage || {}),
-            hasLongitude: "longitude" in (locationMessage || {}),
-            latitudeType: typeof locationMessage?.latitude,
-            longitudeType: typeof locationMessage?.longitude,
-          });
+
+          // Try to get coordinates from various possible locations
+          let latitude = locationData.latitude || locationMessage.latitude;
+          let longitude = locationData.longitude || locationMessage.longitude;
+
+          // Check if we have valid coordinates
+          const hasValidCoords =
+            latitude !== undefined &&
+            longitude !== undefined &&
+            typeof latitude === "number" &&
+            typeof longitude === "number" &&
+            !isNaN(latitude) &&
+            !isNaN(longitude);
+
+          if (hasValidCoords) {
+            // Create WorkerLocation object from message
+            const location: WorkerLocation = {
+              worker_id: locationMessage.user_id || 0,
+              assignment_id: locationMessage.room_id || 0, // Use room_id as assignment_id for consistency
+              booking_id: locationMessage.room_id || 0,
+              latitude: latitude,
+              longitude: longitude,
+              accuracy: locationData.accuracy || locationMessage.accuracy || 0,
+              status: locationData.status || locationMessage.status || "active",
+              last_updated: new Date().toISOString(),
+            };
+
+            // Emit to general location update callback
+            this.callbacks.onLocationUpdate?.(location);
+
+            // Always call both callbacks if they exist - let the UI decide what to do
+            if (this.callbacks.onMyLocationUpdate) {
+              this.callbacks.onMyLocationUpdate(location);
+            }
+
+            if (this.callbacks.onWorkerLocationUpdate) {
+              this.callbacks.onWorkerLocationUpdate(location);
+            }
+          }
         }
         break;
 
@@ -236,11 +241,6 @@ class LocationTrackingWebSocketService {
           typeof workerJoinMessage.latitude !== "number" ||
           typeof workerJoinMessage.longitude !== "number"
         ) {
-          console.error("[WebSocket] Invalid worker join location data:", {
-            latitude: workerJoinMessage.latitude,
-            longitude: workerJoinMessage.longitude,
-            message: workerJoinMessage,
-          });
           return;
         }
 
@@ -298,11 +298,6 @@ class LocationTrackingWebSocketService {
       this.ws.send(messageString);
     } else {
       const error = "WebSocket is not connected";
-      console.error("[WebSocket] Error:", error, {
-        wsState: this.ws?.readyState,
-        currentUserId: this.currentUserId,
-        currentRoomId: this.currentRoomId,
-      });
       this.callbacks.onError?.(error);
     }
   }
@@ -311,7 +306,6 @@ class LocationTrackingWebSocketService {
   startLocationTracking(assignmentId: number) {
     if (!this.currentUserId || !this.currentRoomId) {
       const error = "Not connected to WebSocket";
-      console.error("[WebSocket] Error:", error);
       this.callbacks.onError?.(error);
       return;
     }
@@ -319,7 +313,6 @@ class LocationTrackingWebSocketService {
     // Check if WebSocket is actually connected
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       const error = `WebSocket not connected. State: ${this.ws?.readyState}`;
-      console.error("[WebSocket] Error:", error);
       this.callbacks.onError?.(error);
       return;
     }
@@ -381,7 +374,6 @@ class LocationTrackingWebSocketService {
         }
       },
       (error) => {
-        console.error("[WebSocket] Failed to watch position:", error);
         // Fallback to periodic updates if watchPosition fails
         this.fallbackToPeriodicUpdates(assignmentId);
       },
@@ -410,8 +402,6 @@ class LocationTrackingWebSocketService {
         position = await this.getCurrentPosition();
         break;
       } catch (error) {
-        console.error(`[WebSocket] Attempt ${attempts} failed:`, error);
-
         if (attempts < maxAttempts) {
           // Wait before retrying (exponential backoff)
           const delay = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
@@ -432,12 +422,7 @@ class LocationTrackingWebSocketService {
         // Force the first update by clearing last emitted location
         this.lastEmittedLocation = null;
         this.updateLocation(assignmentId, cachedPosition);
-      } catch (cachedError) {
-        console.error(
-          "[WebSocket] Failed to get cached position too:",
-          cachedError
-        );
-      }
+      } catch (cachedError) {}
     }
   }
 
@@ -455,12 +440,7 @@ class LocationTrackingWebSocketService {
             // Restore original location
             this.lastEmittedLocation = originalLastLocation;
           })
-          .catch((error) => {
-            console.error(
-              "[WebSocket] Failed to get position for fallback update:",
-              error
-            );
-          });
+          .catch((error) => {});
       } else {
         clearInterval(fallbackInterval);
       }
@@ -469,20 +449,12 @@ class LocationTrackingWebSocketService {
 
   // Fallback to periodic updates if watchPosition fails
   private fallbackToPeriodicUpdates(assignmentId: number) {
-    console.warn(
-      "Falling back to periodic location updates due to watchPosition failure"
-    );
     const intervalId = setInterval(async () => {
       if (this.isTracking && this.currentAssignmentId === assignmentId) {
         try {
           const position = await this.getCurrentPosition();
           this.updateLocation(assignmentId, position);
-        } catch (error) {
-          console.error(
-            "Failed to get current position in fallback mode:",
-            error
-          );
-        }
+        } catch (error) {}
       } else {
         clearInterval(intervalId);
       }
@@ -572,7 +544,6 @@ class LocationTrackingWebSocketService {
   updateLocation(assignmentId: number, position: GeolocationPosition) {
     if (!this.currentUserId || !this.currentRoomId) {
       const error = "Not connected to WebSocket";
-      console.error("[WebSocket] Error:", error);
       this.callbacks.onError?.(error);
       return;
     }
@@ -580,7 +551,6 @@ class LocationTrackingWebSocketService {
     // Check if WebSocket is actually connected
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       const error = `WebSocket not connected. State: ${this.ws?.readyState}`;
-      console.error("[WebSocket] Error:", error);
       this.callbacks.onError?.(error);
       return;
     }
@@ -633,18 +603,12 @@ class LocationTrackingWebSocketService {
         this.lastEmittedLocation = null;
         this.updateLocation(assignmentId, position);
       })
-      .catch((error) => {
-        console.error(
-          "[WebSocket] Failed to get position for forced update:",
-          error
-        );
-      });
+      .catch((error) => {});
   }
 
   // Send test location update for debugging
   sendTestLocationUpdate() {
     if (!this.currentUserId || !this.currentRoomId) {
-      console.error("[WebSocket] Not connected to WebSocket");
       return;
     }
 
@@ -666,6 +630,7 @@ class LocationTrackingWebSocketService {
   // Disconnect from WebSocket
   disconnect() {
     if (this.currentUserId && this.currentRoomId) {
+      console.log(`[WebSocket] Disconnecting user ${this.currentUserId} (${this.currentUserType}) from room ${this.currentRoomId}`);
     }
 
     if (this.locationWatchId) {
