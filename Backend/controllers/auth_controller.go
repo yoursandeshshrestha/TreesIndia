@@ -134,8 +134,9 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	// TODO: Integrate with SMS service (Twilio) later
 	// For now, just return success as OTP is hardcoded to "000000"
 	
-	// Send notification about OTP request
-	go services.NotifyOTPRequested(&user, req.Phone)
+	// User OTP notification removed as per user request
+	// Send admin notification for OTP request monitoring
+	go services.NotifyOTPRequestedToAdmin(&user, req.Phone)
 	
 	// If new user, also notify admin about new user registration
 	if isNewUser {
@@ -376,9 +377,10 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Send notifications about successful OTP verification and login
-	go services.NotifyOTPVerified(&user, req.Phone)
-	go services.NotifyLoginSuccess(&user, "OTP")
+	// User OTP verification and login notifications removed as per user request
+	// Send admin notifications for monitoring
+	go services.NotifyOTPVerifiedToAdmin(&user, req.Phone)
+	go services.NotifyLoginSuccessToAdmin(&user, "OTP")
 	
 	// If new user, also notify admin about new user registration
 	if isNewUser {

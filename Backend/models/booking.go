@@ -201,7 +201,7 @@ type CreateInquiryBookingRequest struct {
 
 // OptimizedBookingResponse represents the optimized booking response for listings
 type OptimizedBookingResponse struct {
-	ID                    uint                    `json:"id"`
+	ID                    uint                    `json:"ID"`
 	BookingReference      string                  `json:"booking_reference"`
 	Status                BookingStatus           `json:"status"`
 	BookingType           BookingType             `json:"booking_type"`
@@ -226,7 +226,7 @@ type OptimizedBookingResponse struct {
 
 // OptimizedServiceInfo represents minimal service information
 type OptimizedServiceInfo struct {
-	ID          uint    `json:"id"`
+	ID          uint    `json:"ID"`
 	Name        string  `json:"name"`
 	PriceType   string  `json:"price_type"`
 	Price       *float64 `json:"price"`
@@ -235,16 +235,15 @@ type OptimizedServiceInfo struct {
 
 // OptimizedUserInfo represents minimal user information
 type OptimizedUserInfo struct {
-	ID     uint   `json:"id"`
-	Name   string `json:"name"`
-	Phone  string `json:"phone"`
+	ID       uint   `json:"ID"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
 	UserType string `json:"user_type"`
 }
 
 // OptimizedContactInfo represents contact information
 type OptimizedContactInfo struct {
 	Person              string `json:"person"`
-	Phone               string `json:"phone"`
 	Description         string `json:"description"`
 	SpecialInstructions string `json:"special_instructions"`
 }
@@ -499,6 +498,13 @@ type WalletPaymentRequest struct {
 	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
 	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
 	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
+}
+
+// Quote represents a quote for notification purposes
+type Quote struct {
+	ID         uint      `json:"id"`
+	Amount     float64   `json:"amount"`
+	ValidUntil time.Time `json:"valid_until"`
 }
 
 // QuoteInfo represents quote information in booking responses
