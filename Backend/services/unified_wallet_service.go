@@ -107,6 +107,9 @@ func (s *UnifiedWalletService) CompleteWalletRecharge(paymentID uint, razorpayPa
 		return fmt.Errorf("failed to update payment: %w", err)
 	}
 
+	// Send notifications for successful wallet recharge
+	go NotifyWalletRechargeSuccess(&user, payment.Amount, newBalance)
+	go NotifyWalletRechargeToAdmin(&user, payment.Amount, newBalance)
 
 	return nil
 }

@@ -14,6 +14,7 @@ type WorkerAssignmentService struct {
 	bookingRepo          *repositories.BookingRepository
 	userRepo             *repositories.UserRepository
 	workerRepo           *repositories.WorkerRepository
+	serviceRepo          *repositories.ServiceRepository
 	notificationService  *NotificationService
 	chatService          *ChatService
 	locationTrackingService *LocationTrackingService
@@ -26,6 +27,7 @@ func NewWorkerAssignmentService(chatService *ChatService, locationTrackingServic
 		bookingRepo:          repositories.NewBookingRepository(),
 		userRepo:             repositories.NewUserRepository(),
 		workerRepo:           repositories.NewWorkerRepository(),
+		serviceRepo:          repositories.NewServiceRepository(),
 		notificationService:  NewNotificationService(),
 		chatService:          chatService,
 		locationTrackingService: locationTrackingService,
@@ -34,7 +36,7 @@ func NewWorkerAssignmentService(chatService *ChatService, locationTrackingServic
 }
 
 // GetWorkerAssignments gets all assignments for a worker with filters
-func (was *WorkerAssignmentService) GetWorkerAssignments(workerID uint, filters *models.WorkerAssignmentFilters) ([]models.WorkerAssignment, *models.Pagination, error) {
+func (was *WorkerAssignmentService) GetWorkerAssignments(workerID uint, filters *models.WorkerAssignmentFilters) ([]models.WorkerAssignmentResponse, *models.Pagination, error) {
 	// Convert models.WorkerAssignmentFilters to repositories.WorkerAssignmentFilters
 	repoFilters := &repositories.WorkerAssignmentFilters{
 		Status: filters.Status,
@@ -49,7 +51,13 @@ func (was *WorkerAssignmentService) GetWorkerAssignments(workerID uint, filters 
 		return nil, nil, errors.New("failed to get worker assignments")
 	}
 
-	return assignments, &models.Pagination{
+	// Convert to privacy-protected response
+	privacyProtectedAssignments := make([]models.WorkerAssignmentResponse, len(assignments))
+	for i, assignment := range assignments {
+		privacyProtectedAssignments[i] = was.convertToPrivacyProtectedResponse(assignment)
+	}
+
+	return privacyProtectedAssignments, &models.Pagination{
 		Page:       pagination.Page,
 		Limit:      pagination.Limit,
 		Total:      pagination.Total,
@@ -70,6 +78,77 @@ func (was *WorkerAssignmentService) GetWorkerAssignment(assignmentID uint, worke
 	}
 
 	return assignment, nil
+}
+
+// convertToPrivacyProtectedResponse converts a WorkerAssignment to WorkerAssignmentResponse (privacy protected)
+func (was *WorkerAssignmentService) convertToPrivacyProtectedResponse(assignment models.WorkerAssignment) models.WorkerAssignmentResponse {
+	return models.WorkerAssignmentResponse{
+		Model:           assignment.Model,
+		BookingID:       assignment.BookingID,
+		WorkerID:        assignment.WorkerID,
+		AssignedBy:      assignment.AssignedBy,
+		Status:          assignment.Status,
+		AssignedAt:      assignment.AssignedAt,
+		AcceptedAt:      assignment.AcceptedAt,
+		RejectedAt:      assignment.RejectedAt,
+		StartedAt:       assignment.StartedAt,
+		CompletedAt:     assignment.CompletedAt,
+		AssignmentNotes: assignment.AssignmentNotes,
+		AcceptanceNotes: assignment.AcceptanceNotes,
+		RejectionNotes:  assignment.RejectionNotes,
+		RejectionReason: assignment.RejectionReason,
+		Booking: models.WorkerAssignmentBookingResponse{
+			Model:                 assignment.Booking.Model,
+			BookingReference:      assignment.Booking.BookingReference,
+			UserID:                assignment.Booking.UserID,
+			ServiceID:             assignment.Booking.ServiceID,
+			Status:                string(assignment.Booking.Status),
+			PaymentStatus:         string(assignment.Booking.PaymentStatus),
+			BookingType:           string(assignment.Booking.BookingType),
+			CompletionType:        (*string)(assignment.Booking.CompletionType),
+			ScheduledDate:         assignment.Booking.ScheduledDate,
+			ScheduledTime:         assignment.Booking.ScheduledTime,
+			ScheduledEndTime:      assignment.Booking.ScheduledEndTime,
+			ActualStartTime:       assignment.Booking.ActualStartTime,
+			ActualEndTime:         assignment.Booking.ActualEndTime,
+			ActualDurationMinutes: assignment.Booking.ActualDurationMinutes,
+			Address:               assignment.Booking.Address,
+			Description:           assignment.Booking.Description,
+			ContactPerson:         assignment.Booking.ContactPerson,
+			ContactPhone:          assignment.Booking.ContactPhone,
+			SpecialInstructions:   assignment.Booking.SpecialInstructions,
+			HoldExpiresAt:         assignment.Booking.HoldExpiresAt,
+			QuoteAmount:           assignment.Booking.QuoteAmount,
+			QuoteNotes:            assignment.Booking.QuoteNotes,
+			QuoteProvidedBy:       assignment.Booking.QuoteProvidedBy,
+			QuoteProvidedAt:       assignment.Booking.QuoteProvidedAt,
+			QuoteAcceptedAt:       assignment.Booking.QuoteAcceptedAt,
+			QuoteExpiresAt:        assignment.Booking.QuoteExpiresAt,
+			User: models.WorkerAssignmentUserResponse{
+				ID:                      assignment.Booking.User.ID,
+				Name:                    assignment.Booking.User.Name,
+				Email:                   assignment.Booking.User.Email,
+				// Phone is intentionally excluded for privacy
+				UserType:                string(assignment.Booking.User.UserType),
+				Avatar:                  assignment.Booking.User.Avatar,
+				Gender:                  assignment.Booking.User.Gender,
+				IsActive:                assignment.Booking.User.IsActive,
+				LastLoginAt:             assignment.Booking.User.LastLoginAt,
+				RoleApplicationStatus:   assignment.Booking.User.RoleApplicationStatus,
+				ApplicationDate:         assignment.Booking.User.ApplicationDate,
+				ApprovalDate:            assignment.Booking.User.ApprovalDate,
+				WalletBalance:           assignment.Booking.User.WalletBalance,
+				SubscriptionID:          assignment.Booking.User.SubscriptionID,
+				Subscription:            nil, // Convert UserSubscription to string if needed
+				HasActiveSubscription:   assignment.Booking.User.HasActiveSubscription,
+				SubscriptionExpiryDate:  assignment.Booking.User.SubscriptionExpiryDate,
+				NotificationSettings:    nil, // Field doesn't exist in User model
+			},
+			Service: assignment.Booking.Service,
+		},
+		Worker:         assignment.Worker,
+		AssignedByUser: assignment.AssignedByUser,
+	}
 }
 
 // AcceptAssignment accepts an assignment
@@ -129,6 +208,20 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 	// Send in-app notification to user about worker assignment
 	go was.sendWorkerAssignmentNotification(assignment, "accepted")
 
+	// Send assignment accepted notification
+	go func() {
+		// Get worker and service details for notification
+		var worker models.User
+		err := was.userRepo.FindByID(&worker, assignment.WorkerID)
+		if err == nil {
+			var service models.Service
+			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				NotifyAssignmentAccepted(assignment, booking, &worker, &service)
+			}
+		}
+	}()
+
 	return assignment, nil
 }
 
@@ -182,6 +275,20 @@ func (was *WorkerAssignmentService) RejectAssignment(assignmentID uint, workerID
 
 	// Send notification
 	go was.notificationService.SendWorkerAssignmentRejectedNotification(assignment)
+
+	// Send assignment rejected notification
+	go func() {
+		// Get worker and service details for notification
+		var worker models.User
+		err := was.userRepo.FindByID(&worker, assignment.WorkerID)
+		if err == nil {
+			var service models.Service
+			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				NotifyAssignmentRejected(assignment, booking, &worker, &service)
+			}
+		}
+	}()
 
 	return assignment, nil
 }
@@ -240,7 +347,18 @@ func (was *WorkerAssignmentService) StartAssignment(assignmentID uint, workerID 
 	}
 
 	// Send in-app notification to user about work started
-	go was.sendWorkerStartedNotification(assignment)
+	go func() {
+		// Get worker and service details for notification
+		var worker models.User
+		err := was.userRepo.FindByID(&worker, assignment.WorkerID)
+		if err == nil {
+			var service models.Service
+			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				NotifyWorkerStarted(booking, &worker, &service)
+			}
+		}
+	}()
 
 	return assignment, nil
 }
@@ -351,7 +469,18 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 	}
 
 	// Send in-app notification to user about work completed
-	go was.sendWorkerCompletedNotification(assignment)
+	go func() {
+		// Get worker and service details for notification
+		var worker models.User
+		err := was.userRepo.FindByID(&worker, assignment.WorkerID)
+		if err == nil {
+			var service models.Service
+			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				NotifyWorkerCompleted(booking, &worker, &service)
+			}
+		}
+	}()
 
 	return assignment, nil
 }

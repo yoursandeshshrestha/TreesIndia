@@ -133,6 +133,10 @@ func (uss *UserSubscriptionService) CreateSubscriptionPaymentOrder(userID uint, 
 		RelatedEntityID:   planID,
 		Description:      fmt.Sprintf("Subscription purchase: %s", plan.Name),
 		Notes:            fmt.Sprintf("Subscription plan: %s (Duration: %d days)", plan.Name, selectedPricing.DurationDays),
+		Metadata: &models.JSONMap{
+			"duration_type": durationType,
+			"duration_days": selectedPricing.DurationDays,
+		},
 	}
 	
 	// Create Razorpay order
@@ -178,10 +182,32 @@ func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, pa
 	
 	// Find the pricing option for the payment's related entity
 	var selectedPricing *models.PricingOption
-	for _, pricing := range plan.Pricing {
-		// For now, use the first pricing option or you can store duration type in payment
-		selectedPricing = &pricing
-		break
+	
+	// Get duration type from payment metadata
+	var durationType string
+	if payment.Metadata != nil {
+		if dt, exists := (*payment.Metadata)["duration_type"]; exists {
+			if dtStr, ok := dt.(string); ok {
+				durationType = dtStr
+			}
+		}
+	}
+	
+	// If duration type is found in metadata, use it; otherwise fall back to first option
+	if durationType != "" {
+		for _, pricing := range plan.Pricing {
+			if pricing.DurationType == durationType {
+				selectedPricing = &pricing
+				break
+			}
+		}
+	}
+	
+	// Fallback to first pricing option if duration type not found or doesn't match
+	if selectedPricing == nil {
+		if len(plan.Pricing) > 0 {
+			selectedPricing = &plan.Pricing[0]
+		}
 	}
 	
 	if selectedPricing == nil {
