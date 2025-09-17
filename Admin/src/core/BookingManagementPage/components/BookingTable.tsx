@@ -71,7 +71,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
   };
 
   const handleViewDetails = (booking: OptimizedBookingResponse) => {
-    router.push(`/dashboard/bookings/${booking.id}`);
+    router.push(`/dashboard/bookings/${booking.ID}`);
   };
 
   const handleAssignWorker = async () => {
@@ -333,7 +333,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
 
         return (
           <div>
-            {selectedBookingId === booking.id ? (
+            {selectedBookingId === booking.ID ? (
               <div className="space-y-2">
                 <div>
                   {workersLoading ? (
@@ -455,7 +455,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 className="text-sm text-gray-500 cursor-pointer hover:bg-gray-100 p-1 rounded"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedBookingId(booking.id);
+                  setSelectedBookingId(booking.ID);
                 }}
               >
                 Click to assign worker
@@ -548,7 +548,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
       <Table<OptimizedBookingResponse>
         data={bookings}
         columns={columns}
-        keyField="id"
+        keyField="ID"
         actions={actions}
         onRowClick={handleViewDetails}
         emptyState={

@@ -66,7 +66,7 @@ export default function QuoteModal({
           : undefined,
       }));
 
-      await apiClient.post(`/admin/bookings/${booking.id}/provide-quote`, {
+      await apiClient.post(`/admin/bookings/${booking.ID}/provide-quote`, {
         notes: formData.notes,
         segments: formattedSegments,
       });

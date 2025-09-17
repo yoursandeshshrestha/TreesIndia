@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
-import Button from "@/components/Button";
+import { Button } from "@/components/Button";
 
 interface StatusUpdateModalProps {
   isOpen: boolean;
