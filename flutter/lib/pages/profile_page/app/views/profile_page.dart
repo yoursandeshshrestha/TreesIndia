@@ -206,53 +206,53 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: AppSpacing.sm),
 
                       // Quick Action Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildQuickActionCard(
-                              icon: Icons.calendar_today_outlined,
-                              label: 'My bookings',
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('My bookings coming soon!')),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          // Expanded(
-                          //   child: _buildQuickActionCard(
-                          //     icon: Icons.devices,
-                          //     label: 'Native devices',
-                          //     onTap: () {
-                          //       ScaffoldMessenger.of(context).showSnackBar(
-                          //         const SnackBar(
-                          //             content: Text('Native devices coming soon!')),
-                          //       );
-                          //     },
-                          //   ),
-                          // ),
-                          // const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: _buildQuickActionCard(
-                              icon: Icons.support_agent_outlined,
-                              label: 'Help & support',
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Help & support coming soon!')),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.calendar_today_outlined,
+                      //     //     label: 'My bookings',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content:
+                      //     //                 Text('My bookings coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //     // const SizedBox(width: AppSpacing.md),
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.devices,
+                      //     //     label: 'Native devices',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content: Text('Native devices coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //     // const SizedBox(width: AppSpacing.md),
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.support_agent_outlined,
+                      //     //     label: 'Help & support',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content:
+                      //     //                 Text('Help & support coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),

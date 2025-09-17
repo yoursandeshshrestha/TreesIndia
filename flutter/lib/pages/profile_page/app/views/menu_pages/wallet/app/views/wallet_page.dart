@@ -6,6 +6,7 @@ import '../../../../../../../../commons/components/text/app/views/custom_text_li
 import '../../../../../../../../commons/components/app_bar/app/views/custom_app_bar.dart';
 import '../providers/wallet_providers.dart';
 import '../viewmodels/wallet_state.dart';
+import '../../domain/entities/wallet_transaction_entity.dart';
 import 'widgets/wallet_balance_card.dart';
 import 'widgets/transactions_list_widget.dart';
 import 'widgets/recharge_bottom_sheet.dart';
@@ -77,6 +78,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isLoading: state.isLoadingMoreTransactions,
             hasMoreTransactions: state.hasMoreTransactions,
             onLoadMore: _loadMoreTransactions,
+            onCompletePayment: _completePayment,
           ),
         ),
       ],
@@ -128,6 +130,10 @@ class _WalletPageState extends ConsumerState<WalletPage> {
 
   void _loadMoreTransactions() {
     ref.read(walletNotifierProvider.notifier).loadMoreTransactions();
+  }
+
+  void _completePayment(WalletTransactionEntity transaction) {
+    ref.read(walletNotifierProvider.notifier).completeExistingPayment(transaction);
   }
 
   void _showRechargeBottomSheet() {
