@@ -13,7 +13,6 @@ import { conversationApi, Conversation } from "./services/conversationApi";
 
 // Utils
 import { conversationStore } from "@/utils/conversationStore";
-import { playSound } from "@/utils/soundUtils";
 
 // Hooks
 
@@ -111,15 +110,7 @@ function ChatManagementPage() {
         updatedConversations.splice(conversationIndex, 1);
         updatedConversations.unshift(updatedConversation);
 
-        // Play notification sound for new messages (only if conversation is not currently open)
-        if (!conversationStore.isConversationOpen(conversationId)) {
-          // Use different sounds based on message sender
-          if (message.sender?.user_type === "admin") {
-            playSound("message_delivered");
-          } else {
-            playSound("notification");
-          }
-        }
+        // Note: Audio sounds for messages are handled in ChatMainArea component
 
         // Emit conversation list update to notify other components (like sidebar)
         conversationStore.emitConversationListUpdate(updatedConversations);
@@ -252,9 +243,6 @@ function ChatManagementPage() {
 
         // Set this conversation as open in the store
         conversationStore.setOpenConversation(newConversation.id);
-
-        // Play new chat sound
-        playSound("new_chat");
 
         toast.success(`Started conversation with ${user.name}`);
       }

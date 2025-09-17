@@ -512,7 +512,7 @@ export const getAssignmentStatusColor = (status: AssignmentStatus): string => {
 
 // Optimized Response Types
 export interface OptimizedBookingResponse {
-  id: number;
+  ID: number;
   booking_reference: string;
   status: BookingStatus;
   payment_status: PaymentStatus;
