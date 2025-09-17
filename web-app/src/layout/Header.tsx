@@ -8,6 +8,7 @@ import { openLocationModal } from "@/store/slices/locationModalSlice";
 import { openSearchModal } from "@/store/slices/searchModalSlice";
 import Link from "next/link";
 import { UserMenu } from "./UserMenu";
+import { useConversationWebSocketService } from "@/hooks/useConversationWebSocketService";
 
 interface HeaderProps {
   className?: string;
@@ -16,6 +17,9 @@ interface HeaderProps {
 export default function Header({ className = "" }: HeaderProps) {
   const dispatch = useAppDispatch();
   const { location } = useLocation();
+
+  // Global conversation WebSocket connection (for Messages button in header)
+  useConversationWebSocketService();
 
   const handleLocationClick = (e: React.MouseEvent) => {
     e.preventDefault();
