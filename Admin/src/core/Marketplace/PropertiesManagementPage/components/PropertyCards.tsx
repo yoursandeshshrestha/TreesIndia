@@ -212,9 +212,7 @@ export default function PropertyCards({
                     }
                   };
                 }}
-                onLoad={() => {
-                  console.log("Image loaded successfully:", property.images[0]);
-                }}
+                onLoad={() => {}}
               />
             ) : (
               <div className="w-full h-full bg-gray-100 flex items-center justify-center">

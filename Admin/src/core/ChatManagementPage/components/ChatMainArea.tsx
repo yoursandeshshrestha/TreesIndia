@@ -110,7 +110,12 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
         }
 
         // Play receive sound for messages from other users (not admin)
-        if (message.sender?.user_type !== "admin") {
+        if (
+          message.sender &&
+          typeof message.sender === "object" &&
+          "user_type" in message.sender &&
+          (message.sender as any).user_type !== "admin"
+        ) {
           playSound("receive");
         }
         // Note: We don't play sound for admin's own messages here since
@@ -230,34 +235,55 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {(() => {
-              const otherParticipant =
-                selectedConversation.user || selectedConversation.worker;
+              const user1 = selectedConversation.user_1_data;
+              const user2 = selectedConversation.user_2_data;
 
-              if (!otherParticipant) return null;
+              if (!user1 || !user2) return null;
 
               return (
                 <>
-                  {otherParticipant.avatar ? (
-                    <img
-                      src={otherParticipant.avatar}
-                      alt={otherParticipant.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {(otherParticipant.name || otherParticipant.phone || "U")
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
-                  )}
+                  {/* Show both participants */}
+                  <div className="flex -space-x-2">
+                    {user1.avatar ? (
+                      <img
+                        src={user1.avatar}
+                        alt={user1.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold border-2 border-white text-xs">
+                        {(user1.name || user1.phone || "U")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                    )}
+                    {user2.avatar ? (
+                      <img
+                        src={user2.avatar}
+                        alt={user2.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold border-2 border-white text-xs">
+                        {(user2.name || user2.phone || "U")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {otherParticipant.name ||
-                        otherParticipant.phone ||
-                        "Unknown User"}
+                      {user1.name || user1.phone || "User 1"} &{" "}
+                      {user2.name || user2.phone || "User 2"}
                     </h3>
                     <p className="text-sm text-gray-500 capitalize">
-                      {otherParticipant.user_type}
+                      {/* Only show non-admin user types to reduce redundancy */}
+                      {user1.user_type !== "admin" &&
+                      user2.user_type !== "admin"
+                        ? `${user1.user_type} & ${user2.user_type}`
+                        : user1.user_type === "admin"
+                        ? user2.user_type
+                        : user1.user_type}
                     </p>
                   </div>
                 </>
@@ -270,10 +296,11 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
               className="p-2 hover:bg-gray-100 rounded-full"
               onClick={() => {
                 if (selectedConversation) {
-                  const otherParticipant =
-                    selectedConversation.user || selectedConversation.worker;
-                  if (otherParticipant?.phone) {
-                    window.open(`tel:${otherParticipant.phone}`, "_self");
+                  // For admin, we could show a dropdown to choose which participant to call
+                  // For now, let's call the first participant
+                  const user1 = selectedConversation.user_1_data;
+                  if (user1?.phone) {
+                    window.open(`tel:${user1.phone}`, "_self");
                   }
                 }
               }}
@@ -329,15 +356,53 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
                   }`}
                 >
                   <div className="max-w-xs lg:max-w-md">
+                    {/* Sender info */}
+                    <div
+                      className={`flex items-center space-x-2 mb-1 ${
+                        message.sender.user_type === "admin"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      {message.sender.user_type !== "admin" && (
+                        <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {(message.sender.name || message.sender.phone || "U")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                      <span
+                        className={`text-xs font-medium ${
+                          message.sender.user_type === "admin"
+                            ? "text-blue-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {message.sender.name ||
+                          message.sender.phone ||
+                          "Unknown User"}
+                      </span>
+                      {message.sender.user_type === "admin" && (
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {(message.sender.name || message.sender.phone || "A")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Message bubble */}
                     <div
                       className={`rounded-lg px-4 py-2 ${
                         message.sender.user_type === "admin"
                           ? "bg-blue-500 text-white"
-                          : "bg-white shadow-sm"
+                          : "bg-white shadow-sm border border-gray-200"
                       }`}
                     >
                       <p className="text-sm">{message.message}</p>
                     </div>
+
+                    {/* Timestamp */}
                     <p
                       className={`text-xs text-gray-500 mt-1 ${
                         message.sender.user_type === "admin"
