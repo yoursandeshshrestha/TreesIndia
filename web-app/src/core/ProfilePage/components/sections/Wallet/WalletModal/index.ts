@@ -1,1 +1,1 @@
-export { default as RechargeWalletModal } from "./RechargeWalletModal";
+// RechargeWalletModal has been moved to WalletSection component
