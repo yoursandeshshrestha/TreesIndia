@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProjects, useProjectStats } from "@/hooks/useProjects";
 import { useProfile } from "@/hooks/useProfile";
 import { ProjectFilters } from "@/types/project";
@@ -18,9 +18,15 @@ export default function ProjectsPage() {
   );
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // First, fetch user profile to check subscription status
   const { userProfile, isLoadingProfile } = useProfile();
+
+  // Fix hydration issues by ensuring client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Check if user has active subscription
   const hasActiveSubscription = userProfile?.subscription?.status === "active";
@@ -39,8 +45,8 @@ export default function ProjectsPage() {
   const projects = response?.data || [];
   const pagination = response?.pagination;
 
-  // Show loading state while checking profile
-  if (isLoadingProfile) {
+  // Show loading state while checking profile or during hydration
+  if (!isClient || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

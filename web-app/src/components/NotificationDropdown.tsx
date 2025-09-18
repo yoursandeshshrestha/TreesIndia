@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, CheckCheck, MoreHorizontal, X } from "lucide-react";
+import { AlertCircle, Bell, CheckCheck, MoreHorizontal, X } from "lucide-react";
 import { InAppNotification, NOTIFICATION_TYPES } from "@/types/notification";
 import {
   useNotifications,
   useUnreadCount,
   useMarkAllAsRead,
 } from "@/hooks/useNotifications";
-import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
+import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
 
 interface NotificationDropdownProps {
   isOpen: boolean;
@@ -59,22 +59,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const { mutate: markAllAsRead, isPending: isMarkingAllAsRead } =
     useMarkAllAsRead();
 
-  // WebSocket connection
-  const { isConnected } = useNotificationWebSocket({
-    onNewNotification: (notification) => {
-      // New notification will be handled by the store automatically
-    },
-    onUnreadCountUpdate: (count) => {
-      setUnreadCount(count);
-    },
-    onAllNotificationsRead: () => {
-      setUnreadCount(0);
-      // Update local notifications to mark all as read
-      setNotifications((prev) =>
-        prev.map((notification) => ({ ...notification, is_read: true }))
-      );
-    },
-  });
+  // Get global WebSocket state
+  const { isNotificationConnected } = useGlobalWebSocket();
 
   // Load notifications
   useEffect(() => {
@@ -195,7 +181,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       </div>
 
       {/* Connection Status */}
-      {!isConnected && (
+      {!isNotificationConnected && (
         <div className="px-4 py-2 bg-yellow-50 border-b border-yellow-200">
           <div className="flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 text-yellow-600" />

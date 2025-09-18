@@ -2,6 +2,10 @@
 
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useProperties } from "@/hooks/useProperties";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
@@ -11,6 +15,8 @@ import { PropertyFilters } from "@/types/property";
 export default function PropertySection() {
   const router = useRouter();
   const { location, isLoading: locationLoading } = useLocation();
+  const { isAuthenticated, user } = useAuth();
+  const dispatch = useAppDispatch();
 
   // Create filters for properties for sale
   const saleFilters: PropertyFilters = {
@@ -45,6 +51,20 @@ export default function PropertySection() {
 
   const handleViewAllProperties = () => {
     router.push("/marketplace/rental-properties");
+  };
+
+  const handleChatClick = (property: any) => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: property.user_id,
+      })
+    );
   };
 
   const getSectionTitle = () => {
@@ -164,6 +184,8 @@ export default function PropertySection() {
             key={`sale-property-${property.ID}-${index}`}
             property={property}
             onClick={() => handlePropertyClick(property.ID)}
+            onChatClick={handleChatClick}
+            currentUserId={user?.id}
           />
         ))}
       </div>
