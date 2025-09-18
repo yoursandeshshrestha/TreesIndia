@@ -96,7 +96,7 @@ func (ps *PropertyService) CreateProperty(property *models.Property, userID uint
 	logrus.Infof("PropertyService.CreateProperty successfully created property ID: %d", property.ID)
 	
 	// Send notification to admins about new property
-	go NotifyPropertyCreated(property, &user)
+	go NotifyPropertyCreated(&user, property)
 	
 	return nil
 }
