@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/providers/Providers";
 import Header from "@/layout/Header";
 import Footer from "@/layout/Footer";
+import { GlobalWebSocketProvider } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
 import LocationModal from "@/commonComponents/LocationModel/LocationModal";
 import { AuthModal } from "@/core/AuthRelated";
 import SubcategoriesModal from "@/core/HomePage/components/SubcategoryOptionModel/SubcategoryOptionModel";
@@ -39,32 +40,34 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <Providers>
-          {/* Global Modals */}
-          <LocationModal />
-          <AuthModal />
-          <SubcategoriesModal />
-          <AddressModal />
-          <SlotModal />
-          <ServiceSearchModal />
-          <MarketplaceModal />
-          <ChatModal />
-          <ServiceDetailModal />
+          <GlobalWebSocketProvider>
+            {/* Global Modals */}
+            <LocationModal />
+            <AuthModal />
+            <SubcategoriesModal />
+            <AddressModal />
+            <SlotModal />
+            <ServiceSearchModal />
+            <MarketplaceModal />
+            <ChatModal />
+            <ServiceDetailModal />
 
-          {/* Chatbot Widget */}
-          {/* <SimpleChatbot /> */}
+            {/* Chatbot Widget */}
+            {/* <SimpleChatbot /> */}
 
-          <div className="flex flex-col min-h-screen">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
-              <Header />
+            <div className="flex flex-col min-h-screen">
+              {/* Sticky Header */}
+              <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+                <Header />
+              </div>
+
+              {/* Main Content */}
+              <main className="flex-1 bg-white">{children}</main>
+
+              {/* Global Footer */}
+              <Footer />
             </div>
-
-            {/* Main Content */}
-            <main className="flex-1 bg-white">{children}</main>
-
-            {/* Global Footer */}
-            <Footer />
-          </div>
+          </GlobalWebSocketProvider>
         </Providers>
 
         {/* Toast Notifications */}

@@ -3,6 +3,10 @@
 import { useParams } from "next/navigation";
 import { useProjectById, useProjectStats } from "@/hooks/useProjects";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 import {
@@ -14,17 +18,27 @@ import {
   ArrowLeft,
   User,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = parseInt(params.id as string);
+  const { isAuthenticated, user } = useAuth();
+  const dispatch = useAppDispatch();
+  const [isClient, setIsClient] = useState(false);
 
   // First, fetch user profile to check subscription status
   const { userProfile, isLoadingProfile } = useProfile();
+
+  // Fix hydration issues by ensuring client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Check if user has active subscription
   const hasActiveSubscription = userProfile?.subscription?.status === "active";
@@ -42,8 +56,8 @@ export default function ProjectDetailPage() {
 
   const project = response?.data;
 
-  // Show loading state while checking profile
-  if (isLoadingProfile) {
+  // Show loading state while checking profile or during hydration
+  if (!isClient || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -71,7 +85,6 @@ export default function ProjectDetailPage() {
       />
     );
   }
-
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -109,6 +122,23 @@ export default function ProjectDetailPage() {
     if (days < 365) return `${Math.round(days / 30)} months`;
     return `${Math.round(days / 365)} years`;
   };
+
+  const handleChatClick = () => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: project.user_id,
+      })
+    );
+  };
+
+  // Check if current user is the same as the project owner
+  const isCurrentUserOwner = user && user.id === project.user_id;
 
   if (isLoading) {
     return (
@@ -383,9 +413,15 @@ export default function ProjectDetailPage() {
                       </button>
                     )}
 
-                    <button className="w-full border border-green-600 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors">
-                      Send Message
-                    </button>
+                    {!isCurrentUserOwner && (
+                      <button
+                        className="w-full border border-green-600 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors flex items-center justify-center"
+                        onClick={handleChatClick}
+                      >
+                        <MessageCircle className="w-3 h-3 mr-2" />
+                        Send Message
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
