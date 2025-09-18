@@ -28,15 +28,11 @@ export function QuoteAcceptanceContent() {
     getAddressDetails,
   } = useQuoteAcceptanceRedux();
 
-  // Get payment progress from bookings data
-  const { bookingsWithProgress } = useBookings();
-  const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.ID
-  );
-  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+  // Get payment segments directly from booking object (new structure)
+  const paymentSegments = booking?.payment_segments || [];
+  const paymentProgress = booking?.payment_progress;
 
-  const hasMultipleSegments =
-    paymentProgress && paymentProgress.segments.length > 1;
+  const hasMultipleSegments = paymentSegments.length > 1;
 
   // Auto-set currentStep to "payment" for multiple segments (skip date/time selection)
   useEffect(() => {

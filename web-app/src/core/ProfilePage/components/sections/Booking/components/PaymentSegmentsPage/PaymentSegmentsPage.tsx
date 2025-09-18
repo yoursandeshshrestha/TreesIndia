@@ -8,6 +8,7 @@ import {
   PaymentSegmentManager,
 } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import { useBookings } from "@/hooks/useBookings";
+import { useWallet } from "@/hooks/useWallet";
 
 interface PaymentSegmentsPageProps {
   booking: Booking;
@@ -20,12 +21,11 @@ export default function PaymentSegmentsPage({
   onBack,
   onPaymentSuccess,
 }: PaymentSegmentsPageProps) {
-  // Get payment progress from bookings data
-  const { bookingsWithProgress, refetchBookings } = useBookings();
-  const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking.ID || item.booking.id === booking.ID
-  );
-  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+  // Get payment segments directly from booking object (new structure)
+  const { refetchBookings } = useBookings();
+  const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
+  const paymentSegments = booking.payment_segments || [];
+  const paymentProgress = booking.payment_progress;
 
   const loading = false; // No loading since data comes from cache
   const error = null; // No error since data comes from cache
@@ -132,7 +132,7 @@ export default function PaymentSegmentsPage({
           segments={paymentProgress.segments}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}
-          walletBalance={booking.user?.wallet_balance || 0}
+          walletBalance={walletSummary?.current_balance || 0}
         />
       </div>
 
