@@ -62,7 +62,6 @@ export default function RoleApplicationDetailPage() {
 
     try {
       const data = await api.get(`/admin/role-applications/${applicationId}`);
-      console.log("Application data:", data); // Debug log
       // Handle both direct data and wrapped data responses
       const applicationData = (data?.data ||
         data) as unknown as EnhancedRoleApplication;

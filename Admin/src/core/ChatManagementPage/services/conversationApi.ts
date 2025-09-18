@@ -3,9 +3,8 @@ import { api } from "@/lib/api-client";
 // Types
 export interface Conversation {
   id: number;
-  user_id: number;
-  worker_id: number | null;
-  admin_id: number | null;
+  user_1: number;
+  user_2: number;
   is_active: boolean;
   last_message_at: string | null;
   last_message_text?: string | null;
@@ -14,21 +13,14 @@ export interface Conversation {
   unread_count?: number;
   created_at: string;
   updated_at: string;
-  user: {
+  user_1_data: {
     ID: number;
     name: string;
     user_type: string;
     avatar?: string;
     phone?: string;
   };
-  worker?: {
-    ID: number;
-    name: string;
-    user_type: string;
-    avatar?: string;
-    phone?: string;
-  };
-  admin?: {
+  user_2_data: {
     ID: number;
     name: string;
     user_type: string;
@@ -81,9 +73,8 @@ export interface SendMessageRequest {
 }
 
 export interface CreateConversationRequest {
-  user_id: number;
-  worker_id?: number;
-  admin_id?: number;
+  user_1: number;
+  user_2: number;
 }
 
 export interface ConversationsResponse {
@@ -109,15 +100,25 @@ export const conversationApi = {
         `/conversations`,
         data as unknown as Record<string, unknown>
       );
-      return (response as unknown as { data: { conversation: Conversation } })
-        .data;
+      // The backend returns { success: true, message: "...", data: { conversation: ... } }
+      const responseData = (
+        response as unknown as { data: { conversation: Conversation } }
+      ).data;
+
+      if (!responseData || !responseData.conversation) {
+        throw new Error(
+          "Invalid response structure: missing conversation data"
+        );
+      }
+
+      return { conversation: responseData.conversation };
     } catch (error) {
       console.error("Error creating conversation:", error);
       throw error;
     }
   },
 
-  // Get all conversations for admin
+  // Get admin's conversations (where admin is a participant)
   getAllConversations: async (
     page: number = 1,
     limit: number = 20
@@ -140,7 +141,35 @@ export const conversationApi = {
         }
       );
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      console.error("Error fetching admin conversations:", error);
+      throw error;
+    }
+  },
+
+  // Get all conversations for oversight (all conversations in the system)
+  getAllConversationsForOversight: async (
+    page: number = 1,
+    limit: number = 20
+  ): Promise<ConversationsResponse> => {
+    try {
+      const response = await api.get(
+        `/admin/conversations/oversight?page=${page}&limit=${limit}`
+      );
+      return (
+        (response as unknown as { data: ConversationsResponse })?.data || {
+          conversations: [],
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 0,
+            total_pages: 0,
+            has_next: false,
+            has_prev: false,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching conversations for oversight:", error);
       throw error;
     }
   },
