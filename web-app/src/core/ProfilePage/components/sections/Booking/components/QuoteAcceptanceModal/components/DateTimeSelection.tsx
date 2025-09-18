@@ -89,14 +89,27 @@ export default function DateTimeSelection({
               {availableSlots.map((slot) => (
                 <button
                   key={slot.time}
-                  onClick={() => onTimeSlotSelect(slot)}
+                  onClick={() => {
+                    if (slot.is_available) {
+                      onTimeSlotSelect(slot);
+                    }
+                  }}
+                  disabled={!slot.is_available}
                   className={`p-2 rounded-lg border transition-all text-center ${
                     selectedTimeSlot?.time === slot.time
                       ? "border-green-500 bg-green-50"
                       : "border-gray-200 bg-white hover:border-gray-300"
+                  } ${
+                    !slot.is_available
+                      ? "opacity-50 cursor-not-allowed bg-gray-100"
+                      : ""
                   }`}
                 >
-                  <span className="font-medium text-gray-900 text-sm">
+                  <span
+                    className={`font-medium text-sm ${
+                      !slot.is_available ? "text-gray-400" : "text-gray-900"
+                    }`}
+                  >
                     {formatTime12Hour(slot.time)}
                   </span>
                 </button>

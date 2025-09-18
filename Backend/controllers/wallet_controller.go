@@ -246,8 +246,8 @@ func (c *WalletController) GetUserTransactions(ctx *gin.Context) {
 		limit = 10
 	}
 
-	// Get transactions
-	transactions, total, err := c.service.GetUserWalletTransactions(userID, page, limit)
+	// Get completed transactions only
+	transactions, total, err := c.service.GetUserCompletedWalletTransactions(userID, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get transactions", err.Error()))
 		return

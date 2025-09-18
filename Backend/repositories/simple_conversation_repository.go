@@ -3,6 +3,7 @@ package repositories
 import (
 	"treesindia/models"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +26,7 @@ func (r *SimpleConversationRepository) Create(conversation *models.SimpleConvers
 // GetByID gets a conversation by ID
 func (r *SimpleConversationRepository) GetByID(id uint) (*models.SimpleConversation, error) {
 	var conversation models.SimpleConversation
-	err := r.db.Preload("User").Preload("Worker").Preload("Admin").
+	err := r.db.Preload("User1Data").Preload("User2Data").
 		First(&conversation, id).Error
 	if err != nil {
 		return nil, err
@@ -34,23 +35,10 @@ func (r *SimpleConversationRepository) GetByID(id uint) (*models.SimpleConversat
 }
 
 // GetByParticipants gets a conversation by participants
-func (r *SimpleConversationRepository) GetByParticipants(userID uint, workerID *uint, adminID *uint) (*models.SimpleConversation, error) {
+func (r *SimpleConversationRepository) GetByParticipants(user1 uint, user2 uint) (*models.SimpleConversation, error) {
 	var conversation models.SimpleConversation
-	query := r.db.Where("user_id = ?", userID)
-	
-	if workerID != nil {
-		query = query.Where("worker_id = ?", *workerID)
-	} else {
-		query = query.Where("worker_id IS NULL")
-	}
-	
-	if adminID != nil {
-		query = query.Where("admin_id = ?", *adminID)
-	} else {
-		query = query.Where("admin_id IS NULL")
-	}
-	
-	err := query.Preload("User").Preload("Worker").Preload("Admin").
+	err := r.db.Where("(user_1 = ? AND user_2 = ?) OR (user_1 = ? AND user_2 = ?)", user1, user2, user2, user1).
+		Preload("User1Data").Preload("User2Data").
 		First(&conversation).Error
 	if err != nil {
 		return nil, err
@@ -63,17 +51,23 @@ func (r *SimpleConversationRepository) GetUserConversations(userID uint, page, l
 	var conversations []models.SimpleConversation
 	var total int64
 
+	// Debug: Log the query parameters
+	logrus.Infof("GetUserConversations: userID=%d, page=%d, limit=%d", userID, page, limit)
+
 	// Count total
 	if err := r.db.Model(&models.SimpleConversation{}).
-		Where("user_id = ? OR worker_id = ? OR admin_id = ?", userID, userID, userID).
+		Where("user_1 = ? OR user_2 = ?", userID, userID).
 		Count(&total).Error; err != nil {
+		logrus.Errorf("GetUserConversations: Count query failed: %v", err)
 		return nil, nil, err
 	}
 
+	logrus.Infof("GetUserConversations: Found %d total conversations for user %d", total, userID)
+
 	// Get conversations with pagination
 	offset := (page - 1) * limit
-	err := r.db.Preload("User").Preload("Worker").Preload("Admin").
-		Where("user_id = ? OR worker_id = ? OR admin_id = ?", userID, userID, userID).
+	err := r.db.Preload("User1Data").Preload("User2Data").
+		Where("user_1 = ? OR user_2 = ?", userID, userID).
 		Order("updated_at DESC").
 		Offset(offset).Limit(limit).
 		Find(&conversations).Error
@@ -92,19 +86,80 @@ func (r *SimpleConversationRepository) GetUserConversations(userID uint, page, l
 	return conversations, pagination, nil
 }
 
-// GetAllConversations gets all conversations (for admin)
-func (r *SimpleConversationRepository) GetAllConversations(page, limit int) ([]models.SimpleConversation, *Pagination, error) {
+// GetAllConversations gets conversations where admin is a participant
+func (r *SimpleConversationRepository) GetAllConversations(adminID uint, page, limit int) ([]models.SimpleConversation, *Pagination, error) {
 	var conversations []models.SimpleConversation
 	var total int64
 
-	// Count total
-	if err := r.db.Model(&models.SimpleConversation{}).Count(&total).Error; err != nil {
+	// Count total conversations where admin is a participant
+	if err := r.db.Model(&models.SimpleConversation{}).
+		Where("user_1 = ? OR user_2 = ?", adminID, adminID).
+		Count(&total).Error; err != nil {
 		return nil, nil, err
 	}
 
 	// Get conversations with pagination and preload relationships including last message sender
 	offset := (page - 1) * limit
-	err := r.db.Preload("User").Preload("Worker").Preload("Admin").Preload("LastMessageSender").
+	err := r.db.Preload("User1Data").Preload("User2Data").Preload("LastMessageSender").
+		Where("user_1 = ? OR user_2 = ?", adminID, adminID).
+		Order("updated_at DESC").
+		Offset(offset).Limit(limit).
+		Find(&conversations).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Update last message data for each conversation
+	for i := range conversations {
+		if conversations[i].LastMessageID == nil {
+			// Get the latest message for this conversation
+			var lastMessage models.SimpleConversationMessage
+			err := r.db.Where("conversation_id = ?", conversations[i].ID).
+				Order("created_at DESC").
+				First(&lastMessage).Error
+			
+			if err == nil {
+				conversations[i].LastMessageID = &lastMessage.ID
+				conversations[i].LastMessageText = &lastMessage.Message
+				conversations[i].LastMessageCreatedAt = &lastMessage.CreatedAt
+				conversations[i].LastMessageSenderID = &lastMessage.SenderID
+				
+				// Load sender information
+				var sender models.User
+				if err := r.db.First(&sender, lastMessage.SenderID).Error; err == nil {
+					conversations[i].LastMessageSender = &sender
+				}
+			}
+		}
+	}
+
+	pagination := &Pagination{
+		Page:       page,
+		Limit:      limit,
+		Total:      int(total),
+		TotalPages: int((total + int64(limit) - 1) / int64(limit)),
+	}
+
+	return conversations, pagination, nil
+}
+
+// GetAllConversationsForOversight gets all conversations for admin oversight (excluding admin's conversations)
+func (r *SimpleConversationRepository) GetAllConversationsForOversight(adminID uint, page, limit int) ([]models.SimpleConversation, *Pagination, error) {
+	var conversations []models.SimpleConversation
+	var total int64
+
+	// Count total conversations excluding those where admin is a participant
+	if err := r.db.Model(&models.SimpleConversation{}).
+		Where("user_1 != ? AND user_2 != ?", adminID, adminID).
+		Count(&total).Error; err != nil {
+		return nil, nil, err
+	}
+
+	// Get conversations with pagination and preload relationships including last message sender
+	offset := (page - 1) * limit
+	err := r.db.Preload("User1Data").Preload("User2Data").Preload("LastMessageSender").
+		Where("user_1 != ? AND user_2 != ?", adminID, adminID).
 		Order("updated_at DESC").
 		Offset(offset).Limit(limit).
 		Find(&conversations).Error
@@ -280,23 +335,17 @@ func (r *SimpleConversationMessageRepository) GetConversationUnreadCounts(conver
 }
 
 
-// GetConversationUnreadCountsForAdmin gets unread counts for multiple conversations (admin view - only messages not sent by admin)
+// GetConversationUnreadCountsForAdmin gets unread counts for multiple conversations (admin view - all unread messages)
 func (r *SimpleConversationMessageRepository) GetConversationUnreadCountsForAdmin(conversationIDs []uint) (map[uint]int64, error) {
 	var results []struct {
 		ConversationID uint  `json:"conversation_id"`
 		Count          int64 `json:"count"`
 	}
 
-	// Get admin user ID (assuming admin has user_type = "admin")
-	var adminUser models.User
-	err := r.db.Where("user_type = ?", "admin").First(&adminUser).Error
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.Model(&models.SimpleConversationMessage{}).
+	// Count all unread messages in the specified conversations (admin can see all unread messages)
+	err := r.db.Model(&models.SimpleConversationMessage{}).
 		Select("conversation_id, COUNT(*) as count").
-		Where("conversation_id IN ? AND is_read = false AND sender_id != ?", conversationIDs, adminUser.ID).
+		Where("conversation_id IN ? AND is_read = false", conversationIDs).
 		Group("conversation_id").
 		Find(&results).Error
 
@@ -332,8 +381,8 @@ func (r *SimpleConversationRepository) GetTotalUnreadCount(userID uint) (int, er
 	// Count unread messages where the user is a participant but not the sender
 	err := r.db.Model(&models.SimpleConversationMessage{}).
 		Joins("JOIN simple_conversations ON simple_conversation_messages.conversation_id = simple_conversations.id").
-		Where("(simple_conversations.user_id = ? OR simple_conversations.worker_id = ? OR simple_conversations.admin_id = ?) AND simple_conversation_messages.sender_id != ? AND simple_conversation_messages.is_read = ?",
-			userID, userID, userID, userID, false).
+		Where("(simple_conversations.user_1 = ? OR simple_conversations.user_2 = ?) AND simple_conversation_messages.sender_id != ? AND simple_conversation_messages.is_read = ?",
+			userID, userID, userID, false).
 		Count(&totalUnreadCount).Error
 
 	if err != nil {
@@ -348,10 +397,10 @@ func (r *SimpleConversationRepository) GetAdminTotalUnreadCount(adminID uint) (i
 	var totalUnreadCount int64
 
 	// Count unread messages where the admin is a participant but not the sender
-	// This includes all conversations where admin is involved (either as admin_id or where admin is the user)
+	// This includes all conversations where admin is involved (either as user_1 or user_2)
 	err := r.db.Model(&models.SimpleConversationMessage{}).
 		Joins("JOIN simple_conversations ON simple_conversation_messages.conversation_id = simple_conversations.id").
-		Where("(simple_conversations.admin_id = ? OR simple_conversations.user_id = ?) AND simple_conversation_messages.sender_id != ? AND simple_conversation_messages.is_read = ?",
+		Where("(simple_conversations.user_1 = ? OR simple_conversations.user_2 = ?) AND simple_conversation_messages.sender_id != ? AND simple_conversation_messages.is_read = ?",
 			adminID, adminID, adminID, false).
 		Count(&totalUnreadCount).Error
 

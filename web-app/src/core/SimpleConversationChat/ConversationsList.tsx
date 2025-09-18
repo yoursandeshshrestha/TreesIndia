@@ -310,7 +310,7 @@ export const ConversationsList = forwardRef<
             <p className="text-sm">
               {searchTerm
                 ? "Try adjusting your search terms"
-                : "Start a conversation with a worker or admin"}
+                : "Start a conversation with a worker, admin, or other user"}
             </p>
           </div>
         ) : (
@@ -319,12 +319,12 @@ export const ConversationsList = forwardRef<
               // Get the other participant (not current user)
               let otherParticipant = null;
 
-              if (conversation.user.ID === currentUser?.id) {
-                // Current user is the user, so other participant is worker or admin
-                otherParticipant = conversation.worker || conversation.admin;
+              if (conversation.user_1_data.ID === currentUser?.id) {
+                // Current user is user_1, so other participant is user_2
+                otherParticipant = conversation.user_2_data;
               } else {
-                // Current user is worker or admin, so other participant is the user
-                otherParticipant = conversation.user;
+                // Current user is user_2, so other participant is user_1
+                otherParticipant = conversation.user_1_data;
               }
 
               if (!otherParticipant) return null;

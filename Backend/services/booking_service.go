@@ -697,7 +697,16 @@ func (bs *BookingService) VerifyPaymentAndCreateBooking(userID uint, req *models
 
 	// 7. Send confirmation notifications only for regular bookings
 	if booking.BookingType == models.BookingTypeRegular {
-		go bs.notificationService.SendBookingConfirmation(booking)
+		// Get user and service details for notification
+		var user models.User
+		err = bs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			var service models.Service
+			err = bs.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				go NotifyBookingConfirmed(booking, &user, &service)
+			}
+		}
 	}
 
 	// Calculate payment progress before returning
@@ -829,9 +838,25 @@ func (bs *BookingService) CancelUserBooking(userID uint, bookingID uint, req *mo
 	callMaskingService := NewCallMaskingService()
 	go callMaskingService.DisableCallMasking(bookingID)
 
+	// 4. Send cancellation notifications
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := bs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			var service models.Service
+			err = bs.serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				reason := "Customer request"
+				if req.Reason != "" {
+					reason = req.Reason
+				}
+				NotifyBookingCancelled(booking, &user, &service, reason)
+			}
+		}
+	}()
 
-
-	// 4. Process refund if payment was made
+	// 5. Process refund if payment was made
 	var refundAmount float64
 	var refundMethod string
 	// TODO: Get payment details from payment table and process refund
@@ -1423,6 +1448,38 @@ func (bs *BookingService) ConvertToOptimizedBookingResponse(booking *models.Book
 		}
 	}
 
+	// Convert payment segments to segment info
+	var paymentSegments []models.PaymentSegmentInfo
+	if len(booking.PaymentSegments) > 0 {
+		for _, segment := range booking.PaymentSegments {
+			segmentInfo := models.PaymentSegmentInfo{
+				ID:            segment.ID,
+				SegmentNumber: segment.SegmentNumber,
+				Amount:        segment.Amount,
+				DueDate:       segment.DueDate,
+				Status:        segment.Status,
+				PaidAt:        segment.PaidAt,
+				Notes:         segment.Notes,
+				PaymentID:     segment.PaymentID,
+				IsOverdue:     false,
+			}
+
+			// Calculate if overdue
+			if segment.DueDate != nil && segment.Status == models.PaymentSegmentStatusPending {
+				now := time.Now()
+				if segment.DueDate.Before(now) {
+					segmentInfo.IsOverdue = true
+					segmentInfo.Status = models.PaymentSegmentStatusOverdue
+				} else {
+					daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
+					segmentInfo.DaysUntilDue = &daysUntilDue
+				}
+			}
+
+			paymentSegments = append(paymentSegments, segmentInfo)
+		}
+	}
+
 	return &models.OptimizedBookingResponse{
 		ID:                    booking.ID,
 		BookingReference:      booking.BookingReference,
@@ -1437,6 +1494,15 @@ func (bs *BookingService) ConvertToOptimizedBookingResponse(booking *models.Book
 		HoldExpiresAt:         booking.HoldExpiresAt,
 		CreatedAt:             booking.CreatedAt,
 		UpdatedAt:             booking.UpdatedAt,
+		
+		// Quote Management (for inquiry bookings)
+		QuoteAmount:           booking.QuoteAmount,
+		QuoteNotes:            booking.QuoteNotes,
+		QuoteProvidedAt:       booking.QuoteProvidedAt,
+		QuoteAcceptedAt:       booking.QuoteAcceptedAt,
+		QuoteExpiresAt:        booking.QuoteExpiresAt,
+		QuoteDuration:         booking.QuoteDuration,
+		
 		Service: &models.OptimizedServiceInfo{
 			ID:        booking.Service.ID,
 			Name:      booking.Service.Name,
@@ -1453,11 +1519,158 @@ func (bs *BookingService) ConvertToOptimizedBookingResponse(booking *models.Book
 		Address:          address,
 		Contact: &models.OptimizedContactInfo{
 			Person:              booking.ContactPerson,
-			Phone:               booking.ContactPhone,
 			Description:         booking.Description,
 			SpecialInstructions: booking.SpecialInstructions,
 		},
 		Payment:          payment,
+		PaymentSegments:  paymentSegments,
+		PaymentProgress:  booking.PaymentProgress,
+		WorkerAssignment: workerAssignment,
+	}
+}
+
+// ConvertToUserOptimizedBookingResponse converts a booking model to optimized response for user bookings (privacy protected)
+func (bs *BookingService) ConvertToUserOptimizedBookingResponse(booking *models.Booking) *models.OptimizedBookingResponse {
+	// Parse address from JSON string
+	var address *models.BookingAddress
+	if booking.Address != nil {
+		var addr models.BookingAddress
+		if err := json.Unmarshal([]byte(*booking.Address), &addr); err == nil {
+			address = &addr
+		}
+	}
+
+	// Get payment information
+	var payment *models.OptimizedPaymentInfo
+	
+	// First try to get payment from preloaded relationship
+	if booking.Payment != nil && booking.Payment.ID != 0 {
+		payment = &models.OptimizedPaymentInfo{
+			Status:            string(booking.Payment.Status),
+			Amount:            booking.Payment.Amount,
+			Currency:          booking.Payment.Currency,
+			PaymentMethod:     &booking.Payment.Method,
+			RazorpayOrderID:   booking.Payment.RazorpayOrderID,
+			RazorpayPaymentID: booking.Payment.RazorpayPaymentID,
+			CreatedAt:         &booking.Payment.CreatedAt,
+		}
+	} else {
+		// Manually load payment if not preloaded
+		paymentRepo := repositories.NewPaymentRepository()
+		paymentRecord, err := paymentRepo.GetByRelatedEntity("booking", booking.ID)
+		if err != nil {
+			logrus.Infof("No payment found for booking %d: %v", booking.ID, err)
+		} else if paymentRecord != nil {
+			logrus.Infof("Found payment for booking %d: amount=%f, status=%s", booking.ID, paymentRecord.Amount, paymentRecord.Status)
+			payment = &models.OptimizedPaymentInfo{
+				Status:            string(paymentRecord.Status),
+				Amount:            paymentRecord.Amount,
+				Currency:          paymentRecord.Currency,
+				PaymentMethod:     &paymentRecord.Method,
+				RazorpayOrderID:   paymentRecord.RazorpayOrderID,
+				RazorpayPaymentID: paymentRecord.RazorpayPaymentID,
+				CreatedAt:         &paymentRecord.CreatedAt,
+			}
+		} else {
+			logrus.Infof("Payment record is nil for booking %d", booking.ID)
+		}
+	}
+
+	// Get worker assignment information (privacy protected - no phone number)
+	var workerAssignment *models.OptimizedWorkerAssignment
+	if booking.WorkerAssignment != nil {
+		workerAssignment = &models.OptimizedWorkerAssignment{
+			WorkerID:   &booking.WorkerAssignment.WorkerID,
+			Status:     (*string)(&booking.WorkerAssignment.Status),
+		}
+
+		// Add worker details if available (without phone number for privacy)
+		if booking.WorkerAssignment.Worker.ID != 0 {
+			workerAssignment.Worker = &models.OptimizedUserInfo{
+				ID:       booking.WorkerAssignment.Worker.ID,
+				Name:     booking.WorkerAssignment.Worker.Name,
+				Phone:    "", // Intentionally empty for privacy
+				UserType: string(booking.WorkerAssignment.Worker.UserType),
+			}
+		}
+	}
+
+	// Convert payment segments to segment info
+	var paymentSegments []models.PaymentSegmentInfo
+	if len(booking.PaymentSegments) > 0 {
+		for _, segment := range booking.PaymentSegments {
+			segmentInfo := models.PaymentSegmentInfo{
+				ID:            segment.ID,
+				SegmentNumber: segment.SegmentNumber,
+				Amount:        segment.Amount,
+				DueDate:       segment.DueDate,
+				Status:        segment.Status,
+				PaidAt:        segment.PaidAt,
+				Notes:         segment.Notes,
+				PaymentID:     segment.PaymentID,
+				IsOverdue:     false,
+			}
+
+			// Calculate if overdue
+			if segment.DueDate != nil && segment.Status == models.PaymentSegmentStatusPending {
+				now := time.Now()
+				if segment.DueDate.Before(now) {
+					segmentInfo.IsOverdue = true
+					segmentInfo.Status = models.PaymentSegmentStatusOverdue
+				} else {
+					daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
+					segmentInfo.DaysUntilDue = &daysUntilDue
+				}
+			}
+
+			paymentSegments = append(paymentSegments, segmentInfo)
+		}
+	}
+
+	return &models.OptimizedBookingResponse{
+		ID:                    booking.ID,
+		BookingReference:      booking.BookingReference,
+		Status:                booking.Status,
+		BookingType:           booking.BookingType,
+		ScheduledDate:         booking.ScheduledDate,
+		ScheduledTime:         booking.ScheduledTime,
+		ScheduledEndTime:      booking.ScheduledEndTime,
+		ActualStartTime:       booking.ActualStartTime,
+		ActualEndTime:         booking.ActualEndTime,
+		ActualDurationMinutes: booking.ActualDurationMinutes,
+		HoldExpiresAt:         booking.HoldExpiresAt,
+		CreatedAt:             booking.CreatedAt,
+		UpdatedAt:             booking.UpdatedAt,
+		
+		// Quote Management (for inquiry bookings)
+		QuoteAmount:           booking.QuoteAmount,
+		QuoteNotes:            booking.QuoteNotes,
+		QuoteProvidedAt:       booking.QuoteProvidedAt,
+		QuoteAcceptedAt:       booking.QuoteAcceptedAt,
+		QuoteExpiresAt:        booking.QuoteExpiresAt,
+		QuoteDuration:         booking.QuoteDuration,
+		
+		Service: &models.OptimizedServiceInfo{
+			ID:        booking.Service.ID,
+			Name:      booking.Service.Name,
+			PriceType: booking.Service.PriceType,
+			Price:     booking.Service.Price,
+			Duration:  booking.Service.Duration,
+		},
+		User: &models.OptimizedUserInfo{
+			ID:       booking.User.ID,
+			Name:     booking.User.Name,
+			Phone:    booking.User.Phone,
+			UserType: string(booking.User.UserType),
+		},
+		Address:          address,
+		Contact: &models.OptimizedContactInfo{
+			Person:              booking.ContactPerson,
+			Description:         booking.Description,
+			SpecialInstructions: booking.SpecialInstructions,
+		},
+		Payment:          payment,
+		PaymentSegments:  paymentSegments,
 		PaymentProgress:  booking.PaymentProgress,
 		WorkerAssignment: workerAssignment,
 	}
@@ -1573,6 +1786,15 @@ func (bs *BookingService) ConvertToDetailedBookingResponse(booking *models.Booki
 		CreatedAt:             booking.CreatedAt,
 		UpdatedAt:             booking.UpdatedAt,
 		DeletedAt:             &booking.DeletedAt.Time,
+		
+		// Quote Management (for inquiry bookings)
+		QuoteAmount:           booking.QuoteAmount,
+		QuoteNotes:            booking.QuoteNotes,
+		QuoteProvidedAt:       booking.QuoteProvidedAt,
+		QuoteAcceptedAt:       booking.QuoteAcceptedAt,
+		QuoteExpiresAt:        booking.QuoteExpiresAt,
+		QuoteDuration:         booking.QuoteDuration,
+		
 		Service: &models.DetailedServiceInfo{
 			ID:          booking.Service.ID,
 			Name:        booking.Service.Name,
@@ -1592,7 +1814,6 @@ func (bs *BookingService) ConvertToDetailedBookingResponse(booking *models.Booki
 		Address: address,
 		Contact: &models.OptimizedContactInfo{
 			Person:              booking.ContactPerson,
-			Phone:               booking.ContactPhone,
 			Description:         booking.Description,
 			SpecialInstructions: booking.SpecialInstructions,
 		},
@@ -1973,11 +2194,7 @@ func (bs *BookingService) sendWalletPaymentNotifications(payment *models.Payment
 		logrus.Errorf("Failed to send payment received notification to admin: %v", err)
 	}
 
-	// Send notification to user about payment confirmation
-	err = notificationService.NotifyPaymentConfirmation(payment, user)
-	if err != nil {
-		logrus.Errorf("Failed to send payment confirmation notification to user: %v", err)
-	}
+	// Payment confirmation notification removed as per user request
 }
 
 // sendWorkerAssignmentNotification sends in-app notification about worker assignment
@@ -2011,7 +2228,7 @@ func (bs *BookingService) sendWorkerAssignmentNotification(assignment *models.Wo
 	}
 
 	// Send notification to worker about new assignment
-	err = notificationService.NotifyWorkerAssignedToWork(&worker, booking, &booking.Service)
+	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
 	if err != nil {
 		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
 	}

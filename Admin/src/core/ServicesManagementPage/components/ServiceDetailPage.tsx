@@ -73,14 +73,6 @@ export default function ServiceDetailPage({
       }
 
       setIsDataReady(true);
-      console.log(
-        "Data ready - Service:",
-        serviceData,
-        "Categories:",
-        categories.length,
-        "Subcategories:",
-        subcategories.length
-      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load service");
       toast.error("Error loading service");
@@ -95,7 +87,6 @@ export default function ServiceDetailPage({
       const response = await apiClient.get("/categories");
       const categoriesData = response.data.data || [];
       setCategories(categoriesData);
-      console.log("Categories loaded:", categoriesData);
     } catch (err) {
       console.error("Failed to load categories:", err);
     } finally {
@@ -111,12 +102,6 @@ export default function ServiceDetailPage({
       );
       const subcategoriesData = response.data.data || [];
       setSubcategories(subcategoriesData);
-      console.log(
-        "Subcategories loaded for category",
-        categoryId,
-        ":",
-        subcategoriesData
-      );
     } catch (err) {
       console.error("Failed to load subcategories:", err);
       setSubcategories([]);
@@ -594,7 +579,6 @@ export default function ServiceDetailPage({
           isSubmitting || isLoadingCategories || isLoadingSubcategories
         }
         onCategoryChange={(categoryId: number) => {
-          console.log("Category changed to:", categoryId);
           loadSubcategories(categoryId);
         }}
       />

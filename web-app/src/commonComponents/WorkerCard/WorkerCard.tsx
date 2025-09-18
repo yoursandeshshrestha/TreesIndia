@@ -10,6 +10,7 @@ interface WorkerCardProps {
   className?: string;
   onClick?: (worker: Worker) => void;
   onChatClick?: (worker: Worker) => void;
+  currentUserId?: number;
 }
 
 export function WorkerCard({
@@ -17,6 +18,7 @@ export function WorkerCard({
   className = "",
   onClick,
   onChatClick,
+  currentUserId,
 }: WorkerCardProps) {
   const handleClick = () => {
     if (onClick) {
@@ -58,6 +60,9 @@ export function WorkerCard({
   };
 
   const contactInfo = formatContactInfo();
+
+  // Check if current user is the same as the worker
+  const isCurrentUserWorker = currentUserId && currentUserId === worker.user_id;
 
   return (
     <div className={`group cursor-pointer ${className}`} onClick={handleClick}>
@@ -146,18 +151,22 @@ export function WorkerCard({
 
         {/* Action Buttons */}
         <div className="flex gap-3">
+          {!isCurrentUserWorker && (
+            <button
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleChatClick();
+              }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Chat</span>
+            </button>
+          )}
           <button
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleChatClick();
-            }}
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Chat</span>
-          </button>
-          <button
-            className="flex-1 bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+            className={`${
+              isCurrentUserWorker ? "w-full" : "flex-1"
+            } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors`}
             onClick={(e) => {
               e.stopPropagation();
               handleClick();

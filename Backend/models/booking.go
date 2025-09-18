@@ -95,7 +95,8 @@ type Booking struct {
 	QuoteProvidedBy  *uint         `json:"quote_provided_by"`               // Admin ID who provided quote
 	QuoteProvidedAt  *time.Time    `json:"quote_provided_at"`               // When quote was provided
 	QuoteAcceptedAt  *time.Time    `json:"quote_accepted_at"`               // When customer accepted quote
-	QuoteExpiresAt   *time.Time    `json:"quote_expires_at"`                // Quote expiration date
+	QuoteExpiresAt   *time.Time    `json:"quote_expires_at"`               // Quote expiration date
+	QuoteDuration    *string       `json:"quote_duration"`                  // Service duration specified in quote
 	
 	// Relationships
 	User             User          `json:"user" gorm:"foreignKey:UserID"`
@@ -201,7 +202,7 @@ type CreateInquiryBookingRequest struct {
 
 // OptimizedBookingResponse represents the optimized booking response for listings
 type OptimizedBookingResponse struct {
-	ID                    uint                    `json:"id"`
+	ID                    uint                    `json:"ID"`
 	BookingReference      string                  `json:"booking_reference"`
 	Status                BookingStatus           `json:"status"`
 	BookingType           BookingType             `json:"booking_type"`
@@ -215,18 +216,27 @@ type OptimizedBookingResponse struct {
 	CreatedAt             time.Time               `json:"created_at"`
 	UpdatedAt             time.Time               `json:"updated_at"`
 	
+	// Quote Management (for inquiry bookings)
+	QuoteAmount           *float64                `json:"quote_amount,omitempty"`
+	QuoteNotes            string                  `json:"quote_notes,omitempty"`
+	QuoteProvidedAt       *time.Time              `json:"quote_provided_at,omitempty"`
+	QuoteAcceptedAt       *time.Time              `json:"quote_accepted_at,omitempty"`
+	QuoteExpiresAt        *time.Time              `json:"quote_expires_at,omitempty"`
+	QuoteDuration         *string                 `json:"quote_duration,omitempty"`
+	
 	Service               *OptimizedServiceInfo   `json:"service"`
 	User                  *OptimizedUserInfo      `json:"user"`
 	Address               *BookingAddress         `json:"address"`
 	Contact               *OptimizedContactInfo   `json:"contact"`
 	Payment               *OptimizedPaymentInfo   `json:"payment"`
+	PaymentSegments       []PaymentSegmentInfo    `json:"payment_segments,omitempty"`
 	PaymentProgress       *PaymentProgress        `json:"payment_progress,omitempty"`
 	WorkerAssignment      *OptimizedWorkerAssignment `json:"worker_assignment"`
 }
 
 // OptimizedServiceInfo represents minimal service information
 type OptimizedServiceInfo struct {
-	ID          uint    `json:"id"`
+	ID          uint    `json:"ID"`
 	Name        string  `json:"name"`
 	PriceType   string  `json:"price_type"`
 	Price       *float64 `json:"price"`
@@ -235,16 +245,15 @@ type OptimizedServiceInfo struct {
 
 // OptimizedUserInfo represents minimal user information
 type OptimizedUserInfo struct {
-	ID     uint   `json:"id"`
-	Name   string `json:"name"`
-	Phone  string `json:"phone"`
+	ID       uint   `json:"ID"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
 	UserType string `json:"user_type"`
 }
 
 // OptimizedContactInfo represents contact information
 type OptimizedContactInfo struct {
 	Person              string `json:"person"`
-	Phone               string `json:"phone"`
 	Description         string `json:"description"`
 	SpecialInstructions string `json:"special_instructions"`
 }
@@ -284,6 +293,14 @@ type DetailedBookingResponse struct {
 	CreatedAt             time.Time               `json:"created_at"`
 	UpdatedAt             time.Time               `json:"updated_at"`
 	DeletedAt             *time.Time              `json:"deleted_at"`
+	
+	// Quote Management (for inquiry bookings)
+	QuoteAmount           *float64                `json:"quote_amount,omitempty"`
+	QuoteNotes            string                  `json:"quote_notes,omitempty"`
+	QuoteProvidedAt       *time.Time              `json:"quote_provided_at,omitempty"`
+	QuoteAcceptedAt       *time.Time              `json:"quote_accepted_at,omitempty"`
+	QuoteExpiresAt        *time.Time              `json:"quote_expires_at,omitempty"`
+	QuoteDuration         *string                 `json:"quote_duration,omitempty"`
 	
 	Service               *DetailedServiceInfo    `json:"service"`
 	User                  *DetailedUserInfo       `json:"user"`
@@ -452,6 +469,7 @@ type Dispute struct {
 type ProvideQuoteRequest struct {
 	Notes       string                    `json:"notes"`
 	Segments    []PaymentSegmentRequest   `json:"segments" binding:"required,min=1"`
+	Duration    *string                   `json:"duration"` // Optional service duration for single segment quotes
 }
 
 // UpdateQuoteRequest represents the request to update an existing quote
@@ -499,6 +517,13 @@ type WalletPaymentRequest struct {
 	ScheduledDate string  `json:"scheduled_date" binding:"required"` // YYYY-MM-DD format
 	ScheduledTime string  `json:"scheduled_time" binding:"required"` // HH:MM format
 	Amount        float64 `json:"amount" binding:"required,min=0"`   // Quote amount to pay
+}
+
+// Quote represents a quote for notification purposes
+type Quote struct {
+	ID         uint      `json:"id"`
+	Amount     float64   `json:"amount"`
+	ValidUntil time.Time `json:"valid_until"`
 }
 
 // QuoteInfo represents quote information in booking responses

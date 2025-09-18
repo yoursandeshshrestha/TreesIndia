@@ -7,6 +7,8 @@ import (
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AvailabilityService struct {
@@ -44,6 +46,11 @@ type AvailabilityResponse struct {
 
 // GetAvailableSlots calculates available time slots for a service on a given date
 func (as *AvailabilityService) GetAvailableSlots(serviceID uint, date string, location string) (*AvailabilityResponse, error) {
+	return as.GetAvailableSlotsWithDuration(serviceID, date, location, nil)
+}
+
+// GetAvailableSlotsWithDuration calculates available time slots for a service on a given date with optional custom duration
+func (as *AvailabilityService) GetAvailableSlotsWithDuration(serviceID uint, date string, location string, customDuration *string) (*AvailabilityResponse, error) {
 	// 1. Get service details
 	service, err := as.serviceRepo.GetByID(serviceID)
 	if err != nil {
@@ -72,16 +79,24 @@ func (as *AvailabilityService) GetAvailableSlots(serviceID uint, date string, lo
 		bufferTimeMinutes = 30
 	}
 
-	// 4. Calculate service duration from service
+	// 4. Calculate service duration from service or custom duration
 	var serviceDurationMinutes int
-	if service.Duration != nil && *service.Duration != "" {
+	if customDuration != nil && *customDuration != "" {
+		// Use custom duration (e.g., from quote)
+		duration, err := utils.ParseDuration(*customDuration)
+		if err != nil {
+			return nil, fmt.Errorf("invalid custom duration: %v", err)
+		}
+		serviceDurationMinutes = duration.ToMinutes()
+	} else if service.Duration != nil && *service.Duration != "" {
+		// Use service duration
 		duration, err := utils.ParseDuration(*service.Duration)
 		if err != nil {
 			return nil, fmt.Errorf("invalid service duration: %v", err)
 		}
 		serviceDurationMinutes = duration.ToMinutes()
 	} else {
-		// If no duration specified in service, use a reasonable default
+		// If no duration specified, use a reasonable default
 		serviceDurationMinutes = 120 // Default 2 hours
 	}
 
@@ -285,71 +300,70 @@ func (as *AvailabilityService) buildBusyWorkersMap(assignments []models.WorkerAs
 	// Get all confirmed bookings for this date that don't have worker assignments
 	confirmedBookings, err := as.bookingRepo.GetConfirmedBookingsForDate(date)
 	if err != nil {
-
+		logrus.Errorf("Failed to get confirmed bookings for date %s: %v", date.Format("2006-01-02"), err)
 		return busyWorkersMap
 	}
 	
-	// Count how many workers are reserved by pool bookings
+	// Log the number of confirmed bookings found
+	logrus.Infof("Found %d confirmed bookings for date %s", len(confirmedBookings), date.Format("2006-01-02"))
+	
+	// Count how many workers are reserved by confirmed bookings
+	// ALL confirmed bookings should block time slots, regardless of worker assignment status
 	for _, booking := range confirmedBookings {
 		if booking.ScheduledTime == nil {
 			continue
 		}
 		
-		// Check if this booking has a worker assignment
-		hasAssignment := false
-		for _, assignment := range assignments {
-			if assignment.BookingID == booking.ID {
-				hasAssignment = true
-				break
-			}
+		// Log the booking being processed
+		logrus.Infof("Processing confirmed booking ID=%d, scheduled_time=%v, status=%s", 
+			booking.ID, booking.ScheduledTime, booking.Status)
+		
+		// ALL confirmed bookings block time slots, whether they have worker assignments or not
+		// This ensures that confirmed bookings are properly reserved
+		
+		// Calculate the service end time (start + duration + buffer)
+		serviceEndTime := booking.ScheduledTime.Add(time.Duration(totalDurationMinutes) * time.Minute)
+		
+		// Generate all 30-minute slots that are reserved
+		currentSlot := time.Date(date.Year(), date.Month(), date.Day(), 
+			booking.ScheduledTime.Hour(), booking.ScheduledTime.Minute(), 0, 0, location)
+		
+		// Round down to nearest 30-minute slot
+		minutes := currentSlot.Minute()
+		if minutes >= 30 {
+			currentSlot = time.Date(currentSlot.Year(), currentSlot.Month(), currentSlot.Day(), 
+				currentSlot.Hour(), 30, 0, 0, currentSlot.Location())
+		} else {
+			currentSlot = time.Date(currentSlot.Year(), currentSlot.Month(), currentSlot.Day(), 
+				currentSlot.Hour(), 0, 0, 0, currentSlot.Location())
 		}
 		
-		// If no worker assignment, this booking is using a pool slot
-		if !hasAssignment {
-			// Calculate the service end time (start + duration + buffer)
-			serviceEndTime := booking.ScheduledTime.Add(time.Duration(totalDurationMinutes) * time.Minute)
-			
-			// Generate all 30-minute slots that are reserved
-			currentSlot := time.Date(date.Year(), date.Month(), date.Day(), 
-				booking.ScheduledTime.Hour(), booking.ScheduledTime.Minute(), 0, 0, location)
-			
-			// Round down to nearest 30-minute slot
-			minutes := currentSlot.Minute()
-			if minutes >= 30 {
-				currentSlot = time.Date(currentSlot.Year(), currentSlot.Month(), currentSlot.Day(), 
-					currentSlot.Hour(), 30, 0, 0, currentSlot.Location())
-			} else {
-				currentSlot = time.Date(currentSlot.Year(), currentSlot.Month(), currentSlot.Day(), 
-					currentSlot.Hour(), 0, 0, 0, currentSlot.Location())
+		// Add a virtual worker to all slots that are reserved
+		for currentSlot.Before(serviceEndTime) {
+			slotKey := currentSlot.Format("15:04")
+			if busyWorkersMap[slotKey] == nil {
+				busyWorkersMap[slotKey] = []uint{}
 			}
 			
-			// Add a virtual worker to all slots that are reserved
-			for currentSlot.Before(serviceEndTime) {
-				slotKey := currentSlot.Format("15:04")
-				if busyWorkersMap[slotKey] == nil {
-					busyWorkersMap[slotKey] = []uint{}
+			// Add a virtual worker ID (using booking ID as a unique identifier)
+			// This represents one worker slot being occupied
+			virtualWorkerID := booking.ID + 1000000 // Use a large offset to avoid conflicts
+			
+			// Check if this virtual worker is already in the list
+			workerExists := false
+			for _, workerID := range busyWorkersMap[slotKey] {
+				if workerID == virtualWorkerID {
+					workerExists = true
+					break
 				}
-				
-				// Add a virtual worker ID (using booking ID as a unique identifier)
-				// This represents one worker slot being occupied
-				virtualWorkerID := booking.ID + 1000000 // Use a large offset to avoid conflicts
-				
-				// Check if this virtual worker is already in the list
-				workerExists := false
-				for _, workerID := range busyWorkersMap[slotKey] {
-					if workerID == virtualWorkerID {
-						workerExists = true
-						break
-					}
-				}
-				
-				if !workerExists {
-					busyWorkersMap[slotKey] = append(busyWorkersMap[slotKey], virtualWorkerID)
-				}
-				
-				// Move to next 30-minute slot
-				currentSlot = currentSlot.Add(30 * time.Minute)
 			}
+			
+			if !workerExists {
+				busyWorkersMap[slotKey] = append(busyWorkersMap[slotKey], virtualWorkerID)
+			}
+			
+			// Move to next 30-minute slot
+			currentSlot = currentSlot.Add(30 * time.Minute)
 		}
 	}
 	

@@ -46,9 +46,7 @@ const SignInPage = () => {
       if (response.success) {
         setStep("otp");
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   const handleVerifyOTP = async () => {

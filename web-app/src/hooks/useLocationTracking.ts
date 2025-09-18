@@ -76,8 +76,9 @@ export function useLocationTracking() {
   );
 
   // Setup WebSocket callbacks when component mounts
+  // Note: This hook no longer automatically connects to websocket
+  // Connection should be explicitly managed by components that need it
   useEffect(() => {
-    console.log("[useLocationTracking] Setting up WebSocket callbacks");
     if (locationTrackingWebSocket) {
       // Set up callbacks
       locationTrackingWebSocket.setupCallbacks({
@@ -89,17 +90,12 @@ export function useLocationTracking() {
         onWorkerLocationUpdate: handleLocationUpdate, // For customers
         onMyLocationUpdate: handleLocationUpdate, // For workers
       });
-      console.log(
-        "[useLocationTracking] WebSocket callbacks set up successfully"
-      );
-    } else {
-      console.error("[useLocationTracking] locationTrackingWebSocket is null");
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount - only disconnect if we're actually connected
     return () => {
       console.log("[useLocationTracking] Cleaning up WebSocket callbacks");
-      if (locationTrackingWebSocket) {
+      if (locationTrackingWebSocket && locationTrackingWebSocket.getConnectionStatus() === "connected") {
         locationTrackingWebSocket.disconnect();
       }
     };

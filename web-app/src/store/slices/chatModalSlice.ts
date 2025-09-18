@@ -4,9 +4,8 @@ interface ChatModalState {
   isOpen: boolean;
   preselectedConversationId?: number;
   createConversationWithUser?: {
-    user_id: number;
-    worker_id?: number;
-    admin_id?: number;
+    user_1: number;
+    user_2: number;
   };
 }
 
@@ -36,9 +35,8 @@ const chatModalSlice = createSlice({
     openChatModalWithUser: (
       state,
       action: PayloadAction<{
-        user_id: number;
-        worker_id?: number;
-        admin_id?: number;
+        user_1: number;
+        user_2: number;
       }>
     ) => {
       state.isOpen = true;

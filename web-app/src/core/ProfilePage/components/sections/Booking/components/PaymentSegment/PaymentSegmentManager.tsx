@@ -71,6 +71,7 @@ export default function PaymentSegmentManager({
       const paymentData: CreateSegmentPaymentRequest = {
         segment_number: selectedSegment.segment_number,
         amount: selectedSegment.amount,
+        payment_method: selectedPaymentMethod,
       };
 
       const result = await paySegment(bookingId, paymentData);

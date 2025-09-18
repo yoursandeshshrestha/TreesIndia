@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { RootState } from "@/store/store";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { useBookingConfig } from "@/hooks/useBookingFlow";
 import { MapPin, Clock, CreditCard, Phone, User } from "lucide-react";
 import { openAddressModal } from "@/store/slices/addressModalSlice";
 import { openSlotModal } from "@/store/slices/slotModalSlice";
@@ -45,6 +46,8 @@ export function BookingSidebar({
     useSelector((state: RootState) => state.booking);
   const { user } = useAuth();
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
+  const { data: configData, isLoading: configLoading } = useBookingConfig();
+  const config = configData?.data;
 
   // Wallet booking mutations
   const createBookingWithWalletMutation = useCreateBookingWithWallet();
@@ -66,9 +69,16 @@ export function BookingSidebar({
   const [successMessage, setSuccessMessage] = useState("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
-  // Calculate total amount
+  // Calculate total amount (same logic as PriceSummary component)
   const itemTotal = service?.price || 0;
-  const totalAmount = itemTotal;
+
+  // Get inquiry booking fee from backend config
+  const inquiryFee = config?.inquiry_booking_fee
+    ? parseInt(config.inquiry_booking_fee)
+    : 0;
+  const visitationFee = isInquiryService ? inquiryFee : 0; // Inquiry services have a booking fee
+  const taxesAndFees = 0; // Taxes and fees set to 0 for now
+  const totalAmount = itemTotal + visitationFee + taxesAndFees;
 
   // Check if wallet payment is disabled
   const isWalletDisabled = (walletSummary?.current_balance || 0) < totalAmount;

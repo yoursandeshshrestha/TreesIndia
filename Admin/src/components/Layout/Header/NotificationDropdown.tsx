@@ -1,25 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Bell,
-  X,
-  User,
-  Calendar,
-  DollarSign,
-  Shield,
-  Key,
-  AlertCircle,
-  CheckCheck,
-} from "lucide-react";
+import { Bell, X, CheckCheck } from "lucide-react";
 import {
   useNotifications,
   useUnreadCount,
   useMarkAllAsRead,
 } from "@/services/api/notifications";
 import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
-import {
-  getNotificationIcon,
-  getNotificationColor,
-} from "@/types/notification";
+import { getNotificationColor } from "@/types/notification";
 import type { InAppNotification } from "@/types/notification";
 
 interface NotificationDropdownProps {
@@ -277,10 +264,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   !notification.is_read ? "bg-blue-50" : ""
                 }`}
               >
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    {getNotificationIconComponent(notification.type)}
-                  </div>
+                <div className="flex items-start">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p
@@ -331,62 +315,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       </div>
     </div>
   );
-};
-
-// Helper function to get notification icon component (using Lucide icons instead of emojis)
-const getNotificationIconComponent = (type: string) => {
-  const iconClass = "w-8 h-8 rounded-full flex items-center justify-center";
-
-  switch (type) {
-    case "user_registered":
-      return (
-        <div className={`${iconClass} bg-green-100 text-green-600`}>
-          <User className="h-4 w-4" />
-        </div>
-      );
-    case "booking_created":
-      return (
-        <div className={`${iconClass} bg-blue-100 text-blue-600`}>
-          <Calendar className="h-4 w-4" />
-        </div>
-      );
-    case "payment_received":
-      return (
-        <div className={`${iconClass} bg-green-100 text-green-600`}>
-          <DollarSign className="h-4 w-4" />
-        </div>
-      );
-    case "otp_requested":
-      return (
-        <div className={`${iconClass} bg-yellow-100 text-yellow-600`}>
-          <Shield className="h-4 w-4" />
-        </div>
-      );
-    case "otp_verified":
-      return (
-        <div className={`${iconClass} bg-green-100 text-green-600`}>
-          <Shield className="h-4 w-4" />
-        </div>
-      );
-    case "login_success":
-      return (
-        <div className={`${iconClass} bg-green-100 text-green-600`}>
-          <Key className="h-4 w-4" />
-        </div>
-      );
-    case "login_failed":
-      return (
-        <div className={`${iconClass} bg-red-100 text-red-600`}>
-          <AlertCircle className="h-4 w-4" />
-        </div>
-      );
-    default:
-      return (
-        <div className={`${iconClass} bg-gray-100 text-gray-600`}>
-          <Bell className="h-4 w-4" />
-        </div>
-      );
-  }
 };
 
 export default NotificationDropdown;

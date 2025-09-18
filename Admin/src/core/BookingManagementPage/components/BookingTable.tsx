@@ -71,7 +71,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
   };
 
   const handleViewDetails = (booking: OptimizedBookingResponse) => {
-    router.push(`/dashboard/bookings/${booking.id}`);
+    router.push(`/dashboard/bookings/${booking.ID}`);
   };
 
   const handleAssignWorker = async () => {
@@ -135,11 +135,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 {displayValue(booking.service.price, "Price not set")}
               </div>
             )}
-            {booking.service.duration && (
-              <div className="text-xs text-gray-400">
-                {displayDuration(booking.service.duration)}
-              </div>
-            )}
           </div>
         </div>
       ),
@@ -158,6 +153,15 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 <Clock className="w-3 h-3 mr-1" />
                 {displayTime(booking.scheduled_time)}
               </div>
+              {(booking.quote_duration || booking.service?.duration) && (
+                <div className="text-xs text-blue-600 flex items-center mt-1">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Duration:{" "}
+                  {displayDuration(
+                    booking.quote_duration || booking.service?.duration
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <span className="text-gray-400">
@@ -333,7 +337,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
 
         return (
           <div>
-            {selectedBookingId === booking.id ? (
+            {selectedBookingId === booking.ID ? (
               <div className="space-y-2">
                 <div>
                   {workersLoading ? (
@@ -455,7 +459,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 className="text-sm text-gray-500 cursor-pointer hover:bg-gray-100 p-1 rounded"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedBookingId(booking.id);
+                  setSelectedBookingId(booking.ID);
                 }}
               >
                 Click to assign worker
@@ -520,11 +524,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
         }
       },
       className: (booking: OptimizedBookingResponse) =>
-        booking.booking_type === "inquiry"
-          ? "text-blue-700 bg-blue-100 hover:bg-blue-200"
-          : "text-gray-400 bg-gray-100 cursor-not-allowed",
-      disabled: (booking: OptimizedBookingResponse) =>
-        booking.booking_type !== "inquiry" || !onChat,
+        "text-blue-700 bg-blue-100 hover:bg-blue-200",
+      disabled: (booking: OptimizedBookingResponse) => !onChat,
     },
   ];
 
@@ -548,7 +549,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
       <Table<OptimizedBookingResponse>
         data={bookings}
         columns={columns}
-        keyField="id"
+        keyField="ID"
         actions={actions}
         onRowClick={handleViewDetails}
         emptyState={

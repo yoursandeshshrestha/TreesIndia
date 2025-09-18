@@ -107,6 +107,9 @@ func (s *UnifiedWalletService) CompleteWalletRecharge(paymentID uint, razorpayPa
 		return fmt.Errorf("failed to update payment: %w", err)
 	}
 
+	// Send notifications for successful wallet recharge
+	go NotifyWalletRechargeSuccess(&user, payment.Amount, newBalance)
+	go NotifyWalletRechargeToAdmin(&user, payment.Amount, newBalance)
 
 	return nil
 }
@@ -447,6 +450,31 @@ func (s *UnifiedWalletService) GetUserWalletTransactionsByType(userID uint, paym
 	total, err := s.paymentService.GetPaymentCountByUserAndType(userID, []models.PaymentType{paymentType})
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get transaction count: %w", err)
+	}
+
+	return payments, total, nil
+}
+
+// GetUserCompletedWalletTransactions gets completed wallet transactions for a user
+func (s *UnifiedWalletService) GetUserCompletedWalletTransactions(userID uint, page, limit int) ([]models.Payment, int64, error) {
+	offset := (page - 1) * limit
+	
+	// Get completed wallet-related payments
+	payments, err := s.paymentService.GetPaymentsByUserAndTypeAndStatus(userID, []models.PaymentType{
+		models.PaymentTypeWalletRecharge,
+		models.PaymentTypeWalletDebit,
+	}, models.PaymentStatusCompleted, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get completed wallet transactions: %w", err)
+	}
+
+	// Get total count
+	total, err := s.paymentService.GetPaymentCountByUserAndTypeAndStatus(userID, []models.PaymentType{
+		models.PaymentTypeWalletRecharge,
+		models.PaymentTypeWalletDebit,
+	}, models.PaymentStatusCompleted)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get completed transaction count: %w", err)
 	}
 
 	return payments, total, nil

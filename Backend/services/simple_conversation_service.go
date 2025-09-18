@@ -31,7 +31,7 @@ func NewSimpleConversationService(
 
 // CreateConversation creates a new conversation
 func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleConversationRequest) (*models.SimpleConversation, error) {
-	logrus.Infof("SimpleConversationService.CreateConversation called with user_id: %d", req.UserID)
+	logrus.Infof("SimpleConversationService.CreateConversation called with user_1: %d, user_2: %d", req.User1, req.User2)
 
 	// Validate participants exist
 	if err := s.validateParticipants(req); err != nil {
@@ -39,11 +39,7 @@ func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleC
 	}
 
 	// Check if conversation already exists
-	existingConversation, err := s.conversationRepo.GetByParticipants(
-		req.UserID,
-		getUintPtr(req.WorkerID),
-		getUintPtr(req.AdminID),
-	)
+	existingConversation, err := s.conversationRepo.GetByParticipants(req.User1, req.User2)
 	if err == nil && existingConversation != nil {
 		logrus.Infof("SimpleConversationService.CreateConversation returning existing conversation ID: %d", existingConversation.ID)
 		return existingConversation, nil
@@ -51,9 +47,8 @@ func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleC
 
 	// Create new conversation
 	conversation := &models.SimpleConversation{
-		UserID:   req.UserID,
-		WorkerID: getUintPtr(req.WorkerID),
-		AdminID:  getUintPtr(req.AdminID),
+		User1: req.User1,
+		User2: req.User2,
 	}
 
 	conversation, err = s.conversationRepo.Create(conversation)
@@ -72,29 +67,10 @@ func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleC
 	logrus.Infof("SimpleConversationService.CreateConversation successfully created conversation ID: %d", conversation.ID)
 	
 	// Send notification about conversation started
-	// Determine the other participant to notify
-	var otherUserID uint
-	var otherUserName string
-	
-	if req.WorkerID != 0 {
-		otherUserID = req.WorkerID
-		// Get worker name
-		var worker models.User
-		if err := s.userRepo.FindByID(&worker, otherUserID); err == nil {
-			otherUserName = worker.Name
-		}
-	} else if req.AdminID != 0 {
-		otherUserID = req.AdminID
-		// Get admin name
-		var admin models.User
-		if err := s.userRepo.FindByID(&admin, otherUserID); err == nil {
-			otherUserName = admin.Name
-		}
-	}
-	
-	// Notify the other participant about conversation started
-	if otherUserID != 0 && otherUserName != "" {
-		go NotifyConversationStarted(otherUserID, otherUserName, 0) // 0 for booking ID since it's not a booking conversation
+	// Notify the other participant (user_2)
+	var otherUser models.User
+	if err := s.userRepo.FindByID(&otherUser, req.User2); err == nil {
+		go NotifyConversationStarted(req.User2, otherUser.Name, 0) // 0 for booking ID since it's not a booking conversation
 	}
 	
 	return conversation, nil
@@ -137,11 +113,11 @@ func (s *SimpleConversationService) GetUserConversations(userID uint, page, limi
 	return conversations, pagination, nil
 }
 
-// GetAllConversations gets all conversations (for admin)
-func (s *SimpleConversationService) GetAllConversations(page, limit int) ([]models.SimpleConversationWithUnreadCount, *repositories.Pagination, error) {
-	logrus.Infof("SimpleConversationService.GetAllConversations called")
+// GetAllConversations gets conversations where admin is a participant
+func (s *SimpleConversationService) GetAllConversations(adminID uint, page, limit int) ([]models.SimpleConversationWithUnreadCount, *repositories.Pagination, error) {
+	logrus.Infof("SimpleConversationService.GetAllConversations called for admin ID: %d", adminID)
 
-	conversations, pagination, err := s.conversationRepo.GetAllConversations(page, limit)
+	conversations, pagination, err := s.conversationRepo.GetAllConversations(adminID, page, limit)
 	if err != nil {
 		logrus.Errorf("SimpleConversationService.GetAllConversations failed: %v", err)
 		return nil, nil, err
@@ -179,6 +155,51 @@ func (s *SimpleConversationService) GetAllConversations(page, limit int) ([]mode
 	}
 
 	logrus.Infof("SimpleConversationService.GetAllConversations returning %d conversations", len(conversationsWithUnread))
+	return conversationsWithUnread, pagination, nil
+}
+
+// GetAllConversationsForOversight gets all conversations for admin oversight (excluding admin's conversations)
+func (s *SimpleConversationService) GetAllConversationsForOversight(adminID uint, page, limit int) ([]models.SimpleConversationWithUnreadCount, *repositories.Pagination, error) {
+	logrus.Infof("SimpleConversationService.GetAllConversationsForOversight called for admin ID: %d", adminID)
+
+	conversations, pagination, err := s.conversationRepo.GetAllConversationsForOversight(adminID, page, limit)
+	if err != nil {
+		logrus.Errorf("SimpleConversationService.GetAllConversationsForOversight failed: %v", err)
+		return nil, nil, err
+	}
+
+	// Convert to conversations with unread counts
+	var conversationsWithUnread []models.SimpleConversationWithUnreadCount
+
+	// Get unread counts for all conversations (admin view)
+	var unreadCounts map[uint]int64
+	if len(conversations) > 0 {
+		conversationIDs := make([]uint, len(conversations))
+		for i, conv := range conversations {
+			conversationIDs[i] = conv.ID
+		}
+
+		unreadCounts, err = s.messageRepo.GetConversationUnreadCountsForAdmin(conversationIDs)
+		if err != nil {
+			logrus.Errorf("SimpleConversationService.GetAllConversationsForOversight failed to get unread counts: %v", err)
+			// Don't fail the entire operation for this
+		}
+	}
+
+	// Convert conversations to include unread counts
+	for _, conv := range conversations {
+		unreadCount := int64(0)
+		if unreadCounts != nil {
+			unreadCount = unreadCounts[conv.ID]
+		}
+
+		conversationsWithUnread = append(conversationsWithUnread, models.SimpleConversationWithUnreadCount{
+			SimpleConversation: conv,
+			UnreadCount:        unreadCount,
+		})
+	}
+
+	logrus.Infof("SimpleConversationService.GetAllConversationsForOversight returning %d conversations", len(conversationsWithUnread))
 	return conversationsWithUnread, pagination, nil
 }
 
@@ -271,40 +292,38 @@ func (s *SimpleConversationService) SendMessage(senderID uint, conversationID ui
 			logrus.Infof("Calling BroadcastSimpleConversationMessage for conversation %d", conversationID)
 			s.wsService.BroadcastSimpleConversationMessage(conversationID, messageData)
 
-			// Broadcast total unread count to admin clients
-			// Get the admin ID from the conversation (assuming the admin is the one who should receive the count)
-			if conversation != nil && conversation.AdminID != nil {
-				totalUnreadCount, err := s.conversationRepo.GetAdminTotalUnreadCount(*conversation.AdminID)
-				if err != nil {
-					logrus.Errorf("Failed to get admin total unread count: %v", err)
-				} else {
-					s.wsService.BroadcastTotalUnreadCount(totalUnreadCount)
-				}
-
-				// Also broadcast individual conversation unread count
-				conversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, *conversation.AdminID)
-				if err != nil {
-					logrus.Errorf("Failed to get conversation unread count: %v", err)
-				} else {
-					s.wsService.BroadcastConversationUnreadCount(conversationID, int(conversationUnreadCount))
-				}
-			}
-
-			// Broadcast total unread count to user clients
+			// Broadcast total unread count to both users
 			if conversation != nil {
-				userTotalUnreadCount, err := s.conversationRepo.GetTotalUnreadCount(conversation.UserID)
+				// Broadcast to user_1
+				user1TotalUnreadCount, err := s.conversationRepo.GetTotalUnreadCount(conversation.User1)
 				if err != nil {
-					logrus.Errorf("Failed to get user total unread count: %v", err)
+					logrus.Errorf("Failed to get user_1 total unread count: %v", err)
 				} else {
-					s.wsService.BroadcastTotalUnreadCountToUserMonitors(userTotalUnreadCount)
+					s.wsService.BroadcastTotalUnreadCountToUserMonitors(user1TotalUnreadCount)
 				}
 
-				// Also broadcast individual conversation unread count to user
-				userConversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, conversation.UserID)
+				// Also broadcast individual conversation unread count to user_1
+				user1ConversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, conversation.User1)
 				if err != nil {
-					logrus.Errorf("Failed to get user conversation unread count: %v", err)
+					logrus.Errorf("Failed to get user_1 conversation unread count: %v", err)
 				} else {
-					s.wsService.BroadcastConversationUnreadCountToUserMonitors(conversationID, int(userConversationUnreadCount))
+					s.wsService.BroadcastConversationUnreadCountToUserMonitors(conversationID, int(user1ConversationUnreadCount))
+				}
+
+				// Broadcast to user_2
+				user2TotalUnreadCount, err := s.conversationRepo.GetTotalUnreadCount(conversation.User2)
+				if err != nil {
+					logrus.Errorf("Failed to get user_2 total unread count: %v", err)
+				} else {
+					s.wsService.BroadcastTotalUnreadCountToUserMonitors(user2TotalUnreadCount)
+				}
+
+				// Also broadcast individual conversation unread count to user_2
+				user2ConversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, conversation.User2)
+				if err != nil {
+					logrus.Errorf("Failed to get user_2 conversation unread count: %v", err)
+				} else {
+					s.wsService.BroadcastConversationUnreadCountToUserMonitors(conversationID, int(user2ConversationUnreadCount))
 				}
 			}
 		}()
@@ -383,7 +402,7 @@ func (s *SimpleConversationService) MarkConversationAsRead(conversationID uint, 
 	logrus.Infof("SimpleConversationService.MarkConversationAsRead called for conversation %d and user %d", conversationID, userID)
 
 	// Validate conversation exists
-	conversation, err := s.conversationRepo.GetByID(conversationID)
+	_, err := s.conversationRepo.GetByID(conversationID)
 	if err != nil {
 		return errors.New("conversation not found")
 	}
@@ -395,45 +414,6 @@ func (s *SimpleConversationService) MarkConversationAsRead(conversationID uint, 
 		return err
 	}
 
-	// Broadcast total unread count to admin clients
-	if s.wsService != nil && conversation.AdminID != nil {
-		go func() {
-			totalUnreadCount, err := s.conversationRepo.GetAdminTotalUnreadCount(*conversation.AdminID)
-			if err != nil {
-				logrus.Errorf("Failed to get admin total unread count: %v", err)
-			} else {
-				s.wsService.BroadcastTotalUnreadCount(totalUnreadCount)
-			}
-
-			// Also broadcast individual conversation unread count
-			conversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, *conversation.AdminID)
-			if err != nil {
-				logrus.Errorf("Failed to get conversation unread count: %v", err)
-			} else {
-				s.wsService.BroadcastConversationUnreadCount(conversationID, int(conversationUnreadCount))
-			}
-		}()
-	}
-
-	// Broadcast total unread count to user clients
-	if s.wsService != nil {
-		go func() {
-			userTotalUnreadCount, err := s.conversationRepo.GetTotalUnreadCount(conversation.UserID)
-			if err != nil {
-				logrus.Errorf("Failed to get user total unread count: %v", err)
-			} else {
-				s.wsService.BroadcastTotalUnreadCountToUserMonitors(userTotalUnreadCount)
-			}
-
-			// Also broadcast individual conversation unread count to user
-			userConversationUnreadCount, err := s.messageRepo.GetUnreadCount(conversationID, conversation.UserID)
-			if err != nil {
-				logrus.Errorf("Failed to get user conversation unread count: %v", err)
-			} else {
-				s.wsService.BroadcastConversationUnreadCountToUserMonitors(conversationID, int(userConversationUnreadCount))
-			}
-		}()
-	}
 
 	logrus.Infof("SimpleConversationService.MarkConversationAsRead completed successfully")
 	return nil
@@ -441,37 +421,21 @@ func (s *SimpleConversationService) MarkConversationAsRead(conversationID uint, 
 
 // validateParticipants validates that all participants exist
 func (s *SimpleConversationService) validateParticipants(req *models.CreateSimpleConversationRequest) error {
-	// Validate user exists
-	var user models.User
-	if err := s.userRepo.FindByID(&user, req.UserID); err != nil {
-		return errors.New("user not found")
+	// Validate user_1 exists
+	var user1 models.User
+	if err := s.userRepo.FindByID(&user1, req.User1); err != nil {
+		return errors.New("user_1 not found")
 	}
 
-	// Validate worker exists (if provided)
-	if req.WorkerID != 0 {
-		var worker models.User
-		if err := s.userRepo.FindByID(&worker, req.WorkerID); err != nil {
-			return errors.New("worker not found")
-		}
-		if worker.UserType != models.UserTypeWorker {
-			return errors.New("invalid worker")
-		}
+	// Validate user_2 exists
+	var user2 models.User
+	if err := s.userRepo.FindByID(&user2, req.User2); err != nil {
+		return errors.New("user_2 not found")
 	}
 
-	// Validate admin exists (if provided)
-	if req.AdminID != 0 {
-		var admin models.User
-		if err := s.userRepo.FindByID(&admin, req.AdminID); err != nil {
-			return errors.New("admin not found")
-		}
-		if admin.UserType != models.UserTypeAdmin {
-			return errors.New("invalid admin")
-		}
-	}
-
-	// At least one of worker or admin must be provided
-	if req.WorkerID == 0 && req.AdminID == 0 {
-		return errors.New("either worker_id or admin_id must be provided")
+	// Users cannot chat with themselves
+	if req.User1 == req.User2 {
+		return errors.New("users cannot chat with themselves")
 	}
 
 	return nil
@@ -480,15 +444,7 @@ func (s *SimpleConversationService) validateParticipants(req *models.CreateSimpl
 // validateConversationAccess validates if user has access to the conversation
 func (s *SimpleConversationService) validateConversationAccess(conversation *models.SimpleConversation, userID uint) error {
 	// Check if user is a participant in the conversation
-	if conversation.UserID == userID {
-		return nil
-	}
-	
-	if conversation.WorkerID != nil && *conversation.WorkerID == userID {
-		return nil
-	}
-	
-	if conversation.AdminID != nil && *conversation.AdminID == userID {
+	if conversation.User1 == userID || conversation.User2 == userID {
 		return nil
 	}
 

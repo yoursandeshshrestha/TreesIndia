@@ -211,6 +211,7 @@ export interface Booking {
   quote_provided_at?: string;
   quote_accepted_at?: string;
   quote_expires_at?: string;
+  quote_duration?: string;
 
   // Relationships
   user: User;
@@ -512,7 +513,7 @@ export const getAssignmentStatusColor = (status: AssignmentStatus): string => {
 
 // Optimized Response Types
 export interface OptimizedBookingResponse {
-  id: number;
+  ID: number;
   booking_reference: string;
   status: BookingStatus;
   payment_status: PaymentStatus;

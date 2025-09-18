@@ -111,7 +111,7 @@ const RecentBookings: React.FC<RecentBookingsProps> = ({
         <tbody>
           {bookings.map((booking) => (
             <tr
-              key={booking.id}
+              key={booking.ID}
               className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
             >
               <td className="py-3 px-4">

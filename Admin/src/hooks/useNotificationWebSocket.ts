@@ -141,7 +141,6 @@ export const useNotificationWebSocket = ({
               console.error("WebSocket error:", message.data);
               break;
             default:
-              console.log("Unknown WebSocket event:", message.event);
           }
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -169,9 +168,6 @@ export const useNotificationWebSocket = ({
           reconnectAttempts.current++;
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(
-              `Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`
-            );
             connect();
           }, delay);
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {

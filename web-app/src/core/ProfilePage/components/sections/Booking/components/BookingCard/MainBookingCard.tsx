@@ -10,6 +10,8 @@ import {
   User,
   Navigation,
   CreditCard,
+  MessageCircle,
+  FileText,
 } from "lucide-react";
 import type { Booking as ApiBooking } from "@/lib/bookingApi";
 import type { Booking as TypeBooking } from "@/types/booking";
@@ -18,6 +20,10 @@ import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
 import { useBookings } from "@/hooks/useBookings";
 import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
+import { useAppDispatch } from "@/store/hooks";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface MainBookingCardProps {
   booking: ApiBooking;
@@ -45,69 +51,67 @@ export function MainBookingCard({
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isSegmentsModalOpen, setIsSegmentsModalOpen] = useState(false);
 
-  // Get payment progress from bookings data
-  const { bookingsWithProgress } = useBookings();
+  // Redux and auth hooks
+  const dispatch = useAppDispatch();
+  const { user } = useAuth();
 
-  // Try multiple matching strategies
-  const bookingWithProgress = bookingsWithProgress.find((item) => {
-    // Primary match: ID comparison
-    if (item.booking.ID === booking.ID) {
-      return true;
-    }
-    // Fallback match: booking reference comparison
-    if (item.booking.booking_reference === booking.booking_reference) {
-      return true;
-    }
-    return false;
-  });
+  // Get payment segments directly from booking object (new structure)
+  const paymentSegments = booking.payment_segments || [];
 
-  // Use payment progress from matched booking, or fallback to booking's own data
-  const paymentProgress: PaymentProgress | null =
-    bookingWithProgress?.booking?.payment_progress || null;
+  // Calculate payment progress from segments
+  const calculatePaymentProgress = (
+    segments: PaymentSegmentInfo[]
+  ): PaymentProgress | null => {
+    if (!segments || segments.length === 0) return null;
 
-  // Debug: Log booking matching
-  if (booking.booking_reference === "BK20250906113000") {
-    console.log("Booking matching debug:", {
-      currentBookingId: booking.ID,
-      currentBookingRef: booking.booking_reference,
-      currentBookingStatus: booking.status,
-      foundBookingWithProgress: bookingWithProgress
-        ? {
-            id: bookingWithProgress.booking.ID,
-            ref: bookingWithProgress.booking.booking_reference,
-            status: bookingWithProgress.booking.status,
-            paymentProgress: bookingWithProgress.booking.payment_progress,
-          }
-        : null,
-      allBookings: bookingsWithProgress.map((b) => ({
-        id: b.booking.ID,
-        ref: b.booking.booking_reference,
-        status: b.booking.status,
-        paidSegments: b.booking.payment_progress?.paid_segments,
-        totalAmount: b.booking.payment_progress?.total_amount,
-        quoteAmount: b.booking.quote_amount,
-      })),
-    });
-  }
+    const totalAmount = segments.reduce(
+      (sum, segment) => sum + segment.amount,
+      0
+    );
+    const paidSegments = segments.filter(
+      (segment) => segment.status === "paid"
+    );
+    const paidAmount = paidSegments.reduce(
+      (sum, segment) => sum + segment.amount,
+      0
+    );
+    const remainingAmount = totalAmount - paidAmount;
+    const progressPercentage =
+      totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+
+    return {
+      total_amount: totalAmount,
+      paid_amount: paidAmount,
+      remaining_amount: remainingAmount,
+      total_segments: segments.length,
+      paid_segments: paidSegments.length,
+      remaining_segments: segments.length - paidSegments.length,
+      progress_percentage: progressPercentage,
+      segments: segments,
+    };
+  };
+
+  const paymentProgress = calculatePaymentProgress(paymentSegments);
 
   // Check if this booking has payment segments
-  const hasPaymentSegments =
-    paymentProgress && paymentProgress.segments.length > 0;
+  const hasPaymentSegments = paymentSegments.length > 0;
 
   // Check if there are pending segments to pay
-  const hasPendingSegments =
-    paymentProgress &&
-    paymentProgress.segments.some(
-      (segment: PaymentSegmentInfo) =>
-        segment.status === "pending" || segment.status === "overdue"
-    );
+  const hasPendingSegments = paymentSegments.some(
+    (segment: PaymentSegmentInfo) =>
+      segment.status === "pending" || segment.status === "overdue"
+  );
 
-  // Check if this is the first segment (no segments paid yet) and quote is accepted
+  // Check if this is a single segment (should show "Pay Now" and open quote acceptance modal)
+  const isSingleSegment = paymentSegments.length === 1;
+
+  // Check if this is the first segment of multiple segments (no segments paid yet) and quote is accepted
   const isFirstSegment =
     paymentProgress &&
     paymentProgress.paid_segments === 0 &&
     hasPendingSegments &&
-    booking.status === "quote_accepted";
+    booking.status === "quote_accepted" &&
+    !isSingleSegment;
 
   // Check if this is a next segment (some segments already paid) and booking is in progress
   const isNextSegment =
@@ -117,22 +121,6 @@ export function MainBookingCard({
     (booking.status === "quote_accepted" ||
       booking.status === "partially_paid" ||
       booking.status === "confirmed");
-
-  // Debug logging
-  if (booking.booking_reference === "BK20250906113000") {
-    console.log("Debug for BK20250906113000:", {
-      bookingId: booking.ID,
-      status: booking.status,
-      paymentProgress,
-      hasPaymentSegments,
-      isFirstSegment,
-      isNextSegment,
-      paidSegments: paymentProgress?.paid_segments,
-      totalSegments: paymentProgress?.total_segments,
-      dataSource: bookingWithProgress ? "matched_booking" : "booking_fallback",
-      bookingOwnPaymentProgress: null,
-    });
-  }
 
   const getStatusConfig = (
     status: string,
@@ -224,21 +212,18 @@ export function MainBookingCard({
           bgColor: "bg-blue-50",
         };
       case "assigned":
-        const workerName = booking?.worker_assignment?.worker?.name;
         return {
           icon: (
             <Image
               src="/icons/worker.png"
-              alt="Worker Assigned"
+              alt="Service Scheduled"
               width={40}
               height={40}
               className="w-10 h-10"
             />
           ),
-          text: workerName
-            ? `Worker assigned - ${workerName}`
-            : "Worker assigned",
-          subtitle: "Your service professional is on the way",
+          text: "Service Scheduled",
+          subtitle: "Your service is scheduled and ready",
           color: "text-blue-600",
           bgColor: "bg-blue-50",
         };
@@ -400,30 +385,24 @@ export function MainBookingCard({
     }
   };
 
-  const formatAddress = (addressString: string) => {
-    try {
-      const address = JSON.parse(addressString);
-      const addressName = address.name || "Home";
-      const addressText = `${address.address}, ${address.city}`;
-      return `${addressName} • ${addressText}`;
-    } catch {
-      return "Address not available";
-    }
+  const formatAddress = (address?: {
+    name: string;
+    address: string;
+    city: string;
+  }) => {
+    if (!address) return "Address not available";
+    const addressName = address.name || "Home";
+    const addressText = `${address.address}, ${address.city}`;
+    return `${addressName} • ${addressText}`;
   };
 
-  const formatContact = (contactPerson: string, contactPhone: string) => {
-    if (!contactPerson && !contactPhone)
-      return "Contact information not available";
-
-    if (contactPerson && contactPhone) {
-      return `${contactPerson} • ${contactPhone}`;
-    } else if (contactPerson) {
-      return contactPerson;
-    } else if (contactPhone) {
-      return contactPhone;
-    }
-
-    return "Contact information not available";
+  const formatContact = (contact?: {
+    person: string;
+    description: string;
+    special_instructions: string;
+  }) => {
+    if (!contact?.person) return "Contact information not available";
+    return contact.person;
   };
 
   const formatAmount = (amount: number) => {
@@ -442,34 +421,42 @@ export function MainBookingCard({
     ID: apiBooking.ID,
     booking_reference: apiBooking.booking_reference,
     status: apiBooking.status,
-    payment_status: apiBooking.payment_status,
-    booking_type: apiBooking.booking_type,
-    scheduled_date: apiBooking.scheduled_date || undefined,
-    scheduled_time: apiBooking.scheduled_time || undefined,
+    payment_status: apiBooking.payment_status || "",
+    booking_type: apiBooking.booking_type || "",
+    scheduled_date: apiBooking.scheduled_date || "",
+    scheduled_time: apiBooking.scheduled_time || "",
     total_amount: apiBooking.quote_amount || undefined,
-    address: apiBooking.address,
-    description: apiBooking.description,
-    CreatedAt: apiBooking.CreatedAt,
-    UpdatedAt: apiBooking.UpdatedAt,
+    address: apiBooking.address ? JSON.stringify(apiBooking.address) : "",
+    description: apiBooking.contact?.description || "",
+    CreatedAt: apiBooking.created_at || "",
+    UpdatedAt: apiBooking.updated_at || "",
     quote_amount: apiBooking.quote_amount || undefined,
     quote_notes: apiBooking.quote_notes || undefined,
     quote_provided_at: apiBooking.quote_provided_at || undefined,
     quote_accepted_at: apiBooking.quote_accepted_at || undefined,
     quote_expires_at: apiBooking.quote_expires_at || undefined,
-    payment_segments: undefined,
-    payment_progress: undefined,
-    contact_person: apiBooking.contact_person || undefined,
-    contact_phone: apiBooking.contact_phone || undefined,
+    payment_segments: apiBooking.payment_segments || undefined,
+    payment_progress: paymentProgress || undefined,
+    contact_person: apiBooking.contact?.person || undefined,
+    contact_phone: apiBooking.contact?.person || undefined,
     service: apiBooking.service
       ? {
-          id: apiBooking.service.id,
+          id: apiBooking.service.ID,
           name: apiBooking.service.name,
           price_type: apiBooking.service.price_type,
           price: apiBooking.service.price || undefined,
           duration: apiBooking.service.duration || undefined,
         }
       : undefined,
-    user: apiBooking.user,
+    user: apiBooking.user
+      ? {
+          id: apiBooking.user.ID,
+          ID: apiBooking.user.ID,
+          name: apiBooking.user.name,
+          phone: "",
+          user_type: apiBooking.user.user_type,
+        }
+      : undefined,
   });
 
   return (
@@ -492,19 +479,22 @@ export function MainBookingCard({
             </div>
           </div>
 
-          {/* Scheduled Date & Time - Prominent Display */}
-          <div className="rounded-lg mb-6">
-            <div className="flex items-center gap-2">
-              <div>
-                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                  Service Date
-                </div>
-                <div className="text-base font-semibold text-gray-900">
-                  {formatDate(booking.scheduled_date, booking.scheduled_time)}
+          {/* Scheduled Date & Time - Only show if scheduled or single payment */}
+          {booking.scheduled_date ||
+          !(booking.payment_segments && booking.payment_segments.length > 1) ? (
+            <div className="rounded-lg mb-6">
+              <div className="flex items-center gap-2">
+                <div>
+                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                    Service Date
+                  </div>
+                  <div className="text-base font-semibold text-gray-900">
+                    {formatDate(booking.scheduled_date, booking.scheduled_time)}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           {/* Key Details */}
           <div className="space-y-3">
@@ -533,18 +523,31 @@ export function MainBookingCard({
                 </span>
               </div>
             )}
+            {booking.quote_duration && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span>Service Duration: {booking.quote_duration}</span>
+              </div>
+            )}
+            {booking.quote_notes && (
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <FileText className="w-4 h-4 text-gray-500 mt-0.5" />
+                <span className="flex-1">
+                  <span className="font-medium">Quote Notes:</span>{" "}
+                  {booking.quote_notes}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <MapPin className="w-4 h-4 text-gray-500" />
               <span className="truncate max-w-[400px]">
                 {formatAddress(booking.address)}
               </span>
             </div>
-            {(booking.contact_person || booking.contact_phone) && (
+            {booking.contact?.person && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-500" />
-                <span>
-                  {formatContact(booking.contact_person, booking.contact_phone)}
-                </span>
+                <span>{formatContact(booking.contact)}</span>
               </div>
             )}
             {booking.worker_assignment?.worker &&
@@ -554,11 +557,11 @@ export function MainBookingCard({
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="w-4 h-4 text-gray-500" />
                   <span>
-                    Worker: {booking.worker_assignment.worker.name} (
-                    {booking.worker_assignment.worker.phone})
+                    Worker: {booking.worker_assignment.worker.name}{" "}
+                    {booking.worker_assignment.worker.phone || ""}
                   </span>
                   {booking.worker_assignment.status &&
-                    ["assigned", "accepted", "in_progress"].includes(
+                    ["accepted", "in_progress"].includes(
                       booking.worker_assignment.status
                     ) && (
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -623,8 +626,9 @@ export function MainBookingCard({
                   </>
                 )}
 
+              {/* Pay Now Button - Show for single segment or no segments */}
               {booking.status === "quote_accepted" &&
-                !hasPaymentSegments &&
+                (isSingleSegment || !hasPaymentSegments) &&
                 onPayNow && (
                   <button
                     onClick={() => onPayNow(booking)}
@@ -642,7 +646,7 @@ export function MainBookingCard({
                   </button>
                 )}
 
-              {/* Pay First Segment Button - Show if this is the first segment */}
+              {/* Pay First Segment Button - Show if this is the first segment of multiple segments */}
               {isFirstSegment && onPayNextSegment && (
                 <button
                   onClick={() => onPayNextSegment(booking)}
@@ -692,7 +696,11 @@ export function MainBookingCard({
                 "quote_provided",
                 "quote_accepted",
               ].includes(booking.status) &&
-                onCancel && (
+                onCancel &&
+                // Don't show cancel button if worker has accepted the assignment
+                !["accepted", "in_progress"].includes(
+                  booking.worker_assignment?.status || ""
+                ) && (
                   <button
                     onClick={() => onCancel(booking)}
                     className="w-full px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
@@ -712,21 +720,6 @@ export function MainBookingCard({
                 </div>
               )}
 
-              {["cancelled", "rejected"].includes(booking.status) && (
-                <div className="text-center">
-                  <div className="text-sm text-red-600 mb-2">
-                    {booking.status === "cancelled"
-                      ? "Booking Cancelled"
-                      : "Quote Rejected"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {booking.status === "cancelled"
-                      ? "This booking has been cancelled"
-                      : "The quote has been rejected"}
-                  </div>
-                </div>
-              )}
-
               {/* Location Tracking Button - Show for in_progress bookings */}
               {booking.worker_assignment?.status === "in_progress" && (
                 <button
@@ -739,6 +732,57 @@ export function MainBookingCard({
                   </div>
                 </button>
               )}
+
+              {/* Communication Icons - Bottom of Right Side */}
+              {booking.worker_assignment?.worker &&
+                ["accepted", "in_progress"].includes(
+                  booking.worker_assignment.status
+                ) && (
+                  <div className="mt-auto pt-4 border-t border-gray-200">
+                    <div className="text-center text-xs text-gray-500 mb-2">
+                      Quick Actions
+                    </div>
+                    <div className="flex gap-6 justify-center">
+                      <button
+                        onClick={() => {
+                          // TODO: Implement phone call functionality
+                          console.log(
+                            "Phone call clicked for worker:",
+                            booking.worker_assignment?.worker?.name
+                          );
+                        }}
+                        className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
+                        title="Call Worker"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (
+                            booking.worker_assignment?.worker?.ID &&
+                            user?.id
+                          ) {
+                            dispatch(
+                              openChatModalWithUser({
+                                user_id: user.id,
+                                worker_id: booking.worker_assignment.worker.ID,
+                              })
+                            );
+                          } else {
+                            toast.error(
+                              "Unable to start chat - missing user information"
+                            );
+                          }
+                        }}
+                        className="p-2 text-gray-800 hover:text-gray-600 transition-colors"
+                        title="Chat with Worker"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
             </div>
           )}
         </div>
@@ -746,7 +790,7 @@ export function MainBookingCard({
 
       {/* Location Tracking Modal */}
       {booking.worker_assignment?.status === "in_progress" &&
-        booking.worker_assignment?.ID && (
+        booking.worker_assignment?.worker_id && (
           <LocationTrackingModal
             isOpen={isLocationModalOpen}
             onClose={() => setIsLocationModalOpen(false)}

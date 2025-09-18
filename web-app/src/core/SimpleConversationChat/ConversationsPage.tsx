@@ -44,7 +44,7 @@ export const ConversationsPage: React.FC = () => {
               </h3>
               <p className="text-gray-500 max-w-md">
                 Select a conversation from the sidebar to start chatting with
-                workers or admins.
+                workers, admins, or other users.
               </p>
             </div>
           </div>

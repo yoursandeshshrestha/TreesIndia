@@ -1,19 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { paySegment } from "@/lib/bookingApi";
-import {
-  BookingWithPaymentProgress,
-  CreateSegmentPaymentRequest,
-} from "@/types/booking";
+import { CreateSegmentPaymentRequest } from "@/types/booking";
+import type { Booking } from "@/lib/bookingApi";
 
 export function usePaymentSegments(bookingId?: number) {
   const queryClient = useQueryClient();
 
   // Get payment progress from cached booking data
   const cachedBookings = queryClient.getQueryData<{
-    bookings: BookingWithPaymentProgress[];
+    bookings: Booking[];
   }>(["userBookings"]);
   const cachedBooking = cachedBookings?.bookings?.find(
-    (item) => item.booking.ID === bookingId || item.booking.id === bookingId
+    (booking) => booking?.ID === bookingId
   );
 
   // Pay segment mutation
@@ -35,7 +33,7 @@ export function usePaymentSegments(bookingId?: number) {
   });
 
   return {
-    paymentProgress: cachedBooking?.booking?.payment_progress || null,
+    paymentProgress: null, // Payment progress not available in new API response format
     isLoadingSegments: false, // No loading since data comes from cache
     segmentsError: null,
     refetchSegments: () => {

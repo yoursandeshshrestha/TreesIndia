@@ -19,6 +19,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 
 interface RentalPropertiesContentProps {
   properties: Property[];
@@ -48,7 +49,7 @@ export function RentalPropertiesContent({
   selectedFurnishingStatus, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: RentalPropertiesContentProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const dispatch = useAppDispatch();
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("Relevance");
@@ -83,6 +84,20 @@ export function RentalPropertiesContent({
     } else {
       router.push("/marketplace/properties/create");
     }
+  };
+
+  const handleChatClick = (property: Property) => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: property.user_id,
+      })
+    );
   };
 
   const sortOptions = [
@@ -330,7 +345,11 @@ export function RentalPropertiesContent({
             onClick={() => handlePropertyClick(property.ID)}
             className="cursor-pointer"
           >
-            <HorizontalPropertyCard property={property} />
+            <HorizontalPropertyCard
+              property={property}
+              onChatClick={handleChatClick}
+              currentUserId={user?.id}
+            />
           </div>
         ))}
       </div>

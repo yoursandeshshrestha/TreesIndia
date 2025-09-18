@@ -31,12 +31,10 @@ class NotificationWebSocketService {
 
     try {
       const wsUrl = `ws://localhost:8080/api/v1/in-app-notifications/ws?token=${token}`;
-      console.log("Connecting to notification WebSocket:", wsUrl);
 
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log("Notification WebSocket connected");
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.startPing();
@@ -46,19 +44,11 @@ class NotificationWebSocketService {
       this.ws.onmessage = (event) => {
         try {
           const message: NotificationWebSocketMessage = JSON.parse(event.data);
-          console.log("Notification WebSocket message received:", message);
           this.handleMessage(message);
-        } catch (error) {
-          console.error("Error parsing notification WebSocket message:", error);
-        }
+        } catch (error) {}
       };
 
       this.ws.onclose = (event) => {
-        console.log(
-          "Notification WebSocket disconnected:",
-          event.code,
-          event.reason
-        );
         this.isConnecting = false;
         this.ws = null;
         this.stopPing();
@@ -70,15 +60,10 @@ class NotificationWebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error("Notification WebSocket error:", error);
         this.isConnecting = false;
         notificationStore.setError("WebSocket connection error");
       };
     } catch (error) {
-      console.error(
-        "Failed to create notification WebSocket connection:",
-        error
-      );
       this.isConnecting = false;
       notificationStore.setError("Failed to connect to WebSocket");
     }
@@ -105,7 +90,6 @@ class NotificationWebSocketService {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn("WebSocket is not connected. Cannot send message:", message);
     }
   }
 
@@ -148,23 +132,17 @@ class NotificationWebSocketService {
         break;
 
       default:
-        console.log("Unknown notification WebSocket event:", message.event);
     }
   }
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log("Max reconnection attempts reached");
       notificationStore.setError("Connection lost. Please refresh the page.");
       return;
     }
 
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
     this.reconnectAttempts++;
-
-    console.log(
-      `Scheduling reconnection attempt ${this.reconnectAttempts} in ${delay}ms`
-    );
 
     this.reconnectTimeout = setTimeout(() => {
       if (this.token) {

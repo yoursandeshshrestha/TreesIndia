@@ -154,10 +154,10 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
   const getOtherParticipant = () => {
     if (!conversation) return null;
 
-    if (conversation.user.ID === currentUser?.id) {
-      return conversation.worker || conversation.admin;
+    if (conversation.user_1_data.ID === currentUser?.id) {
+      return conversation.user_2_data;
     } else {
-      return conversation.user;
+      return conversation.user_1_data;
     }
   };
 
@@ -249,15 +249,59 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
                   }`}
                 >
                   <div className="max-w-xs lg:max-w-md">
+                    {/* Sender info */}
+                    <div
+                      className={`flex items-center space-x-2 mb-1 ${
+                        message.sender_id === currentUser?.id
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      {message.sender_id !== currentUser?.id && (
+                        <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {(
+                            message.sender?.name ||
+                            message.sender?.phone ||
+                            "U"
+                          )
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                      <span
+                        className={`text-xs font-medium ${
+                          message.sender_id === currentUser?.id
+                            ? "text-blue-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {message.sender_id === currentUser?.id
+                          ? "You"
+                          : message.sender?.name ||
+                            message.sender?.phone ||
+                            "Unknown User"}
+                      </span>
+                      {message.sender_id === currentUser?.id && (
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {(currentUser?.name || currentUser?.phone || "Y")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Message bubble */}
                     <div
                       className={`rounded-lg px-4 py-2 ${
                         message.sender_id === currentUser?.id
                           ? "bg-blue-500 text-white"
-                          : "bg-white shadow-sm"
+                          : "bg-white shadow-sm border border-gray-200"
                       }`}
                     >
                       <p className="text-sm">{message.message}</p>
                     </div>
+
+                    {/* Timestamp */}
                     <p
                       className={`text-xs text-gray-500 mt-1 ${
                         message.sender_id === currentUser?.id

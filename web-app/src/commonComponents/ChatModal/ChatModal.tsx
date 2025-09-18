@@ -12,9 +12,7 @@ import {
 } from "@/core/SimpleConversationChat/ConversationsList";
 import { SimpleConversationChat } from "@/core/SimpleConversationChat/SimpleConversationChat";
 import { SimpleConversation } from "@/lib/simpleConversationApi";
-import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
 import { conversationStore } from "@/utils/conversationStore";
-import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
 
 export default function ChatModal() {
   const dispatch = useAppDispatch();
@@ -26,15 +24,7 @@ export default function ChatModal() {
   const conversationsListRef = useRef<ConversationsListRef>(null);
   const hasCreatedConversationRef = useRef(false);
 
-  // WebSocket connection for real-time updates
-  useConversationWebSocket({
-    onMessage: () => {
-      // Message handling is done through the global store
-    },
-    onStatusUpdate: () => {
-      // Handle status updates if needed
-    },
-  });
+  // Note: WebSocket connection is now handled globally in GlobalWebSocketProvider
 
   // Handle conversation creation when modal opens with a user
   useEffect(() => {
@@ -70,9 +60,8 @@ export default function ChatModal() {
     }
   }, [
     isOpen,
-    createConversationWithUser?.user_id,
-    createConversationWithUser?.worker_id,
-    createConversationWithUser?.admin_id,
+    createConversationWithUser?.user_1,
+    createConversationWithUser?.user_2,
   ]);
 
   // Handle preselected conversation

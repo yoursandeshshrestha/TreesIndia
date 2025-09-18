@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { playSound } from "@/utils/soundUtils";
 
 interface WebSocketMessage {
   event: string;
@@ -83,9 +82,6 @@ export const useSimpleConversationWebSocket = ({
         setConnectionError(null);
         reconnectAttempts.current = 0;
 
-        // Play connection established sound
-        playSound("connection_established");
-
         // Start ping interval to keep connection alive
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -121,11 +117,6 @@ export const useSimpleConversationWebSocket = ({
 
       ws.onclose = (event) => {
         setIsConnected(false);
-
-        // Play connection lost sound if it wasn't a normal closure
-        if (event.code !== 1000) {
-          playSound("connection_lost");
-        }
 
         // Clear ping interval
         if (pingIntervalRef.current) {

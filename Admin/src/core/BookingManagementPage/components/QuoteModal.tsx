@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Textarea from "@/components/Textarea/Base/Textarea";
+import DurationPicker from "@/components/DurationPicker";
 import { PaymentSegmentManager } from "@/components/PaymentSegment";
 import {
   OptimizedBookingResponse,
@@ -28,6 +29,7 @@ export default function QuoteModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     notes: "",
+    duration: "", // Service duration for single segment quotes
   });
   const [segments, setSegments] = useState<PaymentSegmentRequest[]>([
     { amount: 0, notes: "" },
@@ -66,9 +68,10 @@ export default function QuoteModal({
           : undefined,
       }));
 
-      await apiClient.post(`/admin/bookings/${booking.id}/provide-quote`, {
+      await apiClient.post(`/admin/bookings/${booking.ID}/provide-quote`, {
         notes: formData.notes,
         segments: formattedSegments,
+        duration: formData.duration || undefined, // Only send if duration is provided
       });
 
       toast.success("Quote provided successfully");
@@ -166,6 +169,27 @@ export default function QuoteModal({
                   rows={3}
                 />
               </div>
+
+              {/* Service Duration - Only show for single segment quotes */}
+              {segments.length === 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Service Duration (Optional)
+                  </label>
+                  <DurationPicker
+                    value={formData.duration}
+                    onChange={(duration) =>
+                      handleInputChange("duration", duration)
+                    }
+                    placeholder="Select service duration"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Specify the duration to help calculate accurate time slot
+                    availability
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Payment Segments */}

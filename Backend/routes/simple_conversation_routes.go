@@ -34,7 +34,8 @@ func SetupSimpleConversationRoutes(router *gin.RouterGroup, conversationService 
 	adminConversations := router.Group("/admin/conversations")
 	adminConversations.Use(middleware.AuthMiddleware())
 	{
-		adminConversations.GET("", conversationController.GetAllConversations)              // Get all conversations (admin only)
+		adminConversations.GET("", conversationController.GetAllConversations)              // Get admin's conversations
+		adminConversations.GET("/oversight", conversationController.GetAllConversationsForOversight) // Get all conversations for oversight
 		adminConversations.POST("", conversationController.CreateConversation)              // Admin create conversation
 		adminConversations.POST("/:id/messages", conversationController.SendMessage)       // Admin send message
 		adminConversations.GET("/unread-count/total", conversationController.GetAdminTotalUnreadCount) // Get admin total unread count

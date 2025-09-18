@@ -50,10 +50,17 @@ export interface StopTrackingMessage extends WebSocketMessage {
 // Location update messages
 export interface LocationUpdateWebSocketMessage extends WebSocketMessage {
   type: "location_update";
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  status: string;
+  data?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    status: string;
+  };
+  // Legacy support for flat structure
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
+  status?: string;
 }
 
 // Tracking status messages

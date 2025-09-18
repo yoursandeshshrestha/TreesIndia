@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useVendors, useVendorStats } from "@/hooks/useVendors";
 import { useProfile } from "@/hooks/useProfile";
 import { VendorFilters } from "@/types/vendor";
@@ -19,9 +19,15 @@ export default function VendorsPage() {
   );
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // First, fetch user profile to check subscription status
   const { userProfile, isLoadingProfile } = useProfile();
+
+  // Fix hydration issues by ensuring client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Check if user has active subscription
   const hasActiveSubscription = userProfile?.subscription?.status === "active";
@@ -42,8 +48,8 @@ export default function VendorsPage() {
     : [];
   const pagination = response?.data?.pagination;
 
-  // Show loading state while checking profile
-  if (isLoadingProfile) {
+  // Show loading state while checking profile or during hydration
+  if (!isClient || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

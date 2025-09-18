@@ -38,7 +38,7 @@ import {
   useProcessWalletPayment,
 } from "@/hooks/useBookingFlow";
 import { usePaymentSegments } from "@/hooks/usePaymentSegments";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 export function useQuoteAcceptanceRedux(
   onSuccess?: () => void,
@@ -65,13 +65,18 @@ export function useQuoteAcceptanceRedux(
   // Wallet and API hooks
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
   const { data: bookingConfigData } = useBookingConfig();
+  const serviceId = booking?.service?.id || booking?.service?.ID || 0;
+  // Get quote duration for availability calculation
+  const quoteDuration = booking?.quote_duration;
+
   const { data: availableSlotsData, isLoading: isLoadingSlots } =
     useAvailableSlots(
-      booking?.service?.id || 0,
+      serviceId,
       selectedDate || "",
-      !!selectedDate && !!booking?.service?.id
+      !!selectedDate && !!serviceId,
+      quoteDuration // Pass quote duration for accurate availability
     );
-  const { bookingsWithProgress } = useBookings();
+  // Note: No longer need bookingsWithProgress since payment_segments are in booking object
 
   const createQuotePaymentMutation = useCreateQuotePayment();
   const verifyQuotePaymentMutation = useVerifyQuotePayment();
@@ -83,8 +88,19 @@ export function useQuoteAcceptanceRedux(
     ? generateDateOptions(bookingConfigData.data)
     : [];
   const availableSlots = availableSlotsData?.data?.available_slots || [];
+  // Calculate the amount to be paid for wallet disabled check
+  const getPaymentAmount = () => {
+    const paymentSegments = booking?.payment_segments || [];
+    if (paymentSegments.length > 0) {
+      // For segmented payments, check against the first segment amount
+      return paymentSegments[0]?.amount || 0;
+    }
+    // For single payment, use quote amount
+    return booking?.quote_amount || 0;
+  };
+
   const isWalletDisabled =
-    (walletSummary?.current_balance || 0) < (booking?.quote_amount || 0);
+    (walletSummary?.current_balance || 0) < getPaymentAmount();
   const isProcessing =
     createQuotePaymentMutation.isPending ||
     verifyQuotePaymentMutation.isPending ||
@@ -130,6 +146,13 @@ export function useQuoteAcceptanceRedux(
     [dispatch]
   );
 
+  // Auto-deselect wallet payment method if it becomes disabled
+  useEffect(() => {
+    if (selectedPaymentMethod === "wallet" && isWalletDisabled) {
+      handleSetSelectedPaymentMethod(null);
+    }
+  }, [selectedPaymentMethod, isWalletDisabled, handleSetSelectedPaymentMethod]);
+
   const handleSetError = useCallback(
     (errorMessage: string | null) => {
       dispatch(setError(errorMessage));
@@ -166,7 +189,14 @@ export function useQuoteAcceptanceRedux(
   // Business logic handlers
   const handleDateSelect = useCallback(
     async (date: string) => {
-      if (!booking?.service?.id) {
+      // Check if service exists and has required information
+      const serviceId = booking?.service?.id || booking?.service?.ID;
+      if (!serviceId) {
+        console.error("Service information missing:", {
+          booking: booking,
+          service: booking?.service,
+          serviceId: serviceId,
+        });
         handleSetError("Service information not available");
         return;
       }
@@ -174,12 +204,7 @@ export function useQuoteAcceptanceRedux(
       handleSetSelectedDate(date);
       handleClearError();
     },
-    [
-      booking?.service?.id,
-      handleSetError,
-      handleSetSelectedDate,
-      handleClearError,
-    ]
+    [serviceId, handleSetError, handleSetSelectedDate, handleClearError]
   );
 
   const handleTimeSlotSelect = useCallback(
@@ -199,13 +224,8 @@ export function useQuoteAcceptanceRedux(
 
   const handleProceedToPayment = useCallback(async () => {
     // Check if this is multiple segments (no date/time selection required)
-    const bookingWithProgress = bookingsWithProgress.find(
-      (item) =>
-        item.booking.ID === booking?.ID || item.booking.id === booking?.ID
-    );
-    const paymentProgress = bookingWithProgress?.booking?.payment_progress;
-    const hasMultipleSegments =
-      paymentProgress && paymentProgress.segments.length > 1;
+    const paymentSegments = booking?.payment_segments || [];
+    const hasMultipleSegments = paymentSegments.length > 1;
 
     if (
       !booking ||
@@ -234,12 +254,18 @@ export function useQuoteAcceptanceRedux(
             },
           });
         } else {
+          // For single segment, use the first segment amount
+          const paymentAmount =
+            paymentSegments.length > 0
+              ? paymentSegments[0].amount
+              : booking.quote_amount || 0;
+
           await processWalletPaymentMutation.mutateAsync({
             bookingId,
             paymentData: {
               scheduled_date: selectedDate!,
               scheduled_time: selectedTimeSlot!.time,
-              amount: booking.quote_amount || 0,
+              amount: paymentAmount,
             },
           });
         }
@@ -266,12 +292,18 @@ export function useQuoteAcceptanceRedux(
             onClose?.();
           }, 2000);
         } else {
+          // For single segment, use the first segment amount
+          const paymentAmount =
+            paymentSegments.length > 0
+              ? paymentSegments[0].amount
+              : booking.quote_amount || 0;
+
           const response = await createQuotePaymentMutation.mutateAsync({
             bookingId,
             paymentData: {
               scheduled_date: selectedDate!,
               scheduled_time: selectedTimeSlot!.time,
-              amount: booking.quote_amount || 0,
+              amount: paymentAmount,
             },
           });
 
@@ -302,7 +334,6 @@ export function useQuoteAcceptanceRedux(
     selectedDate,
     selectedTimeSlot,
     selectedPaymentMethod,
-    bookingsWithProgress,
     handleSetError,
     handleClearError,
     processWalletPaymentMutation,

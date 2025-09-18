@@ -64,6 +64,11 @@ func (qs *QuoteService) ProvideQuote(bookingID uint, adminID uint, req *models.P
 	booking.QuoteProvidedBy = &adminID
 	booking.QuoteProvidedAt = &now
 	booking.Status = models.BookingStatusQuoteProvided
+	
+	// Set quote duration if provided (for single segment quotes)
+	if req.Duration != nil && *req.Duration != "" {
+		booking.QuoteDuration = req.Duration
+	}
 
 	// 5. Create payment segments
 	err = qs.createPaymentSegments(bookingID, req.Segments)
@@ -79,6 +84,28 @@ func (qs *QuoteService) ProvideQuote(bookingID uint, adminID uint, req *models.P
 
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
+	
+	// Send quote provided notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification
+				quote := &models.Quote{
+					ID:         booking.ID, // Using booking ID as quote ID
+					Amount:     segmentsTotal,
+					ValidUntil: time.Now().Add(7 * 24 * time.Hour), // 7 days validity
+				}
+				NotifyQuoteProvided(quote, booking, &user, &service)
+			}
+		}
+	}()
 	
 	logrus.Infof("Quote provided for booking %d: amount=%.2f, admin=%d", bookingID, segmentsTotal, adminID)
 	return booking, nil
@@ -179,6 +206,27 @@ func (qs *QuoteService) AcceptQuote(bookingID uint, userID uint, req *models.Acc
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
 	
+	// Send quote accepted notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification
+				quote := &models.Quote{
+					ID:     booking.ID, // Using booking ID as quote ID
+					Amount: *booking.QuoteAmount,
+				}
+				NotifyQuoteAccepted(quote, booking, &user, &service)
+			}
+		}
+	}()
+	
 	logrus.Infof("Quote accepted for booking %d by user %d", bookingID, userID)
 	return booking, nil
 }
@@ -222,6 +270,27 @@ func (qs *QuoteService) RejectQuote(bookingID uint, userID uint, req *models.Rej
 
 	// Calculate payment progress before returning
 	booking.GetPaymentProgress()
+	
+	// Send quote rejected notification
+	go func() {
+		// Get user and service details for notification
+		var user models.User
+		err := qs.userRepo.FindByID(&user, booking.UserID)
+		if err == nil {
+			// Get service details
+			var service models.Service
+			serviceRepo := repositories.NewServiceRepository()
+			err = serviceRepo.FindByID(&service, booking.ServiceID)
+			if err == nil {
+				// Create quote object for notification (using previous quote amount if available)
+				quote := &models.Quote{
+					ID:     booking.ID, // Using booking ID as quote ID
+					Amount: 0, // Amount cleared when rejected
+				}
+				NotifyQuoteRejected(quote, booking, &user, &service)
+			}
+		}
+	}()
 	
 	logrus.Infof("Quote rejected for booking %d by user %d: reason=%s", bookingID, userID, req.Reason)
 	return booking, nil
@@ -406,22 +475,34 @@ func (qs *QuoteService) CreateQuotePayment(bookingID uint, userID uint, req *mod
 			return nil, errors.New("scheduled date and time are required for single segment payments")
 		}
 
-		// Parse scheduled date and time
-		scheduledDate, err := time.Parse("2006-01-02", *req.ScheduledDate)
-		if err != nil {
-			return nil, errors.New("invalid scheduled date format")
-		}
+	// Parse scheduled date and time
+	scheduledDate, err := time.Parse("2006-01-02", *req.ScheduledDate)
+	if err != nil {
+		return nil, errors.New("invalid scheduled date format")
+	}
 
-		scheduledTime, err := time.Parse("15:04", *req.ScheduledTime)
+	// Log the received scheduled time for debugging
+	logrus.Infof("CreateQuotePayment: Received scheduled_time=%s", *req.ScheduledTime)
+	
+	scheduledTime, err := time.Parse("15:04", *req.ScheduledTime)
+	if err != nil {
+		return nil, errors.New("invalid scheduled time format")
+	}
+	
+	// Log the parsed scheduled time for debugging
+	logrus.Infof("CreateQuotePayment: Parsed scheduled_time=%v", scheduledTime)
+
+		// Use IST timezone to be consistent with the rest of the system
+		istLocation, err := time.LoadLocation("Asia/Kolkata")
 		if err != nil {
-			return nil, errors.New("invalid scheduled time format")
+			istLocation = time.FixedZone("IST", 5*60*60+30*60) // UTC+5:30 as fallback
 		}
 
 		// Combine date and time
 		scheduledDateTime := time.Date(
 			scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 			scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
-			scheduledDate.Location(),
+			istLocation,
 		)
 
 		// Validate scheduled time is in the future
@@ -458,6 +539,10 @@ func (qs *QuoteService) VerifyQuotePayment(bookingID uint, userID uint, req *mod
 		return nil, errors.New("quote has not been accepted")
 	}
 
+	// Log the current scheduled date/time for debugging
+	logrus.Infof("VerifyQuotePayment: Current booking scheduled_date=%v, scheduled_time=%v (retrieved from database)", 
+		booking.ScheduledDate, booking.ScheduledTime)
+
 		// 4. Find the most recent payment record for this booking
 	paymentRepo := repositories.NewPaymentRepository()
 	payments, _, err := paymentRepo.GetPayments(&models.PaymentFilters{
@@ -481,7 +566,13 @@ func (qs *QuoteService) VerifyQuotePayment(bookingID uint, userID uint, req *mod
 	booking.Status = models.BookingStatusConfirmed
 	booking.PaymentStatus = "completed"
 
-	// 7. Update booking
+	// 7. The scheduled date/time should already be set from the CreateQuotePayment step
+	// We just need to ensure the booking is updated with the correct status
+	// Log the current scheduled date/time for debugging
+	logrus.Infof("VerifyQuotePayment: Final booking scheduled_date=%v, scheduled_time=%v (after payment verification)", 
+		booking.ScheduledDate, booking.ScheduledTime)
+
+	// 8. Update booking
 	err = qs.bookingRepo.Update(booking)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update booking: %v", err)
@@ -654,6 +745,9 @@ func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *m
 		return nil, errors.New("scheduled date and time are required for single segment payments")
 	}
 	
+	// Log the received scheduled time for debugging
+	logrus.Infof("processSinglePayment: Received scheduled_time=%s", *req.ScheduledTime)
+	
 	scheduledDate, err := time.Parse("2006-01-02", *req.ScheduledDate)
 	if err != nil {
 		return nil, errors.New("invalid scheduled date format")
@@ -664,10 +758,19 @@ func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *m
 		return nil, errors.New("invalid scheduled time format")
 	}
 	
+	// Log the parsed scheduled time for debugging
+	logrus.Infof("processSinglePayment: Parsed scheduled_time=%v", scheduledTime)
+	
+	// Use IST timezone to be consistent with the rest of the system
+	istLocation, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		istLocation = time.FixedZone("IST", 5*60*60+30*60) // UTC+5:30 as fallback
+	}
+	
 	scheduledDateTime := time.Date(
 		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
 		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
-		scheduledDate.Location(),
+		istLocation,
 	)
 	
 	booking, err := qs.bookingRepo.GetByID(bookingID)
@@ -679,6 +782,10 @@ func (qs *QuoteService) processSinglePayment(bookingID uint, userID uint, req *m
 	booking.ScheduledDate = &scheduledDate
 	booking.ScheduledTime = &scheduledDateTime
 	// Don't update status or payment_status here - that should happen in VerifyQuotePayment
+	
+	// Log the scheduled date/time being set
+	logrus.Infof("processSinglePayment: Setting scheduled_date=%v, scheduled_time=%v (IST timezone)", 
+		booking.ScheduledDate, booking.ScheduledTime)
 	
 	err = qs.bookingRepo.Update(booking)
 	if err != nil {
@@ -825,30 +932,75 @@ func (qs *QuoteService) CreateSegmentPayment(bookingID uint, userID uint, req *m
 		return nil, errors.New("payment amount does not match segment amount")
 	}
 
-	// Process payment using existing logic
-	paymentService := NewPaymentService()
-	
-	paymentReq := &models.CreatePaymentRequest{
-		UserID:            userID,
-		Amount:            req.Amount,
-		Currency:          "INR",
-		Type:              "booking",
-		Method:            "razorpay",
-		RelatedEntityType: "booking",
-		RelatedEntityID:   bookingID,
-		Description:       fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
-		Notes:             fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
-	}
-	
-	_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create payment order: %v", err)
-	}
+	// Handle different payment methods
+	if req.PaymentMethod == "wallet" {
+		// Process wallet payment
+		walletService := NewUnifiedWalletService()
+		
+		description := fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber)
+		payment, err := walletService.DeductFromWalletForBooking(userID, req.Amount, bookingID, description)
+		if err != nil {
+			return nil, fmt.Errorf("wallet payment failed: %v", err)
+		}
 
-	return map[string]interface{}{
-		"payment_order": paymentOrder,
-		"segment":       segment,
-	}, nil
+		// Mark segment as paid
+		err = qs.paymentSegmentRepo.MarkAsPaid(segment.ID, payment.ID)
+		if err != nil {
+			logrus.Errorf("Failed to mark segment as paid: %v", err)
+			return nil, fmt.Errorf("failed to mark segment as paid: %v", err)
+		}
+
+		// Update segment status
+		segment.Status = models.PaymentSegmentStatusPaid
+		segment.PaymentID = &payment.ID
+		now := time.Now()
+		segment.PaidAt = &now
+		err = qs.paymentSegmentRepo.Update(segment)
+		if err != nil {
+			logrus.Errorf("Failed to update segment: %v", err)
+		}
+
+		// Update booking payment status if all segments are paid
+		booking, err := qs.bookingRepo.GetByID(bookingID)
+		if err == nil {
+			paymentProgress := booking.GetPaymentProgress()
+			if paymentProgress != nil && paymentProgress.RemainingSegments == 0 {
+				booking.PaymentStatus = "completed"
+				qs.bookingRepo.Update(booking)
+			}
+		}
+
+		return map[string]interface{}{
+			"success": true,
+			"payment": payment,
+			"segment": segment,
+		}, nil
+	} else {
+		// Process Razorpay payment (existing logic)
+		paymentService := NewPaymentService()
+		
+		paymentReq := &models.CreatePaymentRequest{
+			UserID:            userID,
+			Amount:            req.Amount,
+			Currency:          "INR",
+			Type:              "booking",
+			Method:            "razorpay",
+			RelatedEntityType: "booking",
+			RelatedEntityID:   bookingID,
+			Description:       fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+			Notes:             fmt.Sprintf("Segment %d payment for booking", segment.SegmentNumber),
+		}
+		
+		_, paymentOrder, err := paymentService.CreateRazorpayOrder(paymentReq)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create payment order: %v", err)
+		}
+
+		return map[string]interface{}{
+			"payment_order": paymentOrder,
+			"segment":       segment,
+		}, nil
+	}
 }
 
 // VerifySegmentPayment verifies payment for a specific segment

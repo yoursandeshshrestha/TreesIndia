@@ -350,6 +350,16 @@ func (ps *PaymentService) GetTotalAmountByUserAndType(userID uint, paymentType m
 	return ps.paymentRepo.GetTotalAmountByUserIDAndType(userID, paymentType)
 }
 
+// GetPaymentsByUserAndTypeAndStatus gets payments for a user by type(s) and status
+func (ps *PaymentService) GetPaymentsByUserAndTypeAndStatus(userID uint, paymentTypes []models.PaymentType, status models.PaymentStatus, limit, offset int) ([]models.Payment, error) {
+	return ps.paymentRepo.GetByUserIDAndTypesAndStatus(userID, paymentTypes, status, limit, offset)
+}
+
+// GetPaymentCountByUserAndTypeAndStatus gets payment count for a user by type(s) and status
+func (ps *PaymentService) GetPaymentCountByUserAndTypeAndStatus(userID uint, paymentTypes []models.PaymentType, status models.PaymentStatus) (int64, error) {
+	return ps.paymentRepo.GetCountByUserIDAndTypesAndStatus(userID, paymentTypes, status)
+}
+
 // generatePaymentReference generates a unique payment reference
 func (ps *PaymentService) generatePaymentReference() string {
 	timestamp := time.Now().Format("20060102")
@@ -530,9 +540,5 @@ func (ps *PaymentService) sendPaymentNotifications(payment *models.Payment) {
 		logrus.Errorf("Failed to send payment received notification to admin: %v", err)
 	}
 
-	// Send notification to user about payment confirmation
-	err = notificationService.NotifyPaymentConfirmation(payment, &user)
-	if err != nil {
-		logrus.Errorf("Failed to send payment confirmation notification to user: %v", err)
-	}
+	// Payment confirmation notification removed as per user request
 }

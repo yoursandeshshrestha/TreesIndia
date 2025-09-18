@@ -22,7 +22,6 @@ export function useSubscriptions() {
       setIsLoading(true);
       setError(null);
       const response = await apiClient.get("/subscription-plans");
-      console.log("Subscription API response:", response.data);
 
       // Handle different response structures
       let subscriptionsData = [];

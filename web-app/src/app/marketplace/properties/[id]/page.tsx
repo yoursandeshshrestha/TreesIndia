@@ -2,6 +2,10 @@
 
 import { useParams } from "next/navigation";
 import { usePropertyById, useProperties } from "@/hooks/useProperties";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import {
   ArrowLeft,
   MapPin,
@@ -14,6 +18,7 @@ import {
   Shield,
   Clock,
   Home,
+  MessageCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -23,6 +28,8 @@ import PropertyCard from "@/commonComponents/PropertyCard/PropertyCard";
 export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
+  const dispatch = useAppDispatch();
 
   // Safely parse the property ID with validation
   const propertyIdParam = params.id as string;
@@ -166,6 +173,23 @@ export default function PropertyDetailPage() {
         return age.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
     }
   };
+
+  const handleChatClick = () => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: property.user_id,
+      })
+    );
+  };
+
+  // Check if current user is the same as the property owner
+  const isCurrentUserOwner = user && user.id === property.user_id;
 
   return (
     <div className="min-h-screen  py-8">
@@ -432,9 +456,15 @@ export default function PropertyDetailPage() {
                     </button>
                   )}
 
-                  <button className="w-full border border-green-600 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors">
-                    Send Message
-                  </button>
+                  {!isCurrentUserOwner && (
+                    <button
+                      className="w-full border border-green-600 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors flex items-center justify-center"
+                      onClick={handleChatClick}
+                    >
+                      <MessageCircle className="w-3 h-3 mr-2" />
+                      Send Message
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -472,6 +502,8 @@ export default function PropertyDetailPage() {
             city={property.city}
             state={property.state}
             listingType={property.listing_type}
+            onChatClick={handleChatClick}
+            currentUserId={user?.id}
           />
         </div>
       </div>
@@ -485,11 +517,15 @@ function RelatedPropertiesSection({
   city,
   state,
   listingType,
+  onChatClick,
+  currentUserId,
 }: {
   currentPropertyId: number;
   city: string;
   state: string;
   listingType: "sale" | "rent";
+  onChatClick?: (property: any) => void;
+  currentUserId?: number;
 }) {
   const router = useRouter();
 
@@ -573,6 +609,8 @@ function RelatedPropertiesSection({
             onClick={() =>
               router.push(`/marketplace/properties/${relatedProperty.ID}`)
             }
+            onChatClick={onChatClick}
+            currentUserId={currentUserId}
             className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
           />
         ))}

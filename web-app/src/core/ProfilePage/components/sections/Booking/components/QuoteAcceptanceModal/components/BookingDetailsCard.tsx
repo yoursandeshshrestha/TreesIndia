@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, MapPin, Clock, CreditCard } from "lucide-react";
+import { Phone, MapPin, Clock, CreditCard, FileText } from "lucide-react";
 import { Booking } from "@/lib/bookingApi";
 import { AvailableSlot } from "@/types/booking";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
@@ -49,7 +49,9 @@ export default function BookingDetailsCard({
           <p className="font-semibold text-gray-900 text-sm">
             Send booking details to
           </p>
-          <p className="text-gray-600 text-sm mt-1">{booking.contact_phone}</p>
+          <p className="text-gray-600 text-sm mt-1">
+            {booking.contact?.person}
+          </p>
         </div>
       </div>
 
@@ -63,13 +65,41 @@ export default function BookingDetailsCard({
           <div className="mt-1">
             <p className="text-gray-600 text-xs">
               <span className="text-gray-900 font-medium">
-                {getAddressName(JSON.parse(booking.address))}
+                {booking.address?.name || "Home"}
               </span>{" "}
-              - {getAddressDetails(JSON.parse(booking.address))}
+              - {booking.address?.address}, {booking.address?.city}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Quote Information */}
+      {booking.quote_duration && (
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <Clock className="w-4 h-4 text-gray-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-900 text-sm">
+              Service Duration
+            </p>
+            <p className="text-gray-600 text-sm mt-1">
+              {booking.quote_duration}
+            </p>
+          </div>
+        </div>
+      )}
+      {booking.quote_notes && (
+        <div className="flex items-start gap-3 mb-4 pb-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <FileText className="w-4 h-4 text-gray-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-900 text-sm">Quote Notes</p>
+            <p className="text-gray-600 text-sm mt-1">{booking.quote_notes}</p>
+          </div>
+        </div>
+      )}
 
       {/* Slot Selection - Only show for single segment bookings */}
       {!hasMultipleSegments && (

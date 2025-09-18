@@ -1,0 +1,162 @@
+"use client";
+
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
+import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
+import { conversationStore } from "@/utils/conversationStore";
+import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
+
+interface GlobalWebSocketContextType {
+  isConversationConnected: boolean;
+  isNotificationConnected: boolean;
+  conversationError: string | null;
+  notificationError: string | null;
+  totalUnreadCount: number;
+}
+
+const GlobalWebSocketContext = createContext<GlobalWebSocketContextType | null>(
+  null
+);
+
+export const useGlobalWebSocket = () => {
+  const context = useContext(GlobalWebSocketContext);
+  if (!context) {
+    throw new Error(
+      "useGlobalWebSocket must be used within a GlobalWebSocketProvider"
+    );
+  }
+  return context;
+};
+
+interface GlobalWebSocketProviderProps {
+  children: React.ReactNode;
+}
+
+export const GlobalWebSocketProvider: React.FC<
+  GlobalWebSocketProviderProps
+> = ({ children }) => {
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
+    useState<number | null>(null);
+
+  // Global conversation WebSocket connection
+  const {
+    isConnected: isConversationConnected,
+    connectionError: conversationError,
+  } = useConversationWebSocket({
+    onMessage: (data: any) => {
+      // Emit message updates to conversation store for other components
+      conversationStore.emitUpdate(data);
+    },
+    onTotalUnreadCount: (count: number) => {
+      setTotalUnreadCount(count);
+      conversationStore.setCurrentUnreadCount(count);
+    },
+    onConversationUnreadCount: (conversationId: number, count: number) => {
+      // Emit conversation unread count updates to conversation store
+      conversationStore.emitConversationUnreadCountUpdate(
+        conversationId,
+        count
+      );
+    },
+  });
+
+  // Global notification WebSocket connection
+  const {
+    isConnected: isNotificationConnected,
+    connectionError: notificationError,
+  } = useNotificationWebSocket({
+    onNewNotification: () => {
+      // New notification will be handled by the store automatically
+    },
+    onUnreadCountUpdate: () => {
+      // Unread count updates will be handled by the store automatically
+    },
+    onAllNotificationsRead: () => {
+      // All notifications read will be handled by the store automatically
+    },
+  });
+
+  // Load total unread count using the dedicated API
+  const loadTotalUnreadCount = async () => {
+    try {
+      const response = await getTotalUnreadCount();
+      setTotalUnreadCount(response.total_unread_count);
+      conversationStore.setCurrentUnreadCount(response.total_unread_count);
+    } catch (error) {
+      console.error("Failed to load unread count:", error);
+    }
+  };
+
+  // Load total unread count on component mount
+  useEffect(() => {
+    loadTotalUnreadCount();
+  }, []);
+
+  // Listen for open conversation changes to adjust total count
+  useEffect(() => {
+    const unsubscribeOpenConversation =
+      conversationStore.subscribeToOpenConversation((conversationId) => {
+        setCurrentlyOpenConversationId(conversationId);
+      });
+
+    return () => {
+      unsubscribeOpenConversation();
+    };
+  }, []);
+
+  // Listen for read status updates to reload total count
+  useEffect(() => {
+    const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
+      (conversationId) => {
+        // Reload total unread count when a conversation is marked as read
+        loadTotalUnreadCount();
+      }
+    );
+
+    const unsubscribeConversationList =
+      conversationStore.subscribeToConversationList((conversations) => {
+        // Calculate total unread count excluding currently open conversation
+        const filteredCount = conversations.reduce((total, conv) => {
+          if (conv.id !== currentlyOpenConversationId) {
+            return total + (conv.unread_count || 0);
+          }
+          return total;
+        }, 0);
+        setTotalUnreadCount(filteredCount);
+      });
+
+    const unsubscribeConversationUnreadCount =
+      conversationStore.subscribeToConversationUnreadCount(() => {
+        // When individual conversation unread count changes, reload total count
+        // This ensures real-time updates
+        loadTotalUnreadCount();
+      });
+
+    const unsubscribeTotalUnreadCount =
+      conversationStore.subscribeToTotalUnreadCount((count) => {
+        setTotalUnreadCount(count);
+      });
+
+    return () => {
+      unsubscribeReadStatus();
+      unsubscribeConversationList();
+      unsubscribeConversationUnreadCount();
+      unsubscribeTotalUnreadCount();
+    };
+  }, [currentlyOpenConversationId]);
+
+  const contextValue: GlobalWebSocketContextType = {
+    isConversationConnected,
+    isNotificationConnected,
+    conversationError,
+    notificationError,
+    totalUnreadCount,
+  };
+
+  return (
+    <GlobalWebSocketContext.Provider value={contextValue}>
+      {children}
+    </GlobalWebSocketContext.Provider>
+  );
+};

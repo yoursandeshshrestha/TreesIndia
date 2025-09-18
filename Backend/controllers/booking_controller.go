@@ -245,6 +245,7 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 
 	serviceIDStr := c.Query("service_id")
 	date := c.Query("date")
+	duration := c.Query("duration") // Optional custom duration
 
 	if serviceIDStr == "" || date == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "service_id and date are required"})
@@ -257,10 +258,15 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 		return
 	}
 
-
-
 	availabilityService := services.NewAvailabilityService()
-	availableSlots, err := availabilityService.GetAvailableSlots(uint(serviceID), date, "")
+	
+	// Use custom duration if provided, otherwise use service default
+	var customDuration *string
+	if duration != "" {
+		customDuration = &duration
+	}
+	
+	availableSlots, err := availabilityService.GetAvailableSlotsWithDuration(uint(serviceID), date, "", customDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get available slots", "details": err.Error()})
 		return
@@ -362,19 +368,14 @@ func (bc *BookingController) GetUserBookings(c *gin.Context) {
 		return
 	}
 
-	// Calculate payment progress for each booking
-	bookingsWithProgress := make([]gin.H, len(bookings))
+	// Convert to optimized responses (privacy protected - no worker phone numbers)
+	optimizedBookings := make([]*models.OptimizedBookingResponse, len(bookings))
 	for i, booking := range bookings {
-		// Calculate payment progress and set it on the booking object
-		booking.GetPaymentProgress()
-		
-		bookingsWithProgress[i] = gin.H{
-			"booking": booking,
-		}
+		optimizedBookings[i] = bc.bookingService.ConvertToUserOptimizedBookingResponse(&booking)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"bookings":   bookingsWithProgress,
+		"bookings":   optimizedBookings,
 		"pagination": pagination,
 	})
 }

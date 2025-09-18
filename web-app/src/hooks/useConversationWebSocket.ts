@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { conversationStore } from "@/utils/conversationStore";
 
 interface WebSocketMessage {
   event: string;
@@ -8,7 +7,6 @@ interface WebSocketMessage {
 }
 
 interface UseConversationWebSocketProps {
-  enabled?: boolean;
   onMessage?: (message: unknown) => void;
   onStatusUpdate?: (status: unknown) => void;
   onTotalUnreadCount?: (count: number) => void;
@@ -16,7 +14,6 @@ interface UseConversationWebSocketProps {
 }
 
 export const useConversationWebSocket = ({
-  enabled = true,
   onMessage,
   onStatusUpdate,
   onTotalUnreadCount,
@@ -53,7 +50,7 @@ export const useConversationWebSocket = ({
   }, [onConversationUnreadCount]);
 
   const connect = useCallback(() => {
-    if (!enabled || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
@@ -95,6 +92,9 @@ export const useConversationWebSocket = ({
         // Send a test message to verify connection
         ws.send(JSON.stringify({ event: "test_connection" }));
 
+        // Request conversations data
+        ws.send(JSON.stringify({ event: "get_conversations" }));
+
         // Start ping interval to keep connection alive
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -105,77 +105,48 @@ export const useConversationWebSocket = ({
 
       ws.onmessage = (event) => {
         try {
-          const message: WebSocketMessage = JSON.parse(event.data);
+          const data: WebSocketMessage = JSON.parse(event.data);
 
-          if (
-            message.event === "conversation_message" ||
-            message.event === "new_conversation_message"
-          ) {
-            // Handle new message
-            if (onMessageRef.current) {
-              onMessageRef.current(message);
-            }
-            // Emit to global store for other components
-            conversationStore.emitUpdate(
-              message as unknown as {
-                event: string;
-                conversation_id: number;
-                message: {
-                  id: number;
-                  message: string;
-                  created_at: string;
-                  sender_id: number;
-                  sender?: { user_type: string };
-                };
+          switch (data.event) {
+            case "conversation_message":
+            case "new_conversation_message":
+              if (data.data && onMessageRef.current) {
+                onMessageRef.current(data.data);
               }
-            );
-          } else if (message.event === "conversation_read") {
-            // Handle read status update
-            conversationStore.emitReadStatusUpdate(
-              (message as unknown as { conversation_id: number })
-                .conversation_id
-            );
-          } else if (message.event === "total_unread_count") {
-            // Handle total unread count update from backend
-            if (message.data && onTotalUnreadCountRef.current) {
-              const countData = message.data as { total_unread_count: number };
-              onTotalUnreadCountRef.current(countData.total_unread_count);
-            }
-            // Also emit to global store
-            if (message.data) {
-              const countData = message.data as { total_unread_count: number };
-              conversationStore.emitTotalUnreadCountUpdate(
-                countData.total_unread_count
-              );
-            }
-          } else if (message.event === "conversation_unread_count") {
-            // Handle individual conversation unread count update
-            if (message.data && onConversationUnreadCountRef.current) {
-              const countData = message.data as {
-                conversation_id: number;
-                unread_count: number;
-              };
-              onConversationUnreadCountRef.current(
-                countData.conversation_id,
-                countData.unread_count
-              );
-            }
-            // Also emit to global store
-            if (message.data) {
-              const countData = message.data as {
-                conversation_id: number;
-                unread_count: number;
-              };
-              // Emit conversation unread count update to global store
-              conversationStore.emitConversationUnreadCountUpdate(
-                countData.conversation_id,
-                countData.unread_count
-              );
-            }
-          } else if (message.event === "pong") {
-            // Handle pong response
-          } else if (message.event === "test_connection_response") {
-            // Handle test connection response
+              break;
+            case "conversation_status":
+              if (onStatusUpdateRef.current) {
+                onStatusUpdateRef.current(data.data);
+              }
+              break;
+            case "total_unread_count":
+              if (data.data && onTotalUnreadCountRef.current) {
+                const countData = data.data as { total_unread_count: number };
+                onTotalUnreadCountRef.current(countData.total_unread_count);
+              }
+              break;
+            case "conversation_unread_count":
+              if (data.data && onConversationUnreadCountRef.current) {
+                const countData = data.data as {
+                  conversation_id: number;
+                  unread_count: number;
+                };
+                onConversationUnreadCountRef.current(
+                  countData.conversation_id,
+                  countData.unread_count
+                );
+              }
+              break;
+            case "conversations_data":
+              // Handle conversations data response
+              break;
+            case "pong":
+              // Handle pong response
+              break;
+            case "test_connection_response":
+              break;
+            default:
+              console.log("Unknown WebSocket event:", data.event);
           }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
@@ -196,13 +167,16 @@ export const useConversationWebSocket = ({
           event.code !== 1000 &&
           reconnectAttempts.current < maxReconnectAttempts
         ) {
-          reconnectAttempts.current++;
           const delay = Math.min(
             1000 * Math.pow(2, reconnectAttempts.current),
             30000
           );
+          reconnectAttempts.current++;
 
           reconnectTimeoutRef.current = setTimeout(() => {
+            console.log(
+              `Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`
+            );
             connect();
           }, delay);
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {
@@ -210,12 +184,14 @@ export const useConversationWebSocket = ({
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
         setConnectionError("WebSocket connection error");
       };
 
       wsRef.current = ws;
-    } catch {
+    } catch (error) {
+      console.error("Failed to create WebSocket connection:", error);
       setConnectionError("Failed to create WebSocket connection");
     }
   }, []);
@@ -232,7 +208,7 @@ export const useConversationWebSocket = ({
     }
 
     if (wsRef.current) {
-      wsRef.current.close(1000, "Component unmounting");
+      wsRef.current.close(1000, "Client disconnecting");
       wsRef.current = null;
     }
 
@@ -241,23 +217,26 @@ export const useConversationWebSocket = ({
     reconnectAttempts.current = 0;
   }, []);
 
-  // Connect on mount and when enabled changes
-  useEffect(() => {
-    if (enabled) {
-      connect();
+  const sendMessage = useCallback((message: Record<string, unknown>) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
     } else {
-      disconnect();
+      console.warn("WebSocket is not connected");
     }
+  }, []);
 
+  // Connect on mount, disconnect on unmount
+  useEffect(() => {
+    connect();
     return () => {
       disconnect();
     };
-  }, [enabled, connect, disconnect]);
+  }, [connect, disconnect]);
 
   return {
     isConnected,
     connectionError,
-    connect,
-    disconnect,
+    sendMessage,
+    reconnect: connect,
   };
 };

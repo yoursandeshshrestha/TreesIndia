@@ -7,16 +7,14 @@ CREATE TABLE IF NOT EXISTS simple_conversations (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
-    user_id BIGINT NOT NULL,
-    worker_id BIGINT,
-    admin_id BIGINT,
+    user_1 BIGINT NOT NULL,
+    user_2 BIGINT NOT NULL,
     last_message_id BIGINT,
     last_message_text TEXT,
     last_message_created_at TIMESTAMPTZ,
     last_message_sender_id BIGINT,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (worker_id) REFERENCES users(id),
-    FOREIGN KEY (admin_id) REFERENCES users(id),
+    FOREIGN KEY (user_1) REFERENCES users(id),
+    FOREIGN KEY (user_2) REFERENCES users(id),
     FOREIGN KEY (last_message_sender_id) REFERENCES users(id)
 );
 
@@ -41,9 +39,8 @@ ADD CONSTRAINT fk_simple_conversations_last_message
 FOREIGN KEY (last_message_id) REFERENCES simple_conversation_messages(id);
 
 -- Indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_simple_conversations_user_id ON simple_conversations(user_id);
-CREATE INDEX IF NOT EXISTS idx_simple_conversations_worker_id ON simple_conversations(worker_id);
-CREATE INDEX IF NOT EXISTS idx_simple_conversations_admin_id ON simple_conversations(admin_id);
+CREATE INDEX IF NOT EXISTS idx_simple_conversations_user_1 ON simple_conversations(user_1);
+CREATE INDEX IF NOT EXISTS idx_simple_conversations_user_2 ON simple_conversations(user_2);
 CREATE INDEX IF NOT EXISTS idx_simple_conversations_last_message_id ON simple_conversations(last_message_id);
 CREATE INDEX IF NOT EXISTS idx_simple_conversation_messages_conversation_id ON simple_conversation_messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_simple_conversation_messages_sender_id ON simple_conversation_messages(sender_id);

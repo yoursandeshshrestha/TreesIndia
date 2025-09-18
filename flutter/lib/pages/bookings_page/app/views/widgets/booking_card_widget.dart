@@ -815,36 +815,9 @@ class BookingCardWidget extends ConsumerWidget {
       ];
     }
 
-    // Cancelled/Rejected - show status message
+    // Cancelled/Rejected - no longer show status message
     if (['cancelled', 'rejected'].contains(status)) {
-      return [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          decoration: BoxDecoration(
-            color: AppColors.stateRed50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.stateRed200),
-          ),
-          child: Column(
-            children: [
-              B3Medium(
-                text: status == 'cancelled'
-                    ? 'Booking Cancelled'
-                    : 'Quote Rejected',
-                color: AppColors.stateRed600,
-              ),
-              const SizedBox(height: 4),
-              B4Regular(
-                text: status == 'cancelled'
-                    ? 'This booking has been cancelled'
-                    : 'The quote has been rejected',
-                color: AppColors.brandNeutral500,
-              ),
-            ],
-          ),
-        ),
-      ];
+      return [];
     }
 
     // Add Track Worker Location button for in_progress bookings

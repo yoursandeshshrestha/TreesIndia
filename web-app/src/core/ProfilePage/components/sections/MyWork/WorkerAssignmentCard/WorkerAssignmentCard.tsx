@@ -148,8 +148,12 @@ export function WorkerAssignmentCard({
         return "In Progress";
       case "completed":
         return "Completed";
+      case "rejected":
+        return "Rejected";
+      case "reserved":
+        return "Reserved";
       default:
-        return "Unknown";
+        return status.charAt(0).toUpperCase() + status.slice(1); // Capitalize first letter
     }
   };
 
@@ -163,6 +167,10 @@ export function WorkerAssignmentCard({
         return "bg-yellow-100 text-yellow-800";
       case "completed":
         return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "reserved":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -178,6 +186,10 @@ export function WorkerAssignmentCard({
         return "Work is currently in progress";
       case "completed":
         return "Work has been completed";
+      case "rejected":
+        return "Assignment was rejected";
+      case "reserved":
+        return "Assignment is reserved";
       default:
         return "Assignment status unknown";
     }
@@ -226,10 +238,7 @@ export function WorkerAssignmentCard({
 
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <User className="w-4 h-4 text-gray-500" />
-              <span>
-                Customer: {assignment.booking?.user?.name || "N/A"} (
-                {assignment.booking?.user?.phone || "N/A"})
-              </span>
+              <span>Customer: {assignment.booking?.user?.name || "N/A"}</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-600">

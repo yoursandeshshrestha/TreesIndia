@@ -7,6 +7,7 @@ import { VendorCard } from "@/commonComponents/VendorCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import {
   ChevronLeft,
   ChevronRight,
@@ -48,7 +49,7 @@ export function VendorsContent({
   selectedServices,
 }: VendorsContentProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const dispatch = useAppDispatch();
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("Relevance");
@@ -82,6 +83,26 @@ export function VendorsContent({
       dispatch(openAuthModal({ redirectTo: "/marketplace/vendors/create" }));
     } else {
       router.push("/marketplace/vendors/create");
+    }
+  };
+
+  const handleChatClick = (vendor: Vendor) => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: vendor.user_id,
+      })
+    );
+  };
+
+  const handleCallClick = (vendor: Vendor) => {
+    if (vendor.contact_person_phone) {
+      window.open(`tel:${vendor.contact_person_phone}`);
     }
   };
 
@@ -285,6 +306,9 @@ export function VendorsContent({
             key={vendor.ID || vendor.id}
             vendor={vendor}
             onClick={handleVendorClick}
+            onChatClick={handleChatClick}
+            onCallClick={handleCallClick}
+            currentUserId={user?.id}
           />
         ))}
       </div>

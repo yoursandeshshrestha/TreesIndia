@@ -7,6 +7,7 @@ import { ProjectCard } from "@/commonComponents/ProjectCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import { ChevronDown, Plus } from "lucide-react";
 import { LoadingSpinner } from "@/commonComponents/LoadingSpinner";
 
@@ -41,7 +42,7 @@ export function ProjectsContent({
   selectedStatuses,
 }: ProjectsContentProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const dispatch = useAppDispatch();
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("Relevance");
@@ -76,6 +77,20 @@ export function ProjectsContent({
     } else {
       router.push("/marketplace/projects/create");
     }
+  };
+
+  const handleChatClick = (project: Project) => {
+    if (!isAuthenticated || !user) {
+      dispatch(openAuthModal());
+      return;
+    }
+
+    dispatch(
+      openChatModalWithUser({
+        user_1: user.id,
+        user_2: project.user_id,
+      })
+    );
   };
 
   const sortOptions = [
@@ -316,6 +331,8 @@ export function ProjectsContent({
             key={project.ID || project.id}
             project={project}
             onClick={handleProjectClick}
+            onChatClick={handleChatClick}
+            currentUserId={user?.id}
           />
         ))}
       </div>

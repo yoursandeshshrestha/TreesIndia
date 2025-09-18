@@ -6,9 +6,8 @@ const API_BASE_URL =
 // Simple Conversation Types
 export interface SimpleConversation {
   id: number;
-  user_id: number;
-  worker_id: number | null;
-  admin_id: number | null;
+  user_1: number;
+  user_2: number;
   is_active: boolean;
   last_message_at: string | null;
   created_at: string;
@@ -18,21 +17,14 @@ export interface SimpleConversation {
   last_message_text?: string;
   last_message_created_at?: string;
   last_message_sender_id?: number;
-  user: {
+  user_1_data: {
     ID: number;
     name: string;
     user_type: string;
     avatar?: string;
     phone?: string;
   };
-  worker?: {
-    ID: number;
-    name: string;
-    user_type: string;
-    avatar?: string;
-    phone?: string;
-  };
-  admin?: {
+  user_2_data: {
     ID: number;
     name: string;
     user_type: string;
@@ -91,9 +83,8 @@ export interface SimpleMessageResponse {
 }
 
 export interface CreateConversationRequest {
-  user_id: number;
-  worker_id?: number;
-  admin_id?: number;
+  user_1: number;
+  user_2: number;
 }
 
 export interface SendMessageRequest {

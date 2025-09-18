@@ -98,8 +98,8 @@ export function WorkersContent({
 
     dispatch(
       openChatModalWithUser({
-        user_id: user.id,
-        worker_id: worker.user_id,
+        user_1: user.id,
+        user_2: worker.user_id,
       })
     );
   };
@@ -256,6 +256,7 @@ export function WorkersContent({
               worker={worker}
               onClick={() => handleWorkerClick(worker)}
               onChatClick={() => handleChatClick(worker)}
+              currentUserId={user?.id}
             />
           ))}
         </div>

@@ -54,8 +54,9 @@ type PaymentSegmentRequest struct {
 
 // CreateSegmentPaymentRequest represents the request to create payment for a specific segment
 type CreateSegmentPaymentRequest struct {
-	SegmentNumber int     `json:"segment_number" binding:"required,min=1"`
-	Amount        float64 `json:"amount" binding:"required,min=0"`
+	SegmentNumber  int     `json:"segment_number" binding:"required,min=1"`
+	Amount         float64 `json:"amount" binding:"required,min=0"`
+	PaymentMethod  string  `json:"payment_method" binding:"required,oneof=razorpay wallet"`
 }
 
 // VerifySegmentPaymentRequest represents the request to verify segment payment

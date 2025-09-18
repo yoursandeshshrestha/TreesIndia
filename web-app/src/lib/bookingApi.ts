@@ -2,7 +2,6 @@ import { authenticatedFetch } from "./auth-api";
 import {
   PaymentSegmentInfo,
   CreateSegmentPaymentRequest,
-  BookingWithPaymentProgress,
 } from "@/types/booking";
 
 const API_BASE_URL =
@@ -11,7 +10,7 @@ const API_BASE_URL =
 // Booking API functions for my-bookings functionality
 
 export interface UserBookingsResponse {
-  bookings: BookingWithPaymentProgress[];
+  bookings: Booking[];
   pagination: {
     page: number;
     limit: number;
@@ -35,136 +34,94 @@ export interface BookingAddress {
 
 export interface Booking {
   ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt: string | null;
   booking_reference: string;
-  user_id: number;
-  service_id: number;
   status: string;
-  payment_status: string;
   booking_type: string;
-  completion_type: string | null;
-  scheduled_date: string | null;
-  scheduled_time: string | null;
-  scheduled_end_time: string | null;
+  payment_status?: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  scheduled_end_time: string;
   actual_start_time: string | null;
   actual_end_time: string | null;
   actual_duration_minutes: number | null;
-  address: string; // JSON string that needs to be parsed
-  description: string;
-  contact_person: string;
-  contact_phone: string;
-  special_instructions: string;
   hold_expires_at: string | null;
-  quote_amount: number | null;
-  quote_notes: string;
-  quote_provided_by: number | null;
-  quote_provided_at: string | null;
-  quote_accepted_at: string | null;
-  quote_expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Quote-related fields
+  quote_amount?: number;
+  quote_notes?: string;
+  quote_provided_at?: string;
+  quote_accepted_at?: string;
+  quote_expires_at?: string;
+  quote_duration?: string;
+
+  // Payment segments (new structure)
+  payment_segments?: PaymentSegmentInfo[];
+
+  // Payment progress (for backward compatibility)
+  payment_progress?: {
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    total_segments: number;
+    paid_segments: number;
+    remaining_segments: number;
+    progress_percentage: number;
+    segments: PaymentSegmentInfo[];
+  };
 
   service?: {
-    id: number;
+    ID: number;
     name: string;
-    slug: string;
-    description: string;
-    images: string[] | null;
     price_type: string;
-    price: number | null;
-    duration: string | null;
-    category_id: number;
-    subcategory_id: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-    deleted_at: string | null;
+    price: number;
+    duration: string;
   };
 
   user?: {
     ID: number;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt: string | null;
     name: string;
-    email: string | null;
-    phone: string;
     user_type: string;
-    avatar: string;
-    gender: string;
-    is_active: boolean;
-    last_login_at: string | null;
-    role_application_status: string;
-    application_date: string | null;
-    approval_date: string | null;
-    wallet_balance: number;
-    subscription_id: number | null;
-    subscription: Record<string, unknown> | null;
-    has_active_subscription: boolean;
-    subscription_expiry_date: string | null;
-    notification_settings: Record<string, unknown> | null;
+  };
+
+  address?: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    postal_code: string;
+    latitude: number;
+    longitude: number;
+    landmark: string;
+    house_number: string;
+  };
+
+  contact?: {
+    person: string;
+    description: string;
+    special_instructions: string;
   };
 
   payment?: {
-    ID: number;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt: string | null;
-    payment_reference: string;
-    user_id: number;
+    status: string;
     amount: number;
     currency: string;
-    status: string;
-    type: string;
-    method: string;
-    related_entity_type: string;
-    related_entity_id: number;
+    payment_method: string;
     razorpay_order_id: string;
     razorpay_payment_id: string;
-    razorpay_signature: string;
-    initiated_at: string;
-    completed_at: string | null;
-    failed_at: string | null;
-    refunded_at: string | null;
-    balance_after: number | null;
-    refund_amount: number | null;
-    refund_reason: string | null;
-    refund_method: string | null;
-    description: string;
-    notes: string;
-    metadata: Record<string, unknown>;
-    user: Record<string, unknown>;
+    created_at: string;
   };
 
   worker_assignment?: {
-    ID?: number;
-    CreatedAt?: string;
-    UpdatedAt?: string;
-    DeletedAt?: string | null;
-    booking_id?: number;
-    worker_id?: number;
-    assigned_by?: number;
-    status?: string;
-    assigned_at?: string;
-    accepted_at?: string | null;
-    rejected_at?: string | null;
-    started_at?: string | null;
-    completed_at?: string | null;
-    assignment_notes?: string;
-    acceptance_notes?: string;
-    rejection_notes?: string;
-    rejection_reason?: string;
+    worker_id: number;
+    status: string;
     worker?: {
-      id: number;
+      ID: number;
       name: string;
-      phone: string;
       user_type: string;
-    };
-    assigned_by_user?: {
-      id: number;
-      name: string;
-      phone: string;
-      user_type: string;
+      phone?: string;
     };
   };
 }
@@ -392,6 +349,7 @@ export async function createSegmentPaymentOrder(
   paymentData: {
     segment_number: number;
     amount: number;
+    payment_method: "razorpay" | "wallet";
   }
 ): Promise<{ success: boolean; data: PaymentSegmentInfo }> {
   try {
