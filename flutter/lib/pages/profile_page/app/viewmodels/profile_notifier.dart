@@ -52,6 +52,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
           email: data.email,
           gender: data.gender,
           phone: data.phone,
+          subscription: data.subscription,
         );
       } else {
         state = state.copyWith(

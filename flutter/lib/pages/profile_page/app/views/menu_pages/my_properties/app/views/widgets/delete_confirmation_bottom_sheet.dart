@@ -56,38 +56,45 @@ class DeleteConfirmationBottomSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // Title
-            B3Medium(
+            H3Bold(
               text: 'Delete Property',
-
+       color: AppColors.brandNeutral900,
+              textAlign: TextAlign.center,
 
             ),
 
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
+
+             B2Regular(
+              text: 'Are you sure you want to delete "$propertyTitle"? This action cannot be undone.',
+              color: AppColors.brandNeutral700,
+              textAlign: TextAlign.center,
+            ),
 
             // Description
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.brandNeutral600,
-                  height: 1.5,
-                ),
-                children: [
-                  const TextSpan(text: 'Are you sure you want to delete "'),
-                  TextSpan(
-                    text: propertyTitle,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.brandNeutral800,
-                    ),
-                  ),
-                  const TextSpan(
-                    text: '"? This action cannot be undone.',
-                  ),
-                ],
-              ),
-            ),
+            // RichText(
+            //   textAlign: TextAlign.center,
+            //   text: TextSpan(
+            //     style: const TextStyle(
+            //       fontSize: 16,
+            //       color: AppColors.brandNeutral600,
+            //       height: 1.5,
+            //     ),
+            //     children: [
+            //       const TextSpan(text: 'Are you sure you want to delete "'),
+            //       TextSpan(
+            //         text: propertyTitle,
+            //         style: const TextStyle(
+            //           fontWeight: FontWeight.w600,
+            //           color: AppColors.brandNeutral800,
+            //         ),
+            //       ),
+            //       const TextSpan(
+            //         text: '"? This action cannot be undone.',
+            //       ),
+            //     ],
+            //   ),
+            // ),
 
             const SizedBox(height: AppSpacing.xl),
 

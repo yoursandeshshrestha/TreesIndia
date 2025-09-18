@@ -174,7 +174,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 phone: userModel.phone,
                 gender: userModel.gender,
                 isActive: userModel.isActive,
-                isVerified: userModel.isVerified,
                 userType: userModel.userType,
                 createdAt: userModel.createdAt,
                 updatedAt: userModel.updatedAt,

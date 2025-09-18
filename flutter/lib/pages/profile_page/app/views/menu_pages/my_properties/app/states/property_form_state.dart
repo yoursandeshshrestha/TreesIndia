@@ -68,6 +68,10 @@ class PropertyFormState extends Equatable {
     return currentStep == PropertyFormStep.pricing;
   }
 
+  int get currentStepIndex {
+    return PropertyFormStep.values.indexOf(currentStep);
+  }
+
   bool get isCurrentStepValid {
     switch (currentStep) {
       case PropertyFormStep.basicDetails:
@@ -85,10 +89,6 @@ class PropertyFormState extends Equatable {
 
   bool get canSubmitForm {
     return PropertyFormValidation.isFormComplete(formData) && !isSubmitting;
-  }
-
-  int get currentStepIndex {
-    return PropertyFormStep.values.indexOf(currentStep);
   }
 
   int get totalSteps {

@@ -7,7 +7,7 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../providers/property_providers.dart';
 import '../../states/property_form_state.dart';
-import '../../../data/models/property_form_data.dart';
+import 'form_components/form_step_indicator.dart';
 
 class PropertyFormWidget extends ConsumerStatefulWidget {
   const PropertyFormWidget({super.key});
@@ -17,8 +17,6 @@ class PropertyFormWidget extends ConsumerStatefulWidget {
 }
 
 class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
-  int currentStep = 0;
-
   // Form data
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -40,14 +38,6 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   final _salePriceController = TextEditingController();
   final _rentController = TextEditingController();
 
-  final List<String> _stepTitles = [
-    'Basic Details',
-    'Location Details',
-    'Property Profile',
-    'Photos',
-    'Pricing'
-  ];
-
   @override
   void dispose() {
     _titleController.dispose();
@@ -65,10 +55,16 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final propertyFormState = ref.watch(propertyFormNotifierProvider);
+
     return Column(
       children: [
         // Progress indicator
-        _buildProgressIndicator(),
+        FormStepIndicator(
+          currentStep: propertyFormState.currentStepIndex,
+          totalSteps: propertyFormState.totalSteps,
+          stepCompletion: propertyFormState.stepCompletion,
+        ),
 
         // Form content
         Expanded(
@@ -82,139 +78,32 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildCurrentStep() {
-    switch (currentStep) {
-      case 0:
+    final propertyFormState = ref.watch(propertyFormNotifierProvider);
+    switch (propertyFormState.currentStep) {
+      case PropertyFormStep.basicDetails:
         return _buildStep1BasicDetails();
-      case 1:
+      case PropertyFormStep.locationDetails:
         return _buildStep2LocationDetails();
-      case 2:
+      case PropertyFormStep.propertyProfile:
         return _buildStep3PropertyProfile();
-      case 3:
+      case PropertyFormStep.photos:
         return _buildStep4Photos();
-      case 4:
+      case PropertyFormStep.pricing:
         return _buildStep5Pricing();
-      default:
-        return _buildStep1BasicDetails();
-    }
-  }
-
-  bool _isCurrentStepValid() {
-    final formData = ref.read(propertyFormNotifierProvider).formData;
-    switch (currentStep) {
-      case 0:
-        return PropertyFormValidation.isStep1Complete(formData);
-      case 1:
-        return PropertyFormValidation.isStep2Complete(formData);
-      case 2:
-        return PropertyFormValidation.isStep3Complete(formData);
-      case 3:
-        return PropertyFormValidation.isStep4Complete(formData);
-      case 4:
-        return PropertyFormValidation.isStep5Complete(formData);
-      default:
-        return false;
     }
   }
 
   void _goToNextStep() {
-    if (currentStep < 4) {
-      setState(() {
-        currentStep++;
-      });
-    }
+    ref.read(propertyFormNotifierProvider.notifier).goToNextStep();
   }
 
   void _goToPreviousStep() {
-    if (currentStep > 0) {
-      setState(() {
-        currentStep--;
-      });
-    }
-  }
-
-  Widget _buildProgressIndicator() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        children: [
-          Row(
-            children: List.generate(5, (index) {
-              return Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: index <= currentStep
-                                    ? AppColors.stateGreen500
-                                    : AppColors.brandNeutral200,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${index + 1}',
-                                  style: TextStyle(
-                                    color: index <= currentStep
-                                        ? AppColors.white
-                                        : AppColors.brandNeutral600,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            // Text(
-                            //   _stepTitles[index],
-                            //   style: TextStyle(
-                            //     fontSize: 10,
-                            //     fontWeight: FontWeight.w500,
-                            //     color: index <= currentStep
-                            //         ? AppColors.brandNeutral800
-                            //         : AppColors.brandNeutral500,
-                            //   ),
-                            //   textAlign: TextAlign.center,
-                            // ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (index < 4)
-                      Container(
-                        height: 2,
-                        width: 20,
-                        color: index < currentStep
-                            ? AppColors.stateGreen500
-                            : AppColors.brandNeutral200,
-                      ),
-                  ],
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            _stepTitles[currentStep],
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.brandNeutral800,
-            ),
-          ),
-        ],
-      ),
-    );
+    ref.read(propertyFormNotifierProvider.notifier).goToPreviousStep();
   }
 
   Widget _buildStep1BasicDetails() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -271,7 +160,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     final propertyFormState = ref.watch(propertyFormNotifierProvider);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           _buildTextField(
@@ -367,7 +256,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   Widget _buildStep3PropertyProfile() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           _buildNumberSelector('Bedrooms', _bedrooms, (value) {
@@ -448,7 +337,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     final selectedImages = propertyFormState.formData.images;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           Container(
@@ -614,7 +503,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     final priceNegotiable = formState.formData.priceNegotiable;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           if (listingType == 'sale') ...[
@@ -724,7 +613,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppColors.stateGreen500),
             ),
-            contentPadding: const EdgeInsets.all(AppSpacing.md),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             counterText: '',
           ),
         ),
@@ -821,7 +713,8 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildNavigationButtons() {
-    final isCurrentStepValid = _isCurrentStepValid();
+    final propertyFormState = ref.watch(propertyFormNotifierProvider);
+    final isCurrentStepValid = propertyFormState.isCurrentStepValid;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -832,7 +725,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
       ),
       child: Row(
         children: [
-          if (currentStep > 0)
+          if (propertyFormState.canGoToPreviousStep)
             Expanded(
               child: OutlinedButton(
                 onPressed: _goToPreviousStep,
@@ -848,8 +741,9 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                 child: const Text('Previous'),
               ),
             ),
-          if (currentStep > 0) const SizedBox(width: AppSpacing.md),
-          if (currentStep < 4)
+          if (propertyFormState.canGoToPreviousStep)
+            const SizedBox(width: AppSpacing.md),
+          if (!propertyFormState.isLastStep)
             Expanded(
               child: ElevatedButton(
                 onPressed: isCurrentStepValid ? _goToNextStep : null,
@@ -868,7 +762,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                     isCurrentStepValid ? 'Continue' : 'Complete this step'),
               ),
             ),
-          if (currentStep == 4)
+          if (propertyFormState.isLastStep)
             Expanded(
               child: Consumer(
                 builder: (context, ref, child) {

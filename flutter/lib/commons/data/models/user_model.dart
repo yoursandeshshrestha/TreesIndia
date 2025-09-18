@@ -85,7 +85,7 @@ class UserModel {
       phone: phone,
       gender: gender,
       isActive: isActive,
-      isVerified: isVerified,
+
       userType: userType,
       createdAt: createdAt,
       updatedAt: updatedAt,

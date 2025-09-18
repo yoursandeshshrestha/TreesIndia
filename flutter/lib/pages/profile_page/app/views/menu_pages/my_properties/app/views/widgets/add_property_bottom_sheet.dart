@@ -4,6 +4,7 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/providers/property_providers.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/states/property_form_state.dart';
 import 'property_form_widget.dart';
 
 class AddPropertyBottomSheet extends ConsumerWidget {
@@ -11,24 +12,21 @@ class AddPropertyBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final bottomSheetHeight = screenHeight * 0.9; // 90% of screen height
+    final formState = ref.watch(propertyFormNotifierProvider);
 
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
         ref.read(propertyFormNotifierProvider.notifier).resetForm();
-
       },
       child: Container(
-        height: bottomSheetHeight,
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        height: MediaQuery.of(context).size.height * 0.9,
+        margin: const EdgeInsets.only(top: 50),
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
         child: Column(
@@ -49,19 +47,45 @@ class AddPropertyBottomSheet extends ConsumerWidget {
             ),
 
             // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                H3Medium(
-                  text: 'Add New Property',
-                  color: AppColors.brandNeutral900,
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.brandNeutral200,
+                    width: 1,
+                  ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                  color: AppColors.brandNeutral600,
-                ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(
+                      Icons.close,
+                      size: 24,
+                      color: AppColors.brandNeutral700,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        H3Bold(
+                          text: 'Add New Property',
+                          color: AppColors.brandNeutral900,
+                        ),
+                        const SizedBox(height: 4),
+                        B3Regular(
+                          text: formState.currentStep.subtitle,
+                          color: AppColors.brandNeutral600,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             // Property Form Content

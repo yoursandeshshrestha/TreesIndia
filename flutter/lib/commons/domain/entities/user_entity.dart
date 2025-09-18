@@ -9,7 +9,6 @@ class UserEntity {
   final String? phone;
   final String? gender;
   final bool? isActive;
-  final bool? isVerified;
   final String? userType;
   final String? createdAt;
   final String? updatedAt;
@@ -23,7 +22,6 @@ class UserEntity {
     this.phone,
     this.gender,
     this.isActive,
-    this.isVerified,
     this.userType,
     this.createdAt,
     this.updatedAt,
@@ -38,7 +36,6 @@ class UserEntity {
     String? phone,
     String? gender,
     bool? isActive,
-    bool? isVerified,
     String? userType,
     String? createdAt,
     String? updatedAt,
@@ -52,7 +49,6 @@ class UserEntity {
       phone: phone ?? this.phone,
       gender: gender ?? this.gender,
       isActive: isActive ?? this.isActive,
-      isVerified: isVerified ?? this.isVerified,
       userType: userType ?? this.userType,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -75,7 +71,6 @@ class UserEntity {
       'phone': phone,
       'gender': gender,
       'isActive': isActive,
-      'isVerified': isVerified,
       'userType': userType,
       'createdAt': createdAt,
       'updatedAt': updatedAt,

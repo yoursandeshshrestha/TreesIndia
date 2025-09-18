@@ -12,6 +12,9 @@ import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/my_vendor_profiles_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/subscription_plans_listing_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
@@ -259,6 +262,21 @@ class AppRouter {
                   path: '/my-properties',
                   name: 'MyPropertiesPage',
                   builder: (context, state) => const MyPropertiesPage(),
+                ),
+                GoRoute(
+                  path: '/my-vendor-profiles',
+                  name: 'MyVendorProfilesPage',
+                  builder: (context, state) => const MyVendorProfilesPage(),
+                ),
+                GoRoute(
+                  path: '/my-subscription',
+                  name: 'MySubscriptionPage',
+                  builder: (context, state) => const MySubscriptionPage(),
+                ),
+                GoRoute(
+                  path: '/subscription-plans',
+                  name: 'SubscriptionPlansListingPage',
+                  builder: (context, state) => const SubscriptionPlansListingPage(),
                 ),
                 GoRoute(
                   path: '/manage-payment-methods',

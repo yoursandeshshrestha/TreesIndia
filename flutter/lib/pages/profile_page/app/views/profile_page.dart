@@ -11,6 +11,8 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
+import '../providers/profile_providers.dart';
+import 'package:intl/intl.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -23,13 +25,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoggingOut = false;
   String _appVersion = '';
 
-  // Main navigation color
-  static const Color mainColor = Color(0xFF055c3a);
-
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    // Load profile data when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
   }
 
   Future<void> _loadAppVersion() async {
@@ -140,6 +143,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final userProfileState = ref.watch(userProfileProvider);
     final user = userProfileState.user;
+    final profileState = ref.watch(profileProvider);
 
     return MainLayoutWidget(
       currentIndex: 3,
@@ -206,7 +210,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Subscription Badge/Card
+                      if (profileState.subscription != null &&
+                          profileState.subscription!.status == 'active')
+                        _buildSubscriptionCard(profileState.subscription!),
+
+                      // const SizedBox(height: AppSpacing.sm),
 
                       // Quick Action Cards
                       // Row(
@@ -293,6 +304,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         label: 'My Properties',
                         onTap: () {
                           context.push('/my-properties');
+                        },
+                      ),
+
+                      // Show My Vendor Profiles only for users with active subscription
+                      if (profileState.subscription != null &&
+                          profileState.subscription!.status == 'active')
+                        _buildMenuItem(
+                          icon: Icons.business_outlined,
+                          label: 'My Vendor Profiles',
+                          onTap: () {
+                            context.push('/my-vendor-profiles');
+                          },
+                        ),
+                      _buildMenuItem(
+                        icon: Icons.home_outlined,
+                        label: 'My Subscription',
+                        onTap: () {
+                          context.push('/my-subscription');
                         },
                       ),
 
@@ -444,6 +473,105 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         Icons.person_outline,
         size: 30,
         color: AppColors.brandPrimary600,
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard(subscription) {
+    // Parse dates
+    DateTime? startDate;
+    DateTime? endDate;
+
+    try {
+      startDate = DateTime.parse(subscription.startDate);
+      endDate = DateTime.parse(subscription.endDate);
+    } catch (e) {
+      debugPrint('Error parsing subscription dates: $e');
+    }
+
+    final dateFormat = DateFormat('MMM dd, yyyy');
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/my-subscription');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF055c3a), Color(0xFF0a7c4a)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF055c3a).withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Premium icon
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.workspace_premium,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // Subscription details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Premium Active',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (startDate != null && endDate != null)
+                    Text(
+                      '${dateFormat.format(startDate)} - ${dateFormat.format(endDate)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  if (endDate != null)
+                    Text(
+                      'Expires ${dateFormat.format(endDate)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Arrow icon
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white.withValues(alpha: 0.8),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

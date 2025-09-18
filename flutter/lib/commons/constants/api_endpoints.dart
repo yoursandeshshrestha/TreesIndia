@@ -59,6 +59,13 @@ class ApiEndpoints {
     getUserProperties,
     createProperty,
     deleteProperty,
+    mySubscription,
+    subscriptionHistory,
+    subscriptionPlans,
+    createPaymentOrder,
+    completePurchase,
+    getUserVendors,
+    createVendor,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -330,6 +337,43 @@ class ApiEndpoints {
 
   static ApiEndpoint deleteProperty = ApiEndpoint(
     path: '/user/properties/{propertyId}',
+    requiresAuth: true,
+  );
+
+  // Subscription Endpoints
+  static ApiEndpoint mySubscription = ApiEndpoint(
+    path: '/subscriptions/my-subscription',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint subscriptionHistory = ApiEndpoint(
+    path: '/subscriptions/history',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint subscriptionPlans = ApiEndpoint(
+    path: '/subscription-plans',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createPaymentOrder = ApiEndpoint(
+    path: '/subscriptions/create-payment-order',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint completePurchase = ApiEndpoint(
+    path: '/subscriptions/complete-purchase',
+    requiresAuth: true,
+  );
+
+  // Vendor Endpoints
+  static ApiEndpoint getUserVendors = ApiEndpoint(
+    path: '/vendors',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createVendor = ApiEndpoint(
+    path: '/vendors',
     requiresAuth: true,
   );
 
