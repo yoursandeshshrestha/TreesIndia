@@ -104,29 +104,33 @@ export default function PaymentProgress({
           </h4>
           <div className="space-y-2">
             {progress.segments.map((segment) => (
-              <div
-                key={segment.id}
-                className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium text-gray-600">
-                    Segment #{segment.segment_number}
-                  </span>
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      segment.status === "paid"
-                        ? "bg-green-100 text-green-800"
-                        : segment.status === "overdue"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {segment.status}
+              <div key={segment.id} className="py-2 px-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm font-medium text-gray-600">
+                      Segment #{segment.segment_number}
+                    </span>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        segment.status === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : segment.status === "overdue"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {segment.status}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {formatCurrency(segment.amount)}
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">
-                  {formatCurrency(segment.amount)}
-                </span>
+                {segment.notes && (
+                  <div className="text-xs text-blue-600 mt-1">
+                    <span className="font-medium">Notes:</span> {segment.notes}
+                  </div>
+                )}
               </div>
             ))}
           </div>

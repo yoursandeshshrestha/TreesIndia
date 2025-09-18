@@ -8,6 +8,8 @@ import { Booking } from "@/lib/bookingApi";
 import { BookingWithPaymentProgress } from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
 import { useBookings } from "@/hooks/useBookings";
+import { useWallet } from "@/hooks/useWallet";
+import { usePaymentSegments } from "@/hooks/usePaymentSegments";
 import { createSegmentPaymentOrder } from "@/lib/bookingApi";
 import { bookingFlowApi } from "@/lib/bookingFlowApi";
 import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
@@ -53,29 +55,47 @@ export default function NextSegmentPaymentModal({
     }
   }, [isOpen]);
 
-  // Get payment progress from bookings data
-  const { bookingsWithProgress, refetchBookings } = useBookings();
+  // Get payment segments directly from booking object (new structure)
+  const { refetchBookings } = useBookings();
+  const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
+  const { paySegment } = usePaymentSegments(booking?.ID);
+  const paymentSegments = booking?.payment_segments || [];
 
-  // Try multiple matching strategies (same as MainBookingCard)
-  const bookingWithProgress = bookingsWithProgress.find((item) => {
-    // Primary match: ID comparison
-    if (item.booking.ID === booking?.ID || item.booking.ID === booking?.ID) {
-      return true;
-    }
-    // Fallback match: booking reference comparison
-    if (item.booking.booking_reference === booking?.booking_reference) {
-      return true;
-    }
-    return false;
-  });
+  // Calculate payment progress from segments
+  const calculatePaymentProgress = (segments: PaymentSegmentInfo[]) => {
+    if (!segments || segments.length === 0) return null;
 
-  // Use payment progress from matched booking, or fallback to booking's own data
-  const paymentProgress =
-    bookingWithProgress?.booking?.payment_progress ||
-    (booking as BookingWithPaymentProgress["booking"])?.payment_progress;
+    const totalAmount = segments.reduce(
+      (sum, segment) => sum + segment.amount,
+      0
+    );
+    const paidSegments = segments.filter(
+      (segment) => segment.status === "paid"
+    );
+    const paidAmount = paidSegments.reduce(
+      (sum, segment) => sum + segment.amount,
+      0
+    );
+    const remainingAmount = totalAmount - paidAmount;
+    const progressPercentage =
+      totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+
+    return {
+      total_amount: totalAmount,
+      paid_amount: paidAmount,
+      remaining_amount: remainingAmount,
+      total_segments: segments.length,
+      paid_segments: paidSegments.length,
+      remaining_segments: segments.length - paidSegments.length,
+      progress_percentage: progressPercentage,
+      segments: segments,
+    };
+  };
+
+  const paymentProgress = calculatePaymentProgress(paymentSegments);
 
   // Get the next pending segment (sorted by segment number)
-  const nextSegment = paymentProgress?.segments
+  const nextSegment = paymentSegments
     .filter(
       (segment) => segment.status === "pending" || segment.status === "overdue"
     )
@@ -100,6 +120,7 @@ export default function NextSegmentPaymentModal({
           {
             segment_number: nextSegment.segment_number,
             amount: nextSegment.amount,
+            payment_method: "razorpay",
           }
         );
 
@@ -151,18 +172,39 @@ export default function NextSegmentPaymentModal({
         }
       } else if (selectedPaymentMethod === "wallet") {
         // Handle wallet payment (direct payment)
-        // TODO: Implement wallet payment for segments
-        console.log("Wallet payment not implemented for segments yet");
+        if (!booking?.ID) {
+          throw new Error("Booking ID not found");
+        }
+
+        const result = await paySegment({
+          bookingId: booking.ID,
+          paymentData: {
+            segment_number: nextSegment.segment_number,
+            amount: nextSegment.amount,
+            payment_method: "wallet",
+          },
+        });
+
+        if (result.success) {
+          // Refresh bookings to get updated payment progress
+          await refetchBookings();
+
+          // Show success modal
+          setShowSuccessModal(true);
+        } else {
+          throw new Error("Wallet payment failed");
+        }
       }
     } catch (error) {
       console.error("Payment error:", error);
+      toast.error("Payment failed. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const canPayWithWallet = (amount: number) => {
-    return (booking?.user?.wallet_balance || 0) >= amount;
+    return (walletSummary?.current_balance || 0) >= amount;
   };
 
   const handleRazorpaySuccess = async (paymentData: {
@@ -381,7 +423,7 @@ export default function NextSegmentPaymentModal({
                           </p>
                           <p className="text-xs text-gray-600">
                             Balance:{" "}
-                            {formatAmount(booking.user?.wallet_balance || 0)}
+                            {formatAmount(walletSummary?.current_balance || 0)}
                             {!canPayWithWallet(nextSegment.amount) && (
                               <span className="text-red-600 ml-2">
                                 (Insufficient balance)

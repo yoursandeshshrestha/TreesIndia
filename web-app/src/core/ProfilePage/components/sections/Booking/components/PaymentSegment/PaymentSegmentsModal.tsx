@@ -162,6 +162,12 @@ export default function PaymentSegmentsModal({
                               </span>
                             </div>
                           )}
+                          {segment.notes && (
+                            <div className="text-sm text-blue-600 mt-1">
+                              <span className="font-medium">Notes:</span>{" "}
+                              {segment.notes}
+                            </div>
+                          )}
                         </div>
 
                         <div className="text-right">
