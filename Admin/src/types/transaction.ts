@@ -68,7 +68,8 @@ export type TransactionType =
   | "wallet_debit"
   | "refund"
   | "segment_pay"
-  | "quote";
+  | "quote"
+  | "manual";
 
 export type TransactionMethod = "razorpay" | "wallet" | "cash" | "admin";
 
@@ -134,6 +135,18 @@ export interface FilterOptions {
   sort_orders: string[];
 }
 
+export interface ManualTransactionRequest {
+  user_id: number;
+  amount: number;
+  currency?: string;
+  type: TransactionType;
+  method: TransactionMethod;
+  description: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  status?: TransactionStatus;
+}
+
 // Status badge colors
 export const getStatusColor = (status: TransactionStatus): string => {
   switch (status) {
@@ -171,6 +184,8 @@ export const getTypeColor = (type: TransactionType): string => {
       return "bg-yellow-100 text-yellow-800";
     case "refund":
       return "bg-orange-100 text-orange-800";
+    case "manual":
+      return "bg-purple-100 text-purple-800";
     default:
       return "bg-gray-100 text-gray-800";
   }

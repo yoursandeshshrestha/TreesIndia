@@ -14,6 +14,7 @@ import UserFilters from "@/core/UsersManagementPage/components/UserFilters";
 import UserTable from "@/core/UsersManagementPage/components/UserTable";
 import CreateEditUserModal from "@/core/UsersManagementPage/components/CreateEditUserModal";
 import UserPreviewModal from "@/core/UsersManagementPage/components/UserPreviewModal";
+import ManualWalletAdditionForm from "@/core/UsersManagementPage/components/ManualWalletAdditionForm";
 
 // Types and interfaces
 import {
@@ -44,6 +45,8 @@ function UsersManagementPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isWalletAdditionModalOpen, setIsWalletAdditionModalOpen] =
+    useState(false);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -187,6 +190,15 @@ function UsersManagementPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleWalletAddition = (user: User) => {
+    setSelectedUser(user);
+    setIsWalletAdditionModalOpen(true);
+  };
+
+  const handleWalletAdditionSuccess = () => {
+    loadUsers(); // Refresh the user list to show updated wallet balance
+  };
+
   // Filter users based on current filters
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -275,6 +287,26 @@ function UsersManagementPage() {
         variant="danger"
       />
 
+      <ManualWalletAdditionForm
+        isOpen={isWalletAdditionModalOpen}
+        onClose={() => {
+          setIsWalletAdditionModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onSuccess={handleWalletAdditionSuccess}
+        selectedUser={
+          selectedUser
+            ? {
+                id: selectedUser.ID,
+                name: selectedUser.name,
+                email: selectedUser.email,
+                phone: selectedUser.phone,
+                wallet_balance: selectedUser.wallet_balance,
+              }
+            : null
+        }
+      />
+
       <UserFilters
         search={localSearch}
         user_type={filters.user_type}
@@ -325,6 +357,7 @@ function UsersManagementPage() {
         onEditUser={handleEditUser}
         onToggleActivation={handleToggleActivation}
         onDeleteUser={handleDeleteUserClick}
+        onWalletAddition={handleWalletAddition}
       />
 
       {filteredUsers.length === 0 && !isLoading && (

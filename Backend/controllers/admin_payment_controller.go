@@ -354,6 +354,7 @@ func (apc *AdminPaymentController) GetTransactionFilters(c *gin.Context) {
 			string(models.PaymentTypeSegmentPay),
 			string(models.PaymentTypeQuote),
 			string(models.PaymentTypeRefund),
+			string(models.PaymentTypeManual),
 		},
 		"payment_statuses": []string{
 			string(models.PaymentStatusPending),
@@ -390,4 +391,80 @@ func (apc *AdminPaymentController) GetTransactionFilters(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Filter options retrieved successfully", filterOptions))
+}
+
+// CreateManualTransaction creates a manual transaction (admin only)
+// @Summary Create manual transaction
+// @Description Create a manual transaction entry (admin only)
+// @Tags Admin Transactions
+// @Accept json
+// @Produce json
+// @Param request body models.ManualTransactionRequest true "Manual transaction request"
+// @Success 200 {object} views.Response{data=models.Payment}
+// @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response
+// @Failure 403 {object} views.Response
+// @Failure 500 {object} views.Response
+// @Router /admin/transactions/manual [post]
+func (apc *AdminPaymentController) CreateManualTransaction(c *gin.Context) {
+	var req models.ManualTransactionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Set default user ID if not provided (admin can create transactions without specific user)
+	if req.UserID == 0 {
+		req.UserID = 1 // Default to admin user or system user
+	}
+
+	if req.Amount <= 0 {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Amount must be greater than zero", "Invalid amount"))
+		return
+	}
+
+	if req.Description == "" {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Description is required", "Description cannot be empty"))
+		return
+	}
+
+	// Set default values
+	if req.Currency == "" {
+		req.Currency = "INR"
+	}
+
+	if req.Status == "" {
+		req.Status = models.PaymentStatusCompleted
+	}
+
+	if req.Type == "" {
+		req.Type = models.PaymentTypeBooking
+	}
+
+	if req.Method == "" {
+		req.Method = "admin"
+	}
+
+	// Get admin ID from context for audit trail
+	adminID := c.GetUint("user_id")
+	if adminID == 0 {
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "Admin not authenticated"))
+		return
+	}
+
+	// Add admin note to the transaction
+	if req.Notes == "" {
+		req.Notes = "Manual transaction created by admin ID: " + strconv.Itoa(int(adminID))
+	} else {
+		req.Notes = req.Notes + " (Created by admin ID: " + strconv.Itoa(int(adminID)) + ")"
+	}
+
+	// Create the manual transaction
+	transaction, err := apc.paymentService.CreateManualTransaction(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create manual transaction", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Manual transaction created successfully", transaction))
 }

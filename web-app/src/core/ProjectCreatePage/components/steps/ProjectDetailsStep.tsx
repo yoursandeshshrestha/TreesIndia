@@ -13,6 +13,7 @@ interface ProjectDetailsStepProps {
 export default function ProjectDetailsStep({
   formData,
   onUpdate,
+  errors,
 }: ProjectDetailsStepProps) {
   const updateContactInfo = (field: string, value: string) => {
     onUpdate({
@@ -82,7 +83,7 @@ export default function ProjectDetailsStep({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Contact Person */}
             <TextField
-              label="Contact Person"
+              label="Contact Person *"
               fullWidth
               value={formData.contact_info.contact_person || ""}
               onChange={(e) =>
@@ -90,6 +91,10 @@ export default function ProjectDetailsStep({
               }
               placeholder="Enter contact person name"
               variant="outlined"
+              error={errors.some((err) => err.includes("Contact person"))}
+              helperText={
+                errors.find((err) => err.includes("Contact person")) || ""
+              }
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
@@ -106,13 +111,17 @@ export default function ProjectDetailsStep({
 
             {/* Phone Number */}
             <TextField
-              label="Phone Number"
+              label="Phone Number *"
               fullWidth
               type="tel"
               value={formData.contact_info.phone || ""}
               onChange={(e) => updateContactInfo("phone", e.target.value)}
               placeholder="Enter phone number"
               variant="outlined"
+              error={errors.some((err) => err.includes("Phone number"))}
+              helperText={
+                errors.find((err) => err.includes("Phone number")) || ""
+              }
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,

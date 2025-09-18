@@ -40,5 +40,8 @@ func SetupAdminPaymentRoutes(group *gin.RouterGroup) {
 		
 		// POST /api/v1/admin/transactions/:id/refund - Refund a transaction
 		adminTransactions.POST("/:id/refund", adminPaymentController.RefundTransaction)
+		
+		// POST /api/v1/admin/transactions/manual - Create manual transaction
+		adminTransactions.POST("/manual", adminPaymentController.CreateManualTransaction)
 	}
 }

@@ -6,6 +6,7 @@ import {
   Mail,
   Wallet,
   Calendar,
+  DollarSign,
 } from "lucide-react";
 import Table from "@/components/Table/Table";
 import { User } from "@/types/user";
@@ -29,6 +30,7 @@ interface UserTableProps {
   onEditUser: (user: User) => void;
   onToggleActivation: (user: User) => void;
   onDeleteUser: (user: User) => void;
+  onWalletAddition: (user: User) => void;
 }
 
 const isBase64Image = (src: string): boolean => {
@@ -93,6 +95,7 @@ const UserTable = ({
   onEditUser,
   onToggleActivation,
   onDeleteUser,
+  onWalletAddition,
 }: UserTableProps) => {
   // Calculate statistics
   const stats = {
@@ -289,6 +292,13 @@ const UserTable = ({
               onClick: (row: User) => onEditUser(row),
               className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
               icon: <Edit2 size={14} />,
+              disabled: () => selectionMode,
+            },
+            {
+              label: "Add to Wallet",
+              onClick: (row: User) => onWalletAddition(row),
+              className: "text-green-700 bg-green-100 hover:bg-green-200",
+              icon: <DollarSign size={14} />,
               disabled: () => selectionMode,
             },
             {

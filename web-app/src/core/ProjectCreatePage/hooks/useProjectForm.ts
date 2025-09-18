@@ -94,7 +94,13 @@ export function useProjectForm() {
           break;
 
         case 2: // Project Details
-          // Optional step, no validation required
+          // Validate contact information
+          if (!formState.formData.contact_info?.contact_person?.trim()) {
+            errors.push("Contact person is required");
+          }
+          if (!formState.formData.contact_info?.phone?.trim()) {
+            errors.push("Phone number is required");
+          }
           break;
 
         case 3: // Photos

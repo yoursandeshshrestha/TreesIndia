@@ -5,21 +5,27 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionStats } from "@/types/transaction";
 import { formatCurrency } from "@/types/transaction";
 
-export default function TransactionStatsCards() {
+interface TransactionStatsCardsProps {
+  refreshTrigger?: number;
+}
+
+export default function TransactionStatsCards({
+  refreshTrigger,
+}: TransactionStatsCardsProps) {
   const [stats, setStats] = useState<TransactionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { fetchTransactionStats } = useTransactions();
 
-  useEffect(() => {
-    const loadStats = async () => {
-      setIsLoading(true);
-      const statsData = await fetchTransactionStats();
-      setStats(statsData);
-      setIsLoading(false);
-    };
+  const loadStats = async () => {
+    setIsLoading(true);
+    const statsData = await fetchTransactionStats();
+    setStats(statsData);
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     loadStats();
-  }, [fetchTransactionStats]);
+  }, [fetchTransactionStats, refreshTrigger]);
 
   if (isLoading) {
     return (

@@ -20,6 +20,7 @@ func SetupAdminRoutes(r *gin.RouterGroup) {
 
 		// User management
 		admin.GET("/users", adminController.GetAllUsers)
+		admin.GET("/users/search", adminController.SearchUsers)
 		admin.GET("/users/:id", adminController.GetUserByID)
 		admin.PUT("/users/:id", adminController.UpdateUserByID)
 		admin.DELETE("/users/:id", adminController.DeleteUserByID)
