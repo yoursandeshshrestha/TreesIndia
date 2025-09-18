@@ -19,20 +19,20 @@ export function QuoteAcceptanceFooter({ onClose }: QuoteAcceptanceFooterProps) {
     handleProceedToPayment,
   } = useQuoteAcceptanceRedux();
 
-  // Get payment progress to determine the correct amount to show
-  const { bookingsWithProgress } = useBookings();
-  const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking?.ID || item.booking.id === booking?.ID
-  );
-  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+  // Get payment segments directly from booking object (new structure)
+  const paymentSegments = booking?.payment_segments || [];
+  const paymentProgress = booking?.payment_progress;
 
   // Determine the amount to show in the button
   const getPaymentAmount = () => {
-    if (paymentProgress && paymentProgress.segments.length > 1) {
+    if (paymentSegments.length > 1) {
       // For multiple segments, show first segment amount
-      return paymentProgress.segments[0].amount;
+      return paymentSegments[0].amount;
+    } else if (paymentSegments.length === 1) {
+      // For single segment, show segment amount
+      return paymentSegments[0].amount;
     }
-    // For single segment or no segments, show full quote amount
+    // For no segments, show full quote amount
     return booking?.quote_amount || 0;
   };
 

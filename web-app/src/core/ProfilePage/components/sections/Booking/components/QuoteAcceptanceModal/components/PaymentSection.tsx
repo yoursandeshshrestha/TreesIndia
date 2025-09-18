@@ -38,16 +38,12 @@ export default function PaymentSection({
   // Get wallet data from Redux
   const { walletSummary, isWalletDisabled } = useQuoteAcceptanceRedux();
 
-  // Get payment progress from bookings data
-  const { bookingsWithProgress } = useBookings();
-  const bookingWithProgress = bookingsWithProgress.find(
-    (item) => item.booking.ID === booking.ID
-  );
-  const paymentProgress = bookingWithProgress?.booking?.payment_progress;
+  // Get payment segments directly from booking object (new structure)
+  const paymentSegments = booking.payment_segments || [];
+  const paymentProgress = booking.payment_progress;
 
   // Check if this booking has payment segments
-  const hasPaymentSegments =
-    paymentProgress && paymentProgress.segments.length > 0;
+  const hasPaymentSegments = paymentSegments.length > 0;
 
   return (
     <div className="p-6 h-auto flex flex-col">
@@ -117,32 +113,51 @@ export default function PaymentSection({
             ))}
           </div>
         ) : (
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600">Quote Amount</span>
-            <span className="font-medium">
-              {formatAmount(booking.quote_amount || 0)}
-            </span>
+          <div className="space-y-2">
+            <div className="text-sm text-gray-600 mb-2">Payment Segments</div>
+            {paymentSegments.map((segment, index) => (
+              <div
+                key={segment.id}
+                className="flex justify-between items-center text-sm"
+              >
+                <span className="text-gray-600">
+                  {index + 1}. Segment {index + 1}
+                </span>
+                <span className="font-medium">
+                  {formatAmount(segment.amount)}
+                </span>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Total - Only show for non-multiple segments */}
-        {!isMultipleSegments && (
-          <div className="border-t border-gray-100 pt-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-900 font-semibold">
-                {hasPaymentSegments ? "Total Quote Amount" : "Payable Amount"}
-              </span>
-              <span className="text-gray-900 font-semibold text-lg">
-                {formatAmount(booking.quote_amount || 0)}
-              </span>
-            </div>
-            {hasPaymentSegments && paymentProgress && (
-              <div className="text-sm text-gray-600 mt-1">
-                Remaining: {formatAmount(paymentProgress.remaining_amount)}
-              </div>
-            )}
+        {/* Total - Show for all cases */}
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-900 font-semibold">
+              {hasPaymentSegments ? "Pay Now" : "Payable Amount"}
+            </span>
+            <span className="text-gray-900 font-semibold text-lg">
+              {formatAmount(
+                hasPaymentSegments && paymentSegments.length > 0
+                  ? paymentSegments[0].amount
+                  : booking.quote_amount || 0
+              )}
+            </span>
           </div>
-        )}
+          {hasPaymentSegments && paymentProgress && (
+            <div className="text-sm text-gray-600 mt-1">
+              {paymentSegments.length > 1 ? (
+                <>
+                  Total Quote: {formatAmount(paymentProgress.total_amount)} •
+                  Remaining: {formatAmount(paymentProgress.remaining_amount)}
+                </>
+              ) : (
+                <>Total Quote: {formatAmount(paymentProgress.total_amount)}</>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Payment breakdown for multiple segments */}
         {isMultipleSegments && paymentProgress && (
@@ -166,7 +181,11 @@ export default function PaymentSection({
       <div className="space-y-3 flex-1">
         {/* Wallet Payment Option */}
         <button
-          onClick={() => onPaymentMethodSelect("wallet")}
+          onClick={() => {
+            if (!isWalletDisabled) {
+              onPaymentMethodSelect("wallet");
+            }
+          }}
           disabled={isWalletDisabled}
           className={`w-full p-4 rounded-lg border transition-all text-left ${
             selectedPaymentMethod === "wallet"
