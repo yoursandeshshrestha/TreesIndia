@@ -1,20 +1,36 @@
 "use client";
 
 import { Project } from "@/types/project";
-import { MapPin, Building, Clock } from "lucide-react";
+import { MapPin, Building, Clock, MessageCircle } from "lucide-react";
 import Image from "next/image";
 
 interface ProjectCardProps {
   project: Project;
   onClick?: (projectId: number) => void;
+  onChatClick?: (project: Project) => void;
+  currentUserId?: number;
 }
 
-export function ProjectCard({ project, onClick }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  onClick,
+  onChatClick,
+  currentUserId,
+}: ProjectCardProps) {
   const handleClick = () => {
     if (onClick) {
       onClick(project.ID || project.id || 0);
     }
   };
+
+  const handleChatClick = () => {
+    if (onChatClick) {
+      onChatClick(project);
+    }
+  };
+
+  // Check if current user is the same as the project owner
+  const isCurrentUserOwner = currentUserId && currentUserId === project.user_id;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -155,6 +171,52 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
             {new Date(
               project.CreatedAt || project.created_at || ""
             ).toLocaleDateString()}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-4">
+            {!isCurrentUserOwner && (
+              <button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleChatClick();
+                }}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat</span>
+              </button>
+            )}
+            <button
+              className={`${
+                isCurrentUserOwner ? "w-full" : "flex-1"
+              } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              <span>View</span>
+            </button>
           </div>
         </div>
       </div>

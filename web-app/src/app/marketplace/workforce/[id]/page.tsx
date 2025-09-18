@@ -188,12 +188,14 @@ export default function WorkerDetailPage() {
 
     dispatch(
       openChatModalWithUser({
-        user_id: user.id,
-        worker_id: worker.user_id,
-        admin_id: null,
+        user_1: user.id,
+        user_2: worker.user_id,
       })
     );
   };
+
+  // Check if current user is the same as the worker
+  const isCurrentUserWorker = user && user.id === worker.user_id;
 
   return (
     <div className="min-h-screen py-8">
@@ -416,15 +418,17 @@ export default function WorkerDetailPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="bg-white rounded-xl p-6">
-                <button
-                  onClick={handleChatClick}
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
-                >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Chat
-                </button>
-              </div>
+              {!isCurrentUserWorker && (
+                <div className="bg-white rounded-xl p-6">
+                  <button
+                    onClick={handleChatClick}
+                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Chat
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
