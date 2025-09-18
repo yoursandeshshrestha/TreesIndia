@@ -13,25 +13,23 @@ type SimpleConversation struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 
-	UserID   uint  `json:"user_id" gorm:"not null"`
-	WorkerID *uint `json:"worker_id"`
-	AdminID  *uint `json:"admin_id"`
+	User1 uint `json:"user_1" gorm:"column:user_1;not null"`
+	User2 uint `json:"user_2" gorm:"column:user_2;not null"`
 
 	// Last message fields
-	LastMessageID        *uint      `json:"last_message_id"`
-	LastMessageText      *string    `json:"last_message_text"`
-	LastMessageCreatedAt *time.Time `json:"last_message_created_at"`
-	LastMessageSenderID  *uint      `json:"last_message_sender_id"`
+	LastMessageID        *uint      `json:"last_message_id" gorm:"column:last_message_id"`
+	LastMessageText      *string    `json:"last_message_text" gorm:"column:last_message_text"`
+	LastMessageCreatedAt *time.Time `json:"last_message_created_at" gorm:"column:last_message_created_at"`
+	LastMessageSenderID  *uint      `json:"last_message_sender_id" gorm:"column:last_message_sender_id"`
 
 	// Unread count (computed field, not stored in DB)
 	UnreadCount int `json:"unread_count" gorm:"-"`
 
 	// Relationships
-	User              User                        `json:"user" gorm:"foreignKey:UserID"`
-	Worker            *User                       `json:"worker,omitempty" gorm:"foreignKey:WorkerID"`
-	Admin             *User                       `json:"admin,omitempty" gorm:"foreignKey:AdminID"`
-	Messages          []SimpleConversationMessage `json:"messages,omitempty" gorm:"foreignKey:ConversationID"`
-	LastMessageSender *User                       `json:"last_message_sender,omitempty" gorm:"foreignKey:LastMessageSenderID"`
+	User1Data         User                        `json:"user_1_data" gorm:"foreignKey:User1;references:ID"`
+	User2Data         User                        `json:"user_2_data" gorm:"foreignKey:User2;references:ID"`
+	Messages          []SimpleConversationMessage `json:"messages,omitempty" gorm:"foreignKey:ConversationID;references:ID"`
+	LastMessageSender *User                       `json:"last_message_sender,omitempty" gorm:"foreignKey:LastMessageSenderID;references:ID"`
 }
 
 // TableName returns the table name for SimpleConversation
@@ -46,15 +44,15 @@ type SimpleConversationMessage struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 
-	ConversationID uint   `json:"conversation_id" gorm:"not null"`
-	SenderID       uint   `json:"sender_id" gorm:"not null"`
-	Message        string `json:"message" gorm:"not null"`
-	IsRead         bool   `json:"is_read" gorm:"default:false"`
-	ReadAt         *time.Time `json:"read_at"`
+	ConversationID uint   `json:"conversation_id" gorm:"column:conversation_id;not null"`
+	SenderID       uint   `json:"sender_id" gorm:"column:sender_id;not null"`
+	Message        string `json:"message" gorm:"column:message;not null"`
+	IsRead         bool   `json:"is_read" gorm:"column:is_read;default:false"`
+	ReadAt         *time.Time `json:"read_at" gorm:"column:read_at"`
 
 	// Relationships
-	Conversation SimpleConversation `json:"conversation" gorm:"foreignKey:ConversationID"`
-	Sender       User               `json:"sender" gorm:"foreignKey:SenderID"`
+	Conversation SimpleConversation `json:"conversation" gorm:"foreignKey:ConversationID;references:ID"`
+	Sender       User               `json:"sender" gorm:"foreignKey:SenderID;references:ID"`
 }
 
 // TableName returns the table name for SimpleConversationMessage
@@ -64,9 +62,8 @@ func (SimpleConversationMessage) TableName() string {
 
 // CreateSimpleConversationRequest represents the request structure for creating a conversation
 type CreateSimpleConversationRequest struct {
-	UserID   uint `json:"user_id" binding:"required"`
-	WorkerID uint `json:"worker_id"`
-	AdminID  uint `json:"admin_id"`
+	User1 uint `json:"user_1" binding:"required"`
+	User2 uint `json:"user_2" binding:"required"`
 }
 
 // SendSimpleConversationMessageRequest represents the request structure for sending a message

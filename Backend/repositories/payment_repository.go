@@ -291,6 +291,27 @@ func (pr *PaymentRepository) GetAbandonedWalletPayments(cutoffTime time.Time) ([
 	return payments, err
 }
 
+// GetByUserIDAndTypesAndStatus gets payments for a user by type(s) and status
+func (pr *PaymentRepository) GetByUserIDAndTypesAndStatus(userID uint, paymentTypes []models.PaymentType, status models.PaymentStatus, limit, offset int) ([]models.Payment, error) {
+	var payments []models.Payment
+	err := pr.db.Where("user_id = ? AND type IN ? AND status = ?", userID, paymentTypes, status).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Preload("User").
+		Find(&payments).Error
+	return payments, err
+}
+
+// GetCountByUserIDAndTypesAndStatus gets payment count for a user by type(s) and status
+func (pr *PaymentRepository) GetCountByUserIDAndTypesAndStatus(userID uint, paymentTypes []models.PaymentType, status models.PaymentStatus) (int64, error) {
+	var count int64
+	err := pr.db.Model(&models.Payment{}).
+		Where("user_id = ? AND type IN ? AND status = ?", userID, paymentTypes, status).
+		Count(&count).Error
+	return count, err
+}
+
 // GetAdminPayments gets payments with comprehensive admin filters
 func (pr *PaymentRepository) GetAdminPayments(filters *models.AdminPaymentFilters) ([]models.Payment, *Pagination, error) {
 	var payments []models.Payment
