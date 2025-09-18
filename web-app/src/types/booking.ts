@@ -190,6 +190,7 @@ export interface Booking {
   quote_provided_at?: string;
   quote_accepted_at?: string;
   quote_expires_at?: string;
+  quote_duration?: string;
 
   // Payment segments (for segment-based quotes)
   payment_segments?: PaymentSegmentInfo[];
@@ -358,6 +359,7 @@ export interface PaymentProgress {
 export interface CreateSegmentPaymentRequest {
   segment_number: number;
   amount: number;
+  payment_method: "razorpay" | "wallet";
 }
 
 // Global Razorpay declaration

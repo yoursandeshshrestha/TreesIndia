@@ -8,8 +8,8 @@ export const bookingKeys = {
   all: ["booking"] as const,
   config: () => [...bookingKeys.all, "config"] as const,
   addresses: () => [...bookingKeys.all, "addresses"] as const,
-  availableSlots: (serviceId: number, date: string) =>
-    [...bookingKeys.all, "availableSlots", serviceId, date] as const,
+  availableSlots: (serviceId: number, date: string, duration?: string) =>
+    [...bookingKeys.all, "availableSlots", serviceId, date, duration] as const,
   serviceAvailability: (serviceId: number, city: string, state: string) =>
     [
       ...bookingKeys.all,
@@ -46,11 +46,12 @@ export const useAddresses = () => {
 export const useAvailableSlots = (
   serviceId: number,
   date: string,
-  enabled = true
+  enabled = true,
+  duration?: string
 ) => {
   return useQuery({
-    queryKey: bookingKeys.availableSlots(serviceId, date),
-    queryFn: () => bookingFlowApi.getAvailableSlots(serviceId, date),
+    queryKey: bookingKeys.availableSlots(serviceId, date, duration),
+    queryFn: () => bookingFlowApi.getAvailableSlots(serviceId, date, duration),
     enabled: enabled && !!serviceId && !!date,
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 2 * 60 * 1000, // 2 minutes

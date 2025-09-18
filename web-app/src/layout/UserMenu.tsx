@@ -16,7 +16,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { openAuthModal } from "@/store/slices/authModalSlice";
 import { openChatModal } from "@/store/slices/chatModalSlice";
 import { conversationStore } from "@/utils/conversationStore";
-import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
+import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
 import { useRouter } from "next/navigation";
 import { NotificationIcon } from "@/components/NotificationIcon";
 
@@ -24,24 +24,10 @@ export const UserMenu: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const [totalUnreadCount, setTotalUnreadCount] = useState<number | undefined>(
-    undefined
-  );
+  // Get global WebSocket state and unread count
+  const { totalUnreadCount } = useGlobalWebSocket();
   const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
     useState<number | null>(null);
-
-  // Load total unread count using the dedicated API (same as admin)
-  const loadTotalUnreadCount = async () => {
-    try {
-      const response = await getTotalUnreadCount();
-      setTotalUnreadCount(response.total_unread_count);
-      conversationStore.setCurrentUnreadCount(response.total_unread_count);
-    } catch (error) {
-      console.error("Failed to load unread count:", error);
-    }
-  };
-
-  // Note: Conversation WebSocket is now handled globally in NotificationDropdown
 
   // Subscribe to open conversation changes
   useEffect(() => {
@@ -53,58 +39,6 @@ export const UserMenu: React.FC = () => {
       unsubscribeOpenConversation();
     };
   }, []);
-
-  // Load total unread count on component mount
-  useEffect(() => {
-    loadTotalUnreadCount();
-  }, []);
-
-  // Listen for read status updates to reload total count (same as admin)
-  useEffect(() => {
-    const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
-      () => {
-        // Reload total unread count when a conversation is marked as read
-        loadTotalUnreadCount();
-      }
-    );
-
-    const unsubscribeConversationList =
-      conversationStore.subscribeToConversationList((conversations) => {
-        // Only calculate total unread count if we don't have a backend count
-        // The backend total_unread_count from WebSocket should take precedence
-        const filteredCount = conversations.reduce((total, conv) => {
-          if (conv.id !== currentlyOpenConversationId) {
-            return total + (conv.unread_count || 0);
-          }
-          return total;
-        }, 0);
-
-        // Only use calculated count as fallback when backend count is not available
-        setTotalUnreadCount((prevCount) => {
-          // If we have a backend count, use it; otherwise use calculated count
-          return prevCount !== undefined ? prevCount : filteredCount;
-        });
-      });
-
-    const unsubscribeConversationUnreadCount =
-      conversationStore.subscribeToConversationUnreadCount(() => {
-        // When individual conversation unread count changes, reload total count
-        // This ensures real-time updates
-        loadTotalUnreadCount();
-      });
-
-    const unsubscribeRefresh = conversationStore.subscribeToRefresh(() => {
-      // When chat modal opens, refresh the total unread count
-      loadTotalUnreadCount();
-    });
-
-    return () => {
-      unsubscribeReadStatus();
-      unsubscribeConversationList();
-      unsubscribeConversationUnreadCount();
-      unsubscribeRefresh();
-    };
-  }, [currentlyOpenConversationId]);
 
   const handleLogout = async () => {
     await logout();
@@ -150,14 +84,11 @@ export const UserMenu: React.FC = () => {
           >
             <MessageCircle className="w-4 h-4" />
             <span className="text-sm font-medium">Messages</span>
-            {totalUnreadCount !== undefined &&
-              totalUnreadCount !== null &&
-              Number(totalUnreadCount) > 0 &&
-              currentlyOpenConversationId === null && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
-                  {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
-                </span>
-              )}
+            {totalUnreadCount > 0 && currentlyOpenConversationId === null && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+              </span>
+            )}
           </button>
 
           {/* User Menu Dropdown */}

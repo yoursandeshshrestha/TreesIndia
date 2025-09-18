@@ -45,11 +45,14 @@ export const bookingFlowApi = {
   // Get available time slots for a service and date
   getAvailableSlots: async (
     serviceId: number,
-    date: string
+    date: string,
+    duration?: string
   ): Promise<AvailableSlotsResponse> => {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/bookings/available-slots?service_id=${serviceId}&date=${date}`
-    );
+    let url = `${API_BASE_URL}/bookings/available-slots?service_id=${serviceId}&date=${date}`;
+    if (duration) {
+      url += `&duration=${encodeURIComponent(duration)}`;
+    }
+    const response = await authenticatedFetch(url);
     return handleApiResponse(response);
   },
 

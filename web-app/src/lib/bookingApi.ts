@@ -54,6 +54,10 @@ export interface Booking {
   quote_provided_at?: string;
   quote_accepted_at?: string;
   quote_expires_at?: string;
+  quote_duration?: string;
+
+  // Payment segments (new structure)
+  payment_segments?: PaymentSegmentInfo[];
 
   // Payment progress (for backward compatibility)
   payment_progress?: {
@@ -345,6 +349,7 @@ export async function createSegmentPaymentOrder(
   paymentData: {
     segment_number: number;
     amount: number;
+    payment_method: "razorpay" | "wallet";
   }
 ): Promise<{ success: boolean; data: PaymentSegmentInfo }> {
   try {

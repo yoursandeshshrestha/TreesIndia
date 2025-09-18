@@ -24,6 +24,8 @@ export function useWallet(enableTransactions: boolean = false) {
     queryKey: ["walletSummary"],
     queryFn: () => getWalletSummary(),
     enabled: !!token,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   // Fetch wallet transactions only when enabled
@@ -36,6 +38,8 @@ export function useWallet(enableTransactions: boolean = false) {
     queryKey: ["walletTransactions"],
     queryFn: () => getWalletTransactions(),
     enabled: !!token && enableTransactions,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   // Create wallet recharge mutation
@@ -43,8 +47,8 @@ export function useWallet(enableTransactions: boolean = false) {
     mutationFn: (rechargeData: RechargeRequest) =>
       createWalletRecharge(rechargeData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
-      queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
+      // Don't invalidate queries here - only invalidate after payment completion
+      // This prevents unnecessary re-renders during payment process
     },
     onError: () => {
       // Error handled by component
@@ -65,6 +69,7 @@ export function useWallet(enableTransactions: boolean = false) {
       };
     }) => completeWalletRecharge(paymentId, paymentData),
     onSuccess: () => {
+      // Only invalidate queries after successful payment completion
       queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
       queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
     },
@@ -130,5 +135,10 @@ export function useWallet(enableTransactions: boolean = false) {
     cancelRechargeAsync: cancelRechargeMutation.mutateAsync,
     refetchWalletSummary,
     refetchTransactions,
+    // Manual refresh function for after successful payments
+    refreshWalletData: () => {
+      queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
+      queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
+    },
   };
 }

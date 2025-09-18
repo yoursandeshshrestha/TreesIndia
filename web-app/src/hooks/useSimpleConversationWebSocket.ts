@@ -131,7 +131,6 @@ export function useSimpleConversationWebSocket({
               // Handle pong response
               break;
             default:
-              console.log("Unknown WebSocket message event:", message.event);
           }
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
