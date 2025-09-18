@@ -135,11 +135,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 {displayValue(booking.service.price, "Price not set")}
               </div>
             )}
-            {booking.service.duration && (
-              <div className="text-xs text-gray-400">
-                {displayDuration(booking.service.duration)}
-              </div>
-            )}
           </div>
         </div>
       ),
@@ -158,6 +153,15 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 <Clock className="w-3 h-3 mr-1" />
                 {displayTime(booking.scheduled_time)}
               </div>
+              {(booking.quote_duration || booking.service?.duration) && (
+                <div className="text-xs text-blue-600 flex items-center mt-1">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Duration:{" "}
+                  {displayDuration(
+                    booking.quote_duration || booking.service?.duration
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <span className="text-gray-400">
@@ -520,11 +524,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
         }
       },
       className: (booking: OptimizedBookingResponse) =>
-        booking.booking_type === "inquiry"
-          ? "text-blue-700 bg-blue-100 hover:bg-blue-200"
-          : "text-gray-400 bg-gray-100 cursor-not-allowed",
-      disabled: (booking: OptimizedBookingResponse) =>
-        booking.booking_type !== "inquiry" || !onChat,
+        "text-blue-700 bg-blue-100 hover:bg-blue-200",
+      disabled: (booking: OptimizedBookingResponse) => !onChat,
     },
   ];
 

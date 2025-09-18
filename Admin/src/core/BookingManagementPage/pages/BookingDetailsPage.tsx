@@ -46,6 +46,7 @@ import {
   displayCurrency,
   displayDuration,
 } from "@/utils/displayUtils";
+import { navigateToChat } from "@/utils/chatNavigation";
 
 export default function BookingDetailsPage() {
   const params = useParams();
@@ -262,8 +263,13 @@ export default function BookingDetailsPage() {
               size="sm"
               leftIcon={<MessageSquare className="w-4 h-4" />}
               onClick={() => {
-                // TODO: Open chat modal for this booking
-                toast.info("Chat feature coming soon!");
+                try {
+                  navigateToChat(router, booking);
+                  // Toast will be shown by the chat page after handling the conversation
+                } catch (error) {
+                  console.error("Error navigating to chat:", error);
+                  toast.error("Failed to open chat");
+                }
               }}
             >
               Chat
@@ -418,6 +424,11 @@ export default function BookingDetailsPage() {
                                         <p className="text-xs text-gray-500">
                                           Due: {displayDate(segment.due_date)}
                                         </p>
+                                        {segment.notes && (
+                                          <p className="text-xs text-blue-600 mt-1">
+                                            Notes: {segment.notes}
+                                          </p>
+                                        )}
                                       </div>
                                     </div>
                                     <div className="flex items-center space-x-2">
@@ -637,6 +648,65 @@ export default function BookingDetailsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Quote Information - Show for any booking with quote data */}
+            {(booking.quote_amount ||
+              booking.quote_notes ||
+              booking.quote_duration) && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Quote Information
+                </h2>
+                <div className="space-y-3">
+                  {booking.quote_amount && (
+                    <div>
+                      <p className="text-sm text-gray-600">Quote Amount</p>
+                      <p className="font-medium text-green-600">
+                        {displayCurrency(booking.quote_amount)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.quote_duration && (
+                    <div>
+                      <p className="text-sm text-gray-600">Service Duration</p>
+                      <p className="font-medium">
+                        {displayDuration(booking.quote_duration)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.quote_notes && (
+                    <div>
+                      <p className="text-sm text-gray-600">Quote Notes</p>
+                      <p className="font-medium">{booking.quote_notes}</p>
+                    </div>
+                  )}
+                  {booking.quote_provided_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Quote Provided At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.quote_provided_at)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.quote_accepted_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Quote Accepted At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.quote_accepted_at)}
+                      </p>
+                    </div>
+                  )}
+                  {booking.quote_expires_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Quote Expires At</p>
+                      <p className="font-medium">
+                        {displayDateTime(booking.quote_expires_at)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Payment Information */}
             {booking.payment && (

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useBookings } from "@/hooks/useBookings";
 import BookingTable from "../components/BookingTable";
 import { OptimizedBookingResponse } from "@/types/booking";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { assignWorkerToBooking } from "@/lib/api-client";
+import { navigateToChat } from "@/utils/chatNavigation";
 
 // Components
 import BookingHeader from "../components/BookingHeader";
@@ -15,6 +17,7 @@ import BookingFilters from "../components/BookingFilters";
 import QuoteModal from "../components/QuoteModal";
 
 export default function BookingManagementPage() {
+  const router = useRouter();
   const { bookings, isLoading, error, fetchBookings, clearError } =
     useBookings();
 
@@ -54,7 +57,6 @@ export default function BookingManagementPage() {
     fetchBookings();
   }, [currentPage, itemsPerPage, filters, fetchBookings]);
 
-
   const handleWorkerAssignment = async (
     bookingId: number,
     workerId: number
@@ -68,7 +70,6 @@ export default function BookingManagementPage() {
     }
   };
 
-
   const handleRefresh = () => {
     fetchBookings();
     toast.success("Data refreshed successfully!");
@@ -80,8 +81,13 @@ export default function BookingManagementPage() {
   };
 
   const handleChat = (booking: OptimizedBookingResponse) => {
-    // TODO: Implement chat functionality
-    toast.info(`Open chat for booking: ${booking.booking_reference}`);
+    try {
+      navigateToChat(router, booking);
+      // Toast will be shown by the chat page after handling the conversation
+    } catch (error) {
+      console.error("Error navigating to chat:", error);
+      toast.error("Failed to open chat");
+    }
   };
 
   const clearFilters = () => {
