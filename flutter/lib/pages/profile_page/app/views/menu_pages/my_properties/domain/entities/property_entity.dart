@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:trees_india/commons/constants/app_colors.dart';
+
 class PropertyEntity {
   final int id;
   final String title;
@@ -81,12 +85,12 @@ class PropertyEntity {
 
   String get displayPropertyType {
     return propertyType.substring(0, 1).toUpperCase() +
-           propertyType.substring(1).toLowerCase();
+        propertyType.substring(1).toLowerCase();
   }
 
   String get displayListingType {
     return listingType.substring(0, 1).toUpperCase() +
-           listingType.substring(1).toLowerCase();
+        listingType.substring(1).toLowerCase();
   }
 
   String get displayStatus {
@@ -99,12 +103,44 @@ class PropertyEntity {
         return 'Rented';
       default:
         return status.substring(0, 1).toUpperCase() +
-               status.substring(1).toLowerCase();
+            status.substring(1).toLowerCase();
+    }
+  }
+
+  Color get displayStatusColor {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return AppColors.stateGreen700;
+      case 'sold':
+        return AppColors.stateRed700;
+      case 'rented':
+        return AppColors.stateYellow700;
+      default:
+        return AppColors.brandNeutral700;
     }
   }
 
   String get displayApprovalStatus {
     return isApproved ? 'Approved' : 'Pending Review';
+  }
+
+  String get displayAge {
+    if (age == null || age!.isEmpty) return 'Age not specified';
+
+    switch (age!.toLowerCase()) {
+      case 'under_1_year':
+        return 'Under 1 year';
+      case '1_2_years':
+        return '1-2 years';
+      case '2_5_years':
+        return '2-5 years';
+      case '5_10_years':
+        return '5-10 years';
+      case '10_plus_years':
+        return '10+ years';
+      default:
+        return age!;
+    }
   }
 
   String get primaryImage {
@@ -120,13 +156,13 @@ class PropertyEntity {
   }
 
   String _formatPrice(double price) {
-    if (price >= 10000000) {
-      return '${(price / 10000000).toStringAsFixed(1)}Cr';
-    } else if (price >= 100000) {
-      return '${(price / 100000).toStringAsFixed(1)}L';
-    } else if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(1)}K';
-    }
+    // if (price >= 10000000) {
+    //   return '${(price / 10000000).toStringAsFixed(1)}Cr';
+    // } else if (price >= 100000) {
+    //   return '${(price / 100000).toStringAsFixed(1)}L';
+    // } else if (price >= 1000) {
+    //   return '${(price / 1000).toStringAsFixed(1)}K';
+    // }
     return price.toStringAsFixed(0);
   }
 

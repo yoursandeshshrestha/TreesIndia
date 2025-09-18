@@ -69,6 +69,8 @@ class PropertyFormData {
     double? salePrice,
     double? monthlyRent,
     bool? priceNegotiable,
+    bool setSalePriceToNull = false,
+    bool setMonthlyRentToNull = false,
   }) {
     return PropertyFormData(
       title: title ?? this.title,
@@ -86,8 +88,8 @@ class PropertyFormData {
       age: age ?? this.age,
       furnishingStatus: furnishingStatus ?? this.furnishingStatus,
       images: images ?? this.images,
-      salePrice: salePrice ?? this.salePrice,
-      monthlyRent: monthlyRent ?? this.monthlyRent,
+      salePrice: setSalePriceToNull ? null : (salePrice ?? this.salePrice),
+      monthlyRent: setMonthlyRentToNull ? null : (monthlyRent ?? this.monthlyRent),
       priceNegotiable: priceNegotiable ?? this.priceNegotiable,
     );
   }

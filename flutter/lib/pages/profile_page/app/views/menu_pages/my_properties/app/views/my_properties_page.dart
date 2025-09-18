@@ -11,6 +11,7 @@ import 'widgets/add_property_button.dart';
 import 'widgets/property_empty_state.dart';
 import 'widgets/property_loading_skeleton.dart';
 import 'widgets/add_property_bottom_sheet.dart';
+import 'widgets/delete_confirmation_bottom_sheet.dart';
 
 class MyPropertiesPage extends ConsumerStatefulWidget {
   const MyPropertiesPage({super.key});
@@ -65,28 +66,21 @@ class _MyPropertiesPageState extends ConsumerState<MyPropertiesPage> {
   }
 
   void _showDeleteConfirmation(int propertyId, String propertyTitle) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Property'),
-        content: Text(
-            'Are you sure you want to delete "$propertyTitle"? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref
-                  .read(myPropertiesNotifierProvider.notifier)
-                  .deleteProperty(propertyId);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+      backgroundColor: Colors.transparent,
+      builder: (context) => DeleteConfirmationBottomSheet(
+        propertyTitle: propertyTitle,
+        onConfirm: () {
+          Navigator.of(context).pop();
+
+          ref
+              .read(myPropertiesNotifierProvider.notifier)
+              .deleteProperty(propertyId);
+        },
+        isDeleting:
+            ref.watch(myPropertiesNotifierProvider).deletingPropertyId ==
+                propertyId,
       ),
     );
   }

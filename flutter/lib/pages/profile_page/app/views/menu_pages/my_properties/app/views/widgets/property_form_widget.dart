@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../providers/property_providers.dart';
 import '../../states/property_form_state.dart';
 import '../../../data/models/property_form_data.dart';
@@ -36,7 +39,6 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
 
   final _salePriceController = TextEditingController();
   final _rentController = TextEditingController();
-  bool _priceNegotiable = false;
 
   final List<String> _stepTitles = [
     'Basic Details',
@@ -607,11 +609,15 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   }
 
   Widget _buildStep5Pricing() {
+    final formState = ref.watch(propertyFormNotifierProvider);
+    final listingType = formState.formData.listingType;
+    final priceNegotiable = formState.formData.priceNegotiable;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
-          if (_listingType == 'sale') ...[
+          if (listingType == 'sale') ...[
             _buildTextField(
               controller: _salePriceController,
               label: 'Sale Price (₹) *',
@@ -624,10 +630,10 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                     .updateSalePrice(price);
               },
             ),
-          ] else if (_listingType == 'rent') ...[
+          ] else if (listingType == 'rent') ...[
             _buildTextField(
               controller: _rentController,
-              label: 'Monthly Rent (₹) *',
+              label: 'Rent per month (₹)*',
               hintText: 'Enter monthly rent',
               keyboardType: TextInputType.number,
               onChanged: (value) {
@@ -653,20 +659,22 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.md),
+
           CheckboxListTile(
             title: const Text('Price Negotiable'),
-            value: _priceNegotiable,
+            value: priceNegotiable,
             onChanged: (value) {
               final negotiable = value ?? false;
-              setState(() => _priceNegotiable = negotiable);
               ref
                   .read(propertyFormNotifierProvider.notifier)
                   .updatePriceNegotiable(negotiable);
             },
-            activeColor: AppColors.stateGreen500,
+            activeColor: Colors.transparent,
             contentPadding: EdgeInsets.zero,
           ),
+          const SizedBox(height: AppSpacing.md),
+          // Price Summary Card
+          _buildPriceSummaryCard(),
         ],
       ),
     );
@@ -699,8 +707,11 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
           maxLength: maxLength,
           keyboardType: keyboardType,
           onChanged: onChanged,
+          style: TextStyles.b3Medium(color: AppColors.brandNeutral900),
+          onTapOutside: (_) => FocusScope.of(context).unfocus(),
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: TextStyles.b3Medium(color: AppColors.brandNeutral400),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppColors.brandNeutral200),
@@ -877,16 +888,23 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                             if (mounted) {
                               if (state.status == PropertyFormStatus.success) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Property submitted successfully!')),
+                                  const SuccessSnackbarWidget(
+                                          message:
+                                              'Property submitted successfully!')
+                                      .createSnackBar(),
                                 );
+                                // Refresh the properties list
+                                ref
+                                    .read(myPropertiesNotifierProvider.notifier)
+                                    .loadProperties(refresh: true);
                                 Navigator.of(context).pop();
                               } else if (state.status ==
                                       PropertyFormStatus.failure &&
                                   state.errorMessage != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(state.errorMessage!)),
+                                  ErrorSnackbarWidget(
+                                          message: state.errorMessage!)
+                                      .createSnackBar(),
                                 );
                               }
                             }
@@ -902,10 +920,14 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                       ),
                     ),
                     child: propertyFormState.isSubmitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: const Color(0xFF055c3a)
+                                  .withValues(alpha: 0.8),
+                            ),
                           )
                         : const Text('Submit Property'),
                   );
@@ -915,5 +937,109 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
         ],
       ),
     );
+  }
+
+  Widget _buildPriceSummaryCard() {
+    double? currentPrice;
+    String? priceLabel;
+    final formState = ref.watch(propertyFormNotifierProvider);
+    final salePrice = formState.formData.salePrice;
+    final monthlyRent = formState.formData.monthlyRent;
+    final listingType = formState.formData.listingType;
+    final priceNegotiable = formState.formData.priceNegotiable;
+
+    // Determine current price and label based on listing type
+    if (listingType == 'sale' && salePrice != null) {
+      currentPrice = salePrice;
+      priceLabel = 'Sale Price';
+    } else if (listingType == 'rent' && monthlyRent != null) {
+      currentPrice = monthlyRent;
+      priceLabel = 'Monthly Rent';
+    }
+
+    // Don't show card if no price is entered
+    if (currentPrice == null || priceLabel == null) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: const Color(0xFF055c3a),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF055c3a).withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          const Row(
+            children: [
+              Icon(
+                Icons.monetization_on_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Price Summary',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+
+          // Price Display
+          Text(
+            '$priceLabel: ₹${_formatPrice(currentPrice)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          // Negotiable Badge
+          if (priceNegotiable) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                '💬 Price Negotiable',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(0);
   }
 }

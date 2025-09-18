@@ -183,13 +183,19 @@ class PropertyFormNotifier extends StateNotifier<PropertyFormState> {
   }
 
   void updateSalePrice(double? salePrice) {
-    final updatedData = state.formData.copyWith(salePrice: salePrice);
+    final updatedData = state.formData.copyWith(
+      salePrice: salePrice,
+      setSalePriceToNull: salePrice == null,
+    );
     state = state.copyWith(formData: updatedData);
     _updateStepCompletion();
   }
 
   void updateMonthlyRent(double? monthlyRent) {
-    final updatedData = state.formData.copyWith(monthlyRent: monthlyRent);
+    final updatedData = state.formData.copyWith(
+      monthlyRent: monthlyRent,
+      setMonthlyRentToNull: monthlyRent == null,
+    );
     state = state.copyWith(formData: updatedData);
     _updateStepCompletion();
   }
