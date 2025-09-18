@@ -2,7 +2,14 @@
 
 import Image from "next/image";
 import { Vendor } from "@/types/vendor";
-import { MapPin, Building2, Phone, Clock, User } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  Phone,
+  Clock,
+  User,
+  MessageCircle,
+} from "lucide-react";
 import { formatAddressShort } from "@/utils/addressUtils";
 import { formatDescriptionForCard } from "@/utils/textUtils";
 import { formatDateLong } from "@/utils/dateTimeUtils";
@@ -11,18 +18,39 @@ interface VendorCardProps {
   vendor: Vendor;
   className?: string;
   onClick?: (vendorId: number) => void;
+  onChatClick?: (vendor: Vendor) => void;
+  onCallClick?: (vendor: Vendor) => void;
+  currentUserId?: number;
 }
 
 export function VendorCard({
   vendor,
   className = "",
   onClick,
+  onChatClick,
+  onCallClick,
+  currentUserId,
 }: VendorCardProps) {
   const handleClick = () => {
     if (onClick) {
       onClick(vendor.ID || vendor.id || 0);
     }
   };
+
+  const handleChatClick = () => {
+    if (onChatClick) {
+      onChatClick(vendor);
+    }
+  };
+
+  const handleCallClick = () => {
+    if (onCallClick) {
+      onCallClick(vendor);
+    }
+  };
+
+  // Check if current user is the same as the vendor owner
+  const isCurrentUserOwner = currentUserId && currentUserId === vendor.user_id;
 
   const getBusinessTypeLabel = (type: string) => {
     switch (type) {
@@ -171,40 +199,30 @@ export function VendorCard({
 
         {/* Action Buttons */}
         <div className="p-4 flex space-x-3 mt-auto">
-          {vendor.contact_person_phone && (
+          {!isCurrentUserOwner && (
             <button
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-green-700 transition-colors"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(`tel:${vendor.contact_person_phone}`);
+                handleChatClick();
+              }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Chat</span>
+            </button>
+          )}
+          {vendor.contact_person_phone && (
+            <button
+              className={`${
+                isCurrentUserOwner ? "w-full" : "flex-1"
+              } bg-white text-black border border-gray-300 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCallClick();
               }}
             >
               <Phone className="w-4 h-4" />
               <span>Call</span>
-            </button>
-          )}
-          {vendor.contact_person_email && (
-            <button
-              className="flex-1 bg-white text-black border border-gray-300 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(`mailto:${vendor.contact_person_email}`);
-              }}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span>Email</span>
             </button>
           )}
         </div>

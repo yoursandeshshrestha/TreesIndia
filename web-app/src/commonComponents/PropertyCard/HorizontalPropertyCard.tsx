@@ -2,21 +2,35 @@
 
 import Image from "next/image";
 import { Property } from "@/types/property";
-import { Images, Phone } from "lucide-react";
+import { Images, Phone, MessageCircle } from "lucide-react";
 
 interface HorizontalPropertyCardProps {
   property: Property;
   className?: string;
+  onChatClick?: (property: Property) => void;
+  currentUserId?: number;
 }
 
 export default function HorizontalPropertyCard({
   property,
   className = "",
+  onChatClick,
+  currentUserId,
 }: HorizontalPropertyCardProps) {
   // Ensure property has a valid ID before rendering
   if (!property || !property.ID) {
     return null;
   }
+
+  const handleChatClick = () => {
+    if (onChatClick) {
+      onChatClick(property);
+    }
+  };
+
+  // Check if current user is the same as the property owner
+  const isCurrentUserOwner =
+    currentUserId && currentUserId === property.user_id;
   const formatPrice = (property: Property) => {
     if (property.listing_type === "sale" && property.sale_price) {
       return `₹${property.sale_price.toLocaleString()}`;
@@ -274,7 +288,19 @@ export default function HorizontalPropertyCard({
                   <button className="border border-green-500 text-green-500 px-4 py-2 rounded-lg text-sm font-medium">
                     View Number
                   </button>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                  {!isCurrentUserOwner && (
+                    <button
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleChatClick();
+                      }}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Chat
+                    </button>
+                  )}
+                  <button className="bg-white text-black border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
                     <Phone className="w-4 h-4 mr-2" />
                     Contact
                   </button>
