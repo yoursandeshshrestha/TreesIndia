@@ -92,15 +92,12 @@ func (s *SimpleConversationWebSocketService) UnregisterClient(conn *websocket.Co
 
 // BroadcastSimpleConversationMessage broadcasts a message to all clients in a conversation
 func (s *SimpleConversationWebSocketService) BroadcastSimpleConversationMessage(conversationID uint, messageData map[string]interface{}) {
-	log.Printf("BroadcastSimpleConversationMessage called for conversation %d", conversationID)
 	message := SimpleConversationMessage{
 		ConversationID: conversationID,
 		Message:        messageData,
 		Event:          "conversation_message",
 	}
-	log.Printf("Sending message to broadcast channel for conversation %d", conversationID)
 	s.broadcast <- message
-	log.Printf("Message sent to broadcast channel for conversation %d", conversationID)
 }
 
 // BroadcastConversationStatus broadcasts conversation status updates
@@ -115,8 +112,6 @@ func (s *SimpleConversationWebSocketService) BroadcastConversationStatus(convers
 
 // BroadcastTotalUnreadCount broadcasts total unread count to all admin clients
 func (s *SimpleConversationWebSocketService) BroadcastTotalUnreadCount(totalUnreadCount int) {
-	log.Printf("BroadcastTotalUnreadCount called with count: %d", totalUnreadCount)
-	
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -130,27 +125,20 @@ func (s *SimpleConversationWebSocketService) BroadcastTotalUnreadCount(totalUnre
 
 	adminData, err := json.Marshal(adminMessage)
 	if err != nil {
-		log.Printf("Error marshaling total unread count notification: %v", err)
 		return
 	}
 
-	log.Printf("Broadcasting total unread count to %d admin clients", len(s.adminConnections))
 	for adminID, conn := range s.adminConnections {
-		log.Printf("Sending total unread count to admin %d", adminID)
 		err := conn.WriteMessage(websocket.TextMessage, adminData)
 		if err != nil {
-			log.Printf("Error sending total unread count to admin %d: %v", adminID, err)
 			conn.Close()
 			delete(s.adminConnections, adminID)
-		} else {
-			log.Printf("Successfully sent total unread count to admin %d", adminID)
 		}
 	}
 }
 
 // BroadcastConversationUnreadCount broadcasts individual conversation unread count to all admin clients
 func (s *SimpleConversationWebSocketService) BroadcastConversationUnreadCount(conversationID uint, unreadCount int) {
-	log.Printf("BroadcastConversationUnreadCount called for conversation %d with count: %d", conversationID, unreadCount)
 	
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()

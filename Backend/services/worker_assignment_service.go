@@ -516,7 +516,7 @@ func (was *WorkerAssignmentService) sendWorkerAssignmentNotification(assignment 
 	}
 
 	// Send notification to worker about new assignment
-	err = notificationService.NotifyWorkerAssignedToWork(&worker, booking, &booking.Service)
+	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
 	if err != nil {
 		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
 	}

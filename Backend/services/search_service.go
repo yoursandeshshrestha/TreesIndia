@@ -423,15 +423,25 @@ func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, li
 
 	// Apply keyword filters
 	if len(filters.Keywords) > 0 {
+		// Add joins once outside the loop to avoid duplicate table references
+		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
+			Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id")
+		
+		// Build OR conditions for all keywords
+		var keywordConditions []string
+		var keywordArgs []interface{}
+		
 		for _, keyword := range filters.Keywords {
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
-				// Use proper joins to access category and subcategory names
-				query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
-					Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id").
-					Where("services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?", 
-						"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
+				keywordConditions = append(keywordConditions, 
+					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?)")
+				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
+		}
+		
+		if len(keywordConditions) > 0 {
+			query = query.Where(strings.Join(keywordConditions, " OR "), keywordArgs...)
 		}
 	}
 
@@ -478,15 +488,25 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 
 	// Apply keyword filters
 	if len(filters.Keywords) > 0 {
+		// Add joins once outside the loop to avoid duplicate table references
+		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
+			Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id")
+		
+		// Build OR conditions for all keywords
+		var keywordConditions []string
+		var keywordArgs []interface{}
+		
 		for _, keyword := range filters.Keywords {
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
-				// Use proper joins to access category and subcategory names
-				query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
-					Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id").
-					Where("services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?", 
-						"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
+				keywordConditions = append(keywordConditions, 
+					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?)")
+				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
+		}
+		
+		if len(keywordConditions) > 0 {
+			query = query.Where(strings.Join(keywordConditions, " OR "), keywordArgs...)
 		}
 	}
 
