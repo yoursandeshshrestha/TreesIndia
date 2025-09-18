@@ -70,13 +70,15 @@ func (cc *SimpleConversationController) GetUserConversations(c *gin.Context) {
 	}))
 }
 
-// GetAllConversations gets all conversations (admin only)
+// GetAllConversations gets conversations where admin is a participant
 func (cc *SimpleConversationController) GetAllConversations(c *gin.Context) {
 	userType := c.GetString("user_type")
 	if userType != string(models.UserTypeAdmin) {
 		c.JSON(http.StatusForbidden, views.CreateErrorResponse("Admin access required", "Only admins can access this endpoint"))
 		return
 	}
+
+	adminID := c.GetUint("user_id")
 
 	// Parse query parameters
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -93,13 +95,50 @@ func (cc *SimpleConversationController) GetAllConversations(c *gin.Context) {
 		limit = 50
 	}
 
-	conversations, pagination, err := cc.conversationService.GetAllConversations(page, limit)
+	conversations, pagination, err := cc.conversationService.GetAllConversations(adminID, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get conversations", err.Error()))
 		return
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Conversations retrieved successfully", gin.H{
+		"conversations": conversations,
+		"pagination":    pagination,
+	}))
+}
+
+// GetAllConversationsForOversight gets all conversations for admin oversight (excluding admin's conversations)
+func (cc *SimpleConversationController) GetAllConversationsForOversight(c *gin.Context) {
+	userType := c.GetString("user_type")
+	if userType != string(models.UserTypeAdmin) {
+		c.JSON(http.StatusForbidden, views.CreateErrorResponse("Admin access required", "Only admins can access this endpoint"))
+		return
+	}
+
+	adminID := c.GetUint("user_id")
+
+	// Parse query parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	// Validate page and limit
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	conversations, pagination, err := cc.conversationService.GetAllConversationsForOversight(adminID, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get conversations for oversight", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Conversations for oversight retrieved successfully", gin.H{
 		"conversations": conversations,
 		"pagination":    pagination,
 	}))

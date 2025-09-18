@@ -26,7 +26,11 @@ func NewRoleApplicationController() *RoleApplicationController {
 	
 	logrus.Info("Repositories initialized")
 	
-	applicationService := services.NewRoleApplicationService(applicationRepo, userRepo)
+	// Initialize notification services
+	wsService := services.NewNotificationWebSocketService()
+	notificationService := services.NewInAppNotificationService(wsService)
+	
+	applicationService := services.NewRoleApplicationService(applicationRepo, userRepo, notificationService)
 	
 	// Initialize Cloudinary service
 	cloudinaryService, err := services.NewCloudinaryService()
