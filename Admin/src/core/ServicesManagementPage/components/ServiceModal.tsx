@@ -73,12 +73,6 @@ export function ServiceModal({
       });
       setImagePreviews(service.images || []);
       setSelectedFiles([]);
-      console.log("ServiceModal - Service data set:", {
-        category_id: service.category_id,
-        subcategory_id: service.subcategory_id,
-        categories: categories.length,
-        subcategories: subcategories.length,
-      });
     } else {
       setFormData({
         name: "",
@@ -409,16 +403,9 @@ export function ServiceModal({
                       )
                     }
                     placeholder="Select subcategory"
-                    disabled={(() => {
-                      const isDisabled =
-                        !formData.category_id || subcategories.length === 0;
-                      console.log("Subcategory disabled check:", {
-                        category_id: formData.category_id,
-                        subcategories_length: subcategories.length,
-                        isDisabled,
-                      });
-                      return isDisabled;
-                    })()}
+                    disabled={
+                      !formData.category_id || subcategories.length === 0
+                    }
                     className={errors.subcategory_id ? "border-red-500" : ""}
                     width="100%"
                   />

@@ -211,6 +211,7 @@ export interface Booking {
   quote_provided_at?: string;
   quote_accepted_at?: string;
   quote_expires_at?: string;
+  quote_duration?: string;
 
   // Relationships
   user: User;
