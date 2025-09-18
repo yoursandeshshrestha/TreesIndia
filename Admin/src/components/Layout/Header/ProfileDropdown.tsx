@@ -99,26 +99,20 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   }, []);
 
   const handleItemClick = (action: string) => {
-    console.log("ProfileDropdown: handleItemClick called with action:", action);
     switch (action) {
       case "profile":
-        console.log("ProfileDropdown: Navigating to profile");
         router.push("/dashboard/profile");
         break;
       case "security":
-        console.log("ProfileDropdown: Navigating to security");
         router.push("/dashboard/profile/security");
         break;
       case "sign-out":
-        console.log("ProfileDropdown: Showing logout modal");
         setShowLogoutModal(true);
         break;
       case "system-settings":
-        console.log("ProfileDropdown: Navigating to admin configs");
         router.push("/dashboard/admin-configs");
         break;
       default:
-        console.log("ProfileDropdown: Unknown action:", action);
         break;
     }
     setIsOpen(false);
@@ -147,7 +141,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   // Debug dropdown state
   useEffect(() => {
     if (isOpen) {
-      console.log("ProfileDropdown: Dropdown is open");
     }
   }, [isOpen]);
 
@@ -185,7 +178,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 right: "24px",
               }}
               onMouseDown={(e) => {
-                console.log("ProfileDropdown: Dropdown container clicked");
                 e.stopPropagation();
               }}
             >
@@ -199,7 +191,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               <div className="py-1">
                 <button
                   onMouseDown={(e) => {
-                    console.log("ProfileDropdown: Profile button clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     handleItemClick("profile");
@@ -211,7 +202,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 </button>
                 <button
                   onMouseDown={(e) => {
-                    console.log("ProfileDropdown: Security button clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     handleItemClick("security");
@@ -223,9 +213,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 </button>
                 <button
                   onMouseDown={(e) => {
-                    console.log(
-                      "ProfileDropdown: System settings button clicked"
-                    );
                     e.preventDefault();
                     e.stopPropagation();
                     handleItemClick("system-settings");
@@ -244,7 +231,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               <div className="py-1">
                 <button
                   onMouseDown={(e) => {
-                    console.log("ProfileDropdown: Sign out button clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     handleItemClick("sign-out");

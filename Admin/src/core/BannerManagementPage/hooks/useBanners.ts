@@ -16,7 +16,6 @@ export function useBanners() {
       setIsLoading(true);
       setError(null);
       const response = await apiClient.get("/admin/promotion-banners");
-      console.log("Banner API response:", response.data);
 
       // Handle different response structures
       let bannersData = [];
