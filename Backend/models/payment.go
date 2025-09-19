@@ -187,6 +187,8 @@ type ManualTransactionRequest struct {
 	Currency           string        `json:"currency"`
 	Type               PaymentType   `json:"type" binding:"required"`
 	Method             string        `json:"method" binding:"required"`
+	RelatedEntityType  string        `json:"related_entity_type"`
+	RelatedEntityID    uint          `json:"related_entity_id"`
 	Description        string        `json:"description" binding:"required"`
 	Notes              string        `json:"notes"`
 	Metadata           *JSONMap      `json:"metadata"`
