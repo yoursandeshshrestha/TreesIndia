@@ -6,6 +6,7 @@ interface UseNotificationWebSocketProps {
   onUnreadCountUpdate?: (count: number) => void;
   onNotificationRead?: (notificationId: number, isRead: boolean) => void;
   onAllNotificationsRead?: () => void;
+  enabled?: boolean;
 }
 
 export const useNotificationWebSocket = ({
@@ -13,6 +14,7 @@ export const useNotificationWebSocket = ({
   onUnreadCountUpdate,
   onNotificationRead,
   onAllNotificationsRead,
+  enabled = true,
 }: UseNotificationWebSocketProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -45,6 +47,10 @@ export const useNotificationWebSocket = ({
   }, [onAllNotificationsRead]);
 
   const connect = useCallback(() => {
+    if (!enabled) {
+      return;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
@@ -77,25 +83,43 @@ export const useNotificationWebSocket = ({
       // Admin notification WebSocket URL
       const baseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
       const wsUrl = `${baseUrl}/api/v1/admin/in-app-notifications/ws?token=${token}`;
+
+      // Add connection timeout
+      const connectionTimeout = setTimeout(() => {
+        if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+          console.warn("WebSocket connection timeout");
+          wsRef.current.close();
+        }
+      }, 10000); // 10 second timeout
+
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
+        clearTimeout(connectionTimeout);
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttempts.current = 0;
 
         // Send join event
-        ws.send(JSON.stringify({ event: "join" }));
+        try {
+          ws.send(JSON.stringify({ event: "join" }));
+        } catch (error) {
+          console.error("Failed to send join event:", error);
+        }
 
         // Start ping interval to keep connection alive
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                event: "ping",
-                timestamp: Date.now(),
-              })
-            );
+            try {
+              ws.send(
+                JSON.stringify({
+                  event: "ping",
+                  timestamp: Date.now(),
+                })
+              );
+            } catch (error) {
+              console.error("Failed to send ping:", error);
+            }
           }
         }, 30000); // Ping every 30 seconds
       };
@@ -148,6 +172,7 @@ export const useNotificationWebSocket = ({
       };
 
       ws.onclose = (event) => {
+        clearTimeout(connectionTimeout);
         setIsConnected(false);
 
         // Clear ping interval
@@ -176,8 +201,14 @@ export const useNotificationWebSocket = ({
       };
 
       ws.onerror = (error) => {
+        clearTimeout(connectionTimeout);
         console.error("WebSocket error:", error);
         setConnectionError("WebSocket connection error");
+
+        // Don't attempt to reconnect on error - let the close handler handle it
+        if (wsRef.current) {
+          wsRef.current.close();
+        }
       };
 
       wsRef.current = ws;
@@ -185,7 +216,7 @@ export const useNotificationWebSocket = ({
       console.error("Failed to create WebSocket connection:", error);
       setConnectionError("Failed to create WebSocket connection");
     }
-  }, []);
+  }, [enabled]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -222,11 +253,15 @@ export const useNotificationWebSocket = ({
 
   // Connect on mount, disconnect on unmount
   useEffect(() => {
-    connect();
+    if (enabled) {
+      connect();
+    } else {
+      disconnect();
+    }
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [connect, disconnect, enabled]);
 
   return {
     isConnected,
