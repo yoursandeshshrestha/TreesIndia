@@ -393,8 +393,8 @@ export function WorkerAssignmentCard({
                     if (assignment.booking?.user?.ID && currentUser?.id) {
                       dispatch(
                         openChatModalWithUser({
-                          user_id: assignment.booking.user.ID,
-                          worker_id: currentUser.id,
+                          user_1: assignment.booking.user.ID,
+                          user_2: currentUser.id,
                         })
                       );
                     } else {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"treesindia/models"
 	"treesindia/repositories"
+	"treesindia/utils"
 
 	"github.com/sirupsen/logrus"
 )
@@ -109,6 +110,12 @@ func (s *SimpleConversationService) GetUserConversations(userID uint, page, limi
 		}
 	}
 
+	// Mask phone numbers in user data
+	for i := range conversations {
+		conversations[i].User1Data.Phone = utils.MaskPhoneNumberForDisplay(conversations[i].User1Data.Phone)
+		conversations[i].User2Data.Phone = utils.MaskPhoneNumberForDisplay(conversations[i].User2Data.Phone)
+	}
+
 	logrus.Infof("SimpleConversationService.GetUserConversations returning %d conversations", len(conversations))
 	return conversations, pagination, nil
 }
@@ -153,6 +160,8 @@ func (s *SimpleConversationService) GetAllConversations(adminID uint, page, limi
 			UnreadCount:        unreadCount,
 		})
 	}
+
+	// Note: Admin conversations endpoint should NOT mask phone numbers as admins need full access to user data
 
 	logrus.Infof("SimpleConversationService.GetAllConversations returning %d conversations", len(conversationsWithUnread))
 	return conversationsWithUnread, pagination, nil
@@ -199,6 +208,8 @@ func (s *SimpleConversationService) GetAllConversationsForOversight(adminID uint
 		})
 	}
 
+	// Note: Admin oversight endpoint should NOT mask phone numbers as admins need full access to user data
+
 	logrus.Infof("SimpleConversationService.GetAllConversationsForOversight returning %d conversations", len(conversationsWithUnread))
 	return conversationsWithUnread, pagination, nil
 }
@@ -212,6 +223,10 @@ func (s *SimpleConversationService) GetConversation(conversationID uint) (*model
 		logrus.Errorf("SimpleConversationService.GetConversation failed: %v", err)
 		return nil, err
 	}
+
+	// Mask phone numbers in user data
+	conversation.User1Data.Phone = utils.MaskPhoneNumberForDisplay(conversation.User1Data.Phone)
+	conversation.User2Data.Phone = utils.MaskPhoneNumberForDisplay(conversation.User2Data.Phone)
 
 	logrus.Infof("SimpleConversationService.GetConversation successfully retrieved conversation ID: %d", conversationID)
 	return conversation, nil

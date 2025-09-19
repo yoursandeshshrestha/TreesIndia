@@ -765,8 +765,8 @@ export function MainBookingCard({
                           ) {
                             dispatch(
                               openChatModalWithUser({
-                                user_id: user.id,
-                                worker_id: booking.worker_assignment.worker.ID,
+                                user_1: user.id,
+                                user_2: booking.worker_assignment.worker.ID,
                               })
                             );
                           } else {
