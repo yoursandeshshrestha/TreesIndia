@@ -36,6 +36,7 @@ import 'package:trees_india/pages/services_page/app/views/service_detail_page.da
 import 'package:trees_india/pages/search_page/app/views/search_page.dart';
 import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
+import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -349,6 +350,11 @@ class AppRouter {
                     final chatRoom = state.extra as ChatRoomEntity;
                     return ChatRoomPage(roomId: roomId, chatRoom: chatRoom);
                   },
+                ),
+                GoRoute(
+                  path: '/marketplace/rental-properties',
+                  name: 'RentalAndPropertiesPage',
+                  builder: (context, state) => const RentalAndPropertiesPage(),
                 ),
               ],
             ),

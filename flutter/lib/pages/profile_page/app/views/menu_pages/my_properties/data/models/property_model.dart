@@ -6,6 +6,7 @@ class PropertyModel {
   final String? description;
   final String propertyType;
   final String listingType;
+  final String? slug;
   final double? salePrice;
   final double? monthlyRent;
   final bool priceNegotiable;
@@ -22,6 +23,8 @@ class PropertyModel {
   final List<String> images;
   final String status;
   final bool isApproved;
+  final bool uploadedByAdmin;
+  final bool treesindiaAssured;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -31,6 +34,7 @@ class PropertyModel {
     this.description,
     required this.propertyType,
     required this.listingType,
+    this.slug,
     this.salePrice,
     this.monthlyRent,
     required this.priceNegotiable,
@@ -47,6 +51,8 @@ class PropertyModel {
     required this.images,
     required this.status,
     required this.isApproved,
+    required this.uploadedByAdmin,
+    required this.treesindiaAssured,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -58,6 +64,7 @@ class PropertyModel {
       description: json['description'],
       propertyType: json['property_type'],
       listingType: json['listing_type'],
+      slug: json['slug'],
       salePrice: json['sale_price']?.toDouble(),
       monthlyRent: json['monthly_rent']?.toDouble(),
       priceNegotiable: json['price_negotiable'] ?? true,
@@ -74,6 +81,8 @@ class PropertyModel {
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       status: json['status'] ?? 'available',
       isApproved: json['is_approved'] ?? false,
+      uploadedByAdmin: json['uploaded_by_admin'] ?? false,
+      treesindiaAssured: json['treesindia_assured'] ?? false,
       createdAt: DateTime.parse(json['created_at'] ?? json['CreatedAt']),
       updatedAt: DateTime.parse(json['updated_at'] ?? json['UpdatedAt']),
     );
@@ -86,6 +95,7 @@ class PropertyModel {
       'description': description,
       'property_type': propertyType,
       'listing_type': listingType,
+      'slug': slug,
       'sale_price': salePrice,
       'monthly_rent': monthlyRent,
       'price_negotiable': priceNegotiable,
@@ -102,6 +112,8 @@ class PropertyModel {
       'images': images,
       'status': status,
       'is_approved': isApproved,
+      'uploaded_by_admin': uploadedByAdmin,
+      'treesindia_assured': treesindiaAssured,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -114,6 +126,7 @@ class PropertyModel {
       description: description,
       propertyType: propertyType,
       listingType: listingType,
+      slug: slug,
       salePrice: salePrice,
       monthlyRent: monthlyRent,
       priceNegotiable: priceNegotiable,
@@ -130,6 +143,8 @@ class PropertyModel {
       images: images,
       status: status,
       isApproved: isApproved,
+      uploadedByAdmin: uploadedByAdmin,
+      treesindiaAssured: treesindiaAssured,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -141,12 +156,18 @@ class PropertiesResponseModel {
   final int total;
   final int page;
   final int limit;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrev;
 
   PropertiesResponseModel({
     required this.properties,
     required this.total,
     required this.page,
     required this.limit,
+    required this.totalPages,
+    required this.hasNext,
+    required this.hasPrev,
   });
 
   factory PropertiesResponseModel.fromJson(Map<String, dynamic> json) {
@@ -158,6 +179,9 @@ class PropertiesResponseModel {
       total: json['pagination']?['total'] ?? 0,
       page: json['pagination']?['page'] ?? 1,
       limit: json['pagination']?['limit'] ?? 20,
+      totalPages: json['pagination']?['total_pages'] ?? 1,
+      hasNext: json['pagination']?['has_next'] ?? false,
+      hasPrev: json['pagination']?['has_prev'] ?? false,
     );
   }
 }

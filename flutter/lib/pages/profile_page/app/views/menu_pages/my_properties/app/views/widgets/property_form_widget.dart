@@ -717,7 +717,8 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
     final isCurrentStepValid = propertyFormState.isCurrentStepValid;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.md, horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(
           top: BorderSide(color: AppColors.brandNeutral200),

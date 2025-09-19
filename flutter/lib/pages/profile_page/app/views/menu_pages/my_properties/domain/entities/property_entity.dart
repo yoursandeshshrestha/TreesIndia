@@ -8,6 +8,7 @@ class PropertyEntity {
   final String? description;
   final String propertyType;
   final String listingType;
+  final String? slug;
   final double? salePrice;
   final double? monthlyRent;
   final bool priceNegotiable;
@@ -24,6 +25,8 @@ class PropertyEntity {
   final List<String> images;
   final String status;
   final bool isApproved;
+  final bool uploadedByAdmin;
+  final bool treesindiaAssured;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,6 +36,7 @@ class PropertyEntity {
     this.description,
     required this.propertyType,
     required this.listingType,
+    this.slug,
     this.salePrice,
     this.monthlyRent,
     required this.priceNegotiable,
@@ -49,6 +53,8 @@ class PropertyEntity {
     required this.images,
     required this.status,
     required this.isApproved,
+    required this.uploadedByAdmin,
+    required this.treesindiaAssured,
     required this.createdAt,
     required this.updatedAt,
   });

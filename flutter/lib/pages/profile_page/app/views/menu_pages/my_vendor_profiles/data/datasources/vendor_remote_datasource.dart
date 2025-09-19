@@ -130,9 +130,10 @@ class VendorRemoteDataSourceImpl implements VendorRemoteDataSource {
             _encodeMap(vendorForm.businessAddress)));
       }
 
-      // Add services offered
-      for (final service in vendorForm.servicesOffered) {
-        formData.fields.add(MapEntry('services_offered', service));
+      // Add services offered as JSON array
+      if (vendorForm.servicesOffered.isNotEmpty) {
+        final servicesJson = '[${vendorForm.servicesOffered.map((service) => '"$service"').join(',')}]';
+        formData.fields.add(MapEntry('services_offered', servicesJson));
       }
 
       // Add profile picture if provided
@@ -154,6 +155,20 @@ class VendorRemoteDataSourceImpl implements VendorRemoteDataSource {
           formData.files.add(MapEntry('business_gallery', multipartFile));
         }
       }
+
+      // Debug FormData contents
+      print('=== FormData Debug ===');
+      print('FormData fields:');
+      for (final field in formData.fields) {
+        print('  ${field.key}: ${field.value}');
+      }
+      print('FormData files:');
+      for (final file in formData.files) {
+        print('  ${file.key}: ${file.value.filename} (${file.value.length} bytes)');
+      }
+      print('Services offered count: ${vendorForm.servicesOffered.length}');
+      print('Services offered list: ${vendorForm.servicesOffered}');
+      print('=== End FormData Debug ===');
 
       final response = await dioClient.dio.post(
         url,

@@ -143,8 +143,8 @@ class PropertyDetailBottomSheet extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                Icons.location_on_outlined,
-                size: 18,
+                Icons.location_on,
+                size: 16,
                 color: AppColors.brandNeutral500,
               ),
               const SizedBox(width: AppSpacing.xs),

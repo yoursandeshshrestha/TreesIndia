@@ -161,13 +161,7 @@ class _MyVendorProfilesPageState extends ConsumerState<MyVendorProfilesPage> {
             isDeleting: state.deletingVendorId == vendor.id,
             onDelete: () =>
                 _showDeleteConfirmation(vendor.id, vendor.vendorName),
-            onView: () {
-              // TODO: Implement view vendor details
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('View vendor details coming soon')),
-              );
-            },
-            vendorId: vendor.id,
+
           ),
         );
       },

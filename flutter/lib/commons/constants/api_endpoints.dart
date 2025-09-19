@@ -66,6 +66,7 @@ class ApiEndpoints {
     completePurchase,
     getUserVendors,
     createVendor,
+    getProperties,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -374,6 +375,11 @@ class ApiEndpoints {
 
   static ApiEndpoint createVendor = ApiEndpoint(
     path: '/vendors',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getProperties = ApiEndpoint(
+    path: '/properties',
     requiresAuth: true,
   );
 

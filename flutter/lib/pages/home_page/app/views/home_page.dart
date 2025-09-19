@@ -87,10 +87,16 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   void _showServicesBottomSheet(BuildContext context, ServiceCategory category,
       CategoryEntity categoryEntity) {
-    // Load subcategories instead of services
-    ref
-        .read(subcategoryNotifierProvider.notifier)
-        .loadSubcategoriesByCategory(categoryEntity.id);
+    // Check if this is a marketplace category
+    final isMarketplace =
+        categoryEntity.name.toLowerCase().contains('marketplace');
+
+    if (!isMarketplace) {
+      // Load subcategories instead of services for non-marketplace categories
+      ref
+          .read(subcategoryNotifierProvider.notifier)
+          .loadSubcategoriesByCategory(categoryEntity.id);
+    }
 
     showModalBottomSheet(
       context: context,
@@ -121,65 +127,149 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final subcategoryState =
-                        ref.watch(subcategoryNotifierProvider);
+                child: isMarketplace
+                    ? _buildMarketplaceOptions(context, categoryEntity)
+                    : Consumer(
+                        builder: (context, ref, child) {
+                          final subcategoryState =
+                              ref.watch(subcategoryNotifierProvider);
 
-                    if (subcategoryState.status == SubcategoryStatus.loading) {
-                      return const SubcategoryLoadingSkeleton();
-                    } else if (subcategoryState.status ==
-                        SubcategoryStatus.failure) {
-                      return Center(
-                        child: B2Regular(
-                          text: 'Failed to load subcategories',
-                          color: AppColors.stateRed600,
-                        ),
-                      );
-                    } else if (subcategoryState.subcategories.isEmpty) {
-                      return Center(
-                        child: B2Regular(
-                          text: 'No subcategories available',
-                          color: AppColors.brandNeutral600,
-                        ),
-                      );
-                    } else {
-                      return GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                          childAspectRatio: 0.9,
-                        ),
-                        itemCount: subcategoryState.subcategories.length,
-                        itemBuilder: (context, index) {
-                          final subcategory =
-                              subcategoryState.subcategories[index];
-                          return _SubcategoryCard(
-                            subcategory: subcategory,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              // Set category and subcategory in services page state
-                              ref
-                                  .read(serviceNotifierProvider.notifier)
-                                  .setCategoryAndSubcategory(
-                                      categoryEntity, subcategory);
-                              // Navigate to services page
-                              context.push(
-                                  '/services/${categoryEntity.id}/${subcategory.id}');
-                            },
-                          );
+                          if (subcategoryState.status ==
+                              SubcategoryStatus.loading) {
+                            return const SubcategoryLoadingSkeleton();
+                          } else if (subcategoryState.status ==
+                              SubcategoryStatus.failure) {
+                            return Center(
+                              child: B2Regular(
+                                text: 'Failed to load subcategories',
+                                color: AppColors.stateRed600,
+                              ),
+                            );
+                          } else if (subcategoryState.subcategories.isEmpty) {
+                            return Center(
+                              child: B2Regular(
+                                text: 'No subcategories available',
+                                color: AppColors.brandNeutral600,
+                              ),
+                            );
+                          } else {
+                            return GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.md,
+                                childAspectRatio: 0.9,
+                              ),
+                              itemCount: subcategoryState.subcategories.length,
+                              itemBuilder: (context, index) {
+                                final subcategory =
+                                    subcategoryState.subcategories[index];
+                                return _SubcategoryCard(
+                                  subcategory: subcategory,
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    // Set category and subcategory in services page state
+                                    ref
+                                        .read(serviceNotifierProvider.notifier)
+                                        .setCategoryAndSubcategory(
+                                            categoryEntity, subcategory);
+                                    // Navigate to services page
+                                    context.push(
+                                        '/services/${categoryEntity.id}/${subcategory.id}');
+                                  },
+                                );
+                              },
+                            );
+                          }
                         },
-                      );
-                    }
-                  },
-                ),
+                      ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMarketplaceOptions(
+      BuildContext context, CategoryEntity categoryEntity) {
+    // Create hardcoded marketplace subcategories
+    final marketplaceSubcategories = [
+      SubcategoryEntity(
+        id: 1001,
+        name: 'Rental & Properties',
+        slug: 'rental-properties',
+        description: 'Find rental properties and real estate',
+        icon: 'assets/icons/building.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1002,
+        name: 'Projects',
+        slug: 'projects',
+        description: 'Browse construction and development projects',
+        icon: 'assets/icons/project.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1003,
+        name: 'Vendors',
+        slug: 'vendors',
+        description: 'Find trusted vendors and service providers',
+        icon: 'assets/icons/vendor.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1004,
+        name: 'Workers',
+        slug: 'workers',
+        description: 'Connect with skilled workers',
+        icon: 'assets/icons/worker.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    ];
+
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: AppSpacing.md,
+        mainAxisSpacing: AppSpacing.md,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: marketplaceSubcategories.length,
+      itemBuilder: (context, index) {
+        final subcategory = marketplaceSubcategories[index];
+        return _SubcategoryCard(
+          subcategory: subcategory,
+          onTap: () {
+            Navigator.of(context).pop();
+            // Navigate to marketplace pages based on subcategory
+            if (subcategory.slug == 'rental-properties') {
+              context.push('/marketplace/rental-properties');
+            } else {
+              // TODO: Implement navigation for other marketplace subcategories
+              print('Marketplace subcategory tapped: ${subcategory.name}');
+            }
+          },
+        );
+      },
     );
   }
 
@@ -205,67 +295,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
 
                 const SizedBox(height: AppSpacing.md),
-
-                // User Type Display
-                // Consumer(
-                //   builder: (context, ref, child) {
-                //     final authState = ref.watch(authProvider);
-                //     final userType = authState.userType;
-
-                //     if (userType != null) {
-                //       return Padding(
-                //         padding: const EdgeInsets.symmetric(
-                //             horizontal: AppSpacing.lg),
-                //         child: Container(
-                //           padding: const EdgeInsets.symmetric(
-                //             horizontal: 12,
-                //             vertical: 8,
-                //           ),
-                //           decoration: BoxDecoration(
-                //             color: userType == 'worker'
-                //                 ? AppColors.brandPrimary50
-                //                 : AppColors.stateGreen50,
-                //             borderRadius: BorderRadius.circular(20),
-                //             border: Border.all(
-                //               color: userType == 'worker'
-                //                   ? AppColors.brandPrimary200
-                //                   : AppColors.stateGreen200,
-                //               width: 1,
-                //             ),
-                //           ),
-                //           child: Row(
-                //             mainAxisSize: MainAxisSize.min,
-                //             children: [
-                //               Icon(
-                //                 userType == 'worker'
-                //                     ? Icons.work_outline
-                //                     : Icons.person_outline,
-                //                 size: 16,
-                //                 color: userType == 'worker'
-                //                     ? AppColors.brandPrimary600
-                //                     : AppColors.stateGreen600,
-                //               ),
-                //               const SizedBox(width: 4),
-                //               Text(
-                //                 userType == 'worker' ? 'Worker' : 'Customer',
-                //                 style: TextStyle(
-                //                   fontSize: 12,
-                //                   fontWeight: FontWeight.w500,
-                //                   color: userType == 'worker'
-                //                       ? AppColors.brandPrimary600
-                //                       : AppColors.stateGreen600,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       );
-                //     }
-                //     return const SizedBox.shrink();
-                //   },
-                // ),
-
-                // const SizedBox(height: AppSpacing.sm),
 
                 // Fixed Search Bar
                 Padding(
