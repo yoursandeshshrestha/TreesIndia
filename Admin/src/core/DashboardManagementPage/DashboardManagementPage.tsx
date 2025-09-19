@@ -16,7 +16,6 @@ const DashboardManagementPage = () => {
   const {
     overview,
     userAnalytics,
-    bookingAnalytics,
     financialAnalytics,
     marketplaceAnalytics,
     monthlyTrends,
@@ -24,14 +23,11 @@ const DashboardManagementPage = () => {
     isLoading,
     isLoadingOverview,
     isLoadingUserAnalytics,
-    isLoadingBookingAnalytics,
     isLoadingFinancialAnalytics,
     isLoadingMarketplaceAnalytics,
     isLoadingMonthlyTrends,
-    isLoadingAlerts,
     overviewError,
     userAnalyticsError,
-    bookingAnalyticsError,
     financialAnalyticsError,
     marketplaceAnalyticsError,
     monthlyTrendsError,
@@ -253,7 +249,7 @@ const DashboardManagementPage = () => {
                 error={monthlyTrendsError?.message || null}
               >
                 <MonthlyTrendsChart
-                  trends={(monthlyTrends as any) || null}
+                  trends={monthlyTrends || null}
                   isLoading={isLoadingMonthlyTrends}
                   error={monthlyTrendsError?.message || null}
                 />
@@ -268,7 +264,7 @@ const DashboardManagementPage = () => {
                 error={userAnalyticsError?.message || null}
               >
                 <UserAnalytics
-                  data={userAnalytics as any}
+                  data={userAnalytics}
                   isLoading={isLoadingUserAnalytics}
                   error={userAnalyticsError?.message || null}
                 />
@@ -291,7 +287,7 @@ const DashboardManagementPage = () => {
                 )}
               </div>
               <FinancialAnalytics
-                data={financialAnalytics as any}
+                data={financialAnalytics}
                 isLoading={isLoadingFinancialAnalytics}
                 error={financialAnalyticsError?.message || null}
               />
@@ -313,7 +309,7 @@ const DashboardManagementPage = () => {
                 )}
               </div>
               <MarketplaceAnalytics
-                data={marketplaceAnalytics as any}
+                data={marketplaceAnalytics}
                 isLoading={isLoadingMarketplaceAnalytics}
                 error={marketplaceAnalyticsError?.message || null}
               />

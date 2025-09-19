@@ -9,25 +9,15 @@ import Textarea from "@/components/Textarea/Base/Textarea";
 
 import {
   SubscriptionPlan,
-  GroupedSubscriptionPlan,
   CreateSubscriptionPlanRequest,
   UpdateSubscriptionPlanRequest,
-  CreateSubscriptionRequest,
-  CreateSubscriptionWithBothDurationsRequest,
-  UpdateSubscriptionRequest,
 } from "../types";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
   subscription?: SubscriptionPlan | null;
-  onSubmit: (
-    data:
-      | CreateSubscriptionPlanRequest
-      | UpdateSubscriptionPlanRequest
-      | CreateSubscriptionRequest
-      | UpdateSubscriptionRequest
-  ) => Promise<void>;
+  onSubmit: (data: CreateSubscriptionPlanRequest | UpdateSubscriptionPlanRequest) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -146,7 +136,20 @@ export function SubscriptionModal({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      if (isEditing) {
+        // For editing, we need to pass UpdateSubscriptionPlanRequest
+        const updateData: UpdateSubscriptionPlanRequest = {
+          name: formData.name,
+          description: formData.description,
+          is_active: formData.is_active,
+          features: formData.features,
+          pricing: formData.pricing,
+        };
+        await onSubmit(updateData);
+      } else {
+        // For creating, we pass CreateSubscriptionPlanRequest
+        await onSubmit(formData);
+      }
       onClose();
     } catch (error) {
       console.error("Error submitting subscription:", error);

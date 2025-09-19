@@ -1,42 +1,12 @@
 import React from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { UserAnalytics as UserAnalyticsType } from "../types";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-interface UserGrowth {
-  month: string;
-  value: number;
-}
-
-interface UserTypesDistribution {
-  admin: number;
-  normal: number;
-  worker: number;
-}
-
-interface RecentUser {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  name: string;
-  phone: string;
-  user_type: string;
-  is_active: boolean;
-  last_login_at: string | null;
-}
-
-interface UserAnalyticsData {
-  user_growth: UserGrowth[];
-  user_types_distribution: UserTypesDistribution;
-  recent_users: RecentUser[];
-  active_users: number;
-  new_users_this_month: number;
-  user_retention_rate: number;
-}
-
 interface UserAnalyticsProps {
-  data: UserAnalyticsData | null;
+  data: UserAnalyticsType | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -238,7 +208,7 @@ const UserAnalytics: React.FC<UserAnalyticsProps> = ({
         <div className="space-y-3">
           {data.recent_users.slice(0, 5).map((user) => (
             <div
-              key={user.ID}
+              key={user.id}
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center">
@@ -263,7 +233,7 @@ const UserAnalytics: React.FC<UserAnalyticsProps> = ({
                   {user.user_type}
                 </span>
                 <p className="text-xs text-gray-500 mt-1">
-                  {formatDate(user.CreatedAt)}
+                  {formatDate(user.created_at)}
                 </p>
               </div>
             </div>

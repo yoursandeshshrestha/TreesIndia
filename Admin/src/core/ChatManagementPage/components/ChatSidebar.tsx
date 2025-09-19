@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Loader2, Wifi, WifiOff } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { Conversation, conversationApi } from "../services/conversationApi";
 import { conversationStore } from "@/utils/conversationStore";
 
@@ -19,7 +19,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   selectedConversation,
   onConversationSelect,
   isLoading = false,
-  isWebSocketConnected = false,
   totalUnreadCount = 0,
 }) => {
   // Track which conversation is currently open

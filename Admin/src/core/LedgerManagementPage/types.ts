@@ -88,6 +88,7 @@ export interface CreateLedgerEntryRequest {
   amount_received?: number;
   payment_source?: "cash" | "bank";
   notes?: string;
+  [key: string]: unknown;
 }
 
 export interface UpdateLedgerEntryRequest {
@@ -99,18 +100,21 @@ export interface UpdateLedgerEntryRequest {
   amount_received?: number;
   payment_source?: "cash" | "bank";
   notes?: string;
+  [key: string]: unknown;
 }
 
 export interface ProcessPaymentRequest {
   amount: number;
   payment_source: "cash" | "bank";
   notes?: string;
+  [key: string]: unknown;
 }
 
 export interface UpdateBalanceRequest {
   cash_in_hand?: number;
   bank_balance?: number;
   notes?: string;
+  [key: string]: unknown;
 }
 
 // Filter Types

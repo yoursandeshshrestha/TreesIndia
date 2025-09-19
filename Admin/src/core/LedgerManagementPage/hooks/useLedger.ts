@@ -13,9 +13,6 @@ import {
   UpdateBalanceRequest,
   LedgerFilters,
   LedgerEntriesResponse,
-  LedgerEntryResponse,
-  BalanceResponse,
-  SummaryResponse,
 } from "../types";
 
 export function useLedger() {
@@ -60,7 +57,7 @@ export function useLedger() {
         );
 
         if (response.success) {
-          const data = response.data as LedgerEntriesResponse["data"];
+          const data = response.data as { entries: LedgerEntry[]; total: number; offset: number; limit: number; };
           setEntries(data.entries);
           setPagination((prev) => ({
             ...prev,
@@ -90,7 +87,15 @@ export function useLedger() {
       const response = await api.get("/admin/ledger/entries/pending/payments");
 
       if (response.success) {
-        setEntries(response.data);
+        // Handle both direct array and wrapped response formats
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setEntries(data as LedgerEntry[]);
+        } else if (data && typeof data === 'object' && 'entries' in data) {
+          setEntries((data as LedgerEntriesResponse['data']).entries);
+        } else {
+          setEntries([]);
+        }
       } else {
         throw new Error(response.message || "Failed to fetch pending payments");
       }
@@ -115,7 +120,15 @@ export function useLedger() {
       );
 
       if (response.success) {
-        setEntries(response.data);
+        // Handle both direct array and wrapped response formats
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setEntries(data as LedgerEntry[]);
+        } else if (data && typeof data === 'object' && 'entries' in data) {
+          setEntries((data as LedgerEntriesResponse['data']).entries);
+        } else {
+          setEntries([]);
+        }
       } else {
         throw new Error(
           response.message || "Failed to fetch pending receivables"
@@ -139,7 +152,7 @@ export function useLedger() {
       const response = await api.get("/admin/ledger/balance");
 
       if (response.success) {
-        const data = response.data as BalanceResponse["data"];
+        const data = response.data as unknown as CashBankBalance;
         setBalance(data);
       } else {
         throw new Error(response.message || "Failed to fetch balance");
@@ -158,7 +171,7 @@ export function useLedger() {
       const response = await api.get("/admin/ledger/summary");
 
       if (response.success) {
-        const data = response.data as SummaryResponse["data"];
+        const data = response.data as unknown as LedgerSummary;
         setSummary(data);
       } else {
         throw new Error(response.message || "Failed to fetch summary");
@@ -178,7 +191,7 @@ export function useLedger() {
         const response = await api.post("/admin/ledger/entries", data);
 
         if (response.success) {
-          const newEntry = response.data as LedgerEntryResponse["data"];
+          const newEntry = response.data as unknown as LedgerEntry;
           setEntries((prev) => [newEntry, ...prev]);
           toast.success("Ledger entry created successfully");
           return newEntry;
@@ -205,7 +218,7 @@ export function useLedger() {
         const response = await api.put(`/admin/ledger/entries/${id}`, data);
 
         if (response.success) {
-          const updatedEntry = response.data as LedgerEntryResponse["data"];
+          const updatedEntry = response.data as unknown as LedgerEntry;
           setEntries((prev) =>
             prev.map((entry) => (entry.id === id ? updatedEntry : entry))
           );
@@ -253,7 +266,7 @@ export function useLedger() {
         );
 
         if (response.success) {
-          const updatedEntry = response.data as LedgerEntryResponse["data"];
+          const updatedEntry = response.data as unknown as LedgerEntry;
           setEntries((prev) =>
             prev.map((entry) => (entry.id === id ? updatedEntry : entry))
           );
@@ -316,7 +329,7 @@ export function useLedger() {
         );
 
         if (response.success) {
-          const updatedEntry = response.data as LedgerEntryResponse["data"];
+          const updatedEntry = response.data as unknown as LedgerEntry;
           setEntries((prev) =>
             prev.map((entry) => (entry.id === id ? updatedEntry : entry))
           );
@@ -376,7 +389,7 @@ export function useLedger() {
         const response = await api.put("/admin/ledger/balance", data);
 
         if (response.success) {
-          const updatedBalance = response.data as BalanceResponse["data"];
+          const updatedBalance = response.data as unknown as CashBankBalance;
           setBalance(updatedBalance);
           toast.success("Balance updated successfully");
 

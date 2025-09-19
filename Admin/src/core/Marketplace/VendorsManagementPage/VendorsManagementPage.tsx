@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import useDebounce from "@/hooks/useDebounce";
 import Pagination from "@/components/Pagination/Pagination";
 
@@ -18,11 +17,9 @@ import {
   VendorFilters as VendorFiltersType,
   VendorTabType,
   Vendor,
-  UpdateVendorRequest,
 } from "./types";
 
 function VendorsManagementPage() {
-  const router = useRouter();
   const [isSearching, setIsSearching] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const debouncedSearch = useDebounce(localSearch, 300);
@@ -53,7 +50,6 @@ function VendorsManagementPage() {
     fetchVendors,
     fetchStats,
     refreshVendors,
-    updateVendor,
     deleteVendor,
     toggleVendorStatus,
   } = useVendors();
@@ -81,8 +77,7 @@ function VendorsManagementPage() {
     fetchVendors(
       apiFilters,
       currentPage,
-      itemsPerPage,
-      getModeFromTab(filters.activeTab)
+      itemsPerPage
     );
   }, [filters, currentPage, itemsPerPage, fetchVendors]);
 
@@ -101,19 +96,6 @@ function VendorsManagementPage() {
     }
   };
 
-  // Helper function to get mode based on active tab
-  const getModeFromTab = (
-    activeTab: VendorTabType
-  ): "all" | "active" | "inactive" => {
-    switch (activeTab) {
-      case "active":
-        return "active";
-      case "inactive":
-        return "inactive";
-      default:
-        return "all";
-    }
-  };
 
   // Load stats on component mount
   useEffect(() => {
@@ -132,8 +114,8 @@ function VendorsManagementPage() {
     setFilters((prev) => ({ ...prev, search: "" }));
   };
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const handleFilterChange = (key: string, value: string | number) => {
+    setFilters((prev) => ({ ...prev, [key]: String(value) }));
     setCurrentPage(1);
   };
 
@@ -179,8 +161,7 @@ function VendorsManagementPage() {
         sortOrder: filters.sortOrder,
       },
       currentPage,
-      itemsPerPage,
-      getModeFromTab(filters.activeTab)
+      itemsPerPage
     );
   };
 
@@ -194,15 +175,6 @@ function VendorsManagementPage() {
     setSelectedVendor(null);
   };
 
-  const handleUpdateVendor = async (
-    data: UpdateVendorRequest,
-    imageFiles?: File[]
-  ) => {
-    if (selectedVendor) {
-      await updateVendor(selectedVendor.ID, data, imageFiles);
-      handleRefresh();
-    }
-  };
 
   const handleToggleStatus = async (vendorId: number) => {
     await toggleVendorStatus(vendorId);
@@ -264,7 +236,7 @@ function VendorsManagementPage() {
       <VendorTabs
         activeTab={filters.activeTab}
         onTabChange={handleTabChange}
-        stats={stats}
+        stats={stats || undefined}
         isLoading={isLoading}
       />
 

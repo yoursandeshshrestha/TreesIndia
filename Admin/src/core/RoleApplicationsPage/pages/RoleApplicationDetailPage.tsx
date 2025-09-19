@@ -812,7 +812,7 @@ export default function RoleApplicationDetailPage() {
                 Cancel
               </Button>
               <Button
-                variant="default"
+                variant="primary"
                 size="sm"
                 onClick={handleAcceptApplication}
                 disabled={isAccepting}

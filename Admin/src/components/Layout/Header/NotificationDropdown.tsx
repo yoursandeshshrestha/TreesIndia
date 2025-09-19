@@ -32,14 +32,12 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const {
     data: notificationsData,
     isLoading: isLoadingNotifications,
-    refetch,
   } = useNotifications({
     limit,
     page: currentPage,
   });
 
-  const { data: unreadCountData, refetch: refetchUnreadCount } =
-    useUnreadCount();
+  const { data: unreadCountData } = useUnreadCount();
 
   // Mark all as read hook
   const markAllAsReadMutation = useMarkAllAsRead();
@@ -47,7 +45,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   // WebSocket hook - only connect when dropdown is open
   const { isConnected } = useNotificationWebSocket({
     onNewNotification: (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+      // Type assertion to ensure the notification matches InAppNotification interface
+      const typedNotification = notification as InAppNotification;
+      setNotifications((prev) => [typedNotification, ...prev]);
       setUnreadCount((prev) => prev + 1);
     },
     onUnreadCountUpdate: (count) => {

@@ -11,6 +11,13 @@ import {
   FilterOptions,
 } from "@/types/transaction";
 
+// Import ApiResponseData type
+interface ApiResponseData {
+  success: boolean;
+  message: string;
+  data?: Record<string, unknown>;
+}
+
 export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +56,7 @@ export const useTransactions = () => {
         if (filters.sort_order) params.append("sort_order", filters.sort_order);
 
         const response = await api.get(`/admin/transactions?${params}`);
-        const apiResponse = response as { data: TransactionApiResponse };
+        const apiResponse = response as ApiResponseData & { data: TransactionApiResponse };
         const data = apiResponse.data;
 
         setTransactions(data.transactions || []);
@@ -77,7 +84,7 @@ export const useTransactions = () => {
     useCallback(async (): Promise<TransactionStats | null> => {
       try {
         const response = await api.get("/admin/transactions/stats");
-        const apiResponse = response as { data: TransactionStats };
+        const apiResponse = response as ApiResponseData & { data: TransactionStats };
         return apiResponse.data;
       } catch (err) {
         const errorMessage =
@@ -93,7 +100,7 @@ export const useTransactions = () => {
     useCallback(async (): Promise<TransactionDashboardData | null> => {
       try {
         const response = await api.get("/admin/transactions/dashboard");
-        const apiResponse = response as { data: TransactionDashboardData };
+        const apiResponse = response as ApiResponseData & { data: TransactionDashboardData };
         return apiResponse.data;
       } catch (err) {
         const errorMessage =
@@ -107,7 +114,7 @@ export const useTransactions = () => {
     useCallback(async (): Promise<FilterOptions | null> => {
       try {
         const response = await api.get("/admin/transactions/filters");
-        const apiResponse = response as { data: FilterOptions };
+        const apiResponse = response as ApiResponseData & { data: FilterOptions };
         return apiResponse.data;
       } catch (err) {
         const errorMessage =
@@ -121,7 +128,7 @@ export const useTransactions = () => {
     async (id: number): Promise<Transaction | null> => {
       try {
         const response = await api.get(`/admin/transactions/${id}`);
-        const apiResponse = response as { data: Transaction };
+        const apiResponse = response as ApiResponseData & { data: Transaction };
         return apiResponse.data;
       } catch (err) {
         const errorMessage =
@@ -139,7 +146,7 @@ export const useTransactions = () => {
         const response = await api.get(
           `/admin/transactions/reference/${reference}`
         );
-        const apiResponse = response as { data: Transaction };
+        const apiResponse = response as ApiResponseData & { data: Transaction };
         return apiResponse.data;
       } catch (err) {
         const errorMessage =
@@ -156,12 +163,12 @@ export const useTransactions = () => {
       try {
         const response = await api.post(
           "/admin/transactions/export",
-          exportData,
+          exportData as unknown as Record<string, unknown>,
           {
             responseType: "blob",
           }
         );
-        return response as Blob;
+        return response as unknown as Blob;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to export transactions";

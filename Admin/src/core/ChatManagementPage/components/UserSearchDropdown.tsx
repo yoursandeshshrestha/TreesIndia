@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, User, X, Loader2 } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { User as UserType } from "@/types/user";
 import { getCurrentUser } from "@/utils/authUtils";
@@ -21,7 +21,7 @@ const UserSearchDropdown: React.FC<UserSearchDropdownProps> = ({
   const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [, _setSelectedUser] = useState<UserType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,10 +68,10 @@ const UserSearchDropdown: React.FC<UserSearchDropdownProps> = ({
       const data = await api.get("/admin/users?limit=20");
       if (data.success && data.data) {
         const currentUser = getCurrentUser();
-        const allUsers = (data.data as any).users || [];
+        const allUsers = (data.data as { users: UserType[] }).users || [];
 
         // Filter out current user from the list
-        let filteredUsers = currentUser
+        const filteredUsers = currentUser
           ? allUsers.filter((user: UserType) => user.ID !== currentUser.id)
           : allUsers;
 
@@ -104,10 +104,10 @@ const UserSearchDropdown: React.FC<UserSearchDropdownProps> = ({
       );
       if (data.success && data.data) {
         const currentUser = getCurrentUser();
-        const allUsers = (data.data as any).users || [];
+        const allUsers = (data.data as { users: UserType[] }).users || [];
 
         // Filter out current user from the search results
-        let filteredUsers = currentUser
+        const filteredUsers = currentUser
           ? allUsers.filter((user: UserType) => user.ID !== currentUser.id)
           : allUsers;
 
@@ -142,7 +142,7 @@ const UserSearchDropdown: React.FC<UserSearchDropdownProps> = ({
   };
 
   const handleUserSelect = (user: UserType) => {
-    setSelectedUser(user);
+    _setSelectedUser(user);
     setSearchTerm(user.name);
     setIsOpen(false);
     onUserSelect(user);
@@ -150,7 +150,7 @@ const UserSearchDropdown: React.FC<UserSearchDropdownProps> = ({
 
   const handleClear = () => {
     setSearchTerm("");
-    setSelectedUser(null);
+    _setSelectedUser(null);
     setUsers([]);
     setIsOpen(false);
     inputRef.current?.focus();

@@ -27,7 +27,7 @@ export interface Transaction {
   refund_method?: string;
   description: string;
   notes: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   user: {
     ID: number;
     CreatedAt: string;
@@ -46,10 +46,10 @@ export interface Transaction {
     approval_date?: string | null;
     wallet_balance: number;
     subscription_id?: number | null;
-    subscription?: any;
+    subscription?: unknown;
     has_active_subscription: boolean;
     subscription_expiry_date?: string | null;
-    notification_settings?: any;
+    notification_settings?: unknown;
   };
 }
 
@@ -87,6 +87,7 @@ export interface TransactionFilters {
   sort_by: string;
   sort_order: "asc" | "desc";
   limit?: number;
+  page?: number;
 }
 
 export interface TransactionStats {

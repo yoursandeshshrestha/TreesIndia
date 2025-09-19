@@ -14,12 +14,12 @@ interface VendorFiltersProps {
   sortBy: string;
   sortOrder: string;
   onSearchChange: (value: string) => void;
-  onBusinessTypeChange: (value: string) => void;
+  onBusinessTypeChange: (value: string | number) => void;
   onStateChange: (value: string) => void;
   onCityChange: (value: string) => void;
-  onIsActiveChange: (value: string) => void;
-  onSortByChange: (value: string) => void;
-  onSortOrderChange: (value: string) => void;
+  onIsActiveChange: (value: string | number) => void;
+  onSortByChange: (value: string | number) => void;
+  onSortOrderChange: (value: string | number) => void;
   onClear: () => void;
   onClearSearch: () => void;
   isSearching?: boolean;

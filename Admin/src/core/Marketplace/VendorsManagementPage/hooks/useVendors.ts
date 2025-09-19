@@ -44,7 +44,6 @@ interface UseVendorsReturn {
     filters?: VendorFilters,
     page?: number,
     limit?: number,
-    mode?: "all" | "active" | "inactive"
   ) => Promise<void>;
   fetchVendorById: (id: number) => Promise<Vendor | null>;
   createVendor: (
@@ -63,7 +62,6 @@ interface UseVendorsReturn {
     filters?: VendorFilters,
     page?: number,
     limit?: number,
-    mode?: "all" | "active" | "inactive"
   ) => Promise<void>;
 }
 
@@ -88,8 +86,7 @@ export const useVendors = (): UseVendorsReturn => {
         sortOrder: "desc",
       },
       pageNum: number = 1,
-      limit: number = 20,
-      mode: "all" | "active" | "inactive" = "all"
+      limit: number = 20
     ) => {
       setIsLoading(true);
       setError(null);
@@ -357,9 +354,8 @@ export const useVendors = (): UseVendorsReturn => {
       filters?: VendorFilters,
       pageNum?: number,
       limit?: number,
-      mode?: "all" | "active" | "inactive"
     ) => {
-      await fetchVendors(filters, pageNum, limit, mode);
+      await fetchVendors(filters, pageNum, limit);
     },
     [fetchVendors]
   );

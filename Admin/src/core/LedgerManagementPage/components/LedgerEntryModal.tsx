@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, IndianRupee, TrendingUp, TrendingDown } from "lucide-react";
+import { X, TrendingUp, TrendingDown } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
@@ -116,6 +116,7 @@ export default function LedgerEntryModal({
       await onSave(data);
       onClose();
     } catch (error) {
+      console.error("Error saving ledger entry:", error);
       // Error handling is done in the parent component
     }
   };

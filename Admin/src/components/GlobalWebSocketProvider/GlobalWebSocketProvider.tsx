@@ -10,12 +10,16 @@ interface GlobalWebSocketContextType {
   totalUnreadCount: number;
 }
 
-const GlobalWebSocketContext = createContext<GlobalWebSocketContextType | null>(null);
+const GlobalWebSocketContext = createContext<GlobalWebSocketContextType | null>(
+  null
+);
 
 export const useGlobalWebSocket = () => {
   const context = useContext(GlobalWebSocketContext);
   if (!context) {
-    throw new Error("useGlobalWebSocket must be used within a GlobalWebSocketProvider");
+    throw new Error(
+      "useGlobalWebSocket must be used within a GlobalWebSocketProvider"
+    );
   }
   return context;
 };
@@ -24,11 +28,12 @@ interface GlobalWebSocketProviderProps {
   children: React.ReactNode;
 }
 
-export const GlobalWebSocketProvider: React.FC<GlobalWebSocketProviderProps> = ({
-  children,
-}) => {
+export const GlobalWebSocketProvider: React.FC<
+  GlobalWebSocketProviderProps
+> = ({ children }) => {
   const [totalUnreadCount, setTotalUnreadCount] = useState(0);
-  const [currentlyOpenConversationId, setCurrentlyOpenConversationId] = useState<number | null>(null);
+  const [currentlyOpenConversationId, setCurrentlyOpenConversationId] =
+    useState<number | null>(null);
 
   // Global WebSocket connection for all real-time updates
   const { isConnected, connectionError } = useAdminConversationWebSocket({
@@ -54,9 +59,23 @@ export const GlobalWebSocketProvider: React.FC<GlobalWebSocketProviderProps> = (
       }, 100);
 
       // Emit message updates to conversation store for other components
-      conversationStore.emitUpdate(messageData);
+      // Transform the message data to match the expected ConversationUpdateData type
+      const transformedMessageData = {
+        conversation_id: messageData.conversation_id,
+        message: messageData.message as {
+          id: number;
+          conversation_id: number;
+          sender_id: number;
+          message: string;
+          created_at: string;
+          sender?: {
+            user_type: string;
+          };
+        }
+      };
+      conversationStore.emitUpdate(transformedMessageData);
     },
-    onStatusUpdate: (status) => {
+    onStatusUpdate: () => {
       // Handle status updates if needed
     },
     onConversationUnreadCount: (conversationId, count) => {
@@ -71,7 +90,9 @@ export const GlobalWebSocketProvider: React.FC<GlobalWebSocketProviderProps> = (
   // Load total unread count using the dedicated API
   const loadTotalUnreadCount = async () => {
     try {
-      const { conversationApi } = await import("@/core/ChatManagementPage/services/conversationApi");
+      const { conversationApi } = await import(
+        "@/core/ChatManagementPage/services/conversationApi"
+      );
       const response = await conversationApi.getAdminTotalUnreadCount();
       // For now, we'll use the backend count directly
       // The backend should ideally filter out the currently open conversation
@@ -101,7 +122,7 @@ export const GlobalWebSocketProvider: React.FC<GlobalWebSocketProviderProps> = (
   // Listen for read status updates to reload total count
   useEffect(() => {
     const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
-      (conversationId) => {
+      () => {
         // Reload total unread count when a conversation is marked as read
         loadTotalUnreadCount();
       }

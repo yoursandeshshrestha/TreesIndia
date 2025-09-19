@@ -153,13 +153,11 @@ const BookingTable: React.FC<BookingTableProps> = ({
                 <Clock className="w-3 h-3 mr-1" />
                 {displayTime(booking.scheduled_time)}
               </div>
-              {(booking.quote_duration || booking.service?.duration) && (
+              {booking.service?.duration && (
                 <div className="text-xs text-blue-600 flex items-center mt-1">
                   <Clock className="w-3 h-3 mr-1" />
                   Duration:{" "}
-                  {displayDuration(
-                    booking.quote_duration || booking.service?.duration
-                  )}
+                  {displayDuration(booking.service.duration)}
                 </div>
               )}
             </div>
@@ -523,9 +521,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
           onChat(booking);
         }
       },
-      className: (booking: OptimizedBookingResponse) =>
-        "text-blue-700 bg-blue-100 hover:bg-blue-200",
-      disabled: (booking: OptimizedBookingResponse) => !onChat,
+      className: () => "text-blue-700 bg-blue-100 hover:bg-blue-200",
+      disabled: () => !onChat,
     },
   ];
 

@@ -52,7 +52,7 @@ function ChatManagementPage() {
   const { isConnected: isWebSocketConnected, totalUnreadCount } =
     useGlobalWebSocket();
 
-  const loadConversations = async (tab: TabType = activeTab) => {
+  const loadConversations = useCallback(async (tab: TabType = activeTab) => {
     setIsLoading(true);
     try {
       let response;
@@ -75,7 +75,7 @@ function ChatManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab]);
 
   // Handle user context from booking system
   const handleUserContext = useCallback(async () => {
@@ -210,7 +210,7 @@ function ChatManagementPage() {
         return updatedConversations;
       });
     },
-    [selectedConversation?.id]
+    [loadConversations]
   );
 
   // Handle conversation unread count updates from WebSocket
@@ -253,12 +253,16 @@ function ChatManagementPage() {
       unsubscribeConversationList();
       unsubscribeConversationUnreadCount();
     };
-  }, [updateConversationList, handleConversationUnreadCount]);
+  }, [
+    updateConversationList,
+    handleConversationUnreadCount,
+    loadConversations,
+  ]);
 
   // Load conversations on component mount and when tab changes
   useEffect(() => {
     loadConversations(activeTab);
-  }, [activeTab]);
+  }, [activeTab, loadConversations]);
 
   // Handle user context from booking system
   useEffect(() => {

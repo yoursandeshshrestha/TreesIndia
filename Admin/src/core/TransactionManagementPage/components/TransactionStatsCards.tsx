@@ -16,14 +16,14 @@ export default function TransactionStatsCards({
   const [isLoading, setIsLoading] = useState(true);
   const { fetchTransactionStats } = useTransactions();
 
-  const loadStats = async () => {
-    setIsLoading(true);
-    const statsData = await fetchTransactionStats();
-    setStats(statsData);
-    setIsLoading(false);
-  };
-
   useEffect(() => {
+    const loadStats = async () => {
+      setIsLoading(true);
+      const statsData = await fetchTransactionStats();
+      setStats(statsData);
+      setIsLoading(false);
+    };
+
     loadStats();
   }, [fetchTransactionStats, refreshTrigger]);
 

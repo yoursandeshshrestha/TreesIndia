@@ -70,6 +70,7 @@ export default function PaymentModal({
       await onProcess(formData);
       onClose();
     } catch (error) {
+      console.error("Error processing payment:", error);
       // Error handling is done in the parent component
       // The error will be displayed in toast by the useLedger hook
     }

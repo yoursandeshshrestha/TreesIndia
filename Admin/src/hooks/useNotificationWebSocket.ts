@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { NotificationWebSocketMessage } from "@/types/notification";
 
 interface UseNotificationWebSocketProps {
-  onNewNotification?: (notification: any) => void;
+  onNewNotification?: (notification: unknown) => void;
   onUnreadCountUpdate?: (count: number) => void;
   onNotificationRead?: (notificationId: number, isRead: boolean) => void;
   onAllNotificationsRead?: () => void;
@@ -137,7 +137,8 @@ export const useNotificationWebSocket = ({
             case "unread_count_update":
               if (
                 onUnreadCountUpdateRef.current &&
-                message.data.unread_count !== undefined
+                message.data.unread_count !== undefined &&
+                typeof message.data.unread_count === "number"
               ) {
                 onUnreadCountUpdateRef.current(message.data.unread_count);
               }
@@ -145,7 +146,9 @@ export const useNotificationWebSocket = ({
             case "notification_read":
               if (
                 onNotificationReadRef.current &&
-                message.data.notification_id !== undefined
+                message.data.notification_id !== undefined &&
+                typeof message.data.notification_id === "number" &&
+                typeof message.data.is_read === "boolean"
               ) {
                 onNotificationReadRef.current(
                   message.data.notification_id,
@@ -239,7 +242,7 @@ export const useNotificationWebSocket = ({
     reconnectAttempts.current = 0;
   }, []);
 
-  const sendMessage = useCallback((message: Record<string, any>) => {
+  const sendMessage = useCallback((message: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
