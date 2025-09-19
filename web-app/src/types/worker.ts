@@ -12,6 +12,9 @@ export interface Worker {
   // JSON fields as objects (parsed from backend)
   contact_info: {
     alternative_number: string;
+    name?: string;
+    email?: string;
+    phone?: string;
   };
   address: {
     street: string;

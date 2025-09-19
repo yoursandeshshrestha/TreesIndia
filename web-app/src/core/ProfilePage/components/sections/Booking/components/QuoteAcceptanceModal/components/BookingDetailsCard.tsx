@@ -21,8 +21,6 @@ export default function BookingDetailsCard({
   selectedDate,
   selectedTimeSlot,
   currentStep,
-  getAddressName,
-  getAddressDetails,
   hasMultipleSegments = false,
 }: BookingDetailsCardProps) {
   const {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { VendorFormData } from "@/types/vendorForm";
-import { TextField, Box, Typography, Grid, Paper, Button } from "@mui/material";
+import { TextField, Box, Typography, Paper, Button } from "@mui/material";
 import { Target, Loader2 } from "lucide-react";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { toast } from "sonner";
@@ -139,120 +139,124 @@ export default function LocationDetailsStep({
         />
 
         {/* City and State */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="City"
-              required
-              fullWidth
-              value={formData.business_address.city}
-              onChange={(e) => handleAddressChange("city", e.target.value)}
-              placeholder="e.g., Mumbai"
-              error={errors.includes("city")}
-              helperText={
-                errors.includes("city") ? "City is required" : "Enter your city"
-              }
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+          }}
+        >
+          <TextField
+            label="City"
+            required
+            fullWidth
+            value={formData.business_address.city}
+            onChange={(e) => handleAddressChange("city", e.target.value)}
+            placeholder="e.g., Mumbai"
+            error={errors.includes("city")}
+            helperText={
+              errors.includes("city") ? "City is required" : "Enter your city"
+            }
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#00a871",
                 },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#00a871",
-                  },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#00a871",
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#00a871",
+              },
+            }}
+          />
+          <TextField
+            label="State"
+            required
+            fullWidth
+            value={formData.business_address.state}
+            onChange={(e) => handleAddressChange("state", e.target.value)}
+            placeholder="e.g., Maharashtra"
+            error={errors.includes("state")}
+            helperText={
+              errors.includes("state")
+                ? "State is required"
+                : "Enter your state"
+            }
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#00a871",
                 },
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="State"
-              required
-              fullWidth
-              value={formData.business_address.state}
-              onChange={(e) => handleAddressChange("state", e.target.value)}
-              placeholder="e.g., Maharashtra"
-              error={errors.includes("state")}
-              helperText={
-                errors.includes("state")
-                  ? "State is required"
-                  : "Enter your state"
-              }
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#00a871",
-                  },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#00a871",
-                },
-              }}
-            />
-          </Grid>
-        </Grid>
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#00a871",
+              },
+            }}
+          />
+        </Box>
 
         {/* Pincode and Landmark */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Pincode"
-              required
-              fullWidth
-              value={formData.business_address.pincode}
-              onChange={(e) => handleAddressChange("pincode", e.target.value)}
-              placeholder="e.g., 400001"
-              error={errors.includes("pincode")}
-              helperText={
-                errors.includes("pincode")
-                  ? "Pincode is required"
-                  : "Enter your pincode"
-              }
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+          }}
+        >
+          <TextField
+            label="Pincode"
+            required
+            fullWidth
+            value={formData.business_address.pincode}
+            onChange={(e) => handleAddressChange("pincode", e.target.value)}
+            placeholder="e.g., 400001"
+            error={errors.includes("pincode")}
+            helperText={
+              errors.includes("pincode")
+                ? "Pincode is required"
+                : "Enter your pincode"
+            }
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#00a871",
                 },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#00a871",
-                  },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#00a871",
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#00a871",
+              },
+            }}
+          />
+          <TextField
+            label="Landmark"
+            fullWidth
+            value={formData.business_address.landmark || ""}
+            onChange={(e) => handleAddressChange("landmark", e.target.value)}
+            placeholder="e.g., Near Central Mall"
+            helperText="Optional - nearby landmark for easy identification"
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#00a871",
                 },
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Landmark"
-              fullWidth
-              value={formData.business_address.landmark || ""}
-              onChange={(e) => handleAddressChange("landmark", e.target.value)}
-              placeholder="e.g., Near Central Mall"
-              helperText="Optional - nearby landmark for easy identification"
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#00a871",
-                  },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#00a871",
-                },
-              }}
-            />
-          </Grid>
-        </Grid>
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#00a871",
+              },
+            }}
+          />
+        </Box>
 
         {/* Address Preview */}
         {formData.business_address.street && (

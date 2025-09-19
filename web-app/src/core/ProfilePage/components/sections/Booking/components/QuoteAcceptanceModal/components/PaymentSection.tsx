@@ -6,7 +6,6 @@ import { AvailableSlot } from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
-import { useBookings } from "@/hooks/useBookings";
 
 import { PaymentMethod } from "@/types/payment";
 
@@ -31,8 +30,6 @@ export default function PaymentSection({
   selectedTimeSlot,
   selectedPaymentMethod,
   onPaymentMethodSelect,
-  getAddressName,
-  getAddressDetails,
   isMultipleSegments = false,
 }: PaymentSectionProps) {
   // Get wallet data from Redux

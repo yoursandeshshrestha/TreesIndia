@@ -171,13 +171,13 @@ class LocationTrackingWebSocketService {
         // Handle different data structures from backend
         if (locationData && typeof locationData === "object") {
           // If data is nested, try to extract the actual location data
-          if (locationData.data && typeof locationData.data === "object") {
+          if ('data' in locationData && locationData.data && typeof locationData.data === "object") {
             locationData = locationData.data;
           }
 
           // Try to get coordinates from various possible locations
-          let latitude = locationData.latitude || locationMessage.latitude;
-          let longitude = locationData.longitude || locationMessage.longitude;
+          const latitude = locationData.latitude || locationMessage.latitude;
+          const longitude = locationData.longitude || locationMessage.longitude;
 
           // Check if we have valid coordinates
           const hasValidCoords =
@@ -373,7 +373,7 @@ class LocationTrackingWebSocketService {
           this.updateLocation(assignmentId, position);
         }
       },
-      (error) => {
+      () => {
         // Fallback to periodic updates if watchPosition fails
         this.fallbackToPeriodicUpdates(assignmentId);
       },
@@ -401,7 +401,7 @@ class LocationTrackingWebSocketService {
       try {
         position = await this.getCurrentPosition();
         break;
-      } catch (error) {
+      } catch {
         if (attempts < maxAttempts) {
           // Wait before retrying (exponential backoff)
           const delay = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
@@ -422,7 +422,7 @@ class LocationTrackingWebSocketService {
         // Force the first update by clearing last emitted location
         this.lastEmittedLocation = null;
         this.updateLocation(assignmentId, cachedPosition);
-      } catch (cachedError) {}
+      } catch {}
     }
   }
 
@@ -440,7 +440,7 @@ class LocationTrackingWebSocketService {
             // Restore original location
             this.lastEmittedLocation = originalLastLocation;
           })
-          .catch((error) => {});
+          .catch(() => {});
       } else {
         clearInterval(fallbackInterval);
       }
@@ -454,7 +454,7 @@ class LocationTrackingWebSocketService {
         try {
           const position = await this.getCurrentPosition();
           this.updateLocation(assignmentId, position);
-        } catch (error) {}
+        } catch {}
       } else {
         clearInterval(intervalId);
       }
@@ -603,7 +603,7 @@ class LocationTrackingWebSocketService {
         this.lastEmittedLocation = null;
         this.updateLocation(assignmentId, position);
       })
-      .catch((error) => {});
+      .catch(() => {});
   }
 
   // Send test location update for debugging

@@ -39,7 +39,7 @@ export const useNotifications = (params?: {
         ]);
       }
     }
-  }, [query.data, params?.page]);
+  }, [query.data, params?.page, storeState.notifications]);
 
   return {
     ...query,
@@ -96,7 +96,7 @@ export const useMarkAllAsRead = () => {
       });
       toast.success("All notifications marked as read");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Failed to mark all as read:", error);
       toast.error("Failed to mark all notifications as read");
     },

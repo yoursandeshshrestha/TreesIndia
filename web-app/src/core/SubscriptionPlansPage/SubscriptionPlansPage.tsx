@@ -15,7 +15,6 @@ import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
 import { useWallet } from "@/hooks/useWallet";
 import {
   SubscriptionPlan,
-  GroupedSubscriptionPlan,
 } from "@/types/subscription";
 
 export const SubscriptionPlansPage: React.FC = () => {
@@ -39,9 +38,6 @@ export const SubscriptionPlansPage: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
     null
   );
-  const [selectedDuration, setSelectedDuration] = useState<
-    "monthly" | "yearly"
-  >("monthly");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -73,9 +69,6 @@ export const SubscriptionPlansPage: React.FC = () => {
     setShowPaymentModal(true);
   };
 
-  const handleDurationChange = (duration: "monthly" | "yearly") => {
-    setSelectedDuration(duration);
-  };
 
   const handlePaymentMethodSelect = async (method: "wallet" | "razorpay") => {
     if (!selectedPlan) return;
@@ -342,8 +335,11 @@ export const SubscriptionPlansPage: React.FC = () => {
 
         {/* Savings Info */}
         {groupedPlans.length > 0 &&
+          groupedPlans[0] &&
           groupedPlans[0].monthly &&
-          groupedPlans[0].yearly && (
+          groupedPlans[0].yearly &&
+          groupedPlans[0].monthly.price &&
+          groupedPlans[0].yearly.price && (
             <div className="flex justify-center mb-8">
               <div className="bg-green-50 border border-green-200 rounded-lg px-6 py-3">
                 <div className="flex items-center gap-2">
@@ -366,7 +362,7 @@ export const SubscriptionPlansPage: React.FC = () => {
         {groupedPlans.length > 0 ? (
           <div className="flex justify-center mb-12">
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
-              {groupedPlans.map((groupedPlan, index) => (
+              {groupedPlans.map((groupedPlan) => (
                 <React.Fragment key={`${groupedPlan.name}-container`}>
                   {/* Monthly Plan */}
                   {groupedPlan.monthly && (
@@ -431,7 +427,7 @@ export const SubscriptionPlansPage: React.FC = () => {
                   No Subscription Plans Available
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  We're currently setting up our subscription plans. Please
+                  We&apos;re currently setting up our subscription plans. Please
                   check back later or contact support for assistance.
                 </p>
                 <button

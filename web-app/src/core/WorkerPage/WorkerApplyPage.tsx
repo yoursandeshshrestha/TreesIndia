@@ -391,7 +391,9 @@ function WorkerApplyPage() {
 
             {hookSubmitError && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-800 text-sm">{hookSubmitError}</p>
+                <p className="text-red-800 text-sm">
+                  {hookSubmitError.message || String(hookSubmitError)}
+                </p>
               </div>
             )}
             {renderCurrentStep()}

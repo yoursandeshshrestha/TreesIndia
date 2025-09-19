@@ -3,7 +3,6 @@
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
-import { useBookings } from "@/hooks/useBookings";
 import BookingDetailsCard from "./BookingDetailsCard";
 import DateTimeSelection from "./DateTimeSelection";
 import PaymentSection from "./PaymentSection";
@@ -30,7 +29,6 @@ export function QuoteAcceptanceContent() {
 
   // Get payment segments directly from booking object (new structure)
   const paymentSegments = booking?.payment_segments || [];
-  const paymentProgress = booking?.payment_progress;
 
   const hasMultipleSegments = paymentSegments.length > 1;
 

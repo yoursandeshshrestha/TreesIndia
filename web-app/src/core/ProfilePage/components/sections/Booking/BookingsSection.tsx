@@ -266,7 +266,7 @@ export function BookingsSection() {
           <BookingsSectionSkeleton />
         ) : filteredBookings.length > 0 ? (
           filteredBookings.map((booking, index) => (
-            <div key={booking.ID || booking.id || `booking-${index}`}>
+            <div key={booking.ID || `booking-${index}`}>
               <MainBookingCard
                 booking={booking as Booking}
                 onCancel={handleCancelClick}

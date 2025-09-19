@@ -5,7 +5,7 @@ export interface ChatbotSession {
   session_id: string;
   is_active: boolean;
   last_message_at: string;
-  current_context: Record<string, any>;
+  current_context: Record<string, unknown>;
   query_type?: string;
   location: string;
   messages: ChatMessage[];
@@ -18,8 +18,8 @@ export interface ChatMessage {
   content: string;
   message_type: string;
   created_at: string;
-  context?: Record<string, any>;
-  data_results?: Record<string, any>;
+  context?: Record<string, unknown>;
+  data_results?: Record<string, unknown>;
   suggestions?: string[];
   needs_more_info?: boolean;
   next_step?: string;
@@ -29,7 +29,7 @@ export interface ChatbotSuggestion {
   id: number;
   text: string;
   action: string;
-  action_data: Record<string, any>;
+  action_data: Record<string, unknown>;
   category: string;
   priority: number;
   is_active: boolean;
@@ -39,13 +39,13 @@ export interface ChatbotSuggestion {
 export interface CreateSessionRequest {
   user_id?: number;
   location: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface SendMessageRequest {
   session_id: string;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface ApiResponse<T> {
@@ -149,8 +149,8 @@ class ChatbotService {
     });
   }
 
-  async healthCheck(): Promise<ApiResponse<Record<string, any>>> {
-    return this.makeRequest<Record<string, any>>("/health");
+  async healthCheck(): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>("/health");
   }
 }
 

@@ -24,7 +24,6 @@ export default function PaymentSegmentsPage({
   // Get payment segments directly from booking object (new structure)
   const { refetchBookings } = useBookings();
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
-  const paymentSegments = booking.payment_segments || [];
   const paymentProgress = booking.payment_progress;
 
   const loading = false; // No loading since data comes from cache

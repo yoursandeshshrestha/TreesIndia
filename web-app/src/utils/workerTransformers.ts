@@ -1,4 +1,6 @@
 import { Worker } from "@/types/worker";
+import { UserSubscription } from "@/types/subscription";
+import { PaymentMethod } from "@/types/payment";
 
 /**
  * Raw worker data from API - JSON fields come as strings
@@ -47,7 +49,7 @@ export interface RawWorker {
     approval_date: string | null;
     wallet_balance: number;
     subscription_id: number | null;
-    subscription: any | null;
+    subscription: UserSubscription | null; // Raw subscription data from API - will be transformed
     has_active_subscription: boolean;
     subscription_expiry_date: string | null;
     notification_settings: Record<string, unknown> | null;
@@ -77,10 +79,62 @@ function safeJsonParse<T>(jsonString: string, fallback: T): T {
 }
 
 /**
+ * Transform raw subscription data to UserSubscription type
+ */
+function transformSubscription(subscriptionData: UserSubscription | Record<string, unknown> | null): UserSubscription | null {
+  if (!subscriptionData) {
+    return null;
+  }
+
+  // Type guard to check if it's already a proper UserSubscription object
+  const isUserSubscription = (data: UserSubscription | Record<string, unknown>): data is UserSubscription => {
+    return typeof data === 'object' && 
+           data !== null && 
+           'ID' in data && 
+           'CreatedAt' in data && 
+           'UpdatedAt' in data && 
+           'DeletedAt' in data &&
+           'user_id' in data &&
+           'plan_id' in data &&
+           'start_date' in data &&
+           'end_date' in data &&
+           'status' in data &&
+           'payment_method' in data &&
+           'amount' in data &&
+           'payment_reference' in data;
+  };
+
+  // If it's already a proper UserSubscription object, return it
+  if (isUserSubscription(subscriptionData)) {
+    return subscriptionData;
+  }
+
+  // If it's a simple object with id, name, status, create a minimal UserSubscription
+  if ('id' in subscriptionData && 'name' in subscriptionData && 'status' in subscriptionData) {
+    return {
+      ID: subscriptionData.id as number,
+      CreatedAt: new Date().toISOString(),
+      UpdatedAt: new Date().toISOString(),
+      DeletedAt: null,
+      user_id: 0, // Will be set by the parent object
+      plan_id: subscriptionData.id as number,
+      start_date: new Date().toISOString(),
+      end_date: new Date().toISOString(),
+      status: subscriptionData.status as "active" | "expired" | "cancelled",
+      payment_method: "wallet" as PaymentMethod, // Default payment method
+      amount: 0,
+      payment_reference: "",
+    };
+  }
+
+  return null;
+}
+
+/**
  * Transform raw worker data from API to properly typed Worker object
  */
 export function transformWorkerData(rawWorker: RawWorker): Worker {
-  return {
+  const transformedWorker: Worker = {
     ...rawWorker,
     contact_info: safeJsonParse(rawWorker.contact_info, {
       alternative_number: "",
@@ -108,7 +162,13 @@ export function transformWorkerData(rawWorker: RawWorker): Worker {
       police_verification: "",
     }),
     skills: safeJsonParse(rawWorker.skills, []),
+    user: rawWorker.user ? {
+      ...rawWorker.user,
+      subscription: transformSubscription(rawWorker.user.subscription),
+    } : undefined,
   };
+
+  return transformedWorker;
 }
 
 /**

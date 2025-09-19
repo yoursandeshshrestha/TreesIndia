@@ -176,7 +176,7 @@ export default function PropertyDetailPage() {
 
   const handleChatClick = () => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 
@@ -524,7 +524,7 @@ function RelatedPropertiesSection({
   city: string;
   state: string;
   listingType: "sale" | "rent";
-  onChatClick?: (property: any) => void;
+  onChatClick?: (property: { user_id: number }) => void;
   currentUserId?: number;
 }) {
   const router = useRouter();

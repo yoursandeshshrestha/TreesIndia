@@ -81,7 +81,7 @@ export function ProjectsContent({
 
   const handleChatClick = (project: Project) => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 

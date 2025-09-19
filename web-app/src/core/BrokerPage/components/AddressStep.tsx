@@ -6,6 +6,14 @@ import { Target, Loader2 } from "lucide-react";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { toast } from "sonner";
 
+// Custom Grid component to handle TypeScript issues
+const GridItem = Grid as React.ComponentType<{
+  item?: boolean;
+  xs?: number;
+  sm?: number;
+  children?: React.ReactNode;
+}>;
+
 interface AddressStepProps {
   formData: {
     address?: string;
@@ -117,7 +125,7 @@ const AddressStep: React.FC<AddressStepProps> = ({
         />
 
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <GridItem item xs={12} sm={6}>
             <TextField
               label="City"
               required
@@ -128,8 +136,8 @@ const AddressStep: React.FC<AddressStepProps> = ({
               error={!!errors.address}
               fullWidth
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </GridItem>
+          <GridItem item xs={12} sm={6}>
             <TextField
               label="State"
               required
@@ -140,11 +148,11 @@ const AddressStep: React.FC<AddressStepProps> = ({
               error={!!errors.address}
               fullWidth
             />
-          </Grid>
+          </GridItem>
         </Grid>
 
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <GridItem item xs={12} sm={6}>
             <TextField
               label="Pincode"
               required
@@ -155,8 +163,8 @@ const AddressStep: React.FC<AddressStepProps> = ({
               error={!!errors.address}
               fullWidth
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </GridItem>
+          <GridItem item xs={12} sm={6}>
             <TextField
               label="Landmark (Optional)"
               type="text"
@@ -165,7 +173,7 @@ const AddressStep: React.FC<AddressStepProps> = ({
               placeholder="Enter landmark"
               fullWidth
             />
-          </Grid>
+          </GridItem>
         </Grid>
       </Box>
     </Box>

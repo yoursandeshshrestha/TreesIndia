@@ -481,7 +481,6 @@ export function ProfileOverview() {
       {/* Subscription Status Card - Only show if there's meaningful subscription data */}
       {userProfile?.subscription &&
         userProfile.subscription.status &&
-        userProfile.subscription.status !== "unknown" &&
         (userProfile.subscription.start_date ||
           userProfile.subscription.end_date) && (
           <div className="bg-white border border-gray-200 rounded-lg p-6">

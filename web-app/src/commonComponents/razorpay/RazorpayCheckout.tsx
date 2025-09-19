@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   RazorpayOptions,
@@ -187,7 +187,18 @@ export default function RazorpayCheckout({
         document.body.removeChild(script);
       }
     };
-  }, [order.id, onFailure]);
+  }, [
+    order.id,
+    order.amount,
+    order.currency,
+    order.key_id,
+    description,
+    onClose,
+    onSuccess,
+    onFailure,
+    user?.name,
+    user?.phone,
+  ]);
 
   return null; // This component doesn't render anything visible
 }

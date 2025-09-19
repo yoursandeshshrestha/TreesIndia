@@ -12,10 +12,7 @@ import {
   Box,
   Typography,
   Chip,
-  Grid,
   Button,
-  InputAdornment,
-  IconButton,
 } from "@mui/material";
 import { Plus, X } from "lucide-react";
 
@@ -56,7 +53,16 @@ export default function BusinessDetailsStep({
   const [customService, setCustomService] = useState("");
 
   const handleBusinessTypeChange = (businessType: string) => {
-    onUpdate({ business_type: businessType as any });
+    onUpdate({
+      business_type: businessType as
+        | "individual"
+        | "partnership"
+        | "company"
+        | "llp"
+        | "pvt_ltd"
+        | "public_ltd"
+        | "other",
+    });
   };
 
   const handleYearsInBusinessChange = (years: number) => {
@@ -192,39 +198,36 @@ export default function BusinessDetailsStep({
           >
             Select from common construction materials:
           </Typography>
-          <Grid container spacing={1} sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
             {constructionMaterials.map((material) => (
-              <Grid item key={material}>
-                <Chip
-                  label={material}
-                  onClick={() => handleMaterialToggle(material)}
-                  variant={
-                    formData.services_offered.includes(material)
-                      ? "filled"
-                      : "outlined"
-                  }
-                  sx={{
+              <Chip
+                key={material}
+                label={material}
+                onClick={() => handleMaterialToggle(material)}
+                variant={
+                  formData.services_offered.includes(material)
+                    ? "filled"
+                    : "outlined"
+                }
+                sx={{
+                  backgroundColor: formData.services_offered.includes(material)
+                    ? "#00a871"
+                    : "transparent",
+                  color: formData.services_offered.includes(material)
+                    ? "white"
+                    : "#00a871",
+                  borderColor: "#00a871",
+                  "&:hover": {
                     backgroundColor: formData.services_offered.includes(
                       material
                     )
-                      ? "#00a871"
-                      : "transparent",
-                    color: formData.services_offered.includes(material)
-                      ? "white"
-                      : "#00a871",
-                    borderColor: "#00a871",
-                    "&:hover": {
-                      backgroundColor: formData.services_offered.includes(
-                        material
-                      )
-                        ? "#008f5f"
-                        : "#f0f9f5",
-                    },
-                  }}
-                />
-              </Grid>
+                      ? "#008f5f"
+                      : "#f0f9f5",
+                  },
+                }}
+              />
             ))}
-          </Grid>
+          </Box>
 
           {/* Custom Service Input */}
           <Typography
@@ -281,28 +284,27 @@ export default function BusinessDetailsStep({
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 Selected Products/Services:
               </Typography>
-              <Grid container spacing={1}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                 {formData.services_offered.map((service) => (
-                  <Grid item key={service}>
-                    <Chip
-                      label={service}
-                      onDelete={() => handleRemoveService(service)}
-                      deleteIcon={<X className="h-3 w-3" />}
-                      variant="filled"
-                      sx={{
-                        backgroundColor: "#00a871",
+                  <Chip
+                    key={service}
+                    label={service}
+                    onDelete={() => handleRemoveService(service)}
+                    deleteIcon={<X className="h-3 w-3" />}
+                    variant="filled"
+                    sx={{
+                      backgroundColor: "#00a871",
+                      color: "white",
+                      "& .MuiChip-deleteIcon": {
                         color: "white",
-                        "& .MuiChip-deleteIcon": {
-                          color: "white",
-                          "&:hover": {
-                            color: "#f0f0f0",
-                          },
+                        "&:hover": {
+                          color: "#f0f0f0",
                         },
-                      }}
-                    />
-                  </Grid>
+                      },
+                    }}
+                  />
                 ))}
-              </Grid>
+              </Box>
             </Box>
           )}
 

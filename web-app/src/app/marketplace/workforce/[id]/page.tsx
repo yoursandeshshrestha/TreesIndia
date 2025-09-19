@@ -8,12 +8,8 @@ import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 import {
   MapPin,
   Phone,
-  Clock,
-  Star,
   ArrowLeft,
   User,
-  Briefcase,
-  Award,
   Shield,
   Mail,
   MessageCircle,
@@ -133,7 +129,7 @@ export default function WorkerDetailPage() {
                 Worker Not Found
               </h3>
               <p className="text-gray-600 mb-4">
-                The worker you're looking for doesn't exist or has been removed.
+                The worker you&apos;re looking for doesn&apos;t exist or has been removed.
               </p>
               <button
                 onClick={() => router.push("/marketplace/workforce")}
@@ -182,7 +178,7 @@ export default function WorkerDetailPage() {
 
   const handleChatClick = () => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 
@@ -273,13 +269,13 @@ export default function WorkerDetailPage() {
               </div>
 
               {/* Skills Section */}
-              {worker.skills && worker.skills.length > 0 && (
+              {worker.skills && (Array.isArray(worker.skills) ? worker.skills.length > 0 : worker.skills) && (
                 <div className="bg-white rounded-xl p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Skills & Expertise
                   </h2>
                   <div className="flex flex-wrap gap-3">
-                    {worker.skills.map((skill, index) => (
+                    {(Array.isArray(worker.skills) ? worker.skills : [worker.skills]).map((skill, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-green-500 to-green-600 text-white"

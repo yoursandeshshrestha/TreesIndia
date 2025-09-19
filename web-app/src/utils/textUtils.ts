@@ -66,5 +66,5 @@ export function formatDescriptionForDetails(
  * Check if description needs truncation
  */
 export function needsTruncation(text: string, maxLength: number): boolean {
-  return text && text.length > maxLength;
+  return Boolean(text && text.length > maxLength);
 }

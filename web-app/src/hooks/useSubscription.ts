@@ -188,7 +188,7 @@ export const useSubscription = () => {
     };
 
     initializeData();
-  }, []);
+  }, [fetchGroupedPlans]);
 
   return {
     plans,

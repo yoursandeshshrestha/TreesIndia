@@ -101,7 +101,7 @@ export function MyVendorsSection() {
   if (isLoadingProfile) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner  />
       </div>
     );
   }
@@ -127,7 +127,7 @@ export function MyVendorsSection() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner  />
       </div>
     );
   }

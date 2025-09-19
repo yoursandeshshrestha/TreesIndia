@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AlertCircle, Bell, CheckCheck, MoreHorizontal, X } from "lucide-react";
-import { InAppNotification, NOTIFICATION_TYPES } from "@/types/notification";
+import { AlertCircle, Bell, CheckCheck, X } from "lucide-react";
+import { InAppNotification } from "@/types/notification";
 import {
   useNotifications,
   useUnreadCount,
@@ -46,14 +46,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const {
     data: notificationsData,
     isLoading: isLoadingNotifications,
-    refetch,
   } = useNotifications({
     limit,
     page: currentPage,
   });
 
-  const { data: unreadCountData, refetch: refetchUnreadCount } =
-    useUnreadCount();
+  const { data: unreadCountData } = useUnreadCount();
 
   // Mark all as read hook
   const { mutate: markAllAsRead, isPending: isMarkingAllAsRead } =
@@ -136,10 +134,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     markAllAsRead();
   };
 
-  const handleRefresh = () => {
-    refetch();
-    refetchUnreadCount();
-  };
 
   if (!isOpen) return null;
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useWorkers, useWorkerStats } from "@/hooks/useWorkers";
 import { useProfile } from "@/hooks/useProfile";
 import { WorkerFilters } from "@/types/worker";
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 import { WorkersSidebar, WorkersContent } from "./components";
 import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 

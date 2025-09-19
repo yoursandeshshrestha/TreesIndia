@@ -12,7 +12,6 @@ import {
   getTotalUnreadCount,
   CreateConversationRequest,
   SendMessageRequest,
-  SimpleConversationMessage,
 } from "@/lib/simpleConversationApi";
 import { conversationStore } from "@/utils/conversationStore";
 
@@ -122,7 +121,7 @@ export function useSendConversationMessage() {
       conversationId: number;
       messageData: SendMessageRequest;
     }) => sendConversationMessage(conversationId, messageData),
-    onSuccess: (newMessage, { conversationId }) => {
+    onSuccess: () => {
       // Invalidate conversations list to update last_message
       queryClient.invalidateQueries({
         queryKey: simpleConversationKeys.lists(),
@@ -151,11 +150,11 @@ export function useMarkConversationMessageRead() {
       // Update the message in the cache
       queryClient.setQueryData(
         simpleConversationKeys.messages(conversationId),
-        (oldData: any) => {
+        (oldData: { messages: Array<{ id: number; is_read: boolean; read_at?: string }> }) => {
           if (!oldData) return oldData;
           return {
             ...oldData,
-            messages: oldData.messages.map((msg: any) =>
+            messages: oldData.messages.map((msg) =>
               msg.id === messageId
                 ? { ...msg, is_read: true, read_at: new Date().toISOString() }
                 : msg
@@ -216,7 +215,7 @@ export function useMarkConversationAsRead() {
       // Get the actual unread count for this conversation from the query cache
       const conversationData = queryClient.getQueryData(
         simpleConversationKeys.detail(conversationId)
-      ) as any;
+      ) as { unread_count?: number } | undefined;
       const conversationUnreadCount = conversationData?.unread_count || 0;
 
       // Use setTimeout to defer the state update to avoid render phase issues

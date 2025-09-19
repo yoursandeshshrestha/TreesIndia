@@ -2,7 +2,6 @@
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { useBookings } from "@/hooks/useBookings";
 import {
   openModal,
   closeModal,
@@ -65,7 +64,7 @@ export function useQuoteAcceptanceRedux(
   // Wallet and API hooks
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
   const { data: bookingConfigData } = useBookingConfig();
-  const serviceId = booking?.service?.id || booking?.service?.ID || 0;
+  const serviceId = booking?.service?.ID || 0;
   // Get quote duration for availability calculation
   const quoteDuration = booking?.quote_duration;
 
@@ -81,7 +80,7 @@ export function useQuoteAcceptanceRedux(
   const createQuotePaymentMutation = useCreateQuotePayment();
   const verifyQuotePaymentMutation = useVerifyQuotePayment();
   const processWalletPaymentMutation = useProcessWalletPayment();
-  const { paySegment } = usePaymentSegments(booking?.ID);
+  const { paySegment } = usePaymentSegments();
 
   // Computed values
   const dateOptions = bookingConfigData?.data
@@ -190,7 +189,7 @@ export function useQuoteAcceptanceRedux(
   const handleDateSelect = useCallback(
     async (date: string) => {
       // Check if service exists and has required information
-      const serviceId = booking?.service?.id || booking?.service?.ID;
+      const serviceId = booking?.service?.ID;
       if (!serviceId) {
         console.error("Service information missing:", {
           booking: booking,
@@ -204,7 +203,7 @@ export function useQuoteAcceptanceRedux(
       handleSetSelectedDate(date);
       handleClearError();
     },
-    [serviceId, handleSetError, handleSetSelectedDate, handleClearError]
+    [handleSetError, handleSetSelectedDate, handleClearError, booking]
   );
 
   const handleTimeSlotSelect = useCallback(
@@ -250,7 +249,8 @@ export function useQuoteAcceptanceRedux(
             bookingId,
             paymentData: {
               segment_number: 1,
-              amount: paymentProgress?.segments[0]?.amount || 0,
+              amount: paymentSegments[0]?.amount || 0,
+              payment_method: "wallet",
             },
           });
         } else {
@@ -281,7 +281,8 @@ export function useQuoteAcceptanceRedux(
             bookingId,
             paymentData: {
               segment_number: 1,
-              amount: paymentProgress?.segments[0]?.amount || 0,
+              amount: paymentSegments[0]?.amount || 0,
+              payment_method: "razorpay",
             },
           });
           handleSetSuccess(

@@ -49,8 +49,6 @@ export function WorkersContent({
   onClearFilters,
   onSortChange,
   filters,
-  selectedWorkerTypes,
-  selectedSkills,
 }: WorkersContentProps) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
@@ -84,7 +82,7 @@ export function WorkersContent({
 
   const handleWorkerClick = (worker: Worker) => {
     if (!isAuthenticated) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
     router.push(`/marketplace/workforce/${worker.ID}`);
@@ -92,7 +90,7 @@ export function WorkersContent({
 
   const handleChatClick = (worker: Worker) => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 
@@ -106,7 +104,7 @@ export function WorkersContent({
 
   const handleApplyForWorker = () => {
     if (!isAuthenticated) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
     router.push("/apply/worker");

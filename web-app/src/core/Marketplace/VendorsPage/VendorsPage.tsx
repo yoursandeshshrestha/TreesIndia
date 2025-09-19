@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useVendors, useVendorStats } from "@/hooks/useVendors";
 import { useProfile } from "@/hooks/useProfile";
 import { VendorFilters } from "@/types/vendor";
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 import { VendorsSidebar, VendorsContent } from "./components";
 import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 

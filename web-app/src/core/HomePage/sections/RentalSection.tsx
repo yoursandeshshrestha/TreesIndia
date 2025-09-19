@@ -53,9 +53,9 @@ export default function RentalSection() {
     router.push("/marketplace/rental-properties");
   };
 
-  const handleChatClick = (property: any) => {
+  const handleChatClick = (property: { user_id: number }) => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 

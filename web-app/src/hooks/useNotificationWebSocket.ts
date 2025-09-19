@@ -1,11 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./useAuth";
 import { notificationWebSocketService } from "@/services/notificationWebSocketService";
 import { notificationStore } from "@/utils/notificationStore";
-import type { NotificationWebSocketMessage } from "@/types/notification";
 
 interface UseNotificationWebSocketProps {
-  onNewNotification?: (notification: any) => void;
+  onNewNotification?: (notification: { id: number; title: string; message: string; created_at: string; is_read: boolean }) => void;
   onUnreadCountUpdate?: (count: number) => void;
   onNotificationRead?: (notificationId: number, isRead: boolean) => void;
   onAllNotificationsRead?: () => void;
@@ -18,6 +17,7 @@ export const useNotificationWebSocket = ({
   onAllNotificationsRead,
 }: UseNotificationWebSocketProps = {}) => {
   const { user, token, isAuthenticated } = useAuth();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Callback refs to avoid stale closures
   const onNewNotificationRef = useRef(onNewNotification);
@@ -58,6 +58,9 @@ export const useNotificationWebSocket = ({
   // Subscribe to notification store changes
   useEffect(() => {
     const unsubscribe = notificationStore.subscribe((state) => {
+      // Update connection error from store
+      setConnectionError(state.error);
+
       // Call callbacks when state changes
       if (state.notifications.length > 0) {
         const latestNotification = state.notifications[0];
@@ -72,9 +75,10 @@ export const useNotificationWebSocket = ({
 
   return {
     isConnected: notificationWebSocketService.isConnected,
+    connectionError,
     connect: (token: string) => notificationWebSocketService.connect(token),
     disconnect: () => notificationWebSocketService.disconnect(),
-    send: (message: Record<string, any>) =>
+    send: (message: Record<string, string | number | boolean>) =>
       notificationWebSocketService.send(message),
   };
 };

@@ -3,7 +3,6 @@ import {
   WorkerApplicationResponse,
 } from "@/types/worker-application";
 import { authenticatedFetch } from "./auth-api";
-import { compressFiles } from "./imageCompression";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";

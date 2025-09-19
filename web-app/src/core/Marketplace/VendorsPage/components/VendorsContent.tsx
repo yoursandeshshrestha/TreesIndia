@@ -88,7 +88,7 @@ export function VendorsContent({
 
   const handleChatClick = (vendor: Vendor) => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 

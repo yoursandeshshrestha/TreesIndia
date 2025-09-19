@@ -7,8 +7,6 @@ import {
   PurchaseSubscriptionRequest,
   SubscriptionResponse,
   SubscriptionPlansResponse,
-  GroupedSubscriptionPlansResponse,
-  MultipleGroupedSubscriptionPlansResponse,
   SubscriptionHistoryResponse,
 } from "@/types/subscription";
 import { Payment, PaymentOrder } from "@/types/payment";

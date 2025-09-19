@@ -15,7 +15,6 @@ import {
   Info,
   LogOut,
   Briefcase,
-  MessageCircle,
   Home,
   Building2,
 } from "lucide-react";

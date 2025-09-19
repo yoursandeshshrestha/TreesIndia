@@ -130,10 +130,7 @@ export function useVendorForm() {
             formData.contact_person_phone.trim() !== ""
           );
         case 2: // Business Details
-          return (
-            formData.business_type !== "" &&
-            formData.services_offered.length > 0
-          );
+          return formData.services_offered.length > 0;
         case 3: // Location Details
           return (
             formData.business_address.street.trim() !== "" &&
@@ -147,7 +144,7 @@ export function useVendorForm() {
           return false;
       }
     },
-    [formState.formData]
+    [formState]
   );
 
   const getStepErrors = useCallback(
@@ -206,7 +203,7 @@ export function useVendorForm() {
 
       return errors;
     },
-    [formState.formData]
+    [formState]
   );
 
   const currentStep = steps[formState.currentStep];

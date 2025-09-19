@@ -2,7 +2,6 @@
 
 import { Loader2 } from "lucide-react";
 import { useQuoteAcceptanceRedux } from "@/hooks/useQuoteAcceptanceRedux";
-import { useBookings } from "@/hooks/useBookings";
 import { formatAmount } from "@/utils/formatters";
 
 interface QuoteAcceptanceFooterProps {
@@ -21,7 +20,6 @@ export function QuoteAcceptanceFooter({ onClose }: QuoteAcceptanceFooterProps) {
 
   // Get payment segments directly from booking object (new structure)
   const paymentSegments = booking?.payment_segments || [];
-  const paymentProgress = booking?.payment_progress;
 
   // Determine the amount to show in the button
   const getPaymentAmount = () => {
