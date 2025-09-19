@@ -2,6 +2,7 @@ import '../../domain/entities/property_entity.dart';
 
 class PropertyModel {
   final int id;
+  final int? userId;
   final String title;
   final String? description;
   final String propertyType;
@@ -30,6 +31,7 @@ class PropertyModel {
 
   PropertyModel({
     required this.id,
+    this.userId,
     required this.title,
     this.description,
     required this.propertyType,
@@ -60,6 +62,7 @@ class PropertyModel {
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
     return PropertyModel(
       id: json['ID'] ?? json['id'],
+      userId: json['user_id'],
       title: json['title'],
       description: json['description'],
       propertyType: json['property_type'],
@@ -91,6 +94,7 @@ class PropertyModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'user_id': userId,
       'title': title,
       'description': description,
       'property_type': propertyType,
@@ -122,6 +126,7 @@ class PropertyModel {
   PropertyEntity toEntity() {
     return PropertyEntity(
       id: id,
+      userId: userId,
       title: title,
       description: description,
       propertyType: propertyType,

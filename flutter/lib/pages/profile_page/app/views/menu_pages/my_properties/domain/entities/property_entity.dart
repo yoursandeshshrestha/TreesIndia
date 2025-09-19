@@ -4,6 +4,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 
 class PropertyEntity {
   final int id;
+  final int? userId;
   final String title;
   final String? description;
   final String propertyType;
@@ -32,6 +33,7 @@ class PropertyEntity {
 
   PropertyEntity({
     required this.id,
+    this.userId,
     required this.title,
     this.description,
     required this.propertyType,

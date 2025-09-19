@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
+import '../../../../../commons/app/auth_provider.dart';
 import '../../../../profile_page/app/views/menu_pages/my_properties/domain/entities/property_entity.dart';
 
 class PropertyGridWidget extends StatelessWidget {
@@ -48,13 +50,7 @@ class PropertyGridWidget extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 1,
-                crossAxisSpacing: AppSpacing.md,
-                mainAxisSpacing: AppSpacing.md,
-                childAspectRatio: 0.8,
-              ),
+            child: ListView.builder(
               itemCount: properties.length + (hasMore ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= properties.length) {
@@ -62,7 +58,10 @@ class PropertyGridWidget extends StatelessWidget {
                   return _LoadMoreCard(onLoadMore: onLoadMore);
                 }
 
-                return PropertyCard(property: properties[index]);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                  child: PropertyCard(property: properties[index]),
+                );
               },
             ),
           ),
@@ -72,7 +71,7 @@ class PropertyGridWidget extends StatelessWidget {
   }
 }
 
-class PropertyCard extends StatelessWidget {
+class PropertyCard extends ConsumerWidget {
   final PropertyEntity property;
 
   const PropertyCard({
@@ -81,14 +80,15 @@ class PropertyCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.brandNeutral200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.brandNeutral200.withValues(alpha: 0.15),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -98,168 +98,377 @@ class PropertyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image
-          Expanded(
-            flex: 3,
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Stack(
-                  children: [
-                    property.images.isNotEmpty
-                        ? Image.network(
-                            property.images.first,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: AppColors.brandNeutral100,
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              color: AppColors.brandNeutral100,
+            ),
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Stack(
+                children: [
+                  property.images.isNotEmpty
+                      ? Image.network(
+                          property.images.first,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
                               color: AppColors.brandNeutral100,
-                              child: const Icon(
-                                Icons.image_not_supported,
-                                color: AppColors.brandNeutral400,
-                                size: 32,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
                               ),
-                            ),
-                          )
-                        : Container(
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
                             color: AppColors.brandNeutral100,
                             child: const Icon(
-                              Icons.home,
+                              Icons.image_not_supported,
                               color: AppColors.brandNeutral400,
                               size: 32,
                             ),
                           ),
-
-                    // Trees India Assured Badge
-                    if (property.treesindiaAssured)
-                      Positioned(
-                        top: AppSpacing.sm,
-                        left: AppSpacing.sm,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.stateGreen600,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.verified,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              B3Bold(
-                                text: 'Assured',
-                                color: Colors.white,
-                              ),
-                            ],
+                        )
+                      : Container(
+                          color: AppColors.brandNeutral100,
+                          child: const Icon(
+                            Icons.home,
+                            color: AppColors.brandNeutral400,
+                            size: 32,
                           ),
                         ),
-                      ),
 
-                    // Image count
-                    if (property.hasMultipleImages)
-                      Positioned(
-                        bottom: AppSpacing.sm,
-                        right: AppSpacing.sm,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.photo_library,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              B3Regular(
-                                text: '${property.imageCount}',
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
+                  // Trees India Assured Badge
+                  if (property.treesindiaAssured)
+                    Positioned(
+                      top: AppSpacing.sm,
+                      left: AppSpacing.sm,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.stateGreen600,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.verified,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            B3Bold(
+                              text: 'TreesIndia Assured',
+                              color: Colors.white,
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    ),
+
+                  // Image count
+                  if (property.hasMultipleImages)
+                    Positioned(
+                      bottom: AppSpacing.sm,
+                      right: AppSpacing.sm,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.photo_library,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            B3Regular(
+                              text: '${property.imageCount}',
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
 
           // Content
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  B2Bold(
-                    text: property.title,
-                    color: AppColors.brandNeutral900,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                H2Medium(
+                  text: property.title,
+                  color: AppColors.brandNeutral900,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (property.address != null &&
+                    property.address!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
-
-                  // Location
-                  B3Regular(
-                    text: property.displayLocation,
-                    color: AppColors.brandNeutral600,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // Details
-                  if (property.displayBedBath.isNotEmpty)
-                    B3Regular(
-                      text: property.displayBedBath,
-                      color: AppColors.brandNeutral700,
-                    ),
-                  if (property.area != null)
-                    B3Regular(
-                      text: property.displayArea,
-                      color: AppColors.brandNeutral700,
-                    ),
-
-                  const Spacer(),
-
-                  // Price
-                  B2Bold(
-                    text: property.displayPrice,
-                    color: AppColors.stateGreen600,
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: AppColors.brandNeutral500,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: B3Medium(
+                          text: property.address!,
+                          color: AppColors.brandNeutral600,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
+                const SizedBox(height: AppSpacing.sm),
+
+                // Property Info Row
+                _buildPropertyInfoRow(),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                // Price
+                Row(
+                  children: [
+                    H3Bold(
+                      text: property.displayPrice,
+                      color: AppColors.brandNeutral900,
+                    ),
+                    if (property.priceNegotiable) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPrimary50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Negotiable',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.brandPrimary600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.md),
+
+                // Action Buttons
+                _buildActionButtons(context, ref),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState.token?.userId;
+    final shouldShowChatButton = currentUserId != null &&
+        property.userId != null &&
+        currentUserId != property.userId.toString();
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            // View Number Button
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: Implement view number functionality
+                },
+                icon: const Icon(
+                  Icons.phone,
+                  size: 16,
+                  color: AppColors.stateGreen600,
+                ),
+                label: const Text(
+                  'View Number',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.stateGreen600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.stateGreen600),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
               ),
+            ),
+
+            const SizedBox(width: AppSpacing.sm),
+            // Contact Button
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: Implement contact functionality
+                },
+                icon: const Icon(
+                  Icons.contact_page,
+                  size: 16,
+                  color: AppColors.brandNeutral600,
+                ),
+                label: const Text(
+                  'Contact',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.brandNeutral600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.brandNeutral400),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (shouldShowChatButton) ...[
+          const SizedBox(height: AppSpacing.sm),
+          // Chat Button
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Implement chat functionality
+                  },
+                  icon: const Icon(
+                    Icons.chat,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    'Chat',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.stateGreen600,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _getPropertyAge(String age) {
+    switch (age.toLowerCase()) {
+      case 'under_1_year':
+        return 'Under 1 year';
+      case '1_2_years':
+        return '1-2 years';
+      case '2_5_years':
+        return '2-5 years';
+      case '5_10_years':
+        return '5-10 years';
+      case '10_plus_years':
+        return '10+ years';
+      default:
+        return age;
+    }
+  }
+
+  Widget _buildPropertyInfoRow() {
+    return Row(
+      children: [
+        if (property.displayArea != 'Area not specified') ...[
+          _buildInfoChip(property.displayArea, Icons.square_foot),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        if (property.displayBedBath.isNotEmpty) ...[
+          _buildInfoChip(property.displayBedBath, Icons.bed_outlined),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        if (property.age != null && property.age!.isNotEmpty) ...[
+          _buildInfoChip(
+              _getPropertyAge(property.age!), Icons.calendar_today_outlined),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInfoChip(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.brandNeutral50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.brandNeutral200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: AppColors.brandNeutral600,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.brandNeutral700,
             ),
           ),
         ],
