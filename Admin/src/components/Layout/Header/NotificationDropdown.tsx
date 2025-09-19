@@ -44,7 +44,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   // Mark all as read hook
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  // WebSocket hook
+  // WebSocket hook - only connect when dropdown is open
   const { isConnected } = useNotificationWebSocket({
     onNewNotification: (notification) => {
       setNotifications((prev) => [notification, ...prev]);
@@ -76,6 +76,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       );
       setUnreadCount(0);
     },
+    enabled: isOpen, // Only connect when dropdown is open
   });
 
   // Load notifications
