@@ -1,4 +1,5 @@
 import '../../domain/entities/property_entity.dart';
+import 'user_model.dart';
 
 class PropertyModel {
   final int id;
@@ -28,6 +29,14 @@ class PropertyModel {
   final bool treesindiaAssured;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? approvedAt;
+  final int? approvedBy;
+  final int priorityScore;
+  final bool subscriptionRequired;
+  final DateTime? expiresAt;
+  final int? brokerId;
+  final PropertyUserModel? user;
 
   PropertyModel({
     required this.id,
@@ -57,6 +66,14 @@ class PropertyModel {
     required this.treesindiaAssured,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
+    this.approvedAt,
+    this.approvedBy,
+    required this.priorityScore,
+    required this.subscriptionRequired,
+    this.expiresAt,
+    this.brokerId,
+    this.user,
   });
 
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
@@ -88,6 +105,22 @@ class PropertyModel {
       treesindiaAssured: json['treesindia_assured'] ?? false,
       createdAt: DateTime.parse(json['created_at'] ?? json['CreatedAt']),
       updatedAt: DateTime.parse(json['updated_at'] ?? json['UpdatedAt']),
+      deletedAt: json['DeletedAt'] != null
+          ? DateTime.parse(json['DeletedAt'])
+          : json['deleted_at'] != null
+              ? DateTime.parse(json['deleted_at'])
+              : null,
+      approvedAt: json['approved_at'] != null
+          ? DateTime.parse(json['approved_at'])
+          : null,
+      approvedBy: json['approved_by'],
+      priorityScore: json['priority_score'] ?? 50,
+      subscriptionRequired: json['subscription_required'] ?? false,
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'])
+          : null,
+      brokerId: json['broker_id'],
+      user: json['user'] != null ? PropertyUserModel.fromJson(json['user']) : null,
     );
   }
 
@@ -120,6 +153,14 @@ class PropertyModel {
       'treesindia_assured': treesindiaAssured,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
+      'approved_at': approvedAt?.toIso8601String(),
+      'approved_by': approvedBy,
+      'priority_score': priorityScore,
+      'subscription_required': subscriptionRequired,
+      'expires_at': expiresAt?.toIso8601String(),
+      'broker_id': brokerId,
+      'user': user?.toJson(),
     };
   }
 
@@ -152,6 +193,14 @@ class PropertyModel {
       treesindiaAssured: treesindiaAssured,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      deletedAt: deletedAt,
+      approvedAt: approvedAt,
+      approvedBy: approvedBy,
+      priorityScore: priorityScore,
+      subscriptionRequired: subscriptionRequired,
+      expiresAt: expiresAt,
+      brokerId: brokerId,
+      user: user?.toEntity(),
     );
   }
 }

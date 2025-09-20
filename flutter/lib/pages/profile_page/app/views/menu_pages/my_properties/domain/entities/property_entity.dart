@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:trees_india/commons/constants/app_colors.dart';
+import 'user_entity.dart';
 
 class PropertyEntity {
   final int id;
@@ -30,6 +31,14 @@ class PropertyEntity {
   final bool treesindiaAssured;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? approvedAt;
+  final int? approvedBy;
+  final int priorityScore;
+  final bool subscriptionRequired;
+  final DateTime? expiresAt;
+  final int? brokerId;
+  final PropertyUserEntity? user;
 
   PropertyEntity({
     required this.id,
@@ -59,6 +68,14 @@ class PropertyEntity {
     required this.treesindiaAssured,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
+    this.approvedAt,
+    this.approvedBy,
+    required this.priorityScore,
+    required this.subscriptionRequired,
+    this.expiresAt,
+    this.brokerId,
+    this.user,
   });
 
   String get displayPrice {

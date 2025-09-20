@@ -14,6 +14,8 @@ abstract class PropertyRemoteDataSource {
   Future<PropertyModel> createProperty(PropertyFormModel propertyForm);
 
   Future<void> deleteProperty(int propertyId);
+
+  Future<PropertyModel> getPropertyDetails(String propertyId);
 }
 
 class PropertyRemoteDataSourceImpl implements PropertyRemoteDataSource {
@@ -105,6 +107,27 @@ class PropertyRemoteDataSourceImpl implements PropertyRemoteDataSource {
       if (response.statusCode != 200) {
         throw Exception(
             response.data['message'] ?? 'Failed to delete property');
+      }
+    } on DioException catch (e) {
+      throw errorHandler.handleError(e);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<PropertyModel> getPropertyDetails(String propertyId) async {
+    try {
+      final url = ApiEndpoints.getPropertyDetails.path
+          .replaceAll('{id}', propertyId.toString());
+
+      final response = await dioClient.dio.get(url);
+
+      if (response.statusCode == 200) {
+        return PropertyModel.fromJson(response.data['data']);
+      } else {
+        throw Exception(
+            response.data['message'] ?? 'Failed to fetch property details');
       }
     } on DioException catch (e) {
       throw errorHandler.handleError(e);

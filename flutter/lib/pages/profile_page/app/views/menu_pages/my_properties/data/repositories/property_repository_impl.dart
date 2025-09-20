@@ -55,4 +55,10 @@ class PropertyRepositoryImpl implements PropertyRepository {
   Future<void> deleteProperty(int propertyId) async {
     await remoteDataSource.deleteProperty(propertyId);
   }
+
+  @override
+  Future<PropertyEntity> getPropertyDetails(String propertyId) async {
+    final propertyModel = await remoteDataSource.getPropertyDetails(propertyId);
+    return propertyModel.toEntity();
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -60,7 +61,14 @@ class PropertyGridWidget extends StatelessWidget {
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: PropertyCard(property: properties[index]),
+                  child: PropertyCard(
+                    property: properties[index],
+                    onTap: () {
+                      // Navigate to vendor details page using GoRouter
+                      context
+                          .push('/rental-properties/${properties[index].id}');
+                    },
+                  ),
                 );
               },
             ),
@@ -73,225 +81,230 @@ class PropertyGridWidget extends StatelessWidget {
 
 class PropertyCard extends ConsumerWidget {
   final PropertyEntity property;
+  final VoidCallback? onTap;
 
   const PropertyCard({
     super.key,
     required this.property,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.brandNeutral200),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandNeutral200.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              color: AppColors.brandNeutral100,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.brandNeutral200),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNeutral200.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Stack(
-                children: [
-                  property.images.isNotEmpty
-                      ? Image.network(
-                          property.images.first,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                color: AppColors.brandNeutral100,
+              ),
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Stack(
+                  children: [
+                    property.images.isNotEmpty
+                        ? Image.network(
+                            property.images.first,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: AppColors.brandNeutral100,
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
                               color: AppColors.brandNeutral100,
-                              child: const Center(
-                                child: CircularProgressIndicator(),
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                color: AppColors.brandNeutral400,
+                                size: 32,
                               ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
+                            ),
+                          )
+                        : Container(
                             color: AppColors.brandNeutral100,
                             child: const Icon(
-                              Icons.image_not_supported,
+                              Icons.home,
                               color: AppColors.brandNeutral400,
                               size: 32,
                             ),
                           ),
-                        )
-                      : Container(
-                          color: AppColors.brandNeutral100,
-                          child: const Icon(
-                            Icons.home,
-                            color: AppColors.brandNeutral400,
-                            size: 32,
+
+                    // Trees India Assured Badge
+                    if (property.treesindiaAssured)
+                      Positioned(
+                        top: AppSpacing.sm,
+                        left: AppSpacing.sm,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.stateGreen600,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              B3Bold(
+                                text: 'TreesIndia Assured',
+                                color: Colors.white,
+                              ),
+                            ],
                           ),
                         ),
+                      ),
 
-                  // Trees India Assured Badge
-                  if (property.treesindiaAssured)
-                    Positioned(
-                      top: AppSpacing.sm,
-                      left: AppSpacing.sm,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.stateGreen600,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.verified,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            B3Bold(
-                              text: 'TreesIndia Assured',
-                              color: Colors.white,
-                            ),
-                          ],
+                    // Image count
+                    if (property.hasMultipleImages)
+                      Positioned(
+                        bottom: AppSpacing.sm,
+                        right: AppSpacing.sm,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.photo_library,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              B3Regular(
+                                text: '${property.imageCount}',
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                  // Image count
-                  if (property.hasMultipleImages)
-                    Positioned(
-                      bottom: AppSpacing.sm,
-                      right: AppSpacing.sm,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  H2Medium(
+                    text: property.title,
+                    color: AppColors.brandNeutral900,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (property.address != null &&
+                      property.address!.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: AppColors.brandNeutral500,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(4),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: B3Medium(
+                            text: property.address!,
+                            color: AppColors.brandNeutral600,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.photo_library,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            B3Regular(
-                              text: '${property.imageCount}',
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Property Info Row
+                  _buildPropertyInfoRow(),
+
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Price
+                  Row(
+                    children: [
+                      H3Bold(
+                        text: property.displayPrice,
+                        color: AppColors.brandNeutral900,
+                      ),
+                      if (property.priceNegotiable) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandPrimary50,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Negotiable',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.brandPrimary600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Action Buttons
+                  _buildActionButtons(context, ref),
                 ],
               ),
             ),
-          ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                H2Medium(
-                  text: property.title,
-                  color: AppColors.brandNeutral900,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (property.address != null &&
-                    property.address!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: AppColors.brandNeutral500,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Expanded(
-                        child: B3Medium(
-                          text: property.address!,
-                          color: AppColors.brandNeutral600,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.sm),
-
-                // Property Info Row
-                _buildPropertyInfoRow(),
-
-                const SizedBox(height: AppSpacing.sm),
-
-                // Price
-                Row(
-                  children: [
-                    H3Bold(
-                      text: property.displayPrice,
-                      color: AppColors.brandNeutral900,
-                    ),
-                    if (property.priceNegotiable) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandPrimary50,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Negotiable',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.brandPrimary600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.md),
-
-                // Action Buttons
-                _buildActionButtons(context, ref),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

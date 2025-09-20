@@ -1,79 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
-import '../../../domain/entities/property_entity.dart';
-import 'property_image_carousel.dart';
-// import 'delete_confirmation_bottom_sheet.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/widgets/property_image_carousel.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/domain/entities/property_entity.dart';
+import 'package:trees_india/pages/property_details/app/notifiers/property_details_notifier.dart';
 
-class PropertyDetailBottomSheet extends StatelessWidget {
-  final PropertyEntity property;
-  final VoidCallback onDelete;
-  final bool isDeleting;
-
-  const PropertyDetailBottomSheet({
-    super.key,
-    required this.property,
-    required this.onDelete,
-    this.isDeleting = false,
-  });
+class PropertyDetailsPage extends ConsumerWidget {
+  final String propertyId;
+  const PropertyDetailsPage({super.key, required this.propertyId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final propertyDetailsState = ref.watch(propertyDetailsNotifierProvider);
+
+    ref.listen<PropertyDetailsState>(propertyDetailsNotifierProvider,
+        (previous, next) {
+      if (next.status == PropertyDetailsStatus.failure &&
+          next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
+    // Fetch vendor details when the page loads or when vendorId changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Always fetch vendor details for the requested vendorId
+      // Check if we're showing a different vendor or no vendor at all
+      final currentId = propertyDetailsState.property?.id.toString();
+      if (currentId != propertyId ||
+          propertyDetailsState.status == PropertyDetailsStatus.initial) {
+        ref
+            .read(propertyDetailsNotifierProvider.notifier)
+            .loadPropertyDetails(propertyId);
+      }
+    });
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        ref.invalidate(propertyDetailsNotifierProvider);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: H3Bold(
+            text: propertyDetailsState.property?.title ?? 'Property Details',
+            color: AppColors.brandNeutral900,
+          ),
+          leading: IconButton(
+            icon:
+                const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: _buildBody(propertyDetailsState, ref),
+      ),
+    );
+  }
+
+  Widget _buildBody(PropertyDetailsState state, WidgetRef ref) {
+    switch (state.status) {
+      case PropertyDetailsStatus.loading:
+        return const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.brandPrimary500,
+          ),
+        );
+      case PropertyDetailsStatus.success:
+        return state.property != null
+            ? _buildPropertyDetailsBody(state.property!, ref)
+            : const Center(child: Text('No vendor data available'));
+      case PropertyDetailsStatus.failure:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              H3Bold(
+                text: 'Error Loading Vendor',
+                color: AppColors.brandNeutral900,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              B2Regular(
+                text: state.errorMessage ?? 'Unknown error occurred',
+                color: AppColors.brandNeutral600,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildPropertyDetailsBody(PropertyEntity property, WidgetRef ref) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          // Drag Handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.brandNeutral300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header with close button and delete action
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.close,
-                    color: AppColors.brandNeutral600,
-                  ),
-                ),
-                const Spacer(),
-                if (isDeleting)
-                  const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      onDelete();
-                    },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: AppColors.error,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
           // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
@@ -82,44 +124,80 @@ class PropertyDetailBottomSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title and Address
-                  _buildHeaderSection(),
+                  _buildHeaderSection(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Image Carousel
-                  _buildImageCarousel(),
+                  _buildImageCarousel(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
+                  if (property.treesindiaAssured) ...[
+                    // Assured Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.stateGreen600),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/logo/logo.svg',
+                            width: 16,
+                            height: 16,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          const Text(
+                            'TreesIndia Assured',
+                            style: TextStyle(
+                              color: AppColors.stateGreen600,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
                   // Price Information Section
-                  _buildPriceSection(),
+                  _buildPriceSection(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Property Details
-                  _buildPropertyDetails(),
+                  _buildPropertyDetails(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Address Card
-                  _buildAddressCard(),
+                  _buildAddressCard(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Description (if available)
                   if (property.description != null &&
                       property.description!.isNotEmpty)
-                    _buildDescriptionSection(),
+                    _buildDescriptionSection(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Contact Section
-                  _buildContactSection(),
+                  _buildContactSection(property),
 
                   const SizedBox(height: AppSpacing.lg),
 
                   // Additional Information
-                  _buildAdditionalInformationSection(),
+                  _buildAdditionalInformationSection(property),
 
                   const SizedBox(height: AppSpacing.xl),
                 ],
@@ -131,7 +209,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeaderSection(PropertyEntity property) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -165,7 +243,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildImageCarousel() {
+  Widget _buildImageCarousel(PropertyEntity property) {
     if (property.images.isEmpty) {
       return Container(
         height: 250,
@@ -198,7 +276,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     return PropertyImageCarousel(images: property.images);
   }
 
-  Widget _buildPriceSection() {
+  Widget _buildPriceSection(PropertyEntity property) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -319,7 +397,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPropertyDetails() {
+  Widget _buildPropertyDetails(PropertyEntity property) {
     final details = [
       _DetailItem('Status', property.displayStatus, Icons.alarm),
       if (property.displayArea != 'Area not specified')
@@ -405,7 +483,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressCard() {
+  Widget _buildAddressCard(PropertyEntity property) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -488,7 +566,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionSection() {
+  Widget _buildDescriptionSection(PropertyEntity property) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -522,7 +600,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildContactSection() {
+  Widget _buildContactSection(PropertyEntity property) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -616,7 +694,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAdditionalInformationSection() {
+  Widget _buildAdditionalInformationSection(PropertyEntity property) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),

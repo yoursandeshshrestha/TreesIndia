@@ -12,4 +12,6 @@ abstract class PropertyRepository {
   Future<PropertyEntity> createProperty(PropertyFormData propertyForm);
 
   Future<void> deleteProperty(int propertyId);
+
+  Future<PropertyEntity> getPropertyDetails(String propertyId);
 }

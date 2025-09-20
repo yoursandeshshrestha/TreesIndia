@@ -17,6 +17,7 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_propertie
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/my_vendor_profiles_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/subscription_plans_listing_page.dart';
+import 'package:trees_india/pages/rental_and_properties/app/views/property_details_page.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
@@ -360,6 +361,10 @@ class AppRouter {
                   name: 'RentalAndPropertiesPage',
                   builder: (context, state) => const RentalAndPropertiesPage(),
                 ),
+                GoRoute(path: '/rental-properties/:propertyId', name: 'PropertyDetailsPage', builder: (context, state) {
+                  final propertyId = state.pathParameters['propertyId']!;
+                  return PropertyDetailsPage(propertyId: propertyId);
+                }),
                 GoRoute(
                   path: '/marketplace/projects',
                   name: 'ProjectsPage',
