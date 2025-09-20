@@ -37,6 +37,9 @@ import 'package:trees_india/pages/search_page/app/views/search_page.dart';
 import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
 import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
+import 'package:trees_india/pages/marketplace/projects_page.dart';
+import 'package:trees_india/pages/marketplace/vendors_page.dart';
+import 'package:trees_india/pages/marketplace/workers_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -355,6 +358,21 @@ class AppRouter {
                   path: '/marketplace/rental-properties',
                   name: 'RentalAndPropertiesPage',
                   builder: (context, state) => const RentalAndPropertiesPage(),
+                ),
+                GoRoute(
+                  path: '/marketplace/projects',
+                  name: 'ProjectsPage',
+                  builder: (context, state) => const ProjectsPage(),
+                ),
+                GoRoute(
+                  path: '/marketplace/vendors',
+                  name: 'VendorsPage',
+                  builder: (context, state) => const VendorsPage(),
+                ),
+                GoRoute(
+                  path: '/marketplace/workers',
+                  name: 'WorkersPage',
+                  builder: (context, state) => const WorkersPage(),
                 ),
               ],
             ),

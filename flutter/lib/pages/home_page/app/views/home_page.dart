@@ -10,6 +10,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
@@ -22,6 +23,7 @@ import 'widgets/simple_banner_widget.dart';
 import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
 import 'widgets/popular_categories_widget.dart';
+import 'widgets/subscription_lock_modal.dart';
 import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -194,6 +196,9 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _buildMarketplaceOptions(
       BuildContext context, CategoryEntity categoryEntity) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
     // Create hardcoded marketplace subcategories
     final marketplaceSubcategories = [
       SubcategoryEntity(
@@ -246,31 +251,90 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     ];
 
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: AppSpacing.md,
-        mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: marketplaceSubcategories.length,
-      itemBuilder: (context, index) {
-        final subcategory = marketplaceSubcategories[index];
-        return _SubcategoryCard(
-          subcategory: subcategory,
-          onTap: () {
-            Navigator.of(context).pop();
-            // Navigate to marketplace pages based on subcategory
-            if (subcategory.slug == 'rental-properties') {
-              context.push('/marketplace/rental-properties');
-            } else {
-              // TODO: Implement navigation for other marketplace subcategories
-              print('Marketplace subcategory tapped: ${subcategory.name}');
-            }
+    return Consumer(
+      builder: (context, ref, child) {
+        final profileState = ref.watch(profileProvider);
+        final hasActiveSubscription = profileState.subscription != null &&
+            profileState.subscription!.status == 'active';
+
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: marketplaceSubcategories.length,
+          itemBuilder: (context, index) {
+            final subcategory = marketplaceSubcategories[index];
+            final requiresSubscription =
+                subcategory.slug != 'rental-properties';
+            final isLocked = requiresSubscription && !hasActiveSubscription;
+
+            return _MarketplaceSubcategoryCard(
+              subcategory: subcategory,
+              isLocked: isLocked,
+              onTap: () {
+                Navigator.of(context).pop();
+
+                if (isLocked) {
+                  // Show subscription lock modal
+                  _showSubscriptionLockModal(context, subcategory.slug);
+                } else {
+                  // Navigate to marketplace pages based on subcategory
+                  _navigateToMarketplace(context, subcategory.slug);
+                }
+              },
+            );
           },
         );
       },
     );
+  }
+
+  void _showSubscriptionLockModal(BuildContext context, String slug) {
+    MarketplaceType type;
+    switch (slug) {
+      case 'projects':
+        type = MarketplaceType.projects;
+        break;
+      case 'vendors':
+        type = MarketplaceType.vendors;
+        break;
+      case 'workers':
+        type = MarketplaceType.workers;
+        break;
+      default:
+        return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SubscriptionLockModal(type: type),
+    );
+  }
+
+  void _navigateToMarketplace(BuildContext context, String slug) {
+    switch (slug) {
+      case 'rental-properties':
+        context.push('/marketplace/rental-properties');
+        break;
+      case 'projects':
+        context.push('/marketplace/projects');
+        break;
+      case 'vendors':
+        context.push('/marketplace/vendors');
+        break;
+      case 'workers':
+        context.push('/marketplace/workers');
+        break;
+      default:
+        print('Unknown marketplace subcategory: $slug');
+    }
   }
 
   @override
@@ -519,6 +583,132 @@ class _SubcategoryCardState extends State<_SubcategoryCard> {
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketplaceSubcategoryCard extends StatefulWidget {
+  final SubcategoryEntity subcategory;
+  final bool isLocked;
+  final VoidCallback onTap;
+
+  const _MarketplaceSubcategoryCard({
+    required this.subcategory,
+    required this.isLocked,
+    required this.onTap,
+  });
+
+  @override
+  State<_MarketplaceSubcategoryCard> createState() =>
+      _MarketplaceSubcategoryCardState();
+}
+
+class _MarketplaceSubcategoryCardState
+    extends State<_MarketplaceSubcategoryCard> {
+  bool _isPressed = false;
+
+  IconData _getIconForSlug(String slug) {
+    switch (slug) {
+      case 'rental-properties':
+        return Icons.home_outlined;
+      case 'projects':
+        return Icons.construction_outlined;
+      case 'vendors':
+        return Icons.business_outlined;
+      case 'workers':
+        return Icons.person_outline;
+      default:
+        return Icons.build_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform:
+            _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
+        child: Container(
+          height: 120,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icon container with lock overlay
+              Container(
+                width: double.infinity,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: widget.isLocked
+                      ? const Color(0xFFF0F0F0)
+                      : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        _getIconForSlug(widget.subcategory.slug),
+                        size: 40,
+                        color: widget.isLocked
+                            ? AppColors.brandNeutral400
+                            : AppColors.brandNeutral600,
+                      ),
+                    ),
+                    if (widget.isLocked)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.lock,
+                            size: 16,
+                            color: AppColors.brandNeutral600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              // Title text
+              Expanded(
+                child: Text(
+                  widget.subcategory.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: widget.isLocked
+                        ? AppColors.brandNeutral500
+                        : Colors.black,
                     height: 1.3,
                   ),
                   textAlign: TextAlign.center,

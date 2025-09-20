@@ -67,6 +67,9 @@ class ApiEndpoints {
     getUserVendors,
     createVendor,
     getProperties,
+    projectsStats,
+    vendorsStats,
+    workersStats,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -380,6 +383,22 @@ class ApiEndpoints {
 
   static ApiEndpoint getProperties = ApiEndpoint(
     path: '/properties',
+    requiresAuth: true,
+  );
+
+  // Stats Endpoints
+  static ApiEndpoint projectsStats = ApiEndpoint(
+    path: '/projects/stats',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint vendorsStats = ApiEndpoint(
+    path: '/vendors/stats',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint workersStats = ApiEndpoint(
+    path: '/workers/stats',
     requiresAuth: true,
   );
 
