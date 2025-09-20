@@ -8,6 +8,8 @@ import 'package:trees_india/commons/utils/services/navigation_service.dart';
 import 'package:trees_india/pages/chats_page/domain/entities/chat_room_entity.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
+import 'package:trees_india/pages/marketplace_vendors/app/views/marketplace_vendors_page.dart';
+import 'package:trees_india/pages/marketplace_vendors/app/views/vendor_details_page.dart';
 import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
 import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
@@ -38,7 +40,6 @@ import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
 import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
 import 'package:trees_india/pages/marketplace/projects_page.dart';
-import 'package:trees_india/pages/marketplace/vendors_page.dart';
 import 'package:trees_india/pages/marketplace/workers_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
@@ -367,7 +368,15 @@ class AppRouter {
                 GoRoute(
                   path: '/marketplace/vendors',
                   name: 'VendorsPage',
-                  builder: (context, state) => const VendorsPage(),
+                  builder: (context, state) => const MarketplaceVendorsPage(),
+                ),
+                GoRoute(
+                  path: '/vendors/:vendorId',
+                  name: 'VendorDetailsPage',
+                  builder: (context, state) {
+                    final vendorId = state.pathParameters['vendorId']!;
+                    return VendorDetailsPage(vendorId: vendorId);
+                  },
                 ),
                 GoRoute(
                   path: '/marketplace/workers',

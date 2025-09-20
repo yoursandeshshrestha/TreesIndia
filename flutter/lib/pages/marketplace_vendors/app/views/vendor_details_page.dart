@@ -1,78 +1,143 @@
 import 'package:flutter/material.dart';
-import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import 'package:trees_india/commons/constants/app_colors.dart';
-import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/widgets/vendor_image_carousel.dart';
+import '../../../../commons/components/text/app/views/custom_text_library.dart';
+import '../../../../commons/constants/app_colors.dart';
+import '../../../../commons/constants/app_spacing.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/domain/entities/vendor_entity.dart';
+import '../providers/vendor_providers.dart';
+import '../viewmodels/vendor_details_state.dart';
 
-class VendorProfileDetailsBottomSheet extends StatelessWidget {
-  final VendorEntity vendor;
-  final VoidCallback onDelete;
-  final bool isDeleting;
+class VendorDetailsPage extends ConsumerWidget {
+  final String vendorId;
 
-  const VendorProfileDetailsBottomSheet({
-    super.key,
-    required this.vendor,
-    required this.onDelete,
-    this.isDeleting = false,
-  });
+  const VendorDetailsPage({super.key, required this.vendorId});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vendorDetailsState = ref.watch(vendorDetailsNotifierProvider);
+
+    ref.listen<VendorDetailsState>(vendorDetailsNotifierProvider,
+        (previous, next) {
+      if (next.status == VendorDetailsStatus.failure &&
+          next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
+    // Fetch vendor details when the page loads or when vendorId changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Always fetch vendor details for the requested vendorId
+      // Check if we're showing a different vendor or no vendor at all
+      final currentVendorId = vendorDetailsState.vendor?.id.toString();
+      if (currentVendorId != vendorId ||
+          vendorDetailsState.status == VendorDetailsStatus.initial) {
+        ref
+            .read(vendorDetailsNotifierProvider.notifier)
+            .getVendorDetails(vendorId);
+      }
+    });
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        ref.invalidate(vendorDetailsNotifierProvider);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: H3Bold(
+            text: vendorDetailsState.vendor?.vendorName ?? 'Vendor Details',
+            color: AppColors.brandNeutral900,
+          ),
+          leading: IconButton(
+            icon:
+                const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: _buildBody(vendorDetailsState, ref),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag Handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.brandNeutral300,
-              borderRadius: BorderRadius.circular(2),
-            ),
+    );
+  }
+
+  Widget _buildBody(VendorDetailsState state, WidgetRef ref) {
+    switch (state.status) {
+      case VendorDetailsStatus.loading:
+        return const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.brandPrimary500,
           ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md, vertical: AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildVendorHeader(),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildImageGallery(),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildBusinessDetails(),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildServicesOffered(),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildAddressCard(),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildContactSection(),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (vendor.businessDescription.isNotEmpty) ...[
-                    _buildBusinessDescription(),
-                    const SizedBox(height: AppSpacing.lg)
-                  ],
-                  _buildActionButtons(context),
-                ],
+        );
+      case VendorDetailsStatus.success:
+        return state.vendor != null
+            ? _buildVendorDetails(state.vendor!, ref)
+            : const Center(child: Text('No vendor data available'));
+      case VendorDetailsStatus.failure:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
               ),
-            ),
+              const SizedBox(height: AppSpacing.lg),
+              H3Bold(
+                text: 'Error Loading Vendor',
+                color: AppColors.brandNeutral900,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              B2Regular(
+                text: state.errorMessage ?? 'Unknown error occurred',
+                color: AppColors.brandNeutral600,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildVendorDetails(VendorEntity vendor, WidgetRef ref) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildVendorHeader(vendor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildImageGallery(vendor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildBusinessDetails(vendor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildServicesOffered(vendor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildAddressCard(vendor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildContactSection(vendor, ref),
+          const SizedBox(height: AppSpacing.lg),
+          if (vendor.businessDescription.isNotEmpty) ...[
+            _buildBusinessDescription(vendor),
+            const SizedBox(height: AppSpacing.lg)
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildImageGallery() {
+  Widget _buildImageGallery(VendorEntity vendor) {
     if (vendor.businessGallery.isEmpty) {
       return Container(
         height: 250,
@@ -114,7 +179,7 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
     return VendorImageCarousel(images: vendor.businessGallery);
   }
 
-  Widget _buildVendorHeader() {
+  Widget _buildVendorHeader(VendorEntity vendor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,7 +232,7 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildBusinessDetails() {
+  Widget _buildBusinessDetails(VendorEntity vendor) {
     final details = [
       _DetailItem('Business Type', _formatBusinessType(vendor.businessType),
           Icons.home_outlined),
@@ -245,7 +310,12 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildContactSection() {
+  Widget _buildContactSection(VendorEntity vendor, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState.token?.userId;
+    final shouldShowChatButton =
+        currentUserId != null && currentUserId != vendor.userId.toString();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -351,12 +421,39 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
               ),
             ),
           ),
+
+          if (shouldShowChatButton) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: Implement phone call functionality
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.stateGreen600,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.message_outlined, size: 18),
+                label: const Text(
+                  'Send Message',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildServicesOffered() {
+  Widget _buildServicesOffered(VendorEntity vendor) {
     if (vendor.servicesOffered.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -399,7 +496,7 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressCard() {
+  Widget _buildAddressCard(VendorEntity vendor) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -466,7 +563,7 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildBusinessDescription() {
+  Widget _buildBusinessDescription(VendorEntity vendor) {
     if (vendor.businessDescription.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -485,42 +582,6 @@ class VendorProfileDetailsBottomSheet extends StatelessWidget {
             color: AppColors.brandNeutral700,
             fontSize: 14,
             height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: isDeleting
-                ? null
-                : () {
-                    Navigator.pop(context);
-                    onDelete();
-                  },
-            icon: isDeleting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.delete_outline),
-            label: Text(isDeleting ? 'Deleting...' : 'Delete Profile'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.stateRed600,
-              side: const BorderSide(color: AppColors.stateRed300),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0),
-              ),
-            ),
           ),
         ),
       ],
