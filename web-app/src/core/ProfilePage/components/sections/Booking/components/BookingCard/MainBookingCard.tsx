@@ -18,7 +18,6 @@ import type { Booking as TypeBooking } from "@/types/booking";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
 import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
-import { useBookings } from "@/hooks/useBookings";
 import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import { useAppDispatch } from "@/store/hooks";
 import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
@@ -765,8 +764,8 @@ export function MainBookingCard({
                           ) {
                             dispatch(
                               openChatModalWithUser({
-                                user_id: user.id,
-                                worker_id: booking.worker_assignment.worker.ID,
+                                user_1: user.id,
+                                user_2: booking.worker_assignment.worker.ID,
                               })
                             );
                           } else {
@@ -795,7 +794,7 @@ export function MainBookingCard({
             isOpen={isLocationModalOpen}
             onClose={() => setIsLocationModalOpen(false)}
             assignment={booking.worker_assignment as WorkerAssignment}
-            booking={booking}
+            booking={booking?.ID ? { ...booking, ID: booking.ID } : undefined}
           />
         )}
 

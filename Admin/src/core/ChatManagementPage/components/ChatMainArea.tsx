@@ -114,7 +114,7 @@ const ChatMainArea: React.FC<ChatMainAreaProps> = ({
           message.sender &&
           typeof message.sender === "object" &&
           "user_type" in message.sender &&
-          (message.sender as any).user_type !== "admin"
+          (message.sender as { user_type: string }).user_type !== "admin"
         ) {
           playSound("receive");
         }

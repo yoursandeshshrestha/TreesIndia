@@ -1,18 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { paySegment } from "@/lib/bookingApi";
-import { CreateSegmentPaymentRequest } from "@/types/booking";
-import type { Booking } from "@/lib/bookingApi";
+import { CreateSegmentPaymentRequest, PaymentProgress } from "@/types/booking";
 
-export function usePaymentSegments(bookingId?: number) {
+export function usePaymentSegments() {
   const queryClient = useQueryClient();
-
-  // Get payment progress from cached booking data
-  const cachedBookings = queryClient.getQueryData<{
-    bookings: Booking[];
-  }>(["userBookings"]);
-  const cachedBooking = cachedBookings?.bookings?.find(
-    (booking) => booking?.ID === bookingId
-  );
 
   // Pay segment mutation
   const paySegmentMutation = useMutation({
@@ -33,7 +24,7 @@ export function usePaymentSegments(bookingId?: number) {
   });
 
   return {
-    paymentProgress: null, // Payment progress not available in new API response format
+    paymentProgress: null as PaymentProgress | null, // Payment progress not available in new API response format
     isLoadingSegments: false, // No loading since data comes from cache
     segmentsError: null,
     refetchSegments: () => {
@@ -47,11 +38,11 @@ export function usePaymentSegments(bookingId?: number) {
 }
 
 // Hook to check if a booking has payment segments
-export function useBookingPaymentSegments(bookingId?: number) {
-  const { paymentProgress, isLoadingSegments } = usePaymentSegments(bookingId);
+export function useBookingPaymentSegments() {
+  const { paymentProgress, isLoadingSegments } = usePaymentSegments();
 
   return {
-    hasPaymentSegments: paymentProgress && paymentProgress.segments.length > 0,
+    hasPaymentSegments: paymentProgress?.segments && paymentProgress.segments.length > 0,
     paymentProgress,
     isLoadingSegments,
   };

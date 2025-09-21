@@ -1,16 +1,16 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useDashboard as useDashboardQuery } from "../services/dashboardApi";
-import type { DashboardOverview, DashboardAlerts } from "../types";
+import type { DashboardOverview, DashboardAlerts, MonthlyTrends, FinancialAnalytics, MarketplaceAnalytics, UserAnalytics } from "../types";
 
 interface UseDashboardReturn {
   // Data
   overview: DashboardOverview | null;
-  userAnalytics: unknown;
+  userAnalytics: UserAnalytics | null;
   bookingAnalytics: unknown;
-  financialAnalytics: unknown;
-  marketplaceAnalytics: unknown;
-  monthlyTrends: unknown;
+  financialAnalytics: FinancialAnalytics | null;
+  marketplaceAnalytics: MarketplaceAnalytics | null;
+  monthlyTrends: MonthlyTrends | null;
   alerts: DashboardAlerts | null;
 
   // Loading states
@@ -46,7 +46,7 @@ interface UseDashboardReturn {
 }
 
 export const useDashboard = (): UseDashboardReturn => {
-  const [errors, setErrors] = useState<{
+  const [, setErrors] = useState<{
     overview: Error | null;
     userAnalytics: Error | null;
     bookingAnalytics: Error | null;
@@ -152,13 +152,13 @@ export const useDashboard = (): UseDashboardReturn => {
 
   return {
     // Data
-    overview,
-    userAnalytics,
+    overview: overview ?? null,
+    userAnalytics: userAnalytics ?? null,
     bookingAnalytics,
-    financialAnalytics,
-    marketplaceAnalytics,
-    monthlyTrends,
-    alerts,
+    financialAnalytics: financialAnalytics ?? null,
+    marketplaceAnalytics: marketplaceAnalytics ?? null,
+    monthlyTrends: monthlyTrends ?? null,
+    alerts: alerts ?? null,
 
     // Loading states
     isLoading,

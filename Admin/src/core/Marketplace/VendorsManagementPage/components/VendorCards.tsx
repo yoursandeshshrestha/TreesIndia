@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import {
   Eye,
   Check,
   X,
   MapPin,
-  Calendar,
   User,
   Mail,
   Phone,
@@ -20,7 +19,7 @@ import {
 import Badge from "@/components/Badge/Badge";
 import Button from "@/components/Button/Base/Button";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
-import { Vendor, BusinessType } from "../types";
+import { Vendor, BusinessType, BusinessAddress } from "../types";
 
 interface VendorCardsProps {
   vendors: Vendor[];
@@ -37,7 +36,6 @@ export default function VendorCards({
   onToggleStatus,
   onDeleteVendor,
 }: VendorCardsProps) {
-  const router = useRouter();
   const [isToggleModalOpen, setIsToggleModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -109,7 +107,7 @@ export default function VendorCards({
     });
   };
 
-  const formatAddress = (address: any) => {
+  const formatAddress = (address: BusinessAddress) => {
     if (!address) return "No address";
     const parts = [];
     if (address.street) parts.push(address.street);
@@ -290,7 +288,8 @@ export default function VendorCards({
           selectedVendor?.is_active ? "deactivate" : "activate"
         } "${selectedVendor?.vendor_name}"?`}
         confirmText={selectedVendor?.is_active ? "Deactivate" : "Activate"}
-        confirmVariant={selectedVendor?.is_active ? "danger" : "success"}
+        cancelText="Cancel"
+        variant={selectedVendor?.is_active ? "danger" : "default"}
       />
 
       {/* Delete Modal */}
@@ -301,7 +300,8 @@ export default function VendorCards({
         title="Delete Vendor"
         message={`Are you sure you want to delete "${selectedVendor?.vendor_name}"? This action cannot be undone.`}
         confirmText="Delete"
-        confirmVariant="danger"
+        cancelText="Cancel"
+        variant="danger"
       />
     </>
   );

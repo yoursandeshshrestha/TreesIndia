@@ -67,6 +67,9 @@ func SetupRoutes(r *gin.Engine) {
 		SetupPaymentRoutes(v1)
 		SetupPaymentSegmentRoutes(v1)
 		SetupAdminPaymentRoutes(v1)
+		
+		// Ledger routes
+		SetupLedgerRoutes(v1)
 	}
 }
 

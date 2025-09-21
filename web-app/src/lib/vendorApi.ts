@@ -150,7 +150,7 @@ export async function fetchUserVendors(
             errorData.message || errorData.error || `HTTP error! status: ${response.status}`
           );
         }
-      } catch (parseError) {
+      } catch {
         // If parsing fails, fall back to status text
         throw new Error(`Failed to fetch user vendors: ${response.statusText}`);
       }

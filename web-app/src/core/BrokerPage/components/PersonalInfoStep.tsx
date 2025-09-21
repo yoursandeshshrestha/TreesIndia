@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { TextField, Box, Typography } from "@mui/material";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -18,9 +18,11 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   onFieldChange,
 }) => {
   const { userProfile } = useProfile();
-  const contactInfo = formData.contact_info
-    ? JSON.parse(formData.contact_info)
-    : {};
+  const contactInfo = useMemo(() => {
+    return formData.contact_info
+      ? JSON.parse(formData.contact_info)
+      : {};
+  }, [formData.contact_info]);
 
   // Pre-fill form with user profile data if available
   useEffect(() => {

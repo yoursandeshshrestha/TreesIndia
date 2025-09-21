@@ -19,6 +19,7 @@ const (
 	PaymentTypeRefund      PaymentType = "refund"
 	PaymentTypeSegmentPay  PaymentType = "segment_pay"
 	PaymentTypeQuote       PaymentType = "quote"
+	PaymentTypeManual      PaymentType = "manual"
 )
 
 
@@ -177,4 +178,19 @@ type TransactionExportRequest struct {
 	Format             string              `json:"format"`              // csv, excel
 	IncludeUserDetails bool                `json:"include_user_details"` // Include user name, email, phone
 	IncludeMetadata    bool                `json:"include_metadata"`    // Include payment metadata
+}
+
+// ManualTransactionRequest represents the request structure for creating a manual transaction
+type ManualTransactionRequest struct {
+	UserID             uint          `json:"user_id,omitempty"`
+	Amount             float64       `json:"amount" binding:"required"`
+	Currency           string        `json:"currency"`
+	Type               PaymentType   `json:"type" binding:"required"`
+	Method             string        `json:"method" binding:"required"`
+	RelatedEntityType  string        `json:"related_entity_type"`
+	RelatedEntityID    uint          `json:"related_entity_id"`
+	Description        string        `json:"description" binding:"required"`
+	Notes              string        `json:"notes"`
+	Metadata           *JSONMap      `json:"metadata"`
+	Status             PaymentStatus `json:"status"` // For manual transactions, can be set directly
 }

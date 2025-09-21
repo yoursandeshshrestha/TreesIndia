@@ -20,10 +20,10 @@ export const navigateToChat = (
   // Store user context in sessionStorage for the chat page to pick up
   if (typeof window !== "undefined") {
     const userContext = {
-      userId: booking.user.id || booking.user.ID, // Handle both cases
+      userId: booking.user.id,
       userName: booking.user.name,
       userPhone: booking.user.phone,
-      bookingId: booking.id || booking.ID, // Handle both cases
+      bookingId: 'id' in booking ? booking.id : booking.ID, // Handle both cases
       bookingReference: booking.booking_reference,
       timestamp: Date.now(),
     };

@@ -5,7 +5,13 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionStats } from "@/types/transaction";
 import { formatCurrency } from "@/types/transaction";
 
-export default function TransactionStatsCards() {
+interface TransactionStatsCardsProps {
+  refreshTrigger?: number;
+}
+
+export default function TransactionStatsCards({
+  refreshTrigger,
+}: TransactionStatsCardsProps) {
   const [stats, setStats] = useState<TransactionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { fetchTransactionStats } = useTransactions();
@@ -19,7 +25,7 @@ export default function TransactionStatsCards() {
     };
 
     loadStats();
-  }, [fetchTransactionStats]);
+  }, [fetchTransactionStats, refreshTrigger]);
 
   if (isLoading) {
     return (

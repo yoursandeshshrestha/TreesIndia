@@ -14,8 +14,8 @@ import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import {
   SubscriptionPlan,
-  CreateSubscriptionWithBothDurationsRequest,
-  UpdateSubscriptionRequest,
+  CreateSubscriptionPlanRequest,
+  UpdateSubscriptionPlanRequest,
 } from "./types";
 
 function SubscriptionManagementPage() {
@@ -32,7 +32,7 @@ function SubscriptionManagementPage() {
 
   const {
     subscriptions: apiSubscriptions,
-    createSubscriptionWithBothDurations,
+    createSubscriptionPlan,
     updateSubscription,
     deleteSubscription,
     toggleSubscriptionStatus,
@@ -42,11 +42,11 @@ function SubscriptionManagementPage() {
   } = useSubscriptions();
 
   const handleCreateSubscription = async (
-    data: CreateSubscriptionWithBothDurationsRequest
+    data: CreateSubscriptionPlanRequest
   ) => {
     try {
       setIsCreating(true);
-      await createSubscriptionWithBothDurations(data);
+      await createSubscriptionPlan(data);
       toast.success("Subscription plans created successfully");
       setIsModalOpen(false);
     } catch (error) {
@@ -61,7 +61,7 @@ function SubscriptionManagementPage() {
   };
 
   const handleUpdateSubscription = async (
-    data: CreateSubscriptionWithBothDurationsRequest
+    data: UpdateSubscriptionPlanRequest
   ) => {
     if (!selectedSubscription) return;
 
@@ -148,6 +148,16 @@ function SubscriptionManagementPage() {
     setSelectedSubscription(null);
   };
 
+  const handleModalSubmit = async (
+    data: CreateSubscriptionPlanRequest | UpdateSubscriptionPlanRequest
+  ) => {
+    if (selectedSubscription) {
+      await handleUpdateSubscription(data as UpdateSubscriptionPlanRequest);
+    } else {
+      await handleCreateSubscription(data as CreateSubscriptionPlanRequest);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -192,13 +202,7 @@ function SubscriptionManagementPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         subscription={selectedSubscription}
-        onSubmit={
-          selectedSubscription
-            ? (data: CreateSubscriptionWithBothDurationsRequest) =>
-                handleUpdateSubscription(data)
-            : (data: CreateSubscriptionWithBothDurationsRequest) =>
-                handleCreateSubscription(data)
-        }
+        onSubmit={handleModalSubmit}
         isLoading={isCreating || isUpdating}
       />
 

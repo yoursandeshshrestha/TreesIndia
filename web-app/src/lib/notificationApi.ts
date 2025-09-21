@@ -19,7 +19,7 @@ const NOTIFICATION_ENDPOINTS = {
 export const notificationQueryKeys = {
   all: ["notifications"] as const,
   lists: () => [...notificationQueryKeys.all, "list"] as const,
-  list: (params: Record<string, any>) =>
+  list: (params: Record<string, unknown>) =>
     [...notificationQueryKeys.lists(), params] as const,
   unreadCount: () => [...notificationQueryKeys.all, "unreadCount"] as const,
   stats: () => [...notificationQueryKeys.all, "stats"] as const,

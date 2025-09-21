@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { queryKeys } from "@/types/api";
 import type {
-  InAppNotification,
   NotificationResponse,
   UnreadCountResponse,
   NotificationStatsResponse,
@@ -20,7 +18,7 @@ const NOTIFICATION_ENDPOINTS = {
 export const notificationQueryKeys = {
   all: ["notifications"] as const,
   lists: () => [...notificationQueryKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) =>
+  list: (filters: Record<string, unknown>) =>
     [...notificationQueryKeys.lists(), filters] as const,
   unreadCount: () => [...notificationQueryKeys.all, "unreadCount"] as const,
   stats: () => [...notificationQueryKeys.all, "stats"] as const,

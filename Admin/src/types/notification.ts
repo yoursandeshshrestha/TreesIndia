@@ -7,7 +7,7 @@ export interface InAppNotification {
   read_at?: string;
   related_entity_type?: string;
   related_entity_id?: number;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -50,11 +50,11 @@ export interface NotificationWebSocketMessage {
   user_id: number;
   user_type: string;
   event: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export interface NotificationWebSocketClient {
-  send: (message: Record<string, any>) => void;
+  send: (message: Record<string, unknown>) => void;
   close: () => void;
 }
 

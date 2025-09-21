@@ -125,7 +125,11 @@ export default function ProjectDetailPage() {
 
   const handleChatClick = () => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
+      return;
+    }
+
+    if (!project) {
       return;
     }
 
@@ -138,7 +142,7 @@ export default function ProjectDetailPage() {
   };
 
   // Check if current user is the same as the project owner
-  const isCurrentUserOwner = user && user.id === project.user_id;
+  const isCurrentUserOwner = user && project && user.id === project.user_id;
 
   if (isLoading) {
     return (

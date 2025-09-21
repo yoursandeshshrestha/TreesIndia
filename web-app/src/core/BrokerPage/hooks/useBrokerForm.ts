@@ -68,7 +68,7 @@ export function useBrokerForm() {
     isSubmitting: false,
   });
 
-  const updateFormData = useCallback((field: string, value: any) => {
+  const updateFormData = useCallback((field: string, value: string | File | null) => {
     setFormState((prev) => ({
       ...prev,
       formData: {

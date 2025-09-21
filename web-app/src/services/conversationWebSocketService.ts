@@ -109,13 +109,34 @@ class ConversationWebSocketService {
       case "conversation_message":
       case "new_conversation_message":
         if (message.data) {
-          // Emit message updates to conversation store for other components
-          conversationStore.emitUpdate(
-            message as {
-              conversation_id: number;
-              message: Record<string, unknown>;
+          // Transform message data to ConversationUpdateData format
+          const messageData = message.data as {
+            conversation_id: number;
+            message: {
+              id?: number;
+              message?: string;
+              created_at?: string;
+              sender_id?: number;
+              sender?: {
+                user_type?: string;
+              };
+            };
+          };
+          const conversationUpdateData = {
+            event: message.event,
+            conversation_id: messageData.conversation_id,
+            message: {
+              id: messageData.message.id || Date.now(),
+              message: messageData.message.message || '',
+              created_at: messageData.message.created_at || new Date().toISOString(),
+              sender_id: messageData.message.sender_id || 0,
+              sender: messageData.message.sender ? {
+                user_type: messageData.message.sender.user_type || 'user'
+              } : undefined
             }
-          );
+          };
+          // Emit message updates to conversation store for other components
+          conversationStore.emitUpdate(conversationUpdateData);
         }
         break;
 

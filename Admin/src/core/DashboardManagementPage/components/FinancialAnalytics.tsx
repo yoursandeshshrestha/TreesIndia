@@ -1,5 +1,5 @@
 import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+// import { TrendingUp, TrendingDown } from "lucide-react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -10,7 +10,8 @@ import {
   BarElement,
   Title,
 } from "chart.js";
-import { Doughnut, Bar } from "react-chartjs-2";
+import { Doughnut } from "react-chartjs-2";
+import type { FinancialAnalytics as FinancialAnalyticsType } from "../types";
 
 ChartJS.register(
   ArcElement,
@@ -22,33 +23,8 @@ ChartJS.register(
   Title
 );
 
-interface PaymentAnalytics {
-  total_transactions: number;
-  successful_payments: number;
-  failed_payments: number;
-  payment_success_rate: number;
-  payment_method_breakdown: Record<string, number>;
-  payment_trends: any;
-}
-
-interface SubscriptionAnalytics {
-  active_subscriptions: number;
-  new_subscriptions: number;
-  subscription_revenue: number;
-  churn_rate: number;
-  subscription_trends: any;
-}
-
-interface FinancialAnalyticsData {
-  revenue_trends: any;
-  payment_analytics: PaymentAnalytics;
-  subscription_analytics: SubscriptionAnalytics;
-  revenue_this_month: number;
-  revenue_growth: number;
-}
-
 interface FinancialAnalyticsProps {
-  data: FinancialAnalyticsData | null;
+  data: FinancialAnalyticsType | null;
   isLoading: boolean;
   error: string | null;
 }

@@ -24,9 +24,15 @@ export interface OverviewStats {
   active_subscriptions: number;
 }
 
+export interface UserTypesDistribution {
+  admin: number;
+  normal: number;
+  worker: number;
+}
+
 export interface UserAnalytics {
   user_growth: MonthlyData[];
-  user_types_distribution: Record<string, number>;
+  user_types_distribution: UserTypesDistribution;
   recent_users: User[];
   active_users: number;
   new_users_this_month: number;

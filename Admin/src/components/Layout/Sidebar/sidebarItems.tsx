@@ -15,6 +15,7 @@ import {
   UserCheck,
   Truck,
   MessageCircle,
+  BookOpen,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -247,6 +248,14 @@ export const sidebarItems: SidebarItem[] = [
     "Transaction Management",
     "/dashboard/transactions",
     <CreditCard size={16} />
+  ),
+
+  // Ledger Management
+  createMenuItem(
+    "ledger-management",
+    "Ledger Management",
+    "/dashboard/ledger",
+    <BookOpen size={16} />
   ),
 
   // System Section

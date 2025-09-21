@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Badge from "@/components/Badge/Badge";
-import { Vendor, BusinessType } from "../types";
+import { Vendor, BusinessType, BusinessAddress } from "../types";
 import Image from "next/image";
 
 interface VendorDetailPageProps {
@@ -62,7 +62,7 @@ export default function VendorDetailPage({
     });
   };
 
-  const formatAddress = (address: any) => {
+  const formatAddress = (address: BusinessAddress) => {
     if (!address) return "No address provided";
     const parts = [];
     if (address.street) parts.push(address.street);

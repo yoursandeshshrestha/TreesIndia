@@ -155,7 +155,7 @@ function VendorCreatePage() {
         business_type: formState.formData.business_type,
         years_in_business: formState.formData.years_in_business,
         services_offered: formState.formData.services_offered,
-        profile_picture: formState.formData.profile_picture,
+        profile_picture: formState.formData.profile_picture || undefined,
         business_gallery: formState.formData.business_gallery,
       };
 

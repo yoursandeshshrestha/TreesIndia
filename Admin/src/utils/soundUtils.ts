@@ -182,7 +182,7 @@ export const isAudioSupported = (): boolean => {
   try {
     const audio = new Audio();
     return !!(audio.canPlayType && audio.canPlayType("audio/mpeg"));
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -209,7 +209,7 @@ export const initializeAudio = (): void => {
           .catch(() => {
             // Ignore errors
           });
-      } catch (error) {
+      } catch {
         // Ignore errors
       }
     };

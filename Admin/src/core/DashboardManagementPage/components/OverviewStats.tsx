@@ -24,7 +24,7 @@ interface OverviewStatsProps {
   error?: string | null;
 }
 
-const OverviewStats: React.FC<OverviewStatsProps> = ({
+const OverviewStatsComponent: React.FC<OverviewStatsProps> = ({
   stats,
   isLoading = false,
   error = null,
@@ -263,4 +263,4 @@ const OverviewStats: React.FC<OverviewStatsProps> = ({
   );
 };
 
-export default OverviewStats;
+export default OverviewStatsComponent;

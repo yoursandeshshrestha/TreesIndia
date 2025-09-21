@@ -190,7 +190,7 @@ export default function VendorDetailPage() {
 
   const handleChatClick = () => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 

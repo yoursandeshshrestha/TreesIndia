@@ -88,7 +88,7 @@ export function RentalPropertiesContent({
 
   const handleChatClick = (property: Property) => {
     if (!isAuthenticated || !user) {
-      dispatch(openAuthModal());
+      dispatch(openAuthModal({}));
       return;
     }
 

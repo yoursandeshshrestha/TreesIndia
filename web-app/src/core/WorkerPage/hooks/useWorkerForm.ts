@@ -79,7 +79,7 @@ export function useWorkerForm() {
     isSubmitting: false,
   });
 
-  const updateFormData = useCallback((field: string, value: any) => {
+  const updateFormData = useCallback((field: string, value: string | number | File | null) => {
     setFormState((prev) => ({
       ...prev,
       formData: { ...prev.formData, [field]: value },

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { conversationStore } from "@/utils/conversationStore";
 
 interface WebSocketMessage {
   event: "conversation_message" | "typing" | "status_update" | "ping" | "pong";
@@ -26,7 +25,6 @@ export function useSimpleConversationWebSocket({
   onMessage,
   onStatusUpdate,
   onTyping,
-  isConversationOpen = false,
 }: UseSimpleConversationWebSocketProps) {
   const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
@@ -181,7 +179,7 @@ export function useSimpleConversationWebSocket({
       setIsConnecting(false);
       setConnectionError("Failed to create WebSocket connection");
     }
-  }, [enabled, conversationId, user?.id, isConversationOpen]);
+  }, [enabled, conversationId, user?.id]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

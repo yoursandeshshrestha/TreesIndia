@@ -5,7 +5,6 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CreditCard, Wallet, AlertCircle } from "lucide-react";
 import { Booking } from "@/lib/bookingApi";
-import { BookingWithPaymentProgress } from "@/types/booking";
 import { formatAmount } from "@/utils/formatters";
 import { useBookings } from "@/hooks/useBookings";
 import { useWallet } from "@/hooks/useWallet";
@@ -15,6 +14,7 @@ import { bookingFlowApi } from "@/lib/bookingFlowApi";
 import RazorpayCheckout from "@/commonComponents/razorpay/RazorpayCheckout";
 import { SuccessModal } from "@/commonComponents/SuccessModal";
 import { toast } from "sonner";
+import { PaymentSegmentInfo } from "@/types/booking";
 
 interface NextSegmentPaymentModalProps {
   isOpen: boolean;
@@ -58,7 +58,7 @@ export default function NextSegmentPaymentModal({
   // Get payment segments directly from booking object (new structure)
   const { refetchBookings } = useBookings();
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
-  const { paySegment } = usePaymentSegments(booking?.ID);
+  const { paySegment } = usePaymentSegments();
   const paymentSegments = booking?.payment_segments || [];
 
   // Calculate payment progress from segments

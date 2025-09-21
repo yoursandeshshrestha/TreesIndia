@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { TextField, Box, Typography, Chip, Button, Grid } from "@mui/material";
+import { TextField, Box, Typography, Chip, Button } from "@mui/material";
 import { Add } from "@mui/icons-material";
 
 interface SkillsStepProps {

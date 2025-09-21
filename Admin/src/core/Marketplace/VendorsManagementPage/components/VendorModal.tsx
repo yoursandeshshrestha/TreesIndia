@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Upload, MapPin, Building, User, Phone, Mail } from "lucide-react";
+import { X, Upload, MapPin, Building, User } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";

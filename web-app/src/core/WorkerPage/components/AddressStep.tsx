@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { TextField, Box, Typography, Grid, Button } from "@mui/material";
+import { TextField, Box, Typography, Button } from "@mui/material";
 import { Target, Loader2 } from "lucide-react";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { toast } from "sonner";
@@ -116,57 +116,49 @@ const AddressStep: React.FC<AddressStepProps> = ({
           fullWidth
         />
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="City"
-              required
-              type="text"
-              value={address.city || ""}
-              onChange={(e) => handleAddressChange("city", e.target.value)}
-              placeholder="Enter city"
-              error={!!errors.address}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="State"
-              required
-              type="text"
-              value={address.state || ""}
-              onChange={(e) => handleAddressChange("state", e.target.value)}
-              placeholder="Enter state"
-              error={!!errors.address}
-              fullWidth
-            />
-          </Grid>
-        </Grid>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <TextField
+            label="City"
+            required
+            type="text"
+            value={address.city || ""}
+            onChange={(e) => handleAddressChange("city", e.target.value)}
+            placeholder="Enter city"
+            error={!!errors.address}
+            sx={{ flex: "1 1 200px", minWidth: "200px" }}
+          />
+          <TextField
+            label="State"
+            required
+            type="text"
+            value={address.state || ""}
+            onChange={(e) => handleAddressChange("state", e.target.value)}
+            placeholder="Enter state"
+            error={!!errors.address}
+            sx={{ flex: "1 1 200px", minWidth: "200px" }}
+          />
+        </Box>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Pincode"
-              required
-              type="text"
-              value={address.pincode || ""}
-              onChange={(e) => handleAddressChange("pincode", e.target.value)}
-              placeholder="Enter pincode"
-              error={!!errors.address}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Landmark (Optional)"
-              type="text"
-              value={address.landmark || ""}
-              onChange={(e) => handleAddressChange("landmark", e.target.value)}
-              placeholder="Enter landmark"
-              fullWidth
-            />
-          </Grid>
-        </Grid>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <TextField
+            label="Pincode"
+            required
+            type="text"
+            value={address.pincode || ""}
+            onChange={(e) => handleAddressChange("pincode", e.target.value)}
+            placeholder="Enter pincode"
+            error={!!errors.address}
+            sx={{ flex: "1 1 200px", minWidth: "200px" }}
+          />
+          <TextField
+            label="Landmark (Optional)"
+            type="text"
+            value={address.landmark || ""}
+            onChange={(e) => handleAddressChange("landmark", e.target.value)}
+            placeholder="Enter landmark"
+            sx={{ flex: "1 1 200px", minWidth: "200px" }}
+          />
+        </Box>
       </Box>
     </Box>
   );

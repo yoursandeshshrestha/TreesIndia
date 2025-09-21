@@ -13,6 +13,8 @@ import TransactionTable from "./components/TransactionTable";
 import TransactionStatsCards from "./components/TransactionStatsCards";
 import TransactionPreviewModal from "./components/TransactionPreviewModal";
 import ExportModal from "./components/ExportModal";
+import ManualTransactionForm from "./components/ManualTransactionForm";
+import ManualWalletAdditionForm from "../UsersManagementPage/components/ManualWalletAdditionForm";
 
 // Hooks and types
 import { useTransactions } from "@/hooks/useTransactions";
@@ -36,6 +38,11 @@ function TransactionManagementPage() {
   // Modal states
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isManualTransactionOpen, setIsManualTransactionOpen] = useState(false);
+  const [isManualWalletAdditionOpen, setIsManualWalletAdditionOpen] = useState(false);
+
+  // Stats refresh trigger
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
 
   // Filters
   const [filters, setFilters] = useState<TransactionFiltersType>({
@@ -112,9 +119,10 @@ function TransactionManagementPage() {
   const loadTransactions = useCallback(async () => {
     await fetchTransactions({
       ...filters,
+      page: currentPage,
       limit: itemsPerPage,
     });
-  }, [itemsPerPage, filters, fetchTransactions]);
+  }, [currentPage, itemsPerPage, filters, fetchTransactions]);
 
   // Load transactions when filters or pagination changes
   useEffect(() => {
@@ -137,6 +145,42 @@ function TransactionManagementPage() {
 
   const handleExportSuccess = () => {
     setIsExportModalOpen(false);
+  };
+
+  const handleManualTransactionSuccess = async () => {
+    setIsManualTransactionOpen(false);
+    setCurrentPage(1); // Reset to first page to show the new transaction
+    toast.success("Manual transaction added successfully!");
+
+    // Trigger stats refresh
+    setStatsRefreshTrigger((prev) => prev + 1);
+
+    // Small delay to ensure backend has processed the transaction
+    setTimeout(async () => {
+      await fetchTransactions({
+        ...filters,
+        page: 1,
+        limit: itemsPerPage,
+      });
+    }, 500);
+  };
+
+  const handleManualWalletAdditionSuccess = async () => {
+    setIsManualWalletAdditionOpen(false);
+    setCurrentPage(1); // Reset to first page to show the new transaction
+    toast.success("Wallet addition completed successfully!");
+
+    // Trigger stats refresh
+    setStatsRefreshTrigger((prev) => prev + 1);
+
+    // Small delay to ensure backend has processed the transaction
+    setTimeout(async () => {
+      await fetchTransactions({
+        ...filters,
+        page: 1,
+        limit: itemsPerPage,
+      });
+    }, 500);
   };
 
   const clearFilters = () => {
@@ -177,12 +221,14 @@ function TransactionManagementPage() {
           }}
           onRefresh={handleRefresh}
           onExport={handleExportClick}
+          onManualTransaction={() => setIsManualTransactionOpen(true)}
+          onManualWalletAddition={() => setIsManualWalletAdditionOpen(true)}
           isLoading={isLoading}
         />
 
         <div className="">
           {/* Stats Cards */}
-          <TransactionStatsCards />
+          <TransactionStatsCards refreshTrigger={statsRefreshTrigger} />
 
           <TransactionFilters
             search={localSearch}
@@ -295,6 +341,21 @@ function TransactionManagementPage() {
         onClose={() => setIsExportModalOpen(false)}
         filters={filters}
         onSuccess={handleExportSuccess}
+      />
+
+      {/* Manual Transaction Modal */}
+      <ManualTransactionForm
+        isOpen={isManualTransactionOpen}
+        onClose={() => setIsManualTransactionOpen(false)}
+        onSuccess={handleManualTransactionSuccess}
+      />
+
+      {/* Manual Wallet Addition Modal */}
+      <ManualWalletAdditionForm
+        isOpen={isManualWalletAdditionOpen}
+        onClose={() => setIsManualWalletAdditionOpen(false)}
+        onSuccess={handleManualWalletAdditionSuccess}
+        selectedUser={null}
       />
     </div>
   );

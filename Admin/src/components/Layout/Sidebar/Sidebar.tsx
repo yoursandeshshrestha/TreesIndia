@@ -7,7 +7,6 @@ import { useAppDispatch } from "@/app/store";
 import { setSidebarOpen } from "@/app/store";
 import ProfileCard from "./ProfileCard";
 import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
-import { conversationStore } from "@/utils/conversationStore";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -20,8 +19,7 @@ const Sidebar = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Get global WebSocket state and unread count
-  const { isConnected: isWebSocketConnected, totalUnreadCount } = useGlobalWebSocket();
-
+  const { totalUnreadCount } = useGlobalWebSocket();
 
   // Handle responsive behavior
   useEffect(() => {

@@ -542,3 +542,60 @@ func (ps *PaymentService) sendPaymentNotifications(payment *models.Payment) {
 
 	// Payment confirmation notification removed as per user request
 }
+
+// CreateManualTransaction creates a manual transaction (admin only)
+func (ps *PaymentService) CreateManualTransaction(req *models.ManualTransactionRequest) (*models.Payment, error) {
+	// Generate payment reference
+	paymentReference := ps.generatePaymentReference()
+
+	// Handle metadata - use provided metadata or empty object
+	var metadata *models.JSONMap
+	if req.Metadata != nil {
+		metadata = req.Metadata
+	} else {
+		// Use empty JSON object as default
+		emptyMap := models.JSONMap{}
+		metadata = &emptyMap
+	}
+
+	// Set default currency if not provided
+	currency := req.Currency
+	if currency == "" {
+		currency = "INR"
+	}
+
+	// Set default status if not provided
+	status := req.Status
+	if status == "" {
+		status = models.PaymentStatusCompleted // Manual transactions are typically completed immediately
+	}
+
+	payment := &models.Payment{
+		PaymentReference:  paymentReference,
+		UserID:           req.UserID,
+		Amount:           req.Amount,
+		Currency:         currency,
+		Status:           status,
+		Type:             req.Type,
+		Method:           req.Method,
+		RelatedEntityType: req.RelatedEntityType,
+		RelatedEntityID:   req.RelatedEntityID,
+		Description:      req.Description,
+		Notes:            req.Notes,
+		Metadata:         metadata,
+		InitiatedAt:      time.Now(),
+	}
+
+	// Set completion time if status is completed
+	if status == models.PaymentStatusCompleted {
+		now := time.Now()
+		payment.CompletedAt = &now
+	}
+
+	err := ps.paymentRepo.Create(payment)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manual transaction: %v", err)
+	}
+
+	return payment, nil
+}

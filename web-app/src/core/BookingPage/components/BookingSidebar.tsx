@@ -46,7 +46,7 @@ export function BookingSidebar({
     useSelector((state: RootState) => state.booking);
   const { user } = useAuth();
   const { walletSummary } = useWallet(false); // Only need wallet summary, not transactions
-  const { data: configData, isLoading: configLoading } = useBookingConfig();
+  const { data: configData } = useBookingConfig();
   const config = configData?.data;
 
   // Wallet booking mutations

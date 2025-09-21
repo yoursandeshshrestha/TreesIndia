@@ -6,7 +6,6 @@ import {
   X,
   Send,
   Minimize2,
-  Globe,
   Loader2,
 } from "lucide-react";
 
@@ -239,7 +238,7 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isOpen, onToggle }) => {
                   Hi, welcome to TreesIndia!
                 </h4>
                 <p className="text-gray-600 text-sm mb-6">
-                  I'm your AI assistant. How can I help you today?
+                  I&apos;m your AI assistant. How can I help you today?
                 </p>
 
                 {/* Quick Actions */}

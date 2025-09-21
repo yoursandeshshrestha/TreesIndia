@@ -594,6 +594,15 @@ export interface DetailedBookingResponse {
   updated_at: string;
   deleted_at: string | null;
 
+  // Quote Management (for inquiry bookings)
+  quote_amount?: number;
+  quote_notes?: string;
+  quote_provided_by?: number;
+  quote_provided_at?: string;
+  quote_accepted_at?: string;
+  quote_expires_at?: string;
+  quote_duration?: string;
+
   service: DetailedServiceInfo;
   user: DetailedUserInfo;
   address: BookingAddress | null;

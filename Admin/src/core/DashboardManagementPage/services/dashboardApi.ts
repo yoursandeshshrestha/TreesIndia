@@ -3,6 +3,10 @@ import { api } from "@/lib/api-client";
 import type {
   DashboardOverviewResponse,
   DashboardAlertsResponse,
+  MonthlyTrends,
+  FinancialAnalytics,
+  MarketplaceAnalytics,
+  UserAnalytics,
 } from "../types";
 
 // API endpoints
@@ -42,7 +46,7 @@ export const dashboardApi = {
   getUserAnalytics: async (): Promise<{
     success: boolean;
     message: string;
-    data: unknown;
+    data: UserAnalytics;
   }> => {
     return api.get(DASHBOARD_ENDPOINTS.userAnalytics);
   },
@@ -60,7 +64,7 @@ export const dashboardApi = {
   getFinancialAnalytics: async (): Promise<{
     success: boolean;
     message: string;
-    data: unknown;
+    data: FinancialAnalytics;
   }> => {
     return api.get(DASHBOARD_ENDPOINTS.financialAnalytics);
   },
@@ -69,7 +73,7 @@ export const dashboardApi = {
   getMarketplaceAnalytics: async (): Promise<{
     success: boolean;
     message: string;
-    data: unknown;
+    data: MarketplaceAnalytics;
   }> => {
     return api.get(DASHBOARD_ENDPOINTS.marketplaceAnalytics);
   },
@@ -78,7 +82,7 @@ export const dashboardApi = {
   getMonthlyTrends: async (): Promise<{
     success: boolean;
     message: string;
-    data: unknown;
+    data: MonthlyTrends;
   }> => {
     return api.get(DASHBOARD_ENDPOINTS.monthlyTrends);
   },

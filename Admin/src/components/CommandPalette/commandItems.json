@@ -172,5 +172,23 @@
       "payment",
       "pricing"
     ]
+  },
+  {
+    "id": "ledger-management",
+    "label": "Ledger Management",
+    "description": "Go to ledger management",
+    "path": "/dashboard/ledger",
+    "keywords": [
+      "ledger",
+      "financial",
+      "payments",
+      "receivables",
+      "accounting",
+      "money",
+      "transactions",
+      "balance",
+      "cash",
+      "bank"
+    ]
   }
 ]

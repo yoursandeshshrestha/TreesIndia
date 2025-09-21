@@ -3,14 +3,12 @@
 import Image from "next/image";
 import { Vendor } from "@/types/vendor";
 import {
-  Calendar,
   Eye,
   Trash2,
   Images,
   Building2,
   MapPin,
   Phone,
-  Mail,
   Clock,
   User,
 } from "lucide-react";

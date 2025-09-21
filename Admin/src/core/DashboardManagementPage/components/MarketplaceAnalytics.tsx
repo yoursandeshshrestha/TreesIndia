@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Building, Truck, Users } from "lucide-react";
+import { Home, Building, Truck } from "lucide-react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -10,7 +10,8 @@ import {
   BarElement,
   Title,
 } from "chart.js";
-import { Doughnut, Bar, Pie } from "react-chartjs-2";
+import { Pie } from "react-chartjs-2";
+import type { MarketplaceAnalytics as MarketplaceAnalyticsType } from "../types";
 
 ChartJS.register(
   ArcElement,
@@ -22,38 +23,8 @@ ChartJS.register(
   Title
 );
 
-interface PropertyAnalytics {
-  total_properties: number;
-  active_listings: number;
-  properties_this_month: number;
-  average_property_price: number;
-  property_trends: any;
-}
-
-interface ProjectAnalytics {
-  total_projects: number;
-  active_projects: number;
-  completed_projects: number;
-  projects_this_month: number;
-  project_trends: any;
-}
-
-interface VendorAnalytics {
-  total_vendors: number;
-  active_vendors: number;
-  vendors_this_month: number;
-  average_vendor_rating: number;
-  vendor_trends: any;
-}
-
-interface MarketplaceAnalyticsData {
-  property_analytics: PropertyAnalytics;
-  project_analytics: ProjectAnalytics;
-  vendor_analytics: VendorAnalytics;
-}
-
 interface MarketplaceAnalyticsProps {
-  data: MarketplaceAnalyticsData | null;
+  data: MarketplaceAnalyticsType | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -87,12 +58,6 @@ const MarketplaceAnalytics: React.FC<MarketplaceAnalyticsProps> = ({
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(amount);
-  };
 
   return (
     <div className="space-y-6">

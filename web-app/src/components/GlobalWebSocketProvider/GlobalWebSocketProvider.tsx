@@ -44,9 +44,27 @@ export const GlobalWebSocketProvider: React.FC<
     isConnected: isConversationConnected,
     connectionError: conversationError,
   } = useConversationWebSocket({
-    onMessage: (data: any) => {
-      // Emit message updates to conversation store for other components
-      conversationStore.emitUpdate(data);
+    onMessage: (message: unknown) => {
+      // Type guard to ensure the message has the expected structure
+      if (message && typeof message === 'object' && 'conversation_id' in message && 'message' in message && 'sender_id' in message && 'timestamp' in message) {
+        const rawData = message as { conversation_id: number; message: string; sender_id: number; timestamp: string };
+        // Transform to ConversationUpdateData format
+        const data = {
+          event: 'new_conversation_message',
+          conversation_id: rawData.conversation_id,
+          message: {
+            id: Date.now(), // Generate temporary ID
+            message: rawData.message,
+            created_at: rawData.timestamp,
+            sender_id: rawData.sender_id,
+            sender: {
+              user_type: 'user' // Default user type, could be enhanced based on sender_id
+            }
+          }
+        };
+        // Emit message updates to conversation store for other components
+        conversationStore.emitUpdate(data);
+      }
     },
     onTotalUnreadCount: (count: number) => {
       setTotalUnreadCount(count);
@@ -108,7 +126,7 @@ export const GlobalWebSocketProvider: React.FC<
   // Listen for read status updates to reload total count
   useEffect(() => {
     const unsubscribeReadStatus = conversationStore.subscribeToReadStatus(
-      (conversationId) => {
+      () => {
         // Reload total unread count when a conversation is marked as read
         loadTotalUnreadCount();
       }

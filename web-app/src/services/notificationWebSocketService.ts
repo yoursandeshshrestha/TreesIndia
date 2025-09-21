@@ -45,7 +45,9 @@ class NotificationWebSocketService {
         try {
           const message: NotificationWebSocketMessage = JSON.parse(event.data);
           this.handleMessage(message);
-        } catch (error) {}
+        } catch {
+          // Ignore parsing errors
+        }
       };
 
       this.ws.onclose = (event) => {
@@ -59,11 +61,11 @@ class NotificationWebSocketService {
         }
       };
 
-      this.ws.onerror = (error) => {
+      this.ws.onerror = () => {
         this.isConnecting = false;
         notificationStore.setError("WebSocket connection error");
       };
-    } catch (error) {
+    } catch {
       this.isConnecting = false;
       notificationStore.setError("Failed to connect to WebSocket");
     }
@@ -86,7 +88,7 @@ class NotificationWebSocketService {
     this.reconnectAttempts = 0;
   }
 
-  send(message: Record<string, any>): void {
+  send(message: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {

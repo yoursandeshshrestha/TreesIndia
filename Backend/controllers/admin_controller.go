@@ -227,6 +227,50 @@ func (ac *AdminController) GetUserByID(c *gin.Context) {
 	}))
 }
 
+// SearchUsers godoc
+// @Summary Search users
+// @Description Search users by name, email, or phone (admin only)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query"
+// @Param limit query int false "Items per page" default(10)
+// @Success 200 {object} models.Response "Search results retrieved successfully"
+// @Failure 400 {object} models.Response "Invalid search query"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /admin/users/search [get]
+func (ac *AdminController) SearchUsers(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid search query", "Search query is required"))
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+
+	searchTerm := "%" + query + "%"
+	var users []models.User
+
+	if err := ac.db.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Search results retrieved successfully", gin.H{
+		"users": users,
+		"query": query,
+		"limit": limit,
+	}))
+}
+
 // AdminUpdateUserRequest represents the request for admin updating user
 type AdminUpdateUserRequest struct {
 	Name                   string     `json:"name" binding:"required,min=2,max=100"`

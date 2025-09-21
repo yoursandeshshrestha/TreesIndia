@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeChatModal } from "@/store/slices/chatModalSlice";
-import { createConversation } from "@/lib/simpleConversationApi";
+import { createConversation, getTotalUnreadCount } from "@/lib/simpleConversationApi";
 import {
   ConversationsList,
   ConversationsListRef,
@@ -62,6 +62,8 @@ export default function ChatModal() {
     isOpen,
     createConversationWithUser?.user_1,
     createConversationWithUser?.user_2,
+    createConversationWithUser,
+    isCreatingConversation,
   ]);
 
   // Handle preselected conversation
