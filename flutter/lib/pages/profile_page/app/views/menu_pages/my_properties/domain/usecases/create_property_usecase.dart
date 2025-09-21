@@ -1,7 +1,6 @@
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/data/models/property_form_data.dart';
 
 import '../entities/property_entity.dart';
-import '../entities/property_form_entity.dart';
 import '../repositories/property_repository.dart';
 
 class CreatePropertyUseCase {

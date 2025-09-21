@@ -158,9 +158,9 @@ class _MySubscriptionPageState extends ConsumerState<MySubscriptionPage> {
               color: AppColors.error.withOpacity(0.7),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(
+            const Text(
               'Something went wrong',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppColors.brandNeutral800,

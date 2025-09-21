@@ -359,7 +359,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               ),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Logout',
                             style: TextStyle(
                               fontSize: 16,
@@ -418,7 +418,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,

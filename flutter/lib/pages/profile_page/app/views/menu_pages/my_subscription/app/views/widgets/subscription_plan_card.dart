@@ -44,9 +44,9 @@ class SubscriptionPlanCard extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.stateGreen600,
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
@@ -224,7 +224,7 @@ class SubscriptionPlanCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
 
             // Button
-            Container(
+            SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => onPlanSelected(plan.id, durationType),
@@ -239,7 +239,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                     vertical: AppSpacing.sm,
                   ),
-                  side: BorderSide(
+                  side: const BorderSide(
                     color: AppColors.stateGreen600,
                     width: 1,
                   ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
-import '../../../../commons/components/button/app/views/solid_button_widget.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
 import '../../domain/entities/service_detail_entity.dart';
@@ -65,7 +64,7 @@ class _ServiceDetailPageState extends ConsumerState<ServiceDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Service Image
-            Container(
+            SizedBox(
               width: double.infinity,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),

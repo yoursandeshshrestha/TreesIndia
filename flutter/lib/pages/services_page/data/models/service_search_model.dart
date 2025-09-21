@@ -81,8 +81,7 @@ class ServiceSearchModel extends Equatable {
       serviceAreas: (json['service_areas'] as List<dynamic>?)
               ?.map((area) =>
                   ServiceAreaModel.fromJson(area as Map<String, dynamic>))
-              .toList() ??
-          null,
+              .toList(),
     );
   }
 

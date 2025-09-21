@@ -63,7 +63,7 @@ class SortBottomSheetWidget extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               H3Bold(
-                text: 'Sort by: ${PropertyFiltersEntity().getSortDisplayName(currentSortType)}',
+                text: 'Sort by: ${const PropertyFiltersEntity().getSortDisplayName(currentSortType)}',
                 color: AppColors.brandNeutral900,
               ),
             ],
@@ -74,14 +74,14 @@ class SortBottomSheetWidget extends StatelessWidget {
           ...PropertySortType.values.map((sortType) {
             final isSelected = currentSortType == sortType;
             return _SortOption(
-              title: PropertyFiltersEntity().getSortDisplayName(sortType),
+              title: const PropertyFiltersEntity().getSortDisplayName(sortType),
               isSelected: isSelected,
               onTap: () {
                 onSortChanged(sortType);
                 Navigator.of(context).pop();
               },
             );
-          }).toList(),
+          }),
 
           // Safe area bottom padding
           SizedBox(height: MediaQuery.of(context).padding.bottom),

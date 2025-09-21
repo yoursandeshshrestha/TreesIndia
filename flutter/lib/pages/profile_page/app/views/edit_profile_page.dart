@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
 import 'package:trees_india/commons/components/textfield/app/views/email_textfield_widget.dart';
@@ -95,16 +98,17 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     if (name.isEmpty || email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: AppColors.stateRed600,
-        ),
+        const ErrorSnackbarWidget(
+          message: 'Please fill in all required fields',
+        ).createSnackBar(),
       );
       return;
     }
 
-    print(
-        'Updating profile with name: $name, email: $email, gender: $_selectedGender');
+    if (kDebugMode) {
+      print(
+          'Updating profile with name: $name, email: $email, gender: $_selectedGender');
+    }
 
     try {
       // Update profile using auth notifier
@@ -118,10 +122,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: AppColors.stateGreen600,
-          ),
+          const SuccessSnackbarWidget(
+            message: 'Profile updated successfully!',
+          ).createSnackBar(),
         );
       }
 
@@ -412,7 +415,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Widget _buildDefaultAvatar() {
     return Container(
       color: mainColor.withOpacity(0.1),
-      child: Icon(
+      child: const Icon(
         Icons.person,
         size: 60,
         color: mainColor,

@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trees_india/commons/utils/services/location_onboarding_service.dart';
 import '../../data/models/property_form_data.dart';

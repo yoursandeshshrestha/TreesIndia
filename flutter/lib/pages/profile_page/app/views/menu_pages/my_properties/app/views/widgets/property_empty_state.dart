@@ -7,9 +7,9 @@ class PropertyEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -18,7 +18,7 @@ class PropertyEmptyState extends StatelessWidget {
               size: 64,
               color: AppColors.brandNeutral300,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.md),
             Text(
               'No Properties Yet',
               style: TextStyle(
@@ -27,7 +27,7 @@ class PropertyEmptyState extends StatelessWidget {
                 color: AppColors.brandNeutral800,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.sm),
             Text(
               'Click the + button to add your first property',
               style: TextStyle(

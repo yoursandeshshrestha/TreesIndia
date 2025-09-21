@@ -68,7 +68,7 @@ class _FiltersBottomSheetWidgetState extends State<FiltersBottomSheetWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.9,
       child: Column(
         children: [

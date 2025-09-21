@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
@@ -60,14 +59,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  String _getDisplayLocation(LocationEntity location) {
-    // Fallback to first two parts of address
-    final parts = location.address.split(', ');
-    if (parts.length >= 2) {
-      return '${parts[0]}, ${parts[1]}';
-    }
-    return location.address;
-  }
+
 
   void _navigateToLocationPicker() async {
     final result = await context.push('/manual-location');
@@ -435,8 +427,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                               color: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                   vertical: AppSpacing.lg),
-                              child: SimpleBannerWidget(
-                                items: const [
+                              child: const SimpleBannerWidget(
+                                items: [
                                   BannerItem(
                                     id: "1",
                                     image: "assets/images/banner_one.png",

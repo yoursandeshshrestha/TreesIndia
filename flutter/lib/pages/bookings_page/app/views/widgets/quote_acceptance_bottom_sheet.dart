@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
-import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/skeleton/app/views/skeleton_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';

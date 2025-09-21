@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../commons/components/text/app/views/custom_text_library.dart';
-import '../../../../../commons/components/button/app/views/solid_button_widget.dart';
 import '../../../../../commons/constants/app_colors.dart';
-import '../../../../../commons/constants/app_spacing.dart';
 import '../../../domain/entities/service_detail_entity.dart';
 import '../../../../booking_page/app/providers/booking_providers.dart';
 
@@ -23,7 +20,7 @@ class ServiceCard extends ConsumerWidget {
     final bookingState = ref.watch(bookingNotifierProvider);
     return GestureDetector(
       onTap: onTap ?? () {},
-      child: Container(
+      child: SizedBox(
         width: 160,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,8 +28,8 @@ class ServiceCard extends ConsumerWidget {
             // Image Container
             Container(
               height: 100,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
                 ),
@@ -111,17 +108,17 @@ class ServiceCard extends ConsumerWidget {
 
                   // Price Type Badge
                   service.priceType == 'inquiry'
-                      ? Text(
+                      ? const Text(
                           'Inquiry Based',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.brandPrimary600,
                           ),
                         )
-                      : Text(
+                      : const Text(
                           'Fixed Price',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.brandPrimary600,

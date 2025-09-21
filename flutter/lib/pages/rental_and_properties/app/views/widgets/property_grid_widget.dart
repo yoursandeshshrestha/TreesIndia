@@ -558,7 +558,7 @@ class _EmptyWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.search_off,
               size: 48,
               color: AppColors.brandNeutral400,

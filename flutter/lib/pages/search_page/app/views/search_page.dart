@@ -138,7 +138,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.trending_up,
                             size: 16,
                             color: AppColors.brandNeutral600,
@@ -207,9 +207,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                           Container(
                             height: 100,
                             width: double.infinity,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.brandNeutral100,
-                              borderRadius: const BorderRadius.only(
+                              borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(12),
                                 topRight: Radius.circular(12),
                               ),
@@ -278,7 +278,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.access_time,
                                               size: 14,
                                               color: AppColors.brandNeutral500,
@@ -307,10 +307,10 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             // Loading state
             if (homePageState.isLoadingSearchSuggestions ||
                 homePageState.isLoadingPopularServices)
-              Center(
+              const Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSpacing.xl),
-                  child: const CircularProgressIndicator(
+                  child: CircularProgressIndicator(
                     color: Color(0xFF055c3a),
                   ),
                 ),
@@ -326,7 +326,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.search_off,
                         size: 64,
                         color: AppColors.brandNeutral300,
@@ -353,9 +353,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   Widget _buildImagePlaceholder() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.brandNeutral100,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
         ),
@@ -363,7 +363,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.cloud_upload_outlined,
             size: 32,
             color: AppColors.brandNeutral400,
