@@ -8,6 +8,8 @@ import 'package:trees_india/commons/utils/services/navigation_service.dart';
 import 'package:trees_india/pages/chats_page/domain/entities/chat_room_entity.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
+import 'package:trees_india/pages/marketplace_projects/app/views/marketplace_projects_page.dart';
+import 'package:trees_india/pages/marketplace_projects/app/views/project_details_page.dart';
 import 'package:trees_india/pages/marketplace_vendors/app/views/marketplace_vendors_page.dart';
 import 'package:trees_india/pages/marketplace_vendors/app/views/vendor_details_page.dart';
 import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
@@ -282,7 +284,8 @@ class AppRouter {
                 GoRoute(
                   path: '/subscription-plans',
                   name: 'SubscriptionPlansListingPage',
-                  builder: (context, state) => const SubscriptionPlansListingPage(),
+                  builder: (context, state) =>
+                      const SubscriptionPlansListingPage(),
                 ),
                 GoRoute(
                   path: '/manage-payment-methods',
@@ -361,14 +364,25 @@ class AppRouter {
                   name: 'RentalAndPropertiesPage',
                   builder: (context, state) => const RentalAndPropertiesPage(),
                 ),
-                GoRoute(path: '/rental-properties/:propertyId', name: 'PropertyDetailsPage', builder: (context, state) {
-                  final propertyId = state.pathParameters['propertyId']!;
-                  return PropertyDetailsPage(propertyId: propertyId);
-                }),
+                GoRoute(
+                    path: '/rental-properties/:propertyId',
+                    name: 'PropertyDetailsPage',
+                    builder: (context, state) {
+                      final propertyId = state.pathParameters['propertyId']!;
+                      return PropertyDetailsPage(propertyId: propertyId);
+                    }),
                 GoRoute(
                   path: '/marketplace/projects',
                   name: 'ProjectsPage',
-                  builder: (context, state) => const ProjectsPage(),
+                  builder: (context, state) => const MarketplaceProjectsPage(),
+                ),
+                GoRoute(
+                  path: '/projects/:projectId',
+                  name: 'ProjectDetailsPage',
+                  builder: (context, state) {
+                    final projectId = state.pathParameters['projectId']!;
+                    return ProjectDetailsPage(projectId: projectId);
+                  },
                 ),
                 GoRoute(
                   path: '/marketplace/vendors',

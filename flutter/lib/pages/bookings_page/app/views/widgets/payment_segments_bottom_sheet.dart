@@ -5,7 +5,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/pages/bookings_page/domain/entities/booking_details_entity.dart';
 
-class PaymentSegmentsBottomSheet extends StatelessWidget {
+class PaymentSegmentsBottomSheet extends StatefulWidget {
   final BookingDetailsEntity booking;
 
   const PaymentSegmentsBottomSheet({
@@ -13,19 +13,47 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
     required this.booking,
   });
 
-  static Future<void> show(BuildContext context, BookingDetailsEntity booking) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PaymentSegmentsBottomSheet(booking: booking),
+  @override
+  State<PaymentSegmentsBottomSheet> createState() =>
+      _PaymentSegmentsBottomSheetState();
+}
+
+class _PaymentSegmentsBottomSheetState extends State<PaymentSegmentsBottomSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
     );
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Start animation when bottom sheet opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animationController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final paymentProgress = booking.paymentProgress;
-    final paymentSegments = booking.paymentSegments ?? [];
+    final paymentProgress = widget.booking.paymentProgress;
+    final paymentSegments = widget.booking.paymentSegments ?? [];
 
     return Container(
       decoration: const BoxDecoration(
@@ -48,10 +76,8 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (paymentProgress != null) ...[
-                        _buildPaymentProgress(paymentProgress),
-                        const SizedBox(height: AppSpacing.xl),
-                      ],
+                      _buildPaymentProgress(paymentProgress),
+                      const SizedBox(height: AppSpacing.xl),
                       _buildPaymentSegments(paymentSegments),
                     ],
                   ),
@@ -91,7 +117,8 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     B3Medium(
-                      text: 'Booking #${booking.bookingReference} - ${booking.service.name}',
+                      text:
+                          'Booking #${widget.booking.bookingReference} - ${widget.booking.service.name}',
                       color: AppColors.brandNeutral600,
                     ),
                   ],
@@ -110,7 +137,9 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
   }
 
   Widget _buildPaymentProgress(paymentProgress) {
-    final progressPercentage = (paymentProgress.progressPercentage / 100).clamp(0.0, 1.0);
+    final progressPercentage = paymentProgress != null
+        ? (paymentProgress.progressPercentage / 100).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -127,88 +156,140 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
             color: AppColors.brandNeutral800,
           ),
           const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              B3Medium(
-                text: '${paymentProgress.paidSegments} of ${paymentProgress.totalSegments} segments paid',
-                color: AppColors.brandNeutral600,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Progress Bar
-          Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: AppColors.brandNeutral200,
-              borderRadius: BorderRadius.circular(4),
+          if (paymentProgress != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                B3Medium(
+                  text:
+                      '${paymentProgress.paidSegments} of ${paymentProgress.totalSegments} segments paid',
+                  color: AppColors.brandNeutral600,
+                ),
+              ],
             ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: progressPercentage,
-              child: Container(
+          ] else ...[
+            B3Medium(
+              text: 'No payment information available',
+              color: AppColors.brandNeutral600,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          // Animated Progress Bar
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                width: double.maxFinite,
                 decoration: BoxDecoration(
-                  color: AppColors.brandPrimary600,
+                  color: AppColors.brandNeutral200,
                   borderRadius: BorderRadius.circular(4),
                 ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.brandNeutral200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
-            ),
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppColors.brandNeutral200,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: AnimatedBuilder(
+                  animation: _progressAnimation,
+                  builder: (context, child) {
+                    final animatedProgress = paymentProgress != null
+                        ? progressPercentage * _progressAnimation.value
+                        : 0.0;
+
+                    return FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: animatedProgress,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: paymentProgress != null
+                              ? AppColors.brandPrimary600
+                              : AppColors.brandNeutral300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           // Payment Summary
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    B4Regular(
-                      text: 'Total Amount',
-                      color: AppColors.brandNeutral500,
-                    ),
-                    const SizedBox(height: 2),
-                    B3Bold(
-                      text: '₹${paymentProgress.totalAmount.toStringAsFixed(0)}',
-                      color: AppColors.brandNeutral800,
-                    ),
-                  ],
+          if (paymentProgress != null) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B4Regular(
+                        text: 'Total Amount',
+                        color: AppColors.brandNeutral500,
+                      ),
+                      const SizedBox(height: 2),
+                      B3Bold(
+                        text:
+                            '₹${paymentProgress.totalAmount.toStringAsFixed(0)}',
+                        color: AppColors.brandNeutral800,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B4Regular(
+                        text: 'Paid Amount',
+                        color: AppColors.brandNeutral500,
+                      ),
+                      const SizedBox(height: 2),
+                      B3Bold(
+                        text:
+                            '₹${paymentProgress.paidAmount.toStringAsFixed(0)}',
+                        color: AppColors.stateGreen600,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      B4Regular(
+                        text: 'Remaining',
+                        color: AppColors.brandNeutral500,
+                      ),
+                      const SizedBox(height: 2),
+                      B3Bold(
+                        text:
+                            '₹${paymentProgress.remainingAmount.toStringAsFixed(0)}',
+                        color: AppColors.brandNeutral800,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Center(
+                child: B3Medium(
+                  text: 'Payment details will appear here once available',
+                  color: AppColors.brandNeutral500,
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    B4Regular(
-                      text: 'Paid Amount',
-                      color: AppColors.brandNeutral500,
-                    ),
-                    const SizedBox(height: 2),
-                    B3Bold(
-                      text: '₹${paymentProgress.paidAmount.toStringAsFixed(0)}',
-                      color: AppColors.stateGreen600,
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    B4Regular(
-                      text: 'Remaining',
-                      color: AppColors.brandNeutral500,
-                    ),
-                    const SizedBox(height: 2),
-                    B3Bold(
-                      text: '₹${paymentProgress.remainingAmount.toStringAsFixed(0)}',
-                      color: AppColors.brandNeutral800,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
@@ -305,7 +386,8 @@ class PaymentSegmentsBottomSheet extends StatelessWidget {
               ),
               if (isPaid && segment.paidAt != null)
                 B4Regular(
-                  text: 'Paid on ${DateFormat('dd/MM/yyyy').format(segment.paidAt)}',
+                  text:
+                      'Paid on ${DateFormat('dd/MM/yyyy').format(segment.paidAt)}',
                   color: AppColors.stateGreen600,
                 ),
             ],

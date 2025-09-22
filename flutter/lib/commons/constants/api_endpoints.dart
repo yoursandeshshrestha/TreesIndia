@@ -14,6 +14,7 @@ class ApiEndpoints {
     categories,
     subcategories,
     services,
+    searchServices,
     searchSuggestions,
     popularServices,
     walletSummary,
@@ -73,6 +74,8 @@ class ApiEndpoints {
     workersStats,
     getVendors,
     getVendorDetails,
+    getProjects,
+    getProjectDetails,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -122,6 +125,11 @@ class ApiEndpoints {
 
   static ApiEndpoint services = ApiEndpoint(
     path: '/services',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint searchServices = ApiEndpoint(
+    path: '/services/search',
     requiresAuth: false,
   );
 
@@ -416,6 +424,16 @@ class ApiEndpoints {
 
   static ApiEndpoint getVendorDetails = ApiEndpoint(
     path: '/vendors/{vendorId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getProjects = ApiEndpoint(
+    path: '/projects',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getProjectDetails = ApiEndpoint(
+    path: '/projects/{projectId}',
     requiresAuth: true,
   );
 

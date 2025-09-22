@@ -74,25 +74,29 @@ class BookingCardWidget extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.md),
 
                   // Service Date - Prominent Display
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      B3Medium(
-                        text: 'SERVICE DATE',
-                        color: AppColors.brandNeutral500,
-                      ),
-                      const SizedBox(height: 2),
-                      B2Bold(
-                        text: booking.scheduledDate != null &&
-                                booking.scheduledTime != null
-                            ? _formatDateTime(
-                                booking.scheduledDate!, booking.scheduledTime!)
-                            : 'To be scheduled after quote acceptance',
-                        color: AppColors.brandNeutral800,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+                  if (booking.scheduledDate != null ||
+                      !(booking.paymentSegments != null &&
+                          booking.paymentSegments!.isNotEmpty)) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        B3Medium(
+                          text: 'SERVICE DATE',
+                          color: AppColors.brandNeutral500,
+                        ),
+                        const SizedBox(height: 2),
+                        B2Bold(
+                          text: booking.scheduledDate != null &&
+                                  booking.scheduledTime != null
+                              ? _formatDateTime(booking.scheduledDate!,
+                                  booking.scheduledTime!)
+                              : 'To be scheduled after quote acceptance',
+                          color: AppColors.brandNeutral800,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
 
                   // Key Details
                   Column(
@@ -206,7 +210,7 @@ class BookingCardWidget extends ConsumerWidget {
                                   Flexible(
                                     child: B3Medium(
                                       text:
-                                          'Worker: ${booking.workerAssignment!.worker!.name ?? 'Unknown'} (${booking.workerAssignment!.worker!.phone ?? 'No phone'})',
+                                          'Worker: ${booking.workerAssignment!.worker!.name ?? 'Unknown'}',
                                       color: AppColors.brandNeutral600,
                                     ),
                                   ),
@@ -227,7 +231,7 @@ class BookingCardWidget extends ConsumerWidget {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: B4Regular(
-                                        text: booking.workerAssignment!.status
+                                        text: booking.workerAssignment!.status!
                                             .replaceAll('_', ' '),
                                         color: AppColors.brandNeutral600,
                                       ),
@@ -264,7 +268,8 @@ class BookingCardWidget extends ConsumerWidget {
                     // Payment Info
                     if (booking.payment?.amount != null ||
                         booking.quoteAmount != null) ...[
-                      if (booking.payment?.amount != null) ...[
+                      if (booking.payment?.amount != null &&
+                          !_hasPaymentSegments(booking)) ...[
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -348,7 +353,6 @@ class BookingCardWidget extends ConsumerWidget {
         );
       case 'confirmed':
       case 'scheduled':
-        // final workerRejected = booking.workerAssignment?.status == "rejected";
         final hasWorkerAssignment =
             booking.workerAssignment?.worker?.name != null;
 
@@ -548,21 +552,27 @@ class BookingCardWidget extends ConsumerWidget {
   }
 
   bool _hasPaymentSegments(BookingDetailsEntity booking) {
-    return booking.paymentProgress != null &&
-        booking.paymentProgress!.segments.isNotEmpty;
+    return booking.paymentSegments != null &&
+        booking.paymentSegments!.isNotEmpty;
   }
 
   bool _hasPendingSegments(BookingDetailsEntity booking) {
-    return booking.paymentProgress != null &&
-        booking.paymentProgress!.segments.any((segment) =>
+    return booking.paymentSegments != null &&
+        booking.paymentSegments!.any((segment) =>
             segment.status == 'pending' || segment.status == 'overdue');
+  }
+
+  bool _isSingleSegmentBooking(BookingDetailsEntity booking) {
+    return booking.paymentSegments != null &&
+        booking.paymentSegments!.length == 1;
   }
 
   bool _isFirstSegment(BookingDetailsEntity booking) {
     return booking.paymentProgress != null &&
         booking.paymentProgress!.paidSegments == 0 &&
         _hasPendingSegments(booking) &&
-        booking.status == 'quote_accepted';
+        booking.status == 'quote_accepted' &&
+        !_isSingleSegmentBooking(booking);
   }
 
   bool _isNextSegment(BookingDetailsEntity booking) {
@@ -676,7 +686,8 @@ class BookingCardWidget extends ConsumerWidget {
     }
 
     // Quote accepted - show pay now button
-    if (status == 'quote_accepted' && !_hasPaymentSegments(booking)) {
+    if (status == 'quote_accepted' &&
+        (_isSingleSegmentBooking(booking) || !_hasPaymentSegments(booking))) {
       buttons.addAll([
         SizedBox(
           width: double.infinity,
@@ -704,7 +715,7 @@ class BookingCardWidget extends ConsumerWidget {
             onPressed: () {
               // _showPaymentSegmentsBottomSheet(context);
             },
-             style: ElevatedButton.styleFrom(
+            style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateGreen600,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -733,7 +744,7 @@ class BookingCardWidget extends ConsumerWidget {
             onPressed: () {
               // _showPaymentSegmentsBottomSheet(context);
             },
-             style: ElevatedButton.styleFrom(
+            style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateRed600,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -851,6 +862,29 @@ class BookingCardWidget extends ConsumerWidget {
       buttons.add(const SizedBox(height: AppSpacing.xs));
     }
 
+    if (booking.workerAssignment?.worker != null &&
+        ["accepted", "in_progress"]
+            .contains(booking.workerAssignment!.status)) {
+      buttons.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.phone_outlined),
+              color: AppColors.brandNeutral600,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.message_outlined),
+              color: AppColors.brandNeutral600,
+            ),
+          ],
+        ),
+      );
+    }
+
     // Add cancel button for cancellable statuses
     if ([
       'pending',
@@ -859,60 +893,66 @@ class BookingCardWidget extends ConsumerWidget {
       'quote_provided',
       'quote_accepted'
     ].contains(status)) {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: bookingsState.isCancelling
-                ? null
-                : () async {
-                    final result = await CancelBookingBottomSheet.show(
-                      context,
-                      booking.bookingReference,
-                    );
+      if (!(["accepted", "in_progress"].contains(
+          booking.workerAssignment != null &&
+                  booking.workerAssignment!.status != null
+              ? booking.workerAssignment!.status
+              : ""))) {
+        buttons.add(
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: bookingsState.isCancelling
+                  ? null
+                  : () async {
+                      final result = await CancelBookingBottomSheet.show(
+                        context,
+                        booking.bookingReference,
+                      );
 
-                    if (result != null && context.mounted) {
-                      try {
-                        await bookingsNotifier.cancelBooking(
-                          bookingId: booking.id,
-                          reason: result['reason']!,
-                          cancellationReason:
-                              result['cancellation_reason']!.isEmpty
-                                  ? null
-                                  : result['cancellation_reason'],
-                        );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SuccessSnackbarWidget(
-                              message: 'Booking cancelled successfully',
-                            ).createSnackBar(),
+                      if (result != null && context.mounted) {
+                        try {
+                          await bookingsNotifier.cancelBooking(
+                            bookingId: booking.id,
+                            reason: result['reason']!,
+                            cancellationReason:
+                                result['cancellation_reason']!.isEmpty
+                                    ? null
+                                    : result['cancellation_reason'],
                           );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            ErrorSnackbarWidget(
-                                    message:
-                                        'Failed to cancel booking: ${e.toString()}')
-                                .createSnackBar(),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SuccessSnackbarWidget(
+                                message: 'Booking cancelled successfully',
+                              ).createSnackBar(),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              ErrorSnackbarWidget(
+                                      message:
+                                          'Failed to cancel booking: ${e.toString()}')
+                                  .createSnackBar(),
+                            );
+                          }
                         }
                       }
-                    }
-                  },
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.stateRed600),
-              foregroundColor: AppColors.stateRed600,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                    },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.stateRed600),
+                foregroundColor: AppColors.stateRed600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
+              child: Text(bookingsState.isCancelling
+                  ? 'Cancelling...'
+                  : 'Cancel Booking'),
             ),
-            child: Text(bookingsState.isCancelling
-                ? 'Cancelling...'
-                : 'Cancel Booking'),
           ),
-        ),
-      );
+        );
+      }
     }
 
     return buttons;
@@ -926,7 +966,12 @@ class BookingCardWidget extends ConsumerWidget {
   }
 
   void _showPaymentSegmentsBottomSheet(BuildContext context) {
-    PaymentSegmentsBottomSheet.show(context, booking);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PaymentSegmentsBottomSheet(booking: booking),
+    );
   }
 
   String _formatDateTime(DateTime date, DateTime time) {

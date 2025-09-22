@@ -40,7 +40,7 @@ class BookingDetailsEntity extends Equatable {
   final PaymentEntity? payment;
   final WorkerAssignmentEntity? workerAssignment;
   final List<PaymentSegmentEntity>? paymentSegments;
-  final PaymentProgressEntity? paymentProgress;
+  // final PaymentProgressEntity? paymentProgress;
 
   const BookingDetailsEntity({
     required this.id,
@@ -76,8 +76,54 @@ class BookingDetailsEntity extends Equatable {
     this.payment,
     this.workerAssignment,
     this.paymentSegments,
-    this.paymentProgress,
+    // this.paymentProgress,
   });
+
+  /// Calculate payment progress dynamically from payment segments
+  PaymentProgressEntity? get paymentProgress {
+    if (paymentSegments == null || paymentSegments!.isEmpty) {
+      return null;
+    }
+
+    final segments = paymentSegments!;
+
+    // Calculate total amount from all segments
+    final totalAmount = segments.fold<double>(
+      0.0,
+      (sum, segment) => sum + segment.amount,
+    );
+
+    // Filter paid segments (status == "paid")
+    final paidSegments = segments.where((segment) => segment.status == 'paid').toList();
+
+    // Calculate paid amount from paid segments
+    final paidAmount = paidSegments.fold<double>(
+      0.0,
+      (sum, segment) => sum + segment.amount,
+    );
+
+    // Calculate remaining amount
+    final remainingAmount = totalAmount - paidAmount;
+
+    // Calculate progress percentage
+    final progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0.0;
+
+    // Calculate segment counts
+    final totalSegmentsCount = segments.length;
+    final paidSegmentsCount = paidSegments.length;
+    final remainingSegmentsCount = totalSegmentsCount - paidSegmentsCount;
+
+    return PaymentProgressEntity(
+      totalAmount: totalAmount,
+      paidAmount: paidAmount,
+      remainingAmount: remainingAmount,
+      totalSegments: totalSegmentsCount,
+      paidSegments: paidSegmentsCount,
+      remainingSegments: remainingSegmentsCount,
+      progressPercentage: progressPercentage,
+      segments: segments,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -114,7 +160,7 @@ class BookingDetailsEntity extends Equatable {
         payment,
         workerAssignment,
         paymentSegments,
-        paymentProgress,
+        paymentProgress, // Include the calculated paymentProgress in props
       ];
 
   BookingDetailsEntity copyWith({
@@ -151,7 +197,6 @@ class BookingDetailsEntity extends Equatable {
     PaymentEntity? payment,
     WorkerAssignmentEntity? workerAssignment,
     List<PaymentSegmentEntity>? paymentSegments,
-    PaymentProgressEntity? paymentProgress,
   }) {
     return BookingDetailsEntity(
       id: id ?? this.id,
@@ -188,7 +233,6 @@ class BookingDetailsEntity extends Equatable {
       payment: payment ?? this.payment,
       workerAssignment: workerAssignment ?? this.workerAssignment,
       paymentSegments: paymentSegments ?? this.paymentSegments,
-      paymentProgress: paymentProgress ?? this.paymentProgress,
     );
   }
 }
