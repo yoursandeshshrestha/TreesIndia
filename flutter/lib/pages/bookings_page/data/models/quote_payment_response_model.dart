@@ -44,7 +44,7 @@ class QuotePaymentDataModel {
   factory QuotePaymentDataModel.fromJson(Map<String, dynamic> json) {
     return QuotePaymentDataModel(
       message: json['message'] ?? '',
-      paymentOrder: PaymentOrderModel.fromJson(json['payment_order'] ?? {}),
+      paymentOrder: PaymentOrderModel.fromJson(json['payment_order']['payment_order'] ?? {}),
     );
   }
 

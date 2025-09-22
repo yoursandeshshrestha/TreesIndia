@@ -16,6 +16,7 @@ import 'booking_details_bottom_sheet.dart';
 import 'cancel_booking_bottom_sheet.dart';
 import 'payment_segments_bottom_sheet.dart';
 import 'quote_acceptance_bottom_sheet.dart';
+import 'segment_payment_bottom_sheet.dart';
 
 class BookingCardWidget extends ConsumerWidget {
   final BookingDetailsEntity booking;
@@ -612,7 +613,14 @@ class BookingCardWidget extends ConsumerWidget {
                           );
                         }
                         if (context.mounted) {
-                          QuoteAcceptanceBottomSheet.show(context, booking);
+                          if (booking.paymentSegments != null &&
+                              booking.paymentSegments!.length > 1) {
+                            SegmentPaymentBottomSheet.show(
+                                context, booking, true);
+                          } else if (booking.paymentSegments != null &&
+                              booking.paymentSegments!.length == 1) {
+                            QuoteAcceptanceBottomSheet.show(context, booking);
+                          }
                         }
                       } catch (e) {
                         if (context.mounted) {
@@ -713,7 +721,7 @@ class BookingCardWidget extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              // _showPaymentSegmentsBottomSheet(context);
+              SegmentPaymentBottomSheet.show(context, booking, true);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateGreen600,
@@ -742,7 +750,7 @@ class BookingCardWidget extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              // _showPaymentSegmentsBottomSheet(context);
+              SegmentPaymentBottomSheet.show(context, booking, false);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateRed600,

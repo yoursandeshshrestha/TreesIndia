@@ -4,6 +4,7 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/pages/bookings_page/domain/entities/booking_details_entity.dart';
+import 'package:trees_india/pages/bookings_page/domain/entities/payment_progress_entity.dart';
 
 class PaymentSegmentsBottomSheet extends StatefulWidget {
   final BookingDetailsEntity booking;
@@ -136,7 +137,7 @@ class _PaymentSegmentsBottomSheetState extends State<PaymentSegmentsBottomSheet>
     );
   }
 
-  Widget _buildPaymentProgress(paymentProgress) {
+  Widget _buildPaymentProgress(PaymentProgressEntity? paymentProgress) {
     final progressPercentage = paymentProgress != null
         ? (paymentProgress.progressPercentage / 100).clamp(0.0, 1.0)
         : 0.0;

@@ -262,21 +262,25 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
     }
 
     // Assignment Notes
-    if (assignment.assignmentNotes.isNotEmpty) {
-      children
-          .add(_buildDetailRow('Assignment Notes', assignment.assignmentNotes));
+    if (assignment.assignmentNotes != null &&
+        assignment.assignmentNotes!.isNotEmpty) {
+      children.add(
+          _buildDetailRow('Assignment Notes', assignment.assignmentNotes!));
     }
-    if (assignment.acceptanceNotes.isNotEmpty) {
-      children
-          .add(_buildDetailRow('Acceptance Notes', assignment.acceptanceNotes));
+    if (assignment.acceptanceNotes != null &&
+        assignment.acceptanceNotes!.isNotEmpty) {
+      children.add(
+          _buildDetailRow('Acceptance Notes', assignment.acceptanceNotes!));
     }
-    if (assignment.rejectionNotes.isNotEmpty) {
+    if (assignment.rejectionNotes != null &&
+        assignment.rejectionNotes!.isNotEmpty) {
       children
-          .add(_buildDetailRow('Rejection Notes', assignment.rejectionNotes));
+          .add(_buildDetailRow('Rejection Notes', assignment.rejectionNotes!));
     }
-    if (assignment.rejectionReason.isNotEmpty) {
-      children
-          .add(_buildDetailRow('Rejection Reason', assignment.rejectionReason));
+    if (assignment.rejectionReason != null &&
+        assignment.rejectionReason!.isNotEmpty) {
+      children.add(
+          _buildDetailRow('Rejection Reason', assignment.rejectionReason!));
     }
 
     // Assigned by information
@@ -514,7 +518,8 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
     return method[0].toUpperCase() + method.substring(1);
   }
 
-  String _formatAssignmentStatus(String status) {
+  String _formatAssignmentStatus(String? status) {
+    if (status == null) return 'Unknown';
     switch (status.toLowerCase()) {
       case 'assigned':
         return 'Assigned';
@@ -552,7 +557,8 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
     return DateFormat('hh:mm a').format(indianTime);
   }
 
-  String _formatDateTime(DateTime dateTime) {
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return 'Unknown';
     DateTime indianTime;
 
     if (dateTime.isUtc) {

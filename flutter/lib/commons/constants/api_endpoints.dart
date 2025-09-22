@@ -76,6 +76,8 @@ class ApiEndpoints {
     getVendorDetails,
     getProjects,
     getProjectDetails,
+    createSegmentPayment,
+    verifySegmentPayment,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -434,6 +436,16 @@ class ApiEndpoints {
 
   static ApiEndpoint getProjectDetails = ApiEndpoint(
     path: '/projects/{projectId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createSegmentPayment = ApiEndpoint(
+    path: '/bookings/{bookindId}/payment-segments/pay',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifySegmentPayment = ApiEndpoint(
+    path: '/bookings/{bookindId}/payment-segments/verify',
     requiresAuth: true,
   );
 

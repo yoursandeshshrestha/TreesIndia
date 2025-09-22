@@ -3,7 +3,6 @@ import '../../domain/entities/booking_details_entity.dart';
 import 'address_model.dart';
 import 'payment_model.dart';
 import 'payment_segment_model.dart';
-import 'payment_progress_model.dart';
 import 'worker_assignment_model.dart';
 
 class BookingDetailsModel extends BookingDetailsEntity {
@@ -53,8 +52,10 @@ class BookingDetailsModel extends BookingDetailsEntity {
     return BookingDetailsModel(
       id: json['ID'] as int,
       // Handle both CreatedAt and created_at formats
-      createdAt: DateTime.parse(json['created_at'] ?? json['CreatedAt'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] ?? json['UpdatedAt'] as String),
+      createdAt:
+          DateTime.parse(json['created_at'] ?? json['CreatedAt'] as String),
+      updatedAt:
+          DateTime.parse(json['updated_at'] ?? json['UpdatedAt'] as String),
       deletedAt: (json['deleted_at'] ?? json['DeletedAt']) != null
           ? DateTime.parse((json['deleted_at'] ?? json['DeletedAt']) as String)
           : null,
@@ -62,10 +63,15 @@ class BookingDetailsModel extends BookingDetailsEntity {
       // Use user ID from user object if available, otherwise fallback to direct field
       userId: userJson?['ID'] as int? ?? json['user_id'] as int? ?? 0,
       // Use service ID from service object if available, otherwise fallback to direct field
-      serviceId: (json['service'] as Map<String, dynamic>?)?['ID'] as int? ?? json['service_id'] as int? ?? 0,
+      serviceId: (json['service'] as Map<String, dynamic>?)?['ID'] as int? ??
+          json['service_id'] as int? ??
+          0,
       status: json['status'] as String,
       // Use payment status from payment object if available, otherwise fallback to direct field
-      paymentStatus: (json['payment'] as Map<String, dynamic>?)?['status'] as String? ?? json['payment_status'] as String? ?? 'unknown',
+      paymentStatus:
+          (json['payment'] as Map<String, dynamic>?)?['status'] as String? ??
+              json['payment_status'] as String? ??
+              'unknown',
       bookingType: json['booking_type'] as String,
       completionType: json['completion_type'] as String?,
       scheduledDate: json['scheduled_date'] != null
@@ -89,13 +95,21 @@ class BookingDetailsModel extends BookingDetailsEntity {
           ? AddressModel.fromJsonString(addressJson)
           : AddressModel.fromJson(addressJson as Map<String, dynamic>),
       // Use contact description or fallback to description field
-      description: contactJson?['description'] as String? ?? json['description'] as String? ?? '',
+      description: contactJson?['description'] as String? ??
+          json['description'] as String? ??
+          '',
       // Use contact person or fallback to contact_person field
-      contactPerson: contactJson?['person'] as String? ?? json['contact_person'] as String? ?? '',
+      contactPerson: contactJson?['person'] as String? ??
+          json['contact_person'] as String? ??
+          '',
       // Use user phone or fallback to contact_phone field
-      contactPhone: userJson?['phone'] as String? ?? json['contact_phone'] as String? ?? '',
+      contactPhone: userJson?['phone'] as String? ??
+          json['contact_phone'] as String? ??
+          '',
       // Use contact special_instructions or fallback to special_instructions field
-      specialInstructions: contactJson?['special_instructions'] as String? ?? json['special_instructions'] as String? ?? '',
+      specialInstructions: contactJson?['special_instructions'] as String? ??
+          json['special_instructions'] as String? ??
+          '',
       holdExpiresAt: json['hold_expires_at'] != null
           ? DateTime.parse(json['hold_expires_at'] as String)
           : null,
@@ -103,7 +117,9 @@ class BookingDetailsModel extends BookingDetailsEntity {
           ? (json['quote_amount'] as num).toDouble()
           : null,
       // Handle quote_duration for quote_notes fallback
-      quoteNotes: json['quote_notes'] as String? ?? json['quote_duration'] as String? ?? '',
+      quoteNotes: json['quote_notes'] as String? ??
+          json['quote_duration'] as String? ??
+          '',
       quoteProvidedBy: json['quote_provided_by']?.toString(),
       quoteProvidedAt: json['quote_provided_at'] != null
           ? DateTime.parse(json['quote_provided_at'] as String)
@@ -119,11 +135,13 @@ class BookingDetailsModel extends BookingDetailsEntity {
           ? PaymentModel.fromJson(json['payment'] as Map<String, dynamic>)
           : null,
       workerAssignment: json['worker_assignment'] != null
-          ? WorkerAssignmentModel.fromJson(json['worker_assignment'] as Map<String, dynamic>)
+          ? WorkerAssignmentModel.fromJson(
+              json['worker_assignment'] as Map<String, dynamic>)
           : null,
       paymentSegments: json['payment_segments'] != null
           ? (json['payment_segments'] as List<dynamic>)
-              .map((segment) => PaymentSegmentModel.fromJson(segment as Map<String, dynamic>))
+              .map((segment) =>
+                  PaymentSegmentModel.fromJson(segment as Map<String, dynamic>))
               .toList()
           : null,
       // paymentProgress: json['payment_progress'] != null
@@ -165,8 +183,12 @@ class BookingDetailsModel extends BookingDetailsEntity {
       'quote_expires_at': quoteExpiresAt?.toIso8601String(),
       'service': (service as ServiceModel).toJson(),
       'payment': payment != null ? (payment as PaymentModel).toJson() : null,
-      'worker_assignment': workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toJson() : null,
-      'payment_segments': paymentSegments?.map((segment) => (segment as PaymentSegmentModel).toJson()).toList(),
+      'worker_assignment': workerAssignment != null
+          ? (workerAssignment as WorkerAssignmentModel).toJson()
+          : null,
+      'payment_segments': paymentSegments
+          ?.map((segment) => (segment as PaymentSegmentModel).toJson())
+          .toList(),
       // 'payment_progress': paymentProgress != null
       //     ? (paymentProgress as PaymentProgressModel).toJson()
       //     : null,
@@ -206,8 +228,12 @@ class BookingDetailsModel extends BookingDetailsEntity {
       quoteExpiresAt: quoteExpiresAt,
       service: (service as ServiceModel).toEntity(),
       payment: payment != null ? (payment as PaymentModel).toEntity() : null,
-      workerAssignment: workerAssignment != null ? (workerAssignment as WorkerAssignmentModel).toEntity() : null,
-      paymentSegments: paymentSegments?.map((segment) => (segment as PaymentSegmentModel).toEntity()).toList(),
+      workerAssignment: workerAssignment != null
+          ? (workerAssignment as WorkerAssignmentModel).toEntity()
+          : null,
+      paymentSegments: paymentSegments
+          ?.map((segment) => (segment as PaymentSegmentModel).toEntity())
+          .toList(),
       // paymentProgress: paymentProgress != null ? (paymentProgress as PaymentProgressModel).toEntity() : null,
     );
   }
@@ -293,7 +319,9 @@ class BookingDetailsModel extends BookingDetailsEntity {
       workerAssignment: entity.workerAssignment != null
           ? WorkerAssignmentModel.fromEntity(entity.workerAssignment!)
           : null,
-      paymentSegments: entity.paymentSegments?.map((segment) => PaymentSegmentModel.fromEntity(segment)).toList(),
+      paymentSegments: entity.paymentSegments
+          ?.map((segment) => PaymentSegmentModel.fromEntity(segment))
+          .toList(),
       // paymentProgress: entity.paymentProgress != null
       //     ? PaymentProgressModel.fromEntity(entity.paymentProgress!)
       //     : null,
