@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -365,10 +366,23 @@ class PropertyDetailsPage extends ConsumerWidget {
                 : 'Sale price: ${property.displayPrice}',
           ),
 
-          _buildPriceInfoRow('Listing expires: 18/10/2025'),
+          _buildPriceInfoRow('Listing expires: ${_formatExpirationDate(property.expiresAt)}'),
         ],
       ),
     );
+  }
+
+  String _formatExpirationDate(DateTime? expiresAt) {
+    if (expiresAt == null) return 'No expiration date';
+
+    // Convert to IST timezone if needed
+    final istDateTime = expiresAt.isUtc
+        ? expiresAt.add(const Duration(hours: 5, minutes: 30))
+        : expiresAt;
+
+    // Format as dd/MM/yyyy
+    final formatter = DateFormat('dd/MM/yyyy');
+    return formatter.format(istDateTime);
   }
 
   Widget _buildPriceInfoRow(String text) {

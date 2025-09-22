@@ -396,10 +396,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       readOnly: true,
                       onTap: () {
-                        // Load search suggestions and navigate to search page
-                        ref
-                            .read(homePageNotifierProvider.notifier)
-                            .loadSearchSuggestions();
                         context.push('/search');
                       },
                     ),
