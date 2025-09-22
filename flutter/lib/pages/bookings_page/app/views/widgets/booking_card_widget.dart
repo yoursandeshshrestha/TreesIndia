@@ -875,18 +875,40 @@ class BookingCardWidget extends ConsumerWidget {
             .contains(booking.workerAssignment!.status)) {
       buttons.add(
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.phone_outlined),
-              color: AppColors.brandNeutral600,
+            InkWell(
+              onTap: () {},
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5F5F5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline,
+                  size: 24,
+                  color: Colors.grey,
+                ),
+              ),
             ),
-            const SizedBox(width: AppSpacing.xs),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.message_outlined),
-              color: AppColors.brandNeutral600,
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {},
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5F5F5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.phone_outlined,
+                  size: 24,
+                  color: Colors.grey,
+                ),
+              ),
             ),
           ],
         ),

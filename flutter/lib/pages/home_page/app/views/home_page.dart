@@ -10,6 +10,8 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
@@ -42,7 +44,21 @@ class _HomePageState extends ConsumerState<HomePage> {
     // Load popular services when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+      _initializeNotifications();
     });
+  }
+
+  void _initializeNotifications() {
+    final notifier = ref.read(notificationNotifierProvider.notifier);
+
+    // Load initial unread count
+    notifier.loadUnreadCount();
+
+    // Connect WebSocket if authenticated
+    final authState = ref.read(authProvider);
+    if (authState.isLoggedIn && authState.token != null) {
+      notifier.connectWebSocket(authState.token!.token);
+    }
   }
 
   Future<void> _loadCurrentLocation() async {

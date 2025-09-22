@@ -62,6 +62,12 @@ class NotificationItemWidget extends StatelessWidget {
 
   String _getCancellationReason(String? reason) {
     switch (reason) {
+      case 'schedule_conflict':
+        return 'Schedule conflict';
+      case 'found_alternative':
+        return 'Found alternative service';
+      case 'no_longer_needed':
+        return 'Service no longer needed';
       case 'price_concern':
         return 'Price concern';
       case 'service_not_available':
@@ -70,6 +76,10 @@ class NotificationItemWidget extends StatelessWidget {
         return 'Customer request';
       case 'technical_issue':
         return 'Technical issue';
+      case 'personal_emergency':
+        return 'Personal emergency';
+      case 'other':
+        return 'Other';
       default:
         return reason ?? 'Unknown reason';
     }
@@ -469,7 +479,6 @@ class NotificationItemWidget extends StatelessWidget {
   }
 
   Widget _buildQuoteActionButtons(BuildContext context) {
-    
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Row(
@@ -493,13 +502,10 @@ class NotificationItemWidget extends StatelessWidget {
               ),
             ),
           ),
-          
         ],
       ),
     );
   }
-
-  
 
   Widget _buildPropertyActionButtons(BuildContext context) {
     return Padding(
@@ -550,7 +556,8 @@ class NotificationItemWidget extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _getNotificationIconColor(notification.type).withValues(alpha: 0.1),
+                color: _getNotificationIconColor(notification.type)
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
