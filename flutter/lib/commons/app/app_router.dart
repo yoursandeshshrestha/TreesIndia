@@ -44,6 +44,7 @@ import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.
 import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
 import 'package:trees_india/pages/marketplace/projects_page.dart';
 import 'package:trees_india/pages/marketplace/workers_page.dart';
+import 'package:trees_india/pages/notifications_page/app/views/notifications_page.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import './route_tracker.dart';
@@ -401,6 +402,11 @@ class AppRouter {
                   path: '/marketplace/workers',
                   name: 'WorkersPage',
                   builder: (context, state) => const WorkersPage(),
+                ),
+                GoRoute(
+                  path: '/notifications',
+                  name: 'NotificationsPage',
+                  builder: (context, state) => const NotificationsPage(),
                 ),
               ],
             ),

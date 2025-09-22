@@ -345,8 +345,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   currentLocation: _currentLocation,
                   onLocationTap: _navigateToLocationPicker,
                   onBellTap: () {
-                    // TODO: Handle bell icon tap
-                    print('Bell icon tapped');
+                    context.push('/notifications');
                   },
                 ),
 

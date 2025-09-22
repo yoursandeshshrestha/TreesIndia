@@ -78,6 +78,9 @@ class ApiEndpoints {
     getProjectDetails,
     createSegmentPayment,
     verifySegmentPayment,
+    notifications,
+    unreadCount,
+    markAllNotificationsAsRead,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -446,6 +449,22 @@ class ApiEndpoints {
 
   static ApiEndpoint verifySegmentPayment = ApiEndpoint(
     path: '/bookings/{bookindId}/payment-segments/verify',
+    requiresAuth: true,
+  );
+
+  // Notification Endpoints
+  static ApiEndpoint notifications = ApiEndpoint(
+    path: '/in-app-notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint unreadCount = ApiEndpoint(
+    path: '/in-app-notifications/unread-count',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markAllNotificationsAsRead = ApiEndpoint(
+    path: '/in-app-notifications/read-all',
     requiresAuth: true,
   );
 
