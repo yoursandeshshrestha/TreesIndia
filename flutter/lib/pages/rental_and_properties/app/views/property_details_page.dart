@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/widgets/property_image_carousel.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/domain/entities/property_entity.dart';
 import 'package:trees_india/pages/property_details/app/notifiers/property_details_notifier.dart';
@@ -63,12 +66,13 @@ class PropertyDetailsPage extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        body: _buildBody(propertyDetailsState, ref),
+        body: _buildBody(context, propertyDetailsState, ref),
       ),
     );
   }
 
-  Widget _buildBody(PropertyDetailsState state, WidgetRef ref) {
+  Widget _buildBody(
+      BuildContext context, PropertyDetailsState state, WidgetRef ref) {
     switch (state.status) {
       case PropertyDetailsStatus.loading:
         return const Center(
@@ -78,7 +82,7 @@ class PropertyDetailsPage extends ConsumerWidget {
         );
       case PropertyDetailsStatus.success:
         return state.property != null
-            ? _buildPropertyDetailsBody(state.property!, ref)
+            ? _buildPropertyDetailsBody(context, state.property!, ref)
             : const Center(child: Text('No vendor data available'));
       case PropertyDetailsStatus.failure:
         return Center(
@@ -109,7 +113,8 @@ class PropertyDetailsPage extends ConsumerWidget {
     }
   }
 
-  Widget _buildPropertyDetailsBody(PropertyEntity property, WidgetRef ref) {
+  Widget _buildPropertyDetailsBody(
+      BuildContext context, PropertyEntity property, WidgetRef ref) {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -193,7 +198,7 @@ class PropertyDetailsPage extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // Contact Section
-                  _buildContactSection(property),
+                  _buildContactSection(context, property, ref),
 
                   const SizedBox(height: AppSpacing.lg),
 
@@ -366,7 +371,8 @@ class PropertyDetailsPage extends ConsumerWidget {
                 : 'Sale price: ${property.displayPrice}',
           ),
 
-          _buildPriceInfoRow('Listing expires: ${_formatExpirationDate(property.expiresAt)}'),
+          _buildPriceInfoRow(
+              'Listing expires: ${_formatExpirationDate(property.expiresAt)}'),
         ],
       ),
     );
@@ -614,7 +620,14 @@ class PropertyDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContactSection(PropertyEntity property) {
+  Widget _buildContactSection(
+      BuildContext context, PropertyEntity property, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState.token?.userId;
+    final shouldShowChatButton = currentUserId != null &&
+        property.userId != null &&
+        currentUserId != property.userId.toString();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -703,6 +716,33 @@ class PropertyDetailsPage extends ConsumerWidget {
                 ),
               ),
             ),
+
+          if (shouldShowChatButton) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await _createConversationAndNavigate(context, ref, property);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.stateGreen600,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: const Text(
+                  'Send Message',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -783,6 +823,58 @@ class PropertyDetailsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    PropertyEntity property,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      if (property.user == null) {
+        throw Exception('Property user not found');
+      }
+
+      // Create conversation using the use case
+      final createConversationUseCase =
+          ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: property.user!.id,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.push('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
 

@@ -719,7 +719,7 @@ class VendorDetailsPage extends ConsumerWidget {
 
       // Navigate to chat room page with the conversation ID
       if (context.mounted) {
-        context.go('/conversations/${conversation.id}');
+        context.push('/conversations/${conversation.id}');
       }
     } catch (e) {
       // Show error message

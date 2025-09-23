@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -387,8 +388,9 @@ class PropertyCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Implement chat functionality
+                  onPressed: () async {
+                    await _createConversationAndNavigate(
+                        context, ref, property);
                   },
                   icon: const Icon(
                     Icons.chat,
@@ -417,6 +419,58 @@ class PropertyCard extends ConsumerWidget {
         ],
       ],
     );
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    PropertyEntity property,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      if (property.user == null) {
+        throw Exception('Property user not found');
+      }
+
+      // Create conversation using the use case
+      final createConversationUseCase =
+          ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: property.user!.id,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.push('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   String _getPropertyAge(String age) {

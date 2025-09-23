@@ -6,6 +6,7 @@ import '../../../../commons/app/auth_provider.dart';
 import '../../domain/usecases/get_conversation_messages_usecase.dart';
 import '../../domain/usecases/send_conversation_message_usecase.dart';
 import '../../domain/usecases/mark_conversation_as_read_usecase.dart';
+import '../../domain/entities/conversation_message_entity.dart';
 import 'conversation_state.dart';
 
 class ConversationNotifier extends StateNotifier<ConversationState> {
@@ -73,7 +74,11 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
     switch (message.type) {
       case 'new_message':
         if (message.conversationId == conversationId) {
-          refreshMessages();
+          // Only refresh if we're not already loading messages to prevent race conditions
+          if (state.status != ConversationStatus.loadingMessages &&
+              state.status != ConversationStatus.refreshing) {
+            refreshMessages();
+          }
         }
         break;
       case 'conversation_read':
@@ -103,6 +108,22 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
     state = state.copyWith(messages: updatedMessages);
   }
 
+  List<ConversationMessageEntity> _mergeMessagesWithoutDuplicates(
+      List<ConversationMessageEntity> messages) {
+    final Map<int, ConversationMessageEntity> messageMap = {};
+
+    // Add all messages to map, using ID as key to automatically handle duplicates
+    for (final message in messages) {
+      messageMap[message.id] = message;
+    }
+
+    // Return sorted list by creation time (newest first for reverse ListView)
+    final sortedMessages = messageMap.values.toList()
+      ..sort((a, b) => DateTime.parse(b.createdAt).compareTo(DateTime.parse(a.createdAt)));
+
+    return sortedMessages;
+  }
+
   Future<void> loadMessages({bool refresh = false}) async {
     if (!_mounted) return;
 
@@ -128,7 +149,7 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
 
       final newMessages = refresh
           ? response.messages
-          : [...response.messages, ...state.messages];
+          : _mergeMessagesWithoutDuplicates([...response.messages, ...state.messages]);
 
       state = state.copyWith(
         status: ConversationStatus.loaded,

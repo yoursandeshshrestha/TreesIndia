@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/services/conversation_websocket_service.dart';
-import 'package:trees_india/pages/chats_page/app/viewmodels/conversation_notifier.dart';
-import '../viewmodels/conversation_state.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversations_provider.dart';
+import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
+
 import '../providers/conversation_provider.dart';
+import '../viewmodels/conversation_state.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/message_input.dart';
 
@@ -23,21 +25,24 @@ class ConversationPage extends ConsumerStatefulWidget {
 
 class _ConversationPageState extends ConsumerState<ConversationPage> {
   final ScrollController _scrollController = ScrollController();
-  late ConversationNotifier _notifier;
+  late ConversationsNotifier _conversationsNotifier;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _notifier =
-        ref.read(conversationNotifierProvider(widget.conversationId).notifier);
 
     // Initialize the conversation when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProfile = ref.read(userProfileProvider);
       final currentUserId = userProfile.user?.userId;
+      _conversationsNotifier = ref.read(conversationsNotifierProvider.notifier);
 
       if (currentUserId != null) {
+        // Load conversations list to get participant names
+        _conversationsNotifier.loadConversations();
+
+        // Load messages for this specific conversation
         ref
             .read(conversationNotifierProvider(widget.conversationId).notifier)
             .loadMessages();
@@ -47,11 +52,9 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
 
   @override
   void dispose() {
+    _conversationsNotifier.markConversationAsRead(widget.conversationId);
     // Mark conversation as read when user leaves the page
     // This ensures all messages that were visible to the user are marked as read
-    _notifier
-        .markAsRead();
-
     _scrollController.dispose();
     super.dispose();
   }
@@ -82,15 +85,32 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
   }
 
   PreferredSizeWidget _buildAppBar(ConversationState state) {
-    // We'll get conversation details from the conversations list if available
-    // For now, show a simple app bar
+    // Get conversation details from the conversations list
+    final conversationsState = ref.watch(conversationsNotifierProvider);
+    final userProfile = ref.read(userProfileProvider);
+    final currentUserId = userProfile.user?.userId;
+
+    // Find the conversation by ID
+    final conversation = conversationsState.conversations
+        .where((conv) => conv.id == widget.conversationId)
+        .firstOrNull;
+
+    String title = 'Conversation';
+    if (conversation != null && currentUserId != null) {
+      // Determine which user is the other person
+      final otherUser = conversation.user1 == currentUserId
+          ? conversation.user2Data
+          : conversation.user1Data;
+      title = otherUser.name;
+    }
+
     return AppBar(
-      title: const Column(
+      title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Conversation',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ],
       ),

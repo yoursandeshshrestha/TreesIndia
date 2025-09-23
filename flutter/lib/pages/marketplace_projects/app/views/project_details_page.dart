@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 
 import '../../domain/entities/project_entity.dart';
 import '../providers/project_providers.dart';
@@ -19,7 +22,6 @@ class ProjectDetailsPage extends ConsumerStatefulWidget {
 }
 
 class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
-
   @override
   void initState() {
     super.initState();
@@ -38,13 +40,15 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
     // 2. The current project ID doesn't match the requested one
     // 3. The current state is failure (to allow retry)
     // Don't load if we're already loading or already have the correct project data
-    final shouldLoad = (projectDetailsState.status == ProjectDetailsStatus.initial) ||
-                       (currentId != widget.projectId &&
-                        projectDetailsState.status != ProjectDetailsStatus.loading) ||
-                       (projectDetailsState.status == ProjectDetailsStatus.failure);
+    final shouldLoad =
+        (projectDetailsState.status == ProjectDetailsStatus.initial) ||
+            (currentId != widget.projectId &&
+                projectDetailsState.status != ProjectDetailsStatus.loading) ||
+            (projectDetailsState.status == ProjectDetailsStatus.failure);
 
     if (shouldLoad) {
-      ref.read(projectDetailsNotifierProvider.notifier)
+      ref
+          .read(projectDetailsNotifierProvider.notifier)
           .loadProjectDetails(widget.projectId);
     }
   }
@@ -308,10 +312,12 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                         vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: _getProjectTypeColor(project.projectType).withOpacity(0.1),
+                        color: _getProjectTypeColor(project.projectType)
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: _getProjectTypeColor(project.projectType).withOpacity(0.3),
+                          color: _getProjectTypeColor(project.projectType)
+                              .withOpacity(0.3),
                         ),
                       ),
                       child: Text(
@@ -345,7 +351,8 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                         color: _getStatusColor(project.status).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: _getStatusColor(project.status).withOpacity(0.3),
+                          color:
+                              _getStatusColor(project.status).withOpacity(0.3),
                         ),
                       ),
                       child: Text(
@@ -366,7 +373,8 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
           const SizedBox(height: AppSpacing.md),
 
           // Duration
-          _buildProjectInfoRow('Estimated Duration:', project.formattedDuration),
+          _buildProjectInfoRow(
+              'Estimated Duration:', project.formattedDuration),
         ],
       ),
     );
@@ -400,14 +408,17 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
 
   Widget _buildProjectDetails(ProjectEntity project) {
     final details = [
-      _DetailItem('Project Type', project.formattedProjectType, Icons.business_outlined),
+      _DetailItem('Project Type', project.formattedProjectType,
+          Icons.business_outlined),
       _DetailItem('Status', project.formattedStatus, Icons.schedule_outlined),
       _DetailItem('Duration', project.formattedDuration, Icons.timer_outlined),
-      _DetailItem('Location', project.formattedLocation, Icons.location_on_outlined),
+      _DetailItem(
+          'Location', project.formattedLocation, Icons.location_on_outlined),
       if (project.pincode.isNotEmpty)
         _DetailItem('Pincode', project.pincode, Icons.pin_drop_outlined),
       if (project.uploadedByAdmin)
-        _DetailItem('Verified Project', 'Admin Verified', Icons.verified_outlined),
+        _DetailItem(
+            'Verified Project', 'Admin Verified', Icons.verified_outlined),
     ];
 
     return Column(
@@ -591,6 +602,10 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
   }
 
   Widget _buildContactSection(ProjectEntity project) {
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState.token?.userId;
+    final shouldShowChatButton =
+        currentUserId != null && currentUserId != project.userId.toString();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -703,6 +718,32 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                 ),
               ),
             ),
+          if (shouldShowChatButton) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await _createConversationAndNavigate(context, ref, project);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.stateGreen600,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: const Text(
+                  'Send Message',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -824,6 +865,54 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
         return AppColors.stateRed600;
       default:
         return AppColors.brandNeutral600;
+    }
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    ProjectEntity project,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Create conversation using the use case
+      final createConversationUseCase =
+          ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: project.userId,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.push('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 }
