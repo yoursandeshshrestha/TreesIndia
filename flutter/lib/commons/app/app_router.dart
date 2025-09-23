@@ -3,51 +3,52 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/pages/otp_verification_page.dart';
+import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/utils/services/navigation_service.dart';
+import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
+import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
+import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
+import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
 import 'package:trees_india/pages/chats_page/domain/entities/chat_room_entity.dart';
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
+import 'package:trees_india/pages/location_loading_page/app/views/location_loading_page.dart';
+import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
 import 'package:trees_india/pages/login_page/app/views/login_page.dart';
+import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
 import 'package:trees_india/pages/marketplace_projects/app/views/marketplace_projects_page.dart';
 import 'package:trees_india/pages/marketplace_projects/app/views/project_details_page.dart';
 import 'package:trees_india/pages/marketplace_vendors/app/views/marketplace_vendors_page.dart';
 import 'package:trees_india/pages/marketplace_vendors/app/views/vendor_details_page.dart';
+import 'package:trees_india/pages/marketplace_workers/app/views/marketplace_workers_page.dart';
+import 'package:trees_india/pages/marketplace_workers/app/views/worker_details_page.dart';
 import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
-import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
-import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/my_vendor_profiles_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/subscription_plans_listing_page.dart';
-import 'package:trees_india/pages/rental_and_properties/app/views/property_details_page.dart';
-import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
-import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
-import 'package:trees_india/pages/manual_location_page/app/views/manual_location_page.dart';
-import 'package:trees_india/pages/location_loading_page/app/views/location_loading_page.dart';
-import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
-import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
+import 'package:trees_india/pages/notifications_page/app/views/notifications_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_plans/app/views/my_plans_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/app/views/wallet_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/plus_membership/app/views/plus_membership_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_rating/app/views/my_rating_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addresses/app/views/manage_addresses_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payment_methods/app/views/manage_payment_methods_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_plans/app/views/my_plans_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_rating/app/views/my_rating_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/subscription_plans_listing_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/my_vendor_profiles_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/plus_membership/app/views/plus_membership_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/app/views/wallet_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/worker_application_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/profile_page.dart';
+import 'package:trees_india/pages/rental_and_properties/app/views/property_details_page.dart';
+import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
+import 'package:trees_india/pages/search_page/app/views/search_page.dart';
+import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
-import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
-import 'package:trees_india/pages/search_page/app/views/search_page.dart';
-import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
-import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
-import 'package:trees_india/pages/rental_and_properties/app/views/rental_and_properties_page.dart';
-import 'package:trees_india/pages/marketplace/projects_page.dart';
-import 'package:trees_india/pages/marketplace/workers_page.dart';
-import 'package:trees_india/pages/notifications_page/app/views/notifications_page.dart';
-import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
+import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
+
 import './route_tracker.dart';
 
 // auth_provider.dart
@@ -407,7 +408,15 @@ class AppRouter {
                 GoRoute(
                   path: '/marketplace/workers',
                   name: 'WorkersPage',
-                  builder: (context, state) => const WorkersPage(),
+                  builder: (context, state) => const MarketplaceWorkersPage(),
+                ),
+                GoRoute(
+                  path: '/workers/:workerId',
+                  name: 'WorkerDetailsPage',
+                  builder: (context, state) {
+                    final workerId = state.pathParameters['workerId']!;
+                    return WorkerDetailsPage(workerId: workerId);
+                  },
                 ),
                 GoRoute(
                   path: '/notifications',

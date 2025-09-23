@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
-import '../../../domain/entities/vendor_filters_entity.dart';
-import 'vendor_sort_bottom_sheet_widget.dart';
-import 'vendor_filters_bottom_sheet_widget.dart';
+import '../../../domain/entities/worker_filters_entity.dart';
+import 'worker_filters_bottom_sheet_widget.dart';
+import 'worker_sort_bottom_sheet_widget.dart';
 
-class VendorBottomBarWidget extends StatelessWidget {
-  final VendorFiltersEntity filters;
-  final Function(VendorSortType) onSortChanged;
-  final Function(VendorFiltersEntity) onFiltersChanged;
+class WorkerBottomBarWidget extends StatelessWidget {
+  final WorkerFiltersEntity filters;
+  final Function(WorkerSortType) onSortChanged;
+  final Function(WorkerFiltersEntity) onFiltersChanged;
 
-  const VendorBottomBarWidget({
+  const WorkerBottomBarWidget({
     super.key,
     required this.filters,
     required this.onSortChanged,
@@ -46,10 +46,10 @@ class VendorBottomBarWidget extends StatelessWidget {
               title: 'Sort by',
               subtitle: filters.getSortDisplayName(filters.sortBy),
               onTap: () {
-                VendorSortBottomSheetWidget.show(
+                WorkerSortBottomSheetWidget.show(
                   context,
-                  currentSort: filters.sortBy,
-                  onSortSelected: onSortChanged,
+                  currentSortType: filters.sortBy,
+                  onSortChanged: onSortChanged,
                 );
               },
             ),
@@ -62,9 +62,9 @@ class VendorBottomBarWidget extends StatelessWidget {
               title: 'Filters',
               subtitle: _getFilterCount() > 0
                   ? '${_getFilterCount()} applied'
-                  : 'All vendors',
+                  : 'All workers',
               onTap: () {
-                VendorFiltersBottomSheetWidget.show(
+                WorkerFiltersBottomSheetWidget.show(
                   context,
                   currentFilters: filters,
                   onFiltersChanged: onFiltersChanged,
@@ -79,12 +79,11 @@ class VendorBottomBarWidget extends StatelessWidget {
 
   int _getFilterCount() {
     int count = 0;
-    if (filters.businessType != null) count++;
-    if (filters.services != null && filters.services!.isNotEmpty)
-      count += filters.services!.length;
-    if (filters.location != null && filters.location!.isNotEmpty) count++;
-    if (filters.city != null && filters.city!.isNotEmpty) count++;
-    if (filters.state != null && filters.state!.isNotEmpty) count++;
+    if (filters.workerType != null) count++;
+    if (filters.skills != null && filters.skills!.isNotEmpty)
+      count += filters.skills!.length;
+    if (filters.minExperience != null || filters.maxExperience != null) count++;
+    if (filters.search != null && filters.search!.isNotEmpty) count++;
     return count;
   }
 }

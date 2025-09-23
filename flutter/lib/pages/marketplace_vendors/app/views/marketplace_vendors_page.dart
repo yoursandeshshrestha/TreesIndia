@@ -62,7 +62,7 @@ class _MarketplaceVendorsPageState
                 ref.read(vendorNotifierProvider.notifier).clearAllFilters();
               },
             ),
-
+        
             // Vendors Grid
             Expanded(
               child: VendorGridWidget(

@@ -74,6 +74,8 @@ class ApiEndpoints {
     workersStats,
     getVendors,
     getVendorDetails,
+    getWorkers,
+    getWorkerDetails,
     getProjects,
     getProjectDetails,
     createSegmentPayment,
@@ -432,6 +434,16 @@ class ApiEndpoints {
   static ApiEndpoint getVendorDetails = ApiEndpoint(
     path: '/vendors/{vendorId}',
     requiresAuth: true,
+  );
+
+  static ApiEndpoint getWorkers = ApiEndpoint(
+    path: '/public/workers',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint getWorkerDetails = ApiEndpoint(
+    path: '/public/workers/{workerId}',
+    requiresAuth: false,
   );
 
   static ApiEndpoint getProjects = ApiEndpoint(
