@@ -113,9 +113,9 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
           alt: "Professional service platform",
         };
 
-  // Map category icons to the expected format
-  const categories: CategoryProps[] = categoryIcons.map(
-    (icon: HomepageCategoryIcon, index: number) => {
+  // Map category icons to the expected format and reorder them
+  const categories: CategoryProps[] = categoryIcons
+    .map((icon: HomepageCategoryIcon, index: number) => {
       // Get the appropriate fallback icon based on category name
       const getFallbackIcon = (categoryName: string) => {
         const lowerName = categoryName.toLowerCase();
@@ -129,14 +129,34 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
         return `/images/main-icons/test-${index + 1}.png`;
       };
 
+      // Assign categoryId based on category name rather than index
+      const getCategoryId = (categoryName: string) => {
+        const lowerName = categoryName.toLowerCase();
+        if (lowerName.includes("home")) return 1;
+        if (lowerName.includes("construction")) return 2;
+        if (lowerName.includes("marketplace")) return 3;
+        return index + 1; // Fallback to original index for other categories
+      };
+
       return {
         name: icon.name,
         icon: icon.icon_url || getFallbackIcon(icon.name),
         href: `#${icon.name.toLowerCase().replace(/\s+/g, "-")}`,
-        categoryId: index + 1,
+        categoryId: getCategoryId(icon.name),
       };
-    }
-  );
+    })
+    .sort((a, b) => {
+      // Define the desired order: Home Service first, Construction Service second, Marketplace third
+      const getOrder = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("home")) return 1;
+        if (lowerName.includes("construction")) return 2;
+        if (lowerName.includes("marketplace")) return 3;
+        return 4; // Any other categories go last
+      };
+
+      return getOrder(a.name) - getOrder(b.name);
+    });
 
   // Show loading state if data is being fetched
   if (heroConfigLoading || categoryIconsLoading || heroImagesLoading) {
