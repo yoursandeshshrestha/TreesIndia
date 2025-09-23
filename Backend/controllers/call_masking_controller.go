@@ -181,9 +181,104 @@ func (cmc *CallMaskingController) TestCall(c *gin.Context) {
 	}
 
 	response := map[string]string{
-		"call_sid": callSID,
-		"message":  "Test call initiated successfully",
+		"masked_number": callSID,
+		"message":       "Test call initiated successfully",
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Test call initiated", response)
+}
+
+// InitiateCallForBooking initiates a call for a specific booking
+// @Summary Initiate a call for a booking
+// @Description Initiates a call between customer and worker for a specific booking using CloudShope call masking
+// @Tags Call Masking
+// @Accept json
+// @Produce json
+// @Param request body models.InitiateCallForBookingRequest true "Initiate call request"
+// @Success 200 {object} utils.Response{data=models.CloudShopeCallResponse}
+// @Failure 400 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /api/call-masking/booking/call [post]
+func (cmc *CallMaskingController) InitiateCallForBooking(c *gin.Context) {
+	var req models.InitiateCallForBookingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	// Initiate call through the service which will handle phone number retrieval and validation
+	maskedNumber, err := cmc.callMaskingService.InitiateCallForBooking(req.BookingID, userID.(uint))
+	if err != nil {
+		logrus.Errorf("Failed to initiate call for booking %d by user %d: %v", req.BookingID, userID, err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := models.CloudShopeCallResponse{
+		Status:  200,
+		Message: "success",
+		Data: struct {
+			Mobile string `json:"mobile"`
+		}{
+			Mobile: maskedNumber,
+		},
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Call initiated successfully", response)
+}
+
+// InitiateCloudShopeCall initiates a call using CloudShope API (for testing)
+// @Summary Initiate a call using CloudShope
+// @Description Initiates a call using CloudShope call masking (for testing purposes)
+// @Tags Call Masking
+// @Accept json
+// @Produce json
+// @Param request body models.CloudShopeCallRequest true "CloudShope call request"
+// @Success 200 {object} utils.Response{data=models.CloudShopeCallResponse}
+// @Failure 400 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /api/call-masking/cloudshope/call [post]
+func (cmc *CallMaskingController) InitiateCloudShopeCall(c *gin.Context) {
+	var req models.CloudShopeCallRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	// Validate that the user is either the customer or worker for this booking
+	// This validation should be done based on the booking ID and user relationship
+	// For now, we'll proceed with the call initiation
+	
+	maskedNumber, err := cmc.callMaskingService.InitiateCloudShopeCall(req.FromNumber, req.MobileNumber)
+	if err != nil {
+		logrus.Errorf("Failed to initiate CloudShope call from %s to %s by user %d: %v", req.FromNumber, req.MobileNumber, userID, err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := models.CloudShopeCallResponse{
+		Status:  200,
+		Message: "success",
+		Data: struct {
+			Mobile string `json:"mobile"`
+		}{
+			Mobile: maskedNumber,
+		},
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Call initiated successfully", response)
 }
