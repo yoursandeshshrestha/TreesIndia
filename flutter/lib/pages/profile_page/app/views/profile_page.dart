@@ -8,6 +8,7 @@ import 'package:trees_india/commons/components/main_layout/app/views/main_layout
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/domain/entities/user_profile_entity.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
@@ -347,6 +348,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           context.push('/about-trees-india');
                         },
                       ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      if (profileState.roleApplication != null &&
+                          profileState.roleApplication!.status != 'none')
+                        _buildRoleApplicationCard(
+                            profileState.roleApplication!),
 
                       const SizedBox(height: AppSpacing.xl),
 
@@ -485,7 +492,160 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildSubscriptionCard(subscription) {
+  Widget _buildRoleApplicationCard(RoleApplicationEntity roleApplication) {
+    // Parse dates
+    DateTime? applicationDate;
+    DateTime? approvalDate;
+
+    try {
+      if (roleApplication.applicationDate != null &&
+          roleApplication.applicationDate!.isNotEmpty) {
+        applicationDate = DateTime.parse(roleApplication.applicationDate!);
+      }
+      if (roleApplication.approvalDate != null &&
+          roleApplication.approvalDate!.isNotEmpty) {
+        approvalDate = DateTime.parse(roleApplication.approvalDate!);
+      }
+    } catch (e) {
+      debugPrint('Error parsing role application dates: $e');
+    }
+
+    final dateFormat = DateFormat('MMM dd, yyyy');
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/worker-application');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.brandNeutral200),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNeutral100.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            H4Bold(text: 'Role Application Status'),
+            const SizedBox(height: AppSpacing.xs),
+            B3Regular(
+                text: 'Track your application to become a service provider'),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Status section
+            if (roleApplication.status == 'pending')
+              _buildPendingStatus()
+            else if (roleApplication.status == 'approved')
+              _buildApprovedStatus(),
+
+            const SizedBox(height: AppSpacing.lg),
+            const Divider(color: AppColors.brandNeutral200),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Dates
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDateCard(
+                    label: 'Application Date',
+                    date: applicationDate != null
+                        ? dateFormat.format(applicationDate)
+                        : '--',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildDateCard(
+                    label: 'Approval Date',
+                    date: approvalDate != null
+                        ? dateFormat.format(approvalDate)
+                        : '--',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingStatus() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.watch_later_outlined,
+                color: AppColors.stateYellow700, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            B2Medium(text: 'Under Review'),
+            const SizedBox(width: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.stateYellow100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: B4Medium(text: 'PENDING', color: AppColors.stateYellow800),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        B3Regular(
+            text:
+                'Your application is currently under review. We\'ll notify you once a decision is made.'),
+      ],
+    );
+  }
+
+  Widget _buildApprovedStatus() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.check_circle_outline,
+                color: AppColors.stateGreen700, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            B2Medium(text: 'Approved'),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        B3Regular(text: 'Congratulations! Your application has been approved.'),
+      ],
+    );
+  }
+
+  Widget _buildDateCard({required String label, required String date}) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.brandNeutral50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          B4Regular(text: label, color: AppColors.brandNeutral500),
+          const SizedBox(height: AppSpacing.xs),
+          B2Medium(text: date),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard(SubscriptionEntity subscription) {
     // Parse dates
     DateTime? startDate;
     DateTime? endDate;

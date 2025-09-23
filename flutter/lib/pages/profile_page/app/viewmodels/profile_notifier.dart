@@ -52,7 +52,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
           email: data.email,
           gender: data.gender,
           phone: data.phone,
+          userType: data.userType,
           subscription: data.subscription,
+          roleApplication: data.roleApplication,
         );
       } else {
         state = state.copyWith(

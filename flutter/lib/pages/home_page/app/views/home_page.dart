@@ -41,6 +41,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _loadCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
     // Load popular services when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homePageNotifierProvider.notifier).loadPopularServices();
@@ -74,8 +77,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       debugPrint('Error loading location: $e');
     }
   }
-
-
 
   void _navigateToLocationPicker() async {
     final result = await context.push('/manual-location');

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 
 class BottomNavBarWidget extends ConsumerWidget {
   final int currentIndex;
@@ -15,8 +15,8 @@ class BottomNavBarWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final userType = authState.userType;
+    final profileState = ref.watch(profileProvider);
+    final userType = profileState.userType;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
