@@ -35,6 +35,7 @@ import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addre
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payment_methods/app/views/manage_payment_methods_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/worker_application_page.dart';
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import 'package:trees_india/pages/services_page/app/views/service_detail_page.dart';
@@ -276,6 +277,11 @@ class AppRouter {
                   path: '/my-vendor-profiles',
                   name: 'MyVendorProfilesPage',
                   builder: (context, state) => const MyVendorProfilesPage(),
+                ),
+                GoRoute(
+                  path: '/worker-application',
+                  name: 'WorkerApplicationPage',
+                  builder: (context, state) => const WorkerApplicationPage(),
                 ),
                 GoRoute(
                   path: '/my-subscription',

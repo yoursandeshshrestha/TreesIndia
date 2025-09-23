@@ -317,6 +317,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             context.push('/my-vendor-profiles');
                           },
                         ),
+
+                      _buildMenuItem(
+                        icon: Icons.work_outline,
+                        label: 'Apply for Worker',
+                        onTap: () {
+                          context.push('/worker-application');
+                        },
+                      ),
                       _buildMenuItem(
                         icon: Icons.home_outlined,
                         label: 'My Subscription',

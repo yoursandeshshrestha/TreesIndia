@@ -81,6 +81,8 @@ class ApiEndpoints {
     notifications,
     unreadCount,
     markAllNotificationsAsRead,
+    submitWorkerApplication,
+    getUserApplicationStatus,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -465,6 +467,17 @@ class ApiEndpoints {
 
   static ApiEndpoint markAllNotificationsAsRead = ApiEndpoint(
     path: '/in-app-notifications/read-all',
+    requiresAuth: true,
+  );
+
+  // Worker Application Endpoints
+  static ApiEndpoint submitWorkerApplication = ApiEndpoint(
+    path: '/role-applications/worker',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getUserApplicationStatus = ApiEndpoint(
+    path: '/role-applications/me',
     requiresAuth: true,
   );
 
