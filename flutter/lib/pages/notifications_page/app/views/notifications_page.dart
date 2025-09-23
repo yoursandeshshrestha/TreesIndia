@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 
 import '../providers/notification_providers.dart';
 import '../viewmodels/notification_state.dart';
@@ -70,6 +72,15 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   Widget build(BuildContext context) {
     final notificationState = ref.watch(notificationNotifierProvider);
     final isWebSocketConnected = ref.watch(isWebSocketConnectedProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,

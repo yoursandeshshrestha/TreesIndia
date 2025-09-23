@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
@@ -16,6 +17,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 
@@ -156,6 +158,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     final userProfileState = ref.watch(userProfileProvider);
     final profileState = ref.watch(profileProvider);
     final user = userProfileState.user;
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     // Re-initialize if user data changes and we haven't initialized yet
     if (user != null && !_isInitialized) {

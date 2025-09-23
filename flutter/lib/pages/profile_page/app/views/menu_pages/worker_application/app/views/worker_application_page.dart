@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/widgets/worker_form_step_indicator.dart';
 import '../providers/worker_application_providers.dart';
 import '../states/worker_application_state.dart';
@@ -39,6 +41,15 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
   @override
   Widget build(BuildContext context) {
     final workerApplicationState = ref.watch(workerApplicationNotifierProvider);
+        final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     ref.listen<WorkerApplicationState>(
       workerApplicationNotifierProvider,

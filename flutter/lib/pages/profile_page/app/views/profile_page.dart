@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:trees_india/commons/components/button/app/views/outline_button_widget.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_profile_entity.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
@@ -145,6 +147,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final userProfileState = ref.watch(userProfileProvider);
     final user = userProfileState.user;
     final profileState = ref.watch(profileProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return MainLayoutWidget(
       currentIndex: 3,

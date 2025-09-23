@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -79,11 +80,23 @@ class LocationService {
 
       final Position position = await Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          debugPrint('⏰ [LocationService] GPS acquisition timed out after 30 seconds in _getCurrentPositionAndPlacemarkIfAllowed');
+          throw TimeoutException('GPS location acquisition timed out', const Duration(seconds: 30));
+        },
       );
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⏰ [LocationService] Reverse geocoding timed out after 15 seconds in _getCurrentPositionAndPlacemarkIfAllowed');
+          throw TimeoutException('Reverse geocoding timed out', const Duration(seconds: 15));
+        },
       );
 
       if (placemarks.isEmpty) {
@@ -192,6 +205,10 @@ class LocationService {
   //will return the geo location of the user
 
   Future<(double latitude, double longitude)> getCurrentCoordinates() async {
+    debugPrint('🛰️ [LocationService] Starting getCurrentCoordinates...');
+    final startTime = DateTime.now();
+
+    debugPrint('🛰️ [LocationService] Configuring location settings...');
     final LocationSettings locationSettings = Platform.isAndroid
         ? AndroidSettings(
             accuracy: LocationAccuracy.best,
@@ -206,11 +223,27 @@ class LocationService {
             pauseLocationUpdatesAutomatically: true,
           );
 
+    debugPrint('🛰️ [LocationService] Location settings: Platform=${Platform.isAndroid ? 'Android' : 'iOS'}, Accuracy=best');
+    debugPrint('🛰️ [LocationService] Calling Geolocator.getCurrentPosition...');
+    final gpsStartTime = DateTime.now();
+
     final Position position = await Geolocator.getCurrentPosition(
       locationSettings: locationSettings,
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {
+        debugPrint('⏰ [LocationService] GPS acquisition timed out after 30 seconds');
+        throw TimeoutException('GPS location acquisition timed out', const Duration(seconds: 30));
+      },
     );
-    position.latitude;
-    position.longitude;
+
+    final gpsDuration = DateTime.now().difference(gpsStartTime);
+    final totalDuration = DateTime.now().difference(startTime);
+
+    debugPrint('🛰️ [LocationService] GPS acquisition completed in ${gpsDuration.inMilliseconds}ms');
+    debugPrint('🛰️ [LocationService] Coordinates: ${position.latitude}, ${position.longitude}');
+    debugPrint('✅ [LocationService] getCurrentCoordinates completed in ${totalDuration.inMilliseconds}ms total');
+
     return (position.latitude, position.longitude);
   }
 

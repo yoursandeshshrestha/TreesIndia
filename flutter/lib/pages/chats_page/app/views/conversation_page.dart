@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/services/conversation_websocket_service.dart';
 import 'package:trees_india/pages/chats_page/app/providers/conversations_provider.dart';
 import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
@@ -77,6 +79,15 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
   Widget build(BuildContext context) {
     final conversationState =
         ref.watch(conversationNotifierProvider(widget.conversationId));
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return Scaffold(
       appBar: _buildAppBar(conversationState),

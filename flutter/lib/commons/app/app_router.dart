@@ -48,7 +48,7 @@ import 'package:trees_india/pages/services_page/app/views/service_detail_page.da
 import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
-import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
+
 import 'package:trees_india/commons/components/snackbar/custom_exit_snackbar.dart';
 
 import './route_tracker.dart';
@@ -261,11 +261,7 @@ class AppRouter {
               name: 'SplashScreen',
               builder: (context, state) => const SplashScreen(),
             ),
-            GoRoute(
-              path: '/welcome',
-              name: 'WelcomePage',
-              builder: (context, state) => const WelcomePage(),
-            ),
+
             GoRoute(
               path: '/login',
               name: 'LoginPage',
