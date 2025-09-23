@@ -39,6 +39,14 @@ class ReviewStep extends ConsumerWidget {
           [
             _buildInfoRow('Full Name', application.contactInfo.fullName),
             _buildInfoRow('Email', application.contactInfo.email),
+            if (workerState.emailError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: B4Regular(
+                  text: workerState.emailError!,
+                  color: AppColors.stateRed600,
+                ),
+              ),
             _buildInfoRow('Phone', application.contactInfo.phone),
             _buildInfoRow(
                 'Alternative Phone', application.contactInfo.alternativePhone),

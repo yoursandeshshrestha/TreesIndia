@@ -1,5 +1,5 @@
 class SkillsEntity {
-  final int experienceYears;
+  final String? experienceYears;
   final List<String> skills;
 
   const SkillsEntity({
@@ -8,7 +8,7 @@ class SkillsEntity {
   });
 
   SkillsEntity copyWith({
-    int? experienceYears,
+    String? experienceYears,
     List<String>? skills,
   }) {
     return SkillsEntity(
@@ -25,7 +25,13 @@ class SkillsEntity {
   }
 
   bool get hasSkills => skills.isNotEmpty;
-  bool get hasValidExperience => experienceYears >= 0;
+  bool get hasValidExperience {
+    if (experienceYears == null || experienceYears!.isEmpty) {
+      return false;
+    }
+    final experience = int.tryParse(experienceYears!);
+    return experience != null && experience >= 0;
+  }
 
   @override
   bool operator ==(Object other) {

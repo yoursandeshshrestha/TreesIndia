@@ -73,12 +73,12 @@ class _AddressStepState extends ConsumerState<AddressStep> {
 
     // Always update the notifier state with current values (regardless of validation)
     ref.read(workerApplicationNotifierProvider.notifier).updateAddress(
-      street: _streetController.text, // Keep spaces for addresses
-      city: _cityController.text, // Keep spaces for city names
-      state: _stateController.text, // Keep spaces for state names
-      pincode: _pincodeController.text.trim(), // Remove spaces for pincode
-      landmark: _landmarkController.text, // Keep spaces for landmarks
-    );
+          street: _streetController.text, // Keep spaces for addresses
+          city: _cityController.text, // Keep spaces for city names
+          state: _stateController.text, // Keep spaces for state names
+          pincode: _pincodeController.text.trim(), // Remove spaces for pincode
+          landmark: _landmarkController.text, // Keep spaces for landmarks
+        );
   }
 
   void _validateFields() {
@@ -102,7 +102,8 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     if (pincode.isEmpty) {
       _errors['pincode'] = 'Pincode is required';
     } else {
-      final pincodeValidation = WorkerApplicationValidation.validatePincode(pincode);
+      final pincodeValidation =
+          WorkerApplicationValidation.validatePincode(pincode);
       if (pincodeValidation != null) {
         _errors['pincode'] = pincodeValidation;
       }
@@ -115,13 +116,25 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     });
 
     // Simulate getting location (you would implement actual GPS logic here)
-    await Future.delayed(const Duration(seconds: 2));
+    await ref
+        .read(workerApplicationNotifierProvider.notifier)
+        .getCurrentLocation();
+
+    final formData = ref.read(workerApplicationNotifierProvider).formData;
 
     // Mock data for demonstration
-    _streetController.text = '123 Main Street, Sector 15';
-    _cityController.text = 'Gurgaon';
-    _stateController.text = 'Haryana';
-    _pincodeController.text = '122001';
+    if (formData.address.street.isNotEmpty == true) {
+      _streetController.text = formData.address.street;
+    }
+    if (formData.address.city.isNotEmpty == true) {
+      _cityController.text = formData.address.city;
+    }
+    if (formData.address.state.isNotEmpty == true) {
+      _stateController.text = formData.address.state;
+    }
+    if (formData.address.pincode.isNotEmpty == true) {
+      _pincodeController.text = formData.address.pincode;
+    }
 
     _updateFormData();
 
@@ -188,7 +201,9 @@ class _AddressStepState extends ConsumerState<AddressStep> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.my_location),
-            label: Text(_isGettingLocation ? 'Getting Location...' : 'Get Current Location'),
+            label: Text(_isGettingLocation
+                ? 'Getting Location...'
+                : 'Get Current Location'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.stateGreen500,
               foregroundColor: AppColors.white,

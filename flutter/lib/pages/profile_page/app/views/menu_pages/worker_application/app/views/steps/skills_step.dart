@@ -50,8 +50,8 @@ class _SkillsStepState extends ConsumerState<SkillsStep> {
     final workerState = ref.read(workerApplicationNotifierProvider);
     final skills = workerState.formData.skills;
 
-    if (skills.experienceYears > 0) {
-      _experienceController.text = skills.experienceYears.toString();
+    if (skills.experienceYears != null && skills.experienceYears!.isNotEmpty) {
+      _experienceController.text = skills.experienceYears!;
     }
     if (skills.skills.isNotEmpty) {
       _selectedSkills = List.from(skills.skills);
@@ -72,12 +72,10 @@ class _SkillsStepState extends ConsumerState<SkillsStep> {
 
     _validateFields();
 
-    // Always update the notifier state with current values (regardless of validation)
-    final experience = int.tryParse(_experienceController.text.trim()) ?? 0;
     ref.read(workerApplicationNotifierProvider.notifier).updateSkills(
-      experienceYears: experience,
-      skills: _selectedSkills,
-    );
+          experienceYears: _experienceController.text.trim(),
+          skills: _selectedSkills,
+        );
   }
 
   void _validateFields() {
@@ -138,8 +136,8 @@ class _SkillsStepState extends ConsumerState<SkillsStep> {
 
     // Sync experience field with state
     final currentExperience = workerState.formData.skills.experienceYears;
-    if (_experienceController.text != currentExperience.toString() && currentExperience > 0) {
-      _experienceController.text = currentExperience.toString();
+    if (_experienceController.text != currentExperience) {
+      _experienceController.text = currentExperience ?? '';
     }
 
     return Column(

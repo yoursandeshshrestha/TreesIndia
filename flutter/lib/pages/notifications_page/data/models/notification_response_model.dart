@@ -19,10 +19,12 @@ class NotificationResponseModel {
     return NotificationResponseModel(
       success: json['success'] as bool,
       message: json['message'] as String? ?? '',
-      data: (json['data'] as List<dynamic>)
-          .map((item) =>
-              NotificationModel.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      data: json['data'] != null
+          ? (json['data'] as List<dynamic>)
+              .map((item) =>
+                  NotificationModel.fromJson(item as Map<String, dynamic>))
+              .toList()
+          : [],
       pagination:
           PaginationModel.fromJson(json['pagination'] as Map<String, dynamic>),
     );

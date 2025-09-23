@@ -1,3 +1,5 @@
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/widgets/application_status_badge.dart';
+
 import 'contact_info_entity.dart';
 import 'address_entity.dart';
 import 'banking_info_entity.dart';
@@ -98,33 +100,57 @@ class WorkerApplicationEntity {
     };
   }
 
+  ApplicationStatus get applicationStatus {
+    return ApplicationStatusBadge.fromString(status ?? 'pending');
+  }
+
+  bool get isApproved {
+    return applicationStatus == ApplicationStatus.approved;
+  }
+
+  bool get isPending {
+    return applicationStatus == ApplicationStatus.pending;
+  }
+
+  bool get isRejected {
+    return applicationStatus == ApplicationStatus.rejected;
+  }
+
+  bool get isUnderReview {
+    return applicationStatus == ApplicationStatus.underReview;
+  }
+
+  bool get hasExistingApplication {
+    return id != null && id!.isNotEmpty;
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
     return other is WorkerApplicationEntity &&
-      other.contactInfo == contactInfo &&
-      other.documents == documents &&
-      other.address == address &&
-      other.skills == skills &&
-      other.bankingInfo == bankingInfo &&
-      other.status == status &&
-      other.id == id &&
-      other.createdAt == createdAt &&
-      other.updatedAt == updatedAt;
+        other.contactInfo == contactInfo &&
+        other.documents == documents &&
+        other.address == address &&
+        other.skills == skills &&
+        other.bankingInfo == bankingInfo &&
+        other.status == status &&
+        other.id == id &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt;
   }
 
   @override
   int get hashCode {
     return contactInfo.hashCode ^
-      documents.hashCode ^
-      address.hashCode ^
-      skills.hashCode ^
-      bankingInfo.hashCode ^
-      status.hashCode ^
-      id.hashCode ^
-      createdAt.hashCode ^
-      updatedAt.hashCode;
+        documents.hashCode ^
+        address.hashCode ^
+        skills.hashCode ^
+        bankingInfo.hashCode ^
+        status.hashCode ^
+        id.hashCode ^
+        createdAt.hashCode ^
+        updatedAt.hashCode;
   }
 
   @override

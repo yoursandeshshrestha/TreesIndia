@@ -4,6 +4,7 @@ import '../../../../../../../../commons/constants/api_endpoints.dart';
 import '../../../../../../../../commons/utils/error_handler.dart';
 import '../../../../../../../../commons/utils/services/dio_client.dart';
 import '../models/worker_application_model.dart';
+import '../models/role_application_response_model.dart';
 
 class WorkerApplicationResponseModel {
   final bool success;
@@ -28,37 +29,16 @@ class WorkerApplicationResponseModel {
   }
 }
 
-class ApplicationStatusResponseModel {
-  final bool success;
-  final String message;
-  final WorkerApplicationModel? data;
-  final String timestamp;
-
-  ApplicationStatusResponseModel({
-    required this.success,
-    required this.message,
-    this.data,
-    required this.timestamp,
-  });
-
-  factory ApplicationStatusResponseModel.fromJson(Map<String, dynamic> json) {
-    return ApplicationStatusResponseModel(
-      success: json['success'] ?? false,
-      message: json['message'] ?? '',
-      data: json['data'] != null
-          ? WorkerApplicationModel.fromJson(json['data'])
-          : null,
-      timestamp: json['timestamp'] ?? '',
-    );
-  }
-}
+// Using RoleApplicationResponseModel for the GET /role-applications/me endpoint
 
 abstract class WorkerApplicationRemoteDataSource {
-  Future<WorkerApplicationResponseModel> submitWorkerApplication(WorkerApplicationModel application);
-  Future<ApplicationStatusResponseModel> getUserApplicationStatus();
+  Future<WorkerApplicationResponseModel> submitWorkerApplication(
+      WorkerApplicationModel application);
+  Future<RoleApplicationResponseModel> getUserApplicationStatus();
 }
 
-class WorkerApplicationRemoteDataSourceImpl implements WorkerApplicationRemoteDataSource {
+class WorkerApplicationRemoteDataSourceImpl
+    implements WorkerApplicationRemoteDataSource {
   final DioClient dioClient;
   final ErrorHandler errorHandler;
 
@@ -68,7 +48,8 @@ class WorkerApplicationRemoteDataSourceImpl implements WorkerApplicationRemoteDa
   });
 
   @override
-  Future<WorkerApplicationResponseModel> submitWorkerApplication(WorkerApplicationModel application) async {
+  Future<WorkerApplicationResponseModel> submitWorkerApplication(
+      WorkerApplicationModel application) async {
     try {
       final url = ApiEndpoints.submitWorkerApplication.path;
 
@@ -161,32 +142,30 @@ class WorkerApplicationRemoteDataSourceImpl implements WorkerApplicationRemoteDa
         return WorkerApplicationResponseModel.fromJson(response.data);
       } else {
         throw Exception(
-          response.data['message'] ?? 'Failed to submit worker application'
-        );
+            response.data['message'] ?? 'Failed to submit worker application');
       }
     } on DioException catch (e) {
-      throw errorHandler.handleError(e);
+      throw e;
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
   @override
-  Future<ApplicationStatusResponseModel> getUserApplicationStatus() async {
+  Future<RoleApplicationResponseModel> getUserApplicationStatus() async {
     try {
       final url = ApiEndpoints.getUserApplicationStatus.path;
 
       final response = await dioClient.dio.get(url);
 
       if (response.statusCode == 200) {
-        return ApplicationStatusResponseModel.fromJson(response.data);
+        return RoleApplicationResponseModel.fromJson(response.data);
       } else {
         throw Exception(
-          response.data['message'] ?? 'Failed to fetch application status'
-        );
+            response.data['message'] ?? 'Failed to fetch application status');
       }
     } on DioException catch (e) {
-      throw errorHandler.handleError(e);
+      throw errorHandler.handleGenericError(e);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

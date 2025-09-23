@@ -54,7 +54,8 @@ class _PersonalInfoStepState extends ConsumerState<PersonalInfoStep> {
       _fullNameController.text = workerState.formData.contactInfo.fullName;
       _emailController.text = workerState.formData.contactInfo.email;
       _phoneController.text = workerState.formData.contactInfo.phone;
-      _alternativePhoneController.text = workerState.formData.contactInfo.alternativePhone;
+      _alternativePhoneController.text =
+          workerState.formData.contactInfo.alternativePhone;
     }
   }
 
@@ -78,11 +79,11 @@ class _PersonalInfoStepState extends ConsumerState<PersonalInfoStep> {
 
     // Always update the notifier state with current values (regardless of validation)
     ref.read(workerApplicationNotifierProvider.notifier).updatePersonalInfo(
-      fullName: _fullNameController.text, // Keep spaces for names
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
-      alternativePhone: _alternativePhoneController.text.trim(),
-    );
+          fullName: _fullNameController.text, // Keep spaces for names
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          alternativePhone: _alternativePhoneController.text.trim(),
+        );
   }
 
   void _validateFields() {
@@ -111,7 +112,8 @@ class _PersonalInfoStepState extends ConsumerState<PersonalInfoStep> {
     if (alternativePhone.isEmpty) {
       _errors['alternativePhone'] = 'Alternative phone number is required';
     } else {
-      final phoneValidation = WorkerApplicationValidation.validatePhone(alternativePhone);
+      final phoneValidation =
+          WorkerApplicationValidation.validatePhone(alternativePhone);
       if (phoneValidation != null) {
         _errors['alternativePhone'] = phoneValidation;
       }
@@ -171,7 +173,7 @@ class _PersonalInfoStepState extends ConsumerState<PersonalInfoStep> {
           hint: 'Enter your email address',
           isRequired: true,
           keyboardType: TextInputType.emailAddress,
-          errorText: _errors['email'],
+          errorText: _errors['email'] ?? workerState.emailError,
           onChanged: (_) => _updateFormData(),
         ),
 

@@ -34,6 +34,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   bool _isInitialized = false;
   Key _nameFieldKey = UniqueKey();
   Key _emailFieldKey = UniqueKey();
+  String? _emailError;
 
   // Main brand color used throughout the app
   static const Color mainColor = Color(0xFF055c3a);
@@ -110,37 +111,43 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           'Updating profile with name: $name, email: $email, gender: $_selectedGender');
     }
 
-    try {
-      // Update profile using auth notifier
-      await ref
-          .read(profileProvider.notifier)
-          .updateProfile(name, email, _selectedGender);
+    // Clear previous inline error
+    setState(() {
+      _emailError = null;
+    });
 
-      // Refresh profile data after update
-      await ref.read(userProfileProvider.notifier).refreshUserProfile();
+    // Trigger update
+    await ref
+        .read(profileProvider.notifier)
+        .updateProfile(name, email, _selectedGender);
 
-      // Show success message
+    // Read the latest state
+    final latestProfileState = ref.read(profileProvider);
+
+    // If there is an error (e.g., Email already exists), stay on page and show inline + snackbar
+    if (latestProfileState.errorMessage != null &&
+        latestProfileState.errorMessage!.isNotEmpty) {
+      final message = latestProfileState.errorMessage!;
       if (mounted) {
+        setState(() {
+          _emailError = message;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SuccessSnackbarWidget(
-            message: 'Profile updated successfully!',
-          ).createSnackBar(),
+          ErrorSnackbarWidget(message: message).createSnackBar(),
         );
       }
+      return;
+    }
 
-      // Navigate back to profile page
-      if (mounted) {
-        context.pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: ${e.toString()}'),
-            backgroundColor: AppColors.stateRed600,
-          ),
-        );
-      }
+    // Success path
+    await ref.read(userProfileProvider.notifier).refreshUserProfile();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SuccessSnackbarWidget(
+          message: 'Profile updated successfully!',
+        ).createSnackBar(),
+      );
+      context.pop();
     }
   }
 
@@ -282,8 +289,24 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         hintText: 'Enter your email address',
                         onTextChanged: (value) {
                           _emailController.text = value;
+                          if (_emailError != null) {
+                            setState(() {
+                              _emailError = null;
+                            });
+                          }
                         },
                       ),
+                      if (_emailError != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _emailError!,
+                          style: const TextStyle(
+                            color: AppColors.stateRed600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 

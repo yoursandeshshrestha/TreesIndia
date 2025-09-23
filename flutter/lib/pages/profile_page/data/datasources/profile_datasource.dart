@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:convert';
 import 'package:trees_india/commons/utils/services/dio_client.dart';
 import 'package:trees_india/commons/constants/api_endpoints.dart';
 import 'package:trees_india/commons/utils/error_handler.dart';
@@ -24,11 +25,28 @@ class ProfileDatasource {
       return ProfileUpdateResponseModel.fromJson(response.data);
     } catch (e) {
       if (e is DioException) {
+        // Log/process the error
         errorHandler.handleNetworkError(e);
+        // Extract server-provided message
+        String? extractedMessage;
+        dynamic data = e.response?.data;
+        if (data is String) {
+          try {
+            data = jsonDecode(data);
+          } catch (_) {}
+        }
+        if (data is Map) {
+          final dynamic message = data['message'] ?? data['error'];
+          if (message is String && message.trim().isNotEmpty) {
+            extractedMessage = message;
+          }
+        } else if (data is String && data.trim().isNotEmpty) {
+          extractedMessage = data;
+        }
+        throw Exception(extractedMessage ?? 'Failed to update profile');
       } else {
-        errorHandler.handleGenericError(e);
+        throw errorHandler.handleGenericError(e);
       }
-      throw Exception('Error updating profile.');
     }
   }
 

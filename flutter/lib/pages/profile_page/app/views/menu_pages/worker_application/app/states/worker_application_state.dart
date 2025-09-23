@@ -28,6 +28,7 @@ class WorkerApplicationState extends Equatable {
   final WorkerApplicationStep currentStep;
   final Map<WorkerApplicationStep, bool> stepCompletion;
   final String? errorMessage;
+  final String? emailError;
   final bool isSubmitting;
   final WorkerApplicationEntity? existingApplication;
 
@@ -37,6 +38,7 @@ class WorkerApplicationState extends Equatable {
     this.currentStep = WorkerApplicationStep.personalInfo,
     this.stepCompletion = const {},
     this.errorMessage,
+    this.emailError,
     this.isSubmitting = false,
     this.existingApplication,
   });
@@ -47,6 +49,7 @@ class WorkerApplicationState extends Equatable {
     WorkerApplicationStep? currentStep,
     Map<WorkerApplicationStep, bool>? stepCompletion,
     String? errorMessage,
+    String? emailError,
     bool? isSubmitting,
     WorkerApplicationEntity? existingApplication,
   }) {
@@ -56,6 +59,7 @@ class WorkerApplicationState extends Equatable {
       currentStep: currentStep ?? this.currentStep,
       stepCompletion: stepCompletion ?? this.stepCompletion,
       errorMessage: errorMessage,
+      emailError: emailError,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       existingApplication: existingApplication ?? this.existingApplication,
     );
@@ -125,6 +129,11 @@ class WorkerApplicationState extends Equatable {
 
   bool get hasExistingApplication => existingApplication != null;
 
+  bool get shouldShowStatusWidget =>
+      existingApplication?.hasExistingApplication == true;
+
+  bool get shouldShowForm => !shouldShowStatusWidget;
+
   @override
   List<Object?> get props => [
         status,
@@ -132,6 +141,7 @@ class WorkerApplicationState extends Equatable {
         currentStep,
         stepCompletion,
         errorMessage,
+        emailError,
         isSubmitting,
         existingApplication,
       ];
@@ -210,6 +220,7 @@ class WorkerApplicationValidation {
     return formData.bankingInfo.accountHolderName.trim().isNotEmpty &&
         formData.bankingInfo.accountNumber.trim().isNotEmpty &&
         formData.bankingInfo.ifscCode.trim().isNotEmpty &&
+        validateIFSC(formData.bankingInfo.ifscCode.trim()) == null &&
         formData.bankingInfo.bankName.trim().isNotEmpty;
   }
 
@@ -264,7 +275,7 @@ class WorkerApplicationValidation {
     }
     final ifscRegExp = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
     if (!ifscRegExp.hasMatch(ifsc.toUpperCase())) {
-      return 'Please enter a valid IFSC code (e.g., SBIN0123456)';
+      return 'Please enter a valid IFSC code (e.g., SBIN0999999)';
     }
     return null;
   }
@@ -287,7 +298,7 @@ WorkerApplicationEntity createInitialWorkerApplication() {
       pincode: '',
     ),
     skills: SkillsEntity(
-      experienceYears: 0,
+      experienceYears: '',
       skills: [],
     ),
     bankingInfo: BankingInfoEntity(

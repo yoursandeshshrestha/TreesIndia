@@ -1,7 +1,7 @@
 import '../../domain/entities/skills_entity.dart';
 
 class SkillsModel {
-  final int experienceYears;
+  final String? experienceYears;
   final List<String> skills;
 
   const SkillsModel({
@@ -11,7 +11,7 @@ class SkillsModel {
 
   factory SkillsModel.fromJson(Map<String, dynamic> json) {
     return SkillsModel(
-      experienceYears: json['experienceYears'] ?? 0,
+      experienceYears: json['experienceYears']?.toString(),
       skills: List<String>.from(json['skills'] ?? []),
     );
   }
@@ -38,7 +38,7 @@ class SkillsModel {
   }
 
   SkillsModel copyWith({
-    int? experienceYears,
+    String? experienceYears,
     List<String>? skills,
   }) {
     return SkillsModel(

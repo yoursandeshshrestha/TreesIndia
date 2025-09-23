@@ -30,15 +30,15 @@ class WorkerApplicationModel {
 
   factory WorkerApplicationModel.fromJson(Map<String, dynamic> json) {
     return WorkerApplicationModel(
-      contactInfo: ContactInfoModel.fromJson(json['contactInfo'] ?? {}),
+      contactInfo: ContactInfoModel.fromJson(json['contact_info'] ?? {}),
       documents: DocumentsModel.fromJson(json['documents'] ?? {}),
       address: AddressModel.fromJson(json['address'] ?? {}),
       skills: SkillsModel.fromJson(json['skills'] ?? {}),
-      bankingInfo: BankingInfoModel.fromJson(json['bankingInfo'] ?? {}),
+      bankingInfo: BankingInfoModel.fromJson(json['banking_info'] ?? {}),
       status: json['status'],
-      id: json['id'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      id: json['id']?.toString(),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 

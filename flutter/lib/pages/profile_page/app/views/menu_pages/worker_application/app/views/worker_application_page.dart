@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
@@ -13,6 +14,7 @@ import 'steps/address_step.dart';
 import 'steps/skills_step.dart';
 import 'steps/banking_step.dart';
 import 'steps/review_step.dart';
+import 'widgets/worker_application_status_widget.dart';
 
 class WorkerApplicationPage extends ConsumerStatefulWidget {
   const WorkerApplicationPage({super.key});
@@ -24,40 +26,129 @@ class WorkerApplicationPage extends ConsumerStatefulWidget {
 
 class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
   @override
+  void initState() {
+    super.initState();
+    // Load existing application when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(workerApplicationNotifierProvider.notifier)
+          .loadExistingApplication();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final workerApplicationState = ref.watch(workerApplicationNotifierProvider);
 
-    return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Apply for worker',
-        backgroundColor: AppColors.white,
-        iconColor: AppColors.brandNeutral800,
-        titleColor: AppColors.brandNeutral800,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicator placeholder
-            WorkerFormStepIndicator(
-              currentStep: workerApplicationState.currentStepIndex,
-              totalSteps: workerApplicationState.totalSteps,
-              stepCompletion: workerApplicationState.stepCompletion,
-            ),
+    ref.listen<WorkerApplicationState>(
+      workerApplicationNotifierProvider,
+      (previous, next) {
+        if (next.emailError != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            ErrorSnackbarWidget(message: next.emailError!).createSnackBar(),
+          );
+          // } else if (next.errorMessage != null) {
+          //   ScaffoldMessenger.of(context).showSnackBar(
+          //     ErrorSnackbarWidget(message: next.errorMessage!).createSnackBar(),
 
-            // Form content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: _buildCurrentStepContent(workerApplicationState),
-              ),
-            ),
+          //   );
+        }
+      },
+    );
 
-            // Navigation buttons
-            _buildNavigationButtons(workerApplicationState),
-          ],
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        // ref.invalidate(workerApplicationNotifierProvider);
+      },
+      child: Scaffold(
+        appBar: const CustomAppBar(
+          title: 'Apply for worker',
+          backgroundColor: AppColors.white,
+          iconColor: AppColors.brandNeutral800,
+          titleColor: AppColors.brandNeutral800,
+        ),
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: _buildBody(workerApplicationState),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(WorkerApplicationState state) {
+    if (state.status == WorkerApplicationStatus.loading &&
+        !state.isSubmitting) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColors.stateGreen600),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Text(
+              'Loading your application...',
+              style: TextStyle(
+                color: AppColors.brandNeutral600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.status == WorkerApplicationStatus.loading && state.isSubmitting) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColors.stateGreen600),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Text(
+              'Submitting your application...',
+              style: TextStyle(
+                color: AppColors.brandNeutral600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.shouldShowStatusWidget) {
+      return SingleChildScrollView(
+        child: WorkerApplicationStatusWidget(
+          application: state.existingApplication!,
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Progress indicator placeholder
+        WorkerFormStepIndicator(
+          currentStep: state.currentStepIndex,
+          totalSteps: state.totalSteps,
+          stepCompletion: state.stepCompletion,
+        ),
+
+        // Form content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: _buildCurrentStepContent(state),
+          ),
+        ),
+
+        // Navigation buttons
+        _buildNavigationButtons(state),
+      ],
     );
   }
 

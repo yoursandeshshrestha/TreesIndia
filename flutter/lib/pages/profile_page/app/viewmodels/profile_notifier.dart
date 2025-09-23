@@ -104,12 +104,18 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       debugPrint('Error updating profile: $e');
       if (!_mounted) return;
 
+      final message = e.toString().replaceFirst('Exception: ', '');
       state = state.copyWith(
         isUpdatingProfile: false,
-        errorMessage: 'Failed to update profile. Please try again.',
+        errorMessage: message.isNotEmpty
+            ? message
+            : 'Failed to update profile. Please try again.',
       );
-      _notificationService
-          .showErrorSnackBar('Failed to update profile. Please try again.');
+      _notificationService.showErrorSnackBar(
+        message.isNotEmpty
+            ? message
+            : 'Failed to update profile. Please try again.',
+      );
     }
   }
 

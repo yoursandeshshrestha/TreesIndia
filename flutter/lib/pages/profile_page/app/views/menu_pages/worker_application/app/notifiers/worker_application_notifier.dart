@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/utils/services/location_onboarding_service.dart';
 import '../states/worker_application_state.dart';
 import '../../domain/usecases/submit_worker_application_usecase.dart';
 import '../../domain/usecases/get_user_application_status_usecase.dart';
@@ -6,17 +8,17 @@ import '../../domain/usecases/get_user_application_status_usecase.dart';
 class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
   final SubmitWorkerApplicationUsecase submitWorkerApplicationUsecase;
   final GetUserApplicationStatusUsecase getUserApplicationStatusUsecase;
+  final LocationOnboardingService locationOnboardingService;
 
   WorkerApplicationNotifier({
     required this.submitWorkerApplicationUsecase,
     required this.getUserApplicationStatusUsecase,
+    required this.locationOnboardingService,
   }) : super(WorkerApplicationState(
           formData: createInitialWorkerApplication(),
-        )) {
-    _loadExistingApplication();
-  }
+        ));
 
-  Future<void> _loadExistingApplication() async {
+  Future<void> loadExistingApplication() async {
     try {
       state = state.copyWith(status: WorkerApplicationStatus.loading);
       final existingApp = await getUserApplicationStatusUsecase();
@@ -46,8 +48,9 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
       alternativePhone: alternativePhone,
     );
 
-    final updatedFormData = state.formData.copyWith(contactInfo: updatedContactInfo);
-    state = state.copyWith(formData: updatedFormData);
+    final updatedFormData =
+        state.formData.copyWith(contactInfo: updatedContactInfo);
+    state = state.copyWith(formData: updatedFormData, emailError: null);
     _updateStepCompletion();
   }
 
@@ -72,7 +75,8 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
       removePoliceVerification: removePoliceVerification,
     );
 
-    final updatedFormData = state.formData.copyWith(documents: updatedDocuments);
+    final updatedFormData =
+        state.formData.copyWith(documents: updatedDocuments);
     state = state.copyWith(formData: updatedFormData);
     _updateStepCompletion();
   }
@@ -85,20 +89,21 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
     String? landmark,
   }) {
     final updatedAddress = this.state.formData.address.copyWith(
-      street: street,
-      city: city,
-      state: state,
-      pincode: pincode,
-      landmark: landmark,
-    );
+          street: street,
+          city: city,
+          state: state,
+          pincode: pincode,
+          landmark: landmark,
+        );
 
-    final updatedFormData = this.state.formData.copyWith(address: updatedAddress);
+    final updatedFormData =
+        this.state.formData.copyWith(address: updatedAddress);
     this.state = this.state.copyWith(formData: updatedFormData);
     _updateStepCompletion();
   }
 
   void updateSkills({
-    int? experienceYears,
+    String? experienceYears,
     List<String>? skills,
   }) {
     final updatedSkills = state.formData.skills.copyWith(
@@ -124,7 +129,8 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
       bankName: bankName,
     );
 
-    final updatedFormData = state.formData.copyWith(bankingInfo: updatedBankingInfo);
+    final updatedFormData =
+        state.formData.copyWith(bankingInfo: updatedBankingInfo);
     state = state.copyWith(formData: updatedFormData);
     _updateStepCompletion();
   }
@@ -151,12 +157,18 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
 
   void _updateStepCompletion() {
     final stepCompletion = <WorkerApplicationStep, bool>{
-      WorkerApplicationStep.personalInfo: WorkerApplicationValidation.isPersonalInfoComplete(state.formData),
-      WorkerApplicationStep.documents: WorkerApplicationValidation.areDocumentsComplete(state.formData),
-      WorkerApplicationStep.address: WorkerApplicationValidation.isAddressComplete(state.formData),
-      WorkerApplicationStep.skills: WorkerApplicationValidation.areSkillsComplete(state.formData),
-      WorkerApplicationStep.banking: WorkerApplicationValidation.isBankingInfoComplete(state.formData),
-      WorkerApplicationStep.review: WorkerApplicationValidation.isFormComplete(state.formData),
+      WorkerApplicationStep.personalInfo:
+          WorkerApplicationValidation.isPersonalInfoComplete(state.formData),
+      WorkerApplicationStep.documents:
+          WorkerApplicationValidation.areDocumentsComplete(state.formData),
+      WorkerApplicationStep.address:
+          WorkerApplicationValidation.isAddressComplete(state.formData),
+      WorkerApplicationStep.skills:
+          WorkerApplicationValidation.areSkillsComplete(state.formData),
+      WorkerApplicationStep.banking:
+          WorkerApplicationValidation.isBankingInfoComplete(state.formData),
+      WorkerApplicationStep.review:
+          WorkerApplicationValidation.isFormComplete(state.formData),
     };
 
     state = state.copyWith(stepCompletion: stepCompletion);
@@ -179,6 +191,25 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
         isSubmitting: false,
         existingApplication: result,
       );
+
+      // After successful submission, load the complete application status
+      // This will get the full application data including user and worker details
+      await loadExistingApplication();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400 &&
+          e.response?.data['error'] == 'email already exists') {
+        state = state.copyWith(
+          status: WorkerApplicationStatus.failure,
+          isSubmitting: false,
+          emailError: 'This email is already in use. Please use a different email.',
+        );
+      } else {
+        state = state.copyWith(
+          status: WorkerApplicationStatus.failure,
+          isSubmitting: false,
+          errorMessage: e.toString(),
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         status: WorkerApplicationStatus.failure,
@@ -189,7 +220,8 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
   }
 
   void clearError() {
-    state = state.copyWith(errorMessage: null, status: WorkerApplicationStatus.initial);
+    state = state.copyWith(
+        errorMessage: null, status: WorkerApplicationStatus.initial);
   }
 
   void resetForm() {
@@ -197,5 +229,41 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
       formData: createInitialWorkerApplication(),
       currentStep: WorkerApplicationStep.personalInfo,
     );
+  }
+
+  Future<void> getCurrentLocation() async {
+    try {
+      state = state.copyWith(status: WorkerApplicationStatus.loading);
+
+      final location = await locationOnboardingService.getSavedLocation();
+
+      if (location != null) {
+        final updatedFormData = state.formData.copyWith(
+          address: state.formData.address.copyWith(
+            street: location.address.isNotEmpty ? location.address : '',
+            city: location.city ?? '',
+            state: location.state ?? '',
+            pincode: location.postalCode ?? '',
+            landmark: '',
+          ),
+        );
+
+        state = state.copyWith(
+          status: WorkerApplicationStatus.initial,
+          formData: updatedFormData,
+          errorMessage: null,
+        );
+      } else {
+        state = state.copyWith(
+          status: WorkerApplicationStatus.failure,
+          errorMessage: 'Could not determine address from current location.',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status: WorkerApplicationStatus.failure,
+        errorMessage: 'Failed to get current location: ${e.toString()}',
+      );
+    }
   }
 }
