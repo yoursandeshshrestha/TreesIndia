@@ -88,6 +88,10 @@ class ApiEndpoints {
     markAllNotificationsAsRead,
     submitWorkerApplication,
     getUserApplicationStatus,
+    getUserNotificationSettings,
+    updateUserNotificationSettings,
+    requestDeleteOtp,
+    deleteUserAccount,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -508,6 +512,27 @@ class ApiEndpoints {
 
   static ApiEndpoint getUserApplicationStatus = ApiEndpoint(
     path: '/role-applications/me',
+    requiresAuth: true,
+  );
+
+  // User Settings Endpoints
+  static ApiEndpoint getUserNotificationSettings = ApiEndpoint(
+    path: '/users/notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint updateUserNotificationSettings = ApiEndpoint(
+    path: '/users/notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint requestDeleteOtp = ApiEndpoint(
+    path: '/users/request-delete-otp',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint deleteUserAccount = ApiEndpoint(
+    path: '/users/account',
     requiresAuth: true,
   );
 
