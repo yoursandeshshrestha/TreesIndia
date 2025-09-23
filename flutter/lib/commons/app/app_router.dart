@@ -29,14 +29,10 @@ import 'package:trees_india/pages/notifications_page/app/views/notifications_pag
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addresses/app/views/manage_addresses_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_payment_methods/app/views/manage_payment_methods_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_plans/app/views/my_plans_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_rating/app/views/my_rating_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/subscription_plans_listing_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/my_vendor_profiles_page.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/plus_membership/app/views/plus_membership_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/settings/app/views/settings_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/app/views/wallet_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/worker_application_page.dart';
@@ -318,26 +314,13 @@ class AppRouter {
               name: 'EditProfilePage',
               builder: (context, state) => const EditProfilePage(),
             ),
-            GoRoute(
-              path: '/my-plans',
-              name: 'MyPlansPage',
-              builder: (context, state) => const MyPlansPage(),
-            ),
+
             GoRoute(
               path: '/wallet',
               name: 'WalletPage',
               builder: (context, state) => const WalletPage(),
             ),
-            GoRoute(
-              path: '/plus-membership',
-              name: 'PlusMembershipPage',
-              builder: (context, state) => const PlusMembershipPage(),
-            ),
-            GoRoute(
-              path: '/my-rating',
-              name: 'MyRatingPage',
-              builder: (context, state) => const MyRatingPage(),
-            ),
+
             GoRoute(
               path: '/manage-addresses',
               name: 'ManageAddressesPage',
@@ -368,11 +351,7 @@ class AppRouter {
               name: 'SubscriptionPlansListingPage',
               builder: (context, state) => const SubscriptionPlansListingPage(),
             ),
-            GoRoute(
-              path: '/manage-payment-methods',
-              name: 'ManagePaymentMethodsPage',
-              builder: (context, state) => const ManagePaymentMethodsPage(),
-            ),
+
             GoRoute(
               path: '/settings',
               name: 'SettingsPage',
