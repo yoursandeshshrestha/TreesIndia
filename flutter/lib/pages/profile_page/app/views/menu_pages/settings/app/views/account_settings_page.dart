@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/presenters/providers/user_settings_provider.dart';
 import 'package:trees_india/commons/presenters/viewmodels/user_settings_viewmodel/user_settings_notifier.dart';
 import 'otp_bottom_sheet.dart';
@@ -23,6 +25,15 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
   Widget build(BuildContext context) {
     final userSettingsState = ref.watch(userSettingsProvider);
     final userSettingsNotifier = ref.read(userSettingsProvider.notifier);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return PopScope(
       canPop: false,

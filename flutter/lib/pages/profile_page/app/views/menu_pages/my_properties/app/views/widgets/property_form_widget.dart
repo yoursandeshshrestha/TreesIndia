@@ -58,7 +58,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   @override
   Widget build(BuildContext context) {
     final propertyFormState = ref.watch(propertyFormNotifierProvider);
-        final isConnected = ref.watch(connectivityNotifierProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(notificationServiceProvider).showOfflineMessage(
