@@ -21,6 +21,7 @@ import { useDispatch } from "react-redux";
 import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import { openAuthModal } from "@/store/slices/authModalSlice";
 import { useAuth } from "@/hooks/useAuth";
+import { CallMaskingButton } from "@/components/CallMasking";
 
 export default function WorkerDetailPage() {
   const params = useParams();
@@ -415,7 +416,7 @@ export default function WorkerDetailPage() {
 
               {/* Action Buttons */}
               {!isCurrentUserWorker && (
-                <div className="bg-white rounded-xl p-6">
+                <div className="bg-white rounded-xl p-6 space-y-3">
                   <button
                     onClick={handleChatClick}
                     className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
@@ -423,6 +424,16 @@ export default function WorkerDetailPage() {
                     <MessageCircle className="w-5 h-5 mr-2" />
                     Chat
                   </button>
+                  
+                  <CallMaskingButton
+                    fromNumber={user?.phone || ""}
+                    toNumber={worker.contact_info?.phone || worker.user?.phone || ""}
+                    disabled={!user?.phone || !(worker.contact_info?.phone || worker.user?.phone)}
+                    variant="outline"
+                    size="lg"
+                    showLabel={true}
+                    className="w-full"
+                  />
                 </div>
               )}
             </div>
