@@ -154,8 +154,8 @@ class PropertyDetailsPage extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SvgPicture.asset(
-                            'assets/logo/logo.svg',
+                          Image.asset(
+                            'assets/logo/logo.png',
                             width: 16,
                             height: 16,
                           ),

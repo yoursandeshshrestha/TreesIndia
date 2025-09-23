@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
@@ -48,8 +49,114 @@ import 'package:trees_india/pages/services_page/app/views/services_page.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import 'package:trees_india/pages/splash_screen/app/views/splash_screen.dart';
 import 'package:trees_india/pages/welcome_page/app/views/welcome_page.dart';
+import 'package:trees_india/commons/components/snackbar/custom_exit_snackbar.dart';
 
 import './route_tracker.dart';
+
+// Base route widget - invisible foundation for navigation stack
+class BaseRouteWidget extends StatefulWidget {
+  const BaseRouteWidget({super.key});
+
+  @override
+  State<BaseRouteWidget> createState() => _BaseRouteWidgetState();
+}
+
+class _BaseRouteWidgetState extends State<BaseRouteWidget> {
+  @override
+  void initState() {
+    super.initState();
+
+    // This should never be visible - immediately redirect to home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('AppRouter: 📍 BaseRouteWidget redirecting to /home');
+      context.go('/location-loading');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink(); // Empty widget
+  }
+}
+
+// Custom back button handler for main pages
+class MainPageWrapper extends StatefulWidget {
+  final Widget child;
+  final String routePath;
+
+  const MainPageWrapper({
+    super.key,
+    required this.child,
+    required this.routePath,
+  });
+
+  @override
+  State<MainPageWrapper> createState() => _MainPageWrapperState();
+}
+
+class _MainPageWrapperState extends State<MainPageWrapper> {
+  DateTime? _lastBackPressTime;
+  Timer? _exitTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint(
+        'AppRouter: 🔙 MainPageWrapper initialized for ${widget.routePath}');
+  }
+
+  @override
+  void dispose() {
+    _exitTimer?.cancel();
+    super.dispose();
+  }
+
+  void _handleMainPageBackPress() {
+    final now = DateTime.now();
+    debugPrint(
+        'AppRouter: 🔄 HandleMainPageBackPress called for ${widget.routePath}. _lastBackPressTime: $_lastBackPressTime');
+
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomExitSnackbar.create(),
+      );
+
+      _exitTimer?.cancel();
+      _exitTimer = Timer(const Duration(seconds: 2), () {
+        if (mounted) {
+          debugPrint(
+              'AppRouter: ⏰ Timer expired - resetting exit state for ${widget.routePath}');
+          _lastBackPressTime = null;
+        }
+      });
+    } else {
+      debugPrint(
+          'AppRouter: 🚪 Second press within 2s from ${widget.routePath} - allowing exit');
+      _exitTimer?.cancel();
+      SystemNavigator.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false, // We'll handle all back button presses ourselves
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        debugPrint(
+            'AppRouter: 🔙 PopScope triggered for ${widget.routePath}! didPop: $didPop');
+
+        if (!didPop) {
+          // Apply double-tap-to-exit behavior to all main pages
+          _handleMainPageBackPress();
+        }
+      },
+      child: widget.child,
+    );
+  }
+}
 
 // auth_provider.dart
 
@@ -127,11 +234,10 @@ class AppRouter {
                 // Allow access to location onboarding if user explicitly navigates there
                 // (removed automatic redirect to home for non-first-login users)
 
-                // If user IS authenticated and on public route, go to location loading
+                // If user IS authenticated and on public route, go to base route (which will redirect to home)
                 if (isPublicRoute) {
-                  debugPrint(
-                      '✅ User authenticated, redirecting to location setup');
-                  return '/location-loading';
+                  debugPrint('✅ User authenticated, redirecting to base route');
+                  return '/base';
                 }
               } catch (e) {
                 debugPrint('⚠️ Error checking first login status: $e');
@@ -142,6 +248,13 @@ class AppRouter {
             return null;
           },
           routes: [
+            // Hidden base route to create navigation stack foundation
+            GoRoute(
+              path: '/base',
+              name: 'BaseRoute',
+              builder: (context, state) => const BaseRouteWidget(),
+            ),
+
             // Public Routes
             GoRoute(
               path: '/',
@@ -182,250 +295,218 @@ class AppRouter {
               builder: (context, state) => const LocationLoadingPage(),
             ),
 
-            // Protected Routes (Requires authentication)
-
-            ShellRoute(
-              observers: [
-                NavigatorObserverWrapper(
-                  onRouteChanged: (previous, current) {},
-                ),
-              ],
-              redirect: (context, state) {
-                // Custom route change logging with push/pop detection
-                if (currentRoutePath != null &&
-                    currentRoutePath != state.fullPath) {
-                  // This is a push - add to stack
-                  if (currentRoutePath != null) {
-                    routeStack.add(currentRoutePath!);
-                  }
-                  debugPrint(
-                      '➡️ Pushed from $currentRoutePath to ${state.fullPath}');
-                } else if (currentRoutePath == null) {
-                  // Initial navigation
-                  debugPrint('🏁 Initial navigation to ${state.fullPath}');
-                }
-                currentRoutePath = state.fullPath;
-                return null;
+            // Protected Routes (Requires authentication) - converted from ShellRoute
+            GoRoute(
+              path: '/home',
+              name: 'HomePage',
+              builder: (context, state) => const MainPageWrapper(
+                routePath: '/home',
+                child: HomePage(),
+              ),
+            ),
+            GoRoute(
+              path: '/search',
+              name: 'SearchPage',
+              builder: (context, state) => const SearchPage(),
+            ),
+            GoRoute(
+              path: '/profile',
+              name: 'ProfilePage',
+              builder: (context, state) => const MainPageWrapper(
+                routePath: '/profile',
+                child: ProfilePage(),
+              ),
+            ),
+            GoRoute(
+              path: '/edit-profile',
+              name: 'EditProfilePage',
+              builder: (context, state) => const EditProfilePage(),
+            ),
+            GoRoute(
+              path: '/my-plans',
+              name: 'MyPlansPage',
+              builder: (context, state) => const MyPlansPage(),
+            ),
+            GoRoute(
+              path: '/wallet',
+              name: 'WalletPage',
+              builder: (context, state) => const WalletPage(),
+            ),
+            GoRoute(
+              path: '/plus-membership',
+              name: 'PlusMembershipPage',
+              builder: (context, state) => const PlusMembershipPage(),
+            ),
+            GoRoute(
+              path: '/my-rating',
+              name: 'MyRatingPage',
+              builder: (context, state) => const MyRatingPage(),
+            ),
+            GoRoute(
+              path: '/manage-addresses',
+              name: 'ManageAddressesPage',
+              builder: (context, state) => const ManageAddressesPage(),
+            ),
+            GoRoute(
+              path: '/my-properties',
+              name: 'MyPropertiesPage',
+              builder: (context, state) => const MyPropertiesPage(),
+            ),
+            GoRoute(
+              path: '/my-vendor-profiles',
+              name: 'MyVendorProfilesPage',
+              builder: (context, state) => const MyVendorProfilesPage(),
+            ),
+            GoRoute(
+              path: '/worker-application',
+              name: 'WorkerApplicationPage',
+              builder: (context, state) => const WorkerApplicationPage(),
+            ),
+            GoRoute(
+              path: '/my-subscription',
+              name: 'MySubscriptionPage',
+              builder: (context, state) => const MySubscriptionPage(),
+            ),
+            GoRoute(
+              path: '/subscription-plans',
+              name: 'SubscriptionPlansListingPage',
+              builder: (context, state) => const SubscriptionPlansListingPage(),
+            ),
+            GoRoute(
+              path: '/manage-payment-methods',
+              name: 'ManagePaymentMethodsPage',
+              builder: (context, state) => const ManagePaymentMethodsPage(),
+            ),
+            GoRoute(
+              path: '/settings',
+              name: 'SettingsPage',
+              builder: (context, state) => const SettingsPage(),
+            ),
+            GoRoute(
+              path: '/about-trees-india',
+              name: 'AboutTreesIndiaPage',
+              builder: (context, state) => const AboutTreesIndiaPage(),
+            ),
+            GoRoute(
+              path: '/services/:categoryId/:subcategoryId',
+              name: 'ServicesPage',
+              builder: (context, state) {
+                final categoryId = state.pathParameters['categoryId']!;
+                final subcategoryId = state.pathParameters['subcategoryId']!;
+                return ServicesPage(
+                  categoryId: categoryId,
+                  subcategoryId: subcategoryId,
+                );
               },
-              builder: (context, state, child) {
-                return ProviderScope(child: Builder(
-                  builder: (context) {
-                    final authState = ref.read(authProvider);
-                    final isAuthenticated = authState.isLoggedIn;
-
-                    if (!isAuthenticated) {
-                      debugPrint(
-                          '🔒 ShellRoute: User not authenticated, showing LoginPage');
-                      return const LoginPage();
-                    }
-
-                    return child;
-                  },
-                ));
+            ),
+            GoRoute(
+              path: '/service-detail/:serviceId',
+              name: 'ServiceDetailPage',
+              builder: (context, state) {
+                final serviceData = state.extra as Map<String, dynamic>;
+                final service = serviceData['service'] as ServiceDetailEntity;
+                return ServiceDetailPage(service: service);
               },
-              routes: [
-                GoRoute(
-                  path: '/home',
-                  name: 'HomePage',
-                  builder: (context, state) => const HomePage(),
-                ),
-                GoRoute(
-                  path: '/search',
-                  name: 'SearchPage',
-                  builder: (context, state) => const SearchPage(),
-                ),
-                GoRoute(
-                  path: '/profile',
-                  name: 'ProfilePage',
-                  builder: (context, state) => const ProfilePage(),
-                ),
-                GoRoute(
-                  path: '/edit-profile',
-                  name: 'EditProfilePage',
-                  builder: (context, state) => const EditProfilePage(),
-                ),
-                GoRoute(
-                  path: '/my-plans',
-                  name: 'MyPlansPage',
-                  builder: (context, state) => const MyPlansPage(),
-                ),
-                GoRoute(
-                  path: '/wallet',
-                  name: 'WalletPage',
-                  builder: (context, state) => const WalletPage(),
-                ),
-                GoRoute(
-                  path: '/plus-membership',
-                  name: 'PlusMembershipPage',
-                  builder: (context, state) => const PlusMembershipPage(),
-                ),
-                GoRoute(
-                  path: '/my-rating',
-                  name: 'MyRatingPage',
-                  builder: (context, state) => const MyRatingPage(),
-                ),
-                GoRoute(
-                  path: '/manage-addresses',
-                  name: 'ManageAddressesPage',
-                  builder: (context, state) => const ManageAddressesPage(),
-                ),
-                GoRoute(
-                  path: '/my-properties',
-                  name: 'MyPropertiesPage',
-                  builder: (context, state) => const MyPropertiesPage(),
-                ),
-                GoRoute(
-                  path: '/my-vendor-profiles',
-                  name: 'MyVendorProfilesPage',
-                  builder: (context, state) => const MyVendorProfilesPage(),
-                ),
-                GoRoute(
-                  path: '/worker-application',
-                  name: 'WorkerApplicationPage',
-                  builder: (context, state) => const WorkerApplicationPage(),
-                ),
-                GoRoute(
-                  path: '/my-subscription',
-                  name: 'MySubscriptionPage',
-                  builder: (context, state) => const MySubscriptionPage(),
-                ),
-                GoRoute(
-                  path: '/subscription-plans',
-                  name: 'SubscriptionPlansListingPage',
-                  builder: (context, state) =>
-                      const SubscriptionPlansListingPage(),
-                ),
-                GoRoute(
-                  path: '/manage-payment-methods',
-                  name: 'ManagePaymentMethodsPage',
-                  builder: (context, state) => const ManagePaymentMethodsPage(),
-                ),
-                GoRoute(
-                  path: '/settings',
-                  name: 'SettingsPage',
-                  builder: (context, state) => const SettingsPage(),
-                ),
-                GoRoute(
-                  path: '/about-trees-india',
-                  name: 'AboutTreesIndiaPage',
-                  builder: (context, state) => const AboutTreesIndiaPage(),
-                ),
-                GoRoute(
-                  path: '/services/:categoryId/:subcategoryId',
-                  name: 'ServicesPage',
-                  builder: (context, state) {
-                    final categoryId = state.pathParameters['categoryId']!;
-                    final subcategoryId =
-                        state.pathParameters['subcategoryId']!;
-                    return ServicesPage(
-                      categoryId: categoryId,
-                      subcategoryId: subcategoryId,
-                    );
-                  },
-                ),
-                GoRoute(
-                  path: '/service-detail/:serviceId',
-                  name: 'ServiceDetailPage',
-                  builder: (context, state) {
-                    final serviceData = state.extra as Map<String, dynamic>;
-                    final service =
-                        serviceData['service'] as ServiceDetailEntity;
-                    return ServiceDetailPage(service: service);
-                  },
-                ),
-                GoRoute(
-                  path: '/bookings',
-                  name: 'BookingsListingPage',
-                  builder: (context, state) => const BookingsListingPage(),
-                ),
-                GoRoute(
-                  path: '/service/:serviceId/booking',
-                  name: 'BookingPage',
-                  builder: (context, state) {
-                    final serviceData = state.extra as Map<String, dynamic>;
-                    final service =
-                        serviceData['service'] as ServiceDetailEntity;
-                    return BookingPage(service: service);
-                  },
-                ),
-                GoRoute(
-                  path: '/myworks',
-                  name: 'MyWorksPage',
-                  builder: (context, state) => const MyWorksPage(),
-                ),
-                GoRoute(
-                  path: '/conversations',
-                  name: 'ConversationsPage',
-                  builder: (context, state) => const ConversationsPage(),
-                ),
-                GoRoute(
-                  path: '/conversations/:conversationId',
-                  name: 'ConversationPage',
-                  builder: (context, state) {
-                    final conversationId =
-                        int.parse(state.pathParameters['conversationId']!);
-                    return ConversationPage(
-                      conversationId: conversationId,
-                    );
-                  },
-                ),
-                GoRoute(
-                  path: '/marketplace/rental-properties',
-                  name: 'RentalAndPropertiesPage',
-                  builder: (context, state) => const RentalAndPropertiesPage(),
-                ),
-                GoRoute(
-                    path: '/rental-properties/:propertyId',
-                    name: 'PropertyDetailsPage',
-                    builder: (context, state) {
-                      final propertyId = state.pathParameters['propertyId']!;
-                      return PropertyDetailsPage(propertyId: propertyId);
-                    }),
-                GoRoute(
-                  path: '/marketplace/projects',
-                  name: 'ProjectsPage',
-                  builder: (context, state) => const MarketplaceProjectsPage(),
-                ),
-                GoRoute(
-                  path: '/projects/:projectId',
-                  name: 'ProjectDetailsPage',
-                  builder: (context, state) {
-                    final projectId = state.pathParameters['projectId']!;
-                    return ProjectDetailsPage(projectId: projectId);
-                  },
-                ),
-                GoRoute(
-                  path: '/marketplace/vendors',
-                  name: 'VendorsPage',
-                  builder: (context, state) => const MarketplaceVendorsPage(),
-                ),
-                GoRoute(
-                  path: '/vendors/:vendorId',
-                  name: 'VendorDetailsPage',
-                  builder: (context, state) {
-                    final vendorId = state.pathParameters['vendorId']!;
-                    return VendorDetailsPage(vendorId: vendorId);
-                  },
-                ),
-                GoRoute(
-                  path: '/marketplace/workers',
-                  name: 'WorkersPage',
-                  builder: (context, state) => const MarketplaceWorkersPage(),
-                ),
-                GoRoute(
-                  path: '/workers/:workerId',
-                  name: 'WorkerDetailsPage',
-                  builder: (context, state) {
-                    final workerId = state.pathParameters['workerId']!;
-                    return WorkerDetailsPage(workerId: workerId);
-                  },
-                ),
-                GoRoute(
-                  path: '/notifications',
-                  name: 'NotificationsPage',
-                  builder: (context, state) => const NotificationsPage(),
-                ),
-              ],
+            ),
+            GoRoute(
+              path: '/bookings',
+              name: 'BookingsListingPage',
+              builder: (context, state) => const MainPageWrapper(
+                routePath: '/bookings',
+                child: BookingsListingPage(),
+              ),
+            ),
+            GoRoute(
+              path: '/service/:serviceId/booking',
+              name: 'BookingPage',
+              builder: (context, state) {
+                final serviceData = state.extra as Map<String, dynamic>;
+                final service = serviceData['service'] as ServiceDetailEntity;
+                return BookingPage(service: service);
+              },
+            ),
+            GoRoute(
+              path: '/myworks',
+              name: 'MyWorksPage',
+              builder: (context, state) => const MainPageWrapper(
+                routePath: '/myworks',
+                child: MyWorksPage(),
+              ),
+            ),
+            GoRoute(
+              path: '/conversations',
+              name: 'ConversationsPage',
+              builder: (context, state) => const MainPageWrapper(
+                routePath: '/conversations',
+                child: ConversationsPage(),
+              ),
+            ),
+            GoRoute(
+              path: '/conversations/:conversationId',
+              name: 'ConversationPage',
+              builder: (context, state) {
+                final conversationId =
+                    int.parse(state.pathParameters['conversationId']!);
+                return ConversationPage(
+                  conversationId: conversationId,
+                );
+              },
+            ),
+            GoRoute(
+              path: '/marketplace/rental-properties',
+              name: 'RentalAndPropertiesPage',
+              builder: (context, state) => const RentalAndPropertiesPage(),
+            ),
+            GoRoute(
+                path: '/rental-properties/:propertyId',
+                name: 'PropertyDetailsPage',
+                builder: (context, state) {
+                  final propertyId = state.pathParameters['propertyId']!;
+                  return PropertyDetailsPage(propertyId: propertyId);
+                }),
+            GoRoute(
+              path: '/marketplace/projects',
+              name: 'ProjectsPage',
+              builder: (context, state) => const MarketplaceProjectsPage(),
+            ),
+            GoRoute(
+              path: '/projects/:projectId',
+              name: 'ProjectDetailsPage',
+              builder: (context, state) {
+                final projectId = state.pathParameters['projectId']!;
+                return ProjectDetailsPage(projectId: projectId);
+              },
+            ),
+            GoRoute(
+              path: '/marketplace/vendors',
+              name: 'VendorsPage',
+              builder: (context, state) => const MarketplaceVendorsPage(),
+            ),
+            GoRoute(
+              path: '/vendors/:vendorId',
+              name: 'VendorDetailsPage',
+              builder: (context, state) {
+                final vendorId = state.pathParameters['vendorId']!;
+                return VendorDetailsPage(vendorId: vendorId);
+              },
+            ),
+            GoRoute(
+              path: '/marketplace/workers',
+              name: 'WorkersPage',
+              builder: (context, state) => const MarketplaceWorkersPage(),
+            ),
+            GoRoute(
+              path: '/workers/:workerId',
+              name: 'WorkerDetailsPage',
+              builder: (context, state) {
+                final workerId = state.pathParameters['workerId']!;
+                return WorkerDetailsPage(workerId: workerId);
+              },
+            ),
+            GoRoute(
+              path: '/notifications',
+              name: 'NotificationsPage',
+              builder: (context, state) => const NotificationsPage(),
             ),
           ],
         );

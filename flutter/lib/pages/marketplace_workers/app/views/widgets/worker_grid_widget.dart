@@ -240,8 +240,8 @@ class _WorkerCard extends ConsumerWidget {
                         Row(
                           children: [
                             worker.workerType == 'treesindia_worker'
-                                ? SvgPicture.asset(
-                                    'assets/logo/logo.svg',
+                                ? Image.asset(
+                                    'assets/logo/logo.png',
                                     width: 14,
                                     height: 14,
                                   )

@@ -235,8 +235,8 @@ class WorkerDetailsPage extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 worker.workerType == 'treesindia_worker'
-                    ? SvgPicture.asset(
-                        'assets/logo/logo.svg',
+                    ? Image.asset(
+                        'assets/logo/logo.png',
                         width: 16,
                         height: 16,
                       )

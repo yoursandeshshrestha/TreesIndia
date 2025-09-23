@@ -125,7 +125,9 @@ class ConversationWebSocketService {
     try {
       final jsonData = json.decode(data as String);
       final message = ConversationWebSocketMessage.fromJson(jsonData);
-      _messageController.add(message);
+      if (!_messageController.isClosed) {
+        _messageController.add(message);
+      }
 
       // Handle ping/pong
       if (message.type == 'ping') {
@@ -221,7 +223,9 @@ class ConversationWebSocketService {
 
   void _updateStatus(ConversationWebSocketConnectionStatus status) {
     _currentStatus = status;
-    _statusController.add(status);
+    if (!_statusController.isClosed) {
+      _statusController.add(status);
+    }
   }
 
   bool sendMessage(ConversationWebSocketMessage message) {
