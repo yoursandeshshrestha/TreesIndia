@@ -19,8 +19,6 @@ class MainLayoutWidget extends ConsumerStatefulWidget {
 }
 
 class _MainLayoutWidgetState extends ConsumerState<MainLayoutWidget> {
-
-
   void _onNavItemTapped(int index) {
     if (index == widget.currentIndex) return;
 
@@ -41,7 +39,7 @@ class _MainLayoutWidgetState extends ConsumerState<MainLayoutWidget> {
         break;
       case 2:
         // Navigate to chats (placeholder)
-        context.go('/chats');
+        context.go('/conversations');
         break;
       case 3:
         context.go('/profile');

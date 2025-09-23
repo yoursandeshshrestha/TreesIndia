@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+import 'package:trees_india/pages/chats_page/app/providers/unread_count_provider.dart';
 
 class BottomNavBarWidget extends ConsumerWidget {
   final int currentIndex;
@@ -17,6 +18,7 @@ class BottomNavBarWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileState = ref.watch(profileProvider);
     final userType = profileState.userType;
+    final unreadCountState = ref.watch(unreadCountProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -61,6 +63,8 @@ class BottomNavBarWidget extends ConsumerWidget {
                 icon: Icons.chat_bubble_outline,
                 label: 'Chat',
                 isActive: currentIndex == 2,
+                hasNotification: unreadCountState.totalUnreadCount > 0,
+                notificationCount: unreadCountState.totalUnreadCount,
               ),
               _buildNavItem(
                 context,
@@ -83,6 +87,7 @@ class BottomNavBarWidget extends ConsumerWidget {
     required String label,
     required bool isActive,
     bool hasNotification = false,
+    int notificationCount = 0,
   }) {
     return GestureDetector(
       onTap: () => onTap(index),
@@ -100,15 +105,31 @@ class BottomNavBarWidget extends ConsumerWidget {
               ),
               if (hasNotification)
                 Positioned(
-                  right: -2,
-                  top: -2,
+                  right: 0,
+                  top: 0,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
                       color: AppColors.stateRed500,
                       shape: BoxShape.circle,
                     ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: notificationCount > 0
+                        ? Text(
+                            notificationCount > 99
+                                ? '99+'
+                                : notificationCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                        : null,
                   ),
                 ),
             ],

@@ -4,24 +4,24 @@ import 'package:trees_india/commons/components/main_layout/app/views/main_layout
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/app/route_tracker.dart';
-import 'package:trees_india/pages/chats_page/app/viewmodels/chats_notifier.dart';
-import '../viewmodels/chats_state.dart';
-import '../providers/chats_provider.dart';
-import 'widgets/chat_room_card.dart';
+import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
+import '../viewmodels/conversations_state.dart';
+import '../providers/conversations_provider.dart';
+import 'widgets/conversation_card.dart';
 
-class ChatsPage extends ConsumerStatefulWidget {
-  const ChatsPage({super.key});
+class ConversationsPage extends ConsumerStatefulWidget {
+  const ConversationsPage({super.key});
 
   @override
-  ConsumerState<ChatsPage> createState() => _ChatsPageState();
+  ConsumerState<ConversationsPage> createState() => _ConversationsPageState();
 }
 
-class _ChatsPageState extends ConsumerState<ChatsPage>
+class _ConversationsPageState extends ConsumerState<ConversationsPage>
     with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   bool _isInitialized = false;
   late NavigationCallback _navigationCallback;
-  late ChatsNotifier _notifier;
+  late ConversationsNotifier _notifier;
 
   @override
   void initState() {
@@ -31,30 +31,32 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
 
     // Set up navigation callback for auto-refresh control and refresh when returning
     _navigationCallback = (String from, String to, bool isPop) {
-      final notifier = ref.read(chatsNotifierProvider.notifier);
+      final notifier = ref.read(conversationsNotifierProvider.notifier);
 
-      if (isPop && from.startsWith('ChatRoomPage') && to == 'ChatsPage') {
-        // User returned from a chat room to chats page - refresh and restart auto-refresh
+      if (isPop &&
+          from.startsWith('ConversationPage') &&
+          to == 'ConversationsPage') {
+        // User returned from a conversation to conversations page - refresh and restart auto-refresh
         debugPrint(
-            '🔄 Returning to chats: refreshing list and restarting auto-refresh');
+            '🔄 Returning to conversations: refreshing list and restarting auto-refresh');
         if (mounted) {
-          notifier.loadChatRooms();
+          notifier.loadConversations(refresh: true);
           notifier.startAutoRefresh();
         }
       } else if (!isPop &&
-          from == 'ChatsPage' &&
-          to.startsWith('ChatRoomPage')) {
-        // User navigated from chats page to a chat room - stop auto-refresh
-        debugPrint('⏸️ Navigating to chat room: stopping auto-refresh');
+          from == 'ConversationsPage' &&
+          to.startsWith('ConversationPage')) {
+        // User navigated from conversations page to a conversation - stop auto-refresh
+        debugPrint('⏸️ Navigating to conversation: stopping auto-refresh');
         notifier.stopAutoRefresh();
       }
     };
     addNavigationCallback(_navigationCallback);
 
-    // Load chat rooms when page is first loaded and start auto-refresh
+    // Load conversations when page is first loaded and start auto-refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _notifier = ref.read(chatsNotifierProvider.notifier);
-      _notifier.loadChatRooms();
+      _notifier = ref.read(conversationsNotifierProvider.notifier);
+      _notifier.loadConversations(refresh: true);
       _notifier.startAutoRefresh();
       _isInitialized = true;
     });
@@ -66,9 +68,9 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // Refresh chat rooms when app comes back to foreground
+    // Refresh conversations when app comes back to foreground
     if (state == AppLifecycleState.resumed && mounted && _isInitialized) {
-      ref.read(chatsNotifierProvider.notifier).loadChatRooms();
+      ref.read(conversationsNotifierProvider.notifier).loadConversations(refresh: true);
     }
   }
 
@@ -84,13 +86,13 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.8) {
-      ref.read(chatsNotifierProvider.notifier).loadMoreChatRooms();
+      ref.read(conversationsNotifierProvider.notifier).loadMoreConversations();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final chatsState = ref.watch(chatsNotifierProvider);
+    final conversationsState = ref.watch(conversationsNotifierProvider);
 
     return MainLayoutWidget(
       currentIndex: 2,
@@ -104,20 +106,20 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
           elevation: 0,
           automaticallyImplyLeading: false,
         ),
-        body: _buildBody(chatsState),
+        body: _buildBody(conversationsState),
       ),
     );
   }
 
-  Widget _buildBody(ChatsState state) {
+  Widget _buildBody(ConversationsState state) {
     switch (state.status) {
-      case ChatsStatus.initial:
-      case ChatsStatus.loading:
+      case ConversationsStatus.initial:
+      case ConversationsStatus.loading:
         return const Center(
           child: CircularProgressIndicator(),
         );
 
-      case ChatsStatus.error:
+      case ConversationsStatus.error:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -147,7 +149,7 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(chatsNotifierProvider.notifier).loadChatRooms();
+                  ref.read(conversationsNotifierProvider.notifier).loadConversations(refresh: true);
                 },
                 child: const Text('Retry'),
               ),
@@ -155,13 +157,13 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
           ),
         );
 
-      case ChatsStatus.loaded:
-      case ChatsStatus.loadingMore:
-      case ChatsStatus.refreshing:
-        if (state.chatRooms.isEmpty) {
+      case ConversationsStatus.loaded:
+      case ConversationsStatus.loadingMore:
+      case ConversationsStatus.refreshing:
+        if (state.conversations.isEmpty) {
           return _buildEmptyState();
         }
-        return _buildChatList(state);
+        return _buildConversationList(state);
     }
   }
 
@@ -197,18 +199,18 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
     );
   }
 
-  Widget _buildChatList(ChatsState state) {
+  Widget _buildConversationList(ConversationsState state) {
     return RefreshIndicator(
       onRefresh: () async {
-        ref.read(chatsNotifierProvider.notifier).refreshChatRooms();
+        ref.read(conversationsNotifierProvider.notifier).refreshConversations();
       },
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: state.chatRooms.length +
-            (state.status == ChatsStatus.loadingMore ? 1 : 0),
+        itemCount: state.conversations.length +
+            (state.status == ConversationsStatus.loadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= state.chatRooms.length) {
+          if (index >= state.conversations.length) {
             return const Padding(
               padding: EdgeInsets.all(16),
               child: Center(
@@ -217,8 +219,8 @@ class _ChatsPageState extends ConsumerState<ChatsPage>
             );
           }
 
-          final chatRoom = state.chatRooms[index];
-          return ChatRoomCard(chatRoom: chatRoom);
+          final conversation = state.conversations[index];
+          return ConversationCard(conversation: conversation);
         },
       ),
     );

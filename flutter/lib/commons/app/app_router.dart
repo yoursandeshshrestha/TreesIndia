@@ -9,9 +9,9 @@ import 'package:trees_india/commons/presenters/providers/location_onboarding_pro
 import 'package:trees_india/commons/utils/services/navigation_service.dart';
 import 'package:trees_india/pages/booking_page/app/views/booking_page.dart';
 import 'package:trees_india/pages/bookings_page/app/views/bookings_listing_page.dart';
-import 'package:trees_india/pages/chats_page/app/views/chat_room_page.dart';
-import 'package:trees_india/pages/chats_page/app/views/chats_page.dart';
-import 'package:trees_india/pages/chats_page/domain/entities/chat_room_entity.dart';
+import 'package:trees_india/pages/chats_page/app/views/conversation_page.dart';
+import 'package:trees_india/pages/chats_page/app/views/conversations_page.dart';
+
 import 'package:trees_india/pages/home_page/app/views/home_page.dart';
 import 'package:trees_india/pages/location_loading_page/app/views/location_loading_page.dart';
 import 'package:trees_india/pages/location_onboarding_page/app/views/location_onboarding_page.dart';
@@ -354,17 +354,19 @@ class AppRouter {
                   builder: (context, state) => const MyWorksPage(),
                 ),
                 GoRoute(
-                  path: '/chats',
-                  name: 'ChatsPage',
-                  builder: (context, state) => const ChatsPage(),
+                  path: '/conversations',
+                  name: 'ConversationsPage',
+                  builder: (context, state) => const ConversationsPage(),
                 ),
                 GoRoute(
-                  path: '/chats/:roomId',
-                  name: 'ChatRoomPage',
+                  path: '/conversations/:conversationId',
+                  name: 'ConversationPage',
                   builder: (context, state) {
-                    final roomId = int.parse(state.pathParameters['roomId']!);
-                    final chatRoom = state.extra as ChatRoomEntity;
-                    return ChatRoomPage(roomId: roomId, chatRoom: chatRoom);
+                    final conversationId =
+                        int.parse(state.pathParameters['conversationId']!);
+                    return ConversationPage(
+                      conversationId: conversationId,
+                    );
                   },
                 ),
                 GoRoute(

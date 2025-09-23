@@ -1,59 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import 'package:trees_india/pages/chats_page/app/providers/chat_room_provider.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
-import '../../domain/entities/chat_room_entity.dart';
-import '../viewmodels/chat_room_state.dart';
+import 'package:trees_india/commons/services/conversation_websocket_service.dart';
+import 'package:trees_india/pages/chats_page/app/viewmodels/conversation_notifier.dart';
+import '../viewmodels/conversation_state.dart';
+import '../providers/conversation_provider.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/message_input.dart';
-import 'widgets/booking_details_bottom_sheet.dart';
 
-class ChatRoomPage extends ConsumerStatefulWidget {
-  final int roomId;
-  final ChatRoomEntity? chatRoom; // Can be passed from previous screen
+class ConversationPage extends ConsumerStatefulWidget {
+  final int conversationId;
 
-  const ChatRoomPage({
+  const ConversationPage({
     super.key,
-    required this.roomId,
-    this.chatRoom,
+    required this.conversationId,
   });
 
   @override
-  ConsumerState<ChatRoomPage> createState() => _ChatRoomPageState();
+  ConsumerState<ConversationPage> createState() => _ConversationPageState();
 }
 
-class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
+class _ConversationPageState extends ConsumerState<ConversationPage> {
   final ScrollController _scrollController = ScrollController();
+  late ConversationNotifier _notifier;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _notifier =
+        ref.read(conversationNotifierProvider(widget.conversationId).notifier);
 
-    // Initialize the chat room when page loads
+    // Initialize the conversation when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProfile = ref.read(userProfileProvider);
       final currentUserId = userProfile.user?.userId;
 
       if (currentUserId != null) {
-        if (widget.chatRoom != null) {
-          ref
-              .read(chatRoomNotifierProvider(widget.roomId).notifier)
-              .initializeChatRoom(widget.chatRoom!, currentUserId);
-        } else {
-          // Load messages if we don't have the chat room data
-          ref
-              .read(chatRoomNotifierProvider(widget.roomId).notifier)
-              .loadMessages();
-        }
+        ref
+            .read(conversationNotifierProvider(widget.conversationId).notifier)
+            .loadMessages();
       }
     });
   }
 
   @override
   void dispose() {
+    // Mark conversation as read when user leaves the page
+    // This ensures all messages that were visible to the user are marked as read
+    _notifier
+        .markAsRead();
+
     _scrollController.dispose();
     super.dispose();
   }
@@ -61,111 +59,69 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.8) {
-      final chatRoomState = ref.read(chatRoomNotifierProvider(widget.roomId));
-      if (chatRoomState.hasMoreMessages &&
-          chatRoomState.status != ChatRoomStatus.loadingMessages) {
+      final conversationState =
+          ref.read(conversationNotifierProvider(widget.conversationId));
+      if (conversationState.hasMoreMessages &&
+          conversationState.status != ConversationStatus.loadingMessages) {
         ref
-            .read(chatRoomNotifierProvider(widget.roomId).notifier)
-            .loadMessages();
+            .read(conversationNotifierProvider(widget.conversationId).notifier)
+            .loadMoreMessages();
       }
     }
   }
 
-  void _showBookingDetailsBottomSheet(BuildContext context, ChatRoomEntity chatRoom) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: BookingDetailsBottomSheet(chatRoom: chatRoom),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final chatRoomState = ref.watch(chatRoomNotifierProvider(widget.roomId));
+    final conversationState =
+        ref.watch(conversationNotifierProvider(widget.conversationId));
 
     return Scaffold(
-      appBar: _buildAppBar(chatRoomState),
-      body: _buildBody(chatRoomState),
+      appBar: _buildAppBar(conversationState),
+      body: _buildBody(conversationState),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(ChatRoomState state) {
-    final chatRoom = state.chatRoom ?? widget.chatRoom;
-    final authState = ref.watch(authProvider);
-    final userType = authState.userType;
-    final chatUserName = userType == 'worker'
-        ? chatRoom?.booking?.contactPerson
-        : chatRoom?.booking?.workerAssignment?.worker?.name;
-
+  PreferredSizeWidget _buildAppBar(ConversationState state) {
+    // We'll get conversation details from the conversations list if available
+    // For now, show a simple app bar
     return AppBar(
-      title: GestureDetector(
-        onTap: () {
-          if (chatRoom?.booking != null) {
-            _showBookingDetailsBottomSheet(context, chatRoom!);
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              chatUserName ?? chatRoom?.roomName ?? 'Chat',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            if (chatRoom?.booking != null)
-              Text(
-                'Booking: ${chatRoom!.booking!.bookingReference}',
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-              ),
-          ],
-        ),
+      title: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Conversation',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
       actions: [
         _buildConnectionStatus(state.webSocketStatus),
-        // IconButton(
-        //   onPressed: () {
-        //     ref
-        //         .read(chatRoomNotifierProvider(widget.roomId).notifier)
-        //         .loadMessages(refresh: true);
-        //   },
-        //   icon: const Icon(Icons.refresh),
-        // ),
       ],
     );
   }
 
-  Widget _buildConnectionStatus(WebSocketStatus status) {
+  Widget _buildConnectionStatus(ConversationWebSocketConnectionStatus status) {
     Color color;
     IconData icon;
     String text;
 
     switch (status) {
-      case WebSocketStatus.connected:
+      case ConversationWebSocketConnectionStatus.connected:
         color = Colors.green;
         icon = Icons.circle;
         text = 'Connected';
         break;
-      case WebSocketStatus.connecting:
+      case ConversationWebSocketConnectionStatus.connecting:
         color = Colors.orange;
         icon = Icons.circle;
         text = 'Connecting';
         break;
-      case WebSocketStatus.error:
+      case ConversationWebSocketConnectionStatus.error:
         color = Colors.red;
         icon = Icons.error;
         text = 'Error';
         break;
-      case WebSocketStatus.disconnected:
+      case ConversationWebSocketConnectionStatus.disconnected:
         color = Colors.grey;
         icon = Icons.circle;
         text = 'Disconnected';
@@ -195,15 +151,15 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
     );
   }
 
-  Widget _buildBody(ChatRoomState state) {
+  Widget _buildBody(ConversationState state) {
     switch (state.status) {
-      case ChatRoomStatus.initial:
-      case ChatRoomStatus.loading:
+      case ConversationStatus.initial:
+      case ConversationStatus.loading:
         return const Center(
           child: CircularProgressIndicator(),
         );
 
-      case ChatRoomStatus.error:
+      case ConversationStatus.error:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +171,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Failed to load chat',
+                'Failed to load conversation',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey[600],
@@ -234,7 +190,8 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
               ElevatedButton(
                 onPressed: () {
                   ref
-                      .read(chatRoomNotifierProvider(widget.roomId).notifier)
+                      .read(conversationNotifierProvider(widget.conversationId)
+                          .notifier)
                       .loadMessages();
                 },
                 child: const Text('Retry'),
@@ -243,10 +200,10 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
           ),
         );
 
-      case ChatRoomStatus.loaded:
-      case ChatRoomStatus.loadingMessages:
-      case ChatRoomStatus.sendingMessage:
-      case ChatRoomStatus.refreshing:
+      case ConversationStatus.loaded:
+      case ConversationStatus.loadingMessages:
+      case ConversationStatus.sendingMessage:
+      case ConversationStatus.refreshing:
         return Column(
           children: [
             Expanded(
@@ -255,18 +212,20 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
             MessageInput(
               onSendMessage: (message) {
                 ref
-                    .read(chatRoomNotifierProvider(widget.roomId).notifier)
+                    .read(conversationNotifierProvider(widget.conversationId)
+                        .notifier)
                     .sendMessage(message);
               },
               isEnabled: !state.isSending &&
-                  state.webSocketStatus == WebSocketStatus.connected,
+                  state.webSocketStatus ==
+                      ConversationWebSocketConnectionStatus.connected,
             ),
           ],
         );
     }
   }
 
-  Widget _buildMessagesList(ChatRoomState state) {
+  Widget _buildMessagesList(ConversationState state) {
     if (state.messages.isEmpty) {
       return Center(
         child: Column(
@@ -301,15 +260,15 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
     return RefreshIndicator(
       onRefresh: () async {
         ref
-            .read(chatRoomNotifierProvider(widget.roomId).notifier)
-            .loadMessages(refresh: true);
+            .read(conversationNotifierProvider(widget.conversationId).notifier)
+            .refreshMessages();
       },
       child: ListView.builder(
         controller: _scrollController,
         reverse: true, // Show newest messages at bottom
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: state.messages.length +
-            (state.status == ChatRoomStatus.loadingMessages ? 1 : 0),
+            (state.status == ConversationStatus.loadingMessages ? 1 : 0),
         itemBuilder: (context, index) {
           if (index >= state.messages.length) {
             return const Padding(

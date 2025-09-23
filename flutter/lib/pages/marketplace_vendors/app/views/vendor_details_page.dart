@@ -7,6 +7,8 @@ import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/domain/entities/vendor_entity.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/vendor_providers.dart';
 import '../viewmodels/vendor_details_state.dart';
 
@@ -64,12 +66,12 @@ class VendorDetailsPage extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        body: _buildBody(vendorDetailsState, ref),
+        body: _buildBody(context, vendorDetailsState, ref),
       ),
     );
   }
 
-  Widget _buildBody(VendorDetailsState state, WidgetRef ref) {
+  Widget _buildBody(BuildContext context, VendorDetailsState state, WidgetRef ref) {
     switch (state.status) {
       case VendorDetailsStatus.loading:
         return const Center(
@@ -79,7 +81,7 @@ class VendorDetailsPage extends ConsumerWidget {
         );
       case VendorDetailsStatus.success:
         return state.vendor != null
-            ? _buildVendorDetails(state.vendor!, ref)
+            ? _buildVendorDetails(context, state.vendor!, ref)
             : const Center(child: Text('No vendor data available'));
       case VendorDetailsStatus.failure:
         return Center(
@@ -110,7 +112,7 @@ class VendorDetailsPage extends ConsumerWidget {
     }
   }
 
-  Widget _buildVendorDetails(VendorEntity vendor, WidgetRef ref) {
+  Widget _buildVendorDetails(BuildContext context, VendorEntity vendor, WidgetRef ref) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -126,7 +128,7 @@ class VendorDetailsPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
           _buildAddressCard(vendor),
           const SizedBox(height: AppSpacing.lg),
-          _buildContactSection(vendor, ref),
+          _buildContactSection(context, vendor, ref),
           const SizedBox(height: AppSpacing.lg),
           if (vendor.businessDescription.isNotEmpty) ...[
             _buildBusinessDescription(vendor),
@@ -310,7 +312,7 @@ class VendorDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContactSection(VendorEntity vendor, WidgetRef ref) {
+  Widget _buildContactSection(BuildContext context, VendorEntity vendor, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final currentUserId = authState.token?.userId;
     final shouldShowChatButton =
@@ -427,8 +429,8 @@ class VendorDetailsPage extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Implement phone call functionality
+                onPressed: () async {
+                  await _createConversationAndNavigate(context, ref, vendor);
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.stateGreen600,
@@ -437,7 +439,7 @@ class VendorDetailsPage extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.message_outlined, size: 18),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
                 label: const Text(
                   'Send Message',
                   style: TextStyle(
@@ -684,6 +686,53 @@ class VendorDetailsPage extends ConsumerWidget {
       'December'
     ];
     return '${istDate.day} ${months[istDate.month - 1]} ${istDate.year}';
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    VendorEntity vendor,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Create conversation using the use case
+      final createConversationUseCase = ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: vendor.userId,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.go('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
 

@@ -51,11 +51,14 @@ class ApiEndpoints {
     rejectAssignment,
     startWork,
     completeWork,
-    chatRooms,
-    chatMessages,
-    sendMessage,
-    markMessageRead,
-    bookingChatRoom,
+    conversations,
+    conversationMessages,
+    sendConversationMessage,
+    markConversationMessageRead,
+    createConversation,
+    markConversationAsRead,
+    getConversationUnreadCount,
+    getTotalUnreadCount,
     getTrackingStatus,
     getUserProperties,
     createProperty,
@@ -317,28 +320,43 @@ class ApiEndpoints {
     requiresAuth: true,
   );
 
-  static ApiEndpoint chatRooms = ApiEndpoint(
-    path: '/chat/rooms',
+  static ApiEndpoint conversations = ApiEndpoint(
+    path: '/conversations',
     requiresAuth: true,
   );
 
-  static ApiEndpoint chatMessages = ApiEndpoint(
-    path: '/chat/rooms/{roomId}/messages',
+  static ApiEndpoint conversationMessages = ApiEndpoint(
+    path: '/conversations/{conversationId}/messages',
     requiresAuth: true,
   );
 
-  static ApiEndpoint sendMessage = ApiEndpoint(
-    path: '/chat/rooms/{roomId}/messages',
+  static ApiEndpoint sendConversationMessage = ApiEndpoint(
+    path: '/conversations/{conversationId}/messages',
     requiresAuth: true,
   );
 
-  static ApiEndpoint markMessageRead = ApiEndpoint(
-    path: '/chat/messages/{messageId}/read',
+  static ApiEndpoint markConversationMessageRead = ApiEndpoint(
+    path: '/conversations/messages/{messageId}/read',
     requiresAuth: true,
   );
 
-  static ApiEndpoint bookingChatRoom = ApiEndpoint(
-    path: '/chat/bookings/{bookingId}/room',
+  static ApiEndpoint createConversation = ApiEndpoint(
+    path: '/conversations',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markConversationAsRead = ApiEndpoint(
+    path: '/conversations/{conversationId}/mark-read',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getConversationUnreadCount = ApiEndpoint(
+    path: '/conversations/{conversationId}/unread-count',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getTotalUnreadCount = ApiEndpoint(
+    path: '/conversations/unread-count/total',
     requiresAuth: true,
   );
 
