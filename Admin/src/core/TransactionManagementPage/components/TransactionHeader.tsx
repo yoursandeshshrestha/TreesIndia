@@ -1,4 +1,4 @@
-import { RefreshCw, Download, Plus, DollarSign } from "lucide-react";
+import { RefreshCw, Download, Plus } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 
@@ -8,7 +8,6 @@ interface TransactionHeaderProps {
   onRefresh: () => void;
   onExport: () => void;
   onManualTransaction: () => void;
-  onManualWalletAddition: () => void;
   isLoading: boolean;
 }
 
@@ -18,7 +17,6 @@ export default function TransactionHeader({
   onRefresh,
   onExport,
   onManualTransaction,
-  onManualWalletAddition,
   isLoading,
 }: TransactionHeaderProps) {
   return (
@@ -65,16 +63,6 @@ export default function TransactionHeader({
           onClick={onExport}
         >
           Export
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-40 h-10"
-          leftIcon={<DollarSign size={16} />}
-          onClick={onManualWalletAddition}
-        >
-          Add to Wallet
         </Button>
 
         <Button
