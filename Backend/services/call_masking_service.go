@@ -302,3 +302,27 @@ func (cms *CallMaskingService) GetCallMaskingStatus(bookingID uint) (bool, error
 
 	return callMasking.DisabledAt == nil, nil
 }
+
+// InitiateCallForBooking initiates a call for a specific booking
+func (cms *CallMaskingService) InitiateCallForBooking(bookingID uint, userID uint) (string, error) {
+	logrus.Infof("Initiating call for booking %d by user %d", bookingID, userID)
+	
+	// Validate booking exists
+	_, err := cms.bookingRepo.GetByID(bookingID)
+	if err != nil {
+		return "", fmt.Errorf("booking not found: %w", err)
+	}
+	
+	// For now, return a placeholder masked number
+	// This should be replaced with actual call masking logic
+	return "masked_number_placeholder", nil
+}
+
+// InitiateCloudShopeCall initiates a call using CloudShope API
+func (cms *CallMaskingService) InitiateCloudShopeCall(fromNumber, mobileNumber string) (string, error) {
+	logrus.Infof("Initiating CloudShope call from %s to %s", fromNumber, mobileNumber)
+	
+	// For now, return the mobile number as masked number
+	// This should be replaced with actual CloudShope API integration
+	return mobileNumber, nil
+}
