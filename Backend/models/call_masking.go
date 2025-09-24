@@ -72,6 +72,26 @@ type InitiateCallRequest struct {
 	BookingID uint `json:"booking_id" binding:"required"`
 }
 
+// InitiateCallForBookingRequest represents the request structure for initiating a call for a booking
+type InitiateCallForBookingRequest struct {
+	BookingID uint `json:"booking_id" binding:"required"`
+}
+
+// CloudShopeCallRequest represents the request structure for CloudShope calls
+type CloudShopeCallRequest struct {
+	FromNumber   string `json:"from_number" binding:"required"`
+	MobileNumber string `json:"mobile_number" binding:"required"`
+}
+
+// CloudShopeCallResponse represents the response structure for CloudShope calls
+type CloudShopeCallResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		Mobile string `json:"mobile"`
+	} `json:"data"`
+}
+
 // CallMaskingEnabledResponse represents the response structure for call masking
 type CallMaskingEnabledResponse struct {
 	ID                uint       `json:"id"`
