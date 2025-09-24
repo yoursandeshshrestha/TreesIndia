@@ -134,7 +134,7 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/logo/logo.png
+  image: assets/logo/pixelcut-export.png
   branding: assets/logo/treesindia-logo.png
   android: true
   ios: true
