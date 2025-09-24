@@ -33,21 +33,30 @@ class PaymentModel extends PaymentEntity {
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      id: json['ID'] as int,
-      createdAt: DateTime.parse(json['CreatedAt'] as String),
-      updatedAt: DateTime.parse(json['UpdatedAt'] as String),
+      // Handle missing ID field with fallback
+      id: json['ID'] as int? ?? json['id'] as int? ?? 0,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      // Handle missing updated_at with created_at fallback
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : DateTime.parse(json['created_at'] as String),
       deletedAt: json['DeletedAt'] != null
           ? DateTime.parse(json['DeletedAt'] as String)
           : null,
-      paymentReference: json['payment_reference'] as String,
-      userId: json['user_id'] as int,
+      // Handle missing payment_reference with fallback
+      paymentReference: json['payment_reference'] as String? ?? '',
+      // Handle missing user_id with fallback
+      userId: json['user_id'] as int? ?? 0,
       amount: (json['amount'] as num).toDouble(),
       currency: json['currency'] as String,
       status: json['status'] as String,
-      type: json['type'] as String,
-      method: json['method'] as String,
-      relatedEntityType: json['related_entity_type'] as String,
-      relatedEntityId: json['related_entity_id'] as int,
+      // Handle missing type with fallback
+      type: json['type'] as String? ?? 'payment',
+      // Map payment_method to method field
+      method: json['method'] as String? ?? json['payment_method'] as String? ?? 'unknown',
+      // Handle missing related entity fields with fallbacks
+      relatedEntityType: json['related_entity_type'] as String? ?? 'booking',
+      relatedEntityId: json['related_entity_id'] as int? ?? 0,
       razorpayOrderId: json['razorpay_order_id'] as String?,
       razorpayPaymentId: json['razorpay_payment_id'] as String?,
       razorpaySignature: json['razorpay_signature'] as String?,
@@ -71,8 +80,9 @@ class PaymentModel extends PaymentEntity {
           : null,
       refundReason: json['refund_reason'] as String?,
       refundMethod: json['refund_method'] as String?,
-      description: json['description'] as String,
-      notes: json['notes'] as String,
+      // Handle missing description and notes with fallbacks
+      description: json['description'] as String? ?? '',
+      notes: json['notes'] as String? ?? '',
       metadata: json['metadata'] as Map<String, dynamic>? ?? {},
     );
   }

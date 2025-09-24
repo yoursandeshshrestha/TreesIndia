@@ -5,6 +5,8 @@ import '../../../../commons/utils/error_handler.dart';
 import '../models/bookings_response_model.dart';
 import '../models/quote_payment_request_model.dart';
 import '../models/quote_payment_response_model.dart';
+import '../models/segment_payment_request_model.dart';
+import '../models/segment_payment_response_model.dart';
 import '../../app/viewmodels/bookings_state.dart';
 
 class BookingsDatasource {
@@ -200,7 +202,8 @@ class BookingsDatasource {
         .replaceAll('{bookingId}', bookingId.toString());
 
     try {
-      final response = await dioClient.dio.post(url, data: verification.toJson());
+      final response =
+          await dioClient.dio.post(url, data: verification.toJson());
 
       if (response.statusCode == 200) {
         print('📍 Quote payment verified successfully: $bookingId');
@@ -239,6 +242,59 @@ class BookingsDatasource {
         errorHandler.handleGenericError(e);
       }
       throw Exception('Error processing wallet quote payment.');
+    }
+  }
+
+  Future<SegmentPaymentResponseModel> createSegmentPayment({
+    required int bookingId,
+    required SegmentPaymentRequestModel request,
+  }) async {
+    final url = ApiEndpoints.createSegmentPayment.path
+        .replaceAll('{bookindId}', bookingId.toString());
+
+    try {
+      final response = await dioClient.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200 && response.data != null) {
+        print('📍 Segment payment order created successfully: $bookingId');
+        final data = response.data['data'] as Map<String, dynamic>;
+        return SegmentPaymentResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to create segment payment. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error creating segment payment.');
+    }
+  }
+
+  Future<void> verifySegmentPayment({
+    required int bookingId,
+    required Map<String, String> verificationData,
+  }) async {
+    // final url = '/bookings/$bookingId/payment-segments/verify';
+    final url = ApiEndpoints.verifySegmentPayment.path
+        .replaceAll('{bookindId}', bookingId.toString());
+
+    try {
+      final response = await dioClient.dio.post(url, data: verificationData);
+
+      if (response.statusCode == 200) {
+        print('📍 Segment payment verified successfully: $bookingId');
+      } else {
+        throw Exception('Failed to verify segment payment. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Error verifying segment payment.');
     }
   }
 }

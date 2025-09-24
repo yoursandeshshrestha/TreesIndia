@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
-import '../../../../commons/components/button/app/views/solid_button_widget.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
 import '../../domain/entities/service_detail_entity.dart';
@@ -32,6 +33,15 @@ class _ServiceDetailPageState extends ConsumerState<ServiceDetailPage> {
   @override
   Widget build(BuildContext context) {
     final bookingState = ref.watch(bookingNotifierProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -65,7 +75,7 @@ class _ServiceDetailPageState extends ConsumerState<ServiceDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Service Image
-            Container(
+            SizedBox(
               width: double.infinity,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),

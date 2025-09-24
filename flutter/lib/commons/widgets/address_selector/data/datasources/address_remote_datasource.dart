@@ -8,7 +8,7 @@ abstract class AddressRemoteDataSource {
   Future<AddressListResponseModel> getAddresses();
   Future<AddressModel> createAddress(CreateAddressRequestModel request);
   Future<AddressModel> updateAddress(UpdateAddressRequestModel request);
-  Future<void> deleteAddress(int addressId);
+  Future<String> deleteAddress(int addressId);
 }
 
 class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
@@ -59,7 +59,8 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
   Future<AddressModel> updateAddress(UpdateAddressRequestModel request) async {
     try {
       final response = await dioClient.dio.put(
-        ApiEndpoints.updateAddress.path.replaceAll('{addressId}', '${request.id}'),
+        ApiEndpoints.updateAddress.path
+            .replaceAll('{addressId}', '${request.id}'),
         data: request.toJson(),
       );
 
@@ -75,13 +76,20 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
   }
 
   @override
-  Future<void> deleteAddress(int addressId) async {
+  Future<String> deleteAddress(int addressId) async {
     try {
-      await dioClient.dio.delete(
+      final response = await dioClient.dio.delete(
         ApiEndpoints.deleteAddress.path.replaceAll('{addressId}', '$addressId'),
       );
+
+      return response.data['message'];
     } catch (e) {
       if (e is DioException) {
+        // Handle 409 status code specifically - return response message instead of throwing
+        if (e.response?.statusCode == 409) {
+          return e.response?.data['message'] ?? 'Address cannot be deleted';
+        }
+
         errorHandler.handleNetworkError(e);
       } else {
         throw Exception(e.toString());

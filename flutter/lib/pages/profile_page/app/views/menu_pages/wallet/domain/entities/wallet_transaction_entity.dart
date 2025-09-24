@@ -7,6 +7,9 @@ class WalletTransactionEntity {
   final String method;
   final DateTime createdAt;
   final DateTime? completedAt;
+  final String? razorpayOrderId;
+  final String? razorpayPaymentId;
+  final String? razorpaySignature;
 
   const WalletTransactionEntity({
     required this.id,
@@ -17,6 +20,9 @@ class WalletTransactionEntity {
     required this.method,
     required this.createdAt,
     this.completedAt,
+    this.razorpayOrderId,
+    this.razorpayPaymentId,
+    this.razorpaySignature,
   });
 
   @override
@@ -31,7 +37,10 @@ class WalletTransactionEntity {
         other.type == type &&
         other.method == method &&
         other.createdAt == createdAt &&
-        other.completedAt == completedAt;
+        other.completedAt == completedAt &&
+        other.razorpayOrderId == razorpayOrderId &&
+        other.razorpayPaymentId == razorpayPaymentId &&
+        other.razorpaySignature == razorpaySignature;
   }
 
   @override
@@ -43,11 +52,21 @@ class WalletTransactionEntity {
         type.hashCode ^
         method.hashCode ^
         createdAt.hashCode ^
-        completedAt.hashCode;
+        completedAt.hashCode ^
+        razorpayOrderId.hashCode ^
+        razorpayPaymentId.hashCode ^
+        razorpaySignature.hashCode;
   }
 
   @override
   String toString() {
-    return 'WalletTransactionEntity(id: $id, paymentReference: $paymentReference, amount: $amount, status: $status, type: $type, method: $method, createdAt: $createdAt, completedAt: $completedAt)';
+    return 'WalletTransactionEntity(id: $id, paymentReference: $paymentReference, amount: $amount, status: $status, type: $type, method: $method, createdAt: $createdAt, completedAt: $completedAt, razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, razorpaySignature: $razorpaySignature)';
+  }
+
+  bool get canCompletePayment {
+    return status.toLowerCase() == 'pending' &&
+           type.toLowerCase().contains('recharge') &&
+           razorpayOrderId != null &&
+           razorpayOrderId!.isNotEmpty;
   }
 }

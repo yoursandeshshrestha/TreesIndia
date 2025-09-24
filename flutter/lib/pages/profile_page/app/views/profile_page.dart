@@ -4,13 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:trees_india/commons/components/button/app/views/outline_button_widget.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+import 'package:trees_india/commons/domain/entities/user_profile_entity.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
+import '../providers/profile_providers.dart';
+import 'package:intl/intl.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -23,13 +28,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoggingOut = false;
   String _appVersion = '';
 
-  // Main navigation color
-  static const Color mainColor = Color(0xFF055c3a);
-
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    // Load profile data when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
   }
 
   Future<void> _loadAppVersion() async {
@@ -140,6 +146,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final userProfileState = ref.watch(userProfileProvider);
     final user = userProfileState.user;
+    final profileState = ref.watch(profileProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     return MainLayoutWidget(
       currentIndex: 3,
@@ -206,53 +222,60 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Subscription Badge/Card
+                      if (profileState.subscription != null &&
+                          profileState.subscription!.status == 'active')
+                        _buildSubscriptionCard(profileState.subscription!),
+
+                      // const SizedBox(height: AppSpacing.sm),
 
                       // Quick Action Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildQuickActionCard(
-                              icon: Icons.calendar_today_outlined,
-                              label: 'My bookings',
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('My bookings coming soon!')),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          // Expanded(
-                          //   child: _buildQuickActionCard(
-                          //     icon: Icons.devices,
-                          //     label: 'Native devices',
-                          //     onTap: () {
-                          //       ScaffoldMessenger.of(context).showSnackBar(
-                          //         const SnackBar(
-                          //             content: Text('Native devices coming soon!')),
-                          //       );
-                          //     },
-                          //   ),
-                          // ),
-                          // const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: _buildQuickActionCard(
-                              icon: Icons.support_agent_outlined,
-                              label: 'Help & support',
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Help & support coming soon!')),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.calendar_today_outlined,
+                      //     //     label: 'My bookings',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content:
+                      //     //                 Text('My bookings coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //     // const SizedBox(width: AppSpacing.md),
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.devices,
+                      //     //     label: 'Native devices',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content: Text('Native devices coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //     // const SizedBox(width: AppSpacing.md),
+                      //     // Expanded(
+                      //     //   child: _buildQuickActionCard(
+                      //     //     icon: Icons.support_agent_outlined,
+                      //     //     label: 'Help & support',
+                      //     //     onTap: () {
+                      //     //       ScaffoldMessenger.of(context).showSnackBar(
+                      //     //         const SnackBar(
+                      //     //             content:
+                      //     //                 Text('Help & support coming soon!')),
+                      //     //       );
+                      //     //     },
+                      //     //   ),
+                      //     // ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
@@ -289,6 +312,40 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
 
                       _buildMenuItem(
+                        icon: Icons.home_outlined,
+                        label: 'My Properties',
+                        onTap: () {
+                          context.push('/my-properties');
+                        },
+                      ),
+
+                      // Show My Vendor Profiles only for users with active subscription
+                      if (profileState.subscription != null &&
+                          profileState.subscription!.status == 'active')
+                        _buildMenuItem(
+                          icon: Icons.business_outlined,
+                          label: 'My Vendor Profiles',
+                          onTap: () {
+                            context.push('/my-vendor-profiles');
+                          },
+                        ),
+
+                      _buildMenuItem(
+                        icon: Icons.work_outline,
+                        label: 'Apply for Worker',
+                        onTap: () {
+                          context.push('/worker-application');
+                        },
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.home_outlined,
+                        label: 'My Subscription',
+                        onTap: () {
+                          context.push('/my-subscription');
+                        },
+                      ),
+
+                      _buildMenuItem(
                         icon: Icons.settings_outlined,
                         label: 'Settings',
                         onTap: () {
@@ -302,6 +359,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           context.push('/about-trees-india');
                         },
                       ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      if (profileState.roleApplication != null &&
+                          profileState.roleApplication!.status != 'none')
+                        _buildRoleApplicationCard(
+                            profileState.roleApplication!),
 
                       const SizedBox(height: AppSpacing.xl),
 
@@ -322,7 +385,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               ),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Logout',
                             style: TextStyle(
                               fontSize: 16,
@@ -381,7 +444,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
@@ -436,6 +499,258 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         Icons.person_outline,
         size: 30,
         color: AppColors.brandPrimary600,
+      ),
+    );
+  }
+
+  Widget _buildRoleApplicationCard(RoleApplicationEntity roleApplication) {
+    // Parse dates
+    DateTime? applicationDate;
+    DateTime? approvalDate;
+
+    try {
+      if (roleApplication.applicationDate != null &&
+          roleApplication.applicationDate!.isNotEmpty) {
+        applicationDate = DateTime.parse(roleApplication.applicationDate!);
+      }
+      if (roleApplication.approvalDate != null &&
+          roleApplication.approvalDate!.isNotEmpty) {
+        approvalDate = DateTime.parse(roleApplication.approvalDate!);
+      }
+    } catch (e) {
+      debugPrint('Error parsing role application dates: $e');
+    }
+
+    final dateFormat = DateFormat('MMM dd, yyyy');
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/worker-application');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.brandNeutral200),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNeutral100.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            H4Bold(text: 'Role Application Status'),
+            const SizedBox(height: AppSpacing.xs),
+            B3Regular(
+                text: 'Track your application to become a service provider'),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Status section
+            if (roleApplication.status == 'pending')
+              _buildPendingStatus()
+            else if (roleApplication.status == 'approved')
+              _buildApprovedStatus(),
+
+            const SizedBox(height: AppSpacing.lg),
+            const Divider(color: AppColors.brandNeutral200),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Dates
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDateCard(
+                    label: 'Application Date',
+                    date: applicationDate != null
+                        ? dateFormat.format(applicationDate)
+                        : '--',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildDateCard(
+                    label: 'Approval Date',
+                    date: approvalDate != null
+                        ? dateFormat.format(approvalDate)
+                        : '--',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingStatus() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.watch_later_outlined,
+                color: AppColors.stateYellow700, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            B2Medium(text: 'Under Review'),
+            const SizedBox(width: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.stateYellow100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: B4Medium(text: 'PENDING', color: AppColors.stateYellow800),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        B3Regular(
+            text:
+                'Your application is currently under review. We\'ll notify you once a decision is made.'),
+      ],
+    );
+  }
+
+  Widget _buildApprovedStatus() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.check_circle_outline,
+                color: AppColors.stateGreen700, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            B2Medium(text: 'Approved'),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        B3Regular(text: 'Congratulations! Your application has been approved.'),
+      ],
+    );
+  }
+
+  Widget _buildDateCard({required String label, required String date}) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.brandNeutral50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          B4Regular(text: label, color: AppColors.brandNeutral500),
+          const SizedBox(height: AppSpacing.xs),
+          B2Medium(text: date),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard(SubscriptionEntity subscription) {
+    // Parse dates
+    DateTime? startDate;
+    DateTime? endDate;
+
+    try {
+      startDate = DateTime.parse(subscription.startDate);
+      endDate = DateTime.parse(subscription.endDate);
+    } catch (e) {
+      debugPrint('Error parsing subscription dates: $e');
+    }
+
+    final dateFormat = DateFormat('MMM dd, yyyy');
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/my-subscription');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF055c3a), Color(0xFF0a7c4a)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF055c3a).withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Premium icon
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.workspace_premium,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // Subscription details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Premium Active',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (startDate != null && endDate != null)
+                    Text(
+                      '${dateFormat.format(startDate)} - ${dateFormat.format(endDate)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  if (endDate != null)
+                    Text(
+                      'Expires ${dateFormat.format(endDate)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Arrow icon
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white.withValues(alpha: 0.8),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

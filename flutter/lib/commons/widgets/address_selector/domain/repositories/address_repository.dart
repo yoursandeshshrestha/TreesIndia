@@ -4,5 +4,5 @@ abstract class AddressRepository {
   Future<AddressListResponseEntity> getAddresses();
   Future<AddressEntity> createAddress(CreateAddressRequestEntity request);
   Future<AddressEntity> updateAddress(UpdateAddressRequestEntity request);
-  Future<void> deleteAddress(int addressId);
+  Future<String> deleteAddress(int addressId);
 }

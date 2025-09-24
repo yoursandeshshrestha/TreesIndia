@@ -12,6 +12,8 @@ import '../../domain/usecases/accept_quote_usecase.dart';
 import '../../domain/usecases/create_quote_payment_usecase.dart';
 import '../../domain/usecases/verify_quote_payment_usecase.dart';
 import '../../domain/usecases/process_wallet_quote_payment_usecase.dart';
+import '../../domain/usecases/create_segment_payment_usecase.dart';
+import '../../domain/usecases/verify_segment_payment_usecase.dart';
 import '../../../booking_page/app/providers/booking_providers.dart';
 import '../viewmodels/bookings_notifier.dart';
 import '../viewmodels/bookings_state.dart';
@@ -77,6 +79,20 @@ final processWalletQuotePaymentUseCaseProvider =
   return ProcessWalletQuotePaymentUseCase(repository: repository);
 });
 
+final createSegmentPaymentUseCaseProvider =
+    Provider<CreateSegmentPaymentUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return CreateSegmentPaymentUseCase(repository: repository);
+});
+
+final verifySegmentPaymentUseCaseProvider =
+    Provider<VerifySegmentPaymentUseCase>((ref) {
+  final repository = ref.read(bookingsRepositoryProvider);
+
+  return VerifySegmentPaymentUseCase(repository: repository);
+});
+
 final bookingsNotifierProvider =
     StateNotifierProvider<BookingsNotifier, BookingsState>((ref) {
   final getBookingsUseCase = ref.read(getBookingsUseCaseProvider);
@@ -87,6 +103,8 @@ final bookingsNotifierProvider =
   final verifyQuotePaymentUseCase = ref.read(verifyQuotePaymentUseCaseProvider);
   final processWalletQuotePaymentUseCase =
       ref.read(processWalletQuotePaymentUseCaseProvider);
+  final createSegmentPaymentUseCase = ref.read(createSegmentPaymentUseCaseProvider);
+  final verifySegmentPaymentUseCase = ref.read(verifySegmentPaymentUseCaseProvider);
   final getBookingConfigUseCase = ref.read(getBookingConfigUseCaseProvider);
   final getAvailableSlotsUseCase = ref.read(getAvailableSlotsUseCaseProvider);
   final razorpayProvider = Provider<Razorpay>((ref) {
@@ -100,6 +118,8 @@ final bookingsNotifierProvider =
     createQuotePaymentUseCase: createQuotePaymentUseCase,
     verifyQuotePaymentUseCase: verifyQuotePaymentUseCase,
     processWalletQuotePaymentUseCase: processWalletQuotePaymentUseCase,
+    createSegmentPaymentUseCase: createSegmentPaymentUseCase,
+    verifySegmentPaymentUseCase: verifySegmentPaymentUseCase,
     getBookingConfigUseCase: getBookingConfigUseCase,
     getAvailableSlotsUseCase: getAvailableSlotsUseCase,
     razorpay: ref.read(razorpayProvider),

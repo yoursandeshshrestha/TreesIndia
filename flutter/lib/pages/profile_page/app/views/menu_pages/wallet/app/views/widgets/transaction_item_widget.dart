@@ -6,10 +6,12 @@ import '../../../domain/entities/wallet_transaction_entity.dart';
 
 class TransactionItemWidget extends StatelessWidget {
   final WalletTransactionEntity transaction;
+  final VoidCallback? onCompletePayment;
 
   const TransactionItemWidget({
     super.key,
     required this.transaction,
+    this.onCompletePayment,
   });
 
   @override
@@ -17,70 +19,111 @@ class TransactionItemWidget extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                B2Medium(
-                  text: _getTransactionTitle(),
-                  color: AppColors.brandNeutral800,
-                ),
-                const SizedBox(height: 4),
-                Row(
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    B3Regular(
-                      text: _formatDate(transaction.createdAt),
-                      color: AppColors.brandNeutral500,
+                    B2Medium(
+                      text: _getTransactionTitle(),
+                      color: AppColors.brandNeutral800,
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: AppColors.brandNeutral400,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getStatusBackgroundColor(),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: B3Regular(
-                        text: _getStatusText(),
-                        color: _getStatusTextColor(),
-                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        B3Regular(
+                          text: _formatDate(transaction.createdAt),
+                          color: AppColors.brandNeutral500,
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: AppColors.brandNeutral400,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusBackgroundColor(),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: B3Regular(
+                            text: _getStatusText(),
+                            color: _getStatusTextColor(),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              B2Medium(
-                text:
-                    '${_isCredit() ? '+' : '-'}₹${transaction.amount.toStringAsFixed(2)}',
-                color: _isCredit()
-                    ? AppColors.stateGreen600
-                    : AppColors.stateRed600,
               ),
-              const SizedBox(height: 4),
-              B3Regular(
-                text: transaction.method.toUpperCase(),
-                color: AppColors.brandNeutral500,
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  B2Medium(
+                    text:
+                        '${_isCredit() ? '+' : '-'}₹${transaction.amount.toStringAsFixed(2)}',
+                    color: _isCredit()
+                        ? AppColors.stateGreen600
+                        : AppColors.stateRed600,
+                  ),
+                  const SizedBox(height: 4),
+                  B3Regular(
+                    text: transaction.method.toUpperCase(),
+                    color: AppColors.brandNeutral500,
+                  ),
+                ],
               ),
             ],
           ),
+          if (transaction.canCompletePayment && onCompletePayment != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton.icon(
+                    onPressed: onCompletePayment,
+                    icon: const Icon(
+                      Icons.payment,
+                      size: 16,
+                    ),
+                    label: const Text(
+                      'Complete Payment',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.stateGreen600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 4,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

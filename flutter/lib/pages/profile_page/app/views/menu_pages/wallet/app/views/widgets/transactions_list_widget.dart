@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
+
 import '../../../../../../../../../commons/constants/app_colors.dart';
-import '../../../../../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../domain/entities/wallet_transaction_entity.dart';
 import 'transaction_item_widget.dart';
 
@@ -10,6 +10,7 @@ class TransactionsListWidget extends StatelessWidget {
   final bool isLoading;
   final bool hasMoreTransactions;
   final VoidCallback onLoadMore;
+  final Function(WalletTransactionEntity)? onCompletePayment;
 
   const TransactionsListWidget({
     super.key,
@@ -17,6 +18,7 @@ class TransactionsListWidget extends StatelessWidget {
     required this.isLoading,
     required this.hasMoreTransactions,
     required this.onLoadMore,
+    this.onCompletePayment,
   });
 
   @override
@@ -37,7 +39,7 @@ class TransactionsListWidget extends StatelessWidget {
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
           ),
-          child: Text(
+          child: const Text(
             'Recent Transactions',
             style: TextStyle(
               fontSize: 16,
@@ -57,16 +59,16 @@ class TransactionsListWidget extends StatelessWidget {
 
   Widget _buildTransactionsList() {
     if (transactions.isEmpty && !isLoading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.history_outlined,
               size: 64,
               color: AppColors.brandNeutral400,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.md),
             Text(
               'No Transactions Yet',
               style: TextStyle(
@@ -75,7 +77,7 @@ class TransactionsListWidget extends StatelessWidget {
                 color: AppColors.brandNeutral600,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.sm),
             Text(
               'Your transaction history will appear here',
               style: TextStyle(
@@ -99,7 +101,7 @@ class TransactionsListWidget extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         itemCount: transactions.length + (hasMoreTransactions ? 1 : 0),
-        separatorBuilder: (context, index) => Divider(
+        separatorBuilder: (context, index) => const Divider(
           color: AppColors.brandNeutral100,
           height: 1,
         ),
@@ -120,7 +122,12 @@ class TransactionsListWidget extends StatelessWidget {
           }
 
           final transaction = transactions[index];
-          return TransactionItemWidget(transaction: transaction);
+          return TransactionItemWidget(
+            transaction: transaction,
+            onCompletePayment: onCompletePayment != null
+                ? () => onCompletePayment!(transaction)
+                : null,
+          );
         },
       ),
     );

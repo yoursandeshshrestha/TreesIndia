@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../data/models/location_model.dart';
 import '../../domain/entities/location_entity.dart';
@@ -37,23 +39,59 @@ class LocationOnboardingService {
 
   Future<LocationEntity?> getSavedLocation() async {
     try {
+      debugPrint('💾 [LocationService] Getting saved location from storage...');
+      final startTime = DateTime.now();
       final locationData = await _localStorage.getData(_locationKey);
+      final duration = DateTime.now().difference(startTime);
+      debugPrint('💾 [LocationService] Storage read completed in ${duration.inMilliseconds}ms');
+
       if (locationData != null && locationData is String) {
+        debugPrint('💾 [LocationService] Found saved location data, parsing JSON...');
+        final parseStartTime = DateTime.now();
         final json = jsonDecode(locationData);
-        return LocationModel.fromJson(json).toEntity();
+        final entity = LocationModel.fromJson(json).toEntity();
+        final parseDuration = DateTime.now().difference(parseStartTime);
+        debugPrint('💾 [LocationService] JSON parsing completed in ${parseDuration.inMilliseconds}ms');
+        debugPrint('💾 [LocationService] Saved location: ${entity.city}, ${entity.state}');
+        return entity;
       }
+      debugPrint('💾 [LocationService] No saved location found');
       return null;
     } catch (e) {
+      debugPrint('❌ [LocationService] Error getting saved location: $e');
+      debugPrint('❌ [LocationService] Error type: ${e.runtimeType}');
       return null;
     }
   }
 
   Future<void> saveLocation(LocationEntity location) async {
     try {
+      debugPrint('💾 [LocationService] Saving location: ${location.city}, ${location.state}');
+      final startTime = DateTime.now();
+
+      debugPrint('💾 [LocationService] Converting entity to model...');
+      final modelConvertStartTime = DateTime.now();
       final locationModel = LocationModel.fromEntity(location);
+      final modelConvertDuration = DateTime.now().difference(modelConvertStartTime);
+      debugPrint('💾 [LocationService] Entity conversion completed in ${modelConvertDuration.inMilliseconds}ms');
+
+      debugPrint('💾 [LocationService] Encoding to JSON...');
+      final jsonStartTime = DateTime.now();
       final jsonString = jsonEncode(locationModel.toJson());
+      final jsonDuration = DateTime.now().difference(jsonStartTime);
+      debugPrint('💾 [LocationService] JSON encoding completed in ${jsonDuration.inMilliseconds}ms');
+
+      debugPrint('💾 [LocationService] Writing to storage...');
+      final storageStartTime = DateTime.now();
       await _localStorage.saveData(_locationKey, jsonString);
+      final storageDuration = DateTime.now().difference(storageStartTime);
+      debugPrint('💾 [LocationService] Storage write completed in ${storageDuration.inMilliseconds}ms');
+
+      final totalDuration = DateTime.now().difference(startTime);
+      debugPrint('✅ [LocationService] Location saved successfully in ${totalDuration.inMilliseconds}ms total');
     } catch (e) {
+      debugPrint('❌ [LocationService] Failed to save location: $e');
+      debugPrint('❌ [LocationService] Error type: ${e.runtimeType}');
       throw Exception('Failed to save location: $e');
     }
   }
@@ -73,6 +111,12 @@ class LocationOnboardingService {
       final placemarks = await placemarkFromCoordinates(
         coordinates.$1,
         coordinates.$2,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⏰ [LocationService] Reverse geocoding timed out after 15 seconds in getCurrentLocation');
+          throw TimeoutException('Reverse geocoding timed out', const Duration(seconds: 15));
+        },
       );
 
       if (placemarks.isEmpty) {
@@ -89,6 +133,7 @@ class LocationOnboardingService {
         city: placemark.locality,
         state: placemark.administrativeArea,
         country: placemark.country ?? 'Unknown',
+        postalCode: placemark.postalCode,
       );
     } catch (e) {
       throw Exception('Failed to get current location: $e');

@@ -14,6 +14,7 @@ class ApiEndpoints {
     categories,
     subcategories,
     services,
+    searchServices,
     searchSuggestions,
     popularServices,
     walletSummary,
@@ -50,12 +51,47 @@ class ApiEndpoints {
     rejectAssignment,
     startWork,
     completeWork,
-    chatRooms,
-    chatMessages,
-    sendMessage,
-    markMessageRead,
-    bookingChatRoom,
+    conversations,
+    conversationMessages,
+    sendConversationMessage,
+    markConversationMessageRead,
+    createConversation,
+    markConversationAsRead,
+    getConversationUnreadCount,
+    getTotalUnreadCount,
     getTrackingStatus,
+    getUserProperties,
+    createProperty,
+    deleteProperty,
+    mySubscription,
+    subscriptionHistory,
+    subscriptionPlans,
+    createPaymentOrder,
+    completePurchase,
+    getUserVendors,
+    createVendor,
+    getProperties,
+    getPropertyDetails,
+    projectsStats,
+    vendorsStats,
+    workersStats,
+    getVendors,
+    getVendorDetails,
+    getWorkers,
+    getWorkerDetails,
+    getProjects,
+    getProjectDetails,
+    createSegmentPayment,
+    verifySegmentPayment,
+    notifications,
+    unreadCount,
+    markAllNotificationsAsRead,
+    submitWorkerApplication,
+    getUserApplicationStatus,
+    getUserNotificationSettings,
+    updateUserNotificationSettings,
+    requestDeleteOtp,
+    deleteUserAccount,
   ];
 
   static ApiEndpoint requestOtp = ApiEndpoint(
@@ -105,6 +141,11 @@ class ApiEndpoints {
 
   static ApiEndpoint services = ApiEndpoint(
     path: '/services',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint searchServices = ApiEndpoint(
+    path: '/services/search',
     requiresAuth: false,
   );
 
@@ -283,34 +324,215 @@ class ApiEndpoints {
     requiresAuth: true,
   );
 
-  static ApiEndpoint chatRooms = ApiEndpoint(
-    path: '/chat/rooms',
+  static ApiEndpoint conversations = ApiEndpoint(
+    path: '/conversations',
     requiresAuth: true,
   );
 
-  static ApiEndpoint chatMessages = ApiEndpoint(
-    path: '/chat/rooms/{roomId}/messages',
+  static ApiEndpoint conversationMessages = ApiEndpoint(
+    path: '/conversations/{conversationId}/messages',
     requiresAuth: true,
   );
 
-  static ApiEndpoint sendMessage = ApiEndpoint(
-    path: '/chat/rooms/{roomId}/messages',
+  static ApiEndpoint sendConversationMessage = ApiEndpoint(
+    path: '/conversations/{conversationId}/messages',
     requiresAuth: true,
   );
 
-  static ApiEndpoint markMessageRead = ApiEndpoint(
-    path: '/chat/messages/{messageId}/read',
+  static ApiEndpoint markConversationMessageRead = ApiEndpoint(
+    path: '/conversations/messages/{messageId}/read',
     requiresAuth: true,
   );
 
-  static ApiEndpoint bookingChatRoom = ApiEndpoint(
-    path: '/chat/bookings/{bookingId}/room',
+  static ApiEndpoint createConversation = ApiEndpoint(
+    path: '/conversations',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markConversationAsRead = ApiEndpoint(
+    path: '/conversations/{conversationId}/mark-read',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getConversationUnreadCount = ApiEndpoint(
+    path: '/conversations/{conversationId}/unread-count',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getTotalUnreadCount = ApiEndpoint(
+    path: '/conversations/unread-count/total',
     requiresAuth: true,
   );
 
   // Location Tracking Endpoints
   static ApiEndpoint getTrackingStatus = ApiEndpoint(
     path: '/assignments/{assignmentId}/tracking-status',
+    requiresAuth: true,
+  );
+
+  // Property Endpoints
+  static ApiEndpoint getUserProperties = ApiEndpoint(
+    path: '/user/properties',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createProperty = ApiEndpoint(
+    path: '/user/properties',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint deleteProperty = ApiEndpoint(
+    path: '/user/properties/{propertyId}',
+    requiresAuth: true,
+  );
+
+  // Subscription Endpoints
+  static ApiEndpoint mySubscription = ApiEndpoint(
+    path: '/subscriptions/my-subscription',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint subscriptionHistory = ApiEndpoint(
+    path: '/subscriptions/history',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint subscriptionPlans = ApiEndpoint(
+    path: '/subscription-plans',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createPaymentOrder = ApiEndpoint(
+    path: '/subscriptions/create-payment-order',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint completePurchase = ApiEndpoint(
+    path: '/subscriptions/complete-purchase',
+    requiresAuth: true,
+  );
+
+  // Vendor Endpoints
+  static ApiEndpoint getUserVendors = ApiEndpoint(
+    path: '/vendors',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createVendor = ApiEndpoint(
+    path: '/vendors',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getProperties = ApiEndpoint(
+    path: '/properties',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getPropertyDetails = ApiEndpoint(
+    path: '/properties/{id}',
+    requiresAuth: true,
+  );
+
+  // Stats Endpoints
+  static ApiEndpoint projectsStats = ApiEndpoint(
+    path: '/projects/stats',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint vendorsStats = ApiEndpoint(
+    path: '/vendors/stats',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint workersStats = ApiEndpoint(
+    path: '/workers/stats',
+    requiresAuth: true,
+  );
+  static ApiEndpoint getVendors = ApiEndpoint(
+    path: '/public/vendors',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getVendorDetails = ApiEndpoint(
+    path: '/vendors/{vendorId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getWorkers = ApiEndpoint(
+    path: '/public/workers',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint getWorkerDetails = ApiEndpoint(
+    path: '/public/workers/{workerId}',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint getProjects = ApiEndpoint(
+    path: '/projects',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getProjectDetails = ApiEndpoint(
+    path: '/projects/{projectId}',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint createSegmentPayment = ApiEndpoint(
+    path: '/bookings/{bookindId}/payment-segments/pay',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint verifySegmentPayment = ApiEndpoint(
+    path: '/bookings/{bookindId}/payment-segments/verify',
+    requiresAuth: true,
+  );
+
+  // Notification Endpoints
+  static ApiEndpoint notifications = ApiEndpoint(
+    path: '/in-app-notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint unreadCount = ApiEndpoint(
+    path: '/in-app-notifications/unread-count',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint markAllNotificationsAsRead = ApiEndpoint(
+    path: '/in-app-notifications/read-all',
+    requiresAuth: true,
+  );
+
+  // Worker Application Endpoints
+  static ApiEndpoint submitWorkerApplication = ApiEndpoint(
+    path: '/role-applications/worker',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint getUserApplicationStatus = ApiEndpoint(
+    path: '/role-applications/me',
+    requiresAuth: true,
+  );
+
+  // User Settings Endpoints
+  static ApiEndpoint getUserNotificationSettings = ApiEndpoint(
+    path: '/users/notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint updateUserNotificationSettings = ApiEndpoint(
+    path: '/users/notifications',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint requestDeleteOtp = ApiEndpoint(
+    path: '/users/request-delete-otp',
+    requiresAuth: true,
+  );
+
+  static ApiEndpoint deleteUserAccount = ApiEndpoint(
+    path: '/users/account',
     requiresAuth: true,
   );
 

@@ -338,31 +338,37 @@ class AssignmentCardWidget extends ConsumerWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.chat_bubble_outline,
-                size: 24,
-                color: Colors.grey,
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5F5F5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline,
+                  size: 24,
+                  color: Colors.grey,
+                ),
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.phone_outlined,
-                size: 24,
-                color: Colors.grey,
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5F5F5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.phone_outlined,
+                  size: 24,
+                  color: Colors.grey,
+                ),
               ),
             ),
           ],

@@ -1,3 +1,5 @@
+import '../../../../commons/domain/entities/user_profile_entity.dart';
+
 class ProfileState {
   final bool isLoading;
   final bool isUpdatingProfile;
@@ -10,6 +12,9 @@ class ProfileState {
   final String? gender;
   final String? phone;
   final bool isProfileLoaded;
+  final String userType;
+  final SubscriptionEntity? subscription;
+  final RoleApplicationEntity? roleApplication;
 
   const ProfileState({
     this.isLoading = false,
@@ -23,6 +28,9 @@ class ProfileState {
     this.gender,
     this.phone,
     this.isProfileLoaded = false,
+    this.userType = 'normal',
+    this.subscription,
+    this.roleApplication,
   });
 
   ProfileState copyWith({
@@ -36,7 +44,10 @@ class ProfileState {
     String? email,
     String? gender,
     String? phone,
+    String? userType,
     bool? isProfileLoaded,
+    SubscriptionEntity? subscription,
+    RoleApplicationEntity? roleApplication,
   }) {
     return ProfileState(
       isLoading: isLoading ?? this.isLoading,
@@ -49,7 +60,10 @@ class ProfileState {
       email: email ?? this.email,
       gender: gender ?? this.gender,
       phone: phone ?? this.phone,
+      userType: userType ?? this.userType,
       isProfileLoaded: isProfileLoaded ?? this.isProfileLoaded,
+      subscription: subscription ?? this.subscription,
+      roleApplication: roleApplication ?? this.roleApplication,
     );
   }
 
@@ -62,6 +76,6 @@ class ProfileState {
 
   @override
   String toString() {
-    return 'ProfileState(isLoading: $isLoading, isUpdatingProfile: $isUpdatingProfile, isUploadingAvatar: $isUploadingAvatar, errorMessage: $errorMessage, successMessage: $successMessage, avatarUrl: $avatarUrl, name: $name, email: $email, gender: $gender, phone: $phone, isProfileLoaded: $isProfileLoaded)';
+    return 'ProfileState(isLoading: $isLoading, isUpdatingProfile: $isUpdatingProfile, isUploadingAvatar: $isUploadingAvatar, errorMessage: $errorMessage, successMessage: $successMessage, avatarUrl: $avatarUrl, name: $name, email: $email, gender: $gender, phone: $phone, isProfileLoaded: $isProfileLoaded, subscription: $subscription)';
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
-import '../../../domain/entities/chat_message_entity.dart';
+import '../../../domain/entities/conversation_message_entity.dart';
 
 class MessageBubble extends StatelessWidget {
-  final ChatMessageEntity message;
+  final ConversationMessageEntity message;
   final bool isMe;
 
   const MessageBubble({
@@ -32,13 +32,11 @@ class MessageBubble extends StatelessWidget {
               crossAxisAlignment:
                   isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                if (!isMe &&
-                    message.sender != null &&
-                    message.sender!.name.isNotEmpty)
+                if (!isMe && message.sender.name.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: B4Regular(
-                      text: message.sender!.name,
+                      text: message.sender.name,
                       color: AppColors.brandNeutral700,
                     ),
                   ),
@@ -90,8 +88,6 @@ class MessageBubble extends StatelessWidget {
 
   IconData _getStatusIcon() {
     if (message.isRead) {
-      return Icons.done_all;
-    } else if (message.status == "delivered") {
       return Icons.done_all;
     } else {
       return Icons.check;

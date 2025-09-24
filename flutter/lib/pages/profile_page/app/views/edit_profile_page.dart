@@ -1,10 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/textfield/app/views/alphabetic_textfield_widget.dart';
 import 'package:trees_india/commons/components/textfield/app/views/email_textfield_widget.dart';
@@ -13,6 +17,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_entity.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 
@@ -31,6 +36,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   bool _isInitialized = false;
   Key _nameFieldKey = UniqueKey();
   Key _emailFieldKey = UniqueKey();
+  String? _emailError;
 
   // Main brand color used throughout the app
   static const Color mainColor = Color(0xFF055c3a);
@@ -95,49 +101,55 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     if (name.isEmpty || email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: AppColors.stateRed600,
-        ),
+        const ErrorSnackbarWidget(
+          message: 'Please fill in all required fields',
+        ).createSnackBar(),
       );
       return;
     }
 
-    print(
-        'Updating profile with name: $name, email: $email, gender: $_selectedGender');
+    if (kDebugMode) {
+      print(
+          'Updating profile with name: $name, email: $email, gender: $_selectedGender');
+    }
 
-    try {
-      // Update profile using auth notifier
-      await ref
-          .read(profileProvider.notifier)
-          .updateProfile(name, email, _selectedGender);
+    // Clear previous inline error
+    setState(() {
+      _emailError = null;
+    });
 
-      // Refresh profile data after update
-      await ref.read(userProfileProvider.notifier).refreshUserProfile();
+    // Trigger update
+    await ref
+        .read(profileProvider.notifier)
+        .updateProfile(name, email, _selectedGender);
 
-      // Show success message
+    // Read the latest state
+    final latestProfileState = ref.read(profileProvider);
+
+    // If there is an error (e.g., Email already exists), stay on page and show inline + snackbar
+    if (latestProfileState.errorMessage != null &&
+        latestProfileState.errorMessage!.isNotEmpty) {
+      final message = latestProfileState.errorMessage!;
       if (mounted) {
+        setState(() {
+          _emailError = message;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: AppColors.stateGreen600,
-          ),
+          ErrorSnackbarWidget(message: message).createSnackBar(),
         );
       }
+      return;
+    }
 
-      // Navigate back to profile page
-      if (mounted) {
-        context.pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: ${e.toString()}'),
-            backgroundColor: AppColors.stateRed600,
-          ),
-        );
-      }
+    // Success path
+    await ref.read(userProfileProvider.notifier).refreshUserProfile();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SuccessSnackbarWidget(
+          message: 'Profile updated successfully!',
+        ).createSnackBar(),
+      );
+      context.pop();
     }
   }
 
@@ -146,6 +158,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     final userProfileState = ref.watch(userProfileProvider);
     final profileState = ref.watch(profileProvider);
     final user = userProfileState.user;
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     // Re-initialize if user data changes and we haven't initialized yet
     if (user != null && !_isInitialized) {
@@ -279,8 +300,24 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         hintText: 'Enter your email address',
                         onTextChanged: (value) {
                           _emailController.text = value;
+                          if (_emailError != null) {
+                            setState(() {
+                              _emailError = null;
+                            });
+                          }
                         },
                       ),
+                      if (_emailError != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _emailError!,
+                          style: const TextStyle(
+                            color: AppColors.stateRed600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -412,7 +449,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Widget _buildDefaultAvatar() {
     return Container(
       color: mainColor.withOpacity(0.1),
-      child: Icon(
+      child: const Icon(
         Icons.person,
         size: 60,
         color: mainColor,
