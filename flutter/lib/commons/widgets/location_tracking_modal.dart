@@ -66,7 +66,7 @@ class _LocationTrackingModalState extends ConsumerState<LocationTrackingModal> {
       // Get initial tracking status if assignment exists
       if (widget.booking.workerAssignment != null) {
         _locationNotifier!
-            .getTrackingStatus(widget.booking.workerAssignment!.id);
+            .getTrackingStatus(widget.booking.workerAssignment!.workerId);
       }
     });
   }

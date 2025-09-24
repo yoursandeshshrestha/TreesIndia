@@ -1,10 +1,13 @@
 import '../../domain/entities/bookings_response_entity.dart';
 import '../../domain/entities/quote_payment_request_entity.dart';
 import '../../domain/entities/quote_payment_response_entity.dart';
+import '../../domain/entities/segment_payment_request_entity.dart';
+import '../../domain/entities/segment_payment_response_entity.dart';
 import '../../domain/repositories/bookings_repository.dart';
 import '../../app/viewmodels/bookings_state.dart';
 import '../datasources/bookings_datasource.dart';
 import '../models/quote_payment_request_model.dart';
+import '../models/segment_payment_request_model.dart';
 
 class BookingsRepositoryImpl implements BookingsRepository {
   final BookingsDatasource datasource;
@@ -94,6 +97,30 @@ class BookingsRepositoryImpl implements BookingsRepository {
     await datasource.processWalletQuotePayment(
       bookingId: bookingId,
       request: requestModel,
+    );
+  }
+
+  @override
+  Future<SegmentPaymentResponseEntity> createSegmentPayment({
+    required int bookingId,
+    required SegmentPaymentRequestEntity request,
+  }) async {
+    final requestModel = SegmentPaymentRequestModel.fromEntity(request);
+    final responseModel = await datasource.createSegmentPayment(
+      bookingId: bookingId,
+      request: requestModel,
+    );
+    return responseModel.toEntity();
+  }
+
+  @override
+  Future<void> verifySegmentPayment({
+    required int bookingId,
+    required Map<String, String> verificationData,
+  }) async {
+    await datasource.verifySegmentPayment(
+      bookingId: bookingId,
+      verificationData: verificationData,
     );
   }
 }

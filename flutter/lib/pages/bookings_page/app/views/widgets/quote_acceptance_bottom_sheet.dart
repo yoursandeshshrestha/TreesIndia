@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
-import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/skeleton/app/views/skeleton_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
@@ -44,6 +43,7 @@ class _QuoteAcceptanceBottomSheetState
   DateTime? _selectedDate;
   String? _selectedTime;
   String _selectedPaymentMethod = 'razorpay';
+  bool showSuccess = false;
 
   @override
   void initState() {
@@ -83,9 +83,16 @@ class _QuoteAcceptanceBottomSheetState
     // Listen for payment success states
     ref.listen<BookingsState>(bookingsNotifierProvider, (previous, current) {
       if (current.isWalletPaymentSuccess || current.isRazorpayPaymentSuccess) {
-        _showSuccessDialog();
+        // _showSuccessDialog();
+        setState(() {
+          showSuccess = true;
+        });
       }
     });
+
+    if (showSuccess) {
+      return _buildSuccessScreen();
+    }
 
     return Container(
       decoration: const BoxDecoration(
@@ -780,60 +787,59 @@ class _QuoteAcceptanceBottomSheetState
     }
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        // Auto-close after 3 seconds
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted && Navigator.canPop(dialogContext)) {
-            // Clear payment data and close dialog
-            ref.read(bookingsNotifierProvider.notifier).clearPaymentData();
-            Navigator.of(dialogContext).pop(); // Close success dialog
-            
-            // Close bottom sheet after dialog is closed
-            if (mounted && Navigator.canPop(context)) {
-              Navigator.of(context).pop(); // Close bottom sheet
-            }
-          }
-        });
-        
-        return AlertDialog(
-          contentPadding: EdgeInsets.zero,
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          content: Container(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: 120,
-                  width: 120,
-                  child: Lottie.asset(
-                    'assets/lottie/success.json',
-                    repeat: false,
+  Widget _buildSuccessScreen() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/lottie/success.json',
+              width: 120,
+              height: 120,
+              repeat: false,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            H3Bold(
+              text: 'Payment Successful!',
+              color: AppColors.stateGreen600,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            B2Medium(
+              text: 'Your quote payment has been processed successfully',
+              color: AppColors.brandNeutral600,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Bookings are already refreshed by the notifier after successful payment
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.stateGreen600,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 24),
-                H4Bold(
-                  text: 'Payment Successful!',
-                  color: AppColors.brandPrimary700,
+                child: B2Bold(
+                  text: 'Continue',
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 12),
-                B2Regular(
-                  text: 'Your quote has been accepted and payment processed successfully.',
-                  color: const Color(0xFF6B7280),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

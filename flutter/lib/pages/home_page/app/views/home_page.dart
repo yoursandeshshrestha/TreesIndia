@@ -3,13 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
@@ -22,6 +26,7 @@ import 'widgets/simple_banner_widget.dart';
 import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
 import 'widgets/popular_categories_widget.dart';
+import 'widgets/subscription_lock_modal.dart';
 import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -38,10 +43,27 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _loadCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
     // Load popular services when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+      _initializeNotifications();
     });
+  }
+
+  void _initializeNotifications() {
+    final notifier = ref.read(notificationNotifierProvider.notifier);
+
+    // Load initial unread count
+    notifier.loadUnreadCount();
+
+    // Connect WebSocket if authenticated
+    final authState = ref.read(authProvider);
+    if (authState.isLoggedIn && authState.token != null) {
+      notifier.connectWebSocket(authState.token!.token);
+    }
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -56,15 +78,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     } catch (e) {
       debugPrint('Error loading location: $e');
     }
-  }
-
-  String _getDisplayLocation(LocationEntity location) {
-    // Fallback to first two parts of address
-    final parts = location.address.split(', ');
-    if (parts.length >= 2) {
-      return '${parts[0]}, ${parts[1]}';
-    }
-    return location.address;
   }
 
   void _navigateToLocationPicker() async {
@@ -87,10 +100,16 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   void _showServicesBottomSheet(BuildContext context, ServiceCategory category,
       CategoryEntity categoryEntity) {
-    // Load subcategories instead of services
-    ref
-        .read(subcategoryNotifierProvider.notifier)
-        .loadSubcategoriesByCategory(categoryEntity.id);
+    // Check if this is a marketplace category
+    final isMarketplace =
+        categoryEntity.name.toLowerCase().contains('marketplace');
+
+    if (!isMarketplace) {
+      // Load subcategories instead of services for non-marketplace categories
+      ref
+          .read(subcategoryNotifierProvider.notifier)
+          .loadSubcategoriesByCategory(categoryEntity.id);
+    }
 
     showModalBottomSheet(
       context: context,
@@ -121,60 +140,63 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final subcategoryState =
-                        ref.watch(subcategoryNotifierProvider);
+                child: isMarketplace
+                    ? _buildMarketplaceOptions(context, categoryEntity)
+                    : Consumer(
+                        builder: (context, ref, child) {
+                          final subcategoryState =
+                              ref.watch(subcategoryNotifierProvider);
 
-                    if (subcategoryState.status == SubcategoryStatus.loading) {
-                      return const SubcategoryLoadingSkeleton();
-                    } else if (subcategoryState.status ==
-                        SubcategoryStatus.failure) {
-                      return Center(
-                        child: B2Regular(
-                          text: 'Failed to load subcategories',
-                          color: AppColors.stateRed600,
-                        ),
-                      );
-                    } else if (subcategoryState.subcategories.isEmpty) {
-                      return Center(
-                        child: B2Regular(
-                          text: 'No subcategories available',
-                          color: AppColors.brandNeutral600,
-                        ),
-                      );
-                    } else {
-                      return GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                          childAspectRatio: 0.9,
-                        ),
-                        itemCount: subcategoryState.subcategories.length,
-                        itemBuilder: (context, index) {
-                          final subcategory =
-                              subcategoryState.subcategories[index];
-                          return _SubcategoryCard(
-                            subcategory: subcategory,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              // Set category and subcategory in services page state
-                              ref
-                                  .read(serviceNotifierProvider.notifier)
-                                  .setCategoryAndSubcategory(
-                                      categoryEntity, subcategory);
-                              // Navigate to services page
-                              context.push(
-                                  '/services/${categoryEntity.id}/${subcategory.id}');
-                            },
-                          );
+                          if (subcategoryState.status ==
+                              SubcategoryStatus.loading) {
+                            return const SubcategoryLoadingSkeleton();
+                          } else if (subcategoryState.status ==
+                              SubcategoryStatus.failure) {
+                            return Center(
+                              child: B2Regular(
+                                text: 'Failed to load subcategories',
+                                color: AppColors.stateRed600,
+                              ),
+                            );
+                          } else if (subcategoryState.subcategories.isEmpty) {
+                            return Center(
+                              child: B2Regular(
+                                text: 'No subcategories available',
+                                color: AppColors.brandNeutral600,
+                              ),
+                            );
+                          } else {
+                            return GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.md,
+                                childAspectRatio: 0.9,
+                              ),
+                              itemCount: subcategoryState.subcategories.length,
+                              itemBuilder: (context, index) {
+                                final subcategory =
+                                    subcategoryState.subcategories[index];
+                                return _SubcategoryCard(
+                                  subcategory: subcategory,
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    // Set category and subcategory in services page state
+                                    ref
+                                        .read(serviceNotifierProvider.notifier)
+                                        .setCategoryAndSubcategory(
+                                            categoryEntity, subcategory);
+                                    // Navigate to services page
+                                    context.push(
+                                        '/services/${categoryEntity.id}/${subcategory.id}');
+                                  },
+                                );
+                              },
+                            );
+                          }
                         },
-                      );
-                    }
-                  },
-                ),
+                      ),
               ),
             ],
           ),
@@ -183,8 +205,160 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  Widget _buildMarketplaceOptions(
+      BuildContext context, CategoryEntity categoryEntity) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).loadProfile();
+    });
+    // Create hardcoded marketplace subcategories
+    final marketplaceSubcategories = [
+      SubcategoryEntity(
+        id: 1001,
+        name: 'Rental & Properties',
+        slug: 'rental-properties',
+        description: 'Find rental properties and real estate',
+        icon: 'assets/icons/building.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1002,
+        name: 'Projects',
+        slug: 'projects',
+        description: 'Browse construction and development projects',
+        icon: 'assets/icons/project.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1003,
+        name: 'Vendors',
+        slug: 'vendors',
+        description: 'Find trusted vendors and service providers',
+        icon: 'assets/icons/vendor.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      SubcategoryEntity(
+        id: 1004,
+        name: 'Workers',
+        slug: 'workers',
+        description: 'Connect with skilled workers',
+        icon: 'assets/icons/worker.png',
+        parentId: categoryEntity.id,
+        parent: categoryEntity,
+        isActive: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    ];
+
+    return Consumer(
+      builder: (context, ref, child) {
+        final profileState = ref.watch(profileProvider);
+        final hasActiveSubscription = profileState.subscription != null &&
+            profileState.subscription!.status == 'active';
+
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: marketplaceSubcategories.length,
+          itemBuilder: (context, index) {
+            final subcategory = marketplaceSubcategories[index];
+            final requiresSubscription =
+                subcategory.slug != 'rental-properties';
+            final isLocked = requiresSubscription && !hasActiveSubscription;
+
+            return _MarketplaceSubcategoryCard(
+              subcategory: subcategory,
+              isLocked: isLocked,
+              onTap: () {
+                Navigator.of(context).pop();
+
+                if (isLocked) {
+                  // Show subscription lock modal
+                  _showSubscriptionLockModal(context, subcategory.slug);
+                } else {
+                  // Navigate to marketplace pages based on subcategory
+                  _navigateToMarketplace(context, subcategory.slug);
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSubscriptionLockModal(BuildContext context, String slug) {
+    MarketplaceType type;
+    switch (slug) {
+      case 'projects':
+        type = MarketplaceType.projects;
+        break;
+      case 'vendors':
+        type = MarketplaceType.vendors;
+        break;
+      case 'workers':
+        type = MarketplaceType.workers;
+        break;
+      default:
+        return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SubscriptionLockModal(type: type),
+    );
+  }
+
+  void _navigateToMarketplace(BuildContext context, String slug) {
+    switch (slug) {
+      case 'rental-properties':
+        context.push('/marketplace/rental-properties');
+        break;
+      case 'projects':
+        context.push('/marketplace/projects');
+        break;
+      case 'vendors':
+        context.push('/marketplace/vendors');
+        break;
+      case 'workers':
+        context.push('/marketplace/workers');
+        break;
+      default:
+        print('Unknown marketplace subcategory: $slug');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
     return MainLayoutWidget(
       currentIndex: 0,
       child: Scaffold(
@@ -199,73 +373,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   currentLocation: _currentLocation,
                   onLocationTap: _navigateToLocationPicker,
                   onBellTap: () {
-                    // TODO: Handle bell icon tap
-                    print('Bell icon tapped');
+                    context.push('/notifications');
                   },
                 ),
 
                 const SizedBox(height: AppSpacing.md),
-
-                // User Type Display
-                // Consumer(
-                //   builder: (context, ref, child) {
-                //     final authState = ref.watch(authProvider);
-                //     final userType = authState.userType;
-
-                //     if (userType != null) {
-                //       return Padding(
-                //         padding: const EdgeInsets.symmetric(
-                //             horizontal: AppSpacing.lg),
-                //         child: Container(
-                //           padding: const EdgeInsets.symmetric(
-                //             horizontal: 12,
-                //             vertical: 8,
-                //           ),
-                //           decoration: BoxDecoration(
-                //             color: userType == 'worker'
-                //                 ? AppColors.brandPrimary50
-                //                 : AppColors.stateGreen50,
-                //             borderRadius: BorderRadius.circular(20),
-                //             border: Border.all(
-                //               color: userType == 'worker'
-                //                   ? AppColors.brandPrimary200
-                //                   : AppColors.stateGreen200,
-                //               width: 1,
-                //             ),
-                //           ),
-                //           child: Row(
-                //             mainAxisSize: MainAxisSize.min,
-                //             children: [
-                //               Icon(
-                //                 userType == 'worker'
-                //                     ? Icons.work_outline
-                //                     : Icons.person_outline,
-                //                 size: 16,
-                //                 color: userType == 'worker'
-                //                     ? AppColors.brandPrimary600
-                //                     : AppColors.stateGreen600,
-                //               ),
-                //               const SizedBox(width: 4),
-                //               Text(
-                //                 userType == 'worker' ? 'Worker' : 'Customer',
-                //                 style: TextStyle(
-                //                   fontSize: 12,
-                //                   fontWeight: FontWeight.w500,
-                //                   color: userType == 'worker'
-                //                       ? AppColors.brandPrimary600
-                //                       : AppColors.stateGreen600,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       );
-                //     }
-                //     return const SizedBox.shrink();
-                //   },
-                // ),
-
-                // const SizedBox(height: AppSpacing.sm),
 
                 // Fixed Search Bar
                 Padding(
@@ -311,10 +423,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       readOnly: true,
                       onTap: () {
-                        // Load search suggestions and navigate to search page
-                        ref
-                            .read(homePageNotifierProvider.notifier)
-                            .loadSearchSuggestions();
                         context.push('/search');
                       },
                     ),
@@ -342,8 +450,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                               color: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                   vertical: AppSpacing.lg),
-                              child: SimpleBannerWidget(
-                                items: const [
+                              child: const SimpleBannerWidget(
+                                items: [
                                   BannerItem(
                                     id: "1",
                                     image: "assets/images/banner_one.png",
@@ -490,6 +598,132 @@ class _SubcategoryCardState extends State<_SubcategoryCard> {
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketplaceSubcategoryCard extends StatefulWidget {
+  final SubcategoryEntity subcategory;
+  final bool isLocked;
+  final VoidCallback onTap;
+
+  const _MarketplaceSubcategoryCard({
+    required this.subcategory,
+    required this.isLocked,
+    required this.onTap,
+  });
+
+  @override
+  State<_MarketplaceSubcategoryCard> createState() =>
+      _MarketplaceSubcategoryCardState();
+}
+
+class _MarketplaceSubcategoryCardState
+    extends State<_MarketplaceSubcategoryCard> {
+  bool _isPressed = false;
+
+  IconData _getIconForSlug(String slug) {
+    switch (slug) {
+      case 'rental-properties':
+        return Icons.home_outlined;
+      case 'projects':
+        return Icons.construction_outlined;
+      case 'vendors':
+        return Icons.business_outlined;
+      case 'workers':
+        return Icons.person_outline;
+      default:
+        return Icons.build_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform:
+            _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
+        child: Container(
+          height: 120,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icon container with lock overlay
+              Container(
+                width: double.infinity,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: widget.isLocked
+                      ? const Color(0xFFF0F0F0)
+                      : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        _getIconForSlug(widget.subcategory.slug),
+                        size: 40,
+                        color: widget.isLocked
+                            ? AppColors.brandNeutral400
+                            : AppColors.brandNeutral600,
+                      ),
+                    ),
+                    if (widget.isLocked)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.lock,
+                            size: 16,
+                            color: AppColors.brandNeutral600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              // Title text
+              Expanded(
+                child: Text(
+                  widget.subcategory.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: widget.isLocked
+                        ? AppColors.brandNeutral500
+                        : Colors.black,
                     height: 1.3,
                   ),
                   textAlign: TextAlign.center,

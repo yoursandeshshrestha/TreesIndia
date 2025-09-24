@@ -24,6 +24,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
       final response = await datasource.updateProfile(requestModel);
       return response.toEntity();
     } catch (e) {
+      // Preserve server-provided error messages (e.g., "Email already exists")
+      if (e is Exception) {
+        print('ProfileRepositoryImpl: Exception: ${e.toString()}');
+        final message = e.toString().replaceFirst('Exception: ', '');
+        throw Exception(message);
+      }
       throw Exception('Failed to update profile. Please try again.');
     }
   }

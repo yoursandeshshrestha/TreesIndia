@@ -1,6 +1,8 @@
 import '../entities/bookings_response_entity.dart';
 import '../entities/quote_payment_request_entity.dart';
 import '../entities/quote_payment_response_entity.dart';
+import '../entities/segment_payment_request_entity.dart';
+import '../entities/segment_payment_response_entity.dart';
 import '../../app/viewmodels/bookings_state.dart';
 
 abstract class BookingsRepository {
@@ -39,5 +41,15 @@ abstract class BookingsRepository {
   Future<void> processWalletQuotePayment({
     required int bookingId,
     required WalletQuotePaymentRequestEntity request,
+  });
+
+  Future<SegmentPaymentResponseEntity> createSegmentPayment({
+    required int bookingId,
+    required SegmentPaymentRequestEntity request,
+  });
+
+  Future<void> verifySegmentPayment({
+    required int bookingId,
+    required Map<String, String> verificationData,
   });
 }

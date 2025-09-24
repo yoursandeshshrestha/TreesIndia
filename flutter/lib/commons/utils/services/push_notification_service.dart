@@ -82,7 +82,7 @@ class PushNotificationService {
 
       // Initialize local notifications
       const androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/launcher_icon');
       const iosSettings = DarwinInitializationSettings(
         requestSoundPermission: true,
         requestBadgePermission: true,
@@ -132,7 +132,7 @@ class PushNotificationService {
           _localStorage = ref.watch(localStorageServiceProvider);
           await _localStorage.saveData('FCMTOKEN', token);
           debugPrint('FCM Token: $token');
-          
+
           // Trigger auto-registration with backend
           try {
             final autoRegistrationService = FCMAutoRegistrationService();
@@ -365,7 +365,7 @@ class PushNotificationService {
               enableLights: true,
               enableVibration: true,
               playSound: true,
-              icon: '@mipmap/ic_launcher'),
+              icon: '@mipmap/launcher_icon'),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
@@ -495,10 +495,11 @@ class PushNotificationService {
     try {
       _localStorage = ref.watch(localStorageServiceProvider);
       final token = await _localStorage.getData('FCMTOKEN');
-      
+
       if (token != null) {
-        debugPrint('Re-triggering FCM registration with token: ${token.substring(0, 20)}...');
-        
+        debugPrint(
+            'Re-triggering FCM registration with token: ${token.substring(0, 20)}...');
+
         final autoRegistrationService = FCMAutoRegistrationService();
         await autoRegistrationService.autoRegisterDevice(
           ref: ref,

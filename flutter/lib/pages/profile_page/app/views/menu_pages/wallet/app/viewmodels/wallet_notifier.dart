@@ -3,6 +3,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/domain/entities/wallet_summary_entity.dart';
 import '../../../../../../../../commons/environment/global_environment.dart';
 import '../../domain/entities/wallet_recharge_entity.dart';
+import '../../domain/entities/wallet_transaction_entity.dart';
 import '../../domain/usecases/get_wallet_summary_usecase.dart';
 import '../../domain/usecases/get_wallet_transactions_usecase.dart';
 import '../../domain/usecases/initiate_wallet_recharge_usecase.dart';
@@ -203,6 +204,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
     state = state.copyWith(
       rechargeStatus: RechargeStatus.failure,
       errorMessage: response.message ?? 'Payment failed',
+      isCompletingPayment: false,
     );
   }
 
@@ -210,6 +212,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
     state = state.copyWith(
       rechargeStatus: RechargeStatus.failure,
       errorMessage: 'External wallet selected: ${response.walletName}',
+      isCompletingPayment: false,
     );
   }
 
@@ -233,6 +236,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
 
       state = state.copyWith(
         rechargeStatus: RechargeStatus.success,
+        isCompletingPayment: false,
       );
 
       await refreshWalletData();
@@ -240,6 +244,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
       state = state.copyWith(
         rechargeStatus: RechargeStatus.failure,
         errorMessage: 'Failed to complete payment: $error',
+        isCompletingPayment: false,
       );
     }
   }
@@ -256,6 +261,59 @@ class WalletNotifier extends StateNotifier<WalletState> {
       await refreshWalletData();
     } catch (error) {
       print('Error cancelling wallet recharge: $error');
+    }
+  }
+
+  Future<void> completeExistingPayment(WalletTransactionEntity transaction) async {
+    if (!transaction.canCompletePayment) {
+      state = state.copyWith(
+        errorMessage: 'This transaction cannot be completed',
+      );
+      return;
+    }
+
+    state = state.copyWith(isCompletingPayment: true);
+
+    try {
+      // Open Razorpay with existing order details
+      final options = {
+        'key': GlobalEnvironment.razorpayKey,
+        'amount': (transaction.amount * 100).toInt(), // Convert to paise
+        'currency': 'INR',
+        'order_id': transaction.razorpayOrderId,
+        'name': 'Trees India',
+        'description': 'Complete Wallet Recharge Payment',
+        'prefill': {'contact': '', 'email': ''}
+      };
+
+      // Store the transaction ID for completion
+      state = state.copyWith(
+        rechargeResponse: WalletRechargeResponseEntity(
+          payment: PaymentEntity(
+            id: transaction.id,
+            paymentReference: transaction.paymentReference,
+            userId: 0, // Will be set by backend
+            amount: transaction.amount,
+            status: transaction.status,
+            type: transaction.type,
+            method: transaction.method,
+          ),
+          paymentOrder: PaymentOrderEntity(
+            id: transaction.razorpayOrderId!,
+            amount: (transaction.amount * 100).toInt(),
+            currency: 'INR',
+            keyId: GlobalEnvironment.razorpayKey,
+            receipt: transaction.paymentReference,
+          ),
+        ),
+      );
+
+      razorpay.open(options);
+    } catch (error) {
+      state = state.copyWith(
+        isCompletingPayment: false,
+        errorMessage: 'Failed to open payment gateway: $error',
+      );
     }
   }
 

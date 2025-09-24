@@ -219,7 +219,7 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
           phone: profileData.phone,
           gender: profileData.gender,
           isActive: profileData.isActive,
-          isVerified: profileData.isVerified,
+          isVerified: true, // Default value since isVerified is not in new API
           userType: profileData.userType,
           createdAt: profileData.createdAt,
           updatedAt: profileData.updatedAt,

@@ -10,8 +10,7 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     
-    // Configure Firebase
-    FirebaseApp.configure()
+
     
     // Configure push notifications
     if #available(iOS 10.0, *) {

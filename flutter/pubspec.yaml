@@ -68,6 +68,7 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   web_socket_channel: ^3.0.1
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +80,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+
+  flutter_native_splash: 2.4.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -96,6 +99,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/urban/
+    - assets/logo/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -127,3 +131,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/logo/pixelcut-export.png
+  branding: assets/logo/treesindia-logo.png
+  android: true
+  ios: true
+  web: false
+  ios_content_mode: scaleAspectFit
+  branding_mode: bottom
+  branding_bottom_padding: 24
+  fullscreen: true

@@ -13,10 +13,10 @@ class BookingsResponseModel extends BookingsResponseEntity {
 
     return BookingsResponseModel(
       bookings: (json['bookings'] as List<dynamic>?)
-              ?.map((bookingWrapper) {
-                // Each booking is wrapped in a 'booking' key
-                final bookingData = bookingWrapper['booking'] as Map<String, dynamic>;
-                return BookingDetailsModel.fromJson(bookingData);
+              ?.map((bookingItem) {
+              
+                
+                return BookingDetailsModel.fromJson(bookingItem);
               })
               .toList() ??
           [],

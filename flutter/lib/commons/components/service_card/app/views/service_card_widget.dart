@@ -38,7 +38,7 @@ class ServiceCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 160,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,8 +46,8 @@ class ServiceCardWidget extends StatelessWidget {
             // Image Container
             Container(
               height: 100,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
                 ),
@@ -93,7 +93,7 @@ class ServiceCardWidget extends StatelessWidget {
                       color: Colors.black,
                       height: 1.2,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),

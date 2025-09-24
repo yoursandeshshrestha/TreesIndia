@@ -15,6 +15,9 @@ import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/process_wallet_quote_payment_usecase.dart';
 import '../../domain/usecases/reject_quote_usecase.dart';
 import '../../domain/usecases/verify_quote_payment_usecase.dart';
+import '../../domain/usecases/create_segment_payment_usecase.dart';
+import '../../domain/usecases/verify_segment_payment_usecase.dart';
+import '../../domain/entities/segment_payment_request_entity.dart';
 import 'bookings_state.dart';
 
 class BookingsNotifier extends StateNotifier<BookingsState> {
@@ -25,6 +28,8 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
   final CreateQuotePaymentUseCase createQuotePaymentUseCase;
   final VerifyQuotePaymentUseCase verifyQuotePaymentUseCase;
   final ProcessWalletQuotePaymentUseCase processWalletQuotePaymentUseCase;
+  final CreateSegmentPaymentUseCase createSegmentPaymentUseCase;
+  final VerifySegmentPaymentUseCase verifySegmentPaymentUseCase;
   final GetBookingConfigUseCase getBookingConfigUseCase;
   final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
   Timer? _autoRefreshTimer;
@@ -41,6 +46,8 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     required this.createQuotePaymentUseCase,
     required this.verifyQuotePaymentUseCase,
     required this.processWalletQuotePaymentUseCase,
+    required this.createSegmentPaymentUseCase,
+    required this.verifySegmentPaymentUseCase,
     required this.getBookingConfigUseCase,
     required this.getAvailableSlotsUseCase,
     required this.razorpay,
@@ -520,6 +527,106 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
 
   /// Check if there's an ongoing payment
   bool get hasOngoingPayment => _currentPaymentBookingId != null;
+
+  /// Create segment payment (for both wallet and Razorpay)
+  Future<void> createSegmentPayment({
+    required int bookingId,
+    required SegmentPaymentRequestEntity request,
+  }) async {
+    state = state.copyWith(isProcessingSegmentPayment: true, segmentPaymentError: null);
+
+    try {
+      final response = await createSegmentPaymentUseCase.call(
+        bookingId: bookingId,
+        request: request,
+      );
+
+      if (request.paymentMethod == 'wallet') {
+        // For wallet payments, payment is completed immediately
+        state = state.copyWith(
+          isProcessingSegmentPayment: false,
+          segmentPaymentSuccess: true,
+        );
+        // Refresh bookings after successful wallet payment
+        getBookings(isRefresh: true);
+      } else {
+        // For Razorpay, store order details and let UI handle Razorpay SDK
+        state = state.copyWith(
+          isProcessingSegmentPayment: false,
+          quotePaymentResponse: QuotePaymentResponseEntity(
+            success: true,
+            message: 'Payment order created successfully',
+            timestamp: DateTime.now().toIso8601String(),
+            data: QuotePaymentDataEntity(
+              message: 'Segment payment order created',
+              paymentOrder: PaymentOrderEntity(
+                id: response.orderId,
+                amount: (response.amount * 100).toInt(), // Convert to paise
+                currency: response.currency,
+                keyId: response.keyId,
+                receipt: 'segment_${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
+              ),
+            ),
+          ),
+        );
+        // Store bookingId for Razorpay verification later
+        _currentPaymentBookingId = bookingId;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isProcessingSegmentPayment: false,
+        segmentPaymentError: e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Verify segment payment for Razorpay
+  Future<void> verifySegmentPayment({
+    required int bookingId,
+    required String razorpayPaymentId,
+    required String razorpayOrderId,
+    required String razorpaySignature,
+  }) async {
+    state = state.copyWith(isProcessingSegmentPayment: true, segmentPaymentError: null);
+
+    try {
+      await verifySegmentPaymentUseCase.call(
+        bookingId: bookingId,
+        verificationData: {
+          'razorpay_payment_id': razorpayPaymentId,
+          'razorpay_order_id': razorpayOrderId,
+          'razorpay_signature': razorpaySignature,
+        },
+      );
+
+      state = state.copyWith(
+        isProcessingSegmentPayment: false,
+        segmentPaymentSuccess: true,
+      );
+
+      // Clear current payment booking ID
+      _currentPaymentBookingId = null;
+
+      // Refresh bookings after successful payment
+      getBookings(isRefresh: true);
+    } catch (e) {
+      state = state.copyWith(
+        isProcessingSegmentPayment: false,
+        segmentPaymentError: e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Clear segment payment data
+  void clearSegmentPaymentData() {
+    state = state.copyWith(
+      isProcessingSegmentPayment: false,
+      segmentPaymentSuccess: false,
+      segmentPaymentError: null,
+    );
+  }
 
   @override
   void dispose() {

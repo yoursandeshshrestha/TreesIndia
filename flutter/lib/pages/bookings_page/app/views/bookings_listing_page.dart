@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
@@ -87,6 +89,15 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
   @override
   Widget build(BuildContext context) {
     final bookingsState = ref.watch(bookingsNotifierProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationServiceProvider).showOfflineMessage(
+              context,
+              onRetry: () => debugPrint('Retrying…'),
+            );
+      });
+    }
 
     // Update tab controller if needed
     if (_tabController.index != _getIndexFromTab(bookingsState.currentTab)) {
@@ -267,7 +278,7 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
               padding: EdgeInsets.all(AppSpacing.md),
               child: Center(
                 child: CircularProgressIndicator(
-                  color:  Color(0xFF055c3a),
+                  color: Color(0xFF055c3a),
                 ),
               ),
             );

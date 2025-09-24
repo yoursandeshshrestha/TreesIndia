@@ -15,7 +15,7 @@ class WalletBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,7 +25,7 @@ class WalletBalanceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Treesindia Cash Label
-              Text(
+              const Text(
                 'Treesindia Cash',
                 style: TextStyle(
                   fontSize: 16,
@@ -38,7 +38,7 @@ class WalletBalanceCard extends StatelessWidget {
               // Balance Amount
               Text(
                 '₹${walletSummary.currentBalance.toStringAsFixed(2)}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.brandNeutral900,
@@ -47,7 +47,7 @@ class WalletBalanceCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
 
               // Explanatory Text
-              Text(
+              const Text(
                 'Applicable on all services',
                 style: TextStyle(
                   fontSize: 12,
@@ -63,14 +63,14 @@ class WalletBalanceCard extends StatelessWidget {
           // Recharge Button - Same style as address button
           GestureDetector(
             onTap: onRecharge,
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.add,
                   color: Color(0xFF055c3a),
                   size: 20,
                 ),
-                const SizedBox(width: AppSpacing.md),
+                SizedBox(width: AppSpacing.md),
                 Text(
                   'Recharge Wallet',
                   style: TextStyle(

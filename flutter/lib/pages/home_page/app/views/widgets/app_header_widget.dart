@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
 import '../../../../../commons/domain/entities/location_entity.dart';
+import '../../../../../pages/notifications_page/app/providers/notification_providers.dart';
 
-class AppHeaderWidget extends StatelessWidget {
+class AppHeaderWidget extends ConsumerWidget {
   final LocationEntity? currentLocation;
   final VoidCallback? onLocationTap;
   final VoidCallback? onBellTap;
@@ -27,7 +29,9 @@ class AppHeaderWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadCountProvider);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -118,25 +122,58 @@ class AppHeaderWidget extends StatelessWidget {
             ),
           ),
 
-          // Bell Icon (Right) - Circular container
+          // Bell Icon (Right) - Circular container with badge
           GestureDetector(
             onTap: onBellTap,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.brandNeutral100,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.brandNeutral200,
-                  width: 1,
+            child: Stack(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.brandNeutral100,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.brandNeutral200,
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_outlined,
+                    size: 20,
+                    color: AppColors.brandNeutral900,
+                  ),
                 ),
-              ),
-              child: const Icon(
-                Icons.notifications_outlined,
-                size: 20,
-                color: AppColors.brandNeutral900,
-              ),
+                // Unread count badge
+                if (unreadCount > 0)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 16),
+                      height: 16,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.stateRed600,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          unreadCount > 99 ? '99+' : unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],

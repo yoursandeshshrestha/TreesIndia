@@ -5,6 +5,7 @@ import '../../../../commons/utils/services/dio_client.dart';
 import '../models/service_response_model.dart';
 import '../models/search_suggestions_response_model.dart';
 import '../models/popular_services_response_model.dart';
+import '../models/search_response_model.dart';
 
 abstract class ServiceRemoteDataSource {
   Future<ServiceResponseModel> getServices({
@@ -15,9 +16,15 @@ abstract class ServiceRemoteDataSource {
     int page = 1,
     int limit = 10,
   });
-  
+
+  Future<SearchResponseModel> searchServices({
+    required String query,
+    int page = 1,
+    int limit = 20,
+  });
+
   Future<SearchSuggestionsResponseModel> getSearchSuggestions();
-  
+
   Future<PopularServicesResponseModel> getPopularServices();
 }
 
@@ -93,6 +100,40 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
         errorHandler.handleGenericError(e);
       }
       throw Exception('Could not fetch search suggestions. Please try again.');
+    }
+  }
+
+  @override
+  Future<SearchResponseModel> searchServices({
+    required String query,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final url = ApiEndpoints.searchServices.path;
+      final response = await dioClient.dio.get(url, queryParameters: {
+        'q': query,
+        'page': page,
+        'limit': limit,
+      });
+
+      if (response.statusCode == 200) {
+        final apiResponse = SearchResponseModel.fromJson(response.data);
+        if (apiResponse.success) {
+          return apiResponse;
+        } else {
+          throw Exception(apiResponse.message);
+        }
+      } else {
+        throw Exception('Failed to search services. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Could not search services. Please try again.');
     }
   }
 

@@ -60,7 +60,7 @@ class UserModel {
 
     return UserModel(
       fullName: json['fullName'] ?? json['name'],
-      userId: json['userId'] ?? json['id'],
+      userId: json['userId'] ?? json['id'] ?? json['ID'],
       email: json['email'],
       userImage: json['userImage'] ?? json['avatar'],
       token: tokenModel,
@@ -85,7 +85,7 @@ class UserModel {
       phone: phone,
       gender: gender,
       isActive: isActive,
-      isVerified: isVerified,
+
       userType: userType,
       createdAt: createdAt,
       updatedAt: updatedAt,

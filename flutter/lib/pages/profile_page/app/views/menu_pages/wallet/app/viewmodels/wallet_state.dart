@@ -17,6 +17,7 @@ class WalletState extends Equatable {
   final WalletRechargeResponseEntity? rechargeResponse;
   final bool isRefreshing;
   final String errorMessage;
+  final bool isCompletingPayment;
 
   const WalletState({
     this.status = WalletStatus.initial,
@@ -29,6 +30,7 @@ class WalletState extends Equatable {
     this.rechargeResponse,
     this.isRefreshing = false,
     this.errorMessage = '',
+    this.isCompletingPayment = false,
   });
 
   WalletState copyWith({
@@ -42,6 +44,7 @@ class WalletState extends Equatable {
     WalletRechargeResponseEntity? rechargeResponse,
     bool? isRefreshing,
     String? errorMessage,
+    bool? isCompletingPayment,
   }) {
     return WalletState(
       status: status ?? this.status,
@@ -54,6 +57,7 @@ class WalletState extends Equatable {
       rechargeResponse: rechargeResponse ?? this.rechargeResponse,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: errorMessage ?? this.errorMessage,
+      isCompletingPayment: isCompletingPayment ?? this.isCompletingPayment,
     );
   }
 
@@ -69,5 +73,6 @@ class WalletState extends Equatable {
         rechargeResponse,
         isRefreshing,
         errorMessage,
+        isCompletingPayment,
       ];
 }

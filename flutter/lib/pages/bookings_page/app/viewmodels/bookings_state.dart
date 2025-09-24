@@ -41,6 +41,9 @@ class BookingsState extends Equatable {
   final bool isPaymentProcessing;
   final bool isWalletPaymentSuccess;
   final bool isRazorpayPaymentSuccess;
+  final bool isProcessingSegmentPayment;
+  final bool segmentPaymentSuccess;
+  final String? segmentPaymentError;
   final BookingConfigEntity? bookingConfig;
   final AvailableSlotsResponseEntity? availableSlots;
   final QuotePaymentResponseEntity? quotePaymentResponse;
@@ -73,6 +76,9 @@ class BookingsState extends Equatable {
     this.isPaymentProcessing = false,
     this.isWalletPaymentSuccess = false,
     this.isRazorpayPaymentSuccess = false,
+    this.isProcessingSegmentPayment = false,
+    this.segmentPaymentSuccess = false,
+    this.segmentPaymentError,
     this.errorMessage = '',
     this.bookingConfig,
     this.availableSlots,
@@ -148,6 +154,9 @@ class BookingsState extends Equatable {
     bool? isPaymentProcessing,
     bool? isWalletPaymentSuccess,
     bool? isRazorpayPaymentSuccess,
+    bool? isProcessingSegmentPayment,
+    bool? segmentPaymentSuccess,
+    String? segmentPaymentError,
     String? errorMessage,
     BookingConfigEntity? bookingConfig,
     AvailableSlotsResponseEntity? availableSlots,
@@ -180,6 +189,9 @@ class BookingsState extends Equatable {
       isPaymentProcessing: isPaymentProcessing ?? this.isPaymentProcessing,
       isWalletPaymentSuccess: isWalletPaymentSuccess ?? this.isWalletPaymentSuccess,
       isRazorpayPaymentSuccess: isRazorpayPaymentSuccess ?? this.isRazorpayPaymentSuccess,
+      isProcessingSegmentPayment: isProcessingSegmentPayment ?? this.isProcessingSegmentPayment,
+      segmentPaymentSuccess: segmentPaymentSuccess ?? this.segmentPaymentSuccess,
+      segmentPaymentError: segmentPaymentError ?? this.segmentPaymentError,
       errorMessage: errorMessage ?? this.errorMessage,
       bookingConfig: bookingConfig ?? this.bookingConfig,
       availableSlots: availableSlots ?? this.availableSlots,
@@ -215,6 +227,9 @@ class BookingsState extends Equatable {
         isPaymentProcessing,
         isWalletPaymentSuccess,
         isRazorpayPaymentSuccess,
+        isProcessingSegmentPayment,
+        segmentPaymentSuccess,
+        segmentPaymentError,
         errorMessage,
         bookingConfig,
         availableSlots,

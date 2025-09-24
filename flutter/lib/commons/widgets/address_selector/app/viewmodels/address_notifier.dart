@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/utils/services/notification_service.dart';
 import '../../domain/entities/address_entity.dart';
 import '../../domain/usecases/get_addresses_usecase.dart';
 import '../../domain/usecases/create_address_usecase.dart';
@@ -11,12 +12,14 @@ class AddressNotifier extends StateNotifier<AddressState> {
   final CreateAddressUseCase createAddressUseCase;
   final UpdateAddressUseCase updateAddressUseCase;
   final DeleteAddressUseCase deleteAddressUseCase;
+  final NotificationService notificationService;
 
   AddressNotifier({
     required this.getAddressesUseCase,
     required this.createAddressUseCase,
     required this.updateAddressUseCase,
     required this.deleteAddressUseCase,
+    required this.notificationService,
   }) : super(const AddressState());
 
   Future<void> loadAddresses() async {
@@ -41,7 +44,7 @@ class AddressNotifier extends StateNotifier<AddressState> {
     try {
       final newAddress = await createAddressUseCase(request);
       final updatedAddresses = [...state.addresses, newAddress];
-      
+
       state = state.copyWith(
         isCreating: false,
         addresses: updatedAddresses,
@@ -62,14 +65,15 @@ class AddressNotifier extends StateNotifier<AddressState> {
     try {
       final updatedAddress = await updateAddressUseCase(request);
       final updatedAddresses = state.addresses
-          .map((address) => address.id == updatedAddress.id ? updatedAddress : address)
+          .map((address) =>
+              address.id == updatedAddress.id ? updatedAddress : address)
           .toList();
-      
+
       state = state.copyWith(
         isUpdating: false,
         addresses: updatedAddresses,
-        selectedAddress: state.selectedAddress?.id == updatedAddress.id 
-            ? updatedAddress 
+        selectedAddress: state.selectedAddress?.id == updatedAddress.id
+            ? updatedAddress
             : state.selectedAddress,
         status: AddressStatus.success,
       );
@@ -85,16 +89,25 @@ class AddressNotifier extends StateNotifier<AddressState> {
   Future<void> deleteAddress(int addressId) async {
     state = state.copyWith(isDeleting: true, clearErrorMessage: true);
     try {
-      await deleteAddressUseCase(addressId);
-      final updatedAddresses = state.addresses
-          .where((address) => address.id != addressId)
-          .toList();
-      
+      final message = await deleteAddressUseCase.call(addressId);
+      if (message == 'Cannot delete last address' ||
+          message == 'Address cannot be deleted') {
+        state = state.copyWith(
+          isDeleting: false,
+          errorMessage: message,
+          status: AddressStatus.success,
+        );
+        notificationService.showErrorSnackBar(message);
+        return;
+      }
+      final updatedAddresses =
+          state.addresses.where((address) => address.id != addressId).toList();
+
       state = state.copyWith(
         isDeleting: false,
         addresses: updatedAddresses,
-        selectedAddress: state.selectedAddress?.id == addressId 
-            ? null 
+        selectedAddress: state.selectedAddress?.id == addressId
+            ? null
             : state.selectedAddress,
         status: AddressStatus.success,
         clearSelectedAddress: state.selectedAddress?.id == addressId,
@@ -105,6 +118,7 @@ class AddressNotifier extends StateNotifier<AddressState> {
         errorMessage: e.toString(),
         status: AddressStatus.failure,
       );
+      // notificationService.showErrorSnackBar(message);
     }
   }
 
