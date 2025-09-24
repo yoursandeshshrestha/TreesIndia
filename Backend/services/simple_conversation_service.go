@@ -110,10 +110,12 @@ func (s *SimpleConversationService) GetUserConversations(userID uint, page, limi
 		}
 	}
 
-	// Mask phone numbers in user data
+	// Mask phone numbers in user data (but not last message text that users intentionally share)
 	for i := range conversations {
 		conversations[i].User1Data.Phone = utils.MaskPhoneNumberForDisplay(conversations[i].User1Data.Phone)
 		conversations[i].User2Data.Phone = utils.MaskPhoneNumberForDisplay(conversations[i].User2Data.Phone)
+		
+		// Don't mask last message text - users can share phone numbers in messages
 	}
 
 	logrus.Infof("SimpleConversationService.GetUserConversations returning %d conversations", len(conversations))
@@ -224,9 +226,11 @@ func (s *SimpleConversationService) GetConversation(conversationID uint) (*model
 		return nil, err
 	}
 
-	// Mask phone numbers in user data
+	// Mask phone numbers in user data (but not last message text that users intentionally share)
 	conversation.User1Data.Phone = utils.MaskPhoneNumberForDisplay(conversation.User1Data.Phone)
 	conversation.User2Data.Phone = utils.MaskPhoneNumberForDisplay(conversation.User2Data.Phone)
+	
+	// Don't mask last message text - users can share phone numbers in messages
 
 	logrus.Infof("SimpleConversationService.GetConversation successfully retrieved conversation ID: %d", conversationID)
 	return conversation, nil
@@ -365,6 +369,12 @@ func (s *SimpleConversationService) GetMessages(conversationID uint, page, limit
 	if err != nil {
 		logrus.Errorf("SimpleConversationService.GetMessages failed: %v", err)
 		return nil, nil, err
+	}
+
+	// Mask sender phone numbers (but not message content that users intentionally share)
+	for i := range messages {
+		// Only mask sender phone number, not message content
+		messages[i].Sender.Phone = utils.MaskPhoneNumberForDisplay(messages[i].Sender.Phone)
 	}
 
 	logrus.Infof("SimpleConversationService.GetMessages returning %d messages", len(messages))
