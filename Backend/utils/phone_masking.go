@@ -75,6 +75,41 @@ func MaskPhoneNumberForDisplay(phone string) string {
 	return phone
 }
 
+// MaskPhoneNumbersInText masks phone numbers found in text content
+// This function finds phone number patterns in text and masks them
+func MaskPhoneNumbersInText(text string) string {
+	if text == "" {
+		return text
+	}
+
+	// Regular expression to match phone numbers
+	// Matches patterns like: +919609321667, 9609321667, +91-960-932-1667, etc.
+	phoneRegex := regexp.MustCompile(`(\+?91[\s\-]?)?[6-9]\d{9}`)
+	
+	return phoneRegex.ReplaceAllStringFunc(text, func(match string) string {
+		// Clean the match to get just the digits
+		cleanMatch := strings.ReplaceAll(match, " ", "")
+		cleanMatch = strings.ReplaceAll(cleanMatch, "-", "")
+		
+		// If it starts with +91, mask from position 6
+		if strings.HasPrefix(cleanMatch, "+91") && len(cleanMatch) >= 10 {
+			return cleanMatch[:6] + strings.Repeat("*", len(cleanMatch)-6)
+		}
+		
+		// If it's a 10-digit number starting with 6-9, mask from position 3
+		if len(cleanMatch) == 10 && cleanMatch[0] >= '6' && cleanMatch[0] <= '9' {
+			return cleanMatch[:3] + strings.Repeat("*", 7)
+		}
+		
+		// For other patterns, mask from position 3
+		if len(cleanMatch) >= 6 {
+			return cleanMatch[:3] + strings.Repeat("*", len(cleanMatch)-3)
+		}
+		
+		return match
+	})
+}
+
 // IsValidPhoneNumber checks if a phone number is valid
 func IsValidPhoneNumber(phone string) bool {
 	if phone == "" {
