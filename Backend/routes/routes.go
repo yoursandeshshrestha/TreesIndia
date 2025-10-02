@@ -50,6 +50,7 @@ func SetupRoutes(r *gin.Engine) {
 		// Simple conversation routes will be set up in main.go with WebSocket service
 		SetupPromotionBannerRoutes(v1)
 		SetupHeroRoutes(v1)
+		SetupBannerRoutes(v1)
 		SetupHomepageCategoryIconRoutes(v1)
 		SetupVendorRoutes(v1)
 		SetupWorkerRoutes(v1)
