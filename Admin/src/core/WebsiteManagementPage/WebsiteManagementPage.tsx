@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Home } from "lucide-react";
+import { Home, Image } from "lucide-react";
 import HeroSectionTab from "./components/HeroSectionTab";
+import BannerSectionTab from "./components/BannerSectionTab";
 
-type TabType = "hero";
+type TabType = "hero" | "banner";
 
 function WebsiteManagementPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero");
@@ -15,6 +16,12 @@ function WebsiteManagementPage() {
       label: "Hero Section",
       icon: <Home size={16} />,
       description: "Manage hero text, images, and category icons",
+    },
+    {
+      id: "banner" as TabType,
+      label: "Banner Images",
+      icon: <Image size={16} />,
+      description: "Manage promotional banner images (max 3)",
     },
   ];
 
@@ -27,7 +34,8 @@ function WebsiteManagementPage() {
             Website Management
           </h1>
           <p className="text-gray-600 mt-1">
-            Manage your website&apos;s hero section and category icons
+            Manage your website&apos;s hero section, banner images, and category
+            icons
           </p>
         </div>
       </div>
@@ -53,7 +61,10 @@ function WebsiteManagementPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="mt-6">{activeTab === "hero" && <HeroSectionTab />}</div>
+      <div className="mt-6">
+        {activeTab === "hero" && <HeroSectionTab />}
+        {activeTab === "banner" && <BannerSectionTab />}
+      </div>
     </div>
   );
 }

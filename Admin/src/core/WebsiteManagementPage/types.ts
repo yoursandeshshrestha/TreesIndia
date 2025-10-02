@@ -37,3 +37,31 @@ export interface UpdateHeroImageRequest {
   image?: File;
   is_active?: boolean;
 }
+
+export interface BannerImage {
+  id: number;
+  title: string;
+  image: string;
+  link: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBannerImageRequest {
+  title: string;
+  image: File;
+  link?: string;
+}
+
+export interface UpdateBannerImageRequest {
+  title?: string;
+  image?: File;
+  link?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateBannerImageSortRequest {
+  sort_order: number;
+}
