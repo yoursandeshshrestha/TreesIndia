@@ -52,8 +52,8 @@ export const UserMenu: React.FC = () => {
   return (
     <>
       {isAuthenticated && user ? (
-        <div className="flex items-center space-x-4">
-          {/* My Bookings/My Work Button */}
+        <div className="flex items-center space-x-2 lg:space-x-4">
+          {/* My Bookings/My Work Button - Hidden on mobile, shown in mobile menu */}
           <button
             onClick={() =>
               router.push(
@@ -62,7 +62,7 @@ export const UserMenu: React.FC = () => {
                   : "/profile/my-bookings"
               )
             }
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="hidden lg:flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             {user.user_type === "worker" ? (
               <Briefcase className="w-4 h-4" />
@@ -74,13 +74,18 @@ export const UserMenu: React.FC = () => {
             </span>
           </button>
 
-          {/* Notifications */}
-          <NotificationIcon />
+          {/* Notifications - Icon only on mobile */}
+          <div className="lg:hidden">
+            <NotificationIcon />
+          </div>
+          <div className="hidden lg:block">
+            <NotificationIcon />
+          </div>
 
-          {/* Chat Button */}
+          {/* Chat Button - Hidden on mobile, shown in mobile menu */}
           <button
             onClick={() => dispatch(openChatModal())}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
+            className="hidden lg:flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
           >
             <MessageCircle className="w-4 h-4" />
             <span className="text-sm font-medium">Messages</span>
@@ -93,11 +98,11 @@ export const UserMenu: React.FC = () => {
 
           {/* User Menu Dropdown */}
           <div className="relative group">
-            <button className="flex items-center space-x-1 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center">
+            <button className="flex items-center space-x-1 p-1 lg:p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-black" />
               </div>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="hidden lg:block text-sm font-medium text-gray-700">
                 {user.name || (
                   <span
                     onClick={(e) => {
@@ -150,6 +155,44 @@ export const UserMenu: React.FC = () => {
               </div>
 
               <div className="p-2 space-y-1">
+                {/* Mobile-only buttons for My Bookings/Work and Messages */}
+                <div className="lg:hidden space-y-1">
+                  <button
+                    onClick={() =>
+                      router.push(
+                        user.user_type === "worker"
+                          ? "/profile/my-work"
+                          : "/profile/my-bookings"
+                      )
+                    }
+                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  >
+                    {user.user_type === "worker" ? (
+                      <Briefcase className="w-4 h-4 text-gray-600" />
+                    ) : (
+                      <Calendar className="w-4 h-4 text-gray-600" />
+                    )}
+                    <span className="text-sm text-gray-700">
+                      {user.user_type === "worker" ? "My Work" : "My Bookings"}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => dispatch(openChatModal())}
+                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left relative"
+                  >
+                    <MessageCircle className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">Messages</span>
+                    {totalUnreadCount > 0 &&
+                      currentlyOpenConversationId === null && (
+                        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                          {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                        </span>
+                      )}
+                  </button>
+                  <div className="border-t border-gray-100 my-2"></div>
+                </div>
+
                 <button
                   onClick={() => router.push("/profile")}
                   className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
@@ -179,7 +222,7 @@ export const UserMenu: React.FC = () => {
       ) : (
         <button
           onClick={() => dispatch(openAuthModal({}))}
-          className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="flex items-center space-x-1 lg:space-x-2 px-2 lg:px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <User className="w-4 h-4" />
           <span className="text-sm font-medium">Sign In</span>
