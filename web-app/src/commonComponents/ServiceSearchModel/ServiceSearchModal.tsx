@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -41,6 +41,22 @@ export default function ServiceSearchModal() {
     setShowSuggestions(true);
     setSelectedIndex(-1);
   };
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Simple overflow hidden approach
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const handleSearchInputChange = (value: string) => {
     setSearchQuery(value);
@@ -103,7 +119,7 @@ export default function ServiceSearchModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-2 sm:p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               handleClose();
@@ -120,9 +136,9 @@ export default function ServiceSearchModal() {
               stiffness: 300,
               duration: 0.3,
             }}
-            className="relative w-full max-w-2xl"
+            className="relative w-full max-w-sm sm:max-w-md lg:max-w-2xl"
           >
-            {/* Close Button */}
+            {/* Close Button - Responsive positioning */}
             <motion.button
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -133,44 +149,44 @@ export default function ServiceSearchModal() {
                 e.stopPropagation();
                 handleClose();
               }}
-              className="absolute -top-14 -right-0 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[10000] cursor-pointer shadow-lg"
+              className="absolute -top-10 sm:-top-12 -right-0 sm:-right-0 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[10000] cursor-pointer shadow-lg"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <X className="w-5 h-5 text-black" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl shadow-xl overflow-hidden"
+              className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[70vh] sm:max-h-[60vh]"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Search Input */}
-              <div className="px-4 pt-4 pb-2">
+              <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2">
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchInputChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search for services..."
-                  leftIcon={<Search className="w-5 h-5" />}
+                  leftIcon={<Search className="w-4 h-4 sm:w-5 sm:h-5" />}
                   rightIcon={
                     isSearching || isLoadingSuggestions ? (
                       <BouncingDots size="sm" color="text-gray-400" />
                     ) : undefined
                   }
-                  className="text-lg py-4"
+                  className="text-base sm:text-lg py-3 sm:py-4"
                   autoFocus
                 />
               </div>
 
               {/* Content */}
-              <div className="h-[600px] overflow-y-auto">
+              <div className="h-[400px] sm:h-[450px] lg:h-[500px] overflow-y-auto">
                 {showSuggestions && searchQuery.trim().length < 2 ? (
                   /* Show Suggestions */
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     {isLoadingSuggestions ? (
                       <div className="flex items-center justify-center py-8">
                         <BouncingDots size="md" color="text-gray-400" />
@@ -215,7 +231,7 @@ export default function ServiceSearchModal() {
                                   Popular Services
                                 </h3>
                               </div>
-                              <div className="grid grid-cols-3 gap-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                                 {suggestionsData.services.map((service) => (
                                   <CompactServiceCard
                                     key={service.id}
@@ -233,7 +249,7 @@ export default function ServiceSearchModal() {
                   </div>
                 ) : (
                   /* Show Search Results */
-                  <div className="h-full">
+                  <div className="h-full p-3 sm:p-4">
                     {isSearching ? (
                       <div className="flex items-center justify-center h-full">
                         <BouncingDots size="md" color="text-gray-400" />

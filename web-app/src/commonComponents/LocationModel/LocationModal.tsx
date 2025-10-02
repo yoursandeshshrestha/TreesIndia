@@ -186,6 +186,22 @@ export default function LocationModal() {
     dispatch(closeLocationModal());
   };
 
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Simple overflow hidden approach
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -194,7 +210,7 @@ export default function LocationModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-2 sm:p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -206,31 +222,31 @@ export default function LocationModal() {
               stiffness: 300,
               duration: 0.3,
             }}
-            className="relative"
+            className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg"
           >
-            {/* Close Button - Positioned on top of the modal */}
+            {/* Close Button - Responsive positioning */}
             <motion.button
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 20 }}
               onClick={handleClose}
-              className="absolute -top-14 -right-0 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg"
+              className="absolute -top-10 sm:-top-12 -right-0 sm:-right-0 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <X className="w-5 h-5 text-black" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl min-w-lg max-w-lg w-full shadow-xl"
+              className="bg-white rounded-xl sm:rounded-2xl w-full shadow-xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Search Bar */}
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-3 sm:p-4 border-b border-gray-200">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -238,7 +254,7 @@ export default function LocationModal() {
                     value={searchQuery}
                     onChange={(e) => handleSearchInputChange(e.target.value)}
                     placeholder="Search for your location/society/apartment"
-                    className="w-full text-black   pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full text-black pl-10 pr-4 py-3 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {isSearching && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />

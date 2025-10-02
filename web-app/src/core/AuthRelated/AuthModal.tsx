@@ -154,6 +154,22 @@ export const AuthModal: React.FC = () => {
     dispatch(closeAuthModal());
   };
 
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Simple overflow hidden approach
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -162,7 +178,7 @@ export const AuthModal: React.FC = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-2 sm:p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -174,58 +190,58 @@ export const AuthModal: React.FC = () => {
               stiffness: 300,
               duration: 0.3,
             }}
-            className="relative"
+            className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg"
           >
-            {/* Close Button - Positioned on top of the modal */}
+            {/* Close Button - Responsive positioning */}
             <motion.button
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 20 }}
               onClick={handleClose}
-              className="absolute -top-14 -right-0 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg"
+              className="absolute -top-10 sm:-top-12 -right-0 sm:-right-0 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <X className="w-5 h-5 text-black" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl min-w-lg max-w-lg w-full shadow-xl"
+              className="bg-white rounded-xl sm:rounded-2xl w-full shadow-xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Content */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {step === "phone" && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
                     <div className="text-left">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.1, type: "spring", damping: 20 }}
-                        className="mb-4"
+                        className="mb-3 sm:mb-4"
                       >
                         <Image
                           src="/images/auth/phone.png"
                           alt="Phone"
                           width={48}
                           height={48}
-                          className="w-12 h-12"
+                          className="w-10 h-10 sm:w-12 sm:h-12"
                         />
                       </motion.div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                         Enter your phone number
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 leading-relaxed">
                         We&apos;ll send you a text with a verification code.
                         Standard tariff may apply.
                       </p>
@@ -245,7 +261,7 @@ export const AuthModal: React.FC = () => {
                     <motion.button
                       onClick={handlePhoneSubmit}
                       disabled={isLoading || phone.length !== 10}
-                      className="w-full bg-gray-300 text-gray-500 cursor-pointer py-3 px-4 rounded-lg font-medium
+                      className="w-full bg-gray-300 text-gray-500 cursor-pointer py-3 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base
                                 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00a871]
                                 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors
                                 data-[active=true]:bg-[#00a871] data-[active=true]:text-white data-[active=true]:hover:bg-[#00a871]/90"
@@ -281,9 +297,9 @@ export const AuthModal: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
-                    <div className="flex items-center mb-4">
+                    <div className="flex items-center mb-3 sm:mb-4">
                       <motion.button
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
@@ -293,7 +309,7 @@ export const AuthModal: React.FC = () => {
                         disabled={isLoading}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                       >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                       </motion.button>
                     </div>
                     <div className="text-left">
@@ -301,20 +317,20 @@ export const AuthModal: React.FC = () => {
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.1, type: "spring", damping: 20 }}
-                        className="mb-4"
+                        className="mb-3 sm:mb-4"
                       >
                         <Image
                           src="/images/auth/sms.png"
                           alt="SMS"
                           width={48}
                           height={48}
-                          className="w-12 h-12"
+                          className="w-10 h-10 sm:w-12 sm:h-12"
                         />
                       </motion.div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                         Enter verification code
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 leading-relaxed">
                         A 6-digit verification code has been sent to{" "}
                         <span className="font-medium text-gray-900">
                           {countryCode + phone}
@@ -347,13 +363,13 @@ export const AuthModal: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="text-center space-y-6"
+                    className="text-center space-y-4 sm:space-y-6"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.2, type: "spring", damping: 20 }}
-                      className="w-32 h-32 mx-auto"
+                      className="w-24 h-24 sm:w-32 sm:h-32 mx-auto"
                     >
                       {successAnimation && (
                         <Lottie
@@ -369,10 +385,10 @@ export const AuthModal: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3, duration: 0.3 }}
                     >
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                         {isNewUser ? "Welcome to TreesIndia!" : "Welcome back!"}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 leading-relaxed">
                         {isNewUser
                           ? "Your account has been created successfully."
                           : "You have been signed in successfully."}

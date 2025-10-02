@@ -9,7 +9,7 @@ import { openSearchModal } from "@/store/slices/searchModalSlice";
 import Link from "next/link";
 import { UserMenu } from "./UserMenu";
 import { useConversationWebSocketService } from "@/hooks/useConversationWebSocketService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
   className?: string;
@@ -38,6 +38,22 @@ export default function Header({ className = "" }: HeaderProps) {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      // Simple overflow hidden approach
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <header className={`h-16 lg:h-20 ${className}`}>
@@ -133,11 +149,11 @@ export default function Header({ className = "" }: HeaderProps) {
             onClick={toggleMobileMenu}
           >
             <div
-              className="fixed top-0 left-0 right-0 bottom-0 bg-white"
+              className="fixed top-0 left-0 right-0 bottom-0 bg-white flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header with close button */}
-              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center">
                   <Image
                     src="/logo/treesindia-logo.png"
@@ -156,11 +172,11 @@ export default function Header({ className = "" }: HeaderProps) {
               </div>
 
               {/* Scrollable content */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto min-h-0">
                 <div className="px-4 py-6 space-y-6">
                   {/* Mobile User Menu */}
                   <div className="border-b border-gray-200 pb-6">
-                    <UserMenu />
+                    <UserMenu isMobileMenuContext={true} />
                   </div>
 
                   {/* Mobile Search Section */}
