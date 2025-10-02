@@ -1,6 +1,7 @@
 import {
   PopularServicesResponse,
   PromotionBannersResponse,
+  BannerImagesResponse,
   SubcategoriesResponse,
   CategoriesResponse,
   ServicesResponse,
@@ -57,6 +58,23 @@ export async function fetchSubcategories(
 export async function fetchPromotionBanners(): Promise<PromotionBannersResponse> {
   try {
     const url = `${API_BASE_URL}/promotion-banners`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function fetchBannerImages(): Promise<BannerImagesResponse> {
+  try {
+    const url = `${API_BASE_URL}/banner/images`;
 
     const response = await fetch(url);
 

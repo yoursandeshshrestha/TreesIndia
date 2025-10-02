@@ -79,6 +79,24 @@ export interface PromotionBannersResponse {
   timestamp: string;
 }
 
+export interface BannerImage {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  image: string;
+  link: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface BannerImagesResponse {
+  success: boolean;
+  message: string;
+  data: BannerImage[];
+  timestamp: string;
+}
+
 export interface Category {
   id: number;
   created_at: string;
