@@ -69,7 +69,7 @@ export default function SlotSelectionModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-2 sm:p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -98,17 +98,17 @@ export default function SlotSelectionModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl min-w-lg max-w-[500px] w-full max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl w-full min-w-[320px] max-w-[500px] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[30vw] xl:max-w-[30vw] max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Header */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                       When should the professional arrive?
                     </h2>
                     {selectedService && (
@@ -122,7 +122,7 @@ export default function SlotSelectionModal({
               </div>
 
               {/* Content */}
-              <div className="px-6 overflow-y-auto max-h-[60vh] py-2">
+              <div className="px-4 sm:px-6 overflow-y-auto max-h-[60vh] py-2">
                 {/* Date Selection */}
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-900 mb-3">
@@ -131,7 +131,7 @@ export default function SlotSelectionModal({
                   {!bookingConfig ? (
                     <DateSelectionSkeleton />
                   ) : (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                       {dateOptions.map((dateOption) => (
                         <button
                           key={dateOption.date}
@@ -170,7 +170,7 @@ export default function SlotSelectionModal({
                     {isLoading ? (
                       <TimeSlotSkeleton />
                     ) : availableSlots.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                         {availableSlots.map((slot) => (
                           <button
                             key={slot.time}
@@ -206,7 +206,7 @@ export default function SlotSelectionModal({
               </div>
 
               {/* Footer */}
-              <div className="p-6 0">
+              <div className="p-4 sm:p-6">
                 <button
                   onClick={onConfirm}
                   disabled={isConfirmDisabled}

@@ -352,7 +352,7 @@ export function BookingSidebar({
   };
 
   return (
-    <div className="w-120 bg-white p-6 pr-0 ">
+    <div className="w-full lg:w-120 bg-white pt-4 lg:p-6 lg:pr-0 mb-4 lg:mb-0">
       {/* Booking Details Card */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
         {/* Send booking details to */}

@@ -25,7 +25,7 @@ export function MainContent({
   error,
 }: MainContentProps) {
   return (
-    <div className="flex-1 pt-6 ">
+    <div className="flex-1 pt-4 lg:pt-6">
       {isLoading ? (
         <BookingPageSkeleton />
       ) : error ? (
@@ -35,17 +35,17 @@ export function MainContent({
           </div>
         </div>
       ) : service ? (
-        <div className="bg-white rounded-lg  border border-gray-200 p-4 ">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-4">
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                 {service.name}
               </h2>
               <p className="text-gray-600 text-sm mb-3">
                 {service.description}
               </p>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                     isInquiryService
@@ -66,8 +66,8 @@ export function MainContent({
             </div>
 
             {service.price && !isInquiryService && (
-              <div className="text-right">
-                <span className="text-2xl font-bold text-green-600">
+              <div className="text-left sm:text-right">
+                <span className="text-xl sm:text-2xl font-bold text-green-600">
                   ₹{service.price}
                 </span>
               </div>

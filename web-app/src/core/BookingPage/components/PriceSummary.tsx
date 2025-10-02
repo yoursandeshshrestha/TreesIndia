@@ -33,7 +33,7 @@ export function PriceSummary({ service, isInquiryService }: PriceSummaryProps) {
   // Show error if config failed to load for inquiry services
   if (isInquiryService && error) {
     return (
-      <div className="w-80 bg-white h-fit border border-gray-200 p-4 mt-6 rounded-lg sticky top-4">
+      <div className="w-full lg:w-80 bg-white h-fit border border-gray-200 p-4 mt-4 lg:mt-6 rounded-lg lg:sticky lg:top-4 mb-4 lg:mb-0">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Payment summary
         </h3>
@@ -47,7 +47,7 @@ export function PriceSummary({ service, isInquiryService }: PriceSummaryProps) {
   // Show loading state
   if (isInquiryService && isLoading) {
     return (
-      <div className="w-80 bg-white h-fit border border-gray-200 p-4 mt-6 rounded-lg sticky top-4">
+      <div className="w-full lg:w-80 bg-white h-fit border border-gray-200 p-4 mt-4 lg:mt-6 rounded-lg lg:sticky lg:top-4 mb-4 lg:mb-0">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Payment summary
         </h3>
@@ -59,7 +59,7 @@ export function PriceSummary({ service, isInquiryService }: PriceSummaryProps) {
   }
 
   return (
-    <div className="w-80 bg-white h-fit border border-gray-200 p-4 mt-6 rounded-lg sticky top-4">
+    <div className="w-full lg:w-80 bg-white h-fit border border-gray-200 p-4 mt-4 lg:mt-6 rounded-lg lg:sticky lg:top-4 mb-4 lg:mb-0">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Payment summary
       </h3>

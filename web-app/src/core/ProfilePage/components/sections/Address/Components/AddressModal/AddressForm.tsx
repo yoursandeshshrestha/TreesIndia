@@ -37,7 +37,7 @@ export default function AddressForm({
       }}
       className="space-y-4"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <TextField
           fullWidth
           label="City"
@@ -85,7 +85,7 @@ export default function AddressForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TextField
           fullWidth
           label="House/Flat Number "
@@ -111,7 +111,7 @@ export default function AddressForm({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Address Name
           </label>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             {["Home", "Work", "Other"].map((option) => (
               <button
                 key={option}
@@ -122,7 +122,7 @@ export default function AddressForm({
                     onInputChange("customName", "");
                   }
                 }}
-                className={`px-4 py-2 text-sm rounded-lg border transition-colors cursor-pointer ${
+                className={`px-4 py-2 text-sm rounded-lg border transition-colors cursor-pointer flex-1 min-w-0 ${
                   formData.name === option
                     ? "bg-[#00a871] text-white border-[#00a871]"
                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -150,7 +150,7 @@ export default function AddressForm({
       </div>
 
       {/* Form Actions */}
-      <div className="flex space-x-3 py-4">
+      <div className="flex flex-col sm:flex-row gap-3 py-4">
         <button
           type="submit"
           disabled={

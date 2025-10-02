@@ -107,26 +107,52 @@ function BookingPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto flex gap-6 ">
-        {/* Left Sidebar */}
-        <BookingSidebar
-          service={service as unknown as Service}
-          isInquiryService={isInquiryService}
-        />
+      <div className="max-w-7xl mx-auto px-4 lg:px-0">
+        {/* Mobile Layout */}
+        <div className="block lg:hidden">
+          {/* Booking Sidebar - Mobile First */}
+          <BookingSidebar
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+          />
 
-        {/* Main Content Area */}
-        <MainContent
-          service={service as unknown as Service}
-          isInquiryService={isInquiryService}
-          isLoading={isLoading}
-          error={error}
-        />
+          {/* Main Content Area - Mobile */}
+          <MainContent
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+            isLoading={isLoading}
+            error={error}
+          />
 
-        {/* Right Sidebar - Price Summary */}
-        <PriceSummary
-          service={service as unknown as Service}
-          isInquiryService={isInquiryService}
-        />
+          {/* Price Summary - Mobile Last */}
+          <PriceSummary
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+          />
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex gap-6">
+          {/* Left Sidebar */}
+          <BookingSidebar
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+          />
+
+          {/* Main Content Area */}
+          <MainContent
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+            isLoading={isLoading}
+            error={error}
+          />
+
+          {/* Right Sidebar - Price Summary */}
+          <PriceSummary
+            service={service as unknown as Service}
+            isInquiryService={isInquiryService}
+          />
+        </div>
       </div>
 
       {/* Contact Info Modal */}
