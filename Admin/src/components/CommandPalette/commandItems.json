@@ -42,6 +42,13 @@
     "keywords": ["create", "new", "service", "add", "product"]
   },
   {
+    "id": "website-management",
+    "label": "Website Management",
+    "description": "Go to website management",
+    "path": "/dashboard/website-management",
+    "keywords": ["website", "hero", "banner", "images", "content", "management"]
+  },
+  {
     "id": "admin-configs",
     "label": "Admin Configs",
     "description": "Go to admin configs",

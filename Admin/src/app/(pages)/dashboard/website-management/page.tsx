@@ -3,7 +3,8 @@ import WebsiteManagementPage from "@/core/WebsiteManagementPage/WebsiteManagemen
 
 export const metadata: Metadata = {
   title: "Website Management | Admin Dashboard",
-  description: "Manage hero section, category icons, and website content",
+  description:
+    "Manage hero section, banner images, category icons, and website content",
 };
 
 export default function WebsiteManagementPageRoute() {
