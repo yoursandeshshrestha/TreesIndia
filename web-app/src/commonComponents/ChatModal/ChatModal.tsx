@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle } from "lucide-react";
+import { X, MessageCircle, ArrowLeft } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeChatModal } from "@/store/slices/chatModalSlice";
-import { createConversation, getTotalUnreadCount } from "@/lib/simpleConversationApi";
+import {
+  createConversation,
+  getTotalUnreadCount,
+} from "@/lib/simpleConversationApi";
 import {
   ConversationsList,
   ConversationsListRef,
@@ -23,6 +26,7 @@ export default function ChatModal() {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const conversationsListRef = useRef<ConversationsListRef>(null);
   const hasCreatedConversationRef = useRef(false);
+  const [showMobileConversations, setShowMobileConversations] = useState(true);
 
   // Note: WebSocket connection is now handled globally in GlobalWebSocketProvider
 
@@ -77,6 +81,10 @@ export default function ChatModal() {
   // Fetch fresh data when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Reset mobile state when modal opens
+      setShowMobileConversations(true);
+      setSelectedConversation(null);
+
       // Refresh conversations list
       if (conversationsListRef.current?.refetchConversations) {
         conversationsListRef.current.refetchConversations();
@@ -110,6 +118,8 @@ export default function ChatModal() {
   const handleConversationSelect = useCallback(
     (conversation: SimpleConversation) => {
       setSelectedConversation(conversation);
+      // On mobile, switch to chat view when conversation is selected
+      setShowMobileConversations(false);
     },
     []
   );
@@ -117,6 +127,13 @@ export default function ChatModal() {
   const handleCloseChat = () => {
     // Clear the open conversation when chat is closed
     conversationStore.setOpenConversation(null);
+    setSelectedConversation(null);
+    // On mobile, return to conversations list
+    setShowMobileConversations(true);
+  };
+
+  const handleBackToConversations = () => {
+    setShowMobileConversations(true);
     setSelectedConversation(null);
   };
 
@@ -128,7 +145,7 @@ export default function ChatModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4 "
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-2 sm:p-3 md:p-4 lg:p-6"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -161,50 +178,141 @@ export default function ChatModal() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
-              className="w-full min-w-6xl max-w-6xl h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden flex"
+              className="w-full max-w-full h-[85vh] sm:h-[90vh] md:h-[85vh] lg:h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden flex min-w-[320px] sm:min-w-[400px] md:min-w-[500px] sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw]"
             >
-              {/* Conversations Sidebar */}
-              <div className="w-1/3 min-w-[350px] bg-white border-r border-gray-200 flex flex-col">
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Messages
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Chat with workers and admins
-                  </p>
+              {/* Desktop Layout */}
+              <div className="hidden md:flex w-full h-full">
+                {/* Conversations Sidebar */}
+                <div className="w-1/4 sm:w-1/3 md:w-1/3 min-w-[250px] sm:min-w-[300px] md:min-w-[350px] max-w-[400px] sm:max-w-[450px] md:max-w-[500px] bg-white border-r border-gray-200 flex flex-col">
+                  <div className="p-4 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Messages
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Chat with workers and admins
+                    </p>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <ConversationsList
+                      ref={conversationsListRef}
+                      onConversationSelect={handleConversationSelect}
+                      selectedConversationId={
+                        selectedConversation?.id || preselectedConversationId
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <ConversationsList
-                    ref={conversationsListRef}
-                    onConversationSelect={handleConversationSelect}
-                    selectedConversationId={
-                      selectedConversation?.id || preselectedConversationId
-                    }
-                  />
+
+                {/* Main Chat Area */}
+                <div className="flex-1 flex flex-col">
+                  {selectedConversation ? (
+                    <SimpleConversationChat
+                      conversationId={selectedConversation.id}
+                      onClose={handleCloseChat}
+                    />
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center bg-gray-50">
+                      <div className="text-center">
+                        <MessageCircle
+                          size={64}
+                          className="mx-auto text-gray-300 mb-4"
+                        />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                          Welcome to Conversations
+                        </h3>
+                        <p className="text-gray-500 max-w-md">
+                          Select a conversation from the sidebar to start
+                          chatting with workers or admins.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Main Chat Area */}
-              <div className="flex-1 flex flex-col">
-                {selectedConversation ? (
-                  <SimpleConversationChat
-                    conversationId={selectedConversation.id}
-                    onClose={handleCloseChat}
-                  />
-                ) : (
-                  <div className="flex-1 flex items-center justify-center bg-gray-50">
-                    <div className="text-center">
-                      <MessageCircle
-                        size={64}
-                        className="mx-auto text-gray-300 mb-4"
-                      />
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        Welcome to Conversations
-                      </h3>
-                      <p className="text-gray-500 max-w-md">
-                        Select a conversation from the sidebar to start chatting
-                        with workers or admins.
+              {/* Mobile Layout */}
+              <div className="md:hidden w-full h-full flex flex-col">
+                {/* Mobile Conversations View */}
+                {showMobileConversations && (
+                  <div className="w-full h-full bg-white flex flex-col">
+                    <div className="p-3 sm:p-4 border-b border-gray-200">
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                        Messages
+                      </h2>
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        Chat with workers and admins
                       </p>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <ConversationsList
+                        ref={conversationsListRef}
+                        onConversationSelect={handleConversationSelect}
+                        selectedConversationId={
+                          selectedConversation?.id || preselectedConversationId
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Chat View */}
+                {!showMobileConversations && selectedConversation && (
+                  <div className="w-full h-full bg-white flex flex-col">
+                    {/* Mobile Chat Header */}
+                    <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center gap-3">
+                      <button
+                        onClick={handleBackToConversations}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                          {selectedConversation.user_2_data?.name || "Chat"}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
+                          {selectedConversation.user_2_data?.user_type ||
+                            "User"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <SimpleConversationChat
+                        conversationId={selectedConversation.id}
+                        onClose={handleCloseChat}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Welcome State */}
+                {!showMobileConversations && !selectedConversation && (
+                  <div className="w-full h-full bg-white flex flex-col">
+                    <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center gap-3">
+                      <button
+                        onClick={handleBackToConversations}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                      </button>
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                        Welcome
+                      </h3>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center bg-gray-50">
+                      <div className="text-center">
+                        <MessageCircle
+                          size={64}
+                          className="mx-auto text-gray-300 mb-4"
+                        />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                          Welcome to Conversations
+                        </h3>
+                        <p className="text-gray-500 max-w-md">
+                          Select a conversation from the sidebar to start
+                          chatting with workers or admins.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

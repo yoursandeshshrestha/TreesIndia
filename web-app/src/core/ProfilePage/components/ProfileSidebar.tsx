@@ -26,7 +26,11 @@ interface ProfileSidebarItem {
   path: string;
 }
 
-export function ProfileSidebar() {
+interface ProfileSidebarProps {
+  onCloseMobileSidebar?: () => void;
+}
+
+export function ProfileSidebar({ onCloseMobileSidebar }: ProfileSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, user } = useAuth();
@@ -116,6 +120,10 @@ export function ProfileSidebar() {
 
   const handleNavigation = (path: string) => {
     router.push(path);
+    // Close mobile sidebar after navigation
+    if (onCloseMobileSidebar) {
+      onCloseMobileSidebar();
+    }
   };
 
   const handleLogoutClick = () => {
@@ -137,7 +145,7 @@ export function ProfileSidebar() {
 
   return (
     <>
-      <div className="w-80 bg-white border border-gray-200 rounded-lg p-4 sticky top-24 h-fit">
+      <div className="w-full lg:w-80 bg-white border border-gray-200 rounded-lg p-4 lg:sticky lg:top-24 lg:h-fit">
         {/* Navigation Items */}
         <div className="space-y-2">
           {profileSidebarItems.map((item) => {

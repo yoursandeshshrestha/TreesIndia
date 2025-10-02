@@ -58,7 +58,7 @@ export default function ServiceDetailModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-2 sm:p-4 md:p-6"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -87,14 +87,14 @@ export default function ServiceDetailModal() {
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl min-w-lg max-w-2xl w-full shadow-xl max-h-[90vh] flex flex-col"
+              className="bg-white rounded-2xl w-full max-w-full shadow-xl max-h-[95vh] sm:max-h-[90vh] md:max-h-[85vh] flex flex-col sm:min-w-[400px] sm:max-w-[500px] md:min-w-[500px] md:max-w-[600px] lg:max-w-[700px]"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Service Image */}
-              <div className="relative w-full h-48 md:h-64 rounded-t-2xl overflow-hidden flex-shrink-0">
+              <div className="relative w-full h-40 sm:h-48 md:h-56 lg:h-64 rounded-t-2xl overflow-hidden flex-shrink-0">
                 <Image
                   src={
                     service.images && service.images.length > 0
@@ -115,13 +115,13 @@ export default function ServiceDetailModal() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6 pb-0">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-0">
                 {/* Header */}
                 <div className="mb-4">
-                  <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">
                     {service.name}
                   </h1>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <span className="text-[#00a871] font-medium">
                         {formatPriceType(service.price_type)}
@@ -137,10 +137,10 @@ export default function ServiceDetailModal() {
                 </div>
 
                 {/* Price */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Price</p>
-                    <p className="text-xl font-bold text-[#00a871]">
+                    <p className="text-lg sm:text-xl font-bold text-[#00a871]">
                       {formatPrice(service.price, service.price_type)}
                     </p>
                   </div>
@@ -149,10 +149,10 @@ export default function ServiceDetailModal() {
                 {/* Description */}
                 {service.description && (
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                       About this service
                     </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
+                    <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                       {service.description}
                     </p>
                   </div>
@@ -160,10 +160,10 @@ export default function ServiceDetailModal() {
               </div>
 
               {/* Fixed Footer */}
-              <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-200 bg-white rounded-b-2xl">
+              <div className="flex-shrink-0 p-4 sm:p-6 pt-4 border-t border-gray-200 bg-white rounded-b-2xl">
                 <button
                   onClick={handleBookNow}
-                  className="w-full bg-[#00a871] hover:bg-[#00a871]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-[#00a871] hover:bg-[#00a871]/90 text-white font-medium py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
                 >
                   <Calendar className="w-4 h-4" />
                   Book Now
