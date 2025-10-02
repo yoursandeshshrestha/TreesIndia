@@ -11,11 +11,11 @@ export default function HomePage() {
       <HeroSection />
 
       <div className="space-y-20">
-        {/* Promotional Banner */}
-        <PromotionalBanner />
-
         {/* Popular Services */}
         <PopularServices />
+
+        {/* Promotional Banner */}
+        <PromotionalBanner />
 
         {/* Listed Properties */}
         <PropertySection />
