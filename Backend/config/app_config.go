@@ -33,6 +33,8 @@ type AppConfig struct {
 	
 	// OTP Configuration
 	OTP string
+	TwoFactorAPIKey string
+	TwoFactorAPIURL string
 	
 	// Cloudinary Configuration
 	CloudinaryURL    string
@@ -119,6 +121,8 @@ func LoadConfig() *AppConfig {
 		
 		// OTP Configuration
 		OTP: getEnv("OTP", "0000"),
+		TwoFactorAPIKey: getEnv("TWO_FACTOR_API_KEY", "d02b4"),
+		TwoFactorAPIURL: getEnv("TWO_FACTOR_API_URL", "https://2factor.in/API/V1"),
 		
 		// Cloudinary Configuration
 		CloudinaryURL:        getEnv("CLOUDINARY_URL", ""),

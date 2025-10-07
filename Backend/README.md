@@ -145,12 +145,33 @@ backend/
 
 ### Environment Variables
 
-| Variable       | Description                          | Default       |
-| -------------- | ------------------------------------ | ------------- |
-| `PORT`         | Server port                          | `8080`        |
-| `ENV`          | Environment (development/production) | `development` |
-| `DATABASE_URL` | PostgreSQL connection string         | Required      |
-| `GIN_MODE`     | Gin mode (debug/release)             | `debug`       |
+| Variable             | Description                          | Default                                |
+| -------------------- | ------------------------------------ | -------------------------------------- |
+| `PORT`               | Server port                          | `8080`                                 |
+| `ENV`                | Environment (development/production) | `development`                          |
+| `DATABASE_URL`       | PostgreSQL connection string         | Required                               |
+| `GIN_MODE`           | Gin mode (debug/release)             | `debug`                                |
+| `TWO_FACTOR_API_KEY` | 2Factor API key for OTP sending      | `d02b4b18-9889-11f0-b922-0200cd936042` |
+| `TWO_FACTOR_API_URL` | 2Factor API base URL                 | `https://2factor.in/API/V1`            |
+
+### OTP Configuration
+
+The backend uses 2Factor API for sending dynamic OTPs:
+
+1. **Get your API key**: Sign up at [2Factor.in](https://2factor.in/) to get your API key
+2. **Set environment variable**: Add `TWO_FACTOR_API_KEY` to your `.env` file
+3. **OTP Configuration**:
+   - **OTP Length**: 6 digits
+   - **Expiry Time**: 5 minutes (300 seconds)
+   - **Max Attempts**: 5 attempts per OTP
+   - **Purpose Types**: `login`, `account_deletion`
+
+**Example .env configuration:**
+
+```bash
+TWO_FACTOR_API_KEY=your-2factor-api-key-here
+TWO_FACTOR_API_URL=https://2factor.in/API/V1
+```
 
 ### Air Configuration
 
