@@ -18,6 +18,7 @@ type UserController struct {
 	db               *gorm.DB
 	validationHelper *utils.ValidationHelper
 	cloudinaryService *services.CloudinaryService
+	otpService       *services.OTPService
 }
 
 // NewUserController creates a new user controller
@@ -32,6 +33,7 @@ func NewUserController() *UserController {
 		db:               database.GetDB(),
 		validationHelper: utils.NewValidationHelper(),
 		cloudinaryService: cloudinaryService,
+		otpService:       services.NewOTPService(),
 	}
 }
 
@@ -429,12 +431,18 @@ func (uc *UserController) RequestDeleteOTP(c *gin.Context) {
 		return
 	}
 
-	// TODO: Integrate with SMS service (Twilio) later
-	// For now, just return success as OTP is hardcoded to "000000"
+	// Generate and send OTP via 2Factor API
+	_, err := uc.otpService.SendOTP(user.Phone, "account_deletion")
+	if err != nil {
+		// Log the error but don't expose internal details to client
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to send OTP", "Please try again later"))
+		return
+	}
 	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
 		"message": "OTP has been sent to your registered phone number",
 		"phone":   user.Phone, // Return masked phone number for user confirmation
+		"expires_in": 300, // 5 minutes (300 seconds)
 	}))
 }
 
@@ -471,9 +479,21 @@ func (uc *UserController) DeleteAccount(c *gin.Context) {
 		return
 	}
 
-	// Verify OTP (hardcoded to "000000" for now)
-	if req.OTP != "000000" {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", "OTP is incorrect"))
+	// Verify OTP using OTP service
+	valid, err := uc.otpService.VerifyOTP(user.Phone, req.OTP, "account_deletion")
+	if err != nil || !valid {
+		errorMessage := "OTP is incorrect"
+		if err != nil {
+			// Provide more specific error messages
+			if strings.Contains(err.Error(), "expired") {
+				errorMessage = "OTP has expired. Please request a new one"
+			} else if strings.Contains(err.Error(), "not found") {
+				errorMessage = "No valid OTP found. Please request a new one"
+			} else if strings.Contains(err.Error(), "too many") {
+				errorMessage = "Too many failed attempts. Please request a new OTP"
+			}
+		}
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", errorMessage))
 		return
 	}
 

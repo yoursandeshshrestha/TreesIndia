@@ -22,6 +22,7 @@ type AuthController struct {
 	*BaseController
 	db *gorm.DB
 	authService *services.AuthService
+	otpService *services.OTPService
 	validationHelper *utils.ValidationHelper
 }
 
@@ -31,6 +32,7 @@ func NewAuthController() *AuthController {
 		BaseController:   NewBaseController(),
 		db:               database.GetDB(),
 		authService:      services.NewAuthService(),
+		otpService:       services.NewOTPService(),
 		validationHelper: utils.NewValidationHelper(),
 	}
 }
@@ -105,13 +107,13 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	
 	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-					// Create new user
-		user = models.User{
-			Phone:           req.Phone,
-			UserType:        models.UserTypeNormal, // Default role is user
-			IsActive:        true,
-			WalletBalance:    0,  // Default 0 balance
-		}
+			// Create new user
+			user = models.User{
+				Phone:           req.Phone,
+				UserType:        models.UserTypeNormal, // Default role is user
+				IsActive:        true,
+				WalletBalance:    0,  // Default 0 balance
+			}
 			
 			if err := ac.db.Create(&user).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
@@ -131,8 +133,14 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 		isNewUser = false
 	}
 
-	// TODO: Integrate with SMS service (Twilio) later
-	// For now, just return success as OTP is hardcoded to "000000"
+	// Generate and send OTP via 2Factor API
+	_, err := ac.otpService.SendOTP(req.Phone, "login")
+	if err != nil {
+		// Log the error but don't expose internal details to client
+		fmt.Printf("Failed to send OTP: %v\n", err)
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to send OTP", "Please try again later"))
+		return
+	}
 	
 	// User OTP notification removed as per user request
 	// Send admin notification for OTP request monitoring
@@ -145,7 +153,7 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
 		"phone":      req.Phone,
-		"expires_in": 60, // 60 seconds
+		"expires_in": 300, // 5 minutes (300 seconds)
 		"is_new_user": isNewUser,
 	}))
 }
@@ -310,15 +318,28 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Verify OTP (hardcoded to "000000" for now)
-	if req.OTP != "000000" {
+	// Verify OTP using OTP service
+	valid, err := ac.otpService.VerifyOTP(req.Phone, req.OTP, "login")
+	if err != nil || !valid {
 		// Try to find user for failed login notification
 		var user models.User
 		if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err == nil {
 			go services.NotifyLoginFailed(&user, req.Phone, "Invalid OTP")
 		}
 		
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", "OTP is incorrect"))
+		errorMessage := "OTP is incorrect"
+		if err != nil {
+			// Provide more specific error messages
+			if strings.Contains(err.Error(), "expired") {
+				errorMessage = "OTP has expired. Please request a new one"
+			} else if strings.Contains(err.Error(), "not found") {
+				errorMessage = "No valid OTP found. Please request a new one"
+			} else if strings.Contains(err.Error(), "too many") {
+				errorMessage = "Too many failed attempts. Please request a new OTP"
+			}
+		}
+		
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", errorMessage))
 		return
 	}
 
