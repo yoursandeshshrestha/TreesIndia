@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -80,24 +81,37 @@ func (c *HeroController) GetHeroImages(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero images retrieved successfully", images))
 }
 
-// CreateHeroImage creates a new hero image
+// CreateHeroImage creates a new hero image or video
 func (c *HeroController) CreateHeroImage(ctx *gin.Context) {
-	// Get the uploaded file
-	file, err := ctx.FormFile("image")
+	// Get the uploaded file (try 'media' first, then fallback to 'image' for backward compatibility)
+	file, err := ctx.FormFile("media")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("No image file provided", err.Error()))
-		return
+		file, err = ctx.FormFile("image")
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("No media file provided", err.Error()))
+			return
+		}
 	}
 
+	// Determine media type from content-type
+	contentType := file.Header.Get("Content-Type")
+	mediaType := getMediaType(contentType)
+	
 	// Validate file type
-	if !isValidImageType(file.Header.Get("Content-Type")) {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only JPEG, PNG, and WebP images are allowed"))
+	if mediaType == "" {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only JPEG, PNG, WebP images and MP4, WebM, AVI videos are allowed"))
 		return
 	}
 
-	// Validate file size (max 5MB)
-	if file.Size > 5*1024*1024 {
-		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", "Image size must be less than 5MB"))
+	// Validate file size (max 5MB for images, 50MB for videos)
+	maxSize := int64(5 * 1024 * 1024) // 5MB default
+	if mediaType == "video" {
+		maxSize = 50 * 1024 * 1024 // 50MB for videos
+	}
+	
+	if file.Size > maxSize {
+		maxSizeMB := maxSize / (1024 * 1024)
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", fmt.Sprintf("File size must be less than %dMB", maxSizeMB)))
 		return
 	}
 
@@ -108,19 +122,20 @@ func (c *HeroController) CreateHeroImage(ctx *gin.Context) {
 		return
 	}
 
-	// Create hero image with file upload
+	// Create hero image/video with file upload
 	image := models.HeroImage{
-		IsActive:    true,
+		IsActive:     true,
 		HeroConfigID: config.ID,
+		MediaType:    mediaType,
 	}
 
 	err = c.heroService.CreateHeroImageWithFile(&image, file)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create hero image", err.Error()))
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create hero media", err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero image created successfully", image))
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero media created successfully", image))
 }
 
 // UpdateHeroImage updates an existing hero image
@@ -183,4 +198,33 @@ func isValidImageType(contentType string) bool {
 		}
 	}
 	return false
+}
+
+// isValidVideoType checks if the content type is a valid video type
+func isValidVideoType(contentType string) bool {
+	validTypes := []string{
+		"video/mp4",
+		"video/webm",
+		"video/avi",
+		"video/quicktime", // .mov files
+		"video/x-msvideo", // .avi files
+	}
+	
+	for _, validType := range validTypes {
+		if strings.EqualFold(contentType, validType) {
+			return true
+		}
+	}
+	return false
+}
+
+// getMediaType determines if the file is an image or video
+func getMediaType(contentType string) string {
+	if isValidImageType(contentType) {
+		return "image"
+	}
+	if isValidVideoType(contentType) {
+		return "video"
+	}
+	return ""
 }

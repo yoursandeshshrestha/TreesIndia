@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  HeroImage,
-  UpdateHeroImageRequest,
-} from "../types";
+import { HeroImage, UpdateHeroImageRequest } from "../types";
 import { apiClient } from "@/lib/api-client";
 
 export const useHeroImages = () => {
@@ -28,20 +25,24 @@ export const useHeroImages = () => {
     }
   };
 
-  const createHeroImage = async (imageFile: File): Promise<void> => {
+  const createHeroImage = async (mediaFile: File): Promise<void> => {
     setIsLoading(true);
     setError(null);
 
     try {
       const formData = new FormData();
-      formData.append("image", imageFile);
+      // Use 'media' field for both images and videos
+      formData.append("media", mediaFile);
 
       await apiClient.post("/hero/images", formData);
       await fetchHeroImages(); // Refresh the list
-      toast.success("Hero image created successfully");
+
+      // Determine if it's an image or video for the success message
+      const isVideo = mediaFile.type.startsWith("video/");
+      toast.success(`Hero ${isVideo ? "video" : "image"} created successfully`);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Failed to create hero image";
+        err instanceof Error ? err.message : "Failed to create hero media";
       setError(errorMessage);
       toast.error(errorMessage);
       throw err;
