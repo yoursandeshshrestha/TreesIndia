@@ -63,7 +63,7 @@ func (s *HeroService) UpdateHeroImage(image *models.HeroImage) error {
 	return s.heroRepo.UpdateHeroImage(image)
 }
 
-// UpdateHeroImageWithFile updates an existing hero image with file upload
+// UpdateHeroImageWithFile updates an existing hero image/video with file upload
 func (s *HeroService) UpdateHeroImageWithFile(id uint, image *models.HeroImage, file *multipart.FileHeader) error {
 	// Get the existing image to get the old Cloudinary URL
 	existingImage, err := s.heroRepo.GetHeroImageByID(id)
@@ -76,14 +76,21 @@ func (s *HeroService) UpdateHeroImageWithFile(id uint, image *models.HeroImage, 
 		return errors.New("cloudinary service is not available")
 	}
 	
-	// Upload new image to Cloudinary
-	imageURL, err := s.cloudinaryService.UploadImage(file, "hero-images")
-	if err != nil {
-		return fmt.Errorf("failed to upload image to Cloudinary: %w", err)
+	// Determine media type from the image model (should be set before calling this)
+	mediaType := image.MediaType
+	if mediaType == "" {
+		mediaType = "image" // default to image
 	}
 	
-	// Set the new image URL
-	image.ImageURL = imageURL
+	// Upload new media to Cloudinary
+	mediaURL, err := s.cloudinaryService.UploadMedia(file, "hero-media", mediaType)
+	if err != nil {
+		return fmt.Errorf("failed to upload media to Cloudinary: %w", err)
+	}
+	
+	// Set the new media URLs
+	image.MediaURL = mediaURL
+	image.ImageURL = mediaURL
 	
 	// Update in database
 	err = s.heroRepo.UpdateHeroImage(image)
@@ -91,12 +98,23 @@ func (s *HeroService) UpdateHeroImageWithFile(id uint, image *models.HeroImage, 
 		return err
 	}
 	
-	// Delete old image from Cloudinary if it exists
-	if existingImage.ImageURL != "" {
-		publicID := s.cloudinaryService.GetPublicIDFromURL(existingImage.ImageURL)
+	// Delete old media from Cloudinary if it exists
+	if existingImage.MediaURL != "" {
+		publicID := s.cloudinaryService.GetPublicIDFromURL(existingImage.MediaURL)
+		resourceType := s.cloudinaryService.GetResourceTypeFromURL(existingImage.MediaURL)
 		if publicID != "" {
 			// Try to delete from Cloudinary, but don't fail if it doesn't work
-			if deleteErr := s.cloudinaryService.DeleteImage(publicID); deleteErr != nil {
+			if deleteErr := s.cloudinaryService.DeleteMedia(publicID, resourceType); deleteErr != nil {
+				// Log error silently
+			}
+		}
+	} else if existingImage.ImageURL != "" {
+		// Fallback to ImageURL for backward compatibility
+		publicID := s.cloudinaryService.GetPublicIDFromURL(existingImage.ImageURL)
+		resourceType := s.cloudinaryService.GetResourceTypeFromURL(existingImage.ImageURL)
+		if publicID != "" {
+			// Try to delete from Cloudinary, but don't fail if it doesn't work
+			if deleteErr := s.cloudinaryService.DeleteMedia(publicID, resourceType); deleteErr != nil {
 				// Log error silently
 			}
 		}
@@ -105,7 +123,7 @@ func (s *HeroService) UpdateHeroImageWithFile(id uint, image *models.HeroImage, 
 	return nil
 }
 
-// DeleteHeroImage deletes a hero image
+// DeleteHeroImage deletes a hero image/video
 func (s *HeroService) DeleteHeroImage(id uint) error {
 	// Get the image first to get the Cloudinary URL
 	image, err := s.heroRepo.GetHeroImageByID(id)
@@ -120,13 +138,23 @@ func (s *HeroService) DeleteHeroImage(id uint) error {
 	}
 	
 	// Delete from Cloudinary if service is available and URL is from Cloudinary
-	if s.cloudinaryService != nil && image.ImageURL != "" {
-		// Extract public ID from Cloudinary URL
-		publicID := s.cloudinaryService.GetPublicIDFromURL(image.ImageURL)
-		if publicID != "" {
-			// Try to delete from Cloudinary, but don't fail if it doesn't work
-			if deleteErr := s.cloudinaryService.DeleteImage(publicID); deleteErr != nil {
-				// Log error silently
+	if s.cloudinaryService != nil {
+		var urlToDelete string
+		if image.MediaURL != "" {
+			urlToDelete = image.MediaURL
+		} else if image.ImageURL != "" {
+			urlToDelete = image.ImageURL
+		}
+		
+		if urlToDelete != "" {
+			// Extract public ID and resource type from Cloudinary URL
+			publicID := s.cloudinaryService.GetPublicIDFromURL(urlToDelete)
+			resourceType := s.cloudinaryService.GetResourceTypeFromURL(urlToDelete)
+			if publicID != "" {
+				// Try to delete from Cloudinary, but don't fail if it doesn't work
+				if deleteErr := s.cloudinaryService.DeleteMedia(publicID, resourceType); deleteErr != nil {
+					// Log error silently
+				}
 			}
 		}
 	}
@@ -141,7 +169,7 @@ func (s *HeroService) GetHeroImageByID(id uint) (*models.HeroImage, error) {
 	return s.heroRepo.GetHeroImageByID(id)
 }
 
-// CreateHeroImageWithFile creates a new hero image with file upload
+// CreateHeroImageWithFile creates a new hero image/video with file upload
 func (s *HeroService) CreateHeroImageWithFile(image *models.HeroImage, file *multipart.FileHeader) error {
 	if file == nil {
 		return errors.New("file is required")
@@ -152,14 +180,21 @@ func (s *HeroService) CreateHeroImageWithFile(image *models.HeroImage, file *mul
 		return errors.New("cloudinary service is not available")
 	}
 	
-	// Upload image to Cloudinary
-	imageURL, err := s.cloudinaryService.UploadImage(file, "hero-images")
-	if err != nil {
-		return fmt.Errorf("failed to upload image to Cloudinary: %w", err)
+	// Determine media type from the image model (should be set before calling this)
+	mediaType := image.MediaType
+	if mediaType == "" {
+		mediaType = "image" // default to image
 	}
 	
-	// Set the image URL
-	image.ImageURL = imageURL
+	// Upload media to Cloudinary
+	mediaURL, err := s.cloudinaryService.UploadMedia(file, "hero-media", mediaType)
+	if err != nil {
+		return fmt.Errorf("failed to upload media to Cloudinary: %w", err)
+	}
+	
+	// Set the media URLs (keep ImageURL for backward compatibility)
+	image.MediaURL = mediaURL
+	image.ImageURL = mediaURL
 	
 	return s.heroRepo.CreateHeroImage(image)
 }
