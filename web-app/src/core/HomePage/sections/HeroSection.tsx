@@ -105,14 +105,20 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
-  // Get current hero image (from backend or fallback)
-  const currentHeroImage =
+  // Get current hero media (from backend or fallback)
+  const currentHeroMedia =
     heroImages.length > 0
       ? heroImages[currentImageIndex]
       : {
           image_url: "/images/others/maid11.jpg",
+          media_url: "/images/others/maid11.jpg",
+          media_type: "image" as const,
           alt: "Professional service platform",
         };
+
+  // Get the media URL (with fallback to image_url for backward compatibility)
+  const mediaUrl = currentHeroMedia.media_url || currentHeroMedia.image_url;
+  const isVideo = currentHeroMedia.media_type === "video";
 
   // Map category icons to the expected format and reorder them - COMMENTED OUT as categories are no longer used
   // const categories: CategoryProps[] = categoryIcons
@@ -246,34 +252,53 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
             </div>
           </div>
 
-          {/* Right Column - Hero Image */}
+          {/* Right Column - Hero Media (Image or Video) */}
           <div className="lg:pl-10">
             <div className="relative w-full aspect-square">
-              <Image
-                src={currentHeroImage.image_url}
-                alt={
-                  "alt" in currentHeroImage
-                    ? currentHeroImage.alt
-                    : "Hero image"
-                }
-                width={500}
-                height={500}
-                className="rounded-2xl w-full h-full object-cover border border-gray-200 shadow-lg"
-                onError={(e) => {
-                  // Fallback to default image if backend image fails to load
-                  const target = e.target as HTMLImageElement;
-                  if (!target.src.includes("maid11.jpg")) {
-                    target.src = "/images/others/maid11.jpg";
+              {isVideo ? (
+                <video
+                  key={mediaUrl} // Force re-render when video changes
+                  src={mediaUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="rounded-2xl w-full h-full object-cover border border-gray-200 shadow-lg"
+                  onError={(e) => {
+                    // Fallback to default image if video fails to load
+                    const target = e.target as HTMLVideoElement;
+                    console.error("Video failed to load:", target.src);
+                  }}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <Image
+                  src={mediaUrl}
+                  alt={
+                    "alt" in currentHeroMedia
+                      ? currentHeroMedia.alt
+                      : "Hero media"
                   }
-                }}
-              />
+                  width={500}
+                  height={500}
+                  className="rounded-2xl w-full h-full object-cover border border-gray-200 shadow-lg"
+                  onError={(e) => {
+                    // Fallback to default image if backend image fails to load
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes("maid11.jpg")) {
+                      target.src = "/images/others/maid11.jpg";
+                    }
+                  }}
+                />
+              )}
 
               {/* Carousel Controls */}
               {heroImages.length > 1 && (
                 <>
                   {/* Bottom Indicators */}
                   <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3">
-                    {heroImages.map((_, index) => (
+                    {heroImages.map((media, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
@@ -282,7 +307,9 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
                             ? "bg-white shadow-lg scale-110"
                             : "bg-white/60 hover:bg-white/80 hover:scale-105"
                         }`}
-                        aria-label={`Go to image ${index + 1}`}
+                        aria-label={`Go to ${media.media_type || "image"} ${
+                          index + 1
+                        }`}
                       />
                     ))}
                   </div>
