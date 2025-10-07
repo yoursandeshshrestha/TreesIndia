@@ -460,16 +460,16 @@ export function MainBookingCard({
 
   return (
     <div className="bg-gray-50 rounded-lg overflow-hidden">
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Left Side - Status and Service Info */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 sm:p-6">
           {/* Status Header */}
           <div className="flex items-start gap-4 mb-4">
             <div className="w-10 h-10 mt-1 flex items-center justify-center ">
               {statusConfig.icon}
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-xl mb-1">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-lg sm:text-xl mb-1 truncate">
                 {booking.service?.name || "Service"}
               </h3>
               <p className="text-sm text-gray-500 font-medium mb-3">
@@ -538,8 +538,8 @@ export function MainBookingCard({
               </div>
             )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="truncate max-w-[400px]">
+              <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+              <span className="truncate max-w-[300px] sm:max-w-[400px]">
                 {formatAddress(booking.address)}
               </span>
             </div>
@@ -573,7 +573,7 @@ export function MainBookingCard({
         </div>
 
         {/* Right Side - Payment and Actions */}
-        <div className="w-64 border-l border-gray-200 p-6">
+        <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l border-gray-200 p-4 sm:p-6">
           {/* Payment Info */}
           <div className="mb-4">
             {booking.payment && !hasPaymentSegments && (
@@ -741,7 +741,7 @@ export function MainBookingCard({
                     <div className="text-center text-xs text-gray-500 mb-2">
                       Quick Actions
                     </div>
-                    <div className="flex gap-6 justify-center">
+                    <div className="flex gap-4 sm:gap-6 justify-center">
                       <button
                         onClick={() => {
                           // TODO: Implement phone call functionality

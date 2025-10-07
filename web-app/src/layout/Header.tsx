@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { Search, MapPin, ChevronDown, Menu, X } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  ChevronDown,
+  Menu,
+  X,
+  Home as HomeIcon,
+} from "lucide-react";
 import { useLocation } from "@/hooks/useLocationRedux";
 import { useAppDispatch } from "@/store/hooks";
 import { openLocationModal } from "@/store/slices/locationModalSlice";
@@ -10,6 +17,7 @@ import Link from "next/link";
 import { UserMenu } from "./UserMenu";
 import { useConversationWebSocketService } from "@/hooks/useConversationWebSocketService";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 interface HeaderProps {
   className?: string;
@@ -19,6 +27,8 @@ export default function Header({ className = "" }: HeaderProps) {
   const dispatch = useAppDispatch();
   const { location } = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const showHomeIcon = pathname !== "/";
 
   // Global conversation WebSocket connection (for Messages button in header)
   useConversationWebSocketService();
@@ -105,13 +115,31 @@ export default function Header({ className = "" }: HeaderProps) {
             </div>
           </div>
 
-          {/* Desktop User Menu */}
+          {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-4">
+            {showHomeIcon && (
+              <Link
+                href="/"
+                aria-label="Go to home"
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <HomeIcon className="w-5 h-5" />
+              </Link>
+            )}
             <UserMenu />
           </div>
 
           {/* Mobile Search and Menu Buttons */}
           <div className="flex lg:hidden items-center space-x-2">
+            {showHomeIcon && (
+              <Link
+                href="/"
+                aria-label="Go to home"
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <HomeIcon className="w-5 h-5" />
+              </Link>
+            )}
             {/* Mobile Search Button */}
             <button
               onClick={handleSearchClick}
