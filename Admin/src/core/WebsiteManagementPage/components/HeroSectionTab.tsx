@@ -8,7 +8,7 @@ import { useHeroImages } from "../hooks/useHeroImages";
 import { useCategoryIcons } from "../hooks/useCategoryIcons";
 import { UpdateHeroConfigRequest, HeroImage } from "../types";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
-import { ImageUploadCard } from "@/components/FileUpload";
+import { MediaUploadCard } from "@/components/FileUpload";
 import Toggle from "@/components/Toggle";
 
 function HeroSectionTab() {
@@ -298,62 +298,78 @@ function HeroSectionTab() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {heroImages.map((image) => (
-              <div
-                key={image.id}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-              >
-                {/* Full Image Display */}
-                <div className="relative aspect-video">
-                  <img
-                    src={image.image_url}
-                    alt="Hero image"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+            {heroImages.map((image) => {
+              const mediaUrl = image.media_url || image.image_url;
+              const isVideo = image.media_type === "video";
 
-                {/* Controls */}
-                <div className="p-4 space-y-3">
-                  {/* Status Toggle */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">
-                      Status
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <Toggle
-                        checked={image.is_active}
-                        onChange={() => handleToggleImageStatus(image)}
-                        disabled={togglingItems.has(image.id)}
-                        size="sm"
+              return (
+                <div
+                  key={image.id}
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {/* Full Media Display */}
+                  <div className="relative aspect-video bg-gray-100">
+                    {isVideo ? (
+                      <video
+                        src={mediaUrl}
+                        controls
+                        className="w-full h-full object-cover"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    ) : (
+                      <img
+                        src={mediaUrl}
+                        alt="Hero media"
+                        className="w-full h-full object-cover"
                       />
-                      <span className="text-sm text-gray-600 w-16 text-center">
-                        {image.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedImage(image);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                    Delete Image
-                  </button>
-                </div>
-              </div>
-            ))}
+                  {/* Controls */}
+                  <div className="p-4 space-y-3">
+                    {/* Status Toggle */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Status
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Toggle
+                          checked={image.is_active}
+                          onChange={() => handleToggleImageStatus(image)}
+                          disabled={togglingItems.has(image.id)}
+                          size="sm"
+                        />
+                        <span className="text-sm text-gray-600 w-16 text-center">
+                          {image.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    </div>
 
-            {/* Add Image Card */}
-            <ImageUploadCard
-              onImageSelect={createHeroImage}
-              accept="image/*"
-              maxSize={5 * 1024 * 1024} // 5MB
-              label="Upload Hero Image"
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedImage(image);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                      Delete {isVideo ? "Video" : "Image"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add Media Card */}
+            <MediaUploadCard
+              onMediaSelect={createHeroImage}
+              accept="image/*,video/*"
+              maxSize={50 * 1024 * 1024} // 50MB
+              label="Upload Hero Media"
               description="Click to browse or drag and drop"
+              allowVideo={true}
             />
           </div>
         )}
@@ -364,8 +380,12 @@ function HeroSectionTab() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteImage}
-        title="Delete Hero Image"
-        message="Are you sure you want to delete this hero image? This action cannot be undone."
+        title={`Delete Hero ${
+          selectedImage?.media_type === "video" ? "Video" : "Image"
+        }`}
+        message={`Are you sure you want to delete this hero ${
+          selectedImage?.media_type === "video" ? "video" : "image"
+        }? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
       />
