@@ -19,17 +19,19 @@ type HeroConfig struct {
 	IsActive    bool `json:"is_active" gorm:"default:true"`
 }
 
-// HeroImage represents hero section images
+// HeroImage represents hero section images and videos
 type HeroImage struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	
-	// Image Information
-	ImageURL    string `json:"image_url" gorm:"not null"` // URL to the image
+	// Media Information
+	MediaURL    string `json:"media_url" gorm:"not null"` // URL to the media (image or video)
+	ImageURL    string `json:"image_url" gorm:"not null"` // Deprecated: Use MediaURL instead
+	MediaType   string `json:"media_type" gorm:"default:'image'"` // 'image' or 'video'
 	
 	// Status
-	IsActive    bool `json:"is_active" gorm:"default:true"` // Show/hide image
+	IsActive    bool `json:"is_active" gorm:"default:true"` // Show/hide media
 	
 	// Relationship
 	HeroConfigID uint `json:"hero_config_id" gorm:"not null"`
