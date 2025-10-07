@@ -1,6 +1,6 @@
 "use client";
 
-import { Facebook, Linkedin, Instagram, Twitter } from "lucide-react";
+import { Facebook, Linkedin, Instagram /*, Twitter */ } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -122,13 +122,13 @@ export default function Footer({ className = "" }: FooterProps) {
 
               {/* Social Media Icons */}
               <div className="flex space-x-4">
-                <a
+                {/* <a
                   href="#"
                   className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
                   aria-label="Follow us on Twitter"
                 >
                   <Twitter className="w-5 h-5" />
-                </a>
+                </a> */}
                 <a
                   href="#"
                   className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
@@ -153,7 +153,7 @@ export default function Footer({ className = "" }: FooterProps) {
               </div>
 
               {/* App Download Buttons */}
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <button className="flex items-center hover:opacity-80 transition-opacity duration-200">
                   <Image
                     src="/images/footer/app_store.svg"
@@ -170,7 +170,7 @@ export default function Footer({ className = "" }: FooterProps) {
                     height={40}
                   />
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -179,8 +179,8 @@ export default function Footer({ className = "" }: FooterProps) {
         <div className="border-t border-gray-300">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <p className="text-gray-500 text-sm text-center font-medium leading-relaxed">
-              * As on December 31, 2024 Copyright 2025 Trees India Ltd. All
-              rights reserved. | CIN: U74140DL2014PTC274413
+              * As on October 7, 2025 Copyright 2025 Trees India Ltd. All rights
+              reserved.
             </p>
           </div>
         </div>

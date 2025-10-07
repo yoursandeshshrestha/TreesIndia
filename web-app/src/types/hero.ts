@@ -19,7 +19,9 @@ export interface HomepageCategoryIcon {
 
 export interface HeroImage {
   id: number;
-  image_url: string;
+  image_url: string; // Deprecated: Use media_url instead
+  media_url: string;
+  media_type: "image" | "video";
   is_active: boolean;
   hero_config_id: number;
   created_at: string;
