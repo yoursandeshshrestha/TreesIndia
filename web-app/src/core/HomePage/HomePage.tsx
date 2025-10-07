@@ -9,6 +9,8 @@ import RentalSection from "./sections/RentalSection";
 export default function HomePage() {
   return (
     <>
+      {/* First Banner Image */}
+      <BannerImages bannerIndex={0} />
       {/* Hero Section */}
       <HeroSection />
 
@@ -18,9 +20,6 @@ export default function HomePage() {
 
         {/* Category Section */}
         <CategorySection />
-
-        {/* First Banner Image */}
-        <BannerImages bannerIndex={0} />
 
         {/* Promotional Banner */}
         <PromotionalBanner />

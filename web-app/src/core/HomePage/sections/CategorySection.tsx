@@ -72,8 +72,8 @@ const CategoryCard = ({ name, icon, categoryId }: CategoryProps) => {
 };
 
 const LoadingSkeleton = () => (
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-    {[1, 2, 3].map((i) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    {[1, 2].map((i) => (
       <div key={i} className="animate-pulse">
         <div className="bg-[#f5f5f5] rounded-xl p-4 mb-3">
           <div className="w-[50px] h-[50px] bg-gray-300 rounded mx-auto"></div>
@@ -120,15 +120,20 @@ export default function CategorySection({
     return (
       <section className={`w-full py-8 ${backgroundColor} ${className}`}>
         <div className="max-w-7xl mx-auto px-4">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center">
-              Other services we provide:
-            </h2>
-            <p className="text-gray-600 text-center mt-2">
-              Choose from our wide range of professional services
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column - Image Loading */}
+            <div className="lg:pr-10">
+              <div className="w-full aspect-square bg-gray-200 rounded-2xl animate-pulse"></div>
+            </div>
+
+            {/* Right Column - Categories Loading */}
+            <div className="border border-gray-200 rounded-2xl p-6">
+              <div className="space-y-4 mb-8">
+                <div className="h-6 bg-gray-200 rounded w-64 animate-pulse"></div>
+              </div>
+              <LoadingSkeleton />
+            </div>
           </div>
-          <LoadingSkeleton />
         </div>
       </section>
     );
@@ -138,7 +143,34 @@ export default function CategorySection({
     return (
       <section className={`w-full py-8 ${backgroundColor} ${className}`}>
         <div className="max-w-7xl mx-auto px-4">
-          <ErrorState error={error} onRetry={() => refetch()} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column - Image */}
+            <div className="lg:pr-10">
+              <div className="relative w-full aspect-square">
+                {/* Image for small screens */}
+                <Image
+                  src="/images/others/other-we-provide-down.png"
+                  alt="Other services we provide"
+                  width={500}
+                  height={500}
+                  className="rounded-2xl w-full h-full object-cover lg:hidden"
+                />
+                {/* Image for large screens */}
+                <Image
+                  src="/images/others/other-we-provide.png"
+                  alt="Other services we provide"
+                  width={500}
+                  height={500}
+                  className="rounded-2xl w-full h-full object-cover hidden lg:block"
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Error */}
+            <div className="border border-gray-200 rounded-2xl p-6">
+              <ErrorState error={error} onRetry={() => refetch()} />
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -181,14 +213,16 @@ export default function CategorySection({
         categoryId: getCategoryId(icon.name),
       };
     })
+    // Filter out Home Service from the list
+    .filter((category) => !category.name.toLowerCase().includes("home"))
     .sort((a, b) => {
-      // Define the desired order: Home Service first, Construction Service second, Marketplace third
+      // Define the desired order: Construction Service first, Marketplace second
       const getOrder = (name: string) => {
         const lowerName = name.toLowerCase();
-        if (lowerName.includes("home")) return 1;
-        if (lowerName.includes("construction")) return 2;
-        if (lowerName.includes("marketplace")) return 3;
-        return 4; // Any other categories go last
+        // if (lowerName.includes("home")) return 1; // Commented out - Home Service removed
+        if (lowerName.includes("construction")) return 1;
+        if (lowerName.includes("marketplace")) return 2;
+        return 3; // Any other categories go last
       };
 
       return getOrder(a.name) - getOrder(b.name);
@@ -197,18 +231,45 @@ export default function CategorySection({
   return (
     <section className={`w-full py-8 ${backgroundColor} ${className}`}>
       <div className="max-w-7xl mx-auto px-4">
-        {/* Section Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center">
-            Other services we provide
-          </h2>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left Column - Image */}
+          <div className="lg:pr-10">
+            <div className="relative w-full aspect-square">
+              {/* Image for small screens */}
+              <Image
+                src="/images/others/other-we-provide-down.png"
+                alt="Other services we provide"
+                width={500}
+                height={500}
+                className="rounded-2xl w-full h-full object-cover lg:hidden"
+              />
+              {/* Image for large screens */}
+              <Image
+                src="/images/others/other-we-provide.png"
+                alt="Other services we provide"
+                width={500}
+                height={500}
+                className="rounded-2xl w-full h-full object-cover hidden lg:block"
+              />
+            </div>
+          </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <CategoryCard key={category.categoryId} {...category} />
-          ))}
+          {/* Right Column - Categories */}
+          <div className="border border-gray-200 rounded-2xl p-6">
+            {/* Section Header */}
+            <div className="space-y-4 mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 leading-tight">
+                Other services we provide
+              </h2>
+            </div>
+
+            {/* Categories Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {categories.map((category) => (
+                <CategoryCard key={category.categoryId} {...category} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
