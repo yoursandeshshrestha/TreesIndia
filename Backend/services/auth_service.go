@@ -104,8 +104,10 @@ func (as *AuthService) VerifyOTP(phone, otp string) (*models.User, *TokenRespons
 		return nil, nil, fmt.Errorf("account disabled")
 	}
 
-	// Verify OTP (hardcoded to "0000" for now)
-	if otp != "0000" {
+	// Verify OTP using OTP service
+	otpService := NewOTPService()
+	valid, err := otpService.VerifyOTP(phone, otp, "login")
+	if err != nil || !valid {
 		return nil, nil, fmt.Errorf("invalid OTP")
 	}
 
