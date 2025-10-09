@@ -5,6 +5,12 @@
       "phone": "+918597831351",
       "user_type": "admin",
       "is_active": true
+    },
+    {
+      "name": "AMIT BISWAKARMA",
+      "phone": "+919382579820",
+      "user_type": "admin",
+      "is_active": true
     }
   ]
 }
