@@ -11,6 +11,12 @@
       "phone": "+919382579820",
       "user_type": "admin",
       "is_active": true
+    },
+    {
+      "name": "AMIT BISWAKARMA ADMIN",
+      "phone": "+918170962280",
+      "user_type": "admin",
+      "is_active": true
     }
   ]
 }
