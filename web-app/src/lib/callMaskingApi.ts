@@ -27,6 +27,19 @@ export interface TestCallResponse {
   message: string;
 }
 
+export interface CloudShopeCallRequest {
+  from_number: string;
+  mobile_number: string;
+}
+
+export interface CloudShopeCallResponse {
+  status: number;
+  message: string;
+  data: {
+    mobile: string;
+  };
+}
+
 export const callMaskingApi = {
   // Initiate a call
   initiateCall: async (bookingId: number): Promise<void> => {
@@ -81,6 +94,46 @@ export const callMaskingApi = {
       `${API_BASE_URL}/call-masking/test?phone_number=${phoneNumber}`,
       {
         method: "POST",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data;
+  },
+
+  // Initiate a call for a specific booking
+  initiateCallForBooking: async (
+    bookingId: number
+  ): Promise<CloudShopeCallResponse> => {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/booking/call`,
+      {
+        method: "POST",
+        body: JSON.stringify({ booking_id: bookingId }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data;
+  },
+
+  // Initiate a CloudShope call
+  initiateCloudShopeCall: async (
+    request: CloudShopeCallRequest
+  ): Promise<CloudShopeCallResponse> => {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/call-masking/cloudshope/call`,
+      {
+        method: "POST",
+        body: JSON.stringify(request),
       }
     );
 
