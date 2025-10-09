@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Edit,
-  Trash2,
-  Save,
-  X,
-  Upload,
-  Link,
-  ArrowUp,
-  ArrowDown,
-} from "lucide-react";
+import { Edit, Trash2, Link, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { useBannerImages } from "../hooks/useBannerImages";
 import {
@@ -327,7 +318,7 @@ function BannerSectionTab() {
                 Active
               </label>
               <Toggle
-                checked={editFormData.is_active}
+                checked={editFormData.is_active ?? false}
                 onChange={(checked) =>
                   setEditFormData({ ...editFormData, is_active: checked })
                 }

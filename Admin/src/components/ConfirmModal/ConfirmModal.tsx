@@ -9,7 +9,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | React.ReactNode;
   confirmText: string;
   cancelText: string;
   variant?: "default" | "danger";
@@ -68,7 +68,11 @@ const ConfirmModal = ({
 
           {/* Content */}
           <div className="px-6 py-4">
-            <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+            {typeof message === 'string' ? (
+              <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+            ) : (
+              <div className="text-sm text-gray-600">{message}</div>
+            )}
           </div>
 
           {/* Footer */}
