@@ -30,16 +30,16 @@ export function ServiceMainContent({
   };
 
   return (
-    <div className="flex-1 px-6 pt-0 pb-6 ">
-      <h2 className="text-2xl font-semibold bg-white text-gray-900 mb-6">
+    <div className="flex-1 px-0 lg:px-6 pt-0 pb-6">
+      <h2 className="text-xl sm:text-2xl font-semibold bg-white text-gray-900 mb-4 sm:mb-6">
         {selectedSubcategory ? getLocationText() : "All Services"}
       </h2>
-      <div className="max-w-4xl border border-gray-200 rounded-lg p-5">
+      <div className="max-w-4xl border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-5">
         {servicesLoading ? (
           <ServiceMainContentSkeleton />
         ) : servicesError ? (
           <div className="text-center py-8">
-            <p className="text-red-600">
+            <p className="text-red-600 text-sm sm:text-base">
               {location?.city
                 ? `Failed to load services for ${location.city}`
                 : "Failed to load services"}
@@ -47,7 +47,7 @@ export function ServiceMainContent({
           </div>
         ) : services.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-sm sm:text-base">
               {location?.city
                 ? `No services available${
                     selectedSubcategory ? ` for this category` : ""
@@ -58,7 +58,7 @@ export function ServiceMainContent({
             </p>
           </div>
         ) : (
-          <div className="space-y-6 bg-white">
+          <div className="space-y-4 sm:space-y-6 bg-white">
             {services.map((service, index) => (
               <ServiceCard
                 key={service.id}

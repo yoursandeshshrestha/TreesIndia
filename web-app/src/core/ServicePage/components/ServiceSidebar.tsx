@@ -25,11 +25,11 @@ export function ServiceSidebar({
   }
 
   return (
-    <div className="w-80 bg-white flex flex-col pb-6 sticky top-24 h-fit">
+    <div className="w-full lg:w-80 bg-white flex flex-col pb-6 lg:sticky lg:top-24 h-fit">
       {/* Subcategory Header Section */}
       {(selectedSubcategory || selectedCategory) && (
-        <div className="mb-6 flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold text-gray-900">
+        <div className="mb-4 sm:mb-6 flex flex-col gap-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
             {selectedSubcategory?.name || selectedCategory?.name}
           </h1>
         </div>
@@ -37,8 +37,8 @@ export function ServiceSidebar({
 
       {/* Subcategories section */}
       {subcategories.length > 0 && (
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h2 className="text-base font-normal text-black leading-normal tracking-normal mb-4">
+        <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
+          <h2 className="text-sm sm:text-base font-normal text-black leading-normal tracking-normal mb-3 sm:mb-4">
             Browse other categories
           </h2>
           {subcategoriesError ? (
@@ -46,7 +46,7 @@ export function ServiceSidebar({
               Failed to load services
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
               {subcategories.map((subcategory) => (
                 <SubcategoryCard
                   key={subcategory.id}
@@ -61,8 +61,8 @@ export function ServiceSidebar({
 
       <div
         className={`${
-          selectedSubcategory || selectedCategory ? "mt-6" : "mt-0"
-        }`}
+          selectedSubcategory || selectedCategory ? "mt-4 sm:mt-6" : "mt-0"
+        } hidden lg:block`}
       >
         <div className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors">
           <div className="flex items-center justify-between">
@@ -88,29 +88,29 @@ export function ServiceSidebar({
 
 function ServiceSidebarSkeleton() {
   return (
-    <div className="w-80 bg-white flex flex-col pb-6 sticky top-24 h-fit">
+    <div className="w-full lg:w-80 bg-white flex flex-col pb-6 lg:sticky lg:top-24 h-fit">
       {/* Header Section Skeleton */}
-      <div className="mb-6 flex flex-col gap-2">
-        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+      <div className="mb-4 sm:mb-6 flex flex-col gap-2">
+        <div className="h-7 sm:h-8 bg-gray-200 rounded w-40 sm:w-48 animate-pulse"></div>
       </div>
 
       {/* Subcategories section Skeleton */}
-      <div className="border border-gray-200 rounded-lg p-4">
-        <div className="h-5 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
+        <div className="h-4 sm:h-5 bg-gray-200 rounded w-32 sm:w-40 mb-3 sm:mb-4 animate-pulse"></div>
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="bg-gray-100 rounded-xl p-4 mb-3">
-                <div className="w-[50px] h-[50px] bg-gray-200 rounded-lg mx-auto"></div>
+              <div className="bg-gray-100 rounded-xl p-3 sm:p-4 mb-2 sm:mb-3">
+                <div className="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] bg-gray-200 rounded-lg mx-auto"></div>
               </div>
-              <div className="h-4 bg-gray-200 rounded mx-auto w-16"></div>
+              <div className="h-3 sm:h-4 bg-gray-200 rounded mx-auto w-14 sm:w-16"></div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Terms and Conditions Skeleton */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6 hidden lg:block">
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -136,25 +136,25 @@ function SubcategoryCard({ subcategory, onSelect }: SubcategoryCardProps) {
       className="group cursor-pointer"
       onClick={() => onSelect(subcategory.id)}
     >
-      <div className="bg-gray-100 rounded-xl p-4 mb-3 hover:bg-gray-200 transition-colors">
+      <div className="bg-gray-100 rounded-xl p-3 sm:p-4 mb-2 sm:mb-3 hover:bg-gray-200 transition-colors">
         {subcategory.image ? (
           <Image
             src={subcategory.image}
             alt={subcategory.name}
             width={50}
             height={50}
-            className="w-[50px] h-[50px] object-contain mx-auto"
+            className="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] object-contain mx-auto"
           />
         ) : (
-          <div className="w-[50px] h-[50px] bg-gray-200 rounded-lg mx-auto flex items-center justify-center text-gray-500 text-lg font-medium">
+          <div className="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] bg-gray-200 rounded-lg mx-auto flex items-center justify-center text-gray-500 text-base sm:text-lg font-medium">
             {subcategory.name.charAt(0)}
           </div>
         )}
       </div>
-      <p className="text-gray-700 text-sm font-normal text-center">
+      <p className="text-gray-700 text-xs sm:text-sm font-normal text-center leading-tight">
         {subcategory.name}
       </p>
-      <div className="w-0 group-hover:w-8 h-0.5 bg-[#00a871] mx-auto mt-2 transition-all duration-300"></div>
+      <div className="w-0 group-hover:w-6 sm:group-hover:w-8 h-0.5 bg-[#00a871] mx-auto mt-1 sm:mt-2 transition-all duration-300"></div>
     </div>
   );
 }

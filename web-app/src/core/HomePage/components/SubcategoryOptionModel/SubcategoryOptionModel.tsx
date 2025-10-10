@@ -63,26 +63,26 @@ const SubcategoryCard = ({
 
   return (
     <div className="group cursor-pointer" onClick={onClick}>
-      <div className="bg-gray-100 rounded-xl p-4 px-12 mb-3 hover:bg-gray-200 transition-colors">
+      <div className="bg-gray-100 rounded-xl p-3 px-6 sm:p-4 sm:px-12 mb-3 hover:bg-gray-200 transition-colors">
         {subcategory.image && !imageError ? (
           <Image
             src={subcategory.image}
             alt={subcategory.name}
             width={50}
             height={50}
-            className="w-[50px] h-[50px] object-contain mx-auto"
+            className="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] object-contain mx-auto"
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-[50px] h-[50px] flex items-center justify-center mx-auto">
+          <div className="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] flex items-center justify-center mx-auto">
             {getSubcategoryIcon(subcategory.name)}
           </div>
         )}
       </div>
-      <p className="text-gray-700 text-sm font-normal text-center">
+      <p className="text-gray-700 text-xs sm:text-sm font-normal text-center leading-tight">
         {subcategory.name}
       </p>
-      <div className="w-0 group-hover:w-8 h-0.5 bg-[#00a871] mx-auto mt-2 transition-all duration-300"></div>
+      <div className="w-0 group-hover:w-6 sm:group-hover:w-8 h-0.5 bg-[#00a871] mx-auto mt-2 transition-all duration-300"></div>
     </div>
   );
 };
@@ -134,7 +134,7 @@ export default function SubcategoriesModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4 sm:p-6"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -167,17 +167,17 @@ export default function SubcategoriesModal() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 25 }}
-              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] w-full max-w-sm sm:max-w-md lg:max-w-lg flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="p-6 ">
-                <h2 className="text-2xl font-semibold text-gray-900 text-left">
+              <div className="p-4 sm:p-6 flex-shrink-0">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 text-left">
                   {categoryName}
                 </h2>
               </div>
 
               {/* Content - Matching hero section categories container */}
-              <div>
+              <div className="flex-1 overflow-y-auto">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 text-gray-400 animate-spin mb-4" />
@@ -208,8 +208,8 @@ export default function SubcategoriesModal() {
                     </p>
                   </div>
                 ) : (
-                  <div className=" p-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="p-4 sm:p-6 pb-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {subcategories.map((subcategory) => (
                         <SubcategoryCard
                           key={subcategory.id}
