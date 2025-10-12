@@ -138,7 +138,7 @@ export function WorkersContent({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-96">
+      <div className="flex justify-center items-center min-h-96 py-8 sm:py-12">
         <LoadingSpinner />
       </div>
     );
@@ -146,18 +146,18 @@ export function WorkersContent({
 
   if (isError) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8 sm:py-12 px-4">
         <div className="text-red-500 mb-4">
-          <Users className="w-12 h-12 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <Users className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             Error Loading Workers
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
             {error instanceof Error ? error.message : "Something went wrong"}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
           >
             Try Again
           </button>
@@ -167,36 +167,41 @@ export function WorkersContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workers</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Workers
+          </h1>
           {pagination && (
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               {pagination.total} worker{pagination.total !== 1 ? "s" : ""} found
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Apply for Worker Button */}
           <button
             onClick={handleApplyForWorker}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap"
           >
             <UserPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">Apply for Worker</span>
+            <span className="hidden sm:inline">Apply for Worker</span>
+            <span className="sm:hidden">Apply</span>
           </button>
 
           {/* Sort Dropdown */}
           <div className="relative" ref={sortRef}>
             <button
               onClick={() => setShowSortOptions(!showSortOptions)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <ArrowUpDown className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Sort</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-700">
+                Sort
+              </span>
               <ChevronUp
                 className={`w-4 h-4 text-gray-600 transition-transform ${
                   showSortOptions ? "rotate-180" : ""
@@ -205,7 +210,7 @@ export function WorkersContent({
             </button>
 
             {showSortOptions && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                 <div className="py-1">
                   {sortOptions.map((option) => (
                     <button
@@ -213,7 +218,7 @@ export function WorkersContent({
                       onClick={() =>
                         handleSortChange(option.value, option.order)
                       }
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      className={`w-full text-left px-4 py-2.5 sm:py-2 text-xs sm:text-sm hover:bg-gray-50 ${
                         sortBy === option.value && sortOrder === option.order
                           ? "bg-green-50 text-green-700"
                           : "text-gray-700"
@@ -231,23 +236,23 @@ export function WorkersContent({
 
       {/* Workers Grid */}
       {workers.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             No Workers Found
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
             Try adjusting your filters to see more workers.
           </p>
           <button
             onClick={onClearFilters}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
           >
             Clear Filters
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-fr">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 auto-rows-fr">
           {workers.map((worker) => (
             <WorkerCard
               key={worker.ID}
@@ -262,14 +267,15 @@ export function WorkersContent({
 
       {/* Pagination */}
       {pagination && pagination.total_pages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-6 sm:mt-8">
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={!pagination.has_prev}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Previous
+            <span className="hidden sm:inline">Previous</span>
+            <span className="sm:hidden">Prev</span>
           </button>
 
           <div className="flex items-center gap-1">
@@ -291,7 +297,7 @@ export function WorkersContent({
                   <button
                     key={pageNumber}
                     onClick={() => onPageChange(pageNumber)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                    className={`px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                       pageNumber === pagination.page
                         ? "bg-green-600 text-white"
                         : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
@@ -307,7 +313,7 @@ export function WorkersContent({
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={!pagination.has_next}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
             <ChevronRight className="w-4 h-4" />

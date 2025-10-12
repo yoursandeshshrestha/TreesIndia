@@ -16,6 +16,7 @@ interface WorkersSidebarProps {
   selectedSkills: string[];
   onSkillToggle: (skill: string) => void;
   onCloseMobileFilters?: () => void;
+  showMobileFilters?: boolean;
 }
 
 export function WorkersSidebar({
@@ -27,6 +28,7 @@ export function WorkersSidebar({
   selectedSkills,
   onSkillToggle,
   onCloseMobileFilters,
+  showMobileFilters,
 }: WorkersSidebarProps) {
   // Count active filters (excluding default ones)
   const getActiveFiltersCount = () => {
@@ -61,14 +63,18 @@ export function WorkersSidebar({
   ];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 z-50 lg:z-auto">
+    <div
+      className={`bg-white ${
+        showMobileFilters ? "h-full" : ""
+      } lg:border lg:border-gray-200 lg:rounded-lg p-4 sm:p-6`}
+    >
       {/* Mobile Header */}
-      {onCloseMobileFilters && (
-        <div className="flex items-center justify-between mb-6 lg:hidden">
+      {showMobileFilters && onCloseMobileFilters && (
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 lg:hidden">
           <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
           <button
             onClick={onCloseMobileFilters}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -77,17 +83,17 @@ export function WorkersSidebar({
 
       {/* Header */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-medium text-gray-900">
+            <h3 className="text-sm sm:text-base font-medium text-gray-900">
               Applied Filters
             </h3>
           </div>
           <button
             onClick={onClearFilters}
-            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
+            className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Clear</span>
           </button>
         </div>
@@ -95,19 +101,19 @@ export function WorkersSidebar({
 
       {/* Active Filters Display */}
       {activeFiltersCount > 0 && (
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="flex flex-wrap gap-2">
             {selectedWorkerTypes.map((workerType) => (
               <span
                 key={workerType}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {workerType === "normal"
                   ? "Independent Workers"
                   : "TreesIndia Workers"}
                 <button
                   onClick={() => onWorkerTypeToggle(workerType)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -116,26 +122,26 @@ export function WorkersSidebar({
             {selectedSkills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {skill}
                 <button
                   onClick={() => onSkillToggle(skill)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
             {filters.min_experience && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {filters.min_experience}-{filters.max_experience || 20}y exp
                 <button
                   onClick={() => {
                     onFilterChange("min_experience", undefined);
                     onFilterChange("max_experience", undefined);
                   }}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -145,10 +151,10 @@ export function WorkersSidebar({
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Search */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Search Workers
           </h4>
           <input
@@ -162,7 +168,7 @@ export function WorkersSidebar({
 
         {/* Worker Type */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Worker Type
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -172,7 +178,7 @@ export function WorkersSidebar({
                 <button
                   key={type.value}
                   onClick={() => onWorkerTypeToggle(type.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -187,7 +193,7 @@ export function WorkersSidebar({
 
         {/* Skills */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Popular Skills
           </h4>
           <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
@@ -197,7 +203,7 @@ export function WorkersSidebar({
                 <button
                   key={skill}
                   onClick={() => onSkillToggle(skill)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -212,7 +218,7 @@ export function WorkersSidebar({
 
         {/* Experience Range */}
         <div>
-          <label className="block text-base font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
             Experience Range (Years)
           </label>
           <div className="px-2">

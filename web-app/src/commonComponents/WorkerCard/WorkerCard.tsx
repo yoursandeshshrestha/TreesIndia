@@ -66,12 +66,12 @@ export function WorkerCard({
 
   return (
     <div className={`group cursor-pointer ${className}`} onClick={handleClick}>
-      <div className="bg-white rounded-xl border border-gray-200 p-6 w-full h-full">
+      <div className="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-4 sm:p-6 w-full h-full hover:shadow-lg transition-shadow duration-300">
         {/* Top Section - Profile Picture, Name, Role, Rating, Availability */}
-        <div className="flex items-center space-x-4 mb-6">
+        <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
           {/* Profile Picture with Verification Badge */}
           <div className="relative flex-shrink-0">
-            <div className="w-16 h-16 rounded-full overflow-hidden">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden">
               <Image
                 src={
                   worker.documents.profile_pic
@@ -92,18 +92,18 @@ export function WorkerCard({
             </div>
             {/* Verification Badge */}
             {worker.worker_type === "treesindia_worker" && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
-                <Check className="w-2.5 h-2.5 text-white" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
               </div>
             )}
           </div>
 
           {/* Worker Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
               {contactInfo.name}
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               {worker.worker_type === "treesindia_worker"
                 ? "TreesIndia Worker"
                 : "Independent Worker"}
@@ -112,36 +112,44 @@ export function WorkerCard({
         </div>
 
         {/* Contact Information */}
-        <div className="space-y-2 mb-6">
+        <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
           <div className="flex items-center text-gray-600">
-            <Mail className="w-4 h-4 mr-3 text-gray-400" />
-            <span className="text-sm">{contactInfo.email}</span>
+            <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm truncate">
+              {contactInfo.email}
+            </span>
           </div>
           <div className="flex items-center text-gray-600">
-            <Phone className="w-4 h-4 mr-3 text-gray-400" />
-            <span className="text-sm">{contactInfo.phone}</span>
+            <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm truncate">
+              {contactInfo.phone}
+            </span>
           </div>
           <div className="flex items-center text-gray-600">
-            <MapPin className="w-4 h-4 mr-3 text-gray-400" />
-            <span className="text-sm">{formatLocation()}</span>
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm truncate">
+              {formatLocation()}
+            </span>
           </div>
         </div>
 
         {/* Key Skills Section */}
         {workerSkills && workerSkills.length > 0 && (
-          <div className="mb-6">
-            <h4 className="font-semibold text-gray-900 mb-3">Key Skills</h4>
-            <div className="flex flex-wrap gap-2">
+          <div className="mb-4 sm:mb-6">
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3">
+              Key Skills
+            </h4>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {workerSkills.slice(0, 4).map((skill, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                  className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700"
                 >
                   {skill}
                 </span>
               ))}
               {workerSkills.length > 4 && (
-                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
                   +{workerSkills.length - 4} more
                 </span>
               )}
@@ -150,10 +158,10 @@ export function WorkerCard({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {!isCurrentUserWorker && (
             <button
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium sm:font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleChatClick();
@@ -166,7 +174,7 @@ export function WorkerCard({
           <button
             className={`${
               isCurrentUserWorker ? "w-full" : "flex-1"
-            } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors`}
+            } bg-white text-black border border-gray-300 hover:bg-gray-50 font-medium sm:font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-sm`}
             onClick={(e) => {
               e.stopPropagation();
               handleClick();
