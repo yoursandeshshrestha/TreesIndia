@@ -55,7 +55,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl max-w-md w-full mx-4 relative"
+            className="bg-white rounded-2xl min-w-[300px] max-w-none w-full mx-4 relative"
           >
             {/* Close button */}
             <button

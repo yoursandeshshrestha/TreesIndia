@@ -98,14 +98,14 @@ export default function SlotSelectionModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl w-full min-w-[320px] max-w-[500px] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[30vw] xl:max-w-[30vw] max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl w-full min-w-[300px] max-w-[500px] max-h-[80vh] sm:max-h-[80vh] overflow-hidden flex flex-col"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               {/* Header */}
-              <div className="p-4 sm:p-6">
+              <div className="p-4 sm:p-6 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -122,7 +122,7 @@ export default function SlotSelectionModal({
               </div>
 
               {/* Content */}
-              <div className="px-4 sm:px-6 overflow-y-auto max-h-[60vh] py-2">
+              <div className="px-4 sm:px-6 overflow-y-auto flex-1 py-2">
                 {/* Date Selection */}
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-900 mb-3">
@@ -206,7 +206,7 @@ export default function SlotSelectionModal({
               </div>
 
               {/* Footer */}
-              <div className="p-4 sm:p-6">
+              <div className="p-4 sm:p-6 flex-shrink-0 border-t border-gray-100">
                 <button
                   onClick={onConfirm}
                   disabled={isConfirmDisabled}

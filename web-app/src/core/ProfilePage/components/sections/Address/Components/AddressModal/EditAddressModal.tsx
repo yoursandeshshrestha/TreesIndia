@@ -214,7 +214,7 @@ export default function EditAddressModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl w-full min-w-[320px] max-w-[500px] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[30vw] xl:max-w-[30vw] max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl w-full min-w-[300px] max-w-none max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}

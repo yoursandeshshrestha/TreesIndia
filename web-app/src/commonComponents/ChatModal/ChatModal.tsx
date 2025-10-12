@@ -178,7 +178,7 @@ export default function ChatModal() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
-              className="w-full max-w-full h-[85vh] sm:h-[90vh] md:h-[85vh] lg:h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden flex min-w-[320px] sm:min-w-[400px] md:min-w-[500px] sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw]"
+              className="w-full max-w-none h-[85vh] sm:h-[90vh] md:h-[85vh] lg:h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden flex min-w-[300px]"
             >
               {/* Desktop Layout */}
               <div className="hidden md:flex w-full h-full">

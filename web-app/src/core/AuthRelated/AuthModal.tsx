@@ -190,7 +190,8 @@ export const AuthModal: React.FC = () => {
               stiffness: 300,
               duration: 0.3,
             }}
-            className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg"
+            className="relative w-full min-w-[300px] sm:max-w-md 
+            lg:max-w-lg"
           >
             {/* Close Button - Responsive positioning */}
             <motion.button

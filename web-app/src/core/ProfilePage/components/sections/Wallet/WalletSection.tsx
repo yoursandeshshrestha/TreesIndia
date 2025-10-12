@@ -493,7 +493,7 @@ export function WalletSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[99] p-4 overflow-y-auto "
             onClick={handleCloseModal}
           >
             <motion.div
@@ -515,7 +515,7 @@ export function WalletSection() {
                 exit={{ scale: 0, opacity: 0 }}
                 transition={{ delay: 0.1, type: "spring", damping: 20 }}
                 onClick={handleCloseModal}
-                className="absolute -top-14 -right-0 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg"
+                className="absolute -top-14 -right-0 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-[100] cursor-pointer shadow-lg "
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -523,7 +523,7 @@ export function WalletSection() {
               </motion.button>
 
               <motion.div
-                className="bg-white rounded-2xl min-w-lg max-w-[500px] w-full max-h-[90vh] overflow-hidden"
+                className="bg-white rounded-2xl min-w-[300px] max-w-[500px] w-full max-h-[90vh] overflow-hidden"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 20, opacity: 0 }}

@@ -302,7 +302,7 @@ export default function NextSegmentPaymentModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl w-[500px] max-w-[95vw] shadow-xl"
+              className="bg-white rounded-2xl w-full min-w-[300px] max-w-none shadow-xl"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}

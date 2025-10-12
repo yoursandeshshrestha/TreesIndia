@@ -71,7 +71,7 @@ export function ConfirmModal({
             className="relative"
           >
             <motion.div
-              className="bg-white rounded-2xl p-6 w-96 max-w-sm shadow-xl"
+              className="bg-white rounded-2xl p-6 w-full min-w-[300px] max-w-none shadow-xl"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}

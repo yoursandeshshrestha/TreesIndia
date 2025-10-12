@@ -110,8 +110,10 @@ export function LocationTrackingModal({
       return;
     }
 
-    console.log(`[LocationTrackingModal] Connecting user ${user.id} to booking ${bookingId} for location tracking`);
-    
+    console.log(
+      `[LocationTrackingModal] Connecting user ${user.id} to booking ${bookingId} for location tracking`
+    );
+
     // Clear any existing connection error and set status to connecting
     setConnectionError(null);
     setConnectionStatus("connecting");
@@ -192,7 +194,9 @@ export function LocationTrackingModal({
   ]);
 
   const disconnectFromWebSocket = useCallback(() => {
-    console.log(`[LocationTrackingModal] Disconnecting user from location tracking`);
+    console.log(
+      `[LocationTrackingModal] Disconnecting user from location tracking`
+    );
     locationTrackingWebSocket.disconnect();
     setConnectionError(null);
     setConnectionStatus("disconnected");
@@ -277,7 +281,7 @@ export function LocationTrackingModal({
     return () => {
       // Ensure websocket is disconnected when component unmounts
       disconnectFromWebSocket();
-      
+
       // Clear any pending timeouts
       if (workerTimeoutRef.current) {
         clearTimeout(workerTimeoutRef.current);
@@ -383,7 +387,7 @@ export function LocationTrackingModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl shadow-xl w-full min-w-[800px] max-w-[95vw] h-[85vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full min-w-[300px] max-w-none h-[85vh] overflow-hidden"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}

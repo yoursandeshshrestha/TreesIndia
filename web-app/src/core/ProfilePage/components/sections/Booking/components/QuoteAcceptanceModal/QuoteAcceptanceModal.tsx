@@ -106,7 +106,7 @@ export default function QuoteAcceptanceModal({
               </motion.button>
 
               <motion.div
-                className="bg-white rounded-2xl w-[1000px] max-w-[95vw] h-[80vh] overflow-hidden flex flex-col"
+                className="bg-white rounded-2xl w-full min-w-[300px] max-w-none h-[80vh] overflow-hidden flex flex-col"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 20, opacity: 0 }}

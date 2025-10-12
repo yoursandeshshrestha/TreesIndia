@@ -75,7 +75,7 @@ export default function PaymentSegmentsModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl w-[600px] max-w-[95vw] shadow-xl max-h-[80vh] overflow-hidden"
+              className="bg-white rounded-2xl w-full min-w-[300px] max-w-none shadow-xl max-h-[80vh] overflow-hidden"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
