@@ -164,8 +164,8 @@ export default function PropertySection() {
   return (
     <section className="px-6 max-w-7xl mx-auto">
       {/* Header Section */}
-      <div className="flex items-center justify-between mb-10">
-        <h2 className="text-4xl font-semibold text-gray-900 leading-tight">
+      <div className="flex flex-col lg:flex-row items-center justify-between mb-10">
+        <h2 className="text-2xl lg:text-4xl font-semibold text-gray-900 leading-tight">
           {getSectionTitle()}
         </h2>
         <button

@@ -129,19 +129,19 @@ export default function MarketplaceModal() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 25 }}
-              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] w-full min-w-[300px] max-w-none overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-h-[85vh] w-full min-w-[300px] max-w-[90vw] sm:max-w-[600px] flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="p-6 ">
+              <div className="p-6 flex-shrink-0 border-b border-gray-100">
                 <h2 className="text-2xl font-semibold text-gray-900 text-left">
                   Marketplace
                 </h2>
               </div>
 
-              {/* Content - Matching hero section categories container */}
-              <div>
-                <div className=" p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Content - Scrollable area */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="p-6">
+                  <div className="grid grid-cols-2 gap-6">
                     {marketplaceOptions.map((option) => (
                       <MarketplaceOptionCard key={option.id} option={option} />
                     ))}

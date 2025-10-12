@@ -164,9 +164,9 @@ export function RentalPropertiesContent({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Loading Skeleton */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
@@ -174,7 +174,7 @@ export function RentalPropertiesContent({
             >
               <div className="flex flex-col md:flex-row">
                 <div className="w-full md:w-80 h-48 md:h-64 bg-gray-200"></div>
-                <div className="flex-1 p-6">
+                <div className="flex-1 p-4 sm:p-6">
                   <div className="space-y-3">
                     <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                     <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -199,15 +199,15 @@ export function RentalPropertiesContent({
 
   if (isError) {
     return (
-      <div className="text-center py-12">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Home className="w-8 h-8 text-red-600" />
+      <div className="text-center py-8 sm:py-12">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Home className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold text-red-800 mb-2">
+          <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">
             Failed to Load Properties
           </h3>
-          <p className="text-red-600 mb-6">
+          <p className="text-sm sm:text-base text-red-600 mb-6 px-4">
             {(error as { message?: string })?.message ||
               "Something went wrong while loading rental properties. Please try again."}
           </p>
@@ -224,34 +224,35 @@ export function RentalPropertiesContent({
 
   if (properties.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 break-words">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-end">
             {/* List My Properties Button */}
             <button
               onClick={handleCreateProperty}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
-              <span>List My Properties</span>
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">List My Properties</span>
+              <span className="sm:hidden">List Property</span>
             </button>
           </div>
         </div>
 
         {/* No Results Message */}
-        <div className="text-center py-12">
-          <div className="p-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <div className="p-6 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
               No Properties Found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-6 px-4">
               We couldn&apos;t find any properties matching your criteria. Try
               adjusting your search filters or check back later.
             </p>
@@ -268,29 +269,32 @@ export function RentalPropertiesContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Results Header */}
       <div className="relative">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          {/* Top Row - Header Text */}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 break-words">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Bottom Row - Actions */}
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Sort Options */}
-            <div className="relative" ref={sortRef}>
+            <div className="relative flex-1 sm:flex-initial" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 w-full sm:w-auto justify-between sm:justify-start border border-gray-200 sm:border-0"
               >
-                <ArrowUpDown className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  Sort by: {selectedSort}
+                <ArrowUpDown className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 truncate">
+                  <span className="hidden sm:inline">Sort by: </span>
+                  {selectedSort}
                 </span>
                 <ChevronUp
-                  className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
+                  className={`w-4 h-4 text-gray-600 transition-transform duration-200 flex-shrink-0 ${
                     isSortOpen ? "rotate-180" : ""
                   }`}
                 />
@@ -298,7 +302,7 @@ export function RentalPropertiesContent({
 
               {/* Dropdown Menu */}
               {isSortOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                   <div className="py-1">
                     {sortOptions.map((option) => (
                       <div key={option.value} className="relative">
@@ -307,7 +311,7 @@ export function RentalPropertiesContent({
                             setSelectedSort(option.label);
                             setIsSortOpen(false);
                           }}
-                          className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
+                          className={`w-full px-4 py-3 text-left text-xs sm:text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
                             selectedSort === option.label
                               ? "bg-green-50 text-green-700 font-medium"
                               : ""
@@ -328,17 +332,18 @@ export function RentalPropertiesContent({
             {/* List My Properties Button */}
             <button
               onClick={handleCreateProperty}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
-              <span>List My Properties</span>
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">List My Properties</span>
+              <span className="sm:hidden">List Property</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Properties List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {properties.map((property, index) => (
           <div
             key={`property-${property.ID}-${index}`}
@@ -356,18 +361,18 @@ export function RentalPropertiesContent({
 
       {/* Pagination */}
       {pagination && pagination.total_pages > 1 && (
-        <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-2 pt-8">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 pt-6 sm:pt-8">
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="inline-flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 w-full sm:w-auto justify-center"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Previous
           </button>
 
           {/* Page Numbers */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 overflow-x-auto max-w-full px-2">
             {Array.from(
               { length: Math.min(5, pagination.total_pages) },
               (_, i) => {
@@ -378,7 +383,7 @@ export function RentalPropertiesContent({
                   <button
                     key={pageNum}
                     onClick={() => onPageChange(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                    className={`px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200 flex-shrink-0 ${
                       isActive
                         ? "bg-green-600 text-white"
                         : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
@@ -392,10 +397,12 @@ export function RentalPropertiesContent({
 
             {pagination.total_pages > 5 && (
               <>
-                <span className="px-2 text-gray-500">...</span>
+                <span className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
+                  ...
+                </span>
                 <button
                   onClick={() => onPageChange(pagination.total_pages)}
-                  className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  className="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex-shrink-0"
                 >
                   {pagination.total_pages}
                 </button>
@@ -406,7 +413,7 @@ export function RentalPropertiesContent({
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.total_pages}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="inline-flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 w-full sm:w-auto justify-center"
           >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
@@ -415,7 +422,7 @@ export function RentalPropertiesContent({
       )}
 
       {/* Results Summary */}
-      <div className="text-center text-sm text-gray-500 pt-4">
+      <div className="text-center text-xs sm:text-sm text-gray-500 pt-3 sm:pt-4">
         Page {pagination?.page || 1} of {pagination?.total_pages || 1} • Total{" "}
         {pagination?.total || 0} properties found
       </div>

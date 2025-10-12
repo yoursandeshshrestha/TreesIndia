@@ -144,10 +144,10 @@ export default function HorizontalPropertyCard({
 
   return (
     <div className={`${className}`}>
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-200">
         <div className="flex flex-col md:flex-row">
           {/* Property Image - Left Side */}
-          <div className="relative w-full md:w-80 h-auto  overflow-hidden flex-shrink-0">
+          <div className="relative w-full md:w-80 h-48 sm:h-56 md:h-64 overflow-hidden flex-shrink-0">
             <Image
               src={
                 property.images && property.images.length > 0
@@ -168,10 +168,10 @@ export default function HorizontalPropertyCard({
 
             {/* Trees India Assured Badge */}
             {property.treesindia_assured && (
-              <div className="absolute top-3 left-3">
-                <span className="bg-green-600 text-white text-xs font-medium px-2 py-1 rounded-md flex items-center">
+              <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                <span className="bg-green-600 text-white text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center">
                   <svg
-                    className="w-3 h-3 mr-1"
+                    className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -181,16 +181,17 @@ export default function HorizontalPropertyCard({
                       clipRule="evenodd"
                     />
                   </svg>
-                  Trees India Assured
+                  <span className="hidden sm:inline">Trees India Assured</span>
+                  <span className="sm:hidden">Assured</span>
                 </span>
               </div>
             )}
 
             {/* Image Count */}
             {property.images && property.images.length > 1 && (
-              <div className="absolute bottom-3 right-3">
-                <span className="bg-gray-800 bg-opacity-80 text-white text-xs font-medium px-2 py-1 rounded-md flex items-center">
-                  <Images className="w-3 h-3 mr-1" />
+              <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3">
+                <span className="bg-gray-800 bg-opacity-80 text-white text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center">
+                  <Images className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                   {property.images.length}
                 </span>
               </div>
@@ -198,70 +199,72 @@ export default function HorizontalPropertyCard({
           </div>
 
           {/* Property Details - Right Side */}
-          <div className="flex-1 p-6 py-3">
+          <div className="flex-1 p-4 sm:p-5 md:p-6">
             <div className="flex flex-col h-full">
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-600 text-sm ">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-600 text-xs sm:text-sm truncate">
                     {property.locality || property.city}, {property.state}
                   </h3>
-                  <p className="text-gray-700 text-lg font-semibold">
+                  <p className="text-gray-700 text-base sm:text-lg font-semibold line-clamp-2 mt-0.5">
                     {property.title}
                   </p>
                 </div>
               </div>
 
               {/* Key Metrics */}
-              <div className="flex items-center space-x-6 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 lg:gap-6 mb-3 sm:mb-4">
                 {/* Price */}
-                <div className="flex-1">
-                  <div className="text-lg font-bold text-gray-900">
+                <div className="flex-1 min-w-0">
+                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
                     {formatPrice(property)}
                   </div>
                   {getPricePerSqft() && (
-                    <div className="text-xs text-gray-600">
+                    <div className="text-[10px] sm:text-xs text-gray-600 truncate">
                       {getPricePerSqft()}
                     </div>
                   )}
                 </div>
 
-                {/* Divider */}
+                {/* Divider - Hidden on mobile */}
                 {(property.area ||
                   (property.bedrooms && property.bathrooms)) && (
-                  <div className="w-px h-12 bg-gray-300"></div>
+                  <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
                 )}
 
                 {/* Area */}
                 {property.area && (
                   <>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs sm:text-sm text-gray-900">
                         <span className="font-bold">{property.area} sqft</span>
                         {getAreaInSqm() && (
-                          <span className="font-normal text-[13px]">
+                          <span className="font-normal text-[11px] sm:text-[13px]">
                             {" "}
                             ({getAreaInSqm()} sqm)
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-600">Carpet Area</div>
+                      <div className="text-[10px] sm:text-xs text-gray-600">
+                        Carpet Area
+                      </div>
                     </div>
 
-                    {/* Divider */}
+                    {/* Divider - Hidden on mobile */}
                     {property.bedrooms && property.bathrooms && (
-                      <div className="w-px h-12 bg-gray-300"></div>
+                      <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
                     )}
                   </>
                 )}
 
                 {/* Configuration */}
                 {property.bedrooms && property.bathrooms && (
-                  <div className="flex-1">
-                    <div className="text-sm font-bold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs sm:text-sm font-bold text-gray-900">
                       {property.bedrooms} BHK ({property.bathrooms} Baths)
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-[10px] sm:text-xs text-gray-600">
                       {property.age ? formatAge(property.age) : "Ready To Move"}
                     </div>
                   </div>
@@ -269,8 +272,8 @@ export default function HorizontalPropertyCard({
               </div>
 
               {/* Description */}
-              <div className="mb-4">
-                <p className="text-gray-700 text-sm leading-relaxed">
+              <div className="mb-3 sm:mb-4">
+                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
                   {getPropertyDescription()}
                   {property.description &&
                     property.description.length > 100 &&
@@ -279,30 +282,30 @@ export default function HorizontalPropertyCard({
               </div>
 
               {/* Footer */}
-              <div className="mt-auto flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+              <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
                   <div>{getTimeAgo()}</div>
                 </div>
 
-                <div className="flex space-x-3">
-                  <button className="border border-green-500 text-green-500 px-4 py-2 rounded-lg text-sm font-medium">
+                <div className="flex flex-wrap gap-2 sm:gap-3 order-1 sm:order-2">
+                  <button className="hidden sm:flex border border-green-500 text-green-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-green-50 transition-colors">
                     View Number
                   </button>
                   {!isCurrentUserOwner && (
                     <button
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
+                      className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleChatClick();
                       }}
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Chat
+                      <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span>Chat</span>
                     </button>
                   )}
-                  <button className="bg-white text-black border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Contact
+                  <button className="flex-1 sm:flex-initial bg-white hover:bg-gray-50 text-black border border-gray-300 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center transition-colors">
+                    <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span>Contact</span>
                   </button>
                 </div>
               </div>

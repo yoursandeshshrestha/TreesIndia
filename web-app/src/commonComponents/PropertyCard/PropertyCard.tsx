@@ -107,9 +107,9 @@ export default function PropertyCard({
 
   return (
     <div className={`group cursor-pointer ${className}`} onClick={onClick}>
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-200">
         {/* Property Image */}
-        <div className="relative w-full h-60 overflow-hidden">
+        <div className="relative w-full h-48 sm:h-56 md:h-60 overflow-hidden">
           <Image
             src={
               property.images && property.images.length > 0
@@ -134,9 +134,9 @@ export default function PropertyCard({
 
           {/* Image Count */}
           {property.images && property.images.length > 1 && (
-            <div className="absolute bottom-3 right-3">
-              <span className="bg-gray-800 bg-opacity-80 text-white text-xs font-medium px-2 py-1 rounded-md flex items-center">
-                <Images className="w-3 h-3 mr-1" />
+            <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3">
+              <span className="bg-gray-800 bg-opacity-80 text-white text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center">
+                <Images className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                 {property.images.length}
               </span>
             </div>
@@ -144,15 +144,15 @@ export default function PropertyCard({
         </div>
 
         {/* Property Details */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* Property Title */}
-          <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
+          <h3 className="font-semibold text-gray-900 text-base sm:text-lg mb-2 line-clamp-2">
             {property.title}
           </h3>
 
           {/* Location */}
-          <div className="flex items-center text-gray-600 text-sm mb-3">
-            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+          <div className="flex items-center text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
+            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
             <span className="truncate">
               {property.city && property.state
                 ? `${property.city}, ${property.state}`
@@ -162,16 +162,16 @@ export default function PropertyCard({
 
           {/* Property Configuration */}
           {(property.bedrooms || property.bathrooms) && (
-            <div className="flex items-center space-x-4 mb-3">
+            <div className="flex items-center space-x-3 sm:space-x-4 mb-2 sm:mb-3">
               {property.bedrooms && (
-                <div className="flex items-center text-gray-600 text-sm">
-                  <Bed className="w-4 h-4 mr-1" />
+                <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+                  <Bed className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span>{property.bedrooms}</span>
                 </div>
               )}
               {property.bathrooms && (
-                <div className="flex items-center text-gray-600 text-sm">
-                  <Bath className="w-4 h-4 mr-1" />
+                <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+                  <Bath className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span>{property.bathrooms}</span>
                 </div>
               )}
@@ -179,8 +179,8 @@ export default function PropertyCard({
           )}
 
           {/* Price */}
-          <div>
-            <div className="text-xl font-bold text-gray-900">
+          <div className="mb-3 sm:mb-4">
+            <div className="text-lg sm:text-xl font-bold text-gray-900 truncate">
               {formatPrice(property)}
             </div>
             {property.age && (
@@ -191,30 +191,30 @@ export default function PropertyCard({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-2 sm:gap-3">
             {!isCurrentUserOwner && (
               <button
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-xs sm:text-sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleChatClick();
                 }}
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>Chat</span>
               </button>
             )}
             <button
               className={`${
                 isCurrentUserOwner ? "w-full" : "flex-1"
-              } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors`}
+              } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-xs sm:text-sm`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (onClick) onClick();
               }}
             >
               <svg
-                className="w-4 h-4"
+                className="w-3 h-3 sm:w-4 sm:h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

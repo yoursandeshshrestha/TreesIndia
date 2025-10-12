@@ -167,24 +167,24 @@ export default function SubcategoriesModal() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 25 }}
-              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] w-full min-w-[300px] max-w-none flex flex-col overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-h-[85vh] w-full min-w-[300px] max-w-[90vw] sm:max-w-[600px] flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="p-4 sm:p-6 flex-shrink-0">
+              <div className="p-4 sm:p-6 flex-shrink-0 border-b border-gray-100">
                 <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 text-left">
                   {categoryName}
                 </h2>
               </div>
 
-              {/* Content - Matching hero section categories container */}
-              <div className="flex-1 overflow-y-auto">
+              {/* Content - Scrollable area */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12">
+                  <div className="flex flex-col items-center justify-center py-12 px-4">
                     <Loader2 className="w-8 h-8 text-gray-400 animate-spin mb-4" />
                     <p className="text-gray-600">Loading subcategories...</p>
                   </div>
                 ) : isError ? (
-                  <div className="flex flex-col items-center justify-center py-12">
+                  <div className="flex flex-col items-center justify-center py-12 px-4">
                     <p className="text-red-600 text-center mb-4">
                       Failed to load subcategories
                     </p>
@@ -199,7 +199,7 @@ export default function SubcategoriesModal() {
                     </button>
                   </div>
                 ) : subcategories.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12">
+                  <div className="flex flex-col items-center justify-center py-12 px-4">
                     <p className="text-gray-600 text-center">
                       No subcategories available
                     </p>

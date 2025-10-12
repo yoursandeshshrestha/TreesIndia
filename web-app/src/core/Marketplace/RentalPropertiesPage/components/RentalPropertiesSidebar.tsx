@@ -50,20 +50,20 @@ export function RentalPropertiesSidebar({
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 z-50 lg:z-auto">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 lg:sticky lg:top-4">
       {/* Header */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-medium text-gray-900">
+            <h3 className="text-sm sm:text-base font-medium text-gray-900">
               Applied Filters
             </h3>
           </div>
           <button
             onClick={onClearFilters}
-            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
+            className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Clear</span>
           </button>
         </div>
@@ -71,8 +71,8 @@ export function RentalPropertiesSidebar({
 
       {/* Active Filters Display */}
       {activeFiltersCount > 0 && (
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {filters.listing_type && (
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {filters.listing_type === "rent" ? "Rental" : "Properties"}
@@ -141,16 +141,16 @@ export function RentalPropertiesSidebar({
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 pb-20 lg:pb-0">
         {/* Property Type Tabs */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">
             Property Type
           </h4>
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => onFilterChange("listing_type", undefined)}
-              className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
+              className={`flex-1 px-2 sm:px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
                 !filters.listing_type
                   ? "bg-white text-green-600 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
@@ -160,7 +160,7 @@ export function RentalPropertiesSidebar({
             </button>
             <button
               onClick={() => onFilterChange("listing_type", "sale")}
-              className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
+              className={`flex-1 px-2 sm:px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
                 filters.listing_type === "sale"
                   ? "bg-white text-green-600 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
@@ -170,7 +170,7 @@ export function RentalPropertiesSidebar({
             </button>
             <button
               onClick={() => onFilterChange("listing_type", "rent")}
-              className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
+              className={`flex-1 px-2 sm:px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
                 filters.listing_type === "rent"
                   ? "bg-white text-green-600 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
@@ -183,28 +183,30 @@ export function RentalPropertiesSidebar({
 
         {/* Assured by Trees India Toggle */}
         <div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h4 className="text-xs sm:text-sm font-medium text-gray-900">
                 Assured by Trees India
               </h4>
-              <p className="text-xs text-gray-500 mt-1 w-[80%]">
+              <p className="text-xs text-gray-500 mt-1 break-words">
                 Properties verified and assured by our team
               </p>
             </div>
-            <Toggle
-              checked={filters.uploaded_by_admin || false}
-              onChange={(checked) =>
-                onFilterChange("uploaded_by_admin", checked || undefined)
-              }
-              size="sm"
-            />
+            <div className="flex-shrink-0 mt-0.5">
+              <Toggle
+                checked={filters.uploaded_by_admin || false}
+                onChange={(checked) =>
+                  onFilterChange("uploaded_by_admin", checked || undefined)
+                }
+                size="sm"
+              />
+            </div>
           </div>
         </div>
 
         {/* Location */}
         <div>
-          <label className="block text-base font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
             Location
           </label>
           <div className="relative">
@@ -214,14 +216,14 @@ export function RentalPropertiesSidebar({
               placeholder="City, State"
               value={filters.location || ""}
               onChange={(e) => onFilterChange("location", e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
         </div>
 
         {/* Property Type */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">
             Property Type
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -234,7 +236,7 @@ export function RentalPropertiesSidebar({
                 <button
                   key={option.value}
                   onClick={() => onPropertyTypeToggle(option.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-1.5 sm:py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -249,7 +251,7 @@ export function RentalPropertiesSidebar({
 
         {/* Bedrooms */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">
             No. of Bedrooms
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -271,7 +273,7 @@ export function RentalPropertiesSidebar({
                 <button
                   key={option.value}
                   onClick={() => onBedroomToggle(parseInt(option.value))}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-1.5 sm:py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -286,7 +288,7 @@ export function RentalPropertiesSidebar({
 
         {/* Price Range */}
         <div>
-          <label className="block text-base font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
             Price Range
           </label>
           <div className="px-2">
@@ -339,7 +341,7 @@ export function RentalPropertiesSidebar({
 
         {/* Area Range */}
         <div>
-          <label className="block text-base font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
             Area Range (sq ft)
           </label>
           <div className="px-2">
@@ -392,7 +394,7 @@ export function RentalPropertiesSidebar({
 
         {/* Furnishing Status */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">
             Furnishing Status
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -408,7 +410,7 @@ export function RentalPropertiesSidebar({
                 <button
                   key={option.value}
                   onClick={() => onFurnishingStatusToggle(option.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-1.5 sm:py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"

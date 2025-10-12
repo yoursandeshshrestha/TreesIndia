@@ -59,7 +59,7 @@ export function SubscriptionRequired({
           </div>
 
           {/* Content */}
-          <div className="px-8 py-8">
+          <div className="px-[2px] lg:px-8 py-8">
             {/* Project Stats */}
             {projectStats && (
               <div className="mb-8">
@@ -111,7 +111,7 @@ export function SubscriptionRequired({
                 <h2 className="text-lg font-medium text-gray-900 mb-6 text-center">
                   Choose Your Plan
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
                   {groupedPlan.monthly && (
                     <SubscriptionPlanCard
                       plan={groupedPlan.monthly}
