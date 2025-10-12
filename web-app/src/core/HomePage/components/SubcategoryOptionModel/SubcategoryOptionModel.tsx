@@ -167,7 +167,7 @@ export default function SubcategoriesModal() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ delay: 0.1, type: "spring", damping: 25 }}
-              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] w-full max-w-sm sm:max-w-md lg:max-w-lg flex flex-col overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-h-[80vh] w-full min-w-[300px] max-w-none flex flex-col overflow-hidden"
             >
               {/* Header */}
               <div className="p-4 sm:p-6 flex-shrink-0">

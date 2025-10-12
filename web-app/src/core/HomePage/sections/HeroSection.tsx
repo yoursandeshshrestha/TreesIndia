@@ -201,7 +201,7 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
 
   return (
     <section
-      className={`w-full ${className} bg-white min-h-[80vh] flex items-center`}
+      className={`w-full ${className} bg-white min-h-[80vh] flex items-center pt-10`}
     >
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
