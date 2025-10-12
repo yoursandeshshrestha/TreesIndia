@@ -3,7 +3,7 @@
 // NextSegmentPaymentModal - Updated to fix Razorpay integration
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard, Wallet, AlertCircle } from "lucide-react";
+import { X, CreditCard, Wallet, AlertCircle, Loader2 } from "lucide-react";
 import { Booking } from "@/lib/bookingApi";
 import { formatAmount } from "@/utils/formatters";
 import { useBookings } from "@/hooks/useBookings";
@@ -36,6 +36,7 @@ export default function NextSegmentPaymentModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentOrder, setPaymentOrder] = useState<{
     id: string;
     amount: number;
@@ -218,6 +219,9 @@ export default function NextSegmentPaymentModal({
         return;
       }
 
+      setIsVerifyingPayment(true);
+      setShowRazorpayCheckout(false);
+
       const bookingId = booking.ID;
 
       console.log("Attempting payment verification:", {
@@ -238,11 +242,13 @@ export default function NextSegmentPaymentModal({
       // Refresh bookings to get updated payment progress
       await refetchBookings();
 
+      setIsVerifyingPayment(false);
+
       // Show success modal
       setShowSuccessModal(true);
-      setShowRazorpayCheckout(false);
     } catch (error) {
       console.error("Payment verification failed:", error);
+      setIsVerifyingPayment(false);
       toast.error("Payment verification failed. Please contact support.");
     }
   };
@@ -512,6 +518,56 @@ export default function NextSegmentPaymentModal({
         buttonText="Continue"
         onButtonClick={handleSuccessModalClose}
       />
+
+      {/* Payment Verification Loading Overlay */}
+      {isVerifyingPayment && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div className="relative">
+                <div className="w-20 h-20 bg-[#00a871]/10 rounded-full flex items-center justify-center">
+                  <Loader2 className="w-10 h-10 text-[#00a871] animate-spin" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Verifying Payment
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Please wait while we confirm your payment. This will only take
+                  a moment...
+                </p>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="h-full bg-[#00a871] rounded-full animate-[loading_1.5s_ease-in-out_infinite]"
+                  style={{
+                    width: "60%",
+                    animation: "loading 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes loading {
+          0% {
+            transform: translateX(-100%);
+            width: 0%;
+          }
+          50% {
+            transform: translateX(0%);
+            width: 100%;
+          }
+          100% {
+            transform: translateX(100%);
+            width: 0%;
+          }
+        }
+      `}</style>
     </AnimatePresence>
   );
 }
