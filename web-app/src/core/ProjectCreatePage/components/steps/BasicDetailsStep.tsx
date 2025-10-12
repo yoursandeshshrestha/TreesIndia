@@ -32,18 +32,29 @@ export default function BasicDetailsStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Tell us about your project
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Help us understand what you&apos;re working on
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         {/* Project Title */}
         <TextField
           label="Project Title"
@@ -115,14 +126,23 @@ export default function BasicDetailsStep({
           component="fieldset"
           error={errors.includes("project_type")}
         >
-          <FormLabel component="legend" sx={{ mb: 1, fontWeight: 500 }}>
+          <FormLabel
+            component="legend"
+            sx={{
+              mb: 1,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             Project Type *
           </FormLabel>
           <RadioGroup
-            row
             value={formData.project_type}
             onChange={(e) => handleInputChange("project_type", e.target.value)}
-            sx={{ gap: 2 }}
+            sx={{
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: "column", sm: "row" },
+            }}
           >
             <FormControlLabel
               value="residential"
@@ -135,6 +155,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Residential"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
             <FormControlLabel
               value="commercial"
@@ -147,6 +172,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Commercial"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
             <FormControlLabel
               value="infrastructure"
@@ -159,6 +189,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Infrastructure"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
           </RadioGroup>
           {errors.includes("project_type") && (
@@ -170,14 +205,23 @@ export default function BasicDetailsStep({
 
         {/* Project Status */}
         <FormControl component="fieldset" error={errors.includes("status")}>
-          <FormLabel component="legend" sx={{ mb: 1, fontWeight: 500 }}>
+          <FormLabel
+            component="legend"
+            sx={{
+              mb: 1,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             Project Status *
           </FormLabel>
           <RadioGroup
-            row
             value={formData.status}
             onChange={(e) => handleInputChange("status", e.target.value)}
-            sx={{ gap: 2 }}
+            sx={{
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: "column", sm: "row" },
+            }}
           >
             <FormControlLabel
               value="starting_soon"
@@ -190,6 +234,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Starting Soon"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
             <FormControlLabel
               value="on_going"
@@ -202,6 +251,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="On Going"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
           </RadioGroup>
           {errors.includes("status") && (

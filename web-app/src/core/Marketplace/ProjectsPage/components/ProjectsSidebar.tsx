@@ -15,6 +15,7 @@ interface ProjectsSidebarProps {
   selectedStatuses: string[];
   onStatusToggle: (status: string) => void;
   onCloseMobileFilters?: () => void;
+  showMobileFilters?: boolean;
 }
 
 export function ProjectsSidebar({
@@ -26,6 +27,7 @@ export function ProjectsSidebar({
   selectedStatuses,
   onStatusToggle,
   onCloseMobileFilters,
+  showMobileFilters,
 }: ProjectsSidebarProps) {
   // Count active filters (excluding default ones)
   const getActiveFiltersCount = () => {
@@ -40,14 +42,18 @@ export function ProjectsSidebar({
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 z-50 lg:z-auto">
+    <div
+      className={`bg-white ${
+        showMobileFilters ? "h-full" : ""
+      } lg:border lg:border-gray-200 lg:rounded-lg p-4 sm:p-6`}
+    >
       {/* Mobile Header */}
-      {onCloseMobileFilters && (
-        <div className="flex items-center justify-between mb-6 lg:hidden">
+      {showMobileFilters && onCloseMobileFilters && (
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 lg:hidden">
           <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
           <button
             onClick={onCloseMobileFilters}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -56,17 +62,17 @@ export function ProjectsSidebar({
 
       {/* Header */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-medium text-gray-900">
+            <h3 className="text-sm sm:text-base font-medium text-gray-900">
               Applied Filters
             </h3>
           </div>
           <button
             onClick={onClearFilters}
-            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
+            className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Clear</span>
           </button>
         </div>
@@ -74,17 +80,17 @@ export function ProjectsSidebar({
 
       {/* Active Filters Display */}
       {activeFiltersCount > 0 && (
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="flex flex-wrap gap-2">
             {selectedProjectTypes.map((projectType) => (
               <span
                 key={projectType}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {projectType}
                 <button
                   onClick={() => onProjectTypeToggle(projectType)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -93,23 +99,23 @@ export function ProjectsSidebar({
             {selectedStatuses.map((status) => (
               <span
                 key={status}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {status}
                 <button
                   onClick={() => onStatusToggle(status)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
             {filters.uploaded_by_admin && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 Assured by Trees India
                 <button
                   onClick={() => onFilterChange("uploaded_by_admin", undefined)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -119,12 +125,10 @@ export function ProjectsSidebar({
         </div>
       )}
 
-      <div className="space-y-6">
-
-
+      <div className="space-y-5 sm:space-y-6">
         {/* Project Type */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Project Type
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -138,7 +142,7 @@ export function ProjectsSidebar({
                 <button
                   key={option.value}
                   onClick={() => onProjectTypeToggle(option.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -153,7 +157,7 @@ export function ProjectsSidebar({
 
         {/* Project Status */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Project Status
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -169,7 +173,7 @@ export function ProjectsSidebar({
                 <button
                   key={option.value}
                   onClick={() => onStatusToggle(option.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"

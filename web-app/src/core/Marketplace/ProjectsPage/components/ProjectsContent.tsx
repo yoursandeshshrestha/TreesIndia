@@ -137,9 +137,10 @@ export function ProjectsContent({
         key="prev"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Previous
+        <span className="hidden sm:inline">Previous</span>
+        <span className="sm:hidden">Prev</span>
       </button>
     );
 
@@ -152,7 +153,7 @@ export function ProjectsContent({
         <button
           key={i}
           onClick={() => onPageChange(i)}
-          className={`px-3 py-2 text-sm font-medium border-t border-b ${
+          className={`px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium border-t border-b transition-colors ${
             i === page
               ? "text-green-600 bg-green-50 border-green-500"
               : "text-gray-500 bg-white border-gray-300 hover:bg-gray-50"
@@ -169,22 +170,22 @@ export function ProjectsContent({
         key="next"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= total_pages}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         Next
       </button>
     );
 
     return (
-      <div className="flex justify-center mt-8">
-        <div className="flex">{pages}</div>
+      <div className="flex justify-center mt-6 sm:mt-8">
+        <div className="flex shadow-sm">{pages}</div>
       </div>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
+      <div className="flex justify-center items-center py-8 sm:py-12">
         <LoadingSpinner />
       </div>
     );
@@ -201,14 +202,16 @@ export function ProjectsContent({
     }
 
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8 sm:py-12 px-4">
         <div className="text-red-600 mb-4">
-          <p className="text-lg font-medium">Error loading projects</p>
-          <p className="text-sm">{error?.message}</p>
+          <p className="text-base sm:text-lg font-medium mb-2">
+            Error loading projects
+          </p>
+          <p className="text-xs sm:text-sm">{error?.message}</p>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-colors"
         >
           Try Again
         </button>
@@ -218,20 +221,20 @@ export function ProjectsContent({
 
   if (projects.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             {/* Create Project Button */}
             <button
               onClick={handleCreateProject}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Create Project</span>
@@ -240,18 +243,18 @@ export function ProjectsContent({
         </div>
 
         {/* No Results Message */}
-        <div className="text-center py-12">
-          <div className="p-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <div className="p-6 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
               No Projects Found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
               We couldn&apos;t find any projects matching your criteria. Try
               adjusting your search filters or check back later.
             </p>
             <button
               onClick={onClearFilters}
-              className="inline-flex items-center px-6 py-3 text-sm font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
+              className="inline-flex items-center px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
             >
               Clear All Filters
             </button>
@@ -262,31 +265,31 @@ export function ProjectsContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Results Header */}
       <div className="relative">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Sort Dropdown */}
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 text-sm whitespace-nowrap"
               >
-                <span className="text-sm font-medium text-gray-700">
-                  Sort by: {selectedSort}
+                <span className="text-xs sm:text-sm font-medium text-gray-700">
+                  Sort: {selectedSort}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </button>
 
               {isSortOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                   <div className="py-1">
                     {sortOptions.map((option) => (
                       <div key={option.value} className="relative">
@@ -294,7 +297,7 @@ export function ProjectsContent({
                           onClick={() =>
                             handleSortChange(option.value, option.label)
                           }
-                          className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
+                          className={`w-full px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
                             selectedSort === option.label
                               ? "bg-green-50 text-green-700 font-medium"
                               : ""
@@ -315,17 +318,18 @@ export function ProjectsContent({
             {/* Create Project Button */}
             <button
               onClick={handleCreateProject}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
-              <span>Create Project</span>
+              <span className="hidden sm:inline">Create Project</span>
+              <span className="sm:hidden">Create</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
         {projects.map((project) => (
           <ProjectCard
             key={project.ID || project.id}

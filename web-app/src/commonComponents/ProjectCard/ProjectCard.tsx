@@ -92,9 +92,9 @@ export function ProjectCard({
 
   return (
     <div className="group cursor-pointer" onClick={handleClick}>
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
         {/* Project Image */}
-        <div className="relative w-full h-60 overflow-hidden">
+        <div className="relative w-full h-48 sm:h-52 lg:h-60 overflow-hidden">
           <Image
             src={
               project.images && project.images.length > 0
@@ -104,7 +104,7 @@ export function ProjectCard({
             alt={project.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (!target.src.includes("data:image/svg+xml")) {
@@ -114,7 +114,7 @@ export function ProjectCard({
           />
 
           {/* Status Badge */}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
             <span
               className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
                 project.status
@@ -126,15 +126,15 @@ export function ProjectCard({
         </div>
 
         {/* Project Details */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* Project Title */}
-          <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
+          <h3 className="font-semibold text-gray-900 text-base sm:text-lg mb-2 line-clamp-1">
             {project.title}
           </h3>
 
           {/* Description */}
           {project.description && (
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
               {project.description.length > 100
                 ? `${project.description.substring(0, 100)}...`
                 : project.description}
@@ -142,8 +142,8 @@ export function ProjectCard({
           )}
 
           {/* Location */}
-          <div className="flex items-center text-gray-600 text-sm mb-3">
-            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+          <div className="flex items-center text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
             <span className="truncate">
               {project.city && project.state
                 ? `${project.city}, ${project.state}`
@@ -152,21 +152,21 @@ export function ProjectCard({
           </div>
 
           {/* Project Type and Duration */}
-          <div className="flex items-center space-x-4 mb-3">
-            <div className="flex items-center text-gray-600 text-sm">
-              <Building className="w-4 h-4 mr-1" />
+          <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-3 flex-wrap">
+            <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+              <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
               <span>{getProjectTypeLabel(project.project_type)}</span>
             </div>
             {project.estimated_duration_days && (
-              <div className="flex items-center text-gray-600 text-sm">
-                <Clock className="w-4 h-4 mr-1" />
+              <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                 <span>{formatDuration(project.estimated_duration_days)}</span>
               </div>
             )}
           </div>
 
           {/* Posted Date */}
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 mb-3 sm:mb-0">
             Posted{" "}
             {new Date(
               project.CreatedAt || project.created_at || ""
@@ -174,10 +174,10 @@ export function ProjectCard({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
             {!isCurrentUserOwner && (
               <button
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium sm:font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleChatClick();
@@ -190,7 +190,7 @@ export function ProjectCard({
             <button
               className={`${
                 isCurrentUserOwner ? "w-full" : "flex-1"
-              } bg-white text-black border border-gray-300 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors`}
+              } bg-white text-black border border-gray-300 hover:bg-gray-50 font-medium sm:font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors text-sm`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleClick();

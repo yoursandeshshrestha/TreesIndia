@@ -25,18 +25,28 @@ export default function ProjectDetailsStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a" }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Project Details & Contact Information
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Add timeline and contact details for your project
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         {/* Estimated Duration */}
         <TextField
           label="Estimated Duration (Days)"
@@ -68,19 +78,37 @@ export default function ProjectDetailsStep({
         />
 
         {/* Contact Information Section */}
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: { xs: 1, sm: 2 } }}>
           <Typography
             variant="h6"
-            sx={{ mb: 2, fontWeight: 500, color: "#1a1a1a" }}
+            sx={{
+              mb: 2,
+              fontWeight: 500,
+              color: "#1a1a1a",
+              fontSize: { xs: "1.125rem", sm: "1.25rem" },
+            }}
           >
             Contact Information
           </Typography>
-          <Typography variant="body2" sx={{ mb: 3, color: "#666" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 3,
+              color: "#666",
+              fontSize: { xs: "0.875rem", sm: "0.875rem" },
+            }}
+          >
             This information will be displayed on your project listing for
             potential clients to contact you.
           </Typography>
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: { xs: 2, sm: 3 },
+            }}
+          >
             {/* Contact Person */}
             <TextField
               label="Contact Person *"
