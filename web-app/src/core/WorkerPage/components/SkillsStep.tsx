@@ -65,18 +65,29 @@ const SkillsStep: React.FC<SkillsStepProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Skills & Experience
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Tell us about your skills and work experience.
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         <TextField
           label="Years of Experience"
           required
@@ -90,7 +101,14 @@ const SkillsStep: React.FC<SkillsStepProps> = ({
         />
 
         <Box>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 2,
+              fontWeight: 500,
+              fontSize: { xs: "1rem", sm: "1.25rem" },
+            }}
+          >
             Select Your Skills
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
@@ -107,10 +125,23 @@ const SkillsStep: React.FC<SkillsStepProps> = ({
         </Box>
 
         <Box>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 2,
+              fontWeight: 500,
+              fontSize: { xs: "1rem", sm: "1.25rem" },
+            }}
+          >
             Add Custom Skill
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              flexDirection: { xs: "column", sm: "row" },
+            }}
+          >
             <TextField
               label="Custom Skill"
               value={customSkill}
@@ -131,7 +162,14 @@ const SkillsStep: React.FC<SkillsStepProps> = ({
 
         {skills.length > 0 && (
           <Box>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontWeight: 500,
+                fontSize: { xs: "1rem", sm: "1.25rem" },
+              }}
+            >
               Selected Skills
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>

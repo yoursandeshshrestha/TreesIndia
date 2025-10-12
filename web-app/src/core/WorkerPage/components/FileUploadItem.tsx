@@ -62,13 +62,13 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-xs sm:text-sm font-medium text-gray-700">
         {label} *
       </label>
 
       {previewUrl ? (
         // Show preview when file is uploaded
-        <div className="border-2 border-gray-300 rounded-lg p-4">
+        <div className="border-2 border-gray-300 rounded-lg p-3 sm:p-4">
           <div className="space-y-3">
             <div className="relative">
               <Image
@@ -76,7 +76,7 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
                 alt={`${label} preview`}
                 width={400}
                 height={128}
-                className="w-full h-32 object-cover rounded-lg"
+                className="w-full h-24 sm:h-32 object-cover rounded-lg"
               />
               <button
                 type="button"
@@ -84,14 +84,14 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
                   handleFileChange(null);
                   setPreviewUrl(null);
                 }}
-                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs"
                 title="Remove file"
               >
                 ×
               </button>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-700 truncate">
+              <p className="text-xs sm:text-sm font-medium text-gray-700 truncate">
                 {file?.name}
               </p>
               <p className="text-xs text-gray-500">
@@ -101,7 +101,7 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
             <button
               type="button"
               onClick={() => document.getElementById(field)?.click()}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors"
             >
               Change File
             </button>
@@ -110,7 +110,7 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
       ) : (
         // Show upload area when no file
         <div
-          className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-3 sm:p-4 text-center transition-colors ${
             fileError
               ? "border-red-300 bg-red-50"
               : "border-gray-300 hover:border-green-500"
@@ -125,11 +125,11 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
           />
           <label htmlFor={field} className="cursor-pointer">
             <div className="space-y-2">
-              <div className="mx-auto w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <FileText className="w-4 h-4 text-gray-600" />
+              <div className="mx-auto w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-xs sm:text-sm font-medium text-gray-700">
                   Upload {label}
                 </p>
                 <p className="text-xs text-gray-500">Click to select file</p>
@@ -139,10 +139,12 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
         </div>
       )}
 
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {error && <p className="text-red-600 text-xs sm:text-sm mt-2">{error}</p>}
       {fileError && (
         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600 text-sm font-medium">{fileError}</p>
+          <p className="text-red-600 text-xs sm:text-sm font-medium">
+            {fileError}
+          </p>
         </div>
       )}
     </div>

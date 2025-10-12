@@ -19,9 +19,7 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
 }) => {
   const { userProfile } = useProfile();
   const contactInfo = useMemo(() => {
-    return formData.contact_info
-      ? JSON.parse(formData.contact_info)
-      : {};
+    return formData.contact_info ? JSON.parse(formData.contact_info) : {};
   }, [formData.contact_info]);
 
   // Pre-fill form with user profile data if available
@@ -48,18 +46,29 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Contact Information
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Please provide your contact information for communication.
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         <TextField
           label="Full Name"
           required

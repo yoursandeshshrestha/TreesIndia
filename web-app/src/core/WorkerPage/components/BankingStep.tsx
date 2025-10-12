@@ -26,18 +26,29 @@ const BankingStep: React.FC<BankingStepProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Banking Information
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Please provide your bank account details for payments.
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         <TextField
           label="Account Holder Name"
           required
