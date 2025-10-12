@@ -32,18 +32,29 @@ export default function BasicDetailsStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Tell us about your property
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Help us understand what you&apos;re listing
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         {/* Property Title */}
         <TextField
           label="Property Title"
@@ -115,14 +126,23 @@ export default function BasicDetailsStep({
           component="fieldset"
           error={errors.includes("property_type")}
         >
-          <FormLabel component="legend" sx={{ mb: 1, fontWeight: 500 }}>
+          <FormLabel
+            component="legend"
+            sx={{
+              mb: 1,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             Property Type *
           </FormLabel>
           <RadioGroup
-            row
             value={formData.property_type}
             onChange={(e) => handleInputChange("property_type", e.target.value)}
-            sx={{ gap: 2 }}
+            sx={{
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: "column", sm: "row" },
+            }}
           >
             <FormControlLabel
               value="residential"
@@ -135,6 +155,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Residential"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
             <FormControlLabel
               value="commercial"
@@ -147,6 +172,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="Commercial"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
           </RadioGroup>
           {errors.includes("property_type") && (
@@ -161,14 +191,23 @@ export default function BasicDetailsStep({
           component="fieldset"
           error={errors.includes("listing_type")}
         >
-          <FormLabel component="legend" sx={{ mb: 1, fontWeight: 500 }}>
+          <FormLabel
+            component="legend"
+            sx={{
+              mb: 1,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             Listing Type *
           </FormLabel>
           <RadioGroup
-            row
             value={formData.listing_type}
             onChange={(e) => handleInputChange("listing_type", e.target.value)}
-            sx={{ gap: 2 }}
+            sx={{
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: "column", sm: "row" },
+            }}
           >
             <FormControlLabel
               value="sale"
@@ -181,6 +220,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="For Sale"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
             <FormControlLabel
               value="rent"
@@ -193,6 +237,11 @@ export default function BasicDetailsStep({
                 />
               }
               label="For Rent"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                },
+              }}
             />
           </RadioGroup>
           {errors.includes("listing_type") && (

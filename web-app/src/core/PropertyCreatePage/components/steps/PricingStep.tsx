@@ -39,22 +39,39 @@ export default function PricingStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a" }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Set your property price
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Help buyers understand the value of your property
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         {/* Price based on listing type */}
         {formData.listing_type === "sale" ? (
           <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mb: 2,
+                fontWeight: 500,
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+              }}
+            >
               Sale Price *
             </Typography>
             <TextField
@@ -99,7 +116,14 @@ export default function PricingStep({
           </Box>
         ) : (
           <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mb: 2,
+                fontWeight: 500,
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+              }}
+            >
               Monthly Rent *
             </Typography>
             <TextField
