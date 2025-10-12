@@ -54,6 +54,7 @@ export interface UserSubscription {
 export interface PurchaseSubscriptionRequest {
   plan_id: number;
   payment_method: PaymentMethod;
+  duration_type: "monthly" | "yearly";
 }
 
 export interface SubscriptionResponse {

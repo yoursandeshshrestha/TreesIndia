@@ -72,11 +72,19 @@ export const SubscriptionPlansPage: React.FC = () => {
 
     setPurchaseLoading(true);
     try {
+      // Determine duration type from the selected plan
+      const durationType =
+        selectedPlan.duration_type ||
+        (selectedPlan.pricing && selectedPlan.pricing.length > 0
+          ? selectedPlan.pricing[0].duration_type
+          : "monthly");
+
       if (method === "wallet") {
         // Handle wallet payment
         await purchase({
           plan_id: selectedPlan.ID,
           payment_method: method,
+          duration_type: durationType,
         });
 
         setShowPaymentModal(false);
@@ -84,12 +92,6 @@ export const SubscriptionPlansPage: React.FC = () => {
         setShowSuccessModal(true);
       } else if (method === "razorpay") {
         // Handle Razorpay payment
-        // Determine duration type from the selected plan
-        const durationType =
-          selectedPlan.duration_type ||
-          (selectedPlan.pricing && selectedPlan.pricing.length > 0
-            ? selectedPlan.pricing[0].duration_type
-            : "monthly");
 
         const paymentData = await createPaymentOrder(
           selectedPlan.ID,
