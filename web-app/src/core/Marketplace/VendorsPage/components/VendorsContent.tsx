@@ -153,7 +153,7 @@ export function VendorsContent({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
+      <div className="flex justify-center items-center py-8 sm:py-12">
         <LoadingSpinner />
       </div>
     );
@@ -161,21 +161,21 @@ export function VendorsContent({
 
   if (isError) {
     return (
-      <div className="text-center py-12">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-red-600" />
+      <div className="text-center py-8 sm:py-12 px-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold text-red-800 mb-2">
+          <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">
             Failed to Load Vendors
           </h3>
-          <p className="text-red-600 mb-6">
+          <p className="text-sm sm:text-base text-red-600 mb-6">
             {(error as { message?: string })?.message ||
               "Something went wrong while loading vendors. Please try again."}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200"
+            className="inline-flex items-center px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200"
           >
             Try Again
           </button>
@@ -186,40 +186,41 @@ export function VendorsContent({
 
   if (vendors.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             {/* Create Vendor Profile Button */}
             <button
               onClick={handleCreateVendorProfile}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
-              <span>Create Vendor Profile</span>
+              <span className="hidden sm:inline">Create Vendor Profile</span>
+              <span className="sm:hidden">Create Profile</span>
             </button>
           </div>
         </div>
 
         {/* No Results Message */}
-        <div className="text-center py-12">
-          <div className="p-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <div className="p-6 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
               No Vendors Found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
               We couldn&apos;t find any vendors matching your criteria. Try
               adjusting your search filters or check back later.
             </p>
             <button
               onClick={onClearFilters}
-              className="inline-flex items-center px-6 py-3 text-sm font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
+              className="inline-flex items-center px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
             >
               Clear All Filters
             </button>
@@ -230,26 +231,26 @@ export function VendorsContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Results Header */}
       <div className="relative">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {generateHeaderText()}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Sort Options */}
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
               >
                 <ArrowUpDown className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  Sort by: {selectedSort}
+                <span className="text-xs sm:text-sm font-medium text-gray-700">
+                  Sort: {selectedSort}
                 </span>
                 <ChevronUp
                   className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
@@ -260,7 +261,7 @@ export function VendorsContent({
 
               {/* Dropdown Menu */}
               {isSortOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-52 sm:w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                   <div className="py-1">
                     {sortOptions.map((option) => (
                       <div key={option.value} className="relative">
@@ -269,7 +270,7 @@ export function VendorsContent({
                             setSelectedSort(option.label);
                             setIsSortOpen(false);
                           }}
-                          className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
+                          className={`w-full px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm hover:bg-gray-50 flex items-center justify-between text-gray-700 transition-colors duration-150 ${
                             selectedSort === option.label
                               ? "bg-green-50 text-green-700 font-medium"
                               : ""
@@ -290,17 +291,18 @@ export function VendorsContent({
             {/* Create Vendor Profile Button */}
             <button
               onClick={handleCreateVendorProfile}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
-              <span>Create Vendor Profile</span>
+              <span className="hidden sm:inline">Create Vendor Profile</span>
+              <span className="sm:hidden">Create</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Vendors Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
         {vendors.map((vendor) => (
           <VendorCard
             key={vendor.ID || vendor.id}
@@ -315,14 +317,15 @@ export function VendorsContent({
 
       {/* Pagination */}
       {pagination && pagination.total_pages > 1 && (
-        <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-2 pt-8">
+        <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-2 pt-6 sm:pt-8">
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous
+            <span className="hidden sm:inline">Previous</span>
+            <span className="sm:hidden">Prev</span>
           </button>
 
           {/* Page Numbers */}
@@ -337,7 +340,7 @@ export function VendorsContent({
                   <button
                     key={pageNum}
                     onClick={() => onPageChange(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                    className={`px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200 ${
                       isActive
                         ? "bg-green-600 text-white"
                         : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
@@ -351,10 +354,12 @@ export function VendorsContent({
 
             {pagination.total_pages > 5 && (
               <>
-                <span className="px-2 text-gray-500">...</span>
+                <span className="px-1 sm:px-2 text-xs sm:text-sm text-gray-500">
+                  ...
+                </span>
                 <button
                   onClick={() => onPageChange(pagination.total_pages)}
-                  className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  className="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 >
                   {pagination.total_pages}
                 </button>
@@ -365,7 +370,7 @@ export function VendorsContent({
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.total_pages}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
@@ -374,7 +379,7 @@ export function VendorsContent({
       )}
 
       {/* Results Summary */}
-      <div className="text-center text-sm text-gray-500 pt-4">
+      <div className="text-center text-xs sm:text-sm text-gray-500 pt-4">
         Page {pagination?.page || 1} of {pagination?.total_pages || 1} • Total{" "}
         {pagination?.total || 0} vendors found
       </div>

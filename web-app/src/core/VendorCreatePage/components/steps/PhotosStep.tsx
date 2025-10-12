@@ -70,12 +70,12 @@ export default function PhotosStep({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
           Business Photos
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Upload a profile picture (1MB max) and business gallery photos
           (minimum 2, max 7, 1MB each)
         </p>
@@ -83,18 +83,18 @@ export default function PhotosStep({
 
       {/* Profile Picture Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <User className="h-5 w-5" />
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <User className="h-4 w-4 sm:h-5 sm:w-5" />
           Profile Picture
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600">
           Upload a profile picture for your business (optional)
         </p>
 
         {formData.profile_picture ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="relative">
-              <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-100">
                 <Image
                   width={96}
                   height={96}
@@ -104,8 +104,8 @@ export default function PhotosStep({
                 />
               </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                 {formData.profile_picture.name}
               </p>
               <p className="text-xs text-gray-500">
@@ -114,19 +114,19 @@ export default function PhotosStep({
             </div>
             <button
               onClick={removeProfilePicture}
-              className="flex items-center space-x-1 px-3 py-1 text-sm text-red-600 hover:text-red-800 transition-colors"
+              className="flex items-center space-x-1 px-2 sm:px-3 py-1 text-xs sm:text-sm text-red-600 hover:text-red-800 transition-colors whitespace-nowrap"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Remove</span>
             </button>
           </div>
         ) : (
           <div
             onClick={openProfileDialog}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors max-w-md"
+            className="border-2 border-dashed border-gray-300 rounded-lg p-5 sm:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors max-w-md"
           >
-            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-            <p className="text-sm font-medium text-gray-900 mb-1">
+            <Upload className="mx-auto h-7 w-7 sm:h-8 sm:w-8 text-gray-400 mb-2" />
+            <p className="text-xs sm:text-sm font-medium text-gray-900 mb-1">
               Upload Profile Picture
             </p>
             <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 1MB</p>
@@ -144,24 +144,24 @@ export default function PhotosStep({
 
       {/* Business Gallery Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           Business Gallery
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600">
           Upload photos of your business (minimum 2, max 7 images, 1MB each)
         </p>
 
         {/* Upload Area */}
         <div
           onClick={openGalleryDialog}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+          className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
         >
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-lg font-medium text-gray-900 mb-2">
+          <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" />
+          <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             Upload Business Photos
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500">
             Click to browse or drag and drop images here
           </p>
           <p className="text-xs text-gray-400 mt-2">
@@ -180,7 +180,7 @@ export default function PhotosStep({
 
         {/* Image Preview Grid */}
         {formData.business_gallery.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {formData.business_gallery.map((file, index) => (
               <div key={index} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -194,11 +194,11 @@ export default function PhotosStep({
                 </div>
                 <button
                   onClick={() => removeGalleryImage(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-red-500 text-white rounded-full p-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
-                <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                <div className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                   Photo {index + 1}
                 </div>
               </div>
@@ -211,7 +211,7 @@ export default function PhotosStep({
           formData.business_gallery.length < 7 && (
             <button
               onClick={openGalleryDialog}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm"
             >
               <ImageIcon className="h-4 w-4" />
               <span>Add More Photos</span>
@@ -219,12 +219,12 @@ export default function PhotosStep({
           )}
 
         {/* Image Count */}
-        <div className="text-sm text-gray-500">
+        <div className="text-xs sm:text-sm text-gray-500">
           {formData.business_gallery.length} of 7 photos uploaded
         </div>
 
         {errors.includes("business_gallery") && (
-          <p className="text-red-500 text-sm">
+          <p className="text-red-500 text-xs sm:text-sm">
             Please upload at least 2 business gallery photos
           </p>
         )}

@@ -107,31 +107,52 @@ export default function BusinessDetailsStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Business Details
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{ mb: 4, color: "#666", fontSize: { xs: "0.875rem", sm: "1rem" } }}
+      >
         Tell us about your business type and the services you offer
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         {/* Business Type */}
         <FormControl
           component="fieldset"
           error={errors.includes("business_type")}
         >
-          <FormLabel component="legend" sx={{ mb: 1, fontWeight: 500 }}>
+          <FormLabel
+            component="legend"
+            sx={{
+              mb: 1,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             Business Type *
           </FormLabel>
           <RadioGroup
-            row
             value={formData.business_type}
             onChange={(e) => handleBusinessTypeChange(e.target.value)}
-            sx={{ gap: 2 }}
+            sx={{
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: "column", sm: "row" },
+              flexWrap: "wrap",
+            }}
           >
             {businessTypes.map((type) => (
               <FormControlLabel
@@ -146,6 +167,11 @@ export default function BusinessDetailsStep({
                   />
                 }
                 label={type.label}
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                  },
+                }}
               />
             ))}
           </RadioGroup>
@@ -187,14 +213,25 @@ export default function BusinessDetailsStep({
 
         {/* What We Sell */}
         <Box>
-          <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 2,
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
             What We Sell *
           </Typography>
 
           {/* Predefined Construction Materials */}
           <Typography
             variant="body2"
-            sx={{ mb: 1, color: "#666", fontSize: "0.875rem" }}
+            sx={{
+              mb: 1,
+              color: "#666",
+              fontSize: { xs: "0.8125rem", sm: "0.875rem" },
+            }}
           >
             Select from common construction materials:
           </Typography>
@@ -232,11 +269,22 @@ export default function BusinessDetailsStep({
           {/* Custom Service Input */}
           <Typography
             variant="body2"
-            sx={{ mb: 1, color: "#666", fontSize: "0.875rem" }}
+            sx={{
+              mb: 1,
+              color: "#666",
+              fontSize: { xs: "0.8125rem", sm: "0.875rem" },
+            }}
           >
             Or add your own products/services:
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              mb: 2,
+              flexDirection: { xs: "column", sm: "row" },
+            }}
+          >
             <TextField
               fullWidth
               placeholder="Enter custom product or service (e.g., Custom Furniture, Solar Panels)"
@@ -281,7 +329,14 @@ export default function BusinessDetailsStep({
           {/* Selected Services Display */}
           {formData.services_offered.length > 0 && (
             <Box>
-              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 1,
+                  fontWeight: 500,
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                }}
+              >
                 Selected Products/Services:
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>

@@ -51,10 +51,10 @@ export default function VendorsPage() {
   // Show loading state while checking profile or during hydration
   if (!isClient || isLoadingProfile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-sm sm:text-base text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -124,10 +124,10 @@ export default function VendorsPage() {
   };
 
   return (
-    <div className="min-h-screen ">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen py-4 sm:py-6 lg:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Mobile Filter Toggle */}
-        <div className="lg:hidden mb-6">
+        <div className="lg:hidden mb-4 sm:mb-6">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors duration-200"
@@ -137,14 +137,16 @@ export default function VendorsPage() {
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Sidebar */}
           <div
-            className={`lg:w-96 flex-shrink-0 ${
-              showMobileFilters ? "block" : "hidden lg:block"
-            }`}
+            className={`${
+              showMobileFilters
+                ? "fixed inset-0 z-50 overflow-y-auto bg-white lg:relative lg:inset-auto lg:z-auto lg:overflow-visible"
+                : "hidden lg:block"
+            } lg:w-96 lg:flex-shrink-0`}
           >
-            <div className="lg:sticky lg:top-8">
+            <div className="lg:sticky lg:top-4">
               <VendorsSidebar
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -154,12 +156,13 @@ export default function VendorsPage() {
                 onServiceToggle={handleServiceToggle}
                 onClearFilters={handleClearFilters}
                 onCloseMobileFilters={() => setShowMobileFilters(false)}
+                showMobileFilters={showMobileFilters}
               />
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <VendorsContent
               vendors={vendors}
               pagination={pagination}
@@ -174,14 +177,6 @@ export default function VendorsPage() {
             />
           </div>
         </div>
-
-        {/* Mobile Filter Overlay */}
-        {showMobileFilters && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setShowMobileFilters(false)}
-          />
-        )}
       </div>
     </div>
   );

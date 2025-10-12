@@ -15,6 +15,7 @@ interface VendorsSidebarProps {
   selectedServices: string[];
   onServiceToggle: (service: string) => void;
   onCloseMobileFilters?: () => void;
+  showMobileFilters?: boolean;
 }
 
 export function VendorsSidebar({
@@ -26,6 +27,7 @@ export function VendorsSidebar({
   selectedServices,
   onServiceToggle,
   onCloseMobileFilters,
+  showMobileFilters,
 }: VendorsSidebarProps) {
   // Count active filters (excluding default ones)
   const getActiveFiltersCount = () => {
@@ -41,14 +43,18 @@ export function VendorsSidebar({
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 z-50 lg:z-auto">
+    <div
+      className={`bg-white ${
+        showMobileFilters ? "h-full" : ""
+      } lg:border lg:border-gray-200 lg:rounded-lg p-4 sm:p-6`}
+    >
       {/* Mobile Header */}
-      {onCloseMobileFilters && (
-        <div className="flex items-center justify-between mb-6 lg:hidden">
+      {showMobileFilters && onCloseMobileFilters && (
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 lg:hidden">
           <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
           <button
             onClick={onCloseMobileFilters}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -57,17 +63,17 @@ export function VendorsSidebar({
 
       {/* Header */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-medium text-gray-900">
+            <h3 className="text-sm sm:text-base font-medium text-gray-900">
               Applied Filters
             </h3>
           </div>
           <button
             onClick={onClearFilters}
-            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
+            className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium flex items-center space-x-1"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Clear</span>
           </button>
         </div>
@@ -75,17 +81,17 @@ export function VendorsSidebar({
 
       {/* Active Filters Display */}
       {activeFiltersCount > 0 && (
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="flex flex-wrap gap-2">
             {selectedBusinessTypes.map((businessType) => (
               <span
                 key={businessType}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {businessType}
                 <button
                   onClick={() => onBusinessTypeToggle(businessType)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -94,45 +100,45 @@ export function VendorsSidebar({
             {selectedServices.map((service) => (
               <span
                 key={service}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
               >
                 {service}
                 <button
                   onClick={() => onServiceToggle(service)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
             {filters.location && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {filters.location}
                 <button
                   onClick={() => onFilterChange("location", undefined)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
             {filters.city && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {filters.city}
                 <button
                   onClick={() => onFilterChange("city", undefined)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
             {filters.state && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              <span className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {filters.state}
                 <button
                   onClick={() => onFilterChange("state", undefined)}
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="ml-1.5 text-green-600 hover:text-green-800"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -142,10 +148,10 @@ export function VendorsSidebar({
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Business Type */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
             Business Type
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -163,7 +169,7 @@ export function VendorsSidebar({
                 <button
                   key={option.value}
                   onClick={() => onBusinessTypeToggle(option.value)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -178,7 +184,9 @@ export function VendorsSidebar({
 
         {/* Services */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">Services</h4>
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
+            Services
+          </h4>
           <div className="flex flex-wrap gap-2">
             {[
               "Plumbing",
@@ -202,7 +210,7 @@ export function VendorsSidebar({
                 <button
                   key={service}
                   onClick={() => onServiceToggle(service)}
-                  className={`px-3 py-2 text-xs font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-full border transition-colors duration-200 whitespace-nowrap ${
                     isSelected
                       ? "bg-white text-green-600 border-green-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:text-green-600"
@@ -217,8 +225,10 @@ export function VendorsSidebar({
 
         {/* Location */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">Location</h4>
-          <div className="space-y-3">
+          <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-3">
+            Location
+          </h4>
+          <div className="space-y-2 sm:space-y-3">
             <input
               type="text"
               placeholder="Search by location..."
