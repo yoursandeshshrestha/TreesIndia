@@ -20,18 +20,33 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
   onFileChange,
 }) => {
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Document Upload
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: { xs: 3, sm: 4 },
+          color: "#666",
+          fontSize: { xs: "0.875rem", sm: "1rem" },
+        }}
+      >
         Please upload the required documents for verification.
       </Typography>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         <FileUploadItem
           field="aadhar_card"
           label="Aadhaar Card (Max 1MB)"

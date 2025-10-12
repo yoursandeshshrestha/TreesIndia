@@ -62,23 +62,37 @@ const AddressStep: React.FC<AddressStepProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 600 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 600, color: "#1a1a1a", mt: 0 }}
+        sx={{
+          mb: 1,
+          fontWeight: 600,
+          color: "#1a1a1a",
+          mt: 0,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Address Information
       </Typography>
-      <Typography variant="body1" sx={{ mb: 3, color: "#666" }}>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: { xs: 2.5, sm: 3 },
+          color: "#666",
+          fontSize: { xs: "0.875rem", sm: "1rem" },
+        }}
+      >
         Please provide your complete residential address.
       </Typography>
 
       {/* Fetch Current Location Button */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <Button
           onClick={handleDetectLocation}
           disabled={isDetectingLocation}
           variant="outlined"
+          fullWidth
           startIcon={
             isDetectingLocation ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -92,8 +106,10 @@ const AddressStep: React.FC<AddressStepProps> = ({
             textTransform: "none",
             fontWeight: 500,
             borderRadius: 2,
-            px: 3,
-            py: 1.5,
+            px: { xs: 2.5, sm: 3 },
+            py: { xs: 1.25, sm: 1.5 },
+            fontSize: { xs: "0.875rem", sm: "1rem" },
+            maxWidth: { sm: "fit-content" },
             "&:hover": {
               borderColor: "#008f5f",
               backgroundColor: "#f0fdf4",
@@ -111,7 +127,9 @@ const AddressStep: React.FC<AddressStepProps> = ({
         </Button>
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, sm: 3 } }}
+      >
         <TextField
           label="Street Address"
           required

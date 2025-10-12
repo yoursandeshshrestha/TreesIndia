@@ -222,29 +222,29 @@ function BrokerApplyPage() {
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 sm:p-8 text-center">
           {successAnimation && (
             <div className="mb-6">
               <Lottie
                 animationData={successAnimation}
                 loop={false}
-                style={{ height: 200 }}
+                style={{ height: 150, maxHeight: 200 }}
               />
             </div>
           )}
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
             {isApproved
               ? "Congratulations!"
               : "Application Submitted Successfully!"}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
             {isApproved
               ? "Your broker application has been approved! You can now start listing properties and managing real estate transactions."
               : "Your broker application has been submitted and is under review. We'll notify you once it's processed."}
           </p>
           <button
             onClick={handleBackToHome}
-            className="w-full bg-[#00a871] text-white py-2 px-4 rounded-lg hover:bg-[#008a5e] transition-colors"
+            className="w-full bg-[#00a871] text-white py-2.5 sm:py-2 px-4 rounded-lg hover:bg-[#008a5e] transition-colors text-sm sm:text-base font-medium"
           >
             Back to Home
           </button>
@@ -260,9 +260,9 @@ function BrokerApplyPage() {
   const isLastStep = formState.currentStep === steps.length - 1;
 
   return (
-    <div className="max-w-7xl mx-auto py-8">
+    <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8">
       {/* Top Back Button */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <button
           onClick={handleBackToHome}
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
@@ -272,7 +272,7 @@ function BrokerApplyPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <BrokerApplySidebar
@@ -284,10 +284,10 @@ function BrokerApplyPage() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white pl-2">
+          <div className="bg-white px-2 sm:px-4 lg:pl-2">
             {/* Step Back Button - Show after first step */}
             {formState.currentStep > 0 && (
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <button
                   onClick={previousStep}
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
@@ -299,11 +299,11 @@ function BrokerApplyPage() {
             )}
 
             {hookSubmitError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-                <div className="flex items-start">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex items-start gap-2 sm:gap-3">
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-5 w-5 text-red-400"
+                      className="h-4 w-4 sm:h-5 sm:w-5 text-red-400"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -314,21 +314,21 @@ function BrokerApplyPage() {
                       />
                     </svg>
                   </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
+                  <div className="flex-1">
+                    <h3 className="text-xs sm:text-sm font-medium text-red-800">
                       Submission Failed
                     </h3>
-                    <div className="mt-2 text-sm text-red-700">
+                    <div className="mt-2 text-xs sm:text-sm text-red-700">
                       <p>
                         {hookSubmitError instanceof Error
                           ? hookSubmitError.message
                           : "Failed to submit application. Please try again."}
                       </p>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-3 sm:mt-4">
                       <button
                         onClick={() => window.location.reload()}
-                        className="text-sm bg-red-100 text-red-800 px-3 py-1 rounded-md hover:bg-red-200 transition-colors"
+                        className="text-xs sm:text-sm bg-red-100 text-red-800 px-3 py-1.5 sm:py-1 rounded-md hover:bg-red-200 transition-colors"
                       >
                         Try Again
                       </button>
@@ -340,12 +340,12 @@ function BrokerApplyPage() {
             {renderStepContent()}
 
             {/* Continue/Submit Button */}
-            <div className="flex justify-start mt-8">
+            <div className="flex justify-start mt-6 sm:mt-8">
               {isLastStep ? (
                 <button
                   onClick={handleSubmit}
                   disabled={!canProceed() || isSubmitting}
-                  className="flex items-center space-x-2 px-6 py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 sm:px-6 py-2.5 sm:py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base font-medium"
                 >
                   {isSubmitting ? (
                     <>
@@ -360,7 +360,7 @@ function BrokerApplyPage() {
                 <button
                   onClick={nextStep}
                   disabled={!canProceed()}
-                  className="flex items-center space-x-2 px-6 py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 sm:px-6 py-2.5 sm:py-2 bg-[#00a871] text-white rounded-md hover:bg-[#008f5f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base font-medium"
                 >
                   <span>Continue</span>
                   <ChevronRight className="h-4 w-4" />
