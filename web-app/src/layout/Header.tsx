@@ -204,7 +204,10 @@ export default function Header({ className = "" }: HeaderProps) {
                 <div className="px-4 py-6 space-y-6">
                   {/* Mobile User Menu */}
                   <div className="border-b border-gray-200 pb-6">
-                    <UserMenu isMobileMenuContext={true} />
+                    <UserMenu
+                      isMobileMenuContext={true}
+                      onMenuClose={() => setIsMobileMenuOpen(false)}
+                    />
                   </div>
 
                   {/* Mobile Search Section */}

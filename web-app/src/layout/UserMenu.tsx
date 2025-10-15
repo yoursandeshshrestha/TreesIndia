@@ -22,10 +22,12 @@ import { NotificationIcon } from "@/components/NotificationIcon";
 
 interface UserMenuProps {
   isMobileMenuContext?: boolean;
+  onMenuClose?: () => void;
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({
   isMobileMenuContext = false,
+  onMenuClose,
 }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const dispatch = useAppDispatch();
@@ -76,6 +78,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push("/profile");
+                        onMenuClose?.();
                       }}
                       className="hover:text-green-600 transition-colors cursor-pointer"
                     >
@@ -87,13 +90,14 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
               {/* 2. My Bookings/My Work Button */}
               <button
-                onClick={() =>
+                onClick={() => {
                   router.push(
                     user.user_type === "worker"
                       ? "/profile/my-work"
                       : "/profile/my-bookings"
-                  )
-                }
+                  );
+                  onMenuClose?.();
+                }}
                 className="w-full flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
               >
                 {user.user_type === "worker" ? (
@@ -116,7 +120,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
               {/* 4. Messages button with unread count */}
               <button
-                onClick={() => dispatch(openChatModal())}
+                onClick={() => {
+                  dispatch(openChatModal());
+                  onMenuClose?.();
+                }}
                 className="w-full flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left relative"
               >
                 <MessageCircle className="w-5 h-5 text-gray-600" />
@@ -133,7 +140,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
               {/* 5. Profile button */}
               <button
-                onClick={() => router.push("/profile")}
+                onClick={() => {
+                  router.push("/profile");
+                  onMenuClose?.();
+                }}
                 className="w-full flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
               >
                 <UserIcon className="w-5 h-5 text-gray-600" />
