@@ -87,6 +87,7 @@ class ApiEndpoints {
     unreadCount,
     markAllNotificationsAsRead,
     submitWorkerApplication,
+    submitBrokerApplication,
     getUserApplicationStatus,
     getUserNotificationSettings,
     updateUserNotificationSettings,
@@ -507,6 +508,12 @@ class ApiEndpoints {
   // Worker Application Endpoints
   static ApiEndpoint submitWorkerApplication = ApiEndpoint(
     path: '/role-applications/worker',
+    requiresAuth: true,
+  );
+
+  // Broker Application Endpoints
+  static ApiEndpoint submitBrokerApplication = ApiEndpoint(
+    path: '/role-applications/broker',
     requiresAuth: true,
   );
 

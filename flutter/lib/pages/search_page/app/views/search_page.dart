@@ -5,6 +5,7 @@ import 'package:trees_india/commons/components/connectivity/connectivity_provide
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/search_page/app/viewmodels/search_page_state.dart';
 import 'package:trees_india/pages/services_page/domain/entities/search_result_entity.dart';
+import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
@@ -259,12 +260,28 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Widget _buildSearchResultCard(SearchResultEntity result) {
     return GestureDetector(
       onTap: () {
-        // context.push(
-        //   '/service-detail/${result.id}',
-        //   extra: {
-        //     'service': ServiceDetailEntity(),
-        //   },
-        // );
+        context.push(
+          '/service-detail/${result.id}',
+          extra: {
+            'service': ServiceDetailEntity(
+              id: result.id,
+              name: result.name,
+              slug: result.slug,
+              description: result.description,
+              priceType: result.priceType,
+              price: result.price,
+              duration: result.duration,
+              categoryId: result.categoryId,
+              subcategoryId: result.subcategoryId,
+              categoryName: result.category,
+              subcategoryName: result.subcategory,
+              isActive: true,
+              createdAt: result.createdAt,
+              updatedAt: result.updatedAt,
+              serviceAreas: [],
+            ),
+          },
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.md),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
+import '../../../../../commons/utils/date_utils.dart';
 import '../../../../../commons/utils/utils.dart';
 import '../../../domain/entities/booking_details_entity.dart';
 import '../../providers/bookings_providers.dart';
@@ -544,30 +545,17 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
   }
 
   String _formatTime(DateTime time) {
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     return DateFormat('hh:mm a').format(indianTime);
   }
 
   String _formatDateTime(DateTime? dateTime) {
     if (dateTime == null) return 'Unknown';
-    DateTime indianTime;
 
-    if (dateTime.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = dateTime.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = dateTime;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(dateTime);
 
     return DateFormat('MMM dd, yyyy at hh:mm a').format(indianTime);
   }

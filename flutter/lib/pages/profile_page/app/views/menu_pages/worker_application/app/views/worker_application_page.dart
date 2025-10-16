@@ -7,6 +7,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/widgets/worker_form_step_indicator.dart';
 import '../providers/worker_application_providers.dart';
 import '../states/worker_application_state.dart';
@@ -41,7 +42,7 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
   @override
   Widget build(BuildContext context) {
     final workerApplicationState = ref.watch(workerApplicationNotifierProvider);
-        final isConnected = ref.watch(connectivityNotifierProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(notificationServiceProvider).showOfflineMessage(
@@ -69,7 +70,7 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
-        // ref.invalidate(workerApplicationNotifierProvider);
+        ref.invalidate(workerApplicationNotifierProvider);
       },
       child: Scaffold(
         appBar: const CustomAppBar(
@@ -219,9 +220,12 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
               isLoading: state.isSubmitting,
               onPressed: state.isLastStep
                   ? (state.canSubmitForm
-                      ? () => ref
-                          .read(workerApplicationNotifierProvider.notifier)
-                          .submitApplication()
+                      ? () {
+                          ref
+                              .read(workerApplicationNotifierProvider.notifier)
+                              .submitApplication();
+                          ref.read(profileProvider.notifier).loadProfile();
+                        }
                       : null)
                   : (state.isCurrentStepValid
                       ? () => ref

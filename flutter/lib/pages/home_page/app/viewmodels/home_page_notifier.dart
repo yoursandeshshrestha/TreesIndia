@@ -3,6 +3,8 @@ import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/get_subcategories_usecase.dart';
 import '../../../services_page/domain/usecases/get_search_suggestions_usecase.dart';
 import '../../../services_page/domain/usecases/get_popular_services_usecase.dart';
+import '../../../rental_and_properties/domain/usecases/get_properties_usecase.dart';
+import '../../../rental_and_properties/domain/entities/property_filters_entity.dart';
 import 'home_page_state.dart';
 
 class HomePageNotifier extends StateNotifier<HomePageState> {
@@ -10,12 +12,14 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
   final GetSubcategoriesUseCase getSubcategoriesUseCase;
   final GetSearchSuggestionsUseCase getSearchSuggestionsUseCase;
   final GetPopularServicesUseCase getPopularServicesUseCase;
+  final GetPropertiesUsecase getPropertiesUsecase;
 
   HomePageNotifier({
     required this.getCategoriesUseCase,
     required this.getSubcategoriesUseCase,
     required this.getSearchSuggestionsUseCase,
     required this.getPopularServicesUseCase,
+    required this.getPropertiesUsecase,
   }) : super(const HomePageState());
 
   Future<void> loadCategories() async {
@@ -96,5 +100,59 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
 
   void clearError() {
     state = state.copyWith(errorMessage: '');
+  }
+
+  Future<void> loadSaleProperties({String? city, String? state}) async {
+    this.state = this.state.copyWith(isLoadingSaleProperties: true);
+
+    try {
+      final filters = PropertyFiltersEntity(
+        page: 1,
+        limit: 8,
+        listingType: 'sale',
+        isApproved: true,
+        status: 'available',
+        city: city,
+        state: state,
+      );
+
+      final response = await getPropertiesUsecase(filters);
+      this.state = this.state.copyWith(
+        isLoadingSaleProperties: false,
+        saleProperties: response.properties,
+      );
+    } catch (error) {
+      this.state = this.state.copyWith(
+        isLoadingSaleProperties: false,
+        errorMessage: error.toString(),
+      );
+    }
+  }
+
+  Future<void> loadRentProperties({String? city, String? state}) async {
+    this.state = this.state.copyWith(isLoadingRentProperties: true);
+
+    try {
+      final filters = PropertyFiltersEntity(
+        page: 1,
+        limit: 8,
+        listingType: 'rent',
+        isApproved: true,
+        status: 'available',
+        city: city,
+        state: state,
+      );
+
+      final response = await getPropertiesUsecase(filters);
+      this.state = this.state.copyWith(
+        isLoadingRentProperties: false,
+        rentProperties: response.properties,
+      );
+    } catch (error) {
+      this.state = this.state.copyWith(
+        isLoadingRentProperties: false,
+        errorMessage: error.toString(),
+      );
+    }
   }
 }

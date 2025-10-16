@@ -1,10 +1,12 @@
 import 'dart:io';
-import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
@@ -15,11 +17,8 @@ import 'package:trees_india/commons/components/textfield/app/views/email_textfie
 import 'package:trees_india/commons/components/textfield/app/views/numeric_textfield_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/domain/entities/user_entity.dart';
-import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
-import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -50,12 +49,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   void _initializeWithUserData() {
-    final profileState = ref.read(userProfileProvider);
-    final user = profileState.user;
-    if (user != null && !_isInitialized) {
-      _nameController.text = user.name ?? '';
-      _emailController.text = user.email ?? '';
-      _selectedGender = user.gender ?? 'male';
+    final profileState = ref.read(profileProvider);
+    // final user = profileState.user;
+    if (profileState != null && !_isInitialized) {
+      _nameController.text = profileState.name ?? '';
+      _emailController.text = profileState.email ?? '';
+      _selectedGender = profileState.gender ?? 'male';
       setState(() {
         _isInitialized = true;
         // Force text fields to rebuild with new keys
@@ -155,9 +154,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final userProfileState = ref.watch(userProfileProvider);
+    // final userProfileState = ref.watch(userProfileProvider);
     final profileState = ref.watch(profileProvider);
-    final user = userProfileState.user;
+    // final user = userProfileState.user;
     final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -169,7 +168,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     }
 
     // Re-initialize if user data changes and we haven't initialized yet
-    if (user != null && !_isInitialized) {
+    if (!_isInitialized) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeWithUserData();
       });
@@ -212,7 +211,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         ],
                       ),
                       child: ClipOval(
-                        child: _buildAvatarImage(user),
+                        child: _buildAvatarImage(profileState.avatarUrl),
                       ),
                     ),
                     if (profileState.isUploadingAvatar)
@@ -359,7 +358,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         onTextChanged: (value) {
                           // Phone number is read-only
                         },
-                        initialText: user?.phone ?? '+91-8617662584',
+                        initialText: profileState.phone ?? '+91-8617662584',
                         readOnly: true,
                         enabled: false,
                       ),
@@ -429,9 +428,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     );
   }
 
-  Widget _buildAvatarImage(UserEntity? user) {
+  Widget _buildAvatarImage(String? avatarUrl) {
     // Prioritize the latest avatar from profile state over auth state
-    final avatarUrl = user?.userImage;
 
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
       return Image.network(

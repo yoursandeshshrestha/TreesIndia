@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
@@ -144,10 +145,9 @@ class _AddressStepState extends ConsumerState<AddressStep> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location detected and filled automatically'),
-          backgroundColor: AppColors.stateGreen600,
-        ),
+        const SuccessSnackbarWidget(
+                message: 'Location detected and filled automatically')
+            .createSnackBar(),
       );
     }
   }

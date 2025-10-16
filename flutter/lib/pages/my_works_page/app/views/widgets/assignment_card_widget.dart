@@ -6,6 +6,7 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/location_tracking_provider.dart';
+import 'package:trees_india/commons/utils/date_utils.dart';
 
 import '../../../domain/entities/assignment_entity.dart';
 import '../../providers/my_works_providers.dart';
@@ -683,29 +684,15 @@ class AssignmentCardWidget extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     return '${dateFormat.format(date)} at ${timeFormat.format(indianTime)}';
   }
 
   String _formatTimeOnly(DateTime time) {
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     final timeFormat = DateFormat('hh:mm a');
     return timeFormat.format(indianTime);

@@ -14,6 +14,7 @@ import 'package:trees_india/commons/presenters/providers/notification_service_pr
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
+import '../../../rental_and_properties/app/providers/property_providers.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
@@ -25,9 +26,9 @@ import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
 import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
-import 'widgets/popular_categories_widget.dart';
 import 'widgets/subscription_lock_modal.dart';
 import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
+import '../../../rental_and_properties/app/views/widgets/property_grid_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -46,10 +47,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
     });
-    // Load popular services when the page initializes
+    // Load popular services and properties when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homePageNotifierProvider.notifier).loadPopularServices();
       _initializeNotifications();
+      _loadProperties();
     });
   }
 
@@ -74,10 +76,21 @@ class _HomePageState extends ConsumerState<HomePage> {
         setState(() {
           _currentLocation = location;
         });
+        // Reload properties when location changes
+        _loadProperties();
       }
     } catch (e) {
       debugPrint('Error loading location: $e');
     }
+  }
+
+  void _loadProperties() {
+    final notifier = ref.read(homePageNotifierProvider.notifier);
+    final city = _currentLocation?.city;
+    final state = _currentLocation?.state;
+
+    notifier.loadSaleProperties(city: city, state: state);
+    notifier.loadRentProperties(city: city, state: state);
   }
 
   void _navigateToLocationPicker() async {
@@ -514,15 +527,220 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                         const SizedBox(height: AppSpacing.xl),
 
-                        // Popular Categories Section
-                        PopularCategoriesWidget(
-                          onSeeAllTap: () {
-                            // Handle "See all" tap - navigate to categories page
-                            context.push('/services');
+                        // Listed Properties Section
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+                            final locationCity =
+                                _currentLocation?.city ?? 'your area';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Section Header with View All button
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      H4Bold(
+                                        text:
+                                            'Listed Properties in $locationCity',
+                                        color: AppColors.brandNeutral900,
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          ref
+                                              .read(propertyNotifierProvider
+                                                  .notifier)
+                                              .setListingType('sale');
+                                          context.push(
+                                              '/marketplace/rental-properties');
+                                        },
+                                        child: const Text(
+                                          'See all',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF055c3a),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+
+                                // Properties List
+                                if (homePageState.isLoadingSaleProperties)
+                                  const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(AppSpacing.xl),
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.stateGreen600,
+                                      ),
+                                    ),
+                                  )
+                                else if (homePageState.saleProperties.isEmpty)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.all(AppSpacing.xl),
+                                    child: Center(
+                                      child: B2Regular(
+                                        text:
+                                            'No properties available in $locationCity',
+                                        color: AppColors.brandNeutral600,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount:
+                                          homePageState.saleProperties.length,
+                                      itemBuilder: (context, index) {
+                                        final property =
+                                            homePageState.saleProperties[index];
+                                        return Container(
+                                          width: 320,
+                                          margin: EdgeInsets.only(
+                                            right: index <
+                                                    homePageState.saleProperties
+                                                            .length -
+                                                        1
+                                                ? AppSpacing.md
+                                                : 0,
+                                          ),
+                                          child: PropertyCard(
+                                            property: property,
+                                            version: 'home',
+                                            onTap: () {
+                                              context.push(
+                                                  '/rental-properties/${property.id}');
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            );
                           },
-                          onCategoryTap: () {
-                            // Handle category tap - navigate to specific category
-                            print('Category tapped');
+                        ),
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Listed Rentals Section
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+                            final locationCity =
+                                _currentLocation?.city ?? 'your area';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Section Header with View All button
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      H4Bold(
+                                        text: 'Listed Rentals in $locationCity',
+                                        color: AppColors.brandNeutral900,
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          ref
+                                              .read(propertyNotifierProvider
+                                                  .notifier)
+                                              .setListingType('rent');
+                                          context.push(
+                                              '/marketplace/rental-properties');
+                                        },
+                                        child: const Text(
+                                          'See all',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF055c3a),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+
+                                // Properties List
+                                if (homePageState.isLoadingRentProperties)
+                                  const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(AppSpacing.xl),
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.stateGreen600,
+                                      ),
+                                    ),
+                                  )
+                                else if (homePageState.rentProperties.isEmpty)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.all(AppSpacing.xl),
+                                    child: Center(
+                                      child: B2Regular(
+                                        text:
+                                            'No rentals available in $locationCity',
+                                        color: AppColors.brandNeutral600,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount:
+                                          homePageState.rentProperties.length,
+                                      itemBuilder: (context, index) {
+                                        final property =
+                                            homePageState.rentProperties[index];
+                                        return Container(
+                                          width: 320,
+                                          margin: EdgeInsets.only(
+                                            right: index <
+                                                    homePageState.rentProperties
+                                                            .length -
+                                                        1
+                                                ? AppSpacing.md
+                                                : 0,
+                                          ),
+                                          child: PropertyCard(
+                                            property: property,
+                                            version: 'home',
+                                            onTap: () {
+                                              context.push(
+                                                  '/rental-properties/${property.id}');
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            );
                           },
                         ),
 

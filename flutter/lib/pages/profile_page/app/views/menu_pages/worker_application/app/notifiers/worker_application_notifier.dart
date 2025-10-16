@@ -195,13 +195,15 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
       // After successful submission, load the complete application status
       // This will get the full application data including user and worker details
       await loadExistingApplication();
+      
     } on DioException catch (e) {
       if (e.response?.statusCode == 400 &&
           e.response?.data['error'] == 'email already exists') {
         state = state.copyWith(
           status: WorkerApplicationStatus.failure,
           isSubmitting: false,
-          emailError: 'This email is already in use. Please use a different email.',
+          emailError:
+              'This email is already in use. Please use a different email.',
         );
       } else {
         state = state.copyWith(
@@ -233,9 +235,9 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
 
   Future<void> getCurrentLocation() async {
     try {
-      state = state.copyWith(status: WorkerApplicationStatus.loading);
+      // state = state.copyWith(status: WorkerApplicationStatus.loading);
 
-      final location = await locationOnboardingService.getSavedLocation();
+      final location = await locationOnboardingService.getCurrentLocation();
 
       if (location != null) {
         final updatedFormData = state.formData.copyWith(

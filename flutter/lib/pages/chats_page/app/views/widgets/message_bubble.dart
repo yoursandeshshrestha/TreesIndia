@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
+import 'package:trees_india/commons/utils/date_utils.dart';
 import '../../../domain/entities/conversation_message_entity.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -104,14 +105,11 @@ class MessageBubble extends StatelessWidget {
 
   String _formatTime(String dateTimeString) {
     try {
-      // Parse the datetime and convert to GMT+5:30 (India Standard Time)
-      final utcDateTime = DateTime.parse(dateTimeString).toUtc();
-      final istDateTime =
-          utcDateTime.add(const Duration(hours: 5, minutes: 30));
+      // Convert to IST using utility function
+      final istDateTime = ISTDateUtils.convertToIST(dateTimeString);
 
       // Get current time in IST
-      final nowUtc = DateTime.now().toUtc();
-      final nowIst = nowUtc.add(const Duration(hours: 5, minutes: 30));
+      final nowIst = ISTDateUtils.nowInIST();
 
       final today = DateTime(nowIst.year, nowIst.month, nowIst.day);
       final yesterday = today.subtract(const Duration(days: 1));
