@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
+import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
+import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
 
 import '../../../../../commons/app/user_profile_provider.dart';
@@ -278,8 +281,10 @@ class _FixedPriceBookingWidgetState
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButtonWidget(
+                  child: SolidButtonWidget(
                     label: 'Select Address',
+                    labelColor: AppColors.white,
+                    backgroundColor: AppColors.stateGreen700,
                     onPressed: () => _showAddressSelectionBottomSheet(),
                   ),
                 ),
@@ -471,6 +476,7 @@ class _FixedPriceBookingWidgetState
 
   void _showAddressSelectionBottomSheet() {
     ref.read(addressNotifierProvider.notifier).loadAddresses();
+    final rootContext = context; // Store root context for snackbar
 
     showModalBottomSheet(
       context: context,
@@ -479,7 +485,7 @@ class _FixedPriceBookingWidgetState
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
+      builder: (bottomSheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
@@ -518,9 +524,48 @@ class _FixedPriceBookingWidgetState
                       ],
                     ),
                   ),
+                  // Add Another Address Button
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.brandNeutral100,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        _showAddAddressBottomSheet(bottomSheetContext, rootContext);
+                      },
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: Color(0xFF055c3a),
+                            size: 20,
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          Text(
+                            'Add another address',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF055c3a),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: _buildAddressListContent(
-                        addressState, scrollController),
+                        addressState, scrollController, rootContext),
                   ),
                 ],
               );
@@ -532,7 +577,7 @@ class _FixedPriceBookingWidgetState
   }
 
   Widget _buildAddressListContent(
-      AddressState addressState, ScrollController scrollController) {
+      AddressState addressState, ScrollController scrollController, BuildContext rootContext) {
     if (addressState.status == AddressStatus.loading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -609,23 +654,616 @@ class _FixedPriceBookingWidgetState
                 .checkServiceAvailability(
                     widget.service.id, address.city, address.state);
 
-            if (!isAvailable && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Service not available at this address'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+            if (!isAvailable) {
+              if (mounted) {
+                // Close the bottom sheet first
+                Navigator.pop(context);
+              }
+              // Show snackbar on root context so it appears above bottom sheet
+              if (rootContext.mounted) {
+                ScaffoldMessenger.of(rootContext).showSnackBar(
+                  ErrorSnackbarWidget(
+                    message: 'This service is not available in your selected location (${address.city}, ${address.state}). Please select another address.',
+                  ).createSnackBar(),
+                );
+              }
               return;
             }
 
-            setState(() {
-              _selectedAddress = address;
-            });
-            Navigator.pop(context);
+            if (mounted) {
+              setState(() {
+                _selectedAddress = address;
+              });
+              Navigator.pop(context);
+            }
           },
         );
       },
+    );
+  }
+
+  void _showAddAddressBottomSheet(
+      BuildContext bottomSheetContext, BuildContext rootContext) {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController addressController = TextEditingController();
+    final TextEditingController cityController = TextEditingController();
+    final TextEditingController stateController = TextEditingController();
+    final TextEditingController pincodeController = TextEditingController();
+    final TextEditingController houseNumberController = TextEditingController();
+    final TextEditingController landmarkController = TextEditingController();
+    bool isLoadingLocation = false;
+    double? fetchedLatitude;
+    double? fetchedLongitude;
+
+    openCustomBottomSheet(
+      context: bottomSheetContext,
+      child: StatefulBuilder(
+        builder: (context, setState) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  H3Medium(
+                    text: 'Add New Address',
+                    color: AppColors.brandNeutral900,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                    color: AppColors.brandNeutral600,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Use Current Location Button
+              Consumer(
+                builder: (context, ref, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoadingLocation
+                          ? null
+                          : () async {
+                              setState(() {
+                                isLoadingLocation = true;
+                              });
+
+                              try {
+                                final locationService =
+                                    ref.read(locationOnboardingServiceProvider);
+                                final location =
+                                    await locationService.getCurrentLocation();
+
+                                if (context.mounted) {
+                                  setState(() {
+                                    cityController.text = location.city ?? '';
+                                    stateController.text = location.state ?? '';
+                                    pincodeController.text =
+                                        location.postalCode ?? '';
+                                    addressController.text = location.address;
+                                    fetchedLatitude = location.latitude;
+                                    fetchedLongitude = location.longitude;
+                                    isLoadingLocation = false;
+                                  });
+
+                                  if (rootContext.mounted) {
+                                    ScaffoldMessenger.of(rootContext)
+                                        .showSnackBar(
+                                      const SuccessSnackbarWidget(
+                                        message: 'Location fetched successfully!',
+                                      ).createSnackBar(),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  setState(() {
+                                    isLoadingLocation = false;
+                                  });
+
+                                  if (rootContext.mounted) {
+                                    ScaffoldMessenger.of(rootContext)
+                                        .showSnackBar(
+                                      ErrorSnackbarWidget(
+                                        message:
+                                            'Failed to get location: ${e.toString()}',
+                                      ).createSnackBar(),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                      icon: isLoadingLocation
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF055c3a)),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.my_location,
+                              size: 18,
+                            ),
+                      label: Text(
+                        isLoadingLocation
+                            ? 'Fetching location...'
+                            : 'Use Current Location',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF055c3a),
+                        side: const BorderSide(
+                          color: Color(0xFF055c3a),
+                          width: 1,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // City
+              TextField(
+                controller: cityController,
+                decoration: InputDecoration(
+                  hintText: 'City',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // State
+              TextField(
+                controller: stateController,
+                decoration: InputDecoration(
+                  hintText: 'State',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Pincode
+              TextField(
+                controller: pincodeController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Pincode',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Full Address
+              TextField(
+                controller: addressController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter your complete address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // House/Flat Number
+              TextField(
+                controller: houseNumberController,
+                decoration: InputDecoration(
+                  hintText: 'House/Flat Number',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Landmark
+              TextField(
+                controller: landmarkController,
+                decoration: InputDecoration(
+                  hintText: 'Landmark',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Address Label
+              const Text(
+                'Address Label',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.brandNeutral700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Predefined options
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          nameController.text = 'Home';
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                          horizontal: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          color: nameController.text == 'Home'
+                              ? const Color(0xFF055c3a)
+                              : Colors.white,
+                          border: Border.all(
+                            color: nameController.text == 'Home'
+                                ? const Color(0xFF055c3a)
+                                : AppColors.brandNeutral300,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Home',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: nameController.text == 'Home'
+                                ? Colors.white
+                                : AppColors.brandNeutral600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          nameController.text = 'Work';
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                          horizontal: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          color: nameController.text == 'Work'
+                              ? const Color(0xFF055c3a)
+                              : Colors.white,
+                          border: Border.all(
+                            color: nameController.text == 'Work'
+                                ? const Color(0xFF055c3a)
+                                : AppColors.brandNeutral300,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Work',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: nameController.text == 'Work'
+                                ? Colors.white
+                                : AppColors.brandNeutral600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          nameController.text = 'Other';
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                          horizontal: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          color: nameController.text == 'Other'
+                              ? const Color(0xFF055c3a)
+                              : Colors.white,
+                          border: Border.all(
+                            color: nameController.text == 'Other'
+                                ? const Color(0xFF055c3a)
+                                : AppColors.brandNeutral300,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Other',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: nameController.text == 'Other'
+                                ? Colors.white
+                                : AppColors.brandNeutral600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Custom input field when "Other" is selected
+              if (nameController.text == 'Other') ...[
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter custom label',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                          color: AppColors.brandNeutral200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                          color: AppColors.brandNeutral200, width: 1),
+                    ),
+                  ),
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+
+              // Add Address Button
+              Consumer(
+                builder: (context, ref, child) {
+                  final addressState = ref.watch(addressNotifierProvider);
+
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: addressState.isCreating
+                          ? null
+                          : () async {
+                              // Validate all required fields
+                              if (nameController.text.isNotEmpty &&
+                                  addressController.text.isNotEmpty &&
+                                  cityController.text.isNotEmpty &&
+                                  stateController.text.isNotEmpty &&
+                                  pincodeController.text.isNotEmpty) {
+                                try {
+                                  // Create address request
+                                  final createAddressRequest =
+                                      CreateAddressRequestEntity(
+                                    name: nameController.text,
+                                    address: addressController.text,
+                                    city: cityController.text,
+                                    state: stateController.text,
+                                    country: 'India', // Default country
+                                    postalCode: pincodeController.text,
+                                    latitude: fetchedLatitude ?? 0.0,
+                                    longitude: fetchedLongitude ?? 0.0,
+                                    houseNumber:
+                                        houseNumberController.text.isNotEmpty
+                                            ? houseNumberController.text
+                                            : null,
+                                    landmark: landmarkController.text.isNotEmpty
+                                        ? landmarkController.text
+                                        : null,
+                                    isDefault: false, // Default to false
+                                  );
+
+                                  // Call the API to create address
+                                  await ref
+                                      .read(addressNotifierProvider.notifier)
+                                      .createAddress(createAddressRequest);
+
+                                  // Close the add address bottom sheet
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+
+                                  // Show success message on root context
+                                  if (rootContext.mounted) {
+                                    ScaffoldMessenger.of(rootContext)
+                                        .showSnackBar(
+                                      const SuccessSnackbarWidget(
+                                        message: 'Address added successfully!',
+                                      ).createSnackBar(),
+                                    );
+                                  }
+
+                                  // Refresh the address list
+                                  ref
+                                      .read(addressNotifierProvider.notifier)
+                                      .loadAddresses();
+                                } catch (e) {
+                                  // Show error message on root context
+                                  if (rootContext.mounted) {
+                                    ScaffoldMessenger.of(rootContext)
+                                        .showSnackBar(
+                                      ErrorSnackbarWidget(
+                                        message:
+                                            'Failed to add address: ${e.toString()}',
+                                      ).createSnackBar(),
+                                    );
+                                  }
+                                }
+                              } else {
+                                // Show validation error on root context
+                                if (rootContext.mounted) {
+                                  ScaffoldMessenger.of(rootContext).showSnackBar(
+                                    const ErrorSnackbarWidget(
+                                      message: 'Please fill all required fields',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: addressState.isCreating
+                            ? AppColors.brandNeutral400
+                            : const Color(0xFF055c3a),
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: addressState.isCreating
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  'Adding Address...',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'Add Address',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
