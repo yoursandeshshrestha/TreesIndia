@@ -1,35 +1,35 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/utils/services/location_onboarding_service.dart';
-import '../states/worker_application_state.dart';
-import '../../domain/usecases/submit_worker_application_usecase.dart';
-import '../../domain/usecases/get_user_application_status_usecase.dart';
+import '../states/broker_application_state.dart';
+import '../../domain/usecases/submit_broker_application_usecase.dart';
+import '../../domain/usecases/get_broker_application_status_usecase.dart';
 
-class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
-  final SubmitWorkerApplicationUsecase submitWorkerApplicationUsecase;
-  final GetUserApplicationStatusUsecase getUserApplicationStatusUsecase;
+class BrokerApplicationNotifier extends StateNotifier<BrokerApplicationState> {
+  final SubmitBrokerApplicationUsecase submitBrokerApplicationUsecase;
+  final GetBrokerApplicationStatusUsecase getBrokerApplicationStatusUsecase;
   final LocationOnboardingService locationOnboardingService;
 
-  WorkerApplicationNotifier({
-    required this.submitWorkerApplicationUsecase,
-    required this.getUserApplicationStatusUsecase,
+  BrokerApplicationNotifier({
+    required this.submitBrokerApplicationUsecase,
+    required this.getBrokerApplicationStatusUsecase,
     required this.locationOnboardingService,
-  }) : super(WorkerApplicationState(
-          formData: createInitialWorkerApplication(),
+  }) : super(BrokerApplicationState(
+          formData: createInitialBrokerApplication(),
         ));
 
   Future<void> loadExistingApplication() async {
     try {
-      state = state.copyWith(status: WorkerApplicationStatus.loading);
-      final existingApp = await getUserApplicationStatusUsecase();
+      state = state.copyWith(status: BrokerApplicationStatus.loading);
+      final existingApp = await getBrokerApplicationStatusUsecase();
       state = state.copyWith(
-        status: WorkerApplicationStatus.initial,
+        status: BrokerApplicationStatus.initial,
         existingApplication: existingApp,
         formData: existingApp ?? state.formData,
       );
     } catch (e) {
       state = state.copyWith(
-        status: WorkerApplicationStatus.initial,
+        status: BrokerApplicationStatus.initial,
         errorMessage: 'Failed to load existing application: ${e.toString()}',
       );
     }
@@ -58,21 +58,17 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
     String? aadhaarCard,
     String? panCard,
     String? profilePhoto,
-    String? policeVerification,
     bool removeAadhaarCard = false,
     bool removePanCard = false,
     bool removeProfilePhoto = false,
-    bool removePoliceVerification = false,
   }) {
     final updatedDocuments = state.formData.documents.copyWith(
       aadhaarCard: aadhaarCard,
       panCard: panCard,
       profilePhoto: profilePhoto,
-      policeVerification: policeVerification,
       removeAadhaarCard: removeAadhaarCard,
       removePanCard: removePanCard,
       removeProfilePhoto: removeProfilePhoto,
-      removePoliceVerification: removePoliceVerification,
     );
 
     final updatedFormData =
@@ -102,35 +98,17 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
     _updateStepCompletion();
   }
 
-  void updateSkills({
-    String? experienceYears,
-    List<String>? skills,
+  void updateBrokerDetails({
+    String? licenseNumber,
+    String? agencyName,
   }) {
-    final updatedSkills = state.formData.skills.copyWith(
-      experienceYears: experienceYears,
-      skills: skills,
-    );
-
-    final updatedFormData = state.formData.copyWith(skills: updatedSkills);
-    state = state.copyWith(formData: updatedFormData);
-    _updateStepCompletion();
-  }
-
-  void updateBankingInfo({
-    String? accountHolderName,
-    String? accountNumber,
-    String? ifscCode,
-    String? bankName,
-  }) {
-    final updatedBankingInfo = state.formData.bankingInfo.copyWith(
-      accountHolderName: accountHolderName,
-      accountNumber: accountNumber,
-      ifscCode: ifscCode,
-      bankName: bankName,
+    final updatedBrokerDetails = state.formData.brokerDetails.copyWith(
+      licenseNumber: licenseNumber,
+      agencyName: agencyName,
     );
 
     final updatedFormData =
-        state.formData.copyWith(bankingInfo: updatedBankingInfo);
+        state.formData.copyWith(brokerDetails: updatedBrokerDetails);
     state = state.copyWith(formData: updatedFormData);
     _updateStepCompletion();
   }
@@ -138,7 +116,7 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
   void goToNextStep() {
     if (state.canGoToNextStep) {
       final nextStepIndex = state.currentStepIndex + 1;
-      final nextStep = WorkerApplicationStep.values[nextStepIndex];
+      final nextStep = BrokerApplicationStep.values[nextStepIndex];
       state = state.copyWith(currentStep: nextStep);
     }
   }
@@ -146,29 +124,27 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
   void goToPreviousStep() {
     if (state.canGoToPreviousStep) {
       final previousStepIndex = state.currentStepIndex - 1;
-      final previousStep = WorkerApplicationStep.values[previousStepIndex];
+      final previousStep = BrokerApplicationStep.values[previousStepIndex];
       state = state.copyWith(currentStep: previousStep);
     }
   }
 
-  void goToStep(WorkerApplicationStep step) {
+  void goToStep(BrokerApplicationStep step) {
     state = state.copyWith(currentStep: step);
   }
 
   void _updateStepCompletion() {
-    final stepCompletion = <WorkerApplicationStep, bool>{
-      WorkerApplicationStep.personalInfo:
-          WorkerApplicationValidation.isPersonalInfoComplete(state.formData),
-      WorkerApplicationStep.documents:
-          WorkerApplicationValidation.areDocumentsComplete(state.formData),
-      WorkerApplicationStep.address:
-          WorkerApplicationValidation.isAddressComplete(state.formData),
-      WorkerApplicationStep.skills:
-          WorkerApplicationValidation.areSkillsComplete(state.formData),
-      WorkerApplicationStep.banking:
-          WorkerApplicationValidation.isBankingInfoComplete(state.formData),
-      WorkerApplicationStep.review:
-          WorkerApplicationValidation.isFormComplete(state.formData),
+    final stepCompletion = <BrokerApplicationStep, bool>{
+      BrokerApplicationStep.personalInfo:
+          BrokerApplicationValidation.isPersonalInfoComplete(state.formData),
+      BrokerApplicationStep.documents:
+          BrokerApplicationValidation.areDocumentsComplete(state.formData),
+      BrokerApplicationStep.address:
+          BrokerApplicationValidation.isAddressComplete(state.formData),
+      BrokerApplicationStep.brokerDetails:
+          BrokerApplicationValidation.areBrokerDetailsComplete(state.formData),
+      BrokerApplicationStep.review:
+          BrokerApplicationValidation.isFormComplete(state.formData),
     };
 
     state = state.copyWith(stepCompletion: stepCompletion);
@@ -179,42 +155,41 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
 
     try {
       state = state.copyWith(
-        status: WorkerApplicationStatus.loading,
+        status: BrokerApplicationStatus.loading,
         isSubmitting: true,
         errorMessage: null,
       );
 
-      final result = await submitWorkerApplicationUsecase.call(state.formData);
+      final result = await submitBrokerApplicationUsecase.call(state.formData);
 
       state = state.copyWith(
-        status: WorkerApplicationStatus.success,
+        status: BrokerApplicationStatus.success,
         isSubmitting: false,
         existingApplication: result,
       );
 
       // After successful submission, load the complete application status
-      // This will get the full application data including user and worker details
+      // This will get the full application data including user and broker details
       await loadExistingApplication();
-      
     } on DioException catch (e) {
       if (e.response?.statusCode == 400 &&
           e.response?.data['error'] == 'email already exists') {
         state = state.copyWith(
-          status: WorkerApplicationStatus.failure,
+          status: BrokerApplicationStatus.failure,
           isSubmitting: false,
           emailError:
               'This email is already in use. Please use a different email.',
         );
       } else {
         state = state.copyWith(
-          status: WorkerApplicationStatus.failure,
+          status: BrokerApplicationStatus.failure,
           isSubmitting: false,
           errorMessage: e.toString(),
         );
       }
     } catch (e) {
       state = state.copyWith(
-        status: WorkerApplicationStatus.failure,
+        status: BrokerApplicationStatus.failure,
         isSubmitting: false,
         errorMessage: e.toString(),
       );
@@ -223,20 +198,18 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
 
   void clearError() {
     state = state.copyWith(
-        errorMessage: null, status: WorkerApplicationStatus.initial);
+        errorMessage: null, status: BrokerApplicationStatus.initial);
   }
 
   void resetForm() {
-    state = WorkerApplicationState(
-      formData: createInitialWorkerApplication(),
-      currentStep: WorkerApplicationStep.personalInfo,
+    state = BrokerApplicationState(
+      formData: createInitialBrokerApplication(),
+      currentStep: BrokerApplicationStep.personalInfo,
     );
   }
 
   Future<void> getCurrentLocation() async {
     try {
-      // state = state.copyWith(status: WorkerApplicationStatus.loading);
-
       final location = await locationOnboardingService.getCurrentLocation();
 
       if (location != null) {
@@ -251,19 +224,19 @@ class WorkerApplicationNotifier extends StateNotifier<WorkerApplicationState> {
         );
 
         state = state.copyWith(
-          status: WorkerApplicationStatus.initial,
+          status: BrokerApplicationStatus.initial,
           formData: updatedFormData,
           errorMessage: null,
         );
       } else {
         state = state.copyWith(
-          status: WorkerApplicationStatus.failure,
+          status: BrokerApplicationStatus.failure,
           errorMessage: 'Could not determine address from current location.',
         );
       }
     } catch (e) {
       state = state.copyWith(
-        status: WorkerApplicationStatus.failure,
+        status: BrokerApplicationStatus.failure,
         errorMessage: 'Failed to get current location: ${e.toString()}',
       );
     }

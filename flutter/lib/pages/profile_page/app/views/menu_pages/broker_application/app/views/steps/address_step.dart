@@ -4,9 +4,9 @@ import 'package:trees_india/commons/components/snackbar/app/views/success_snackb
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import '../../providers/worker_application_providers.dart';
-import '../../states/worker_application_state.dart';
-import '../widgets/worker_form_field.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/widgets/worker_form_field.dart';
+import '../../providers/broker_application_providers.dart';
+import '../../states/broker_application_state.dart';
 
 class AddressStep extends ConsumerStatefulWidget {
   const AddressStep({super.key});
@@ -34,15 +34,14 @@ class _AddressStepState extends ConsumerState<AddressStep> {
     _pincodeController = TextEditingController();
     _landmarkController = TextEditingController();
 
-    // Initialize with existing form data if available
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeFormData();
     });
   }
 
   void _initializeFormData() {
-    final workerState = ref.read(workerApplicationNotifierProvider);
-    final address = workerState.formData.address;
+    final brokerState = ref.read(brokerApplicationNotifierProvider);
+    final address = brokerState.formData.address;
 
     if (address.street.isNotEmpty) {
       _streetController.text = address.street;
@@ -64,21 +63,18 @@ class _AddressStepState extends ConsumerState<AddressStep> {
   }
 
   void _updateFormData() {
-    // Clear previous errors
     setState(() {
       _errors.clear();
     });
 
-    // Validate fields
     _validateFields();
 
-    // Always update the notifier state with current values (regardless of validation)
-    ref.read(workerApplicationNotifierProvider.notifier).updateAddress(
-          street: _streetController.text, // Keep spaces for addresses
-          city: _cityController.text, // Keep spaces for city names
-          state: _stateController.text, // Keep spaces for state names
-          pincode: _pincodeController.text.trim(), // Remove spaces for pincode
-          landmark: _landmarkController.text, // Keep spaces for landmarks
+    ref.read(brokerApplicationNotifierProvider.notifier).updateAddress(
+          street: _streetController.text,
+          city: _cityController.text,
+          state: _stateController.text,
+          pincode: _pincodeController.text.trim(),
+          landmark: _landmarkController.text,
         );
   }
 
@@ -104,7 +100,7 @@ class _AddressStepState extends ConsumerState<AddressStep> {
       _errors['pincode'] = 'Pincode is required';
     } else {
       final pincodeValidation =
-          WorkerApplicationValidation.validatePincode(pincode);
+          BrokerApplicationValidation.validatePincode(pincode);
       if (pincodeValidation != null) {
         _errors['pincode'] = pincodeValidation;
       }
@@ -116,14 +112,12 @@ class _AddressStepState extends ConsumerState<AddressStep> {
       _isGettingLocation = true;
     });
 
-    // Simulate getting location (you would implement actual GPS logic here)
     await ref
-        .read(workerApplicationNotifierProvider.notifier)
+        .read(brokerApplicationNotifierProvider.notifier)
         .getCurrentLocation();
 
-    final formData = ref.read(workerApplicationNotifierProvider).formData;
+    final formData = ref.read(brokerApplicationNotifierProvider).formData;
 
-    // Mock data for demonstration
     if (formData.address.street.isNotEmpty == true) {
       _streetController.text = formData.address.street;
     }
@@ -154,11 +148,9 @@ class _AddressStepState extends ConsumerState<AddressStep> {
 
   @override
   Widget build(BuildContext context) {
-    // Sync with current state whenever widget rebuilds
-    final workerState = ref.watch(workerApplicationNotifierProvider);
-    final address = workerState.formData.address;
+    final brokerState = ref.watch(brokerApplicationNotifierProvider);
+    final address = brokerState.formData.address;
 
-    // Update controllers if they differ from state (without triggering onChanged)
     if (_streetController.text != address.street) {
       _streetController.text = address.street;
     }

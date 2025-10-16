@@ -6,6 +6,7 @@ import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
+import 'package:trees_india/commons/utils/date_utils.dart';
 import 'package:trees_india/commons/widgets/location_tracking_modal.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_notifier.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_state.dart';
@@ -541,15 +542,8 @@ class BookingCardWidget extends ConsumerWidget {
   }
 
   String _formatTimeOnly(DateTime time) {
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     final timeFormat = DateFormat('hh:mm a');
     return timeFormat.format(indianTime);
@@ -1034,15 +1028,8 @@ class BookingCardWidget extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     return '${dateFormat.format(date)} at ${timeFormat.format(indianTime)}';
   }

@@ -8,40 +8,39 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
-import 'package:trees_india/pages/profile_page/app/views/menu_pages/worker_application/app/views/widgets/worker_form_step_indicator.dart';
-import '../providers/worker_application_providers.dart';
-import '../states/worker_application_state.dart';
+import 'widgets/broker_form_step_indicator.dart';
+import '../providers/broker_application_providers.dart';
+import '../states/broker_application_state.dart';
 import 'steps/personal_info_step.dart';
 import 'steps/documents_step.dart';
 import 'steps/address_step.dart';
-import 'steps/skills_step.dart';
-import 'steps/banking_step.dart';
+import 'steps/broker_details_step.dart';
 import 'steps/review_step.dart';
-import 'widgets/worker_application_status_widget.dart';
+import 'widgets/broker_application_status_widget.dart';
 
-class WorkerApplicationPage extends ConsumerStatefulWidget {
-  const WorkerApplicationPage({super.key});
+class BrokerApplicationPage extends ConsumerStatefulWidget {
+  const BrokerApplicationPage({super.key});
 
   @override
-  ConsumerState<WorkerApplicationPage> createState() =>
-      _WorkerApplicationPageState();
+  ConsumerState<BrokerApplicationPage> createState() =>
+      _BrokerApplicationPageState();
 }
 
-class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
+class _BrokerApplicationPageState extends ConsumerState<BrokerApplicationPage> {
   @override
   void initState() {
     super.initState();
     // Load existing application when page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
-          .read(workerApplicationNotifierProvider.notifier)
+          .read(brokerApplicationNotifierProvider.notifier)
           .loadExistingApplication();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final workerApplicationState = ref.watch(workerApplicationNotifierProvider);
+    final brokerApplicationState = ref.watch(brokerApplicationNotifierProvider);
     final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,43 +51,38 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
       });
     }
 
-    ref.listen<WorkerApplicationState>(
-      workerApplicationNotifierProvider,
+    ref.listen<BrokerApplicationState>(
+      brokerApplicationNotifierProvider,
       (previous, next) {
         if (next.emailError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             ErrorSnackbarWidget(message: next.emailError!).createSnackBar(),
           );
-          // } else if (next.errorMessage != null) {
-          //   ScaffoldMessenger.of(context).showSnackBar(
-          //     ErrorSnackbarWidget(message: next.errorMessage!).createSnackBar(),
-
-          //   );
         }
       },
     );
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
-        ref.invalidate(workerApplicationNotifierProvider);
+        ref.invalidate(brokerApplicationNotifierProvider);
       },
       child: Scaffold(
         appBar: const CustomAppBar(
-          title: 'Apply for worker',
+          title: 'Apply for broker',
           backgroundColor: AppColors.white,
           iconColor: AppColors.brandNeutral800,
           titleColor: AppColors.brandNeutral800,
         ),
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: _buildBody(workerApplicationState),
+          child: _buildBody(brokerApplicationState),
         ),
       ),
     );
   }
 
-  Widget _buildBody(WorkerApplicationState state) {
-    if (state.status == WorkerApplicationStatus.loading &&
+  Widget _buildBody(BrokerApplicationState state) {
+    if (state.status == BrokerApplicationStatus.loading &&
         !state.isSubmitting) {
       return const Center(
         child: Column(
@@ -111,7 +105,7 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
       );
     }
 
-    if (state.status == WorkerApplicationStatus.loading && state.isSubmitting) {
+    if (state.status == BrokerApplicationStatus.loading && state.isSubmitting) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -135,7 +129,7 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
 
     if (state.shouldShowStatusWidget) {
       return SingleChildScrollView(
-        child: WorkerApplicationStatusWidget(
+        child: BrokerApplicationStatusWidget(
           application: state.existingApplication!,
         ),
       );
@@ -143,8 +137,8 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
 
     return Column(
       children: [
-        // Progress indicator placeholder
-        WorkerFormStepIndicator(
+        // Progress indicator
+        BrokerFormStepIndicator(
           currentStep: state.currentStepIndex,
           totalSteps: state.totalSteps,
           stepCompletion: state.stepCompletion,
@@ -164,24 +158,22 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
     );
   }
 
-  Widget _buildCurrentStepContent(WorkerApplicationState state) {
+  Widget _buildCurrentStepContent(BrokerApplicationState state) {
     switch (state.currentStep) {
-      case WorkerApplicationStep.personalInfo:
+      case BrokerApplicationStep.personalInfo:
         return const PersonalInfoStep();
-      case WorkerApplicationStep.documents:
+      case BrokerApplicationStep.documents:
         return const DocumentsStep();
-      case WorkerApplicationStep.address:
+      case BrokerApplicationStep.address:
         return const AddressStep();
-      case WorkerApplicationStep.skills:
-        return const SkillsStep();
-      case WorkerApplicationStep.banking:
-        return const BankingStep();
-      case WorkerApplicationStep.review:
+      case BrokerApplicationStep.brokerDetails:
+        return const BrokerDetailsStep();
+      case BrokerApplicationStep.review:
         return const ReviewStep();
     }
   }
 
-  Widget _buildNavigationButtons(WorkerApplicationState state) {
+  Widget _buildNavigationButtons(BrokerApplicationState state) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
@@ -199,7 +191,7 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
               child: OutlinedButton(
                 onPressed: () {
                   ref
-                      .read(workerApplicationNotifierProvider.notifier)
+                      .read(brokerApplicationNotifierProvider.notifier)
                       .goToPreviousStep();
                 },
                 style: OutlinedButton.styleFrom(
@@ -222,14 +214,14 @@ class _WorkerApplicationPageState extends ConsumerState<WorkerApplicationPage> {
                   ? (state.canSubmitForm
                       ? () {
                           ref
-                              .read(workerApplicationNotifierProvider.notifier)
+                              .read(brokerApplicationNotifierProvider.notifier)
                               .submitApplication();
                           ref.read(profileProvider.notifier).loadProfile();
                         }
                       : null)
                   : (state.isCurrentStepValid
                       ? () => ref
-                          .read(workerApplicationNotifierProvider.notifier)
+                          .read(brokerApplicationNotifierProvider.notifier)
                           .goToNextStep()
                       : null),
             ),

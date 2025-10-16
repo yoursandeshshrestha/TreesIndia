@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/button/app/views/outline_button_widget.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
 import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
@@ -11,11 +13,10 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/user_profile_entity.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/commons/utils/date_utils.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
-import 'package:trees_india/commons/app/user_profile_provider.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
+
 import '../providers/profile_providers.dart';
-import 'package:intl/intl.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -144,8 +145,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final userProfileState = ref.watch(userProfileProvider);
-    final user = userProfileState.user;
     final profileState = ref.watch(profileProvider);
     final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
@@ -184,10 +183,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 width: 60,
                                 height: 60,
                                 child: ClipOval(
-                                  child: user?.userImage != null &&
-                                          user!.userImage!.isNotEmpty
+                                  child: profileState.avatarUrl != null &&
+                                          profileState.avatarUrl!.isNotEmpty
                                       ? Image.network(
-                                          user.userImage!,
+                                          profileState.avatarUrl!,
                                           fit: BoxFit.cover,
                                           errorBuilder:
                                               (context, error, stackTrace) {
@@ -202,16 +201,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (user?.name != null &&
-                                        user!.name!.isNotEmpty)
+                                    if (profileState.name != null &&
+                                        profileState.name!.isNotEmpty)
                                       H2Bold(
-                                        text: user.name!,
+                                        text: profileState.name!,
                                         color: AppColors.brandNeutral900,
                                       ),
-                                    if (user?.phone != null &&
-                                        user!.phone!.isNotEmpty)
+                                    if (profileState.phone != null &&
+                                        profileState.phone!.isNotEmpty)
                                       B2Regular(
-                                        text: user.phone!,
+                                        text: profileState.phone!,
                                         color: AppColors.brandNeutral900,
                                       ),
                                   ],
@@ -335,6 +334,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         label: 'Apply for Worker',
                         onTap: () {
                           context.push('/worker-application');
+                        },
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.work_outline,
+                        label: 'Apply for Broker',
+                        onTap: () {
+                          context.push('/broker-application');
                         },
                       ),
                       _buildMenuItem(
@@ -511,11 +517,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     try {
       if (roleApplication.applicationDate != null &&
           roleApplication.applicationDate!.isNotEmpty) {
-        applicationDate = DateTime.parse(roleApplication.applicationDate!);
+        applicationDate =
+            ISTDateUtils.convertToIST(roleApplication.applicationDate!);
       }
       if (roleApplication.approvalDate != null &&
           roleApplication.approvalDate!.isNotEmpty) {
-        approvalDate = DateTime.parse(roleApplication.approvalDate!);
+        approvalDate = ISTDateUtils.convertToIST(roleApplication.approvalDate!);
       }
     } catch (e) {
       debugPrint('Error parsing role application dates: $e');
@@ -556,7 +563,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             if (roleApplication.status == 'pending')
               _buildPendingStatus()
             else if (roleApplication.status == 'approved')
-              _buildApprovedStatus(),
+              _buildApprovedStatus()
+            else if (roleApplication.status == 'rejected')
+              _buildRejectedStatus(),
 
             const SizedBox(height: AppSpacing.lg),
             const Divider(color: AppColors.brandNeutral200),
@@ -638,6 +647,36 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  Widget _buildRejectedStatus() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.cancel_outlined,
+                color: AppColors.stateRed700, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            B2Medium(text: 'Rejected'),
+            const SizedBox(width: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.stateRed100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: B4Medium(text: 'REJECTED', color: AppColors.stateRed800),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        B3Regular(
+            text:
+                'Unfortunately, your application was not approved. Please contact support for more information.'),
+      ],
+    );
+  }
+
   Widget _buildDateCard({required String label, required String date}) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -662,8 +701,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     DateTime? endDate;
 
     try {
-      startDate = DateTime.parse(subscription.startDate);
-      endDate = DateTime.parse(subscription.endDate);
+      startDate = ISTDateUtils.convertToIST(subscription.startDate);
+      endDate = ISTDateUtils.convertToIST(subscription.endDate);
     } catch (e) {
       debugPrint('Error parsing subscription dates: $e');
     }
