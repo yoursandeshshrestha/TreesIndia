@@ -15,8 +15,8 @@ import (
 
 // UserController handles user-related operations
 type UserController struct {
-	db               *gorm.DB
-	validationHelper *utils.ValidationHelper
+	db                *gorm.DB
+	validationHelper  *utils.ValidationHelper
 	cloudinaryService *services.CloudinaryService
 }
 
@@ -29,8 +29,8 @@ func NewUserController() *UserController {
 	}
 
 	return &UserController{
-		db:               database.GetDB(),
-		validationHelper: utils.NewValidationHelper(),
+		db:                database.GetDB(),
+		validationHelper:  utils.NewValidationHelper(),
 		cloudinaryService: cloudinaryService,
 	}
 }
@@ -45,11 +45,11 @@ type ProfileUpdateRequest struct {
 // NotificationSettingsRequest represents the request for updating notification settings
 type NotificationSettingsRequest struct {
 	EmailNotifications bool `json:"email_notifications"`
-	SMSNotifications    bool `json:"sms_notifications"`
-	PushNotifications   bool `json:"push_notifications"`
-	MarketingEmails     bool `json:"marketing_emails"`
-	BookingReminders    bool `json:"booking_reminders"`
-	ServiceUpdates      bool `json:"service_updates"`
+	SMSNotifications   bool `json:"sms_notifications"`
+	PushNotifications  bool `json:"push_notifications"`
+	MarketingEmails    bool `json:"marketing_emails"`
+	BookingReminders   bool `json:"booking_reminders"`
+	ServiceUpdates     bool `json:"service_updates"`
 }
 
 // RequestDeleteOTPRequest represents OTP request for account deletion
@@ -87,26 +87,26 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	// Prepare optimized response data
 	responseData := gin.H{
 		// Basic Information
-		"id":         user.ID,
-		"name":       user.Name,
-		"email":      user.Email,
-		"phone":      user.Phone,
-		"user_type":  user.UserType,
-		"avatar":     user.Avatar,
-		"gender":     user.Gender,
-		"is_active":  user.IsActive,
-		"created_at": user.CreatedAt,
-		"updated_at": user.UpdatedAt,
+		"id":            user.ID,
+		"name":          user.Name,
+		"email":         user.Email,
+		"phone":         user.Phone,
+		"user_type":     user.UserType,
+		"avatar":        user.Avatar,
+		"gender":        user.Gender,
+		"is_active":     user.IsActive,
+		"created_at":    user.CreatedAt,
+		"updated_at":    user.UpdatedAt,
 		"last_login_at": user.LastLoginAt,
-		
+
 		// Wallet Information
 		"wallet": gin.H{
 			"balance": user.WalletBalance,
 		},
-		
+
 		// Role Application Information
 		"role_application": gin.H{
-			"status":          user.RoleApplicationStatus,
+			"status":           user.RoleApplicationStatus,
 			"application_date": user.ApplicationDate,
 			"approval_date":    user.ApprovalDate,
 		},
@@ -191,7 +191,7 @@ func (uc *UserController) UpdateUserProfile(c *gin.Context) {
 	updates := make(map[string]interface{})
 	updates["name"] = req.Name
 	updates["gender"] = req.Gender
-	
+
 	if req.Email != nil {
 		updates["email"] = req.Email
 	}
@@ -298,13 +298,13 @@ func (uc *UserController) GetNotificationSettings(c *gin.Context) {
 		if err == gorm.ErrRecordNotFound {
 			// Create default settings if they don't exist
 			settings = models.UserNotificationSettings{
-				UserID:              userID,
-				EmailNotifications:  true,
-				SMSNotifications:    true,
-				PushNotifications:   true,
-				MarketingEmails:     false,
-				BookingReminders:    true,
-				ServiceUpdates:      true,
+				UserID:             userID,
+				EmailNotifications: true,
+				SMSNotifications:   true,
+				PushNotifications:  true,
+				MarketingEmails:    false,
+				BookingReminders:   true,
+				ServiceUpdates:     true,
 			}
 			if err := uc.db.Create(&settings).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create notification settings", err.Error()))
@@ -325,7 +325,7 @@ func (uc *UserController) GetNotificationSettings(c *gin.Context) {
 		"booking_reminders":   settings.BookingReminders,
 		"service_updates":     settings.ServiceUpdates,
 	}
-	
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Notification settings retrieved successfully", settingsData))
 }
 
@@ -356,13 +356,13 @@ func (uc *UserController) UpdateNotificationSettings(c *gin.Context) {
 		if err == gorm.ErrRecordNotFound {
 			// Create new settings
 			settings = models.UserNotificationSettings{
-				UserID:              userID,
-				EmailNotifications:  req.EmailNotifications,
-				SMSNotifications:    req.SMSNotifications,
-				PushNotifications:   req.PushNotifications,
-				MarketingEmails:     req.MarketingEmails,
-				BookingReminders:    req.BookingReminders,
-				ServiceUpdates:      req.ServiceUpdates,
+				UserID:             userID,
+				EmailNotifications: req.EmailNotifications,
+				SMSNotifications:   req.SMSNotifications,
+				PushNotifications:  req.PushNotifications,
+				MarketingEmails:    req.MarketingEmails,
+				BookingReminders:   req.BookingReminders,
+				ServiceUpdates:     req.ServiceUpdates,
 			}
 			if err := uc.db.Create(&settings).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create notification settings", err.Error()))
@@ -382,7 +382,7 @@ func (uc *UserController) UpdateNotificationSettings(c *gin.Context) {
 			"booking_reminders":   req.BookingReminders,
 			"service_updates":     req.ServiceUpdates,
 		}
-		
+
 		if err := uc.db.Model(&settings).Updates(updates).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update notification settings", err.Error()))
 			return
@@ -398,7 +398,7 @@ func (uc *UserController) UpdateNotificationSettings(c *gin.Context) {
 		"booking_reminders":   settings.BookingReminders,
 		"service_updates":     settings.ServiceUpdates,
 	}
-	
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Notification settings updated successfully", settingsData))
 }
 
@@ -431,7 +431,7 @@ func (uc *UserController) RequestDeleteOTP(c *gin.Context) {
 
 	// TODO: Integrate with SMS service (Twilio) later
 	// For now, just return success as OTP is hardcoded to "000000"
-	
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
 		"message": "OTP has been sent to your registered phone number",
 		"phone":   user.Phone, // Return masked phone number for user confirmation
@@ -485,7 +485,7 @@ func (uc *UserController) DeleteAccount(c *gin.Context) {
 	}
 
 	// Delete all related data in the correct order to avoid foreign key constraint violations
-	
+
 	// 1. Delete chat messages where user is the sender
 	if err := tx.Unscoped().Where("sender_id = ?", userID).Delete(&models.ChatMessage{}).Error; err != nil {
 		tx.Rollback()
