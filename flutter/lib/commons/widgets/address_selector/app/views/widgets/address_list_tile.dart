@@ -27,14 +27,11 @@ class AddressListTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? AppColors.brandPrimary50 
-              : Colors.white,
+          color: isSelected ? AppColors.stateGreen50 : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected 
-                ? AppColors.brandPrimary600 
-                : AppColors.brandNeutral200,
+            color:
+                isSelected ? AppColors.stateGreen600 : AppColors.stateGreen200,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -50,9 +47,9 @@ class AddressListTile extends StatelessWidget {
                     children: [
                       B2Bold(
                         text: address.name,
-                        color: isSelected 
-                            ? AppColors.brandPrimary700 
-                            : AppColors.brandNeutral900,
+                        color: isSelected
+                            ? AppColors.stateGreen700
+                            : AppColors.stateGreen900,
                       ),
                       if (address.isDefault) ...[
                         const SizedBox(width: AppSpacing.sm),
@@ -62,19 +59,19 @@ class AddressListTile extends StatelessWidget {
                             vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.brandPrimary100,
+                            color: AppColors.stateGreen100,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: B4Bold(
                             text: 'DEFAULT',
-                            color: AppColors.brandPrimary700,
+                            color: AppColors.stateGreen700,
                           ),
                         ),
                       ],
                     ],
                   ),
                 ),
-                
+
                 // Action buttons
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -85,7 +82,7 @@ class AddressListTile extends StatelessWidget {
                         icon: const Icon(
                           Icons.edit_outlined,
                           size: 18,
-                          color: AppColors.brandNeutral600,
+                          color: AppColors.stateGreen600,
                         ),
                         constraints: const BoxConstraints(
                           minWidth: 32,
@@ -111,16 +108,16 @@ class AddressListTile extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: AppSpacing.sm),
-            
+
             // Address details
             B3Regular(
               text: address.fullAddress,
-              color: AppColors.brandNeutral700,
+              color: AppColors.stateGreen700,
               maxLines: 3,
             ),
-            
+
             // Selected indicator
             if (isSelected) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -129,12 +126,12 @@ class AddressListTile extends StatelessWidget {
                   const Icon(
                     Icons.check_circle,
                     size: 16,
-                    color: AppColors.brandPrimary600,
+                    color: AppColors.stateGreen600,
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   B4Bold(
                     text: 'Selected',
-                    color: AppColors.brandPrimary600,
+                    color: AppColors.stateGreen600,
                   ),
                 ],
               ),

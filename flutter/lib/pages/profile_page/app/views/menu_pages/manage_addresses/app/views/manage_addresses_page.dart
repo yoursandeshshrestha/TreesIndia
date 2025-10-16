@@ -191,14 +191,39 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Label (Home, Test, etc.)
-                Text(
-                  address.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.brandNeutral900,
-                  ),
+                // Label (Home, Test, etc.) with Default badge
+                Row(
+                  children: [
+                    Text(
+                      address.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.brandNeutral900,
+                      ),
+                    ),
+                    if (address.isDefault) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.stateGreen100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'DEFAULT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.stateGreen700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
 
