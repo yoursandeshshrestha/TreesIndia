@@ -148,8 +148,6 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
 
         // Show success message
         notificationService.showSuccessSnackBar(response.message);
-
-
       } else {
         state = state.copyWith(
           state: LoginState.error,
@@ -229,7 +227,7 @@ class LoginNotifier extends StateNotifier<LoginStateModel>
         // Use the new login method to save both auth and profile data separately
         await ref.read(authProvider.notifier).login(completeUserModel);
         debugPrint('Complete user profile saved to local storage successfully');
-        
+
         // Re-trigger FCM registration now that user is authenticated
         try {
           await PushNotificationService.retriggerRegistration(ref);

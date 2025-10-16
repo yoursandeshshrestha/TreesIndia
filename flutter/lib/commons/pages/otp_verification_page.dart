@@ -99,18 +99,6 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
     // Listen to auth state changes
     ref.listen<LoginStateModel>(loginProvider, (previous, current) {
-      // Only show error if it's different from the previous error to prevent loops
-      if (current.errorMessage != null &&
-          current.errorMessage != previous?.errorMessage) {
-        _showSnackBar(current.errorMessage!, true);
-        // Use addPostFrameCallback to avoid triggering during build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ref.read(loginProvider.notifier).clearMessages();
-          }
-        });
-      }
-
       if (current.state == LoginState.authenticationSuccess) {
         _showSnackBar(
             current.successMessage ?? 'OTP verified successfully!', false);
@@ -175,21 +163,21 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
               const SizedBox(height: AppSpacing.sm),
 
-              // Resend OTP
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  B3Regular(
-                    text: "Didn't receive the code? ",
-                    color: AppColors.brandNeutral600,
-                  ),
-                  TextButtonWidget(
-                    label: 'Resend',
-                    labelColor: AppColors.brandPrimary600,
-                    onPressed: authState.isLoading ? null : _resendOtp,
-                  ),
-                ],
-              ),
+              // // Resend OTP
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     B3Regular(
+              //       text: "Didn't receive the code? ",
+              //       color: AppColors.brandNeutral600,
+              //     ),
+              //     TextButtonWidget(
+              //       label: 'Resend',
+              //       labelColor: AppColors.brandPrimary600,
+              //       onPressed: authState.isLoading ? null : _resendOtp,
+              //     ),
+              //   ],
+              // ),
 
               const Spacer(),
 
