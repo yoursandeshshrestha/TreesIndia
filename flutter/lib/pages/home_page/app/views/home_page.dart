@@ -514,19 +514,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                         const SizedBox(height: AppSpacing.xl),
 
-                        // Popular Categories Section
-                        PopularCategoriesWidget(
-                          onSeeAllTap: () {
-                            // Handle "See all" tap - navigate to categories page
-                            context.push('/services');
-                          },
-                          onCategoryTap: () {
-                            // Handle category tap - navigate to specific category
-                            print('Category tapped');
-                          },
-                        ),
+                        //TODO: Listed properties in {location.city}
 
-                        const SizedBox(height: AppSpacing.xl),
+                        // const SizedBox(height: AppSpacing.xl),
+
+                        //TODO: Listed Rentals in {location.city}
+
+                        // const SizedBox(height: AppSpacing.xl),
                       ],
                     ),
                   ),

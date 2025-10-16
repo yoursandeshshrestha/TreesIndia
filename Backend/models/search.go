@@ -41,7 +41,9 @@ type SearchResult struct {
 	Name            string    `json:"name"`
 	Slug            string    `json:"slug"`
 	Description     string    `json:"description"`
+	CategoryID      uint      `json:"category_id"`
 	Category        string    `json:"category"`
+	SubcategoryID   uint      `json:"subcategory_id"`
 	Subcategory     string    `json:"subcategory"`
 	PriceType       string    `json:"price_type"`
 	Price           *float64  `json:"price"`
