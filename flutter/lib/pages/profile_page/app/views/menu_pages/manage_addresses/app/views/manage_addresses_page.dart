@@ -8,6 +8,7 @@ import 'package:trees_india/commons/components/text/app/views/custom_text_librar
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/providers/address_providers.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/viewmodels/address_state.dart';
@@ -33,7 +34,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
   @override
   Widget build(BuildContext context) {
     final addressState = ref.watch(addressNotifierProvider);
-        final isConnected = ref.watch(connectivityNotifierProvider);
+    final isConnected = ref.watch(connectivityNotifierProvider);
     if (!isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(notificationServiceProvider).showOfflineMessage(
@@ -224,7 +225,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 },
                 icon: const Icon(
                   Icons.edit_outlined,
-                  color: Color.fromARGB(255, 206, 205, 205),
+                  color: AppColors.stateGreen900,
                 ),
                 constraints: const BoxConstraints(
                   minWidth: 24,
@@ -233,12 +234,16 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               ),
               // Delete button
               IconButton(
-                onPressed: () {
-                  _deleteAddress(address.id);
-                },
-                icon: const Icon(
+                onPressed: address.isDefault
+                    ? null
+                    : () {
+                        _deleteAddress(address.id);
+                      },
+                icon: Icon(
                   Icons.delete_outline,
-                  color: Color.fromARGB(255, 206, 205, 205),
+                  color: address.isDefault
+                      ? AppColors.brandNeutral300
+                      : AppColors.stateRed700,
                 ),
                 constraints: const BoxConstraints(
                   minWidth: 24,
@@ -369,6 +374,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     final TextEditingController cityController = TextEditingController();
     final TextEditingController stateController = TextEditingController();
     final TextEditingController pincodeController = TextEditingController();
+    final TextEditingController houseNumberController = TextEditingController();
+    final TextEditingController landmarkController = TextEditingController();
+    bool isLoadingLocation = false;
+    double? fetchedLatitude;
+    double? fetchedLongitude;
 
     openCustomBottomSheet(
       context: context,
@@ -393,6 +403,100 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     color: AppColors.brandNeutral600,
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Use Current Location Button
+              Consumer(
+                builder: (context, ref, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoadingLocation
+                          ? null
+                          : () async {
+                              setState(() {
+                                isLoadingLocation = true;
+                              });
+
+                              try {
+                                final locationService =
+                                    ref.read(locationOnboardingServiceProvider);
+                                final location =
+                                    await locationService.getCurrentLocation();
+
+                                if (context.mounted) {
+                                  setState(() {
+                                    cityController.text = location.city ?? '';
+                                    stateController.text = location.state ?? '';
+                                    pincodeController.text =
+                                        location.postalCode ?? '';
+                                    addressController.text = location.address;
+                                    fetchedLatitude = location.latitude;
+                                    fetchedLongitude = location.longitude;
+                                    isLoadingLocation = false;
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SuccessSnackbarWidget(
+                                      message: 'Location fetched successfully!',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  setState(() {
+                                    isLoadingLocation = false;
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    ErrorSnackbarWidget(
+                                      message:
+                                          'Failed to get location: ${e.toString()}',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                              }
+                            },
+                      icon: isLoadingLocation
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF055c3a)),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.my_location,
+                              size: 18,
+                            ),
+                      label: Text(
+                        isLoadingLocation
+                            ? 'Fetching location...'
+                            : 'Use Current Location',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF055c3a),
+                        side: const BorderSide(
+                          color: Color(0xFF055c3a),
+                          width: 1,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -478,6 +582,55 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Enter your complete address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // House/Flat Number and Landmark Row
+              TextField(
+                controller: houseNumberController,
+                decoration: InputDecoration(
+                  hintText: 'House/Flat Number',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              TextField(
+                controller: landmarkController,
+                decoration: InputDecoration(
+                  hintText: 'Landmark',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(
@@ -680,10 +833,15 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                     state: stateController.text,
                                     country: 'India', // Default country
                                     postalCode: pincodeController.text,
-                                    latitude:
-                                        0.0, // Default latitude - you can get from location service
-                                    longitude:
-                                        0.0, // Default longitude - you can get from location service
+                                    latitude: fetchedLatitude ?? 0.0,
+                                    longitude: fetchedLongitude ?? 0.0,
+                                    houseNumber:
+                                        houseNumberController.text.isNotEmpty
+                                            ? houseNumberController.text
+                                            : null,
+                                    landmark: landmarkController.text.isNotEmpty
+                                        ? landmarkController.text
+                                        : null,
                                     isDefault: false, // Default to false
                                   );
 
@@ -777,12 +935,25 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     );
   }
 
-  void _showEditAddressBottomSheet(BuildContext context, AddressEntity address) {
-    final TextEditingController nameController = TextEditingController(text: address.name);
-    final TextEditingController addressController = TextEditingController(text: address.address);
-    final TextEditingController cityController = TextEditingController(text: address.city);
-    final TextEditingController stateController = TextEditingController(text: address.state);
-    final TextEditingController pincodeController = TextEditingController(text: address.postalCode);
+  void _showEditAddressBottomSheet(
+      BuildContext context, AddressEntity address) {
+    final TextEditingController nameController =
+        TextEditingController(text: address.name);
+    final TextEditingController addressController =
+        TextEditingController(text: address.address);
+    final TextEditingController cityController =
+        TextEditingController(text: address.city);
+    final TextEditingController stateController =
+        TextEditingController(text: address.state);
+    final TextEditingController pincodeController =
+        TextEditingController(text: address.postalCode);
+    final TextEditingController houseNumberController =
+        TextEditingController(text: address.houseNumber ?? '');
+    final TextEditingController landmarkController =
+        TextEditingController(text: address.landmark ?? '');
+    bool isLoadingLocation = false;
+    double? fetchedLatitude;
+    double? fetchedLongitude;
 
     openCustomBottomSheet(
       context: context,
@@ -807,6 +978,100 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     color: AppColors.brandNeutral600,
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Use Current Location Button
+              Consumer(
+                builder: (context, ref, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoadingLocation
+                          ? null
+                          : () async {
+                              setState(() {
+                                isLoadingLocation = true;
+                              });
+
+                              try {
+                                final locationService =
+                                    ref.read(locationOnboardingServiceProvider);
+                                final location =
+                                    await locationService.getCurrentLocation();
+
+                                if (context.mounted) {
+                                  setState(() {
+                                    cityController.text = location.city ?? '';
+                                    stateController.text = location.state ?? '';
+                                    pincodeController.text =
+                                        location.postalCode ?? '';
+                                    addressController.text = location.address;
+                                    fetchedLatitude = location.latitude;
+                                    fetchedLongitude = location.longitude;
+                                    isLoadingLocation = false;
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SuccessSnackbarWidget(
+                                      message: 'Location fetched successfully!',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  setState(() {
+                                    isLoadingLocation = false;
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    ErrorSnackbarWidget(
+                                      message:
+                                          'Failed to get location: ${e.toString()}',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                              }
+                            },
+                      icon: isLoadingLocation
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF055c3a)),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.my_location,
+                              size: 18,
+                            ),
+                      label: Text(
+                        isLoadingLocation
+                            ? 'Fetching location...'
+                            : 'Use Current Location',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF055c3a),
+                        side: const BorderSide(
+                          color: Color(0xFF055c3a),
+                          width: 1,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -892,6 +1157,56 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Enter your complete address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // House/Flat Number
+              TextField(
+                controller: houseNumberController,
+                decoration: InputDecoration(
+                  hintText: 'House/Flat Number',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: AppColors.brandNeutral200, width: 1),
+                  ),
+                ),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Landmark
+              TextField(
+                controller: landmarkController,
+                decoration: InputDecoration(
+                  hintText: 'Landmark',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(
@@ -1095,10 +1410,17 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                     state: stateController.text,
                                     country: address.country,
                                     postalCode: pincodeController.text,
-                                    latitude: address.latitude,
-                                    longitude: address.longitude,
-                                    landmark: address.landmark,
-                                    houseNumber: address.houseNumber,
+                                    latitude:
+                                        fetchedLatitude ?? address.latitude,
+                                    longitude:
+                                        fetchedLongitude ?? address.longitude,
+                                    houseNumber:
+                                        houseNumberController.text.isNotEmpty
+                                            ? houseNumberController.text
+                                            : null,
+                                    landmark: landmarkController.text.isNotEmpty
+                                        ? landmarkController.text
+                                        : null,
                                     isDefault: address.isDefault,
                                   );
 
@@ -1114,7 +1436,8 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SuccessSnackbarWidget(
-                                        message: 'Address updated successfully!',
+                                        message:
+                                            'Address updated successfully!',
                                       ).createSnackBar(),
                                     );
                                   }

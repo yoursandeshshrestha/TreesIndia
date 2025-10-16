@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -43,24 +44,11 @@ class _MySubscriptionPageState extends ConsumerState<MySubscriptionPage> {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        title: const Text(
-          'My Subscription',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.brandNeutral900,
-          ),
-        ),
+      appBar: const CustomAppBar(
+        title: 'My Subscription',
         backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.brandNeutral600,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        iconColor: AppColors.brandNeutral800,
+        titleColor: AppColors.brandNeutral800,
       ),
       body: Consumer(
         builder: (context, ref, child) {

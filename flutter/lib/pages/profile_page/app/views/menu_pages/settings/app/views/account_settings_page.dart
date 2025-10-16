@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/presenters/providers/user_settings_provider.dart';
 import 'package:trees_india/commons/presenters/viewmodels/user_settings_viewmodel/user_settings_notifier.dart';
@@ -41,15 +43,12 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
         widget.onBack();
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: widget.onBack,
-          ),
-          title: const Text('Account'),
+        appBar: CustomAppBar(
+          title: 'Account',
+          backgroundColor: AppColors.white,
+          iconColor: AppColors.brandNeutral800,
+          titleColor: AppColors.brandNeutral800,
+          onBackPressed: widget.onBack,
         ),
         backgroundColor: Colors.grey[50],
         body: Padding(
