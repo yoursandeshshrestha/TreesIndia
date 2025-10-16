@@ -4,12 +4,16 @@ import 'package:trees_india/commons/presenters/providers/error_handler_provider.
 import '../../../../commons/presenters/providers/dio_provider.dart';
 import '../../data/datasources/category_remote_datasource.dart';
 import '../../data/datasources/subcategory_remote_datasource.dart';
+import '../../data/datasources/promotion_banner_remote_datasource.dart';
 import '../../data/repositories/category_repository_impl.dart';
 import '../../data/repositories/subcategory_repository_impl.dart';
+import '../../data/repositories/promotion_banner_repository_impl.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/subcategory_repository.dart';
+import '../../domain/repositories/promotion_banner_repository.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/get_subcategories_usecase.dart';
+import '../../domain/usecases/get_promotion_banners_usecase.dart';
 import '../../../services_page/domain/usecases/get_search_suggestions_usecase.dart';
 import '../../../services_page/domain/usecases/get_popular_services_usecase.dart';
 import '../../../services_page/app/providers/service_providers.dart';
@@ -39,6 +43,16 @@ final subcategoryRemoteDataSourceProvider =
   );
 });
 
+final promotionBannerRemoteDataSourceProvider =
+    Provider<PromotionBannerRemoteDataSource>((ref) {
+  final dioClient = ref.read(dioClientProvider);
+  final errorHandler = ref.read(errorHandlerProvider);
+  return PromotionBannerRemoteDataSourceImpl(
+    dioClient: dioClient,
+    errorHandler: errorHandler,
+  );
+});
+
 // Repository Providers
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   final remoteDataSource = ref.read(categoryRemoteDataSourceProvider);
@@ -48,6 +62,12 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
 final subcategoryRepositoryProvider = Provider<SubcategoryRepository>((ref) {
   final remoteDataSource = ref.read(subcategoryRemoteDataSourceProvider);
   return SubcategoryRepositoryImpl(remoteDataSource: remoteDataSource);
+});
+
+final promotionBannerRepositoryProvider =
+    Provider<PromotionBannerRepository>((ref) {
+  final remoteDataSource = ref.read(promotionBannerRemoteDataSourceProvider);
+  return PromotionBannerRepositoryImpl(remoteDataSource: remoteDataSource);
 });
 
 // Use Case Providers
@@ -81,6 +101,12 @@ final getPropertiesUseCaseProviderForHome =
   return GetPropertiesUsecase(repository);
 });
 
+final getPromotionBannersUseCaseProvider =
+    Provider<GetPromotionBannersUseCase>((ref) {
+  final repository = ref.read(promotionBannerRepositoryProvider);
+  return GetPromotionBannersUseCase(repository);
+});
+
 // Main Home Page State Notifier Provider
 final homePageNotifierProvider =
     StateNotifierProvider<HomePageNotifier, HomePageState>((ref) {
@@ -90,6 +116,8 @@ final homePageNotifierProvider =
       ref.read(getSearchSuggestionsUseCaseProvider);
   final getPopularServicesUseCase = ref.read(getPopularServicesUseCaseProvider);
   final getPropertiesUseCase = ref.read(getPropertiesUseCaseProviderForHome);
+  final getPromotionBannersUseCase =
+      ref.read(getPromotionBannersUseCaseProvider);
 
   return HomePageNotifier(
     getCategoriesUseCase: getCategoriesUseCase,
@@ -97,5 +125,6 @@ final homePageNotifierProvider =
     getSearchSuggestionsUseCase: getSearchSuggestionsUseCase,
     getPopularServicesUseCase: getPopularServicesUseCase,
     getPropertiesUsecase: getPropertiesUseCase,
+    getPromotionBannersUseCase: getPromotionBannersUseCase,
   );
 });

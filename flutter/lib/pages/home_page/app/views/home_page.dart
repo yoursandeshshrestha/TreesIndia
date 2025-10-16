@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
@@ -11,24 +12,23 @@ import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
-import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+
+import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 import '../../../rental_and_properties/app/providers/property_providers.dart';
+import '../../../rental_and_properties/app/views/widgets/property_grid_widget.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
-import '../providers/subcategory_providers.dart';
 import '../providers/home_page_providers.dart';
-import '../../../services_page/app/providers/service_providers.dart';
+import '../providers/subcategory_providers.dart';
 import '../viewmodels/subcategory_state.dart';
+import 'widgets/app_header_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
-import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
 import 'widgets/subscription_lock_modal.dart';
-import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
-import '../../../rental_and_properties/app/views/widgets/property_grid_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -47,9 +47,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
     });
-    // Load popular services and properties when the page initializes
+    // Load popular services, properties, and banners when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+      ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
       _loadProperties();
     });
@@ -195,14 +196,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   subcategory: subcategory,
                                   onTap: () {
                                     Navigator.of(context).pop();
-                                    // Set category and subcategory in services page state
-                                    ref
-                                        .read(serviceNotifierProvider.notifier)
-                                        .setCategoryAndSubcategory(
-                                            categoryEntity, subcategory);
                                     // Navigate to services page
                                     context.push(
-                                        '/services/${categoryEntity.id}/${subcategory.id}');
+                                        '/services?category=${categoryEntity.id}&subcategory=${subcategory.id}');
                                   },
                                 );
                               },
@@ -451,41 +447,62 @@ class _HomePageState extends ConsumerState<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Banner Section
-                        Column(
-                          children: [
-                            // Top divider
-                            Container(
-                              height: 8,
-                              color: const Color(0xFFF5F5F5),
-                            ),
-                            // Banner with white background
-                            Container(
-                              color: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.lg),
-                              child: const SimpleBannerWidget(
-                                items: [
-                                  BannerItem(
-                                    id: "1",
-                                    image: "assets/images/banner_one.png",
-                                  ),
-                                  BannerItem(
-                                    id: "2",
-                                    image: "assets/images/banner_two.png",
-                                  ),
-                                  BannerItem(
-                                    id: "3",
-                                    image: "assets/images/banner_three.png",
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Bottom divider
-                            Container(
-                              height: 8,
-                              color: const Color(0xFFF5F5F5),
-                            ),
-                          ],
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+
+                            // Filter banners: only show active banners with non-empty images
+                            final activeBanners = homePageState.promotionBanners
+                                .where((banner) =>
+                                    banner.isActive && banner.image.isNotEmpty)
+                                .map((banner) => BannerItem(
+                                      id: banner.id.toString(),
+                                      image: banner.image,
+                                      link: banner.link,
+                                      isNetworkImage: true,
+                                    ))
+                                .toList();
+
+                            // Only show banner section if there are active banners
+                            if (activeBanners.isEmpty &&
+                                !homePageState.isLoadingPromotionBanners) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: [
+                                // Top divider
+                                Container(
+                                  height: 8,
+                                  color: const Color(0xFFF5F5F5),
+                                ),
+                                // Banner with white background
+                                Container(
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.lg),
+                                  child: homePageState.isLoadingPromotionBanners
+                                      ? const SizedBox(
+                                          height: 160,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              color: AppColors.stateGreen600,
+                                            ),
+                                          ),
+                                        )
+                                      : SimpleBannerWidget(
+                                          items: activeBanners,
+                                        ),
+                                ),
+                                // Bottom divider
+                                Container(
+                                  height: 8,
+                                  color: const Color(0xFFF5F5F5),
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: AppSpacing.xl),

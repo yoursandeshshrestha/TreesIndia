@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/get_subcategories_usecase.dart';
+import '../../domain/usecases/get_promotion_banners_usecase.dart';
 import '../../../services_page/domain/usecases/get_search_suggestions_usecase.dart';
 import '../../../services_page/domain/usecases/get_popular_services_usecase.dart';
 import '../../../rental_and_properties/domain/usecases/get_properties_usecase.dart';
@@ -13,6 +14,7 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
   final GetSearchSuggestionsUseCase getSearchSuggestionsUseCase;
   final GetPopularServicesUseCase getPopularServicesUseCase;
   final GetPropertiesUsecase getPropertiesUsecase;
+  final GetPromotionBannersUseCase getPromotionBannersUseCase;
 
   HomePageNotifier({
     required this.getCategoriesUseCase,
@@ -20,6 +22,7 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
     required this.getSearchSuggestionsUseCase,
     required this.getPopularServicesUseCase,
     required this.getPropertiesUsecase,
+    required this.getPromotionBannersUseCase,
   }) : super(const HomePageState());
 
   Future<void> loadCategories() async {
@@ -151,6 +154,23 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
     } catch (error) {
       this.state = this.state.copyWith(
         isLoadingRentProperties: false,
+        errorMessage: error.toString(),
+      );
+    }
+  }
+
+  Future<void> loadPromotionBanners() async {
+    state = state.copyWith(isLoadingPromotionBanners: true);
+
+    try {
+      final banners = await getPromotionBannersUseCase();
+      state = state.copyWith(
+        isLoadingPromotionBanners: false,
+        promotionBanners: banners,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isLoadingPromotionBanners: false,
         errorMessage: error.toString(),
       );
     }

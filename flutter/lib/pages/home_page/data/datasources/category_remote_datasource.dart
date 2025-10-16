@@ -4,9 +4,12 @@ import '../../../../commons/utils/error_handler.dart';
 import '../../../../commons/utils/services/dio_client.dart';
 import '../models/category_model.dart';
 import '../models/category_response_model.dart';
+import '../models/category_detail_model.dart';
+import '../models/category_detail_response_model.dart';
 
 abstract class CategoryRemoteDataSource {
   Future<List<CategoryModel>> getCategories();
+  Future<CategoryDetailModel> getCategoryById(int categoryId);
 }
 
 class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
@@ -41,6 +44,32 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
         errorHandler.handleGenericError(e);
       }
       throw Exception('Could not fetch categories. Please try again.');
+    }
+  }
+
+  @override
+  Future<CategoryDetailModel> getCategoryById(int categoryId) async {
+    try {
+      final url = ApiEndpoints.categoryById.path.replaceAll('{categoryId}', categoryId.toString());
+      final response = await dioClient.dio.get(url);
+
+      if (response.statusCode == 200) {
+        final categoryDetailResponse = CategoryDetailResponseModel.fromJson(response.data);
+        if (categoryDetailResponse.success) {
+          return categoryDetailResponse.data;
+        } else {
+          throw Exception(categoryDetailResponse.message);
+        }
+      } else {
+        throw Exception('Failed to fetch category details. Please try again.');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        errorHandler.handleNetworkError(e);
+      } else {
+        errorHandler.handleGenericError(e);
+      }
+      throw Exception('Could not fetch category details. Please try again.');
     }
   }
 }

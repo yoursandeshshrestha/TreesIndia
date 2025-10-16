@@ -87,8 +87,6 @@ class PopularServicesWidget extends ConsumerWidget {
                                 price: service.price != null
                                     ? '₹${service.price}'
                                     : 'Inquiry',
-                                rating: '4.79',
-                                reviewCount: '116K',
                               ),
                               onTap: () {
                                 context.push(

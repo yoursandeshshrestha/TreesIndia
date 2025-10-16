@@ -369,15 +369,17 @@ class AppRouter {
               builder: (context, state) => const AboutTreesIndiaPage(),
             ),
             GoRoute(
-              path: '/services/:categoryId/:subcategoryId',
+              path: '/services',
+              // path: '/services?:categoryId/:subcategoryId',
               name: 'ServicesPage',
               builder: (context, state) {
-                final categoryId = state.pathParameters['categoryId']!;
-                final subcategoryId = state.pathParameters['subcategoryId']!;
+                final categoryId = state.uri.queryParameters['category'];
+                final subcategoryId = state.uri.queryParameters['subcategory'];
                 return ServicesPage(
                   categoryId: categoryId,
                   subcategoryId: subcategoryId,
                 );
+                // return const ServicesPage();
               },
             ),
             GoRoute(

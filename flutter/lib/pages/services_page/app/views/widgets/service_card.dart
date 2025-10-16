@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../domain/entities/service_detail_entity.dart';
 import '../../../../booking_page/app/providers/booking_providers.dart';
@@ -20,7 +21,8 @@ class ServiceCard extends ConsumerWidget {
     final bookingState = ref.watch(bookingNotifierProvider);
     return GestureDetector(
       onTap: onTap ?? () {},
-      child: SizedBox(
+      child: Container(
+        color: Colors.transparent,
         width: 160,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,14 +94,8 @@ class ServiceCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
-                  Text(
-                    service.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                      height: 1.2,
-                    ),
+                  H3Bold(
+                    text: service.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -108,41 +104,37 @@ class ServiceCard extends ConsumerWidget {
 
                   // Price Type Badge
                   service.priceType == 'inquiry'
-                      ? const Text(
-                          'Inquiry Based',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.brandPrimary600,
-                          ),
+                      ? B3Regular(
+                          text: 'Inquiry Based',
+                          color: AppColors.stateGreen600,
                         )
-                      : const Text(
-                          'Fixed Price',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.brandPrimary600,
-                          ),
+                      : B3Regular(
+                          text: 'Fixed Price',
+                          color: AppColors.stateGreen600,
                         ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   // Price
-                  Text(
-                    service.priceType == 'fixed'
+                  B2Regular(
+                    text: service.priceType == 'fixed'
                         ? '₹${service.price}'
                         : 'Inquiry Based',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
                   ),
                   const SizedBox(height: 8),
 
+                  B3Regular(
+                    text: service.description,
+                    color: AppColors.brandNeutral600,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 16),
                   // Book Now Button
                   SizedBox(
                     width: double.infinity,
-                    height: 32,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: () => _navigateToBookingPage(context),
                       style: ElevatedButton.styleFrom(

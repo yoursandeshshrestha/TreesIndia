@@ -6,6 +6,7 @@ import '../../data/datasources/category_remote_datasource.dart';
 import '../../data/repositories/category_repository_impl.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
+import '../../domain/usecases/get_category_by_id_usecase.dart';
 import '../viewmodels/category_notifier.dart';
 import '../viewmodels/category_state.dart';
 
@@ -26,10 +27,15 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   return CategoryRepositoryImpl(remoteDataSource: remoteDataSource);
 });
 
-// Use Case Provider
+// Use Case Providers
 final getCategoriesUseCaseProvider = Provider<GetCategoriesUseCase>((ref) {
   final repository = ref.read(categoryRepositoryProvider);
   return GetCategoriesUseCase(repository);
+});
+
+final getCategoryByIdUseCaseProvider = Provider<GetCategoryByIdUseCase>((ref) {
+  final repository = ref.read(categoryRepositoryProvider);
+  return GetCategoryByIdUseCase(repository);
 });
 
 // State Notifier Provider

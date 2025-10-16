@@ -14,8 +14,8 @@ class ServiceRepositoryImpl implements ServiceRepository {
   Future<ServiceResponseEntity> getServices({
     required String city,
     required String state,
-    required int categoryId,
-    required int subcategoryId,
+    int? categoryId,
+    int? subcategoryId,
     int page = 1,
     int limit = 10,
   }) async {

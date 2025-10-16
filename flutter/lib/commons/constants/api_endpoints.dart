@@ -12,11 +12,13 @@ class ApiEndpoints {
     changePassword,
     locationAutocomplete,
     categories,
+    categoryById,
     subcategories,
     services,
     searchServices,
     searchSuggestions,
     popularServices,
+    promotionBanners,
     walletSummary,
     walletTransactions,
     walletTransactionsByType,
@@ -135,6 +137,11 @@ class ApiEndpoints {
     requiresAuth: false,
   );
 
+  static ApiEndpoint categoryById = ApiEndpoint(
+    path: '/categories/{categoryId}',
+    requiresAuth: false,
+  );
+
   static ApiEndpoint subcategories = ApiEndpoint(
     path: '/subcategories/category/{categoryId}',
     requiresAuth: false,
@@ -157,6 +164,11 @@ class ApiEndpoints {
 
   static ApiEndpoint popularServices = ApiEndpoint(
     path: '/services/popular',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint promotionBanners = ApiEndpoint(
+    path: '/promotion-banners',
     requiresAuth: false,
   );
 

@@ -1,41 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../commons/presenters/providers/location_onboarding_provider.dart';
-import '../../../home_page/domain/entities/category_entity.dart';
-import '../../../home_page/domain/entities/subcategory_entity.dart';
+import '../../../home_page/domain/usecases/get_category_by_id_usecase.dart';
 import '../../domain/usecases/get_services_usecase.dart';
 import 'service_state.dart';
 
 class ServiceNotifier extends StateNotifier<ServiceState> {
   final GetServicesUseCase getServicesUseCase;
+  final GetCategoryByIdUseCase getCategoryByIdUseCase;
   final Ref ref;
 
   ServiceNotifier({
     required this.getServicesUseCase,
+    required this.getCategoryByIdUseCase,
     required this.ref,
   }) : super(const ServiceState());
 
-  void setCategoryAndSubcategory(
-    CategoryEntity category,
-    SubcategoryEntity subcategory,
+  void setCategoryAndSubcategoryIds(
+    int? categoryId,
+    int? subcategoryId,
   ) {
     state = state.copyWith(
-      currentCategory: category,
-      currentSubcategory: subcategory,
+      currentCategoryId: categoryId,
+      currentSubcategoryId: subcategoryId,
     );
   }
 
   Future<void> initializeAndLoadServices() async {
-    if (state.currentCategory == null || state.currentSubcategory == null) {
-      state = state.copyWith(
-        status: ServiceStatus.failure,
-        errorMessage: 'Category or subcategory not set',
-      );
-      return;
-    }
-
     // Get user location
     await _loadUserLocation();
-
 
     if (state.userCity == null && state.userState == null) {
       state = state.copyWith(
@@ -45,8 +38,41 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
       return;
     }
 
+    // Fetch category details if both IDs are provided
+    await _fetchCategoryDetails();
+
     // Load services
     await _loadServices(refresh: true);
+  }
+
+  Future<void> _fetchCategoryDetails() async {
+    if (state.currentCategoryId != null &&
+        state.currentCategoryId != 0 &&
+        state.currentSubcategoryId != null &&
+        state.currentSubcategoryId != 0) {
+      try {
+        final categoryDetail =
+            await getCategoryByIdUseCase.call(state.currentCategoryId!);
+
+        if (categoryDetail.subcategories.isEmpty) {
+          return;
+        }
+
+        // Find matching subcategory
+        final matchingSubcategory = categoryDetail.subcategories.firstWhere(
+          (sub) => sub.id == state.currentSubcategoryId,
+          orElse: () => categoryDetail.subcategories.first,
+        );
+
+        state = state.copyWith(
+          currentCategory: categoryDetail.category,
+          currentSubcategory: matchingSubcategory,
+        );
+      } catch (e) {
+        // Log error but don't fail the entire flow
+        print('Error fetching category details: $e');
+      }
+    }
   }
 
   Future<void> _loadUserLocation() async {
@@ -73,11 +99,13 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
     try {
       final currentPage = refresh ? 1 : (state.pagination?.page ?? 0) + 1;
 
-      final response = await getServicesUseCase(
+      final response = await getServicesUseCase.call(
         city: state.userCity ?? '',
         state: state.userState ?? '',
-        categoryId: state.currentCategory!.id,
-        subcategoryId: state.currentSubcategory!.id,
+        categoryId:
+            state.currentCategoryId != 0 ? state.currentCategoryId : null,
+        subcategoryId:
+            state.currentSubcategoryId != 0 ? state.currentSubcategoryId : null,
         page: currentPage,
         limit: 10,
       );

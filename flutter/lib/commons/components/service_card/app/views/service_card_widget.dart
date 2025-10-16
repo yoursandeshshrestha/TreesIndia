@@ -10,8 +10,6 @@ class ServiceCardProps {
   final ServiceType type;
   final String duration;
   final String price;
-  final String rating;
-  final String reviewCount;
 
   const ServiceCardProps({
     required this.image,
@@ -19,8 +17,6 @@ class ServiceCardProps {
     this.type = ServiceType.fixed,
     this.duration = '2-3 hours',
     this.price = '₹299',
-    this.rating = '4.79',
-    this.reviewCount = '116K',
   });
 }
 
@@ -95,27 +91,6 @@ class ServiceCardWidget extends StatelessWidget {
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Rating
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star,
-                        size: 16,
-                        color: Colors.black,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${props.rating} (${props.reviewCount})',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
                   ),
                   const SizedBox(height: 8),
 
