@@ -51,8 +51,14 @@ class ServiceRepositoryImpl implements ServiceRepository {
   }
 
   @override
-  Future<PopularServicesResponseEntity> getPopularServices() async {
-    final responseModel = await remoteDataSource.getPopularServices();
+  Future<PopularServicesResponseEntity> getPopularServices({
+    String? city,
+    String? state,
+  }) async {
+    final responseModel = await remoteDataSource.getPopularServices(
+      city: city,
+      state: state,
+    );
     return responseModel.toEntity();
   }
 }

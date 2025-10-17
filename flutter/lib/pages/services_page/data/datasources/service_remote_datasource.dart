@@ -25,7 +25,10 @@ abstract class ServiceRemoteDataSource {
 
   Future<SearchSuggestionsResponseModel> getSearchSuggestions();
 
-  Future<PopularServicesResponseModel> getPopularServices();
+  Future<PopularServicesResponseModel> getPopularServices({
+    String? city,
+    String? state,
+  });
 }
 
 class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
@@ -150,10 +153,26 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<PopularServicesResponseModel> getPopularServices() async {
+  Future<PopularServicesResponseModel> getPopularServices({
+    String? city,
+    String? state,
+  }) async {
     try {
       final url = ApiEndpoints.popularServices.path;
-      final response = await dioClient.dio.get(url);
+      var queryParameters = <String, dynamic>{};
+
+      if (city != null) {
+        queryParameters['city'] = city;
+      }
+
+      if (state != null) {
+        queryParameters['state'] = state;
+      }
+
+      final response = await dioClient.dio.get(
+        url,
+        queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
+      );
 
       if (response.statusCode == 200) {
         final apiResponse =

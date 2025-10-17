@@ -18,6 +18,7 @@ import 'package:trees_india/pages/profile_page/app/providers/profile_providers.d
 import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 import '../../../rental_and_properties/app/providers/property_providers.dart';
 import '../../../rental_and_properties/app/views/widgets/property_grid_widget.dart';
+import '../../../rental_and_properties/app/views/widgets/property_card_skeleton.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
@@ -25,6 +26,7 @@ import '../providers/home_page_providers.dart';
 import '../providers/subcategory_providers.dart';
 import '../viewmodels/subcategory_state.dart';
 import 'widgets/app_header_widget.dart';
+import 'widgets/banner_skeleton_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
@@ -49,7 +51,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
     // Load popular services, properties, and banners when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+      _loadPopularServices();
       ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
       _loadProperties();
@@ -77,12 +79,21 @@ class _HomePageState extends ConsumerState<HomePage> {
         setState(() {
           _currentLocation = location;
         });
-        // Reload properties when location changes
+        // Reload popular services and properties when location changes
+        _loadPopularServices();
         _loadProperties();
       }
     } catch (e) {
       debugPrint('Error loading location: $e');
     }
+  }
+
+  void _loadPopularServices() {
+    final notifier = ref.read(homePageNotifierProvider.notifier);
+    final city = _currentLocation?.city;
+    final state = _currentLocation?.state;
+
+    notifier.loadPopularServices(city: city, state: state);
   }
 
   void _loadProperties() {
@@ -483,14 +494,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   padding: const EdgeInsets.symmetric(
                                       vertical: AppSpacing.lg),
                                   child: homePageState.isLoadingPromotionBanners
-                                      ? const SizedBox(
-                                          height: 160,
-                                          child: Center(
-                                            child: CircularProgressIndicator(
-                                              color: AppColors.stateGreen600,
-                                            ),
-                                          ),
-                                        )
+                                      ? const BannerSkeletonWidget()
                                       : SimpleBannerWidget(
                                           items: activeBanners,
                                         ),
@@ -593,12 +597,23 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                                 // Properties List
                                 if (homePageState.isLoadingSaleProperties)
-                                  const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(AppSpacing.xl),
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.stateGreen600,
-                                      ),
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount: 2,
+                                      itemBuilder: (context, index) {
+                                        return Container(
+                                          margin: EdgeInsets.only(
+                                            right: index < 1 ? AppSpacing.md : 0,
+                                          ),
+                                          child: const PropertyCardSkeleton(
+                                            version: 'home',
+                                          ),
+                                        );
+                                      },
                                     ),
                                   )
                                 else if (homePageState.saleProperties.isEmpty)
@@ -702,12 +717,23 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                                 // Properties List
                                 if (homePageState.isLoadingRentProperties)
-                                  const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(AppSpacing.xl),
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.stateGreen600,
-                                      ),
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount: 2,
+                                      itemBuilder: (context, index) {
+                                        return Container(
+                                          margin: EdgeInsets.only(
+                                            right: index < 1 ? AppSpacing.md : 0,
+                                          ),
+                                          child: const PropertyCardSkeleton(
+                                            version: 'home',
+                                          ),
+                                        );
+                                      },
                                     ),
                                   )
                                 else if (homePageState.rentProperties.isEmpty)

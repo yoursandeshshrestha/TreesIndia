@@ -6,7 +6,13 @@ class GetPopularServicesUseCase {
 
   const GetPopularServicesUseCase(this.repository);
 
-  Future<PopularServicesResponseEntity> call() async {
-    return await repository.getPopularServices();
+  Future<PopularServicesResponseEntity> call({
+    String? city,
+    String? state,
+  }) async {
+    return await repository.getPopularServices(
+      city: city,
+      state: state,
+    );
   }
 }

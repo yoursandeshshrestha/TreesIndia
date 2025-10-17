@@ -218,9 +218,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
         // Search results list
         if (searchPageState.searchResults.isNotEmpty) ...[
-          ListView.builder(
+          GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: AppSpacing.md,
+              mainAxisSpacing: AppSpacing.md,
+              childAspectRatio: 0.75,
+            ),
             itemCount: searchPageState.searchResults.length,
             itemBuilder: (context, index) {
               final result = searchPageState.searchResults[index];
@@ -279,12 +285,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               createdAt: result.createdAt,
               updatedAt: result.updatedAt,
               serviceAreas: [],
+              images: result.images,
             ),
           },
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.md),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -300,115 +306,125 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Service name and rating
-              Row(
-                children: [
-                  Expanded(
-                    child: B2Bold(
-                      text: result.name,
-                      color: AppColors.brandNeutral900,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Service image
+            Container(
+              height: 100,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: AppColors.brandNeutral100,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: result.images?.isNotEmpty == true
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        result.images!.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildImagePlaceholder();
+                        },
+                      ),
+                    )
+                  : _buildImagePlaceholder(),
+            ),
+
+            // Service details
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Service name and rating
+                    Row(
+                      children: [
+                        Expanded(
+                          child: B3Bold(
+                            text: result.name,
+                            color: AppColors.brandNeutral900,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (result.rating != null) ...[
+                          const Icon(
+                            Icons.star,
+                            size: 14,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 2),
+                          B4Regular(
+                            text: result.rating!.toStringAsFixed(1),
+                            color: AppColors.brandNeutral700,
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
-                  if (result.rating != null) ...[
-                    const Icon(
-                      Icons.star,
-                      size: 16,
-                      color: Colors.amber,
+
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // Category badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF055c3a).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: B4Regular(
+                        text: result.subcategory,
+                        color: const Color(0xFF055c3a),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    B4Regular(
-                      text: result.rating!.toStringAsFixed(1),
-                      color: AppColors.brandNeutral700,
+
+                    const Spacer(),
+
+                    // Price and duration
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: B4Bold(
+                            text: result.price != null
+                                ? '₹${result.price}'
+                                : 'Inquiry Based',
+                            color: const Color(0xFF055c3a),
+                          ),
+                        ),
+                        if (result.duration != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.access_time,
+                                size: 12,
+                                color: AppColors.brandNeutral500,
+                              ),
+                              const SizedBox(width: 2),
+                              B4Regular(
+                                text: result.duration!,
+                                color: AppColors.brandNeutral600,
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
                   ],
-                ],
+                ),
               ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Category and subcategory
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandNeutral100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: B4Regular(
-                      text: result.category,
-                      color: AppColors.brandNeutral700,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF055c3a).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: B4Regular(
-                      text: result.subcategory,
-                      color: const Color(0xFF055c3a),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Description
-              B3Regular(
-                text: result.description,
-                color: AppColors.brandNeutral600,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Price and duration
-              Row(
-                children: [
-                  if (result.price != null) ...[
-                    B3Bold(
-                      text: '₹${result.price}',
-                      color: const Color(0xFF055c3a),
-                    ),
-                  ] else ...[
-                    B3Bold(
-                      text: 'Inquiry Based',
-                      color: const Color(0xFF055c3a),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (result.duration != null) ...[
-                    const Icon(
-                      Icons.access_time,
-                      size: 16,
-                      color: AppColors.brandNeutral500,
-                    ),
-                    const SizedBox(width: 4),
-                    B4Regular(
-                      text: result.duration!,
-                      color: AppColors.brandNeutral600,
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

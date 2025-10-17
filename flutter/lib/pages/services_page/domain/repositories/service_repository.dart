@@ -21,5 +21,8 @@ abstract class ServiceRepository {
 
   Future<SearchSuggestionsResponseEntity> getSearchSuggestions();
 
-  Future<PopularServicesResponseEntity> getPopularServices();
+  Future<PopularServicesResponseEntity> getPopularServices({
+    String? city,
+    String? state,
+  });
 }

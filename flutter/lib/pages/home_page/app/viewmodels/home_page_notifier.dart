@@ -76,17 +76,20 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
     }
   }
 
-  Future<void> loadPopularServices() async {
-    state = state.copyWith(isLoadingPopularServices: true);
+  Future<void> loadPopularServices({String? city, String? state}) async {
+    this.state = this.state.copyWith(isLoadingPopularServices: true);
 
     try {
-      final response = await getPopularServicesUseCase();
-      state = state.copyWith(
+      final response = await getPopularServicesUseCase.call(
+        city: city,
+        state: state,
+      );
+      this.state = this.state.copyWith(
         isLoadingPopularServices: false,
         popularServices: response.data,
       );
     } catch (error) {
-      state = state.copyWith(
+      this.state = this.state.copyWith(
         isLoadingPopularServices: false,
         errorMessage: error.toString(),
       );
@@ -121,14 +124,14 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
 
       final response = await getPropertiesUsecase(filters);
       this.state = this.state.copyWith(
-        isLoadingSaleProperties: false,
-        saleProperties: response.properties,
-      );
+            isLoadingSaleProperties: false,
+            saleProperties: response.properties,
+          );
     } catch (error) {
       this.state = this.state.copyWith(
-        isLoadingSaleProperties: false,
-        errorMessage: error.toString(),
-      );
+            isLoadingSaleProperties: false,
+            errorMessage: error.toString(),
+          );
     }
   }
 
@@ -148,14 +151,14 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
 
       final response = await getPropertiesUsecase(filters);
       this.state = this.state.copyWith(
-        isLoadingRentProperties: false,
-        rentProperties: response.properties,
-      );
+            isLoadingRentProperties: false,
+            rentProperties: response.properties,
+          );
     } catch (error) {
       this.state = this.state.copyWith(
-        isLoadingRentProperties: false,
-        errorMessage: error.toString(),
-      );
+            isLoadingRentProperties: false,
+            errorMessage: error.toString(),
+          );
     }
   }
 

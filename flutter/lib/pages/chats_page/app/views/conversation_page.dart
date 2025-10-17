@@ -42,7 +42,7 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
 
       if (currentUserId != null) {
         // Load conversations list to get participant names
-        _conversationsNotifier.loadConversations();
+        _conversationsNotifier.loadConversations(refresh: true);
 
         // Load messages for this specific conversation
         ref
