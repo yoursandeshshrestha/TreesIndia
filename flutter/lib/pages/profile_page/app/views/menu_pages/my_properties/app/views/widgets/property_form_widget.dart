@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/theming/text_styles.dart';
 import '../../providers/property_providers.dart';
 import '../../states/property_form_state.dart';
@@ -58,15 +56,7 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   @override
   Widget build(BuildContext context) {
     final propertyFormState = ref.watch(propertyFormNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     return Column(
       children: [

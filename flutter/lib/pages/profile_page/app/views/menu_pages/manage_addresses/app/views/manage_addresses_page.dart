@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
 import 'package:trees_india/commons/theming/text_styles.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
@@ -35,15 +33,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
   @override
   Widget build(BuildContext context) {
     final addressState = ref.watch(addressNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     return Scaffold(
       backgroundColor: AppColors.white,

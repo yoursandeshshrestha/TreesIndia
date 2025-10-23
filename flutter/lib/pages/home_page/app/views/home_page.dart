@@ -4,15 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
+import 'package:trees_india/commons/mixins/connectivity_refresh_mixin.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 
@@ -41,7 +40,7 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> with ConnectivityRefreshMixin {
   LocationEntity? _currentLocation;
 
   @override
@@ -105,6 +104,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     notifier.loadSaleProperties(city: city, state: state);
     notifier.loadRentProperties(city: city, state: state);
+  }
+
+  @override
+  void onConnectivityRestored() {
+    // This is called automatically when connectivity is restored
+    _refreshPageData();
   }
 
   void _refreshPageData() {
@@ -395,27 +400,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isConnected = ref.watch(connectivityNotifierProvider);
-
-    // Listen to connectivity changes to auto-refresh when connection is restored
-    ref.listen<bool>(
-      connectivityNotifierProvider,
-      (previous, current) {
-        // Detect transition from offline to online
-        if (previous == false && current == true) {
-          _refreshPageData();
-        }
-      },
-    );
-
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
     return MainLayoutWidget(
       currentIndex: 0,
       child: Scaffold(

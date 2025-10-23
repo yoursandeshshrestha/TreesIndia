@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/search_page/app/viewmodels/search_page_state.dart';
 import 'package:trees_india/pages/services_page/domain/entities/search_result_entity.dart';
 import 'package:trees_india/pages/services_page/domain/entities/service_detail_entity.dart';
@@ -48,15 +46,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final searchPageState = ref.watch(searchPageNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {

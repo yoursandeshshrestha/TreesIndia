@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'widgets/broker_form_step_indicator.dart';
 import '../providers/broker_application_providers.dart';
@@ -41,15 +39,7 @@ class _BrokerApplicationPageState extends ConsumerState<BrokerApplicationPage> {
   @override
   Widget build(BuildContext context) {
     final brokerApplicationState = ref.watch(brokerApplicationNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     ref.listen<BrokerApplicationState>(
       brokerApplicationNotifierProvider,

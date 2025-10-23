@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/app/app_router.dart';
 import 'package:trees_india/commons/components/backdrop_loader/app/views/backdrop_loader.dart';
+import 'package:trees_india/commons/components/connectivity/connectivity_wrapper.dart';
 import 'package:trees_india/commons/constants/app_constants.dart';
 import 'package:trees_india/commons/presenters/providers/language_provider.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
@@ -143,21 +144,23 @@ class _AppInitializerState extends ConsumerState<AppInitializer>
             '***********************************Current Language: ${(language ?? AppConstants.defaultLanguage).languageCode}');
         debugPrint('Auth state in build: $isAuthenticated');
 
-        return MaterialApp.router(
-          title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          routerConfig: AppRouter(ref).router,
-          scaffoldMessengerKey: notificationService.scaffoldMessengerKey,
-          locale: language?.locale ?? AppConstants.defaultLanguage.locale,
-          // localizationsDelegates: const [
-          //   GlobalMaterialLocalizations.delegate,
-          //   GlobalWidgetsLocalizations.delegate,
-          //   GlobalCupertinoLocalizations.delegate,
-          // ],
-          supportedLocales: AppConstants.supportedLanguages
-              .map((lang) => lang.locale)
-              .toList(),
+        return ConnectivityWrapper(
+          child: MaterialApp.router(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            routerConfig: AppRouter(ref).router,
+            scaffoldMessengerKey: notificationService.scaffoldMessengerKey,
+            locale: language?.locale ?? AppConstants.defaultLanguage.locale,
+            // localizationsDelegates: const [
+            //   GlobalMaterialLocalizations.delegate,
+            //   GlobalWidgetsLocalizations.delegate,
+            //   GlobalCupertinoLocalizations.delegate,
+            // ],
+            supportedLocales: AppConstants.supportedLanguages
+                .map((lang) => lang.locale)
+                .toList(),
+          ),
         );
       },
     );

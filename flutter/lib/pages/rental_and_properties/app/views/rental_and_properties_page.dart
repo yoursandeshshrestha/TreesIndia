@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/commons/mixins/connectivity_refresh_mixin.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
@@ -15,13 +14,23 @@ class RentalAndPropertiesPage extends ConsumerStatefulWidget {
   const RentalAndPropertiesPage({super.key});
 
   @override
-  ConsumerState<RentalAndPropertiesPage> createState() => _RentalAndPropertiesPageState();
+  ConsumerState<RentalAndPropertiesPage> createState() =>
+      _RentalAndPropertiesPageState();
 }
 
-class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPage> {
+class _RentalAndPropertiesPageState
+    extends ConsumerState<RentalAndPropertiesPage>
+    with ConnectivityRefreshMixin {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(propertyNotifierProvider.notifier).loadProperties();
+    });
+  }
+
+  @override
+  void onConnectivityRestored() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(propertyNotifierProvider.notifier).loadProperties();
     });
@@ -57,15 +66,6 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
   @override
   Widget build(BuildContext context) {
     final propertyState = ref.watch(propertyNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
@@ -84,7 +84,8 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
             color: AppColors.brandNeutral900,
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
+            icon:
+                const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -100,11 +101,13 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
               child: PropertyTypeTabsWidget(
                 selectedType: propertyState.filters.listingType,
                 onTypeSelected: (type) {
-                  ref.read(propertyNotifierProvider.notifier).setListingType(type);
+                  ref
+                      .read(propertyNotifierProvider.notifier)
+                      .setListingType(type);
                 },
               ),
             ),
-      
+
             // Trees India Assured Toggle
             Container(
               color: Colors.white,
@@ -129,27 +132,30 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
                   _buildToggleSwitch(
                     propertyState.filters.uploadedByAdmin ?? false,
                     () {
-                      final currentValue = propertyState.filters.uploadedByAdmin ?? false;
-                      ref.read(propertyNotifierProvider.notifier)
+                      final currentValue =
+                          propertyState.filters.uploadedByAdmin ?? false;
+                      ref
+                          .read(propertyNotifierProvider.notifier)
                           .setTreesIndiaAssured(!currentValue ? true : null);
                     },
                   ),
                 ],
               ),
             ),
-      
+
             // Applied Filters
             AppliedFiltersWidget(
               filters: propertyState.filters,
               onRemoveFilter: (filterType, value) {
-                ref.read(propertyNotifierProvider.notifier)
+                ref
+                    .read(propertyNotifierProvider.notifier)
                     .removeFilter(filterType, value);
               },
               onClearAll: () {
                 ref.read(propertyNotifierProvider.notifier).clearAllFilters();
               },
             ),
-      
+
             // Main Content - Properties Grid
             Expanded(
               child: PropertyGridWidget(
@@ -160,14 +166,16 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
                 isEmpty: propertyState.isEmpty,
                 hasMore: propertyState.hasNext,
                 onLoadMore: () {
-                  ref.read(propertyNotifierProvider.notifier).loadMoreProperties();
+                  ref
+                      .read(propertyNotifierProvider.notifier)
+                      .loadMoreProperties();
                 },
                 onRetry: () {
                   ref.read(propertyNotifierProvider.notifier).loadProperties();
                 },
               ),
             ),
-      
+
             // Bottom Bar
             PropertyBottomBarWidget(
               filters: propertyState.filters,
@@ -175,7 +183,9 @@ class _RentalAndPropertiesPageState extends ConsumerState<RentalAndPropertiesPag
                 ref.read(propertyNotifierProvider.notifier).setSortBy(sortType);
               },
               onFiltersChanged: (newFilters) {
-                ref.read(propertyNotifierProvider.notifier).updateFilters(newFilters);
+                ref
+                    .read(propertyNotifierProvider.notifier)
+                    .updateFilters(newFilters);
               },
             ),
           ],

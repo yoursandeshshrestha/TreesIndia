@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
@@ -17,7 +16,6 @@ import 'package:trees_india/commons/components/textfield/app/views/email_textfie
 import 'package:trees_india/commons/components/textfield/app/views/numeric_textfield_widget.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -157,15 +155,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     // final userProfileState = ref.watch(userProfileProvider);
     final profileState = ref.watch(profileProvider);
     // final user = userProfileState.user;
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
 
     // Re-initialize if user data changes and we haven't initialized yet
     if (!_isInitialized) {

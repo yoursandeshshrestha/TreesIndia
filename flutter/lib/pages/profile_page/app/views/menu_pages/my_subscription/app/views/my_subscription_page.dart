@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import '../providers/subscription_providers.dart';
 import '../states/subscription_state.dart';
 import 'widgets/active_subscription_card.dart';
@@ -32,15 +30,7 @@ class _MySubscriptionPageState extends ConsumerState<MySubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     return Scaffold(
       backgroundColor: AppColors.white,
