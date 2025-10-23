@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
 import 'package:trees_india/commons/components/button/app/views/solid_button_widget.dart';
-import 'package:trees_india/commons/components/button/app/views/text_button_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
@@ -12,6 +10,7 @@ import 'package:trees_india/commons/components/textfield/app/views/otp_textfield
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/login_provider.dart';
+import 'package:trees_india/commons/presenters/viewmodels/login_viewmodel/login_state.dart';
 
 class OtpVerificationPage extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -71,11 +70,11 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     }
   }
 
-  void _resendOtp() {
-    // Resend OTP logic would go here
-    // For now, just show a message
-    _showSnackBar('OTP resent successfully', false);
-  }
+  // void _resendOtp() {
+  //   // Resend OTP logic would go here
+  //   // For now, just show a message
+  //   _showSnackBar('OTP resent successfully', false);
+  // }
 
   String _formatPhoneNumber(String phone) {
     // Handle both "+918617662584" and "918617662584" formats

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/project_filters_entity.dart';
 import '../../domain/usecases/get_projects_usecase.dart';
 import 'project_state.dart';
+import '../../../../commons/utils/error_message_helper.dart';
 
 class ProjectNotifier extends StateNotifier<ProjectState> {
   final GetProjectsUsecase getProjectsUsecase;
@@ -45,7 +46,7 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
     } catch (e) {
       state = state.copyWith(
         status: ProjectStatus.failure,
-        errorMessage: 'Failed to load projects: $e',
+        errorMessage: getErrorMessage(e, fallbackMessage: 'Unable to load projects'),
       );
     }
   }

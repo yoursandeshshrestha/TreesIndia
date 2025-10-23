@@ -43,9 +43,8 @@ class SimpleBannerWidget extends StatelessWidget {
 
     // Build the full route with query parameters
     if (queryParams.isNotEmpty) {
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${e.value}')
-          .join('&');
+      final queryString =
+          queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
       context.push('$path?$queryString');
     } else {
       context.push(path);
@@ -136,6 +135,12 @@ class SimpleBannerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     print('SimpleBannerWidget build called with ${items.length} items');
     print('Items: ${items.map((item) => item.image).toList()}');
+
+    // Calculate dynamic dimensions based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bannerWidth = screenWidth * 0.8;
+    final bannerHeight = bannerWidth / 3; // Maintain 2:1 aspect ratio
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
@@ -151,7 +156,7 @@ class SimpleBannerWidget extends StatelessWidget {
           ],
           // Banner Images
           SizedBox(
-            height: 160,
+            height: bannerHeight,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
@@ -160,13 +165,17 @@ class SimpleBannerWidget extends StatelessWidget {
                 return GestureDetector(
                   onTap: () => _handleBannerTap(context, item),
                   child: Container(
-                    width: 320,
-                    height: 160,
+                    width: bannerWidth,
+                    height: bannerHeight,
                     margin: EdgeInsets.only(
                       right: index < items.length - 1 ? 12 : 0,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.brandNeutral200,
+                        width: 1,
+                      ),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),

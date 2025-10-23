@@ -9,6 +9,7 @@ import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
+import 'package:trees_india/commons/theming/text_styles.dart';
 import 'package:trees_india/commons/utils/open_custom_bottom_sheet.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/providers/address_providers.dart';
 import 'package:trees_india/commons/widgets/address_selector/app/viewmodels/address_state.dart';
@@ -525,165 +526,79 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // City
-              TextField(
-                controller: cityController,
-                decoration: InputDecoration(
-                  hintText: 'City',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              // Street Address
+              _buildTextField(
+                controller: addressController,
+                label: 'Street Address',
+                hint: 'Enter complete address',
+                isRequired: true,
+                // onChanged: (value) => _updateLocationDetails(),
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              // City and Pincode
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: pincodeController,
+                      label: 'Pincode',
+                      hint: 'Enter pincode',
+                      isRequired: true,
+                      keyboardType: TextInputType.number,
+                      // onChanged: (value) => _updateLocationDetails(),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: cityController,
+                      label: 'City',
+                      hint: 'Enter city',
+                      isRequired: true,
+                      // onChanged: (value) => _updateLocationDetails(),
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: AppSpacing.md),
 
               // State
-              TextField(
+              _buildTextField(
                 controller: stateController,
-                decoration: InputDecoration(
-                  hintText: 'State',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                label: 'State',
+                hint: 'Enter state',
+                isRequired: true,
+                // onChanged: (value) => _updateLocationDetails(),
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Pincode
-              TextField(
-                controller: pincodeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Pincode',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              _buildTextField(
+                controller: houseNumberController,
+                label: 'House/Flat Number',
+                hint: 'Enter House/Flat Number',
+                isRequired: false,
+                // onChanged: (value) => _updateLocationDetails(),
               ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Full Address
-              TextField(
-                controller: addressController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Enter your complete address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
-              ),
-              const SizedBox(height: AppSpacing.md),
 
               // House/Flat Number and Landmark Row
-              TextField(
-                controller: houseNumberController,
-                decoration: InputDecoration(
-                  hintText: 'House/Flat Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
-              ),
-              const SizedBox(height: AppSpacing.md),
 
-              TextField(
+              const SizedBox(height: AppSpacing.md),
+              _buildTextField(
                 controller: landmarkController,
-                decoration: InputDecoration(
-                  hintText: 'Landmark',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                label: 'Landmark',
+                hint: 'Enter Landmark',
+                isRequired: false,
+                // onChanged: (value) => _updateLocationDetails(),
               ),
+
               const SizedBox(height: AppSpacing.md),
 
               // Address Label
-              const Text(
-                'Address Label',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.brandNeutral700,
-                ),
+              B3Bold(
+                text: 'Address Label',
+                color: AppColors.brandNeutral700,
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -694,7 +609,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          nameController.text = 'Home';
+                          nameController.text == 'Home'
+                              ? nameController.text = ''
+                              : nameController.text = 'Home';
                         });
                       },
                       child: Container(
@@ -731,7 +648,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          nameController.text = 'Work';
+                          nameController.text == 'Work'
+                              ? nameController.text = ''
+                              : nameController.text = 'Work';
                         });
                       },
                       child: Container(
@@ -768,7 +687,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          nameController.text = 'Other';
+                          nameController.text == 'Other'
+                              ? nameController.text = ''
+                              : nameController.text = 'Other';
                         });
                       },
                       child: Container(
@@ -810,22 +731,29 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   controller: nameController,
                   decoration: InputDecoration(
                     hintText: 'Enter custom label',
+                    hintStyle:
+                        TextStyles.b3Medium(color: AppColors.brandNeutral400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                      borderSide:
+                          const BorderSide(color: AppColors.brandNeutral200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppColors.brandNeutral200),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide:
-                          const BorderSide(color: Color(0xFF055c3a), width: 1),
+                          const BorderSide(color: AppColors.stateGreen500),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
                     ),
                   ),
+                  style: TextStyles.b3Medium(color: AppColors.brandNeutral900),
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 ),
               ],
@@ -843,8 +771,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           ? null
                           : () async {
                               // Validate all required fields
-                              if (nameController.text.isNotEmpty &&
-                                  addressController.text.isNotEmpty &&
+                              if (addressController.text.isNotEmpty &&
                                   cityController.text.isNotEmpty &&
                                   stateController.text.isNotEmpty &&
                                   pincodeController.text.isNotEmpty) {
@@ -852,7 +779,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                   // Create address request
                                   final createAddressRequest =
                                       CreateAddressRequestEntity(
-                                    name: nameController.text,
+                                    name: nameController.text.isNotEmpty
+                                        ? nameController.text
+                                        : null,
                                     address: addressController.text,
                                     city: cityController.text,
                                     state: stateController.text,
@@ -876,9 +805,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                       .createAddress(createAddressRequest);
 
                                   // Close the bottom sheet
+                                  if (!context.mounted) return;
                                   Navigator.pop(context);
 
                                   // Show success message
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SuccessSnackbarWidget(
                                       message: 'Address added successfully!',
@@ -891,6 +822,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                       .loadAddresses();
                                 } catch (e) {
                                   // Show error message
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     ErrorSnackbarWidget(
                                       message:
@@ -1100,166 +1032,74 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // City
-              TextField(
-                controller: cityController,
-                decoration: InputDecoration(
-                  hintText: 'City',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              // Street Address
+              _buildTextField(
+                controller: addressController,
+                label: 'Street Address',
+                hint: 'Enter complete address',
+                isRequired: true,
+                maxLines: 3,
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              // City and Pincode
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: pincodeController,
+                      label: 'Pincode',
+                      hint: 'Enter pincode',
+                      isRequired: true,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: cityController,
+                      label: 'City',
+                      hint: 'Enter city',
+                      isRequired: true,
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: AppSpacing.md),
 
               // State
-              TextField(
+              _buildTextField(
                 controller: stateController,
-                decoration: InputDecoration(
-                  hintText: 'State',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Pincode
-              TextField(
-                controller: pincodeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Pincode',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Full Address
-              TextField(
-                controller: addressController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Enter your complete address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                label: 'State',
+                hint: 'Enter state',
+                isRequired: true,
               ),
               const SizedBox(height: AppSpacing.md),
 
               // House/Flat Number
-              TextField(
+              _buildTextField(
                 controller: houseNumberController,
-                decoration: InputDecoration(
-                  hintText: 'House/Flat Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                label: 'House/Flat Number',
+                hint: 'Enter House/Flat Number',
+                isRequired: false,
               ),
+
               const SizedBox(height: AppSpacing.md),
 
               // Landmark
-              TextField(
+              _buildTextField(
                 controller: landmarkController,
-                decoration: InputDecoration(
-                  hintText: 'Landmark',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
-                  ),
-                ),
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                label: 'Landmark',
+                hint: 'Enter Landmark',
+                isRequired: false,
               ),
               const SizedBox(height: AppSpacing.md),
 
               // Address Label
-              const Text(
-                'Address Label',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.brandNeutral700,
-                ),
+              B3Bold(
+                text: 'Address Label',
+                color: AppColors.brandNeutral700,
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -1386,22 +1226,29 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   controller: nameController,
                   decoration: InputDecoration(
                     hintText: 'Enter custom label',
+                    hintStyle:
+                        TextStyles.b3Medium(color: AppColors.brandNeutral400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                      borderSide:
+                          const BorderSide(color: AppColors.brandNeutral200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppColors.brandNeutral200),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide:
-                          const BorderSide(color: Color(0xFF055c3a), width: 1),
+                          const BorderSide(color: AppColors.stateGreen500),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
                     ),
                   ),
+                  style: TextStyles.b3Medium(color: AppColors.brandNeutral900),
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 ),
               ],
@@ -1419,8 +1266,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           ? null
                           : () async {
                               // Validate all required fields
-                              if (nameController.text.isNotEmpty &&
-                                  addressController.text.isNotEmpty &&
+                              if (addressController.text.isNotEmpty &&
                                   cityController.text.isNotEmpty &&
                                   stateController.text.isNotEmpty &&
                                   pincodeController.text.isNotEmpty) {
@@ -1429,7 +1275,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                   final updateAddressRequest =
                                       UpdateAddressRequestEntity(
                                     id: address.id,
-                                    name: nameController.text,
+                                    name: nameController.text.isNotEmpty
+                                        ? nameController.text
+                                        : null,
                                     address: addressController.text,
                                     city: cityController.text,
                                     state: stateController.text,
@@ -1541,6 +1389,64 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    bool isRequired = false,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            B3Bold(
+              text: label,
+              color: AppColors.brandNeutral800,
+            ),
+            if (isRequired)
+              const Text(
+                ' *',
+                style: TextStyle(color: AppColors.stateRed600),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: TextStyles.b3Medium(color: AppColors.brandNeutral900),
+          onTapOutside: (_) => FocusScope.of(context).unfocus(),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyles.b3Medium(color: AppColors.brandNeutral400),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.brandNeutral200),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.brandNeutral200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.stateGreen500),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

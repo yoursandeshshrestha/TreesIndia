@@ -7,8 +7,13 @@ class BannerSkeletonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate dynamic dimensions based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bannerWidth = screenWidth * 0.8;
+    final bannerHeight = bannerWidth / 3; // Maintain 2:1 aspect ratio
+
     return SizedBox(
-      height: 160,
+      height: bannerHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -19,8 +24,8 @@ class BannerSkeletonWidget extends StatelessWidget {
               right: index < 1 ? AppSpacing.md : 0,
             ),
             child: SkeletonWidget(
-              width: 320,
-              height: 160,
+              width: bannerWidth,
+              height: bannerHeight,
               borderRadius: BorderRadius.circular(12),
             ),
           );

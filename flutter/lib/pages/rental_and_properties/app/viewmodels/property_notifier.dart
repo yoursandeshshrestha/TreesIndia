@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/property_filters_entity.dart';
 import '../../domain/usecases/get_properties_usecase.dart';
 import 'property_state.dart';
+import '../../../../commons/utils/error_message_helper.dart';
 
 class PropertyNotifier extends StateNotifier<PropertyState> {
   final GetPropertiesUsecase getPropertiesUsecase;
@@ -33,7 +34,7 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
     } catch (e) {
       state = state.copyWith(
         status: PropertyStatus.failure,
-        errorMessage: e.toString(),
+        errorMessage: getErrorMessage(e, fallbackMessage: 'Unable to load properties'),
       );
     }
   }
@@ -61,7 +62,7 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
     } catch (e) {
       state = state.copyWith(
         status: PropertyStatus.failure,
-        errorMessage: e.toString(),
+        errorMessage: getErrorMessage(e, fallbackMessage: 'Unable to load properties'),
       );
     }
   }

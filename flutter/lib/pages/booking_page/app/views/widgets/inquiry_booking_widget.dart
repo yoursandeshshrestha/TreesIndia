@@ -628,7 +628,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
                     ),
                     child: GestureDetector(
                       onTap: () {
-                        _showAddAddressBottomSheet(bottomSheetContext, rootContext);
+                        _showAddAddressBottomSheet(
+                            bottomSheetContext, rootContext);
                       },
                       child: const Row(
                         children: [
@@ -663,8 +664,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
     );
   }
 
-  Widget _buildAddressListContent(
-      AddressState addressState, ScrollController scrollController, BuildContext rootContext) {
+  Widget _buildAddressListContent(AddressState addressState,
+      ScrollController scrollController, BuildContext rootContext) {
     if (addressState.status == AddressStatus.loading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -750,7 +751,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
               if (rootContext.mounted) {
                 ScaffoldMessenger.of(rootContext).showSnackBar(
                   ErrorSnackbarWidget(
-                    message: 'This service is not available in your selected location (${address.city}, ${address.state}). Please select another address.',
+                    message:
+                        'This service is not available in your selected location (${address.city}, ${address.state}). Please select another address.',
                   ).createSnackBar(),
                 );
               }
@@ -843,7 +845,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
                                     ScaffoldMessenger.of(rootContext)
                                         .showSnackBar(
                                       const SuccessSnackbarWidget(
-                                        message: 'Location fetched successfully!',
+                                        message:
+                                            'Location fetched successfully!',
                                       ).createSnackBar(),
                                     );
                                   }
@@ -1293,9 +1296,11 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
                               } else {
                                 // Show validation error on root context
                                 if (rootContext.mounted) {
-                                  ScaffoldMessenger.of(rootContext).showSnackBar(
+                                  ScaffoldMessenger.of(rootContext)
+                                      .showSnackBar(
                                     const ErrorSnackbarWidget(
-                                      message: 'Please fill all required fields',
+                                      message:
+                                          'Please fill all required fields',
                                     ).createSnackBar(),
                                   );
                                 }
