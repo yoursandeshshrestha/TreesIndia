@@ -603,3 +603,111 @@ Detailed views for marketplace listings including vendors, workers, projects, an
     </td>
   </tr>
 </table>
+
+## Architecture
+
+The Flutter app follows **Clean Architecture** principles with the **MVVM pattern**:
+
+```
+                                             
+            Presentation Layer               
+  (Pages, Widgets, ViewModels/Providers)    
+                                             
+                    �
+                                             
+             Domain Layer                    
+     (Entities, UseCases, Repositories)      
+                                             
+                    �
+                                             
+              Data Layer                     
+  (Models, Repository Implementations,       
+   DataSources, API Endpoints)               
+                                             
+```
+
+### Key Architectural Principles:
+
+- **Separation of Concerns** - Clear boundaries between layers
+- **Dependency Inversion** - Domain layer has no dependencies on outer layers
+- **Single Responsibility** - Each class has one reason to change
+- **State Management** - Riverpod for reactive state management
+- **Repository Pattern** - Abstract data sources behind repositories
+- **UseCase Pattern** - Business logic encapsulated in use cases
+
+### Data Flow:
+
+```
+UI > Notifier > UseCase > Repository > DataSource > API
+                                ^
+                              Model
+                                ^
+                              Entity
+                                ^
+                              State
+                                ^
+                               UI
+```
+
+## Key Features
+
+### Core Functionality
+
+- Phone number authentication with OTP
+- Location-based service discovery
+- Service booking with payment integration
+- Real-time chat and notifications
+- Work assignment management
+- Property and vendor marketplace
+
+### User Roles
+
+- **Customer** - Browse and book services
+- **Service Provider** - Receive and manage work assignments
+- **Property Owner** - List properties for sale/rent
+- **Vendor** - Offer professional services
+- **Worker** - Get hired for skilled work
+
+### Technical Highlights
+
+- Offline capability with local caching (Hive)
+- Connectivity monitoring and auto-refresh
+- Push notifications with Firebase
+- Image upload and compression
+- Map integration for location display
+- Payment gateway integration (Razorpay)
+- WebSocket for real-time features
+- Crash reporting and analytics
+
+---
+
+## Project Status
+
+| Component          | Status                   |
+| ------------------ | ------------------------ |
+| Flutter Mobile App |  Complete                |
+| Backend API        |  Complete                |
+| Web Application    | =� Documentation pending |
+| Admin Panel        | =� Documentation pending |
+
+---
+
+## Contributing
+
+_(To be added)_
+
+---
+
+## License
+
+_(To be added)_
+
+---
+
+## Contact
+
+For questions or support, please contact the Trees India development team.
+
+---
+
+**Note:** This README documents the Flutter mobile application and Web application. Documentation for the Admin Panel will be added in future updates.
