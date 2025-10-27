@@ -45,3 +45,46 @@ Trees India mobile app is a feature-rich platform that provides:
 | **Image Handling**     | Image Picker, Cached Network Image |
 | **Crash Reporting**    | Firebase Crashlytics               |
 
+--- 
+
+## Application Workflows & Screenshots
+
+### 1. User Onboarding Flow
+
+New users go through a seamless onboarding process with phone authentication and location setup.
+
+**Workflow Steps:**
+
+```
+Splash Screen > Login (Phone) > OTP Verification > Location Setup > Home Page
+```
+
+#### Screenshots:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.13.46 AM.jpeg" width="250" alt="Login Screen"/>
+      <br/>
+      <b>Login Screen</b>
+      <br/>
+      <sub>Phone number authentication</sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.39.00 AM.jpeg" width="250" alt="OTP Verification"/>
+      <br/>
+      <b>OTP Verification</b>
+      <br/>
+      <sub>One-time password entry</sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.39.01 AM.jpeg" width="250" alt="Location Setup"/>
+      <br/>
+      <b>Location Setup</b>
+      <br/>
+      <sub>GPS-based location detection</sub>
+    </td>
+  </tr>
+</table>
+
+---
