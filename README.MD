@@ -45,7 +45,7 @@ Trees India mobile app is a feature-rich platform that provides:
 | **Image Handling**     | Image Picker, Cached Network Image |
 | **Crash Reporting**    | Firebase Crashlytics               |
 
----
+--- 
 
 ## Application Workflows & Screenshots
 
@@ -210,47 +210,6 @@ Subscription-gated marketplace for properties, projects, vendors, and workers.
   </tr>
 </table>
 
-<!-- ---
-
-### 5. Service Provider Dashboard (My Works)
-
-Service providers can manage their work assignments and track job status.
-
-**Features:**
-
-- View all assignments (All, Pending, In Progress, Completed, Cancelled)
-- Update job status
-- Real-time updates
-- Auto-refresh functionality
-
-#### Screenshots:
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.13.51 AM.jpeg" width="250" alt="My Works"/>
-      <br/>
-      <b>My Works Dashboard</b>
-      <br/>
-      <sub>Work assignments by status</sub>
-    </td>
-    <td align="center">
-      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.18.32 AM.jpeg" width="250" alt="Work Details"/>
-      <br/>
-      <b>Work Assignment Details</b>
-      <br/>
-      <sub>Job information and actions</sub>
-    </td>
-    <td align="center">
-      <img src="screenshots/mobile-app/WhatsApp Image 2025-10-28 at 3.18.32 AM (1).jpeg" width="250" alt="Work Status"/>
-      <br/>
-      <b>Status Updates</b>
-      <br/>
-      <sub>Track and update progress</sub>
-    </td>
-  </tr>
-</table> -->
-
 ---
 
 ### 5. Bookings History & Management
@@ -331,7 +290,7 @@ WebSocket-powered chat for seamless communication between users and service prov
 
 ---
 
-### 8. Profile & Account Management
+### 7. Profile & Account Management
 
 Comprehensive user profile with multiple management features.
 
@@ -404,6 +363,7 @@ Comprehensive user profile with multiple management features.
 The Trees India web application is a modern, responsive platform built with Next.js that provides customers with seamless access to home and construction services through their web browsers. It complements the mobile app by offering a desktop-optimized experience with enhanced visualization and workflow management.
 
 **Key Capabilities:**
+
 - **Service Discovery & Booking** - Browse and book services with advanced filtering
 - **B2B Marketplace** - Subscription-gated platform for professionals (Projects, Vendors, Workers, Properties)
 - **Professional Onboarding** - Multi-step applications for workers and brokers
@@ -413,19 +373,19 @@ The Trees India web application is a modern, responsive platform built with Next
 
 ### Technology Stack
 
-| Category | Technology |
-|----------|-----------|
-| **Framework** | Next.js 15.5.0 (React 19.1.0) |
-| **Language** | TypeScript |
-| **State Management** | Redux Toolkit + TanStack React Query |
-| **Styling** | Tailwind CSS 4, Material-UI (MUI) |
-| **Backend Integration** | Supabase, Axios |
-| **Real-time Features** | WebSocket |
-| **Maps & Location** | Leaflet, React Leaflet |
-| **Animations** | Framer Motion, Lottie React |
-| **UI Components** | Material-UI, Lucide React |
-| **Notifications** | Sonner (Toast notifications) |
-| **Date Management** | date-fns |
+| Category                | Technology                           |
+| ----------------------- | ------------------------------------ |
+| **Framework**           | Next.js 15.5.0 (React 19.1.0)        |
+| **Language**            | TypeScript                           |
+| **State Management**    | Redux Toolkit + TanStack React Query |
+| **Styling**             | Tailwind CSS 4, Material-UI (MUI)    |
+| **Backend Integration** | Supabase, Axios                      |
+| **Real-time Features**  | WebSocket                            |
+| **Maps & Location**     | Leaflet, React Leaflet               |
+| **Animations**          | Framer Motion, Lottie React          |
+| **UI Components**       | Material-UI, Lucide React            |
+| **Notifications**       | Sonner (Toast notifications)         |
+| **Date Management**     | date-fns                             |
 
 ---
 
@@ -436,6 +396,7 @@ The Trees India web application is a modern, responsive platform built with Next
 The landing page serves as the central hub with hero section, service categories, and property listings.
 
 **Key Features:**
+
 - Hero section with search functionality
 - Popular services carousel
 - Service category navigation
@@ -464,6 +425,7 @@ The landing page serves as the central hub with hero section, service categories
 Browse through categorized services with detailed filtering and search capabilities.
 
 **Features:**
+
 - Category-based navigation
 - Service cards with pricing
 - Advanced filtering options
@@ -491,11 +453,13 @@ Browse through categorized services with detailed filtering and search capabilit
 Comprehensive booking interface with slot selection, address management, and payment processing.
 
 **Workflow Steps:**
+
 ```
 Service Selection > Date/Time Slot > Address Selection > Contact Info > Payment > Confirmation
 ```
 
 **Features:**
+
 - Booking sidebar with service details
 - Calendar-based slot selection
 - Multiple address management
@@ -523,12 +487,14 @@ Service Selection > Date/Time Slot > Address Selection > Contact Info > Payment 
 Subscription-gated B2B marketplace connecting businesses with projects, vendors, workers, and properties.
 
 **Marketplace Sections:**
+
 - **Projects** - Construction and home service projects
 - **Vendors** - Service providers and contractors
 - **Workers** - Skilled workforce directory
 - **Rental Properties** - Property listings for lease
 
 **Features:**
+
 - Advanced filtering (business type, skills, location)
 - Stats dashboard for analytics
 - Create and manage listings
@@ -555,6 +521,7 @@ Subscription-gated B2B marketplace connecting businesses with projects, vendors,
 Comprehensive user profile with multiple management sections and settings.
 
 **Profile Sections:**
+
 - About - Personal information and bio
 - My Bookings - Booking history with tracking
 - My Properties - Listed properties management
@@ -585,6 +552,7 @@ Comprehensive user profile with multiple management sections and settings.
 Advanced booking management with real-time location tracking and segmented payment support.
 
 **Features:**
+
 - View all bookings (Past, Current, Upcoming)
 - Real-time location tracking for active services
 - Multi-segment payment system for long-term projects
@@ -609,50 +577,12 @@ Advanced booking management with real-time location tracking and segmented payme
 
 ---
 
-<!-- ### 7. Professional Onboarding
-
-Multi-step application process for workers and brokers to join the platform.
-
-**Worker Application:**
-- Personal information
-- Skills and experience
-- Document verification
-- Profile review and submission
-
-**Broker Application:**
-- Personal details
-- Address and service area
-- Broker-specific information
-- License and document uploads
-- Review and approval
-
-**Features:**
-- Step-by-step progress tracking
-- Form validation
-- Document upload
-- Application status tracking
-
-#### Screenshot:
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="screenshots/web-app/Screenshot 2025-10-28 at 3.29.19 AM.png" width="800" alt="Professional Application"/>
-      <br/>
-      <b>Professional Onboarding</b>
-      <br/>
-      <sub>Multi-step application for workers and brokers</sub>
-    </td>
-  </tr>
-</table>
-
---- -->
-
 ### 7. Marketplace Listing Details
 
 Detailed views for marketplace listings including vendors, workers, projects, and properties.
 
 **Features:**
+
 - Complete profile information
 - Contact details and communication
 - Portfolio/work samples
@@ -674,105 +604,6 @@ Detailed views for marketplace listings including vendors, workers, projects, an
   </tr>
 </table>
 
-
-
-<!-- ---
-
-## Setup Instructions - Web Application
-
-### Prerequisites
-- Node.js 18+ or higher
-- npm or yarn package manager
-- Supabase account (for backend services)
-
-### Installation
-
-1. **Navigate to web-app directory**
-   ```bash
-   cd TREESINDIA-PROJECT/web-app
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Configure environment**
-   - Copy `.env.example` to `.env.local`
-   - Add your environment variables:
-   ```env
-   NEXT_PUBLIC_API_BASE_URL=your_api_base_url
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-   ```
-
-4. **Run development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser
-
-### Build for Production
-
-```bash
-npm run build
-npm run start
-# or
-yarn build
-yarn start
-```
-
---- -->
-
-## Architecture
-
-The Flutter app follows **Clean Architecture** principles with the **MVVM pattern**:
-
-```
-                                             
-            Presentation Layer               
-  (Pages, Widgets, ViewModels/Providers)    
-                                             
-                    �
-                                             
-             Domain Layer                    
-     (Entities, UseCases, Repositories)      
-                                             
-                    �
-                                             
-              Data Layer                     
-  (Models, Repository Implementations,       
-   DataSources, API Endpoints)               
-                                             
-```
-
-### Key Architectural Principles:
-
-- **Separation of Concerns** - Clear boundaries between layers
-- **Dependency Inversion** - Domain layer has no dependencies on outer layers
-- **Single Responsibility** - Each class has one reason to change
-- **State Management** - Riverpod for reactive state management
-- **Repository Pattern** - Abstract data sources behind repositories
-- **UseCase Pattern** - Business logic encapsulated in use cases
-
-### Data Flow:
-
-```
-UI > Notifier > UseCase > Repository > DataSource > API
-                                ^
-                              Model
-                                ^
-                              Entity
-                                ^
-                              State
-                                ^
-                               UI
-```
 
 ## Key Features
 
@@ -812,8 +643,8 @@ UI > Notifier > UseCase > Repository > DataSource > API
 | ------------------ | ------------------------ |
 | Flutter Mobile App |  Complete                |
 | Backend API        |  Complete                |
-| Web Application    | =� Documentation pending |
-| Admin Panel        | =� Documentation pending |
+| Web Application    |  Documentation pending |
+| Admin Panel        |  Documentation pending |
 
 ---
 
@@ -835,4 +666,5 @@ For questions or support, please contact the Trees India development team.
 
 ---
 
-**Note:** This README focuses on the Flutter mobile application. Documentation for the Web Application and Admin Panel will be added in future updates.
+**Note:** This README documents the Flutter mobile application and Web application. Documentation for the Admin Panel will be added in future updates.
+
