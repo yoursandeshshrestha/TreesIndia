@@ -687,8 +687,8 @@ UI > Notifier > UseCase > Repository > DataSource > API
 | ------------------ | ------------------------ |
 | Flutter Mobile App |  Complete                |
 | Backend API        |  Complete                |
-| Web Application    | =� Documentation pending |
-| Admin Panel        | =� Documentation pending |
+| Web Application    |  Documentation pending |
+| Admin Panel        |  Documentation pending |
 
 ---
 
