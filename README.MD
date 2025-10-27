@@ -604,50 +604,6 @@ Detailed views for marketplace listings including vendors, workers, projects, an
   </tr>
 </table>
 
-## Architecture
-
-The Flutter app follows **Clean Architecture** principles with the **MVVM pattern**:
-
-```
-                                             
-            Presentation Layer               
-  (Pages, Widgets, ViewModels/Providers)    
-                                             
-                    �
-                                             
-             Domain Layer                    
-     (Entities, UseCases, Repositories)      
-                                             
-                    �
-                                             
-              Data Layer                     
-  (Models, Repository Implementations,       
-   DataSources, API Endpoints)               
-                                             
-```
-
-### Key Architectural Principles:
-
-- **Separation of Concerns** - Clear boundaries between layers
-- **Dependency Inversion** - Domain layer has no dependencies on outer layers
-- **Single Responsibility** - Each class has one reason to change
-- **State Management** - Riverpod for reactive state management
-- **Repository Pattern** - Abstract data sources behind repositories
-- **UseCase Pattern** - Business logic encapsulated in use cases
-
-### Data Flow:
-
-```
-UI > Notifier > UseCase > Repository > DataSource > API
-                                ^
-                              Model
-                                ^
-                              Entity
-                                ^
-                              State
-                                ^
-                               UI
-```
 
 ## Key Features
 
