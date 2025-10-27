@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/presenters/providers/connectivity_refresh_service_provider.dart';
+import 'package:trees_india/commons/utils/services/connectivity_refresh_service.dart';
 
 /// Mixin for pages that want to auto-refresh when connectivity is restored.
 ///
@@ -22,6 +23,9 @@ import 'package:trees_india/commons/presenters/providers/connectivity_refresh_se
 mixin ConnectivityRefreshMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   String get _callbackIdentifier => '${T.toString()}_$hashCode';
 
+  // Cache the service instance to avoid using ref after disposal
+  ConnectivityRefreshService? _connectivityService;
+
   @override
   void initState() {
     super.initState();
@@ -38,13 +42,13 @@ mixin ConnectivityRefreshMixin<T extends ConsumerStatefulWidget> on ConsumerStat
   }
 
   void _registerCallback() {
-    final service = ref.read(connectivityRefreshServiceProvider);
-    service.registerRefreshCallback(_callbackIdentifier, onConnectivityRestored);
+    _connectivityService = ref.read(connectivityRefreshServiceProvider);
+    _connectivityService?.registerRefreshCallback(_callbackIdentifier, onConnectivityRestored);
   }
 
   void _unregisterCallback() {
-    final service = ref.read(connectivityRefreshServiceProvider);
-    service.unregisterRefreshCallback(_callbackIdentifier);
+    // Use cached service instance instead of ref.read to avoid disposal errors
+    _connectivityService?.unregisterRefreshCallback(_callbackIdentifier);
   }
 
   /// Override this method to define what should happen when connectivity is restored.

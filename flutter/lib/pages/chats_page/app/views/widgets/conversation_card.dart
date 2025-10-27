@@ -30,13 +30,8 @@ class ConversationCard extends ConsumerWidget {
         context.push('/conversations/${conversation.id}');
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.brandNeutral100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.brandNeutral200),
-        ),
+        color: Colors.transparent,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

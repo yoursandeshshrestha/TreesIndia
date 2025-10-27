@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/app/route_tracker.dart';
+import 'package:trees_india/commons/mixins/connectivity_refresh_mixin.dart';
 import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
 import '../viewmodels/conversations_state.dart';
 import '../providers/conversations_provider.dart';
@@ -17,7 +19,7 @@ class ConversationsPage extends ConsumerStatefulWidget {
 }
 
 class _ConversationsPageState extends ConsumerState<ConversationsPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, ConnectivityRefreshMixin {
   final ScrollController _scrollController = ScrollController();
   bool _isInitialized = false;
   late NavigationCallback _navigationCallback;
@@ -70,7 +72,9 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
 
     // Refresh conversations when app comes back to foreground
     if (state == AppLifecycleState.resumed && mounted && _isInitialized) {
-      ref.read(conversationsNotifierProvider.notifier).loadConversations(refresh: true);
+      ref
+          .read(conversationsNotifierProvider.notifier)
+          .loadConversations(refresh: true);
     }
   }
 
@@ -94,7 +98,6 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
   Widget build(BuildContext context) {
     final conversationsState = ref.watch(conversationsNotifierProvider);
 
-
     return MainLayoutWidget(
       currentIndex: 2,
       child: Scaffold(
@@ -117,7 +120,9 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
       case ConversationsStatus.initial:
       case ConversationsStatus.loading:
         return const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Color(0xFF055c3a),
+          ),
         );
 
       case ConversationsStatus.error:
@@ -150,7 +155,9 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(conversationsNotifierProvider.notifier).loadConversations(refresh: true);
+                  ref
+                      .read(conversationsNotifierProvider.notifier)
+                      .loadConversations(refresh: true);
                 },
                 child: const Text('Retry'),
               ),
@@ -201,6 +208,8 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
   }
 
   Widget _buildConversationList(ConversationsState state) {
+    // RefreshIndicator handles the pull-to-refresh loading state
+    // It shows its native loading indicator when refreshing
     return RefreshIndicator(
       onRefresh: () async {
         ref.read(conversationsNotifierProvider.notifier).refreshConversations();
@@ -208,14 +217,25 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
+        // Add extra item for loading more indicator when fetching more conversations
         itemCount: state.conversations.length +
             (state.status == ConversationsStatus.loadingMore ? 1 : 0),
         itemBuilder: (context, index) {
+          // Show loading indicator at the bottom when loading more conversations
           if (index >= state.conversations.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
-                child: CircularProgressIndicator(),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor.withOpacity(0.7),
+                    ),
+                  ),
+                ),
               ),
             );
           }
@@ -225,5 +245,22 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage>
         },
       ),
     );
+  }
+
+  @override
+  void onConnectivityRestored() {
+    // This is called automatically when connectivity is restored
+    _refreshPageData();
+  }
+
+  void _refreshPageData() {
+    // Reload all page data when connectivity is restored
+    try {
+      ref
+          .read(conversationsNotifierProvider.notifier)
+          .loadConversations(refresh: true);
+    } catch (e) {
+      debugPrint('Error refreshing page data: $e');
+    }
   }
 }

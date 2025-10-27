@@ -124,11 +124,31 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
     if (!_mounted) return;
 
     try {
-      if (refresh || state.status == ConversationsStatus.initial) {
+      // Prevent duplicate loading requests
+      if (state.status == ConversationsStatus.loadingMore ||
+          state.status == ConversationsStatus.refreshing) {
+        return;
+      }
+
+      // Set appropriate status based on context
+      if (refresh) {
+        // If refreshing with no existing conversations, treat as initial load
+        if (state.conversations.isEmpty || state.status == ConversationsStatus.initial) {
+          state = state.copyWith(
+            status: ConversationsStatus.loading,
+            errorMessage: null,
+          );
+        } else {
+          // Refreshing with existing conversations - pull-to-refresh
+          state = state.copyWith(
+            status: ConversationsStatus.refreshing,
+            errorMessage: null,
+          );
+        }
+      } else if (state.status == ConversationsStatus.initial) {
+        // Initial load without refresh flag
         state = state.copyWith(
-          status: refresh
-              ? ConversationsStatus.refreshing
-              : ConversationsStatus.loading,
+          status: ConversationsStatus.loading,
           errorMessage: null,
         );
       }
@@ -230,7 +250,7 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
     _messageSubscription?.cancel();
     _statusSubscription?.cancel();
     _autoRefreshTimer?.cancel();
-    _conversationWebSocketService.dispose();
+    // Don't dispose the shared WebSocket service - it's managed by the provider
     super.dispose();
   }
 }

@@ -145,7 +145,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
 
-
     return MainLayoutWidget(
       currentIndex: 3,
       child: Scaffold(
@@ -494,7 +493,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       child: const Icon(
         Icons.person_outline,
         size: 30,
-        color: AppColors.brandPrimary600,
+        color: Color(0xFF055c3a),
       ),
     );
   }

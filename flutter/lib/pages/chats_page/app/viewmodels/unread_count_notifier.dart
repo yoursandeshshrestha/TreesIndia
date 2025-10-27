@@ -127,7 +127,7 @@ class UnreadCountNotifier extends StateNotifier<UnreadCountState> {
   void dispose() {
     _messageSubscription?.cancel();
     _statusSubscription?.cancel();
-    _conversationWebSocketService.dispose();
+    // Don't dispose the shared WebSocket service - it's managed by the provider
     super.dispose();
   }
 }

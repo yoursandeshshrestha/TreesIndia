@@ -128,16 +128,31 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
     if (!_mounted) return;
 
     try {
-      if (refresh || state.status == ConversationStatus.initial) {
-        state = state.copyWith(
-          status: refresh ? ConversationStatus.refreshing : ConversationStatus.loading,
-          errorMessage: null,
-        );
-      } else if (state.status == ConversationStatus.loadingMessages) {
+      // Prevent duplicate loading requests
+      if (state.status == ConversationStatus.loadingMessages ||
+          state.status == ConversationStatus.refreshing) {
         return;
       }
 
-      state = state.copyWith(status: ConversationStatus.loadingMessages);
+      // Set appropriate status based on context
+      if (refresh) {
+        state = state.copyWith(
+          status: ConversationStatus.refreshing,
+          errorMessage: null,
+        );
+      } else if (state.status == ConversationStatus.initial || state.messages.isEmpty) {
+        // Initial load - show full screen loading
+        state = state.copyWith(
+          status: ConversationStatus.loading,
+          errorMessage: null,
+        );
+      } else {
+        // Loading more messages - show loading indicator above messages
+        state = state.copyWith(
+          status: ConversationStatus.loadingMessages,
+          errorMessage: null,
+        );
+      }
 
       final response = await _getConversationMessagesUseCase.execute(
         conversationId,

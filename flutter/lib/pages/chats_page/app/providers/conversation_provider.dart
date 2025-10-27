@@ -5,7 +5,7 @@ import '../viewmodels/conversation_notifier.dart';
 import '../viewmodels/conversation_state.dart';
 import 'conversation_usecase_providers.dart';
 
-final conversationNotifierProvider = StateNotifierProvider.family<ConversationNotifier, ConversationState, int>((ref, conversationId) {
+final conversationNotifierProvider = StateNotifierProvider.autoDispose.family<ConversationNotifier, ConversationState, int>((ref, conversationId) {
   return ConversationNotifier(
     conversationId: conversationId,
     getConversationMessagesUseCase: ref.read(getConversationMessagesUseCaseProvider),

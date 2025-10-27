@@ -5,7 +5,7 @@ import '../viewmodels/conversations_notifier.dart';
 import '../viewmodels/conversations_state.dart';
 import 'conversation_usecase_providers.dart';
 
-final conversationsNotifierProvider = StateNotifierProvider<ConversationsNotifier, ConversationsState>((ref) {
+final conversationsNotifierProvider = StateNotifierProvider.autoDispose<ConversationsNotifier, ConversationsState>((ref) {
   return ConversationsNotifier(
     getConversationsUseCase: ref.read(getConversationsUseCaseProvider),
     markConversationAsReadUseCase: ref.read(markConversationAsReadUseCaseProvider),

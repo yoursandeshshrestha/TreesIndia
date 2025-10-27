@@ -40,7 +40,8 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> with ConnectivityRefreshMixin {
+class _HomePageState extends ConsumerState<HomePage>
+    with ConnectivityRefreshMixin {
   LocationEntity? _currentLocation;
 
   @override
@@ -123,13 +124,13 @@ class _HomePageState extends ConsumerState<HomePage> with ConnectivityRefreshMix
       _loadProperties();
 
       // Show success message to user
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-           const InfoSnackbarWidget(message: 'Connection restored',
-            duration: Duration(seconds: 2),
-          ).createSnackBar(),
-        );
-      }
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //      const InfoSnackbarWidget(message: 'Connection restored',
+      //       duration: Duration(seconds: 2),
+      //     ).createSnackBar(),
+      //   );
+      // }
     } catch (e) {
       debugPrint('Error refreshing page data: $e');
     }
