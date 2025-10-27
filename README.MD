@@ -835,4 +835,4 @@ For questions or support, please contact the Trees India development team.
 
 ---
 
-**Note:** This README focuses on the Flutter mobile application. Documentation for the Web Application and Admin Panel will be added in future updates.
+**Note:** This README documents the Flutter mobile application and Web application. Documentation for the Admin Panel will be added in future updates.
