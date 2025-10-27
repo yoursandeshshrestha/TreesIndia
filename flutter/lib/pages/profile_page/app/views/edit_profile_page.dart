@@ -95,8 +95,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   void _updateProfile() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    ref.read(profileProvider.notifier).clearErrorMessage();
 
     if (name.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const ErrorSnackbarWidget(
           message: 'Please fill in all required fields',

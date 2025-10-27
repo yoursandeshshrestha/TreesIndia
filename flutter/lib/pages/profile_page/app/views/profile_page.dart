@@ -357,11 +357,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: AppSpacing.md),
 
                       if (profileState.roleApplication != null &&
-                          profileState.roleApplication!.status != 'none')
+                          profileState.roleApplication!.status != 'none') ...[
                         _buildRoleApplicationCard(
                             profileState.roleApplication!),
-
-                      const SizedBox(height: AppSpacing.xl),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
 
                       // Logout Button
                       SizedBox(

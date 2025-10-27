@@ -164,4 +164,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     _checkMounted();
     state = state.clearMessages();
   }
+
+  void clearErrorMessage() {
+    _checkMounted();
+    state = state.clearErrorMessage();
+  }
 }
