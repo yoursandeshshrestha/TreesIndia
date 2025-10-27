@@ -667,3 +667,22 @@ For questions or support, please contact the Trees India development team.
 ---
 
 **Note:** This README documents the Flutter mobile application and Web application. Documentation for the Admin Panel will be added in future updates.
+
+
+```
+                                             
+            Presentation Layer               
+  (Pages, Widgets, ViewModels/Providers)    
+                                             
+                    �
+                                             
+             Domain Layer                    
+     (Entities, UseCases, Repositories)      
+                                             
+                    �
+                                             
+              Data Layer                     
+  (Models, Repository Implementations,       
+   DataSources, API Endpoints)               
+                                             
+```
