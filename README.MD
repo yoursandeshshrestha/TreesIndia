@@ -353,3 +353,253 @@ Comprehensive user profile with multiple management features.
     </td>
   </tr>
 </table>
+
+---
+
+## Web Application
+
+### Overview
+
+The Trees India web application is a modern, responsive platform built with Next.js that provides customers with seamless access to home and construction services through their web browsers. It complements the mobile app by offering a desktop-optimized experience with enhanced visualization and workflow management.
+
+**Key Capabilities:**
+
+- **Service Discovery & Booking** - Browse and book services with advanced filtering
+- **B2B Marketplace** - Subscription-gated platform for professionals (Projects, Vendors, Workers, Properties)
+- **Professional Onboarding** - Multi-step applications for workers and brokers
+- **Real-time Communication** - WebSocket-powered chat and notifications
+- **Advanced Booking Features** - Location tracking, segmented payments, quote management
+- **Profile Management** - Comprehensive account and subscription management
+
+### Technology Stack
+
+| Category                | Technology                           |
+| ----------------------- | ------------------------------------ |
+| **Framework**           | Next.js 15.5.0 (React 19.1.0)        |
+| **Language**            | TypeScript                           |
+| **State Management**    | Redux Toolkit + TanStack React Query |
+| **Styling**             | Tailwind CSS 4, Material-UI (MUI)    |
+| **Backend Integration** | Supabase, Axios                      |
+| **Real-time Features**  | WebSocket                            |
+| **Maps & Location**     | Leaflet, React Leaflet               |
+| **Animations**          | Framer Motion, Lottie React          |
+| **UI Components**       | Material-UI, Lucide React            |
+| **Notifications**       | Sonner (Toast notifications)         |
+| **Date Management**     | date-fns                             |
+
+---
+
+## Application Workflows & Screenshots
+
+### 1. Home Page & Service Discovery
+
+The landing page serves as the central hub with hero section, service categories, and property listings.
+
+**Key Features:**
+
+- Hero section with search functionality
+- Popular services carousel
+- Service category navigation
+- Featured properties showcase
+- Promotional banners
+- Location-based content
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 3.27.23 AM.png" width="800" alt="Home Page"/>
+      <br/>
+      <b>Home Page</b>
+      <br/>
+      <sub>Hero section with service discovery and featured content</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 2. Service Categories & Listings
+
+Browse through categorized services with detailed filtering and search capabilities.
+
+**Features:**
+
+- Category-based navigation
+- Service cards with pricing
+- Advanced filtering options
+- Search with autocomplete
+- Service details modal
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 3.29.06 AM.png" width="800" alt="Service Categories"/>
+      <br/>
+      <b>Service Categories & Browse</b>
+      <br/>
+      <sub>Categorized service listings with filtering</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 3. Service Booking Workflow
+
+Comprehensive booking interface with slot selection, address management, and payment processing.
+
+**Workflow Steps:**
+
+```
+Service Selection > Date/Time Slot > Address Selection > Contact Info > Payment > Confirmation
+```
+
+**Features:**
+
+- Booking sidebar with service details
+- Calendar-based slot selection
+- Multiple address management
+- Price summary breakdown
+- Real-time availability checking
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 3.29.41 AM.png" width="800" alt="Booking Page"/>
+      <br/>
+      <b>Service Booking Interface</b>
+      <br/>
+      <sub>Complete booking workflow with slot selection and address management</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 4. Marketplace Platform
+
+Subscription-gated B2B marketplace connecting businesses with projects, vendors, workers, and properties.
+
+**Marketplace Sections:**
+
+- **Projects** - Construction and home service projects
+- **Vendors** - Service providers and contractors
+- **Workers** - Skilled workforce directory
+- **Rental Properties** - Property listings for lease
+
+**Features:**
+
+- Advanced filtering (business type, skills, location)
+- Stats dashboard for analytics
+- Create and manage listings
+- Subscription requirement enforcement
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 4.21.16 AM.png" width="800" alt="Marketplace"/>
+      <br/>
+      <b>Marketplace Dashboard</b>
+      <br/>
+      <sub>B2B platform for projects, vendors, workers, and properties</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 5. Profile & Account Dashboard
+
+Comprehensive user profile with multiple management sections and settings.
+
+**Profile Sections:**
+
+- About - Personal information and bio
+- My Bookings - Booking history with tracking
+- My Properties - Listed properties management
+- My Vendors - Bookmarked vendors
+- My Work - Work assignments (for service providers)
+- Wallet - Balance and transaction history
+- Subscription - Plan management and upgrades
+- Settings - Notification preferences and privacy
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 3.28.17 AM.png" width="800" alt="Profile Dashboard"/>
+      <br/>
+      <b>Profile Dashboard</b>
+      <br/>
+      <sub>User profile with comprehensive account management</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 6. Booking Management & Tracking
+
+Advanced booking management with real-time location tracking and segmented payment support.
+
+**Features:**
+
+- View all bookings (Past, Current, Upcoming)
+- Real-time location tracking for active services
+- Multi-segment payment system for long-term projects
+- Quote acceptance workflow
+- Booking status updates
+- Service provider communication
+- Payment history and receipts
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 4.19.26 AM.png" width="800" alt="Booking Tracking"/>
+      <br/>
+      <b>Booking Management & Tracking</b>
+      <br/>
+      <sub>Track bookings with location updates and payment segments</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### 7. Marketplace Listing Details
+
+Detailed views for marketplace listings including vendors, workers, projects, and properties.
+
+**Features:**
+
+- Complete profile information
+- Contact details and communication
+- Portfolio/work samples
+- Reviews and ratings
+- Service area and availability
+- Direct booking or inquiry options
+
+#### Screenshot:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-app/Screenshot 2025-10-28 at 4.21.41 AM.png" width="800" alt="Listing Details"/>
+      <br/>
+      <b>Marketplace Listing Details</b>
+      <br/>
+      <sub>Detailed vendor, worker, or property profile</sub>
+    </td>
+  </tr>
+</table>
