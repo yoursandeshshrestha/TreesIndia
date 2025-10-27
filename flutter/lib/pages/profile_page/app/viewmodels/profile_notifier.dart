@@ -93,6 +93,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         state = state.copyWith(
           isUpdatingProfile: false,
           successMessage: response.message,
+          name: name,
+          email: email,
+          gender: gender,
         );
         _notificationService.showSuccessSnackBar(response.message);
       } else {

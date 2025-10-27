@@ -197,11 +197,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                         color: AppColors.brandNeutral900,
                                       ),
                                     if (profileState.phone != null &&
-                                        profileState.phone!.isNotEmpty)
+                                        profileState.phone!.isNotEmpty) ...[
+                                      // const SizedBox(height: AppSpacing.xs),
                                       B2Regular(
                                         text: profileState.phone!,
                                         color: AppColors.brandNeutral900,
                                       ),
+                                    ],
+                                    if (_buildUserTypeBadge(
+                                            profileState.userType) !=
+                                        null) ...[
+                                      const SizedBox(height: AppSpacing.xs),
+                                      _buildUserTypeBadge(
+                                          profileState.userType)!,
+                                    ],
                                   ],
                                 ),
                               ),
@@ -680,6 +689,38 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const SizedBox(height: AppSpacing.xs),
           B2Medium(text: date),
         ],
+      ),
+    );
+  }
+
+  Widget? _buildUserTypeBadge(String userType) {
+    if (userType != 'worker' && userType != 'broker') {
+      return null;
+    }
+
+    final isWorker = userType == 'worker';
+    final backgroundColor = isWorker
+        ? const Color(0xFFE3F2FD) // Light blue for worker
+        : AppColors.stateGreen100; // Light green for broker
+    final textColor = isWorker
+        ? const Color(0xFF1565C0) // Dark blue for worker
+        : const Color(0xFF055c3a); // Dark green for broker
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        userType.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
