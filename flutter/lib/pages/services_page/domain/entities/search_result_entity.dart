@@ -7,6 +7,8 @@ class SearchResultEntity extends Equatable {
   final String description;
   final String category;
   final String subcategory;
+  final int categoryId;
+  final int subcategoryId;
   final String priceType;
   final int? price;
   final String? duration;
@@ -28,6 +30,8 @@ class SearchResultEntity extends Equatable {
     required this.description,
     required this.category,
     required this.subcategory,
+    required this.categoryId,
+    required this.subcategoryId,
     required this.priceType,
     this.price,
     this.duration,
@@ -51,6 +55,8 @@ class SearchResultEntity extends Equatable {
         description,
         category,
         subcategory,
+        categoryId,
+        subcategoryId,
         priceType,
         price,
         duration,

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/vendor_filters_entity.dart';
 import '../../domain/usecases/get_vendors_usecase.dart';
 import 'vendor_state.dart';
+import '../../../../commons/utils/error_message_helper.dart';
 
 class VendorNotifier extends StateNotifier<VendorState> {
   final GetVendorsUsecase getVendorsUsecase;
@@ -45,7 +46,7 @@ class VendorNotifier extends StateNotifier<VendorState> {
     } catch (e) {
       state = state.copyWith(
         status: VendorStatus.failure,
-        errorMessage: 'Failed to load vendors: $e',
+        errorMessage: getErrorMessage(e, fallbackMessage: 'Unable to load vendors'),
       );
     }
   }

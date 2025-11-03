@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/worker_filters_entity.dart';
 import '../../domain/usecases/get_workers_usecase.dart';
 import 'worker_state.dart';
+import '../../../../commons/utils/error_message_helper.dart';
 
 class WorkerNotifier extends StateNotifier<WorkerState> {
   final GetWorkersUsecase getWorkersUsecase;
@@ -45,7 +46,7 @@ class WorkerNotifier extends StateNotifier<WorkerState> {
     } catch (e) {
       state = state.copyWith(
         status: WorkerStatus.failure,
-        errorMessage: 'Failed to load workers: $e',
+        errorMessage: getErrorMessage(e, fallbackMessage: 'Unable to load workers'),
       );
     }
   }

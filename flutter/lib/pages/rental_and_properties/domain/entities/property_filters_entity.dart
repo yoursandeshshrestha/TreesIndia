@@ -22,6 +22,8 @@ class PropertyFiltersEntity {
   final double? maxArea;
   final String? furnishingStatus; // 'furnished', 'semi-furnished', 'unfurnished'
   final PropertySortType sortBy;
+  final String? city;
+  final String? state;
 
   const PropertyFiltersEntity({
     this.page = 1,
@@ -38,6 +40,8 @@ class PropertyFiltersEntity {
     this.maxArea,
     this.furnishingStatus,
     this.sortBy = PropertySortType.relevance,
+    this.city,
+    this.state,
   });
 
   PropertyFiltersEntity copyWith({
@@ -55,6 +59,8 @@ class PropertyFiltersEntity {
     double? maxArea,
     String? furnishingStatus,
     PropertySortType? sortBy,
+    String? city,
+    String? state,
     bool clearListingType = false,
     bool clearUploadedByAdmin = false,
     bool clearBedrooms = false,
@@ -62,6 +68,8 @@ class PropertyFiltersEntity {
     bool clearPriceRange = false,
     bool clearAreaRange = false,
     bool clearFurnishingStatus = false,
+    bool clearCity = false,
+    bool clearState = false,
   }) {
     return PropertyFiltersEntity(
       page: page ?? this.page,
@@ -78,6 +86,8 @@ class PropertyFiltersEntity {
       maxArea: clearAreaRange ? null : (maxArea ?? this.maxArea),
       furnishingStatus: clearFurnishingStatus ? null : (furnishingStatus ?? this.furnishingStatus),
       sortBy: sortBy ?? this.sortBy,
+      city: clearCity ? null : (city ?? this.city),
+      state: clearState ? null : (state ?? this.state),
     );
   }
 
@@ -97,6 +107,8 @@ class PropertyFiltersEntity {
     if (minArea != null) params['min_area'] = minArea;
     if (maxArea != null) params['max_area'] = maxArea;
     if (furnishingStatus != null) params['furnishing_status'] = furnishingStatus;
+    if (city != null) params['city'] = city;
+    if (state != null) params['state'] = state;
 
     // Handle bedrooms as comma-separated string
     if (bedrooms != null && bedrooms!.isNotEmpty) {

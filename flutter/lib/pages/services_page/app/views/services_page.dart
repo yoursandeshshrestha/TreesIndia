@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
@@ -12,13 +11,13 @@ import 'widgets/service_card.dart';
 import 'widgets/service_loading_skeleton.dart';
 
 class ServicesPage extends ConsumerStatefulWidget {
-  final String categoryId;
-  final String subcategoryId;
+  final String? categoryId;
+  final String? subcategoryId;
 
   const ServicesPage({
     super.key,
-    required this.categoryId,
-    required this.subcategoryId,
+    this.categoryId,
+    this.subcategoryId,
   });
 
   @override
@@ -37,6 +36,17 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
 
     // Initialize and load services
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final intCategoryId = int.tryParse(
+          widget.categoryId != null ? '${widget.categoryId}' : '0');
+      final intSubcategoryId = int.tryParse(
+          widget.subcategoryId != null ? '${widget.subcategoryId}' : '0');
+
+      print(
+          'ServicesPage: 🔍 Category ID: $intCategoryId, Subcategory ID: $intSubcategoryId');
+      // Set category and subcategory in services page state
+      ref
+          .read(serviceNotifierProvider.notifier)
+          .setCategoryAndSubcategoryIds(intCategoryId, intSubcategoryId);
       ref.read(serviceNotifierProvider.notifier).initializeAndLoadServices();
     });
   }
@@ -77,48 +87,59 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
   @override
   Widget build(BuildContext context) {
     final serviceState = ref.watch(serviceNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        ref.invalidate(serviceNotifierProvider);
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.brandNeutral900),
-          onPressed: () => context.pop(),
-        ),
-        title: serviceState.currentSubcategory != null
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  H3Bold(
-                    text: serviceState.currentSubcategory!.name,
-                    color: AppColors.brandNeutral900,
-                    textAlign: TextAlign.center,
-                  ),
-                  if (serviceState.currentCategory != null)
-                    B3Regular(
-                      text: serviceState.currentCategory!.name,
-                      color: AppColors.brandNeutral600,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          foregroundColor: AppColors.brandNeutral800,
+          elevation: 0,
+          titleSpacing: 0,
+          automaticallyImplyLeading: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left,
+              color: AppColors.brandNeutral800,
+              size: 28,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              height: 1,
+              color: AppColors.brandNeutral200,
+            ),
+          ),
+          title: serviceState.currentSubcategory != null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    H3Bold(
+                      text: serviceState.currentSubcategory!.name,
+                      color: AppColors.brandNeutral900,
                       textAlign: TextAlign.center,
                     ),
-                ],
-              )
-            : H3Bold(
-                text: 'Services',
-                color: AppColors.brandNeutral900,
-              ),
+                    if (serviceState.currentCategory != null)
+                      B3Regular(
+                        text: serviceState.currentCategory!.name,
+                        color: AppColors.brandNeutral600,
+                        textAlign: TextAlign.center,
+                      ),
+                  ],
+                )
+              : H3Bold(
+                  text: 'All Services',
+                  color: AppColors.brandNeutral900,
+                ),
+        ),
+        body: _buildBody(serviceState),
       ),
-      body: _buildBody(serviceState),
     );
   }
 

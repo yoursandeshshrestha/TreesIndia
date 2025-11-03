@@ -7,8 +7,8 @@ abstract class ServiceRepository {
   Future<ServiceResponseEntity> getServices({
     required String city,
     required String state,
-    required int categoryId,
-    required int subcategoryId,
+    int? categoryId,
+    int? subcategoryId,
     int page = 1,
     int limit = 10,
   });
@@ -21,5 +21,8 @@ abstract class ServiceRepository {
 
   Future<SearchSuggestionsResponseEntity> getSearchSuggestions();
 
-  Future<PopularServicesResponseEntity> getPopularServices();
+  Future<PopularServicesResponseEntity> getPopularServices({
+    String? city,
+    String? state,
+  });
 }

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/services/conversation_websocket_service.dart';
 import 'package:trees_india/pages/chats_page/app/providers/conversations_provider.dart';
 import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
@@ -42,7 +40,7 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
 
       if (currentUserId != null) {
         // Load conversations list to get participant names
-        _conversationsNotifier.loadConversations();
+        _conversationsNotifier.loadConversations(refresh: true);
 
         // Load messages for this specific conversation
         ref
@@ -79,15 +77,6 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
   Widget build(BuildContext context) {
     final conversationState =
         ref.watch(conversationNotifierProvider(widget.conversationId));
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
 
     return Scaffold(
       appBar: _buildAppBar(conversationState),
@@ -107,87 +96,122 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
         .firstOrNull;
 
     String title = 'Conversation';
+    Widget? avatar;
+
     if (conversation != null && currentUserId != null) {
       // Determine which user is the other person
       final otherUser = conversation.user1 == currentUserId
           ? conversation.user2Data
           : conversation.user1Data;
       title = otherUser.name;
+
+      // Build avatar
+      avatar = CircleAvatar(
+        radius: 18,
+        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+        backgroundImage: _isValidImageUrl(otherUser.avatar)
+            ? NetworkImage(otherUser.avatar!)
+            : null,
+        child: !_isValidImageUrl(otherUser.avatar)
+            ? Icon(
+                Icons.person,
+                color: Theme.of(context).primaryColor,
+                size: 18,
+              )
+            : null,
+      );
     }
 
     return AppBar(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
         children: [
+          if (avatar != null) ...[
+            avatar,
+            const SizedBox(width: 12),
+          ],
           Text(
             title,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ],
       ),
-      actions: [
-        _buildConnectionStatus(state.webSocketStatus),
-      ],
+      // actions: [
+      // _buildConnectionStatus(state.webSocketStatus),
+      // ],
     );
   }
 
-  Widget _buildConnectionStatus(ConversationWebSocketConnectionStatus status) {
-    Color color;
-    IconData icon;
-    String text;
+  // Widget _buildConnectionStatus(ConversationWebSocketConnectionStatus status) {
+  //   Color color;
+  //   IconData icon;
+  //   String text;
 
-    switch (status) {
-      case ConversationWebSocketConnectionStatus.connected:
-        color = Colors.green;
-        icon = Icons.circle;
-        text = 'Connected';
-        break;
-      case ConversationWebSocketConnectionStatus.connecting:
-        color = Colors.orange;
-        icon = Icons.circle;
-        text = 'Connecting';
-        break;
-      case ConversationWebSocketConnectionStatus.error:
-        color = Colors.red;
-        icon = Icons.error;
-        text = 'Error';
-        break;
-      case ConversationWebSocketConnectionStatus.disconnected:
-        color = Colors.grey;
-        icon = Icons.circle;
-        text = 'Disconnected';
-        break;
-    }
+  //   switch (status) {
+  //     case ConversationWebSocketConnectionStatus.connected:
+  //       color = Colors.green;
+  //       icon = Icons.circle;
+  //       text = 'Connected';
+  //       break;
+  //     case ConversationWebSocketConnectionStatus.connecting:
+  //       color = Colors.orange;
+  //       icon = Icons.circle;
+  //       text = 'Connecting';
+  //       break;
+  //     case ConversationWebSocketConnectionStatus.error:
+  //       color = Colors.red;
+  //       icon = Icons.error;
+  //       text = 'Error';
+  //       break;
+  //     case ConversationWebSocketConnectionStatus.disconnected:
+  //       color = Colors.grey;
+  //       icon = Icons.circle;
+  //       text = 'Disconnected';
+  //       break;
+  //   }
 
-    return Row(
-      children: [
-        Container(
-          margin: const EdgeInsets.only(right: 16),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 12,
-                color: color,
-              ),
-              const SizedBox(width: 2),
-              B4Medium(
-                text: text,
-                color: color,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  //   return Row(
+  //     children: [
+  //       Container(
+  //         margin: const EdgeInsets.only(right: 16),
+  //         child: Row(
+  //           children: [
+  //             Icon(
+  //               icon,
+  //               size: 12,
+  //               color: color,
+  //             ),
+  //             const SizedBox(width: 2),
+  //             B4Medium(
+  //               text: text,
+  //               color: color,
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildBody(ConversationState state) {
     switch (state.status) {
       case ConversationStatus.initial:
       case ConversationStatus.loading:
-        return const Center(
-          child: CircularProgressIndicator(),
+        // Initial load - show full screen centered loading indicator
+
+        return Column(
+          children: [
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF055c3a),
+                ),
+              ),
+            ),
+            MessageInput(
+              onSendMessage: (message) {},
+              isEnabled: false,
+            ),
+          ],
         );
 
       case ConversationStatus.error:
@@ -235,6 +259,7 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
       case ConversationStatus.loadingMessages:
       case ConversationStatus.sendingMessage:
       case ConversationStatus.refreshing:
+        // Show messages with appropriate loading indicators based on state
         return Column(
           children: [
             Expanded(
@@ -258,6 +283,8 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
 
   Widget _buildMessagesList(ConversationState state) {
     if (state.messages.isEmpty) {
+      // Show empty state when no messages
+      // Note: During refreshing with empty messages, RefreshIndicator will show its own loading
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -288,6 +315,8 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
       );
     }
 
+    // RefreshIndicator handles the pull-to-refresh loading state
+    // It shows its native loading indicator when refreshing
     return RefreshIndicator(
       onRefresh: () async {
         ref
@@ -298,14 +327,26 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
         controller: _scrollController,
         reverse: true, // Show newest messages at bottom
         physics: const AlwaysScrollableScrollPhysics(),
+        // Add extra item for loading more indicator when fetching older messages
         itemCount: state.messages.length +
             (state.status == ConversationStatus.loadingMessages ? 1 : 0),
         itemBuilder: (context, index) {
+          // Show loading indicator at the top (in reverse list, this is the last item)
+          // when loading more older messages
           if (index >= state.messages.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
-                child: CircularProgressIndicator(),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor.withOpacity(0.7),
+                    ),
+                  ),
+                ),
               ),
             );
           }
@@ -323,5 +364,19 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
         },
       ),
     );
+  }
+
+  bool _isValidImageUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority &&
+          uri.host.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 }

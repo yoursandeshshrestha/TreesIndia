@@ -14,8 +14,8 @@ class ServiceRepositoryImpl implements ServiceRepository {
   Future<ServiceResponseEntity> getServices({
     required String city,
     required String state,
-    required int categoryId,
-    required int subcategoryId,
+    int? categoryId,
+    int? subcategoryId,
     int page = 1,
     int limit = 10,
   }) async {
@@ -51,8 +51,14 @@ class ServiceRepositoryImpl implements ServiceRepository {
   }
 
   @override
-  Future<PopularServicesResponseEntity> getPopularServices() async {
-    final responseModel = await remoteDataSource.getPopularServices();
+  Future<PopularServicesResponseEntity> getPopularServices({
+    String? city,
+    String? state,
+  }) async {
+    final responseModel = await remoteDataSource.getPopularServices(
+      city: city,
+      state: state,
+    );
     return responseModel.toEntity();
   }
 }

@@ -83,11 +83,13 @@ class PropertyGridWidget extends StatelessWidget {
 class PropertyCard extends ConsumerWidget {
   final PropertyEntity property;
   final VoidCallback? onTap;
+  final String version;
 
   const PropertyCard({
     super.key,
     required this.property,
     this.onTap,
+    this.version = 'property-listing',
   });
 
   @override
@@ -112,7 +114,7 @@ class PropertyCard extends ConsumerWidget {
           children: [
             // Image
             Container(
-              height: 200,
+              height: version == 'home' ? 140 : 200,
               width: double.infinity,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
@@ -234,7 +236,7 @@ class PropertyCard extends ConsumerWidget {
                   H2Medium(
                     text: property.title,
                     color: AppColors.brandNeutral900,
-                    maxLines: 2,
+                    maxLines: version == 'home' ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (property.address != null &&
@@ -297,8 +299,6 @@ class PropertyCard extends ConsumerWidget {
                     ],
                   ),
 
-                  const SizedBox(height: AppSpacing.md),
-
                   // Action Buttons
                   _buildActionButtons(context, ref),
                 ],
@@ -319,68 +319,68 @@ class PropertyCard extends ConsumerWidget {
 
     return Column(
       children: [
-        Row(
-          children: [
-            // View Number Button
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Implement view number functionality
-                },
-                icon: const Icon(
-                  Icons.phone,
-                  size: 16,
-                  color: AppColors.stateGreen600,
-                ),
-                label: const Text(
-                  'View Number',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.stateGreen600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.stateGreen600),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
+        // Row(
+        //   children: [
+        //     // View Number Button
+        //     Expanded(
+        //       child: OutlinedButton.icon(
+        //         onPressed: () {
+        //           // TODO: Implement view number functionality
+        //         },
+        //         icon: const Icon(
+        //           Icons.phone,
+        //           size: 16,
+        //           color: AppColors.stateGreen600,
+        //         ),
+        //         label: const Text(
+        //           'View Number',
+        //           style: TextStyle(
+        //             fontSize: 12,
+        //             fontWeight: FontWeight.w500,
+        //             color: AppColors.stateGreen600,
+        //           ),
+        //         ),
+        //         style: OutlinedButton.styleFrom(
+        //           side: const BorderSide(color: AppColors.stateGreen600),
+        //           padding: const EdgeInsets.symmetric(vertical: 8),
+        //           shape: RoundedRectangleBorder(
+        //             borderRadius: BorderRadius.circular(6),
+        //           ),
+        //         ),
+        //       ),
+        //     ),
 
-            const SizedBox(width: AppSpacing.sm),
-            // Contact Button
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Implement contact functionality
-                },
-                icon: const Icon(
-                  Icons.contact_page,
-                  size: 16,
-                  color: AppColors.brandNeutral600,
-                ),
-                label: const Text(
-                  'Contact',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.brandNeutral600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.brandNeutral400),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        //     const SizedBox(width: AppSpacing.sm),
+        //     // Contact Button
+        //     Expanded(
+        //       child: OutlinedButton.icon(
+        //         onPressed: () {
+        //           // TODO: Implement contact functionality
+        //         },
+        //         icon: const Icon(
+        //           Icons.contact_page,
+        //           size: 16,
+        //           color: AppColors.brandNeutral600,
+        //         ),
+        //         label: const Text(
+        //           'Contact',
+        //           style: TextStyle(
+        //             fontSize: 12,
+        //             fontWeight: FontWeight.w500,
+        //             color: AppColors.brandNeutral600,
+        //           ),
+        //         ),
+        //         style: OutlinedButton.styleFrom(
+        //           side: const BorderSide(color: AppColors.brandNeutral400),
+        //           padding: const EdgeInsets.symmetric(vertical: 8),
+        //           shape: RoundedRectangleBorder(
+        //             borderRadius: BorderRadius.circular(6),
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ],
+        // ),
         if (shouldShowChatButton) ...[
           const SizedBox(height: AppSpacing.sm),
           // Chat Button
@@ -501,7 +501,9 @@ class PropertyCard extends ConsumerWidget {
           _buildInfoChip(property.displayBedBath, Icons.bed_outlined),
           const SizedBox(width: AppSpacing.sm),
         ],
-        if (property.age != null && property.age!.isNotEmpty) ...[
+        if (property.age != null &&
+            property.age!.isNotEmpty &&
+            version != 'home') ...[
           _buildInfoChip(
               _getPropertyAge(property.age!), Icons.calendar_today_outlined),
           const SizedBox(width: AppSpacing.sm),

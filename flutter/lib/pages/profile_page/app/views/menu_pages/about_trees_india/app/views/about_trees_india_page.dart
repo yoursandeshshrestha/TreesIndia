@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
+import 'package:trees_india/commons/constants/app_colors.dart';
 
 class AboutTreesIndiaPage extends StatelessWidget {
   const AboutTreesIndiaPage({super.key});
@@ -6,8 +8,11 @@ class AboutTreesIndiaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('About TreesIndia'),
+      appBar: const CustomAppBar(
+        title: 'About TreesIndia',
+        backgroundColor: AppColors.white,
+        iconColor: AppColors.brandNeutral800,
+        titleColor: AppColors.brandNeutral800,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -144,21 +149,24 @@ class AboutTreesIndiaPage extends StatelessWidget {
                       if (constraints.maxWidth > 900) {
                         return Row(
                           children: [
-                            Expanded(child: _buildFeatureCard(
+                            Expanded(
+                                child: _buildFeatureCard(
                               Icons.verified_user,
                               'Verified Professionals',
                               'All our service providers are thoroughly verified and background-checked for your safety and peace of mind.',
                               Colors.blue,
                             )),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildFeatureCard(
+                            Expanded(
+                                child: _buildFeatureCard(
                               Icons.groups,
                               'Wide Network',
                               'Access to thousands of skilled professionals across various service categories in your area.',
                               Colors.green,
                             )),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildFeatureCard(
+                            Expanded(
+                                child: _buildFeatureCard(
                               Icons.emoji_events,
                               'Quality Assurance',
                               'We ensure high-quality service delivery with customer feedback and satisfaction guarantees.',
@@ -225,14 +233,22 @@ class AboutTreesIndiaPage extends StatelessWidget {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _buildServiceCard('Home Cleaning', 'Professional house cleaning services'),
-                      _buildServiceCard('Plumbing', 'Expert plumbing and repair services'),
-                      _buildServiceCard('Electrical', 'Licensed electrician services'),
-                      _buildServiceCard('Carpentry', 'Skilled carpentry and woodwork'),
-                      _buildServiceCard('Painting', 'Professional painting services'),
-                      _buildServiceCard('Pest Control', 'Safe and effective pest control'),
-                      _buildServiceCard('Appliance Repair', 'Expert appliance repair services'),
-                      _buildServiceCard('And More...', 'Wide range of services available'),
+                      _buildServiceCard('Home Cleaning',
+                          'Professional house cleaning services'),
+                      _buildServiceCard(
+                          'Plumbing', 'Expert plumbing and repair services'),
+                      _buildServiceCard(
+                          'Electrical', 'Licensed electrician services'),
+                      _buildServiceCard(
+                          'Carpentry', 'Skilled carpentry and woodwork'),
+                      _buildServiceCard(
+                          'Painting', 'Professional painting services'),
+                      _buildServiceCard(
+                          'Pest Control', 'Safe and effective pest control'),
+                      _buildServiceCard('Appliance Repair',
+                          'Expert appliance repair services'),
+                      _buildServiceCard(
+                          'And More...', 'Wide range of services available'),
                     ],
                   ),
                 ],
@@ -247,13 +263,21 @@ class AboutTreesIndiaPage extends StatelessWidget {
                 if (constraints.maxWidth > 800) {
                   return Row(
                     children: [
-                      Expanded(child: _buildStatCard('10K+', 'Happy Customers', Colors.blue)),
+                      Expanded(
+                          child: _buildStatCard(
+                              '10K+', 'Happy Customers', Colors.blue)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard('5K+', 'Verified Professionals', Colors.green)),
+                      Expanded(
+                          child: _buildStatCard(
+                              '5K+', 'Verified Professionals', Colors.green)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard('50+', 'Cities Covered', Colors.purple)),
+                      Expanded(
+                          child: _buildStatCard(
+                              '50+', 'Cities Covered', Colors.purple)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard('4.8★', 'Customer Rating', Colors.orange)),
+                      Expanded(
+                          child: _buildStatCard(
+                              '4.8★', 'Customer Rating', Colors.orange)),
                     ],
                   );
                 } else {
@@ -263,19 +287,23 @@ class AboutTreesIndiaPage extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: (constraints.maxWidth - 12) / 2,
-                        child: _buildStatCard('10K+', 'Happy Customers', Colors.blue),
+                        child: _buildStatCard(
+                            '10K+', 'Happy Customers', Colors.blue),
                       ),
                       SizedBox(
                         width: (constraints.maxWidth - 12) / 2,
-                        child: _buildStatCard('5K+', 'Verified Professionals', Colors.green),
+                        child: _buildStatCard(
+                            '5K+', 'Verified Professionals', Colors.green),
                       ),
                       SizedBox(
                         width: (constraints.maxWidth - 12) / 2,
-                        child: _buildStatCard('50+', 'Cities Covered', Colors.purple),
+                        child: _buildStatCard(
+                            '50+', 'Cities Covered', Colors.purple),
                       ),
                       SizedBox(
                         width: (constraints.maxWidth - 12) / 2,
-                        child: _buildStatCard('4.8★', 'Customer Rating', Colors.orange),
+                        child: _buildStatCard(
+                            '4.8★', 'Customer Rating', Colors.orange),
                       ),
                     ],
                   );
@@ -311,21 +339,33 @@ class AboutTreesIndiaPage extends StatelessWidget {
                       if (constraints.maxWidth > 900) {
                         return Row(
                           children: [
-                            Expanded(child: _buildContactCard(Icons.phone, 'Phone', '+91 1800-123-4567', Colors.blue)),
+                            Expanded(
+                                child: _buildContactCard(Icons.phone, 'Phone',
+                                    '+91 1800-123-4567', Colors.blue)),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildContactCard(Icons.email, 'Email', 'support@treesindia.com', Colors.green)),
+                            Expanded(
+                                child: _buildContactCard(Icons.email, 'Email',
+                                    'support@treesindia.com', Colors.green)),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildContactCard(Icons.location_on, 'Address', 'Mumbai, Maharashtra, India', Colors.purple)),
+                            Expanded(
+                                child: _buildContactCard(
+                                    Icons.location_on,
+                                    'Address',
+                                    'Mumbai, Maharashtra, India',
+                                    Colors.purple)),
                           ],
                         );
                       } else {
                         return Column(
                           children: [
-                            _buildContactCard(Icons.phone, 'Phone', '+91 1800-123-4567', Colors.blue),
+                            _buildContactCard(Icons.phone, 'Phone',
+                                '+91 1800-123-4567', Colors.blue),
                             const SizedBox(height: 16),
-                            _buildContactCard(Icons.email, 'Email', 'support@treesindia.com', Colors.green),
+                            _buildContactCard(Icons.email, 'Email',
+                                'support@treesindia.com', Colors.green),
                             const SizedBox(height: 16),
-                            _buildContactCard(Icons.location_on, 'Address', 'Mumbai, Maharashtra, India', Colors.purple),
+                            _buildContactCard(Icons.location_on, 'Address',
+                                'Mumbai, Maharashtra, India', Colors.purple),
                           ],
                         );
                       }
@@ -336,8 +376,6 @@ class AboutTreesIndiaPage extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-
-            
           ],
         ),
       ),
@@ -444,7 +482,8 @@ class AboutTreesIndiaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(IconData icon, String title, String description, MaterialColor color) {
+  Widget _buildFeatureCard(
+      IconData icon, String title, String description, MaterialColor color) {
     return Column(
       children: [
         Container(
@@ -516,7 +555,8 @@ class AboutTreesIndiaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactCard(IconData icon, String title, String value, MaterialColor color) {
+  Widget _buildContactCard(
+      IconData icon, String title, String value, MaterialColor color) {
     return Row(
       children: [
         Container(

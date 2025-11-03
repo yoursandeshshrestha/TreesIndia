@@ -12,6 +12,8 @@ class ServiceState extends Equatable {
   final PaginationEntity? pagination;
   final CategoryEntity? currentCategory;
   final SubcategoryEntity? currentSubcategory;
+  final int? currentCategoryId;
+  final int? currentSubcategoryId;
   final String? userCity;
   final String? userState;
   final bool isLoadingMore;
@@ -24,6 +26,8 @@ class ServiceState extends Equatable {
     this.pagination,
     this.currentCategory,
     this.currentSubcategory,
+    this.currentCategoryId,
+    this.currentSubcategoryId,
     this.userCity,
     this.userState,
     this.isLoadingMore = false,
@@ -37,6 +41,8 @@ class ServiceState extends Equatable {
     PaginationEntity? pagination,
     CategoryEntity? currentCategory,
     SubcategoryEntity? currentSubcategory,
+    int? currentCategoryId,
+    int? currentSubcategoryId,
     String? userCity,
     String? userState,
     bool? isLoadingMore,
@@ -49,6 +55,8 @@ class ServiceState extends Equatable {
       pagination: pagination ?? this.pagination,
       currentCategory: currentCategory ?? this.currentCategory,
       currentSubcategory: currentSubcategory ?? this.currentSubcategory,
+      currentCategoryId: currentCategoryId ?? this.currentCategoryId,
+      currentSubcategoryId: currentSubcategoryId ?? this.currentSubcategoryId,
       userCity: userCity ?? this.userCity,
       userState: userState ?? this.userState,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
@@ -64,6 +72,8 @@ class ServiceState extends Equatable {
         pagination,
         currentCategory,
         currentSubcategory,
+        currentCategoryId,
+        currentSubcategoryId,
         userCity,
         userState,
         isLoadingMore,

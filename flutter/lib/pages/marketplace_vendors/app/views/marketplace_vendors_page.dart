@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../providers/vendor_providers.dart';
@@ -30,15 +28,7 @@ class _MarketplaceVendorsPageState
   @override
   Widget build(BuildContext context) {
     final vendorState = ref.watch(vendorNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {

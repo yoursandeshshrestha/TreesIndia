@@ -3,31 +3,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
+import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/domain/entities/location_entity.dart';
+import 'package:trees_india/commons/mixins/connectivity_refresh_mixin.dart';
 import 'package:trees_india/commons/presenters/providers/location_onboarding_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
-import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
 import 'package:trees_india/pages/notifications_page/app/providers/notification_providers.dart';
-import 'package:trees_india/commons/app/auth_provider.dart';
+import 'package:trees_india/pages/profile_page/app/providers/profile_providers.dart';
+
+import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
+import '../../../rental_and_properties/app/providers/property_providers.dart';
+import '../../../rental_and_properties/app/views/widgets/property_grid_widget.dart';
+import '../../../rental_and_properties/app/views/widgets/property_card_skeleton.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/subcategory_entity.dart';
-import '../providers/subcategory_providers.dart';
+import '../providers/category_providers.dart';
 import '../providers/home_page_providers.dart';
-import '../../../services_page/app/providers/service_providers.dart';
+import '../providers/subcategory_providers.dart';
 import '../viewmodels/subcategory_state.dart';
+import 'widgets/app_header_widget.dart';
+import 'widgets/banner_skeleton_widget.dart';
 import 'widgets/service_category_tabs_widget.dart';
 import 'widgets/simple_banner_widget.dart';
-import 'widgets/app_header_widget.dart';
 import 'widgets/subcategory_loading_skeleton.dart';
-import 'widgets/popular_categories_widget.dart';
 import 'widgets/subscription_lock_modal.dart';
-import '../../../../../commons/components/popular_services/app/views/popular_services_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -36,7 +40,8 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
+class _HomePageState extends ConsumerState<HomePage>
+    with ConnectivityRefreshMixin {
   LocationEntity? _currentLocation;
 
   @override
@@ -46,10 +51,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
     });
-    // Load popular services when the page initializes
+    // Load popular services, properties, and banners when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(homePageNotifierProvider.notifier).loadPopularServices();
+      _loadPopularServices();
+      ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
+      _loadProperties();
     });
   }
 
@@ -74,9 +81,58 @@ class _HomePageState extends ConsumerState<HomePage> {
         setState(() {
           _currentLocation = location;
         });
+        // Reload popular services and properties when location changes
+        _loadPopularServices();
+        _loadProperties();
       }
     } catch (e) {
       debugPrint('Error loading location: $e');
+    }
+  }
+
+  void _loadPopularServices() {
+    final notifier = ref.read(homePageNotifierProvider.notifier);
+    final city = _currentLocation?.city;
+    final state = _currentLocation?.state;
+
+    notifier.loadPopularServices();
+  }
+
+  void _loadProperties() {
+    final notifier = ref.read(homePageNotifierProvider.notifier);
+    final city = _currentLocation?.city;
+    final state = _currentLocation?.state;
+
+    notifier.loadSaleProperties(city: city, state: state);
+    notifier.loadRentProperties(city: city, state: state);
+  }
+
+  @override
+  void onConnectivityRestored() {
+    // This is called automatically when connectivity is restored
+    _refreshPageData();
+  }
+
+  void _refreshPageData() {
+    // Reload all page data when connectivity is restored
+    try {
+      ref.read(profileProvider.notifier).loadProfile();
+      _loadPopularServices();
+      ref.read(categoryNotifierProvider.notifier).loadCategories();
+      ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
+      _initializeNotifications();
+      _loadProperties();
+
+      // Show success message to user
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //      const InfoSnackbarWidget(message: 'Connection restored',
+      //       duration: Duration(seconds: 2),
+      //     ).createSnackBar(),
+      //   );
+      // }
+    } catch (e) {
+      debugPrint('Error refreshing page data: $e');
     }
   }
 
@@ -182,14 +238,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   subcategory: subcategory,
                                   onTap: () {
                                     Navigator.of(context).pop();
-                                    // Set category and subcategory in services page state
-                                    ref
-                                        .read(serviceNotifierProvider.notifier)
-                                        .setCategoryAndSubcategory(
-                                            categoryEntity, subcategory);
                                     // Navigate to services page
                                     context.push(
-                                        '/services/${categoryEntity.id}/${subcategory.id}');
+                                        '/services?category=${categoryEntity.id}&subcategory=${subcategory.id}');
                                   },
                                 );
                               },
@@ -350,15 +401,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
     return MainLayoutWidget(
       currentIndex: 0,
       child: Scaffold(
@@ -438,41 +480,55 @@ class _HomePageState extends ConsumerState<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Banner Section
-                        Column(
-                          children: [
-                            // Top divider
-                            Container(
-                              height: 8,
-                              color: const Color(0xFFF5F5F5),
-                            ),
-                            // Banner with white background
-                            Container(
-                              color: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.lg),
-                              child: const SimpleBannerWidget(
-                                items: [
-                                  BannerItem(
-                                    id: "1",
-                                    image: "assets/images/banner_one.png",
-                                  ),
-                                  BannerItem(
-                                    id: "2",
-                                    image: "assets/images/banner_two.png",
-                                  ),
-                                  BannerItem(
-                                    id: "3",
-                                    image: "assets/images/banner_three.png",
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Bottom divider
-                            Container(
-                              height: 8,
-                              color: const Color(0xFFF5F5F5),
-                            ),
-                          ],
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+
+                            // Filter banners: only show active banners with non-empty images
+                            final activeBanners = homePageState.promotionBanners
+                                .where((banner) =>
+                                    banner.isActive && banner.image.isNotEmpty)
+                                .map((banner) => BannerItem(
+                                      id: banner.id.toString(),
+                                      image: banner.image,
+                                      link: banner.link,
+                                      isNetworkImage: true,
+                                    ))
+                                .toList();
+
+                            // Only show banner section if there are active banners
+                            if (activeBanners.isEmpty &&
+                                !homePageState.isLoadingPromotionBanners) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: [
+                                // Top divider
+                                Container(
+                                  height: 8,
+                                  color: const Color(0xFFF5F5F5),
+                                ),
+                                // Banner with white background
+                                Container(
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.lg),
+                                  child: homePageState.isLoadingPromotionBanners
+                                      ? const BannerSkeletonWidget()
+                                      : SimpleBannerWidget(
+                                          items: activeBanners,
+                                        ),
+                                ),
+                                // Bottom divider
+                                Container(
+                                  height: 8,
+                                  color: const Color(0xFFF5F5F5),
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: AppSpacing.xl),
@@ -514,19 +570,235 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                         const SizedBox(height: AppSpacing.xl),
 
-                        // Popular Categories Section
-                        PopularCategoriesWidget(
-                          onSeeAllTap: () {
-                            // Handle "See all" tap - navigate to categories page
-                            context.push('/services');
-                          },
-                          onCategoryTap: () {
-                            // Handle category tap - navigate to specific category
-                            print('Category tapped');
+                        // Listed Properties Section
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+                            final locationCity =
+                                _currentLocation?.city ?? 'your area';
+
+                            // Show skeleton during loading (no header)
+                            if (homePageState.isLoadingSaleProperties) {
+                              return SizedBox(
+                                height: 350,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg),
+                                  itemCount: 2,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      margin: EdgeInsets.only(
+                                        right: index < 1 ? AppSpacing.md : 0,
+                                      ),
+                                      child: const PropertyCardSkeleton(
+                                        version: 'home',
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            } else if (homePageState
+                                .saleProperties.isNotEmpty) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Section Header with View All button
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        H4Bold(
+                                          text:
+                                              'Listed Properties in $locationCity',
+                                          color: AppColors.brandNeutral900,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            ref
+                                                .read(propertyNotifierProvider
+                                                    .notifier)
+                                                .setListingType('sale');
+                                            context.push(
+                                                '/marketplace/rental-properties');
+                                          },
+                                          child: const Text(
+                                            'See all',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF055c3a),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+
+                                  // Properties List
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount:
+                                          homePageState.saleProperties.length,
+                                      itemBuilder: (context, index) {
+                                        final property =
+                                            homePageState.saleProperties[index];
+                                        return Container(
+                                          width: 320,
+                                          margin: EdgeInsets.only(
+                                            right: index <
+                                                    homePageState.saleProperties
+                                                            .length -
+                                                        1
+                                                ? AppSpacing.md
+                                                : 0,
+                                          ),
+                                          child: PropertyCard(
+                                            property: property,
+                                            version: 'home',
+                                            onTap: () {
+                                              context.push(
+                                                  '/rental-properties/${property.id}');
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xl),
+                                ],
+                              );
+                            }
+                            // Hide entire section when empty
+                            else {
+                              return const SizedBox.shrink();
+                            }
                           },
                         ),
 
-                        const SizedBox(height: AppSpacing.xl),
+                        // Listed Rentals Section
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final homePageState =
+                                ref.watch(homePageNotifierProvider);
+                            final locationCity =
+                                _currentLocation?.city ?? 'your area';
+
+                            // Show skeleton during loading (no header)
+                            if (homePageState.isLoadingRentProperties) {
+                              return SizedBox(
+                                height: 350,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg),
+                                  itemCount: 2,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      margin: EdgeInsets.only(
+                                        right: index < 1 ? AppSpacing.md : 0,
+                                      ),
+                                      child: const PropertyCardSkeleton(
+                                        version: 'home',
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            } else if (homePageState
+                                .rentProperties.isNotEmpty) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Section Header with View All button
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        H4Bold(
+                                          text:
+                                              'Listed Rentals in $locationCity',
+                                          color: AppColors.brandNeutral900,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            ref
+                                                .read(propertyNotifierProvider
+                                                    .notifier)
+                                                .setListingType('rent');
+                                            context.push(
+                                                '/marketplace/rental-properties');
+                                          },
+                                          child: const Text(
+                                            'See all',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF055c3a),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+
+                                  // Properties List
+                                  SizedBox(
+                                    height: 350,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg),
+                                      itemCount:
+                                          homePageState.rentProperties.length,
+                                      itemBuilder: (context, index) {
+                                        final property =
+                                            homePageState.rentProperties[index];
+                                        return Container(
+                                          width: 320,
+                                          margin: EdgeInsets.only(
+                                            right: index <
+                                                    homePageState.rentProperties
+                                                            .length -
+                                                        1
+                                                ? AppSpacing.md
+                                                : 0,
+                                          ),
+                                          child: PropertyCard(
+                                            property: property,
+                                            version: 'home',
+                                            onTap: () {
+                                              context.push(
+                                                  '/rental-properties/${property.id}');
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xl),
+                                ],
+                              );
+                            }
+                            // Hide entire section when empty
+                            else {
+                              return const SizedBox.shrink();
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),

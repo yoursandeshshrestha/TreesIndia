@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/error_snackbar_widget.dart';
 import 'package:trees_india/commons/components/snackbar/app/views/success_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
+import 'package:trees_india/commons/utils/date_utils.dart';
+import 'package:trees_india/commons/widgets/location_tracking_modal.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_notifier.dart';
 import 'package:trees_india/pages/bookings_page/app/viewmodels/bookings_state.dart';
-import 'package:trees_india/commons/widgets/location_tracking_modal.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -309,7 +313,7 @@ class BookingCardWidget extends ConsumerWidget {
 
                     // Action Buttons
                     ..._buildActionButtons(
-                        context, bookingsState, bookingsNotifier),
+                        context, bookingsState, bookingsNotifier, ref),
                   ],
                 ),
               ),
@@ -538,15 +542,8 @@ class BookingCardWidget extends ConsumerWidget {
   }
 
   String _formatTimeOnly(DateTime time) {
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     final timeFormat = DateFormat('hh:mm a');
     return timeFormat.format(indianTime);
@@ -586,7 +583,7 @@ class BookingCardWidget extends ConsumerWidget {
   }
 
   List<Widget> _buildActionButtons(BuildContext context,
-      BookingsState bookingsState, BookingsNotifier bookingsNotifier) {
+      BookingsState bookingsState, BookingsNotifier bookingsNotifier, WidgetRef ref) {
     final status = booking.status.toLowerCase();
 
     List<Widget> buttons = [];
@@ -877,39 +874,62 @@ class BookingCardWidget extends ConsumerWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            InkWell(
-              onTap: () {},
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  shape: BoxShape.circle,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await _createConversationAndNavigate(context, ref, booking);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.stateGreen700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.chat_bubble_outline,
-                  size: 24,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () {},
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.phone_outlined,
-                  size: 24,
-                  color: Colors.grey,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.chat_bubble_outline, size: 16),
+                    SizedBox(width: AppSpacing.xs),
+                    Text('Chat with Worker'),
+                  ],
                 ),
               ),
             ),
+            // InkWell(
+            //   onTap: () {},
+            //   child: Container(
+            //     width: 48,
+            //     height: 48,
+            //     decoration: const BoxDecoration(
+            //       color: Color(0xFFF5F5F5),
+            //       shape: BoxShape.circle,
+            //     ),
+            //     child: const Icon(
+            //       Icons.chat_bubble_outline,
+            //       size: 24,
+            //       color: Colors.grey,
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(width: 8),
+            // InkWell(
+            //   onTap: () {},
+            //   child: Container(
+            //     width: 48,
+            //     height: 48,
+            //     decoration: const BoxDecoration(
+            //       color: Color(0xFFF5F5F5),
+            //       shape: BoxShape.circle,
+            //     ),
+            //     child: const Icon(
+            //       Icons.phone_outlined,
+            //       size: 24,
+            //       color: Colors.grey,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       );
@@ -1008,16 +1028,64 @@ class BookingCardWidget extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
-    DateTime indianTime;
-
-    if (time.isUtc) {
-      // Convert UTC to IST (UTC+5:30)
-      indianTime = time.add(const Duration(hours: 5, minutes: 30));
-    } else {
-      // Assume it's already in IST
-      indianTime = time;
-    }
+    // Convert to IST using utility function
+    final indianTime = ISTDateUtils.convertToISTFromDateTime(time);
 
     return '${dateFormat.format(date)} at ${timeFormat.format(indianTime)}';
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    BookingDetailsEntity booking,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Get worker user ID from booking
+      final workerUserId = booking.workerAssignment?.worker?.userId;
+
+      if (workerUserId == null) {
+        throw Exception('Worker information not available');
+      }
+
+      // Create conversation using the use case
+      final createConversationUseCase =
+          ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: workerUserId,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.push('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }

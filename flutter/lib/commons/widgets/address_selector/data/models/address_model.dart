@@ -97,7 +97,7 @@ class AddressModel {
 }
 
 class CreateAddressRequestModel {
-  final String name;
+  final String? name;
   final String address;
   final String city;
   final String state;
@@ -110,7 +110,7 @@ class CreateAddressRequestModel {
   final bool isDefault;
 
   const CreateAddressRequestModel({
-    required this.name,
+    this.name,
     required this.address,
     required this.city,
     required this.state,
@@ -159,7 +159,7 @@ class CreateAddressRequestModel {
 
 class UpdateAddressRequestModel {
   final int id;
-  final String name;
+  final String? name;
   final String address;
   final String city;
   final String state;
@@ -173,7 +173,7 @@ class UpdateAddressRequestModel {
 
   const UpdateAddressRequestModel({
     required this.id,
-    required this.name,
+    this.name,
     required this.address,
     required this.city,
     required this.state,

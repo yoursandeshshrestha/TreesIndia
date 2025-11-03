@@ -93,6 +93,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         state = state.copyWith(
           isUpdatingProfile: false,
           successMessage: response.message,
+          name: name,
+          email: email,
+          gender: gender,
         );
         _notificationService.showSuccessSnackBar(response.message);
       } else {
@@ -163,5 +166,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   void clearMessages() {
     _checkMounted();
     state = state.clearMessages();
+  }
+
+  void clearErrorMessage() {
+    _checkMounted();
+    state = state.clearErrorMessage();
   }
 }

@@ -8,6 +8,8 @@ class SearchResultModel extends Equatable {
   final String description;
   final String category;
   final String subcategory;
+  final int categoryId;
+  final int subcategoryId;
   final String priceType;
   final int? price;
   final String? duration;
@@ -29,6 +31,8 @@ class SearchResultModel extends Equatable {
     required this.description,
     required this.category,
     required this.subcategory,
+    required this.categoryId,
+    required this.subcategoryId,
     required this.priceType,
     this.price,
     this.duration,
@@ -52,6 +56,8 @@ class SearchResultModel extends Equatable {
       description: json['description'] as String? ?? '',
       category: json['category'] as String? ?? '',
       subcategory: json['subcategory'] as String? ?? '',
+      categoryId: json['category_id'] as int? ?? 0,
+      subcategoryId: json['subcategory_id'] as int? ?? 0,
       priceType: json['price_type'] as String? ?? '',
       price: json['price'] as int?,
       duration: json['duration'] as String?,
@@ -61,8 +67,8 @@ class SearchResultModel extends Equatable {
               (json['images'] as List<dynamic>?)?.isNotEmpty == true)
           ? (json['images'] as List<dynamic>).cast<String>()
           : null,
-      serviceAreas: (json['service_areas'] as List<dynamic>?)
-              ?.cast<String>() ?? [],
+      serviceAreas:
+          (json['service_areas'] as List<dynamic>?)?.cast<String>() ?? [],
       matchScore: json['match_score'] as int? ?? 0,
       matchReason: json['match_reason'] as String? ?? '',
       highlightedName: json['highlighted_name'] as String? ?? '',
@@ -82,6 +88,8 @@ class SearchResultModel extends Equatable {
       'description': description,
       'category': category,
       'subcategory': subcategory,
+      'category_id': categoryId,
+      'subcategory_id': subcategoryId,
       'price_type': priceType,
       'price': price,
       'duration': duration,
@@ -106,6 +114,8 @@ class SearchResultModel extends Equatable {
       description: description,
       category: category,
       subcategory: subcategory,
+      categoryId: categoryId,
+      subcategoryId: subcategoryId,
       priceType: priceType,
       price: price,
       duration: duration,
@@ -130,6 +140,8 @@ class SearchResultModel extends Equatable {
         description,
         category,
         subcategory,
+        categoryId,
+        subcategoryId,
         priceType,
         price,
         duration,

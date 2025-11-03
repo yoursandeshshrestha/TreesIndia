@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
+import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import '../providers/subscription_providers.dart';
 import '../states/subscription_plans_state.dart';
 import 'widgets/subscription_plan_card.dart';
@@ -14,51 +13,34 @@ class SubscriptionPlansListingPage extends ConsumerStatefulWidget {
   const SubscriptionPlansListingPage({super.key});
 
   @override
-  ConsumerState<SubscriptionPlansListingPage> createState() => _SubscriptionPlansListingPageState();
+  ConsumerState<SubscriptionPlansListingPage> createState() =>
+      _SubscriptionPlansListingPageState();
 }
 
-class _SubscriptionPlansListingPageState extends ConsumerState<SubscriptionPlansListingPage> {
+class _SubscriptionPlansListingPageState
+    extends ConsumerState<SubscriptionPlansListingPage> {
   @override
   void initState() {
     super.initState();
     // Load subscription plans when page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(subscriptionPlansNotifierProvider.notifier).loadSubscriptionPlans();
+      ref
+          .read(subscriptionPlansNotifierProvider.notifier)
+          .loadSubscriptionPlans();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-        final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
-    
+
+
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Subscription Plans',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.brandNeutral900,
-          ),
-        ),
+      appBar: const CustomAppBar(
+        title: 'Subscription Plans',
         backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.brandNeutral600,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        iconColor: AppColors.brandNeutral800,
+        titleColor: AppColors.brandNeutral800,
       ),
       body: Consumer(
         builder: (context, ref, child) {
@@ -144,7 +126,8 @@ class _SubscriptionPlansListingPageState extends ConsumerState<SubscriptionPlans
                   isSelected: state.selectedPlanId == plan.id,
                   selectedDurationType: state.selectedDurationType,
                   onPlanSelected: (planId, durationType) {
-                    ref.read(subscriptionPlansNotifierProvider.notifier)
+                    ref
+                        .read(subscriptionPlansNotifierProvider.notifier)
                         .selectPlan(planId, durationType);
                   },
                 ),
@@ -168,7 +151,8 @@ class _SubscriptionPlansListingPageState extends ConsumerState<SubscriptionPlans
               onPressed: state.isPurchasing
                   ? null
                   : () {
-                      ref.read(subscriptionPlansNotifierProvider.notifier)
+                      ref
+                          .read(subscriptionPlansNotifierProvider.notifier)
                           .purchaseSubscription();
                     },
               style: ElevatedButton.styleFrom(
@@ -234,7 +218,8 @@ class _SubscriptionPlansListingPageState extends ConsumerState<SubscriptionPlans
             const SizedBox(height: AppSpacing.lg),
             ElevatedButton(
               onPressed: () {
-                ref.read(subscriptionPlansNotifierProvider.notifier)
+                ref
+                    .read(subscriptionPlansNotifierProvider.notifier)
                     .loadSubscriptionPlans();
               },
               style: ElevatedButton.styleFrom(

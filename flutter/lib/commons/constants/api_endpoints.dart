@@ -12,11 +12,13 @@ class ApiEndpoints {
     changePassword,
     locationAutocomplete,
     categories,
+    categoryById,
     subcategories,
     services,
     searchServices,
     searchSuggestions,
     popularServices,
+    promotionBanners,
     walletSummary,
     walletTransactions,
     walletTransactionsByType,
@@ -87,6 +89,7 @@ class ApiEndpoints {
     unreadCount,
     markAllNotificationsAsRead,
     submitWorkerApplication,
+    submitBrokerApplication,
     getUserApplicationStatus,
     getUserNotificationSettings,
     updateUserNotificationSettings,
@@ -134,6 +137,11 @@ class ApiEndpoints {
     requiresAuth: false,
   );
 
+  static ApiEndpoint categoryById = ApiEndpoint(
+    path: '/categories/{categoryId}',
+    requiresAuth: false,
+  );
+
   static ApiEndpoint subcategories = ApiEndpoint(
     path: '/subcategories/category/{categoryId}',
     requiresAuth: false,
@@ -156,6 +164,11 @@ class ApiEndpoints {
 
   static ApiEndpoint popularServices = ApiEndpoint(
     path: '/services/popular',
+    requiresAuth: false,
+  );
+
+  static ApiEndpoint promotionBanners = ApiEndpoint(
+    path: '/promotion-banners',
     requiresAuth: false,
   );
 
@@ -507,6 +520,12 @@ class ApiEndpoints {
   // Worker Application Endpoints
   static ApiEndpoint submitWorkerApplication = ApiEndpoint(
     path: '/role-applications/worker',
+    requiresAuth: true,
+  );
+
+  // Broker Application Endpoints
+  static ApiEndpoint submitBrokerApplication = ApiEndpoint(
+    path: '/role-applications/broker',
     requiresAuth: true,
   );
 

@@ -74,6 +74,13 @@ class ProfileState {
     );
   }
 
+
+  ProfileState clearErrorMessage() {
+    return copyWith(
+      errorMessage: null,
+    );
+  }
+
   @override
   String toString() {
     return 'ProfileState(isLoading: $isLoading, isUpdatingProfile: $isUpdatingProfile, isUploadingAvatar: $isUploadingAvatar, errorMessage: $errorMessage, successMessage: $successMessage, avatarUrl: $avatarUrl, name: $name, email: $email, gender: $gender, phone: $phone, isProfileLoaded: $isProfileLoaded, subscription: $subscription)';

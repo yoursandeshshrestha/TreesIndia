@@ -102,7 +102,7 @@ class AddressEntity extends Equatable {
 }
 
 class CreateAddressRequestEntity extends Equatable {
-  final String name;
+  final String? name;
   final String address;
   final String city;
   final String state;
@@ -115,7 +115,7 @@ class CreateAddressRequestEntity extends Equatable {
   final bool isDefault;
 
   const CreateAddressRequestEntity({
-    required this.name,
+    this.name,
     required this.address,
     required this.city,
     required this.state,
@@ -146,7 +146,7 @@ class CreateAddressRequestEntity extends Equatable {
 
 class UpdateAddressRequestEntity extends Equatable {
   final int id;
-  final String name;
+  final String? name;
   final String address;
   final String city;
   final String state;
@@ -160,7 +160,7 @@ class UpdateAddressRequestEntity extends Equatable {
 
   const UpdateAddressRequestEntity({
     required this.id,
-    required this.name,
+    this.name,
     required this.address,
     required this.city,
     required this.state,

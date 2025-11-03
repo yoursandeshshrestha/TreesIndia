@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/presenters/providers/error_handler_provider.dart';
 
 import '../../../../commons/presenters/providers/dio_provider.dart';
+import '../../../home_page/app/providers/category_providers.dart';
 import '../../data/datasources/service_remote_datasource.dart';
 import '../../data/repositories/service_repository_impl.dart';
 import '../../domain/repositories/service_repository.dart';
@@ -70,8 +71,10 @@ final popularServicesNotifierProvider =
 final serviceNotifierProvider =
     StateNotifierProvider<ServiceNotifier, ServiceState>((ref) {
   final getServicesUseCase = ref.read(getServicesUseCaseProvider);
+  final getCategoryByIdUseCase = ref.read(getCategoryByIdUseCaseProvider);
   return ServiceNotifier(
     getServicesUseCase: getServicesUseCase,
+    getCategoryByIdUseCase: getCategoryByIdUseCase,
     ref: ref,
   );
 });

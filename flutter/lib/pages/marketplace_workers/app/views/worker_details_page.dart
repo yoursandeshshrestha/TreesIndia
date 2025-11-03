@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
 import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 
@@ -22,15 +20,7 @@ class WorkerDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final workerDetailsState = ref.watch(workerDetailsNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     ref.listen<WorkerDetailsState>(workerDetailsNotifierProvider,
         (previous, next) {

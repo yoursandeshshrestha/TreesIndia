@@ -11,8 +11,8 @@ abstract class ServiceRemoteDataSource {
   Future<ServiceResponseModel> getServices({
     required String city,
     required String state,
-    required int categoryId,
-    required int subcategoryId,
+    int? categoryId,
+    int? subcategoryId,
     int page = 1,
     int limit = 10,
   });
@@ -25,7 +25,10 @@ abstract class ServiceRemoteDataSource {
 
   Future<SearchSuggestionsResponseModel> getSearchSuggestions();
 
-  Future<PopularServicesResponseModel> getPopularServices();
+  Future<PopularServicesResponseModel> getPopularServices({
+    String? city,
+    String? state,
+  });
 }
 
 class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
@@ -41,21 +44,31 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   Future<ServiceResponseModel> getServices({
     required String city,
     required String state,
-    required int categoryId,
-    required int subcategoryId,
+    int? categoryId,
+    int? subcategoryId,
     int page = 1,
     int limit = 10,
   }) async {
     try {
       final url = ApiEndpoints.services.path;
-      final response = await dioClient.dio.get(url, queryParameters: {
+      var queryParameters = {
         'city': city,
         'state': state,
-        'category': categoryId,
-        'subcategory': subcategoryId,
         'page': page,
         'limit': limit,
-      });
+        'exclude_inactive': true,
+      };
+
+      if (categoryId != null) {
+        queryParameters['category'] = categoryId;
+      }
+
+      if (subcategoryId != null) {
+        queryParameters['subcategory'] = subcategoryId;
+      }
+
+      final response =
+          await dioClient.dio.get(url, queryParameters: queryParameters);
 
       if (response.statusCode == 200) {
         final apiResponse = ServicesApiResponseModel.fromJson(response.data);
@@ -84,14 +97,16 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
       final response = await dioClient.dio.get(url);
 
       if (response.statusCode == 200) {
-        final apiResponse = SearchSuggestionsResponseModel.fromJson(response.data);
+        final apiResponse =
+            SearchSuggestionsResponseModel.fromJson(response.data);
         if (apiResponse.success) {
           return apiResponse;
         } else {
           throw Exception(apiResponse.message);
         }
       } else {
-        throw Exception('Failed to fetch search suggestions. Please try again.');
+        throw Exception(
+            'Failed to fetch search suggestions. Please try again.');
       }
     } catch (e) {
       if (e is DioException) {
@@ -138,13 +153,30 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<PopularServicesResponseModel> getPopularServices() async {
+  Future<PopularServicesResponseModel> getPopularServices({
+    String? city,
+    String? state,
+  }) async {
     try {
       final url = ApiEndpoints.popularServices.path;
-      final response = await dioClient.dio.get(url);
+      var queryParameters = <String, dynamic>{};
+
+      if (city != null) {
+        queryParameters['city'] = city;
+      }
+
+      if (state != null) {
+        queryParameters['state'] = state;
+      }
+
+      final response = await dioClient.dio.get(
+        url,
+        queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
+      );
 
       if (response.statusCode == 200) {
-        final apiResponse = PopularServicesResponseModel.fromJson(response.data);
+        final apiResponse =
+            PopularServicesResponseModel.fromJson(response.data);
         if (apiResponse.success) {
           return apiResponse;
         } else {

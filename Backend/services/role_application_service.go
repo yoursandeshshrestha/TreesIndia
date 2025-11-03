@@ -13,10 +13,10 @@ import (
 
 type RoleApplicationService struct {
 	applicationRepo     *repositories.RoleApplicationRepository
-	userRepo           *repositories.UserRepository
-	subscriptionRepo   *repositories.UserSubscriptionRepository
+	userRepo            *repositories.UserRepository
+	subscriptionRepo    *repositories.UserSubscriptionRepository
 	notificationService *InAppNotificationService
-	db                 *gorm.DB
+	db                  *gorm.DB
 }
 
 func NewRoleApplicationService(
@@ -25,11 +25,11 @@ func NewRoleApplicationService(
 	notificationService *InAppNotificationService,
 ) *RoleApplicationService {
 	return &RoleApplicationService{
-		applicationRepo: applicationRepo,
-		userRepo:        userRepo,
-		subscriptionRepo: repositories.NewUserSubscriptionRepository(),
+		applicationRepo:     applicationRepo,
+		userRepo:            userRepo,
+		subscriptionRepo:    repositories.NewUserSubscriptionRepository(),
 		notificationService: notificationService,
-		db:              database.GetDB(),
+		db:                  database.GetDB(),
 	}
 }
 
@@ -46,12 +46,23 @@ func (s *RoleApplicationService) hasActiveSubscription(userID uint) (bool, error
 // SubmitWorkerApplication submits a worker application for a user
 func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData *models.Worker, userUpdates *models.User) (*models.RoleApplication, error) {
 	var application *models.RoleApplication
-	
+
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// Check if user already has an application
 		existingApplication, err := s.getUserApplicationWithTx(tx, userID)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Errorf("Failed to check existing application: %v", err)
+			return err
+		}
+
+		// Check if user already has a worker record (even if application was deleted)
+		var existingWorker models.Worker
+		workerExists := false
+		err = tx.Where("user_id = ?", userID).First(&existingWorker).Error
+		if err == nil {
+			workerExists = true
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logrus.Errorf("Failed to check existing worker record: %v", err)
 			return err
 		}
 
@@ -72,7 +83,7 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 			if userUpdates.Avatar != "" {
 				updates["avatar"] = userUpdates.Avatar
 			}
-			
+
 			if len(updates) > 0 {
 				err = tx.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
 				if err != nil {
@@ -97,24 +108,34 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 			}
 
 			// Update existing worker record
-			var existingWorker models.Worker
-			err = tx.Where("user_id = ?", userID).First(&existingWorker).Error
-			if err != nil {
-				logrus.Errorf("Failed to find existing worker record: %v", err)
-				return err
-			}
+			if workerExists {
+				// Update worker data
+				existingWorker.Skills = workerData.Skills
+				existingWorker.Experience = workerData.Experience
+				existingWorker.ContactInfo = workerData.ContactInfo
+				existingWorker.Address = workerData.Address
+				existingWorker.BankingInfo = workerData.BankingInfo
+				existingWorker.Documents = workerData.Documents
+				existingWorker.RoleApplicationID = &application.ID
 
-			// Update worker data
-			existingWorker.Skills = workerData.Skills
-			existingWorker.Experience = workerData.Experience
-			existingWorker.BankingInfo = workerData.BankingInfo
-			existingWorker.Documents = workerData.Documents
-			existingWorker.RoleApplicationID = &application.ID
+				err = tx.Save(&existingWorker).Error
+				if err != nil {
+					logrus.Errorf("Failed to update worker record: %v", err)
+					return err
+				}
+			} else {
+				// Create worker record if it doesn't exist
+				workerData.UserID = userID
+				workerData.RoleApplicationID = &application.ID
+				workerData.IsAvailable = false
+				workerData.IsActive = false
+				workerData.WorkerType = models.WorkerTypeNormal
 
-			err = tx.Save(&existingWorker).Error
-			if err != nil {
-				logrus.Errorf("Failed to update worker record: %v", err)
-				return err
+				err = tx.Create(workerData).Error
+				if err != nil {
+					logrus.Errorf("Failed to create worker record: %v", err)
+					return err
+				}
 			}
 		} else {
 			// Create new application
@@ -131,17 +152,38 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 				return err
 			}
 
-			// Create worker record
-			workerData.UserID = userID
-			workerData.RoleApplicationID = &application.ID
-			workerData.IsAvailable = false
-			workerData.IsActive = false
-			workerData.WorkerType = models.WorkerTypeNormal
+			// Update or create worker record
+			if workerExists {
+				// Update existing worker data
+				existingWorker.Skills = workerData.Skills
+				existingWorker.Experience = workerData.Experience
+				existingWorker.ContactInfo = workerData.ContactInfo
+				existingWorker.Address = workerData.Address
+				existingWorker.BankingInfo = workerData.BankingInfo
+				existingWorker.Documents = workerData.Documents
+				existingWorker.RoleApplicationID = &application.ID
+				existingWorker.IsAvailable = false
+				existingWorker.IsActive = false
+				existingWorker.WorkerType = models.WorkerTypeNormal
 
-			err = tx.Create(workerData).Error
-			if err != nil {
-				logrus.Errorf("Failed to create worker record: %v", err)
-				return err
+				err = tx.Save(&existingWorker).Error
+				if err != nil {
+					logrus.Errorf("Failed to update worker record: %v", err)
+					return err
+				}
+			} else {
+				// Create new worker record
+				workerData.UserID = userID
+				workerData.RoleApplicationID = &application.ID
+				workerData.IsAvailable = false
+				workerData.IsActive = false
+				workerData.WorkerType = models.WorkerTypeNormal
+
+				err = tx.Create(workerData).Error
+				if err != nil {
+					logrus.Errorf("Failed to create worker record: %v", err)
+					return err
+				}
 			}
 		}
 
@@ -156,13 +198,13 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 			application.Status = models.ApplicationStatusApproved
 			application.ReviewedAt = &now
 			// Note: ReviewedBy is left nil for auto-approval
-			
+
 			err = tx.Save(application).Error
 			if err != nil {
 				logrus.Errorf("Failed to save auto-approved application: %v", err)
 				return err
 			}
-			
+
 			// Activate the worker immediately
 			updates := map[string]interface{}{
 				"is_available": true,
@@ -175,14 +217,14 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 				logrus.Errorf("Failed to activate worker record for auto-approval: %v", err)
 				return err
 			}
-			
+
 			// Update user's role and application status
 			err = tx.Model(&models.User{}).
 				Where("id = ?", userID).
 				Updates(map[string]interface{}{
-					"user_type": models.UserTypeWorker,
+					"user_type":               models.UserTypeWorker,
 					"role_application_status": "approved",
-					"approval_date": &now,
+					"approval_date":           &now,
 				}).Error
 			if err != nil {
 				logrus.Errorf("Failed to update user for auto-approval: %v", err)
@@ -216,12 +258,23 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 // SubmitBrokerApplication submits a broker application for a user
 func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData *models.Broker, userUpdates *models.User) (*models.RoleApplication, error) {
 	var application *models.RoleApplication
-	
+
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// Check if user already has an application
 		existingApplication, err := s.getUserApplicationWithTx(tx, userID)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Errorf("Failed to check existing application: %v", err)
+			return err
+		}
+
+		// Check if user already has a broker record (even if application was deleted)
+		var existingBroker models.Broker
+		brokerExists := false
+		err = tx.Where("user_id = ?", userID).First(&existingBroker).Error
+		if err == nil {
+			brokerExists = true
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logrus.Errorf("Failed to check existing broker record: %v", err)
 			return err
 		}
 
@@ -242,7 +295,7 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 			if userUpdates.Avatar != "" {
 				updates["avatar"] = userUpdates.Avatar
 			}
-			
+
 			if len(updates) > 0 {
 				err = tx.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
 				if err != nil {
@@ -267,25 +320,31 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 			}
 
 			// Update existing broker record
-			var existingBroker models.Broker
-			err = tx.Where("user_id = ?", userID).First(&existingBroker).Error
-			if err != nil {
-				logrus.Errorf("Failed to find existing broker record: %v", err)
-				return err
-			}
+			if brokerExists {
+				// Update broker data
+				existingBroker.License = brokerData.License
+				existingBroker.Agency = brokerData.Agency
+				existingBroker.ContactInfo = brokerData.ContactInfo
+				existingBroker.Address = brokerData.Address
+				existingBroker.Documents = brokerData.Documents
+				existingBroker.RoleApplicationID = &application.ID
 
-			// Update broker data
-			existingBroker.License = brokerData.License
-			existingBroker.Agency = brokerData.Agency
-			existingBroker.ContactInfo = brokerData.ContactInfo
-			existingBroker.Address = brokerData.Address
-			existingBroker.Documents = brokerData.Documents
-			existingBroker.RoleApplicationID = &application.ID
+				err = tx.Save(&existingBroker).Error
+				if err != nil {
+					logrus.Errorf("Failed to update broker record: %v", err)
+					return err
+				}
+			} else {
+				// Create broker record if it doesn't exist
+				brokerData.UserID = userID
+				brokerData.RoleApplicationID = &application.ID
+				brokerData.IsActive = false
 
-			err = tx.Save(&existingBroker).Error
-			if err != nil {
-				logrus.Errorf("Failed to update broker record: %v", err)
-				return err
+				err = tx.Create(brokerData).Error
+				if err != nil {
+					logrus.Errorf("Failed to create broker record: %v", err)
+					return err
+				}
 			}
 		} else {
 			// Create new application
@@ -302,15 +361,33 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 				return err
 			}
 
-			// Create broker record
-			brokerData.UserID = userID
-			brokerData.RoleApplicationID = &application.ID
-			brokerData.IsActive = false
+			// Update or create broker record
+			if brokerExists {
+				// Update existing broker data
+				existingBroker.License = brokerData.License
+				existingBroker.Agency = brokerData.Agency
+				existingBroker.ContactInfo = brokerData.ContactInfo
+				existingBroker.Address = brokerData.Address
+				existingBroker.Documents = brokerData.Documents
+				existingBroker.RoleApplicationID = &application.ID
+				existingBroker.IsActive = false
 
-			err = tx.Create(brokerData).Error
-			if err != nil {
-				logrus.Errorf("Failed to create broker record: %v", err)
-				return err
+				err = tx.Save(&existingBroker).Error
+				if err != nil {
+					logrus.Errorf("Failed to update broker record: %v", err)
+					return err
+				}
+			} else {
+				// Create new broker record
+				brokerData.UserID = userID
+				brokerData.RoleApplicationID = &application.ID
+				brokerData.IsActive = false
+
+				err = tx.Create(brokerData).Error
+				if err != nil {
+					logrus.Errorf("Failed to create broker record: %v", err)
+					return err
+				}
 			}
 		}
 
@@ -323,15 +400,16 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 			// Auto-approve the application
 			logrus.Infof("Auto-approving broker application for user %d due to active subscription", userID)
 			application.Status = models.ApplicationStatusApproved
+			// brokerData.RoleApplication.Status = models.ApplicationStatusApproved
 			application.ReviewedAt = &now
 			// Note: ReviewedBy is left nil for auto-approval
-			
+
 			err = tx.Save(application).Error
 			if err != nil {
 				logrus.Errorf("Failed to save auto-approved application: %v", err)
 				return err
 			}
-			
+
 			// Activate the broker immediately
 			err = tx.Model(&models.Broker{}).
 				Where("role_application_id = ?", application.ID).
@@ -342,14 +420,14 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 				logrus.Errorf("Failed to activate broker record for auto-approval: %v", err)
 				return err
 			}
-			
+
 			// Update user's role and application status
 			err = tx.Model(&models.User{}).
 				Where("id = ?", userID).
 				Updates(map[string]interface{}{
-					"user_type": models.UserTypeBroker,
+					"user_type":               models.UserTypeBroker,
 					"role_application_status": "approved",
-					"approval_date": &now,
+					"approval_date":           &now,
 				}).Error
 			if err != nil {
 				logrus.Errorf("Failed to update user for auto-approval: %v", err)
@@ -427,7 +505,7 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status
 	}
 
 	application.Status = status
-	
+
 	now := time.Now()
 	application.ReviewedBy = &adminID
 	application.ReviewedAt = &now
@@ -474,12 +552,12 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status
 						"is_active": true,
 					}).Error
 			}
-			
+
 			if err != nil {
 				logrus.Errorf("Failed to activate worker/broker record: %v", err)
 				return err
 			}
-			
+
 			err = s.userRepo.Update(user)
 			if err != nil {
 				logrus.Errorf("Failed to update user application status: %v", err)

@@ -176,7 +176,7 @@ class _ManualLocationPageState extends ConsumerState<ManualLocationPage> {
                   : 'Use current location',
               color: isLoading
                   ? AppColors.brandNeutral500
-                  : AppColors.brandPrimary600,
+                  : AppColors.stateGreen600,
             ),
           ),
         ),

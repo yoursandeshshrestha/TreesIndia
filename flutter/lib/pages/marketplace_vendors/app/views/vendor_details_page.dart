@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
-import 'package:trees_india/commons/components/connectivity/connectivity_provider.dart';
-import 'package:trees_india/commons/presenters/providers/notification_service_provider.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_vendor_profiles/app/views/widgets/vendor_image_carousel.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
@@ -22,15 +20,7 @@ class VendorDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vendorDetailsState = ref.watch(vendorDetailsNotifierProvider);
-    final isConnected = ref.watch(connectivityNotifierProvider);
-    if (!isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationServiceProvider).showOfflineMessage(
-              context,
-              onRetry: () => debugPrint('Retrying…'),
-            );
-      });
-    }
+
 
     ref.listen<VendorDetailsState>(vendorDetailsNotifierProvider,
         (previous, next) {

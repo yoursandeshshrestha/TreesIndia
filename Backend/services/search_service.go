@@ -540,7 +540,9 @@ func (ss *SearchService) convertToSearchResults(services []models.Service, match
 			Name:          service.Name,
 			Slug:          service.Slug,
 			Description:   service.Description,
+			CategoryID:    service.CategoryID,
 			Category:      service.Category.Name,
+			SubcategoryID: service.SubcategoryID,
 			Subcategory:   service.Subcategory.Name,
 			PriceType:     service.PriceType,
 			Price:         service.Price,
@@ -571,13 +573,15 @@ func (ss *SearchService) convertToSearchResultsWithRelevance(services []models.S
 	for i, service := range services {
 		// Calculate relevance score
 		score := ss.calculateRelevanceScore(service, keywords)
-		
+
 		results[i] = models.SearchResult{
 			ID:            service.ID,
 			Name:          service.Name,
 			Slug:          service.Slug,
 			Description:   service.Description,
+			CategoryID:    service.CategoryID,
 			Category:      service.Category.Name,
+			SubcategoryID: service.SubcategoryID,
 			Subcategory:   service.Subcategory.Name,
 			PriceType:     service.PriceType,
 			Price:         service.Price,

@@ -5,6 +5,7 @@ import '../../../../constants/app_colors.dart';
 import '../../../../constants/app_spacing.dart';
 import '../../../../components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/components/service_card/app/views/service_card_widget.dart';
+import 'package:trees_india/commons/components/service_card/app/views/service_card_skeleton.dart';
 import 'package:trees_india/pages/home_page/app/providers/home_page_providers.dart';
 
 class PopularServicesWidget extends ConsumerWidget {
@@ -48,12 +49,19 @@ class PopularServicesWidget extends ConsumerWidget {
 
           // Service Cards
           SizedBox(
-            height: 200,
+            height: 180,
             child: homePageState.isLoadingPopularServices
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF055c3a),
-                    ),
+                ? ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3, // Show 3 skeleton cards
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: index < 2 ? AppSpacing.sm : 0,
+                        ),
+                        child: const ServiceCardSkeleton(),
+                      );
+                    },
                   )
                 : homePageState.popularServices.isEmpty
                     ? Center(
@@ -87,8 +95,6 @@ class PopularServicesWidget extends ConsumerWidget {
                                 price: service.price != null
                                     ? '₹${service.price}'
                                     : 'Inquiry',
-                                rating: '4.79',
-                                reviewCount: '116K',
                               ),
                               onTap: () {
                                 context.push(

@@ -28,6 +28,7 @@ import 'package:trees_india/pages/my_works_page/app/views/my_works_page.dart';
 import 'package:trees_india/pages/notifications_page/app/views/notifications_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/edit_profile_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/about_trees_india/app/views/about_trees_india_page.dart';
+import 'package:trees_india/pages/profile_page/app/views/menu_pages/broker_application/app/views/broker_application_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/manage_addresses/app/views/manage_addresses_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/app/views/my_properties_page.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_subscription/app/views/my_subscription_page.dart';
@@ -342,6 +343,11 @@ class AppRouter {
               builder: (context, state) => const WorkerApplicationPage(),
             ),
             GoRoute(
+              path: '/broker-application',
+              name: 'BrokerApplicationPage',
+              builder: (context, state) => const BrokerApplicationPage(),
+            ),
+            GoRoute(
               path: '/my-subscription',
               name: 'MySubscriptionPage',
               builder: (context, state) => const MySubscriptionPage(),
@@ -363,15 +369,17 @@ class AppRouter {
               builder: (context, state) => const AboutTreesIndiaPage(),
             ),
             GoRoute(
-              path: '/services/:categoryId/:subcategoryId',
+              path: '/services',
+              // path: '/services?:categoryId/:subcategoryId',
               name: 'ServicesPage',
               builder: (context, state) {
-                final categoryId = state.pathParameters['categoryId']!;
-                final subcategoryId = state.pathParameters['subcategoryId']!;
+                final categoryId = state.uri.queryParameters['category'];
+                final subcategoryId = state.uri.queryParameters['subcategory'];
                 return ServicesPage(
                   categoryId: categoryId,
                   subcategoryId: subcategoryId,
                 );
+                // return const ServicesPage();
               },
             ),
             GoRoute(

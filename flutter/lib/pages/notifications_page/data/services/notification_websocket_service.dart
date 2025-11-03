@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:trees_india/commons/environment/global_environment.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 enum WebSocketConnectionState {
@@ -69,7 +70,8 @@ class NotificationWebSocketService {
     _errorController.add(null);
 
     try {
-      const wsUrl = 'ws://localhost:8080/api/v1/in-app-notifications/ws';
+      final wsBaseUrl = GlobalEnvironment.wsBaseUrl;
+      final wsUrl = '$wsBaseUrl/api/v1/in-app-notifications/ws';
       final uri = Uri.parse('$wsUrl?token=$token');
 
       _channel = WebSocketChannel.connect(uri);

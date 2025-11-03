@@ -42,7 +42,7 @@ class AddressNotifier extends StateNotifier<AddressState> {
   Future<void> createAddress(CreateAddressRequestEntity request) async {
     state = state.copyWith(isCreating: true, clearErrorMessage: true);
     try {
-      final newAddress = await createAddressUseCase(request);
+      final newAddress = await createAddressUseCase.call(request);
       final updatedAddresses = [...state.addresses, newAddress];
 
       state = state.copyWith(

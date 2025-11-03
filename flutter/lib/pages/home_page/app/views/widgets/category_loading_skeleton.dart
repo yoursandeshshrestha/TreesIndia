@@ -31,9 +31,9 @@ class _CategorySkeletonCard extends StatelessWidget {
       children: [
         // Circular icon skeleton
         SkeletonWidget(
-          width: 80,
-          height: 80,
-          borderRadius: BorderRadius.circular(40),
+          width: 100,
+          height: 60,
+          borderRadius: BorderRadius.circular(8),
         ),
         const SizedBox(height: 12),
         // Title skeleton
@@ -41,12 +41,12 @@ class _CategorySkeletonCard extends StatelessWidget {
           width: 80,
           height: 14,
         ),
-        const SizedBox(height: 8),
-        // Underline skeleton
-        const SkeletonWidget(
-          width: 32,
-          height: 2,
-        ),
+        // const SizedBox(height: 8),
+        // // Underline skeleton
+        // const SkeletonWidget(
+        //   width: 32,
+        //   height: 2,
+        // ),
       ],
     );
   }
