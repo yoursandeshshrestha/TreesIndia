@@ -1,6 +1,6 @@
 "use client";
 
-import { Facebook, Linkedin, Instagram /*, Twitter */ } from "lucide-react";
+// Social media icons removed - using text links instead
 import Image from "next/image";
 import Link from "next/link";
 
@@ -46,28 +46,28 @@ export default function Footer({ className = "" }: FooterProps) {
               </h3>
               <ul className="space-y-3">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/about"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     About us
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/terms-and-conditions"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     Terms & conditions
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/privacy-policy"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     Privacy policy
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -79,12 +79,12 @@ export default function Footer({ className = "" }: FooterProps) {
               </h3>
               <ul className="space-y-3">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/contact"
                     className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
                   >
                     Contact us
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -115,42 +115,34 @@ export default function Footer({ className = "" }: FooterProps) {
             </div>
 
             {/* Column 4: Social links */}
-            <div className="space-y-6">
-              <h3 className="font-semibold text-gray-900 uppercase text-xs tracking-wider">
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-900 tracking-wide uppercase text-sm">
                 Follow us
               </h3>
 
-              {/* Social Media Icons */}
-              <div className="flex space-x-4">
-                {/* <a
-                  href="#"
-                  className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
-                  aria-label="Follow us on Twitter"
-                >
-                  <Twitter className="w-5 h-5" />
-                </a> */}
-                <a
-                  href="#"
-                  className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
-                  aria-label="Follow us on Facebook"
-                >
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
-                  aria-label="Follow us on Instagram"
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-500 hover:text-gray-900 transition-colors duration-200"
-                  aria-label="Follow us on LinkedIn"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-              </div>
+              {/* Social Media Links */}
+              <ul className="space-y-3">
+                <li>
+                  <a
+                    href="https://www.facebook.com/profile.php?id=61579782072503"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
+                  >
+                    Facebook
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com/treesindiaservices/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
+                  >
+                    Instagram
+                  </a>
+                </li>
+              </ul>
 
               {/* App Download Buttons */}
               {/* <div className="space-y-3">
