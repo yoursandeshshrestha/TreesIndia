@@ -8,7 +8,7 @@ export default function TermsAndConditionsPage() {
           <p className="text-xl font-semibold text-gray-900">Welcome to Trees India!</p>
           
           <p>
-            These Terms and Conditions ("Terms") govern your access to and use of our mobile application, website, and related services (collectively referred to as the "Platform"). By using the Platform, you agree to comply with and be bound by these Terms. Please read them carefully before using our services.
+            These Terms and Conditions (&quot;Terms&quot;) govern your access to and use of our mobile application, website, and related services (collectively referred to as the &quot;Platform&quot;). By using the Platform, you agree to comply with and be bound by these Terms. Please read them carefully before using our services.
           </p>
 
           <section>
@@ -21,7 +21,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">2. Services Offered</h2>
             <p>
-              Trees India is a digital platform that connects users ("Customers") with verified professionals ("Service Providers") for a wide range of services including but not limited to:
+              Trees India is a digital platform that connects users (&quot;Customers&quot;) with verified professionals (&quot;Service Providers&quot;) for a wide range of services including but not limited to:
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Construction and maintenance</li>
@@ -40,7 +40,7 @@ export default function TermsAndConditionsPage() {
             <ul className="list-disc pl-6 space-y-2">
               <li>Provide accurate, complete, and up-to-date information during registration and service booking.</li>
               <li>Use the Platform only for lawful purposes.</li>
-              <li>Refrain from any activity that may disrupt, damage, or impair the Platform's functionality.</li>
+              <li>Refrain from any activity that may disrupt, damage, or impair the Platform&apos;s functionality.</li>
               <li>Treat all Service Providers and Trees India staff with respect and professionalism.</li>
             </ul>
             <p>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useProjects, useProjectStats } from "@/hooks/useProjects";
 import { useProfile } from "@/hooks/useProfile";
 import { ProjectFilters } from "@/types/project";
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 import { ProjectsSidebar, ProjectsContent } from "./components";
 import { SubscriptionRequired } from "@/commonComponents/SubscriptionRequired";
 

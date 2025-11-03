@@ -18,15 +18,16 @@ export default function AboutPage() {
           </p>
 
           <p>
-            At Trees India, we don't just fix problems—we build trust, enhance homes, and make life a little easier, one service at a time.
+            At Trees India, we don&apos;t just fix problems—we build trust, enhance homes, and make life a little easier, one service at a time.
           </p>
 
           <p>
-            At Trees India, we value your trust and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our mobile application, website, and related services (collectively referred to as "Services").
+            At Trees India, we value your trust and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our mobile application, website, and related services (collectively referred to as &quot;Services&quot;).
           </p>
         </div>
       </div>
     </div>
   );
 }
+
 
