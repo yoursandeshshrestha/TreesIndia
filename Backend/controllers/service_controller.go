@@ -751,4 +751,51 @@ func (sc *ServiceController) GetPopularServices(c *gin.Context) {
 	c.JSON(200, views.CreateSuccessResponse("Popular services retrieved successfully", services))
 }
 
+// DeleteServiceImage deletes a specific image from a service
+// @Summary Delete service image
+// @Description Delete a specific image from a service
+// @Tags services
+// @Produce json
+// @Param id path integer true "Service ID"
+// @Param image_url body string true "Image URL to delete"
+// @Success 200 {object} views.Response
+// @Failure 400 {object} views.Response
+// @Failure 404 {object} views.Response
+// @Router /api/v1/admin/services/{id}/images [delete]
+func (sc *ServiceController) DeleteServiceImage(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceController.DeleteServiceImage panic: %v", r)
+		}
+	}()
+	
+	logrus.Info("ServiceController.DeleteServiceImage called")
+	
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid service ID", err.Error()))
+		return
+	}
+	
+	// Get image URL from request body
+	var req struct {
+		ImageURL string `json:"image_url" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+	
+	err = sc.serviceService.DeleteServiceImage(uint(id), req.ImageURL)
+	if err != nil {
+		logrus.Errorf("ServiceController.DeleteServiceImage error: %v", err)
+		c.JSON(400, views.CreateErrorResponse("Failed to delete service image", err.Error()))
+		return
+	}
+	
+	c.JSON(200, views.CreateSuccessResponse("Service image deleted successfully", nil))
+}
+
 
