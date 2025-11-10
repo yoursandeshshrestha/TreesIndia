@@ -301,6 +301,11 @@ func (ss *ServiceService) UpdateService(id uint, req *models.UpdateServiceReques
 		return nil, err
 	}
 
+	logrus.Infof("UpdateService: Service ID %d currently has %d images", id, len(service.Images))
+	if len(service.Images) > 0 {
+		logrus.Infof("UpdateService: Current images: %v", service.Images)
+	}
+
 	// Validate price type and price
 	if req.PriceType != "" {
 		if req.PriceType == "fixed" && req.Price == nil {
@@ -335,6 +340,7 @@ func (ss *ServiceService) UpdateService(id uint, req *models.UpdateServiceReques
 
 	// Upload new images if provided
 	if len(imageFiles) > 0 {
+		logrus.Infof("UpdateService: Uploading %d new images", len(imageFiles))
 		var newImageURLs []string
 		for _, file := range imageFiles {
 			if file != nil {
@@ -347,8 +353,10 @@ func (ss *ServiceService) UpdateService(id uint, req *models.UpdateServiceReques
 		}
 		// Append new images to existing ones
 		service.Images = append(service.Images, newImageURLs...)
+		logrus.Infof("UpdateService: After adding new images, service now has %d images", len(service.Images))
 	}
 
+	logrus.Infof("UpdateService: Saving service with %d images", len(service.Images))
 	err = ss.serviceRepo.Update(service)
 	if err != nil {
 		return nil, err
@@ -489,4 +497,62 @@ func (ss *ServiceService) GetPopularServices(limit int, city, state string) ([]m
 	
 	logrus.Infof("ServiceService.GetPopularServices returning %d popular services", len(services))
 	return services, nil
+}
+
+// DeleteServiceImage deletes a specific image from a service
+func (ss *ServiceService) DeleteServiceImage(serviceID uint, imageURL string) error {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("ServiceService.DeleteServiceImage panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("ServiceService.DeleteServiceImage called with serviceID: %d, imageURL: %s", serviceID, imageURL)
+	
+	// Get the service
+	service, err := ss.serviceRepo.GetByID(serviceID)
+	if err != nil {
+		logrus.Errorf("ServiceService.DeleteServiceImage error getting service: %v", err)
+		return err
+	}
+	
+	// Find and remove the image URL from the array
+	var newImages []string
+	imageFound := false
+	for _, img := range service.Images {
+		if img != imageURL {
+			newImages = append(newImages, img)
+		} else {
+			imageFound = true
+		}
+	}
+	
+	if !imageFound {
+		logrus.Errorf("ServiceService.DeleteServiceImage image not found in service images")
+		return errors.New("image not found in service")
+	}
+	
+	// Update the service with the new images array
+	service.Images = pq.StringArray(newImages)
+	err = ss.serviceRepo.Update(service)
+	if err != nil {
+		logrus.Errorf("ServiceService.DeleteServiceImage error updating service: %v", err)
+		return err
+	}
+	
+	// Delete the image from Cloudinary
+	if ss.cloudinary != nil {
+		publicID := ss.cloudinary.GetPublicIDFromURL(imageURL)
+		if publicID != "" {
+			if deleteErr := ss.cloudinary.DeleteImage(publicID); deleteErr != nil {
+				logrus.Warnf("ServiceService.DeleteServiceImage failed to delete image from Cloudinary: %v", deleteErr)
+				// Don't return error as the database update was successful
+			} else {
+				logrus.Infof("ServiceService.DeleteServiceImage successfully deleted image from Cloudinary: %s", publicID)
+			}
+		}
+	}
+	
+	logrus.Infof("ServiceService.DeleteServiceImage successfully deleted image from service")
+	return nil
 }
