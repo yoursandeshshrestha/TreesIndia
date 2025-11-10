@@ -18,6 +18,7 @@ export const useNotificationWebSocket = ({
 }: UseNotificationWebSocketProps = {}) => {
   const { user, token, isAuthenticated } = useAuth();
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Callback refs to avoid stale closures
   const onNewNotificationRef = useRef(onNewNotification);
@@ -48,12 +49,29 @@ export const useNotificationWebSocket = ({
     } else {
       notificationWebSocketService.disconnect();
       notificationStore.clear();
+      setIsConnected(false);
     }
 
     return () => {
       notificationWebSocketService.disconnect();
     };
   }, [isAuthenticated, user, token]);
+
+  // Monitor connection status
+  useEffect(() => {
+    const checkConnection = () => {
+      const connectionStatus = notificationWebSocketService.isConnected;
+      setIsConnected(connectionStatus);
+    };
+
+    // Check immediately
+    checkConnection();
+
+    // Poll connection status every second
+    const interval = setInterval(checkConnection, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Subscribe to notification store changes
   useEffect(() => {
@@ -74,7 +92,7 @@ export const useNotificationWebSocket = ({
   }, []);
 
   return {
-    isConnected: notificationWebSocketService.isConnected,
+    isConnected,
     connectionError,
     connect: (token: string) => notificationWebSocketService.connect(token),
     disconnect: () => notificationWebSocketService.disconnect(),
