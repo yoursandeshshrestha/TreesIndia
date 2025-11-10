@@ -36,6 +36,7 @@ func SetupServiceRoutes(router *gin.RouterGroup) {
 		adminServices.POST("", serviceController.CreateService)
 		adminServices.PUT("/:id", serviceController.UpdateService)
 		adminServices.DELETE("/:id", serviceController.DeleteService)
+		adminServices.DELETE("/:id/images", serviceController.DeleteServiceImage)
 		adminServices.PATCH("/:id/status", serviceController.ToggleStatus)
 	}
 }
