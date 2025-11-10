@@ -272,24 +272,30 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		services = append(services, service)
 	}
 
-	// Get existing services in one query
+	// Get existing services in one query (including soft-deleted ones)
 	var existingServices []models.Service
-	if err := js.sm.db.Find(&existingServices).Error; err != nil {
+	if err := js.sm.db.Unscoped().Find(&existingServices).Error; err != nil {
 		logrus.Errorf("Failed to fetch existing services: %v", err)
 		return err
 	}
 
-	// Create a map for quick lookup
+	logrus.Infof("Found %d existing services in database", len(existingServices))
+
+	// Create a map for quick lookup by slug (which has unique constraint)
 	existingMap := make(map[string]bool)
 	for _, service := range existingServices {
-		existingMap[service.Name] = true
+		existingMap[service.Slug] = true
+		logrus.Debugf("Existing service slug: %s", service.Slug)
 	}
 
 	// Filter out services that already exist
 	var servicesToCreate []models.Service
 	for _, service := range services {
-		if !existingMap[service.Name] {
+		if !existingMap[service.Slug] {
 			servicesToCreate = append(servicesToCreate, service)
+			logrus.Infof("Will create service: %s (slug: %s)", service.Name, service.Slug)
+		} else {
+			logrus.Infof("Service already exists, skipping: %s (slug: %s)", service.Name, service.Slug)
 		}
 	}
 
