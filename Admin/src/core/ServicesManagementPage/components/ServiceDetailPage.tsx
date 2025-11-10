@@ -16,6 +16,7 @@ import {
   CheckCircle,
   XCircle,
   IndianRupee,
+  X,
 } from "lucide-react";
 import {
   Service,
@@ -52,6 +53,7 @@ export default function ServiceDetailPage({
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
+  const [deletingImageUrl, setDeletingImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadService();
@@ -190,12 +192,39 @@ export default function ServiceDetailPage({
     if (!service) return;
 
     try {
-      await apiClient.delete(`/services/${service.id}`);
+      await apiClient.delete(`/admin/services/${service.id}`);
       toast.success("Service deleted successfully");
       router.push("/dashboard/services");
     } catch (err) {
       console.error("Failed to delete service", err);
       toast.error("Failed to delete service");
+    }
+  };
+
+  const handleDeleteImage = async (imageUrl: string) => {
+    if (!service) return;
+
+    console.log("Deleting image:", imageUrl);
+    console.log("Service ID:", service.id);
+
+    try {
+      setDeletingImageUrl(imageUrl);
+      
+      const response = await apiClient.delete(`/admin/services/${service.id}/images`, {
+        data: { image_url: imageUrl },
+      });
+      
+      console.log("Delete response:", response);
+      
+      // Reload service data from server to ensure consistency
+      await loadService();
+      
+      toast.success("Image deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete image", err);
+      toast.error("Failed to delete image");
+    } finally {
+      setDeletingImageUrl(null);
     }
   };
 
@@ -398,6 +427,19 @@ export default function ServiceDetailPage({
                             }
                           }}
                         />
+                        {/* Delete button overlay */}
+                        <button
+                          onClick={() => handleDeleteImage(image)}
+                          disabled={deletingImageUrl === image}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete image"
+                        >
+                          {deletingImageUrl === image ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <X size={16} />
+                          )}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -581,6 +623,7 @@ export default function ServiceDetailPage({
         onCategoryChange={(categoryId: number) => {
           loadSubcategories(categoryId);
         }}
+        onDeleteImage={handleDeleteImage}
       />
 
       {/* Delete Confirmation Modal */}
