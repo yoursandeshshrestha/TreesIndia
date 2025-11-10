@@ -29,6 +29,7 @@ interface ServiceModalProps {
   ) => Promise<void>;
   isLoading?: boolean;
   onCategoryChange?: (categoryId: number) => void;
+  onDeleteImage?: (imageUrl: string) => Promise<void>;
 }
 
 export function ServiceModal({
@@ -40,6 +41,7 @@ export function ServiceModal({
   onSubmit,
   isLoading = false,
   onCategoryChange,
+  onDeleteImage,
 }: ServiceModalProps) {
   const [formData, setFormData] = useState<CreateServiceRequest>({
     name: "",
@@ -54,7 +56,9 @@ export function ServiceModal({
   });
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [deletingImageUrl, setDeletingImageUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,7 +75,8 @@ export function ServiceModal({
         is_active: service.is_active,
         service_area_ids: service.service_areas?.map((area) => area.id) || [],
       });
-      setImagePreviews(service.images || []);
+      setExistingImages(service.images || []);
+      setNewImagePreviews([]);
       setSelectedFiles([]);
     } else {
       setFormData({
@@ -85,10 +90,12 @@ export function ServiceModal({
         is_active: true,
         service_area_ids: [],
       });
-      setImagePreviews([]);
+      setExistingImages([]);
+      setNewImagePreviews([]);
       setSelectedFiles([]);
     }
     setErrors({});
+    setDeletingImageUrl(null);
   }, [service, isOpen, categories.length, subcategories.length]);
 
   // Additional effect to handle subcategory loading after formData is set
@@ -139,9 +146,9 @@ export function ServiceModal({
 
     // Validate files if selected
     selectedFiles.forEach((file, index) => {
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 3 * 1024 * 1024; // 3MB
       if (file.size > maxSize) {
-        newErrors[`image_${index}`] = "Image file size must be less than 10MB";
+        newErrors[`image_${index}`] = "Image file size must be less than 3MB";
       }
 
       const allowedTypes = [
@@ -209,24 +216,76 @@ export function ServiceModal({
     const files = Array.from(e.target.files || []);
 
     if (files.length > 0) {
-      const newFiles = [...selectedFiles, ...files];
-      setSelectedFiles(newFiles);
-      setErrors((prev) => ({ ...prev, image: "" }));
+      const maxSize = 3 * 1024 * 1024; // 3MB
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      const validFiles: File[] = [];
+      let hasError = false;
 
-      // Create preview URLs
+      // Validate each file
       files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setImagePreviews((prev) => [...prev, event.target?.result as string]);
-        };
-        reader.readAsDataURL(file);
+        // Check file size
+        if (file.size > maxSize) {
+          toast.error(`"${file.name}" is too large. Maximum size is 3MB (file is ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+          hasError = true;
+          return;
+        }
+
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+          toast.error(`"${file.name}" is not a valid image type. Only JPEG, PNG, GIF, and WebP are allowed.`);
+          hasError = true;
+          return;
+        }
+
+        validFiles.push(file);
       });
+
+      // Only add valid files
+      if (validFiles.length > 0) {
+        const newFiles = [...selectedFiles, ...validFiles];
+        setSelectedFiles(newFiles);
+        setErrors((prev) => ({ ...prev, image: "" }));
+
+        // Create preview URLs for valid files
+        validFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setNewImagePreviews((prev) => [...prev, event.target?.result as string]);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        if (!hasError) {
+          toast.success(`${validFiles.length} image${validFiles.length > 1 ? 's' : ''} added successfully`);
+        }
+      }
+
+      // Reset the input value so the same file can be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveNewImage = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveExistingImage = async (imageUrl: string) => {
+    if (!service || !onDeleteImage) return;
+
+    try {
+      setDeletingImageUrl(imageUrl);
+      await onDeleteImage(imageUrl);
+      setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+      toast.success("Image deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete image", err);
+      toast.error("Failed to delete image");
+    } finally {
+      setDeletingImageUrl(null);
+    }
   };
 
   const handleImageClick = () => {
@@ -436,32 +495,64 @@ export function ServiceModal({
 
               {/* Images and Upload Area */}
               <div className="flex flex-wrap gap-4">
-                {/* Image previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="flex flex-wrap gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
+                {/* Existing images from server */}
+                {existingImages.length > 0 && (
+                  <>
+                    {existingImages.map((imageUrl, index) => (
+                      <div key={`existing-${index}`} className="relative group">
+                        <Image
+                          src={imageUrl}
+                          width={150}
+                          height={150}
+                          alt={`Existing ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExistingImage(imageUrl)}
+                          disabled={deletingImageUrl === imageUrl}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete image"
+                        >
+                          {deletingImageUrl === imageUrl ? (
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <X size={14} />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* New image previews */}
+                {newImagePreviews.length > 0 && (
+                  <>
+                    {newImagePreviews.map((preview, index) => (
+                      <div key={`new-${index}`} className="relative">
                         <Image
                           src={preview}
                           width={150}
                           height={150}
-                          alt={`Preview ${index + 1}`}
-                          className="w-32 h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={handleImageClick}
+                          alt={`New Preview ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-lg border"
                         />
                         <button
                           type="button"
-                          onClick={() => handleRemoveImage(index)}
+                          onClick={() => handleRemoveNewImage(index)}
                           className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                         >
                           <X size={14} />
                         </button>
+                        <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                          New
+                        </div>
                       </div>
                     ))}
-                  </div>
+                  </>
                 )}
 
-                {/* Upload area - bigger with more info */}
+                {/* Upload area */}
                 <div
                   onClick={handleImageClick}
                   className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors w-32 h-32 flex flex-col items-center justify-center"
@@ -474,7 +565,7 @@ export function ServiceModal({
                     PNG, JPG, WebP
                   </p>
                   <p className="text-xs text-gray-500 leading-tight">
-                    up to 10MB
+                    up to 3MB
                   </p>
                 </div>
               </div>
