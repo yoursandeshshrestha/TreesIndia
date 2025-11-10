@@ -206,11 +206,8 @@ const UserAnalytics: React.FC<UserAnalyticsProps> = ({
           Recent Users
         </h3>
         <div className="space-y-3">
-          {data.recent_users.slice(0, 5).map((user) => (
-            <div
-              key={user.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
+          {data.recent_users.slice(0, 5).map((user, index) => (
+            <div key={user.id || `user-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-gray-600">
