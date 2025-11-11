@@ -47,7 +47,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Widget build(BuildContext context) {
     final searchPageState = ref.watch(searchPageNotifierProvider);
 
-
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         ref.invalidate(searchPageNotifierProvider);
@@ -274,7 +273,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               isActive: true,
               createdAt: result.createdAt,
               updatedAt: result.updatedAt,
-              serviceAreas: [],
+              serviceAreas: const [],
               images: result.images,
             ),
           },
@@ -290,7 +289,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -369,7 +368,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF055c3a).withOpacity(0.1),
+                        color: const Color(0xFF055c3a).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: B4Regular(
@@ -520,7 +519,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),

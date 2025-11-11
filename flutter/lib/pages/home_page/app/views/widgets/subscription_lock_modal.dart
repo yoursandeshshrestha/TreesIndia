@@ -26,7 +26,6 @@ class _SubscriptionLockModalState extends ConsumerState<SubscriptionLockModal> {
   bool _isLoading = true;
   String? _errorMessage;
   int _activeCount = 0;
-  int _totalCount = 0;
 
   @override
   void initState() {
@@ -48,7 +47,6 @@ class _SubscriptionLockModalState extends ConsumerState<SubscriptionLockModal> {
           if (response.success && response.data != null) {
             setState(() {
               _activeCount = response.data!.active;
-              _totalCount = response.data!.total;
             });
           }
           break;
@@ -58,7 +56,6 @@ class _SubscriptionLockModalState extends ConsumerState<SubscriptionLockModal> {
           if (response.success && response.data != null) {
             setState(() {
               _activeCount = response.data!.activeVendors;
-              _totalCount = response.data!.totalVendors;
             });
           }
           break;
@@ -68,7 +65,6 @@ class _SubscriptionLockModalState extends ConsumerState<SubscriptionLockModal> {
           if (response.success && response.data != null) {
             setState(() {
               _activeCount = response.data!.activeWorkers;
-              _totalCount = response.data!.totalWorkers;
             });
           }
           break;
@@ -95,16 +91,6 @@ class _SubscriptionLockModalState extends ConsumerState<SubscriptionLockModal> {
     }
   }
 
-  String _getDescription() {
-    switch (widget.type) {
-      case MarketplaceType.projects:
-        return 'Explore construction and development projects';
-      case MarketplaceType.vendors:
-        return 'Connect with trusted vendors and service providers';
-      case MarketplaceType.workers:
-        return 'Find and hire skilled workers';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

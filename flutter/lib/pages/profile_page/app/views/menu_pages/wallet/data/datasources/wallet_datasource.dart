@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../../../../../commons/constants/api_endpoints.dart';
 import '../../../../../../../../commons/utils/services/dio_client.dart';
 import '../../../../../../../../commons/utils/error_handler.dart';
@@ -105,28 +106,33 @@ class WalletDatasource {
     final url = ApiEndpoints.walletRecharge.path;
 
     try {
-      print('📍 WalletDatasource: Initiating wallet recharge request');
-      print('📍 Request URL: $url');
-      print('📍 Request data: ${rechargeRequest.toJson()}');
-      
+      if (kDebugMode) {
+        print('📍 WalletDatasource: Initiating wallet recharge request');
+        print('📍 Request URL: $url');
+        print('📍 Request data: ${rechargeRequest.toJson()}');
+      }
+
       final response = await dioClient.dio.post(
         url,
         data: rechargeRequest.toJson(),
       );
-
-      print('📍 Response status: ${response.statusCode}');
-      print('📍 Response data: ${response.data}');
+      if (kDebugMode) {
+        print('📍 Response status: ${response.statusCode}');
+        print('📍 Response data: ${response.data}');
+      }
 
       if (response.statusCode == 201 && response.data['success'] == true) {
-        print('📍 About to parse response.data[\'data\']');
-        print('📍 response.data[\'data\'] content: ${response.data['data']}');
+        if (kDebugMode) {
+          print('📍 About to parse response.data[\'data\']');
+          print('📍 response.data[\'data\'] content: ${response.data['data']}');
+        }
         return WalletRechargeResponseModel.fromJson(response.data['data']);
       } else {
         throw Exception(
             'Failed to initiate wallet recharge. Please try again.');
       }
     } catch (e) {
-      print('📍 Error in initiateWalletRecharge: $e');
+      if (kDebugMode) print('📍 Error in initiateWalletRecharge: $e');
       if (e is DioException) {
         errorHandler.handleNetworkError(e);
       } else {

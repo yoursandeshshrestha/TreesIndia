@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/constants/api_endpoints.dart';
 
 import '../../../../commons/utils/services/dio_client.dart';
@@ -21,7 +22,7 @@ class PropertyRemoteDatasource {
 
       return PropertiesResponseModel.fromJson(response.data);
     } catch (e) {
-      print('Error fetching properties: $e');
+     if (kDebugMode) print('Error fetching properties: $e');
       rethrow;
     }
   }

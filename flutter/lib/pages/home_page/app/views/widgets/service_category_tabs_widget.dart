@@ -160,6 +160,7 @@ class _ServiceCategoryCardState extends State<ServiceCategoryCard> {
             _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
         child: Container(
           height: 120,
+          color: Colors.transparent,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,

@@ -144,8 +144,8 @@ class WorkerApplicationRemoteDataSourceImpl
         throw Exception(
             response.data['message'] ?? 'Failed to submit worker application');
       }
-    } on DioException catch (e) {
-      throw e;
+    } on DioException {
+      rethrow;
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

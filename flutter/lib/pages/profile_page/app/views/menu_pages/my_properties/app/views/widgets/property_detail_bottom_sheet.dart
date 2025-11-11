@@ -578,8 +578,7 @@ class PropertyDetailBottomSheet extends StatelessWidget {
                   onPressed: () async {
                     if (property.user!.phone != null &&
                         property.user!.phone!.isNotEmpty) {
-                      final bool callInitiated =
-                          await PhoneService.makePhoneCall(
+                      await PhoneService.makePhoneCall(
                         property.user!.phone!,
                       );
                     } else {

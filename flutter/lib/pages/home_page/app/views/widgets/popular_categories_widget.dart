@@ -31,9 +31,9 @@ class PopularCategoriesWidget extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: onSeeAllTap,
-                child: Text(
+                child: const Text(
                   'See all',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF055c3a),

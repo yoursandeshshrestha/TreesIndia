@@ -34,7 +34,6 @@ class FormStepIndicator extends StatelessWidget {
           Row(
             children: List.generate(totalSteps, (index) {
               final isActive = index <= currentStep;
-              final isCompleted = index < currentStep;
 
               return Expanded(
                 child: Container(

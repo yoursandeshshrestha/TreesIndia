@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/constants/api_endpoints.dart';
 import 'package:trees_india/commons/data/models/otp_request_model.dart';
 import 'package:trees_india/commons/data/models/otp_response_model.dart';
@@ -28,15 +29,17 @@ class LoginDatasource {
       return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       if (e is DioException) {
-        print("DioException caught - Status: ${e.response?.statusCode}");
-        print("DioException data: ${e.response?.data}");
+        if (kDebugMode) {
+          print("DioException caught - Status: ${e.response?.statusCode}");
+          print("DioException data: ${e.response?.data}");
+        }
 
         // Handle specific status codes
         if (e.response?.statusCode == 404) {
           // User not found - extract server's message
           final errorData = e.response?.data;
           if (errorData != null && errorData['message'] != null) {
-            print("404 error message: ${errorData['message']}");
+            if (kDebugMode) print("404 error message: ${errorData['message']}");
             throw Exception(errorData['message']);
           }
           throw Exception('User not found. Please register first.');
@@ -59,15 +62,17 @@ class LoginDatasource {
       return OtpResponseModel.fromJson(response.data);
     } catch (e) {
       if (e is DioException) {
-        print("DioException caught - Status: ${e.response?.statusCode}");
-        print("DioException data: ${e.response?.data}");
+        if (kDebugMode) {
+          print("DioException caught - Status: ${e.response?.statusCode}");
+          print("DioException data: ${e.response?.data}");
+        }
 
         // Handle specific status codes
         if (e.response?.statusCode == 400 || e.response?.statusCode == 404) {
           // Invalid OTP or user not found - extract server's message
           final errorData = e.response?.data;
           if (errorData != null && errorData['message'] != null) {
-            print("OTP error message: ${errorData['message']}");
+            if (kDebugMode) print("OTP error message: ${errorData['message']}");
             throw Exception(errorData['message']);
           }
           throw Exception('Invalid OTP. Please try again.');

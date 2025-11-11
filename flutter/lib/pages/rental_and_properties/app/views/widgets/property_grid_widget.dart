@@ -202,7 +202,7 @@ class PropertyCard extends ConsumerWidget {
                             vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -319,68 +319,6 @@ class PropertyCard extends ConsumerWidget {
 
     return Column(
       children: [
-        // Row(
-        //   children: [
-        //     // View Number Button
-        //     Expanded(
-        //       child: OutlinedButton.icon(
-        //         onPressed: () {
-        //           // TODO: Implement view number functionality
-        //         },
-        //         icon: const Icon(
-        //           Icons.phone,
-        //           size: 16,
-        //           color: AppColors.stateGreen600,
-        //         ),
-        //         label: const Text(
-        //           'View Number',
-        //           style: TextStyle(
-        //             fontSize: 12,
-        //             fontWeight: FontWeight.w500,
-        //             color: AppColors.stateGreen600,
-        //           ),
-        //         ),
-        //         style: OutlinedButton.styleFrom(
-        //           side: const BorderSide(color: AppColors.stateGreen600),
-        //           padding: const EdgeInsets.symmetric(vertical: 8),
-        //           shape: RoundedRectangleBorder(
-        //             borderRadius: BorderRadius.circular(6),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-
-        //     const SizedBox(width: AppSpacing.sm),
-        //     // Contact Button
-        //     Expanded(
-        //       child: OutlinedButton.icon(
-        //         onPressed: () {
-        //           // TODO: Implement contact functionality
-        //         },
-        //         icon: const Icon(
-        //           Icons.contact_page,
-        //           size: 16,
-        //           color: AppColors.brandNeutral600,
-        //         ),
-        //         label: const Text(
-        //           'Contact',
-        //           style: TextStyle(
-        //             fontSize: 12,
-        //             fontWeight: FontWeight.w500,
-        //             color: AppColors.brandNeutral600,
-        //           ),
-        //         ),
-        //         style: OutlinedButton.styleFrom(
-        //           side: const BorderSide(color: AppColors.brandNeutral400),
-        //           padding: const EdgeInsets.symmetric(vertical: 8),
-        //           shape: RoundedRectangleBorder(
-        //             borderRadius: BorderRadius.circular(6),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ],
-        // ),
         if (shouldShowChatButton) ...[
           const SizedBox(height: AppSpacing.sm),
           // Chat Button

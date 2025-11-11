@@ -80,8 +80,9 @@ class VendorBottomBarWidget extends StatelessWidget {
   int _getFilterCount() {
     int count = 0;
     if (filters.businessType != null) count++;
-    if (filters.services != null && filters.services!.isNotEmpty)
+    if (filters.services != null && filters.services!.isNotEmpty) {
       count += filters.services!.length;
+    }
     if (filters.location != null && filters.location!.isNotEmpty) count++;
     if (filters.city != null && filters.city!.isNotEmpty) count++;
     if (filters.state != null && filters.state!.isNotEmpty) count++;

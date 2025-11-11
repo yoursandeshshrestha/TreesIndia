@@ -135,34 +135,8 @@ class TransactionItemWidget extends StatelessWidget {
         transaction.type.contains('credit');
   }
 
-  IconData _getTransactionIcon() {
-    if (transaction.type.contains('recharge')) {
-      return Icons.add_circle_outline;
-    } else if (transaction.type.contains('debit')) {
-      return Icons.remove_circle_outline;
-    } else if (transaction.type.contains('refund')) {
-      return Icons.refresh;
-    } else {
-      return Icons.swap_horiz;
-    }
-  }
 
-  Color _getIconColor() {
-    if (_isCredit()) {
-      return AppColors.stateGreen600;
-    } else {
-      return AppColors.stateRed600;
-    }
-  }
-
-  Color _getIconBackgroundColor() {
-    if (_isCredit()) {
-      return AppColors.stateGreen50;
-    } else {
-      return AppColors.stateRed50;
-    }
-  }
-
+ 
   String _getTransactionTitle() {
     final type = transaction.type.toLowerCase();
     if (type == 'credit' ||

@@ -80,8 +80,9 @@ class WorkerBottomBarWidget extends StatelessWidget {
   int _getFilterCount() {
     int count = 0;
     if (filters.workerType != null) count++;
-    if (filters.skills != null && filters.skills!.isNotEmpty)
+    if (filters.skills != null && filters.skills!.isNotEmpty) {
       count += filters.skills!.length;
+    }
     if (filters.minExperience != null || filters.maxExperience != null) count++;
     if (filters.search != null && filters.search!.isNotEmpty) count++;
     return count;

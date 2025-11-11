@@ -212,29 +212,22 @@ class BrokerApplicationNotifier extends StateNotifier<BrokerApplicationState> {
     try {
       final location = await locationOnboardingService.getCurrentLocation();
 
-      if (location != null) {
-        final updatedFormData = state.formData.copyWith(
-          address: state.formData.address.copyWith(
-            street: location.address.isNotEmpty ? location.address : '',
-            city: location.city ?? '',
-            state: location.state ?? '',
-            pincode: location.postalCode ?? '',
-            landmark: '',
-          ),
-        );
+      final updatedFormData = state.formData.copyWith(
+        address: state.formData.address.copyWith(
+          street: location.address.isNotEmpty ? location.address : '',
+          city: location.city ?? '',
+          state: location.state ?? '',
+          pincode: location.postalCode ?? '',
+          landmark: '',
+        ),
+      );
 
-        state = state.copyWith(
-          status: BrokerApplicationStatus.initial,
-          formData: updatedFormData,
-          errorMessage: null,
-        );
-      } else {
-        state = state.copyWith(
-          status: BrokerApplicationStatus.failure,
-          errorMessage: 'Could not determine address from current location.',
-        );
-      }
-    } catch (e) {
+      state = state.copyWith(
+        status: BrokerApplicationStatus.initial,
+        formData: updatedFormData,
+        errorMessage: null,
+      );
+        } catch (e) {
       state = state.copyWith(
         status: BrokerApplicationStatus.failure,
         errorMessage: 'Failed to get current location: ${e.toString()}',
