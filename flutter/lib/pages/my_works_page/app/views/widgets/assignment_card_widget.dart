@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
 import 'package:trees_india/commons/presenters/providers/location_tracking_provider.dart';
 import 'package:trees_india/commons/utils/date_utils.dart';
+import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
 
 import '../../../domain/entities/assignment_entity.dart';
 import '../../providers/my_works_providers.dart';
@@ -232,13 +235,45 @@ class AssignmentCardWidget extends ConsumerWidget {
             width: double.maxFinite,
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                      child: _buildActionButtons(context, ref, assignment)),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: _buildActionButtons(context, ref, assignment)),
+                    ],
+                  ),
                   if (_shouldShowQuickActions(assignment.status)) ...[
-                    const SizedBox(width: 16),
-                    _buildQuickActions(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: SizedBox(
+                          width: double.maxFinite,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await _createConversationAndNavigate(
+                                  context, ref, assignment);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.stateGreen700,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.chat_bubble_outline, size: 16),
+                                SizedBox(width: AppSpacing.xs),
+                                Text('Chat '),
+                              ],
+                            ),
+                          ),
+                        )),
+                      ],
+                    )
                   ],
                 ],
               ),
@@ -324,58 +359,6 @@ class AssignmentCardWidget extends ConsumerWidget {
     return status.toLowerCase() == 'assigned' ||
         status.toLowerCase() == 'accepted' ||
         status.toLowerCase() == 'in_progress';
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        B3Medium(
-          text: 'Quick Actions',
-          color: AppColors.brandNeutral500,
-        ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_outline,
-                  size: 24,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.phone_outlined,
-                  size: 24,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   Widget _buildActionButtons(
@@ -582,30 +565,30 @@ class AssignmentCardWidget extends ConsumerWidget {
           ],
         );
 
-      case 'completed':
-        return SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () {
-              // Handle view details functionality
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey[600],
-              side: BorderSide(color: Colors.grey[300]!),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'View Details',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        );
+      // case 'completed':
+      //   return SizedBox(
+      //     width: double.infinity,
+      //     child: OutlinedButton(
+      //       onPressed: () {
+      //         // Handle view details functionality
+      //       },
+      //       style: OutlinedButton.styleFrom(
+      //         foregroundColor: Colors.grey[600],
+      //         side: BorderSide(color: Colors.grey[300]!),
+      //         padding: const EdgeInsets.symmetric(vertical: 12),
+      //         shape: RoundedRectangleBorder(
+      //           borderRadius: BorderRadius.circular(8),
+      //         ),
+      //       ),
+      //       child: const Text(
+      //         'View Details',
+      //         style: TextStyle(
+      //           fontWeight: FontWeight.w600,
+      //           fontSize: 16,
+      //         ),
+      //       ),
+      //     ),
+      //   );
 
       default:
         return const SizedBox.shrink();
@@ -696,5 +679,56 @@ class AssignmentCardWidget extends ConsumerWidget {
 
     final timeFormat = DateFormat('hh:mm a');
     return timeFormat.format(indianTime);
+  }
+
+  Future<void> _createConversationAndNavigate(
+    BuildContext context,
+    WidgetRef ref,
+    AssignmentEntity assignment,
+  ) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Creating conversation...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Get current user ID from auth state
+      final authState = ref.read(authProvider);
+      final currentUserId = authState.token?.userId;
+
+      if (currentUserId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Get worker user ID from booking
+      final customerUserId = assignment.booking.userId;
+
+      // Create conversation using the use case
+      final createConversationUseCase =
+          ref.read(createConversationUseCaseProvider);
+      final conversation = await createConversationUseCase.execute(
+        user1: int.parse(currentUserId),
+        user2: customerUserId,
+      );
+
+      // Navigate to chat room page with the conversation ID
+      if (context.mounted) {
+        context.push('/conversations/${conversation.id}');
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create conversation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
