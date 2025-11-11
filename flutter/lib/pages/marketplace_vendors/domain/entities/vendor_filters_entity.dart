@@ -105,8 +105,7 @@ class VendorFiltersEntity {
         params['sort'] = 'rating_asc';
         break;
       case VendorSortType.relevance:
-      default:
-        // No sort parameter for relevance (default)
+      // No sort parameter for relevance (default)
         break;
     }
 

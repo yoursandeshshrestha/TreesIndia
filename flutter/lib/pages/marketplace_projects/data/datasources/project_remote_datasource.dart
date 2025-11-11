@@ -3,9 +3,9 @@ import 'package:trees_india/commons/constants/api_endpoints.dart';
 import 'package:trees_india/commons/utils/error_handler.dart';
 import 'package:trees_india/commons/utils/services/dio_client.dart';
 import 'package:trees_india/pages/marketplace_projects/data/models/project_response_model.dart';
-import 'package:trees_india/pages/marketplace_projects/data/models/project_details_response_model.dart';
-import '../models/project_model.dart';
+
 import '../../domain/entities/project_filters_entity.dart';
+import '../models/project_model.dart';
 
 abstract class ProjectRemoteDatasource {
   Future<ProjectResponseModel> getProjects(ProjectFiltersEntity filters);

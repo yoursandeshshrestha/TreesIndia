@@ -30,8 +30,6 @@ class _MySubscriptionPageState extends ConsumerState<MySubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: const CustomAppBar(
@@ -148,7 +146,7 @@ class _MySubscriptionPageState extends ConsumerState<MySubscriptionPage> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.error.withOpacity(0.7),
+              color: AppColors.error.withValues(alpha: 0.7),
             ),
             const SizedBox(height: AppSpacing.md),
             const Text(

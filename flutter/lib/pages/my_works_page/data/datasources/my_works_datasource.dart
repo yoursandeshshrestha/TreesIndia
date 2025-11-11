@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/constants/api_endpoints.dart';
 import '../../../../commons/utils/services/dio_client.dart';
 import '../../../../commons/utils/error_handler.dart';
@@ -53,12 +54,14 @@ class MyWorksDataSource {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        print('📍 Fetched worker assignments for tab: $tab');
+        if (kDebugMode) print('📍 Fetched worker assignments for tab: $tab');
         try {
           return AssignmentResponseModel.fromJson(response.data);
         } catch (parseError) {
-          print('📍 Parsing error: $parseError');
-          print('📍 Response data: ${response.data}');
+          if (kDebugMode) {
+            print('📍 Parsing error: $parseError');
+            print('📍 Response data: ${response.data}');
+          }
           rethrow;
         }
       } else {
@@ -89,7 +92,9 @@ class MyWorksDataSource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Assignment accepted successfully: $assignmentId');
+        if (kDebugMode) {
+          print('📍 Assignment accepted successfully: $assignmentId');
+        }
       } else {
         throw Exception('Failed to accept assignment. Please try again.');
       }
@@ -120,7 +125,9 @@ class MyWorksDataSource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Assignment rejected successfully: $assignmentId');
+        if (kDebugMode) {
+          print('📍 Assignment rejected successfully: $assignmentId');
+        }
       } else {
         throw Exception('Failed to reject assignment. Please try again.');
       }
@@ -149,7 +156,7 @@ class MyWorksDataSource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Work started successfully: $assignmentId');
+        if (kDebugMode) print('📍 Work started successfully: $assignmentId');
       } else {
         throw Exception('Failed to start work. Please try again.');
       }
@@ -178,7 +185,7 @@ class MyWorksDataSource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Work completed successfully: $assignmentId');
+        if (kDebugMode) print('📍 Work completed successfully: $assignmentId');
       } else {
         throw Exception('Failed to complete work. Please try again.');
       }

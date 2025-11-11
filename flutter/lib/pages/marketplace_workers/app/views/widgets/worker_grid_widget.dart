@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/services/phone_service.dart';
 import 'package:trees_india/pages/chats_page/app/providers/conversation_usecase_providers.dart';
+
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';

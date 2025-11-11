@@ -28,8 +28,8 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookingsNotifier = ref.read(bookingsNotifierProvider.notifier);
-    final bookingsState = ref.watch(bookingsNotifierProvider);
+    ref.read(bookingsNotifierProvider.notifier);
+    ref.watch(bookingsNotifierProvider);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9,

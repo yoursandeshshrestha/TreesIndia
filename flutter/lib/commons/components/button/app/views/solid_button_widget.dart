@@ -43,7 +43,7 @@ class SolidButtonWidget extends BaseButtonWidget {
         style: ElevatedButton.styleFrom(
           disabledBackgroundColor: disableBackgroundColor ??
               const Color(0xFF055c3a)
-                  .withOpacity(0.3), // Main app color with opacity
+                  .withValues(alpha: 0.3), // Main app color with opacity
           backgroundColor:
               backgroundColor ?? const Color(0xFF055c3a), // Main app color
           shape: RoundedRectangleBorder(

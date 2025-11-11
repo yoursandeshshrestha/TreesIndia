@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/data/datasources/login_datasource.dart';
 import 'package:trees_india/commons/data/models/otp_request_model.dart';
 import 'package:trees_india/commons/data/models/refresh_token_request_model.dart';
@@ -26,8 +27,10 @@ class LoginRepositoryImpl implements LoginRepository {
       if (e.toString().contains('User not found') ||
           e.toString().contains('Please register first')) {
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
-        print(
-            "Repository creating error response: success=false, message=$errorMessage");
+        if (kDebugMode) {
+          print(
+              "Repository creating error response: success=false, message=$errorMessage");
+        }
         return LoginResponseEntity(
           success: false,
           message: errorMessage,
@@ -50,8 +53,10 @@ class LoginRepositoryImpl implements LoginRepository {
           e.toString().contains('OTP expired') ||
           e.toString().contains('User not found')) {
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
-        print(
-            "Repository creating OTP error response: success=false, message=$errorMessage");
+        if (kDebugMode) {
+          print(
+              "Repository creating OTP error response: success=false, message=$errorMessage");
+        }
         return OtpResponseEntity(
           success: false,
           message: errorMessage,

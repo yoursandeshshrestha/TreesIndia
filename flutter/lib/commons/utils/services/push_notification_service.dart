@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -164,7 +165,7 @@ class PushNotificationService {
       if (androidInfo.version.sdkInt >= 33) {
         // For Android 13+
         final status = await Permission.notification.request();
-        print('Notification permission status: $status');
+        if (kDebugMode) print('Notification permission status: $status');
       }
     }
     await PushNotificationService().initialize(ref, context);

@@ -142,21 +142,21 @@ class _CancelBookingBottomSheetState extends State<CancelBookingBottomSheet> {
                         decoration: InputDecoration(
                           hintText: 'Enter additional details...',
                           hintStyle:
-                              TextStyle(color: AppColors.brandNeutral500),
+                              const TextStyle(color: AppColors.brandNeutral500),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide:
-                                BorderSide(color: AppColors.brandNeutral300),
+                                const BorderSide(color: AppColors.brandNeutral300),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide:
-                                BorderSide(color: AppColors.brandNeutral300),
+                                const BorderSide(color: AppColors.brandNeutral300),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide:
-                                BorderSide(color: AppColors.brandPrimary600),
+                                const BorderSide(color: AppColors.brandPrimary600),
                           ),
                         ),
                       ),
@@ -169,7 +169,7 @@ class _CancelBookingBottomSheetState extends State<CancelBookingBottomSheet> {
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: AppSpacing.md),
-                                side: BorderSide(
+                                side: const BorderSide(
                                     color: AppColors.brandNeutral300),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),

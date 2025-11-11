@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
-import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/services/conversation_websocket_service.dart';
 import 'package:trees_india/pages/chats_page/app/providers/conversations_provider.dart';
 import 'package:trees_india/pages/chats_page/app/viewmodels/conversations_notifier.dart';
@@ -343,7 +342,7 @@ class _ConversationPageState extends ConsumerState<ConversationPage> {
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).primaryColor.withOpacity(0.7),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ),

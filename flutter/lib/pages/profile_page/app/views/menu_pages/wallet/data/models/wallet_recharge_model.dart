@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/entities/wallet_recharge_entity.dart';
 
 class WalletRechargeModel {
@@ -66,26 +68,34 @@ class WalletRechargeResponseModel {
   });
 
   factory WalletRechargeResponseModel.fromJson(Map<String, dynamic> json) {
-    print('📍 WalletRechargeResponseModel.fromJson started');
-    print('📍 json keys: ${json.keys}');
-    print('📍 json[\'payment\']: ${json['payment']}');
-    print('📍 json[\'payment_order\']: ${json['payment_order']}');
-    
+    if (kDebugMode) {
+      print('📍 WalletRechargeResponseModel.fromJson started');
+      print('📍 json keys: ${json.keys}');
+      print('📍 json[\'payment\']: ${json['payment']}');
+      print('📍 json[\'payment_order\']: ${json['payment_order']}');
+    }
+
     try {
-      print('📍 About to create PaymentModel');
-      final payment = PaymentModel.fromJson(json['payment'] as Map<String, dynamic>);
-      print('📍 PaymentModel created successfully');
-      
-      print('📍 About to create PaymentOrderModel');
-      final paymentOrder = PaymentOrderModel.fromJson(json['payment_order'] as Map<String, dynamic>);
-      print('📍 PaymentOrderModel created successfully');
-      
+      if (kDebugMode) print('📍 About to create PaymentModel');
+      final payment =
+          PaymentModel.fromJson(json['payment'] as Map<String, dynamic>);
+      if (kDebugMode) {
+        print('📍 PaymentModel created successfully');
+
+        print('📍 About to create PaymentOrderModel');
+      }
+      final paymentOrder = PaymentOrderModel.fromJson(
+          json['payment_order'] as Map<String, dynamic>);
+      if (kDebugMode) print('📍 PaymentOrderModel created successfully');
+
       return WalletRechargeResponseModel(
         payment: payment,
         paymentOrder: paymentOrder,
       );
     } catch (e) {
-      print('📍 Error in WalletRechargeResponseModel.fromJson: $e');
+      if (kDebugMode) {
+        print('📍 Error in WalletRechargeResponseModel.fromJson: $e');
+      }
       rethrow;
     }
   }
@@ -182,26 +192,30 @@ class PaymentModel {
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
-    print('📍 PaymentModel.fromJson started');
-    print('📍 Payment json keys: ${json.keys}');
-    print('📍 Payment json: $json');
-    
+    if (kDebugMode) {
+      print('📍 PaymentModel.fromJson started');
+      print('📍 Payment json keys: ${json.keys}');
+      print('📍 Payment json: $json');
+    }
+
     try {
-      print('📍 Parsing ID: ${json['ID']}');
+      if (kDebugMode) print('📍 Parsing ID: ${json['ID']}');
       final id = json['ID'] as int;
-      
-      print('📍 Parsing CreatedAt: ${json['CreatedAt']}');
+
+      if (kDebugMode) print('📍 Parsing CreatedAt: ${json['CreatedAt']}');
       final createdAt = DateTime.parse(json['CreatedAt'] as String);
-      
-      print('📍 Parsing UpdatedAt: ${json['UpdatedAt']}');
+
+      if (kDebugMode) print('📍 Parsing UpdatedAt: ${json['UpdatedAt']}');
       final updatedAt = DateTime.parse(json['UpdatedAt'] as String);
-      
-      print('📍 Parsing other fields...');
+
+      if (kDebugMode) print('📍 Parsing other fields...');
       return PaymentModel(
         id: id,
         createdAt: createdAt,
         updatedAt: updatedAt,
-        deletedAt: json['DeletedAt'] != null ? DateTime.parse(json['DeletedAt'] as String) : null,
+        deletedAt: json['DeletedAt'] != null
+            ? DateTime.parse(json['DeletedAt'] as String)
+            : null,
         paymentReference: json['payment_reference'] as String,
         userId: json['user_id'] as int,
         amount: (json['amount'] as num).toDouble(),
@@ -215,11 +229,21 @@ class PaymentModel {
         razorpayPaymentId: json['razorpay_payment_id'] as String?,
         razorpaySignature: json['razorpay_signature'] as String?,
         initiatedAt: DateTime.parse(json['initiated_at'] as String),
-        completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at'] as String) : null,
-        failedAt: json['failed_at'] != null ? DateTime.parse(json['failed_at'] as String) : null,
-        refundedAt: json['refunded_at'] != null ? DateTime.parse(json['refunded_at'] as String) : null,
-        balanceAfter: json['balance_after'] != null ? (json['balance_after'] as num).toDouble() : null,
-        refundAmount: json['refund_amount'] != null ? (json['refund_amount'] as num).toDouble() : null,
+        completedAt: json['completed_at'] != null
+            ? DateTime.parse(json['completed_at'] as String)
+            : null,
+        failedAt: json['failed_at'] != null
+            ? DateTime.parse(json['failed_at'] as String)
+            : null,
+        refundedAt: json['refunded_at'] != null
+            ? DateTime.parse(json['refunded_at'] as String)
+            : null,
+        balanceAfter: json['balance_after'] != null
+            ? (json['balance_after'] as num).toDouble()
+            : null,
+        refundAmount: json['refund_amount'] != null
+            ? (json['refund_amount'] as num).toDouble()
+            : null,
         refundReason: json['refund_reason'] as String?,
         refundMethod: json['refund_method'] as String?,
         description: json['description'] as String,
@@ -227,7 +251,7 @@ class PaymentModel {
         metadata: json['metadata'] as Map<String, dynamic>,
       );
     } catch (e) {
-      print('📍 Error in PaymentModel.fromJson: $e');
+      if (kDebugMode) print('📍 Error in PaymentModel.fromJson: $e');
       rethrow;
     }
   }
@@ -365,10 +389,12 @@ class PaymentOrderModel {
   });
 
   factory PaymentOrderModel.fromJson(Map<String, dynamic> json) {
-    print('📍 PaymentOrderModel.fromJson started');
-    print('📍 PaymentOrder json keys: ${json.keys}');
-    print('📍 PaymentOrder json: $json');
-    
+    if (kDebugMode) {
+      print('📍 PaymentOrderModel.fromJson started');
+      print('📍 PaymentOrder json keys: ${json.keys}');
+      print('📍 PaymentOrder json: $json');
+    }
+
     try {
       return PaymentOrderModel(
         id: json['id'] as String,
@@ -378,7 +404,7 @@ class PaymentOrderModel {
         receipt: json['receipt'] as String,
       );
     } catch (e) {
-      print('📍 Error in PaymentOrderModel.fromJson: $e');
+      if (kDebugMode) print('📍 Error in PaymentOrderModel.fromJson: $e');
       rethrow;
     }
   }

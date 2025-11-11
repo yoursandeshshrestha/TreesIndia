@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../../commons/components/skeleton/app/views/skeleton_widget.dart';
-import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
 
 class CategoryLoadingSkeleton extends StatelessWidget {

@@ -20,6 +20,7 @@ class CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 180,
+        color: Colors.transparent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -2,14 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:trees_india/commons/utils/file_size_utils.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:trees_india/commons/utils/file_size_utils.dart';
 
 class Utils {
   Future<List<XFile>> pickImages() async {
@@ -20,14 +19,21 @@ class Utils {
       );
       return images;
     } catch (e) {
-      print('Error picking images: $e');
+      if (kDebugMode) print('Error picking images: $e');
       return [];
     }
   }
 
   Future<List<PlatformFile>> pickDocumentsFromDevice({
     bool allowMultiple = true,
-    List<String> allowedExtensions = const ['jpg', 'jpeg', 'png', 'pdf', 'mp4','mkv'],
+    List<String> allowedExtensions = const [
+      'jpg',
+      'jpeg',
+      'png',
+      'pdf',
+      'mp4',
+      'mkv'
+    ],
   }) async {
     final fileUtils = FileUtils();
 
@@ -121,7 +127,7 @@ class Utils {
       final month = _getMonthName(date.month);
       return '$month ${date.day}, ${date.year} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
     } catch (e) {
-      print('Error formatting date: $e');
+      if (kDebugMode) print('Error formatting date: $e');
       return dateTimeStr;
     }
   }
@@ -324,7 +330,7 @@ class Utils {
 
   // Helper method to validate base64 string
   bool isValidBase64(String str) {
-    print('base64 - $str');
+    if (kDebugMode) ('base64 - $str');
     try {
       if (str.isEmpty) return false;
       if (str.length % 4 != 0) return false;
@@ -392,17 +398,18 @@ class Utils {
   /// Examples: 240 minutes -> "4 hours", 150 minutes -> "2 hours 30 min"
   static String formatDurationFromMinutes(int minutes) {
     if (minutes <= 0) return '0 min';
-    
+
     final hours = minutes ~/ 60;
     final remainingMinutes = minutes % 60;
-    
+
     if (hours == 0) {
       return '$minutes min';
     } else if (remainingMinutes == 0) {
       return hours == 1 ? '1 hour' : '$hours hours';
     } else {
       final hourText = hours == 1 ? '1 hour' : '$hours hours';
-      final minuteText = remainingMinutes == 1 ? '1 min' : '$remainingMinutes min';
+      final minuteText =
+          remainingMinutes == 1 ? '1 min' : '$remainingMinutes min';
       return '$hourText $minuteText';
     }
   }

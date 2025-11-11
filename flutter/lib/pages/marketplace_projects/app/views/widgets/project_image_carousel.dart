@@ -114,7 +114,7 @@ class _ProjectImageCarouselState extends State<ProjectImageCarousel> {
                       shape: BoxShape.circle,
                       color: _currentIndex == index
                           ? Colors.white
-                          : Colors.white.withOpacity(0.5),
+                          : Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -132,7 +132,7 @@ class _ProjectImageCarouselState extends State<ProjectImageCarousel> {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -159,7 +159,7 @@ class _ProjectImageCarouselState extends State<ProjectImageCarousel> {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xs),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -183,7 +183,7 @@ class _ProjectImageCarouselState extends State<ProjectImageCarousel> {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xs),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

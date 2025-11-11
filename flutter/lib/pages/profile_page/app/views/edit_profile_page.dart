@@ -49,7 +49,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   void _initializeWithUserData() {
     final profileState = ref.read(profileProvider);
     // final user = profileState.user;
-    if (profileState != null && !_isInitialized) {
+    if (!_isInitialized) {
       _nameController.text = profileState.name ?? '';
       _emailController.text = profileState.email ?? '';
       _selectedGender = profileState.gender ?? 'male';
@@ -190,12 +190,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: mainColor.withOpacity(0.2),
+                          color: mainColor.withValues(alpha: 0.2),
                           width: 3,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: mainColor.withOpacity(0.1),
+                            color: mainColor.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -210,7 +210,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.black.withOpacity(0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                           ),
                           child: const Center(
                             child: CircularProgressIndicator(
@@ -231,7 +231,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: mainColor.withOpacity(0.3),
+                              color: mainColor.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -404,7 +404,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? mainColor.withOpacity(0.1)
+              ? mainColor.withValues(alpha: 0.1)
               : AppColors.brandNeutral50,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
@@ -437,7 +437,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Widget _buildDefaultAvatar() {
     return Container(
-      color: mainColor.withOpacity(0.1),
+      color: mainColor.withValues(alpha: 0.1),
       child: const Icon(
         Icons.person,
         size: 60,

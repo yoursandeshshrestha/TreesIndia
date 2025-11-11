@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/constants/enums.dart';
 import 'package:trees_india/commons/utils/services/location_service.dart';
 import 'package:trees_india/commons/utils/services/location_state.dart';
@@ -29,7 +30,9 @@ class LocationController extends StateNotifier<LocationState> {
       // Check current permission
       await _checkPermissionAndUpdateState();
     } catch (e) {
-      print('Error initializing location: $e');
+      if (kDebugMode) {
+        print('Error initializing location: $e');
+      }
       state = state.copyWith(status: LocationStatus.permissionDenied);
     }
   }
@@ -86,7 +89,9 @@ class LocationController extends StateNotifier<LocationState> {
         );
       });
     } catch (e) {
-      print('Error tracking location: $e');
+      if (kDebugMode) {
+        print('Error tracking location: $e');
+      }
       // If we get here, there might be an issue with the location service itself
       state = state.copyWith(status: LocationStatus.serviceDisabled);
     }
@@ -126,7 +131,9 @@ class LocationController extends StateNotifier<LocationState> {
       _requestingPermission = false;
       return true;
     } catch (e) {
-      print('Error requesting permission: $e');
+      if (kDebugMode) {
+        print('Error requesting permission: $e');
+      }
       state = state.copyWith(status: LocationStatus.permissionDenied);
       _requestingPermission = false;
       return false;

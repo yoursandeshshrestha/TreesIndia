@@ -1,7 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trees_india/commons/components/app_bar/app/views/custom_app_bar.dart';
 import '../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../commons/constants/app_colors.dart';
 import '../../../../commons/constants/app_spacing.dart';
@@ -41,8 +41,10 @@ class _ServicesPageState extends ConsumerState<ServicesPage> {
       final intSubcategoryId = int.tryParse(
           widget.subcategoryId != null ? '${widget.subcategoryId}' : '0');
 
-      print(
+      if (kDebugMode) {
+        print(
           'ServicesPage: 🔍 Category ID: $intCategoryId, Subcategory ID: $intSubcategoryId');
+      }
       // Set category and subcategory in services page state
       ref
           .read(serviceNotifierProvider.notifier)

@@ -582,8 +582,11 @@ class BookingCardWidget extends ConsumerWidget {
             booking.status == "confirmed");
   }
 
-  List<Widget> _buildActionButtons(BuildContext context,
-      BookingsState bookingsState, BookingsNotifier bookingsNotifier, WidgetRef ref) {
+  List<Widget> _buildActionButtons(
+      BuildContext context,
+      BookingsState bookingsState,
+      BookingsNotifier bookingsNotifier,
+      WidgetRef ref) {
     final status = booking.status.toLowerCase();
 
     List<Widget> buttons = [];
@@ -871,66 +874,28 @@ class BookingCardWidget extends ConsumerWidget {
         ["accepted", "in_progress"]
             .contains(booking.workerAssignment!.status)) {
       buttons.add(
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await _createConversationAndNavigate(context, ref, booking);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.stateGreen700,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.chat_bubble_outline, size: 16),
-                    SizedBox(width: AppSpacing.xs),
-                    Text('Chat with Worker'),
-                  ],
-                ),
+        SizedBox(
+          width: double.maxFinite,
+          child: ElevatedButton(
+            onPressed: () async {
+              await _createConversationAndNavigate(context, ref, booking);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.stateGreen700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-            // InkWell(
-            //   onTap: () {},
-            //   child: Container(
-            //     width: 48,
-            //     height: 48,
-            //     decoration: const BoxDecoration(
-            //       color: Color(0xFFF5F5F5),
-            //       shape: BoxShape.circle,
-            //     ),
-            //     child: const Icon(
-            //       Icons.chat_bubble_outline,
-            //       size: 24,
-            //       color: Colors.grey,
-            //     ),
-            //   ),
-            // ),
-            // const SizedBox(width: 8),
-            // InkWell(
-            //   onTap: () {},
-            //   child: Container(
-            //     width: 48,
-            //     height: 48,
-            //     decoration: const BoxDecoration(
-            //       color: Color(0xFFF5F5F5),
-            //       shape: BoxShape.circle,
-            //     ),
-            //     child: const Icon(
-            //       Icons.phone_outlined,
-            //       size: 24,
-            //       color: Colors.grey,
-            //     ),
-            //   ),
-            // ),
-          ],
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.chat_bubble_outline, size: 16),
+                SizedBox(width: AppSpacing.xs),
+                Text('Chat with Worker'),
+              ],
+            ),
+          ),
         ),
       );
     }
