@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,14 @@ func SetupAdminPaymentRoutes(group *gin.RouterGroup) {
 
 	// Admin transaction routes (admin authentication required)
 	adminTransactions := group.Group("/admin/transactions")
-	adminTransactions.Use(middleware.AuthMiddleware())
-	adminTransactions.Use(middleware.AdminMiddleware())
+	adminTransactions.Use(
+		middleware.AuthMiddleware(),
+		middleware.RequireAdminRoles(
+			// Finance manager and super admin can manage admin transactions
+			models.AdminRoleSuperAdmin,
+			models.AdminRoleFinanceManager,
+		),
+	)
 
 	{
 		// GET /api/v1/admin/transactions - Get all transactions with filtering and pagination

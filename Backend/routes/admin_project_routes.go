@@ -2,6 +2,8 @@ package routes
 
 import (
 	"treesindia/controllers"
+	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +14,14 @@ func SetupAdminProjectRoutes(r *gin.RouterGroup) {
 
 	// Admin project management routes
 	projects := r.Group("/projects")
+	projects.Use(
+		middleware.AuthMiddleware(),
+		// Properties manager and super admin can manage projects/properties
+		middleware.RequireAdminRoles(
+			models.AdminRoleSuperAdmin,
+			models.AdminRolePropertiesManager,
+		),
+	)
 	{
 		// Create project (admin can create projects for any user)
 		projects.POST("", projectController.CreateProject)

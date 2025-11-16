@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,14 @@ func SetupAdminVendorRoutes(router *gin.RouterGroup) {
 	
 	// Admin vendor routes (admin authentication required)
 	adminVendorGroup := router.Group("/vendors")
-	adminVendorGroup.Use(middleware.AuthMiddleware())
-	adminVendorGroup.Use(middleware.AdminMiddleware())
+	adminVendorGroup.Use(
+		middleware.AuthMiddleware(),
+		middleware.RequireAdminRoles(
+			// Vendor manager and super admin can manage vendors
+			models.AdminRoleSuperAdmin,
+			models.AdminRoleVendorManager,
+		),
+	)
 	{
 		// Admin CRUD operations for vendor profiles
 		adminVendorGroup.GET("", adminVendorController.GetAllVendors)

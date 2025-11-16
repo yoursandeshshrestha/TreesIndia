@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,12 +14,25 @@ func SetupAdminRoutes(r *gin.RouterGroup) {
 
 	// Admin routes (admin authentication required)
 	admin := r.Group("/admin")
-	admin.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
+	admin.Use(
+		middleware.AuthMiddleware(),
+		middleware.RequireAdminRoles(
+			// General admin panel access: most admin roles can view/manage users
+			models.AdminRoleSuperAdmin,
+			models.AdminRoleSupportAgent,
+			models.AdminRoleBookingManager,
+			models.AdminRoleVendorManager,
+			models.AdminRoleFinanceManager,
+			models.AdminRoleContentManager,
+			models.AdminRolePropertiesManager,
+		),
+	)
 	{
 		// Admin seeding
 		admin.POST("/seed", adminController.SeedAdminUsers)
 
 		// User management
+		admin.POST("/users", adminController.CreateUser)
 		admin.GET("/users", adminController.GetAllUsers)
 		admin.GET("/users/search", adminController.SearchUsers)
 		admin.GET("/users/:id", adminController.GetUserByID)

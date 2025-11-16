@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,11 @@ func SetupAdminConfigRoutes(group *gin.RouterGroup) {
 
 	// Admin configuration routes (admin only)
 	adminConfigGroup := group.Group("/admin/configs")
-	adminConfigGroup.Use(middleware.AuthMiddleware())
-	adminConfigGroup.Use(middleware.AdminMiddleware()) // Ensure only admins can access
+	adminConfigGroup.Use(
+		middleware.AuthMiddleware(),
+		// Only super admins can manage system configuration
+		middleware.RequireAdminRoles(models.AdminRoleSuperAdmin),
+	)
 
 	{
 		// Get all configurations

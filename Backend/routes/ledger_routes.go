@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,8 +13,14 @@ func SetupLedgerRoutes(router *gin.RouterGroup) {
 
 	// Admin-only routes for ledger management
 	admin := router.Group("/admin/ledger")
-	admin.Use(middleware.AuthMiddleware())
-	admin.Use(middleware.AdminMiddleware()) // Ensure only admins can access
+	admin.Use(
+		middleware.AuthMiddleware(),
+		// Finance manager and super admin can manage ledger
+		middleware.RequireAdminRoles(
+			models.AdminRoleSuperAdmin,
+			models.AdminRoleFinanceManager,
+		),
+	)
 
 	{
 		// Ledger Entry CRUD operations

@@ -34,6 +34,96 @@ type AdminSeed struct {
 	IsActive  bool   `json:"is_active"`
 }
 
+// AdminCreateUserRequest represents the request for creating a user from admin panel
+type AdminCreateUserRequest struct {
+	Name                  string                    `json:"name" binding:"required,min=2,max=100"`
+	Email                 *string                   `json:"email" binding:"omitempty,email"`
+	Phone                 string                    `json:"phone" binding:"required"`
+	UserType              string                    `json:"user_type" binding:"required,oneof=normal worker broker admin"`
+	Gender                string                    `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
+	IsActive              bool                      `json:"is_active"`
+	WalletBalance         float64                   `json:"wallet_balance"`
+	HasActiveSubscription bool                      `json:"has_active_subscription"`
+	AdminRoles            []string                  `json:"admin_roles"` // only used when user_type=admin, slice of role codes
+}
+
+// CreateUser godoc
+// @Summary Create user
+// @Description Create a new user from admin panel (optionally as admin with roles)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param user body AdminCreateUserRequest true "User data"
+// @Success 201 {object} models.Response "User created successfully"
+// @Failure 400 {object} models.Response "Invalid request data"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 409 {object} models.Response "User already exists"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /admin/users [post]
+func (ac *AdminController) CreateUser(c *gin.Context) {
+	var req AdminCreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+		return
+	}
+
+	// Check if email already exists (if provided)
+	if req.Email != nil && *req.Email != "" {
+		var existingUser models.User
+		if err := ac.db.Where("email = ?", *req.Email).First(&existingUser).Error; err == nil {
+			c.JSON(http.StatusConflict, views.CreateErrorResponse("Email already exists", "This email is already registered by another user"))
+			return
+		}
+	}
+
+	// Check if phone already exists
+	{
+		var existingUser models.User
+		if err := ac.db.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
+			c.JSON(http.StatusConflict, views.CreateErrorResponse("Phone already exists", "This phone number is already registered by another user"))
+			return
+		}
+	}
+
+	// Create user
+	user := models.User{
+		Name:                 req.Name,
+		Email:                req.Email,
+		Phone:                req.Phone,
+		UserType:             models.UserType(req.UserType),
+		Gender:               req.Gender,
+		IsActive:             req.IsActive,
+		WalletBalance:        req.WalletBalance,
+		HasActiveSubscription: req.HasActiveSubscription,
+	}
+
+	if err := ac.db.Create(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
+		return
+	}
+
+	// Attach admin roles if user is admin and roles provided
+	if user.UserType == models.UserTypeAdmin && len(req.AdminRoles) > 0 {
+		var roles []models.AdminRole
+		if err := ac.db.Where("code IN ?", req.AdminRoles).Find(&roles).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch admin roles", err.Error()))
+			return
+		}
+
+		if len(roles) > 0 {
+			if err := ac.db.Model(&user).Association("AdminRoles").Append(&roles); err != nil {
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to assign admin roles", err.Error()))
+				return
+			}
+		}
+	}
+
+	c.JSON(http.StatusCreated, views.CreateSuccessResponse("User created successfully", gin.H{
+		"user": user,
+	}))
+}
+
 // SeedAdminUsers godoc
 // @Summary Seed admin users
 // @Description Create default admin users in the database
