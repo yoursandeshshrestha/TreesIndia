@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/components/textfield/app/viewmodels/base_textfield_viewmodel.dart';
 import 'package:trees_india/commons/components/textfield/domain/entities/textfield_entity.dart';
 import 'package:trees_india/commons/components/textfield/domain/entities/validation_message_entity.dart';
@@ -10,8 +11,10 @@ class EmailTextFieldViewModel extends BaseTextFieldViewModel {
   @override
   List<ValidationMessage> validateText(
       TextFieldEntity state, BuildContext context) {
-    print(
+    if (kDebugMode) {
+      print(
         'EmailTextFieldViewModel - isDirty: ${state.isDirty}, text: ${state.text}');
+    }
 
     // Validate only if the field is dirty
     if (state.isDirty) {

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../../../../../commons/constants/api_endpoints.dart';
 import '../../../../../../../../commons/utils/error_handler.dart';
 import '../../../../../../../../commons/utils/services/dio_client.dart';
@@ -111,28 +112,29 @@ class VendorRemoteDataSourceImpl implements VendorRemoteDataSource {
 
       // Add form fields
       formData.fields.add(MapEntry('vendor_name', vendorForm.vendorName));
-      formData.fields
-          .add(MapEntry('business_description', vendorForm.businessDescription));
+      formData.fields.add(
+          MapEntry('business_description', vendorForm.businessDescription));
       formData.fields
           .add(MapEntry('contact_person_name', vendorForm.contactPersonName));
       formData.fields
           .add(MapEntry('contact_person_phone', vendorForm.contactPersonPhone));
       formData.fields
           .add(MapEntry('contact_person_email', vendorForm.contactPersonEmail));
-      formData.fields.add(MapEntry('business_type', _convertBusinessTypeForAPI(vendorForm.businessType)));
-      formData.fields
-          .add(MapEntry('years_in_business', vendorForm.yearsInBusiness.toString()));
+      formData.fields.add(MapEntry('business_type',
+          _convertBusinessTypeForAPI(vendorForm.businessType)));
+      formData.fields.add(
+          MapEntry('years_in_business', vendorForm.yearsInBusiness.toString()));
 
       // Add business address as JSON string
       if (vendorForm.businessAddress.isNotEmpty) {
         formData.fields.add(MapEntry(
-            'business_address',
-            _encodeMap(vendorForm.businessAddress)));
+            'business_address', _encodeMap(vendorForm.businessAddress)));
       }
 
       // Add services offered as JSON array
       if (vendorForm.servicesOffered.isNotEmpty) {
-        final servicesJson = '[${vendorForm.servicesOffered.map((service) => '"$service"').join(',')}]';
+        final servicesJson =
+            '[${vendorForm.servicesOffered.map((service) => '"$service"').join(',')}]';
         formData.fields.add(MapEntry('services_offered', servicesJson));
       }
 
@@ -157,18 +159,21 @@ class VendorRemoteDataSourceImpl implements VendorRemoteDataSource {
       }
 
       // Debug FormData contents
-      print('=== FormData Debug ===');
-      print('FormData fields:');
-      for (final field in formData.fields) {
-        print('  ${field.key}: ${field.value}');
+      if (kDebugMode) {
+        print('=== FormData Debug ===');
+        print('FormData fields:');
+        for (final field in formData.fields) {
+          print('  ${field.key}: ${field.value}');
+        }
+        print('FormData files:');
+        for (final file in formData.files) {
+          print(
+              '  ${file.key}: ${file.value.filename} (${file.value.length} bytes)');
+        }
+        print('Services offered count: ${vendorForm.servicesOffered.length}');
+        print('Services offered list: ${vendorForm.servicesOffered}');
+        print('=== End FormData Debug ===');
       }
-      print('FormData files:');
-      for (final file in formData.files) {
-        print('  ${file.key}: ${file.value.filename} (${file.value.length} bytes)');
-      }
-      print('Services offered count: ${vendorForm.servicesOffered.length}');
-      print('Services offered list: ${vendorForm.servicesOffered}');
-      print('=== End FormData Debug ===');
 
       final response = await dioClient.dio.post(
         url,

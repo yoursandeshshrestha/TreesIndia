@@ -20,7 +20,7 @@ abstract class BaseTextfieldWidget extends StatefulWidget {
   final bool hasError;
 
   const BaseTextfieldWidget({
-    Key? key,
+    super.key,
     required this.hintText,
     required this.onTextChanged,
     this.onBlurred,
@@ -30,7 +30,7 @@ abstract class BaseTextfieldWidget extends StatefulWidget {
     this.enabled = true,
     this.readOnly = false,
     this.hasError = false,
-  }) : super(key: key);
+  });
 
   @override
   BaseTextfieldWidgetState<BaseTextfieldWidget> createState();

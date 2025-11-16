@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
@@ -57,7 +58,9 @@ class AppHeaderWidget extends ConsumerWidget {
                               height: 16,
                               color: AppColors.brandNeutral900,
                               errorBuilder: (context, error, stackTrace) {
-                                print('Location icon error: $error');
+                                if (kDebugMode) {
+                                  print('Location icon error: $error');
+                                }
                                 return const Icon(
                                   Icons.location_on,
                                   size: 16,

@@ -57,7 +57,6 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
   Widget build(BuildContext context) {
     final projectDetailsState = ref.watch(projectDetailsNotifierProvider);
 
-
     ref.listen<ProjectDetailsState>(projectDetailsNotifierProvider,
         (previous, next) {
       if (next.status == ProjectDetailsStatus.failure &&
@@ -282,9 +281,9 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                 color: _getProjectTypeColor(project.projectType),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
+              const Text(
                 'Project Information',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.brandNeutral900,
@@ -314,11 +313,11 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                       ),
                       decoration: BoxDecoration(
                         color: _getProjectTypeColor(project.projectType)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _getProjectTypeColor(project.projectType)
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -349,11 +348,12 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage> {
                         vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(project.status).withOpacity(0.1),
+                        color: _getStatusColor(project.status)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color:
-                              _getStatusColor(project.status).withOpacity(0.3),
+                          color: _getStatusColor(project.status)
+                              .withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(

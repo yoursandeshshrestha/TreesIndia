@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../../commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
@@ -84,7 +85,7 @@ class ServiceBannerWidget extends StatelessWidget {
                   height: 100,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    print(error);
+                    if (kDebugMode) print(error);
                     return Container(
                       height: 100,
                       decoration: BoxDecoration(

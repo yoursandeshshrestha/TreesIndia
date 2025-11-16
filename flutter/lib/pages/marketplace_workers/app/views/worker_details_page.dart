@@ -127,8 +127,7 @@ class WorkerDetailsPage extends ConsumerWidget {
         return _buildWorkerDetails(context, ref, state.worker!);
 
       case WorkerDetailsStatus.initial:
-      default:
-        return const SizedBox.shrink();
+      return const SizedBox.shrink();
     }
   }
 

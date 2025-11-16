@@ -122,8 +122,8 @@ class BrokerApplicationRemoteDataSourceImpl
         throw Exception(
             response.data['message'] ?? 'Failed to submit broker application');
       }
-    } on DioException catch (e) {
-      throw e;
+    } on DioException {
+      rethrow;
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

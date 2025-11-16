@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/domain/entities/wallet_summary_entity.dart';
@@ -260,11 +261,12 @@ class WalletNotifier extends StateNotifier<WalletState> {
 
       await refreshWalletData();
     } catch (error) {
-      print('Error cancelling wallet recharge: $error');
+      if (kDebugMode) print('Error cancelling wallet recharge: $error');
     }
   }
 
-  Future<void> completeExistingPayment(WalletTransactionEntity transaction) async {
+  Future<void> completeExistingPayment(
+      WalletTransactionEntity transaction) async {
     if (!transaction.canCompletePayment) {
       state = state.copyWith(
         errorMessage: 'This transaction cannot be completed',

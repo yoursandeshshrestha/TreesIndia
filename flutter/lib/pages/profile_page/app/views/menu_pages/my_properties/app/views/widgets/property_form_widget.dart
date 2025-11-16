@@ -57,7 +57,6 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
   Widget build(BuildContext context) {
     final propertyFormState = ref.watch(propertyFormNotifierProvider);
 
-
     return Column(
       children: [
         // Progress indicator
@@ -673,20 +672,20 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
-            ...([1, 2, 3, 4].map((num) {
+            ...([1, 2, 3, 4].map((n) {
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.sm),
                 child: GestureDetector(
-                  onTap: () => onChanged(num),
+                  onTap: () => onChanged(n),
                   child: Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: value == num
+                      color: value == n
                           ? AppColors.stateGreen500
                           : AppColors.white,
                       border: Border.all(
-                        color: value == num
+                        color: value == n
                             ? AppColors.stateGreen500
                             : AppColors.brandNeutral300,
                       ),
@@ -694,9 +693,9 @@ class _PropertyFormWidgetState extends ConsumerState<PropertyFormWidget> {
                     ),
                     child: Center(
                       child: Text(
-                        num.toString(),
+                        n.toString(),
                         style: TextStyle(
-                          color: value == num
+                          color: value == n
                               ? AppColors.white
                               : AppColors.brandNeutral700,
                           fontWeight: FontWeight.w600,

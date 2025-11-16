@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
 import 'package:trees_india/commons/components/main_layout/app/views/main_layout_widget.dart';
-import 'package:trees_india/commons/components/snackbar/app/views/info_snackbar_widget.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -92,8 +91,8 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void _loadPopularServices() {
     final notifier = ref.read(homePageNotifierProvider.notifier);
-    final city = _currentLocation?.city;
-    final state = _currentLocation?.state;
+    // final city = _currentLocation?.city;
+    // final state = _currentLocation?.state;
 
     notifier.loadPopularServices();
   }
@@ -395,7 +394,7 @@ class _HomePageState extends ConsumerState<HomePage>
         context.push('/marketplace/workers');
         break;
       default:
-        print('Unknown marketplace subcategory: $slug');
+        debugPrint('Unknown marketplace subcategory: $slug');
     }
   }
 
@@ -839,7 +838,7 @@ class _SubcategoryCardState extends State<_SubcategoryCard> {
         duration: const Duration(milliseconds: 150),
         transform:
             _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
-        child: Container(
+        child: SizedBox(
           height: 120,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -931,7 +930,7 @@ class _MarketplaceSubcategoryCardState
         duration: const Duration(milliseconds: 150),
         transform:
             _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
-        child: Container(
+        child: SizedBox(
           height: 120,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -969,7 +968,7 @@ class _MarketplaceSubcategoryCardState
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),

@@ -1,4 +1,5 @@
 // lib/commons/providers/provider_registry.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Add the ResettableNotifier mixin
@@ -29,7 +30,7 @@ class ProviderRegistry {
             notifier.reset();
           }
         } catch (e) {
-          print('Error resetting provider: $e');
+          if (kDebugMode) print('Error resetting provider: $e');
           // Ignore errors during reset
         }
       }
@@ -40,7 +41,7 @@ class ProviderRegistry {
       try {
         container.invalidate(provider);
       } catch (e) {
-        print('Error invalidating provider: $e');
+        if (kDebugMode) print('Error invalidating provider: $e');
         // Ignore errors during invalidation
       }
     }

@@ -168,7 +168,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           child: Row(
                             children: [
                               // Avatar
-                              Container(
+                              SizedBox(
                                 width: 60,
                                 height: 60,
                                 child: ClipOval(
@@ -420,47 +420,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color(0xFFF5F5F5),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 28,
-              color: AppColors.brandNeutral700,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-                height: 1.3,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildMenuItem({
     required IconData icon,
@@ -541,7 +500,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           border: Border.all(color: AppColors.brandNeutral200),
           boxShadow: [
             BoxShadow(
-              color: AppColors.brandNeutral100.withOpacity(0.5),
+              color: AppColors.brandNeutral100.withValues(alpha: 0.5),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),

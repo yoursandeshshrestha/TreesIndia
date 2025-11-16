@@ -1,7 +1,6 @@
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/my_properties/data/models/property_form_data.dart';
 
 import '../../domain/entities/property_entity.dart';
-import '../../domain/entities/property_form_entity.dart';
 import '../../domain/repositories/property_repository.dart';
 import '../datasources/property_remote_datasource.dart';
 import '../models/property_form_model.dart';

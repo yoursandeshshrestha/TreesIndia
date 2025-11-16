@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../commons/constants/api_endpoints.dart';
 import '../../../../commons/utils/services/dio_client.dart';
 import '../../../../commons/utils/error_handler.dart';
@@ -55,12 +56,14 @@ class BookingsDatasource {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        print('📍 Parsing bookings response for tab: $tab');
+        if (kDebugMode) print('📍 Parsing bookings response for tab: $tab');
         try {
           return BookingsResponseModel.fromJson(response.data);
         } catch (parseError) {
-          print('📍 Parsing error: $parseError');
-          print('📍 Response data: ${response.data}');
+          if (kDebugMode) {
+            print('📍 Parsing error: $parseError');
+            print('📍 Response data: ${response.data}');
+          }
           rethrow;
         }
       } else {
@@ -96,7 +99,7 @@ class BookingsDatasource {
       final response = await dioClient.dio.put(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Booking cancelled successfully: $bookingId');
+        if (kDebugMode) print('📍 Booking cancelled successfully: $bookingId');
       } else {
         throw Exception('Failed to cancel booking. Please try again.');
       }
@@ -125,7 +128,7 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Quote rejected successfully: $bookingId');
+        if (kDebugMode) print('📍 Quote rejected successfully: $bookingId');
       } else {
         throw Exception('Failed to reject quote. Please try again.');
       }
@@ -154,7 +157,7 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: payload);
 
       if (response.statusCode == 200) {
-        print('📍 Quote accepted successfully: $bookingId');
+        if (kDebugMode) print('📍 Quote accepted successfully: $bookingId');
       } else {
         throw Exception('Failed to accept quote. Please try again.');
       }
@@ -179,7 +182,9 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: request.toJson());
 
       if (response.statusCode == 200 && response.data != null) {
-        print('📍 Quote payment order created successfully: $bookingId');
+        if (kDebugMode) {
+          print('📍 Quote payment order created successfully: $bookingId');
+        }
         return QuotePaymentResponseModel.fromJson(response.data);
       } else {
         throw Exception('Failed to create quote payment. Please try again.');
@@ -206,7 +211,9 @@ class BookingsDatasource {
           await dioClient.dio.post(url, data: verification.toJson());
 
       if (response.statusCode == 200) {
-        print('📍 Quote payment verified successfully: $bookingId');
+        if (kDebugMode) {
+          print('📍 Quote payment verified successfully: $bookingId');
+        }
       } else {
         throw Exception('Failed to verify quote payment. Please try again.');
       }
@@ -231,7 +238,9 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: request.toJson());
 
       if (response.statusCode == 200) {
-        print('📍 Wallet quote payment processed successfully: $bookingId');
+        if (kDebugMode) {
+          print('📍 Wallet quote payment processed successfully: $bookingId');
+        }
       } else {
         throw Exception('Failed to process wallet payment. Please try again.');
       }
@@ -256,7 +265,9 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: request.toJson());
 
       if (response.statusCode == 200 && response.data != null) {
-        print('📍 Segment payment order created successfully: $bookingId');
+        if (kDebugMode) {
+          print('📍 Segment payment order created successfully: $bookingId');
+        }
         final data = response.data['data'] as Map<String, dynamic>;
         return SegmentPaymentResponseModel.fromJson(data);
       } else {
@@ -284,7 +295,9 @@ class BookingsDatasource {
       final response = await dioClient.dio.post(url, data: verificationData);
 
       if (response.statusCode == 200) {
-        print('📍 Segment payment verified successfully: $bookingId');
+        if (kDebugMode) {
+          print('📍 Segment payment verified successfully: $bookingId');
+        }
       } else {
         throw Exception('Failed to verify segment payment. Please try again.');
       }

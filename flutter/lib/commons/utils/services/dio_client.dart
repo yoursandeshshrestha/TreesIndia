@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:trees_india/commons/config/api_config.dart';
 import 'package:trees_india/commons/presenters/providers/data_repository_provider.dart';
 import 'package:trees_india/commons/app/auth_provider.dart';
@@ -46,19 +47,21 @@ class DioClient {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        print("inside request interceptor:");
-        print("=== Request Details ===");
-        print("Path: ${options.path}");
-        print("Method: ${options.method}");
-        print("Headers before: ${options.headers}");
-        // String deviceInformation = await getDeviceDetails();
+        if (kDebugMode) {
+          print("inside request interceptor:");
+          print("=== Request Details ===");
+          print("Path: ${options.path}");
+          print("Method: ${options.method}");
+          print("Headers before: ${options.headers}");
+          // String deviceInformation = await getDeviceDetails();
+        }
 
         try {
           final requiresAuth = ApiConfig.isAuthRequired(options.path);
 
           // Store original endpoint for potential retry scenarios
           options.extra['originalPath'] = options.path;
-          
+
           options.path = await _apiConfig.getApiUrl(options.path);
           _localStorageService = CentralizedLocalStorageService();
           final fcmtoken = await _localStorageService.getData('FCMTOKEN');
@@ -69,20 +72,25 @@ class DioClient {
           // Special handling for signup/login endpoints
           if (options.path.contains('signUp') ||
               options.path.contains('login')) {
-            print("=== Processing Auth Request ===");
+            if (kDebugMode) print("=== Processing Auth Request ===");
 
             options.headers['DeviceId'] = fcmtoken;
             if (options.data is Map &&
                 options.data['GoogleAccessKey'] != null) {
-              print("=== Google Sign-In Request ===");
-              print("Token Length: ${options.data['GoogleAccessKey'].length}");
+              if (kDebugMode) {
+                print("=== Google Sign-In Request ===");
+                print(
+                    "Token Length: ${options.data['GoogleAccessKey'].length}");
+              }
 
               options.headers['Content-Type'] = 'application/json';
               options.headers['Accept'] = 'application/json';
 
-              print("Final URL: ${options.path}");
-              print("Final Headers: ${options.headers}");
-              print("Request Body: ${options.data}");
+              if (kDebugMode) {
+                print("Final URL: ${options.path}");
+                print("Final Headers: ${options.headers}");
+                print("Request Body: ${options.data}");
+              }
             }
           }
 
@@ -92,11 +100,13 @@ class DioClient {
               final token = await _ref
                   .read(centralizedDataRepositoryProvider)
                   .getAuthToken();
-              print("token: $token");
+              if (kDebugMode) print("token: $token");
               if (token != null && token.isNotEmpty) {
                 options.headers['Authorization'] = 'Bearer $token';
               } else {
-                print("⚠️ Authorization token is missing or empty");
+                if (kDebugMode) {
+                  print("⚠️ Authorization token is missing or empty");
+                }
                 return handler.reject(
                   DioException(
                     requestOptions: options,
@@ -105,20 +115,25 @@ class DioClient {
                 );
               }
             } else {
-              print(
-                  "Authorization header already present, skipping token lookup");
+              if (kDebugMode) {
+                print(
+                    "Authorization header already present, skipping token lookup");
+              }
             }
           }
-
-          print("=== Final Request Configuration ===");
-          print("URL: ${options.path}");
-          print("Headers: ${options.headers}");
-          print("Body: ${options.data}");
+          if (kDebugMode) {
+            print("=== Final Request Configuration ===");
+            print("URL: ${options.path}");
+            print("Headers: ${options.headers}");
+            print("Body: ${options.data}");
+          }
 
           handler.next(options);
         } catch (e) {
-          print("=== Request Error ===");
-          print("Error: $e");
+          if (kDebugMode) {
+            print("=== Request Error ===");
+            print("Error: $e");
+          }
           handler.reject(
             DioException(
               requestOptions: options,
@@ -128,25 +143,29 @@ class DioClient {
         }
       },
       onResponse: (response, handler) {
-        print("=== Response Details ===");
-        print("Status Code: ${response.statusCode}");
-        print("Headers: ${response.headers}");
-        print("Body: ${response.data}");
+        if (kDebugMode) {
+          print("=== Response Details ===");
+          print("Status Code: ${response.statusCode}");
+          print("Headers: ${response.headers}");
+          print("Body: ${response.data}");
+        }
         handler.resolve(response);
       },
       onError: (DioException error, handler) async {
-        print("=== Error Details ===");
-        print("Error Type: ${error.type}");
-        print("Error Message: ${error.message}");
-        print("Status Code: ${error.response?.statusCode}");
-        print("Error Response: ${error.response?.data}");
+        if (kDebugMode) {
+          print("=== Error Details ===");
+          print("Error Type: ${error.type}");
+          print("Error Message: ${error.message}");
+          print("Status Code: ${error.response?.statusCode}");
+          print("Error Response: ${error.response?.data}");
+        }
 
         // Create unique error ID to prevent duplicate processing
         final errorId = _generateErrorId(error);
 
         // Check if this error has already been processed
         if (_processedErrorIds.contains(errorId)) {
-          print("Error already processed, skipping: $errorId");
+          if (kDebugMode) print("Error already processed, skipping: $errorId");
           handler.next(error);
           return;
         }
@@ -164,11 +183,13 @@ class DioClient {
         final statusCode = error.response?.statusCode;
 
         if (statusCode == 401 || statusCode == 403 || statusCode == 440) {
-          print("Authentication error detected: $statusCode");
+          if (kDebugMode) print("Authentication error detected: $statusCode");
 
           // Prevent multiple refresh attempts
           if (_isRefreshing) {
-            print("Token refresh already in progress, waiting...");
+            if (kDebugMode) {
+              print("Token refresh already in progress, waiting...");
+            }
             handler.next(error);
             return;
           }
@@ -187,7 +208,7 @@ class DioClient {
       responseHeader: true,
       error: true,
       logPrint: (object) {
-        print('DIO LOG: $object');
+        if (kDebugMode) print('DIO LOG: $object');
       },
     ));
   }
@@ -220,12 +241,12 @@ class DioClient {
         message = 'Your session has expired. Please log in again.';
       }
 
-      print(message);
+      if (kDebugMode) print(message);
 
       final refreshSuccess = await _callRefreshToken();
 
       if (refreshSuccess) {
-        print("Token refresh successful, retrying request...");
+        if (kDebugMode) print("Token refresh successful, retrying request...");
 
         // Get the retry count from request options
         final retryCount =
@@ -241,7 +262,8 @@ class DioClient {
 
           if (newToken != null) {
             // Create a fresh request options with original path to avoid double URL concatenation
-            final originalPath = error.requestOptions.extra['originalPath'] as String?;
+            final originalPath =
+                error.requestOptions.extra['originalPath'] as String?;
             if (originalPath != null) {
               final retryOptions = RequestOptions(
                 path: originalPath,
@@ -257,7 +279,8 @@ class DioClient {
                 responseType: error.requestOptions.responseType,
                 contentType: error.requestOptions.contentType,
                 validateStatus: error.requestOptions.validateStatus,
-                receiveDataWhenStatusError: error.requestOptions.receiveDataWhenStatusError,
+                receiveDataWhenStatusError:
+                    error.requestOptions.receiveDataWhenStatusError,
                 followRedirects: error.requestOptions.followRedirects,
                 maxRedirects: error.requestOptions.maxRedirects,
                 persistentConnection: error.requestOptions.persistentConnection,
@@ -272,20 +295,21 @@ class DioClient {
                 handler.resolve(response);
                 return;
               } catch (retryError) {
-                print("Retry failed: $retryError");
+                if (kDebugMode) print("Retry failed: $retryError");
                 handler.next(error);
                 return;
               }
             } else {
               // Fallback to old method if originalPath is not available
-              error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-              
+              error.requestOptions.headers['Authorization'] =
+                  'Bearer $newToken';
+
               try {
                 final response = await _dio.fetch(error.requestOptions);
                 handler.resolve(response);
                 return;
               } catch (retryError) {
-                print("Retry failed: $retryError");
+                if (kDebugMode) print("Retry failed: $retryError");
                 handler.next(error);
                 return;
               }
@@ -308,7 +332,9 @@ class DioClient {
       await _ref.read(authProvider.notifier).logout();
       _notificationService.showErrorSnackBar(message);
     } catch (e) {
-      print("Error during logout: $e");
+      if (kDebugMode) {
+        print("Error during logout: $e");
+      }
     }
   }
 
@@ -321,23 +347,39 @@ class DioClient {
     try {
       if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        print('Running on ${androidInfo.model}');
-        print('Brand: ${androidInfo.brand}');
-        print('Android version: ${androidInfo.version.release}');
-        print('SDK: ${androidInfo.version.sdkInt}');
+        if (kDebugMode) print('Running on ${androidInfo.model}');
+        if (kDebugMode) {
+          print('Brand: ${androidInfo.brand}');
+        }
+        if (kDebugMode) {
+          print('Android version: ${androidInfo.version.release}');
+        }
+        if (kDebugMode) {
+          print('SDK: ${androidInfo.version.sdkInt}');
+        }
         deviceInformation =
             'Android, ${androidInfo.brand}, ${androidInfo.model}, ${androidInfo.version.release}';
-        print('Device information $deviceInformation');
+        if (kDebugMode) {
+          print('Device information $deviceInformation');
+        }
       } else if (Platform.isIOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        print('Running on ${iosInfo.model}');
-        print('System name: ${iosInfo.systemName}');
-        print('System version: ${iosInfo.systemVersion}');
+        if (kDebugMode) {
+          print('Running on ${iosInfo.model}');
+        }
+        if (kDebugMode) {
+          print('System name: ${iosInfo.systemName}');
+        }
+        if (kDebugMode) {
+          print('System version: ${iosInfo.systemVersion}');
+        }
         deviceInformation =
             'iOS, Apple, ${iosInfo.model}, ${iosInfo.systemVersion} ';
       }
     } catch (e) {
-      print('Error getting device info: $e');
+      if (kDebugMode) {
+        print('Error getting device info: $e');
+      }
       deviceInformation = '';
     }
     return deviceInformation;
@@ -369,13 +411,17 @@ class DioClient {
             };
 
             await _localStorageService.saveData('user_auth_tokens', tokenData);
-            print('Token refreshed and saved successfully');
+            if (kDebugMode) {
+              print('Token refreshed and saved successfully');
+            }
             return true;
           }
         }
       }
     } catch (e) {
-      print('Error refreshing token: $e');
+      if (kDebugMode) {
+        print('Error refreshing token: $e');
+      }
     }
     return false;
   }

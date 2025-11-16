@@ -23,7 +23,7 @@ class AccountSettingsPage extends ConsumerStatefulWidget {
 class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
   @override
   Widget build(BuildContext context) {
-    final userSettingsState = ref.watch(userSettingsProvider);
+    ref.watch(userSettingsProvider);
     final userSettingsNotifier = ref.read(userSettingsProvider.notifier);
 
 

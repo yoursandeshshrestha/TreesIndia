@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../commons/presenters/providers/location_onboarding_provider.dart';
@@ -70,7 +71,7 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
         );
       } catch (e) {
         // Log error but don't fail the entire flow
-        print('Error fetching category details: $e');
+        if (kDebugMode) print('Error fetching category details: $e');
       }
     }
   }

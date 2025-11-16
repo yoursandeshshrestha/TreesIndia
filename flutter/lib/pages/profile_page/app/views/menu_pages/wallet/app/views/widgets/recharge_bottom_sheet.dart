@@ -121,7 +121,7 @@ class _RechargeBottomSheetState extends State<RechargeBottomSheet> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? mainAppColor.withOpacity(0.1)
+                              ? mainAppColor.withValues(alpha: 0.1)
                               : AppColors.brandNeutral50,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(

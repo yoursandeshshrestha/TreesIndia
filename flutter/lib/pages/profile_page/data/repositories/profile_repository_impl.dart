@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/entities/profile_update_entity.dart';
 import '../../domain/entities/avatar_upload_entity.dart';
@@ -26,7 +28,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } catch (e) {
       // Preserve server-provided error messages (e.g., "Email already exists")
       if (e is Exception) {
-        print('ProfileRepositoryImpl: Exception: ${e.toString()}');
+        if (kDebugMode) print('ProfileRepositoryImpl: Exception: ${e.toString()}');
         final message = e.toString().replaceFirst('Exception: ', '');
         throw Exception(message);
       }

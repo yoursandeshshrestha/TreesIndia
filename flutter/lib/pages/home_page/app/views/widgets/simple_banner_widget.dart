@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -133,8 +134,10 @@ class SimpleBannerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('SimpleBannerWidget build called with ${items.length} items');
-    print('Items: ${items.map((item) => item.image).toList()}');
+    if (kDebugMode) {
+      print('SimpleBannerWidget build called with ${items.length} items');
+      print('Items: ${items.map((item) => item.image).toList()}');
+    }
 
     // Calculate dynamic dimensions based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
