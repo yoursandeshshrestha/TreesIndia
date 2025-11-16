@@ -1,4 +1,5 @@
 import AuthGuard from "@/components/AuthGuard/AuthGuard";
+import type { AdminRole } from "@/services/api/auth";
 import ProjectDetailPage from "@/core/Marketplace/ProjectsManagementPage/ProjectDetailPage";
 
 interface ProjectDetailRouteProps {
@@ -13,7 +14,7 @@ export default async function ProjectDetailRoute({
   const { id } = await params;
 
   return (
-    <AuthGuard requireAdmin={true}>
+    <AuthGuard requiredRoles={["super_admin", "properties_manager" satisfies AdminRole]}>
       <ProjectDetailPage projectId={parseInt(id)} />
     </AuthGuard>
   );
