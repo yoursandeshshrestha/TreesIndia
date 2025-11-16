@@ -1,4 +1,7 @@
-import { authUtils as apiAuthUtils } from "@/services/api/auth";
+import {
+  authUtils as apiAuthUtils,
+  type AdminRole,
+} from "@/services/api/auth";
 
 /**
  * Automatically signs out a user and clears all authentication data
@@ -12,8 +15,50 @@ export const autoSignOut = (): void => {
  * Checks if the current user is an admin
  */
 export const isAdminUser = (): boolean => {
-  const user = apiAuthUtils.getUser();
-  return user?.role === "admin";
+  const user = apiAuthUtils.getUser() as
+    | {
+        role?: string;
+        admin_roles?: AdminRole[];
+      }
+    | null;
+
+  if (!user) {
+    return false;
+  }
+
+  if (user.role !== "admin") {
+    return false;
+  }
+
+  if (!Array.isArray(user.admin_roles)) {
+    return false;
+  }
+
+  return user.admin_roles.length > 0;
+};
+
+export const hasAdminRole = (required: AdminRole | AdminRole[]): boolean => {
+  const user = apiAuthUtils.getUser() as
+    | {
+        role?: string;
+        admin_roles?: AdminRole[];
+      }
+    | null;
+
+  if (!user || user.role !== "admin" || !Array.isArray(user.admin_roles)) {
+    return false;
+  }
+
+  const requiredList: AdminRole[] = Array.isArray(required)
+    ? required
+    : [required];
+
+  // super_admin always allowed
+  if (user.admin_roles.includes("super_admin")) {
+    return true;
+  }
+
+  return user.admin_roles.some((role) => requiredList.includes(role));
 };
 
 /**

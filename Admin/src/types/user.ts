@@ -29,6 +29,7 @@ export interface CreateUserRequest {
   wallet_balance: number;
   has_active_subscription: boolean;
   subscription_expiry_date?: string;
+  admin_roles?: string[]; // backend expects array of admin role codes when creating admin users
 }
 
 export interface UpdateUserRequest extends Partial<CreateUserRequest> {

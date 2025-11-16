@@ -2,20 +2,26 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, useCurrentUser } from "@/services/api/auth";
+import { useAuth, useCurrentUser, type AdminRole } from "@/services/api/auth";
 import { authUtils } from "@/services/api/auth";
 import { Loader2 } from "lucide-react";
 import { autoSignOut } from "@/utils/authUtils";
 
 interface AuthGuardProps {
   children: React.ReactNode;
+  /**
+   * @deprecated use requiredRoles instead for fine-grained access control.
+   * If true and requiredRoles is not provided, any admin user with at least one admin role is allowed.
+   */
   requireAdmin?: boolean;
+  requiredRoles?: AdminRole[]; // if provided, user must have at least one of these roles (or be super_admin)
   fallback?: React.ReactNode;
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({
   children,
   requireAdmin = false,
+  requiredRoles,
   fallback,
 }) => {
   const router = useRouter();
@@ -52,11 +58,39 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
           return;
         }
 
-        // Check admin requirement
-        if (requireAdmin) {
-          const user = authUtils.getUser();
+        // Check admin/role requirement
+        if (requireAdmin || (Array.isArray(requiredRoles) && requiredRoles.length > 0)) {
+          const user = authUtils.getUser() as
+            | {
+                role?: string;
+                admin_roles?: AdminRole[];
+              }
+            | null;
+
           if (!user || user.role !== "admin") {
-            // Auto sign out non-admin users
+            autoSignOut();
+            router.push("/auth/sign-in");
+            return;
+          }
+
+          const rolesFromUser = Array.isArray(user.admin_roles)
+            ? user.admin_roles
+            : [];
+
+          // If specific roles are required, enforce them (super_admin is always allowed)
+          if (Array.isArray(requiredRoles) && requiredRoles.length > 0) {
+            const hasSuperAdmin = rolesFromUser.includes("super_admin");
+            const hasRequiredRole = rolesFromUser.some((role) =>
+              requiredRoles.includes(role),
+            );
+
+            if (!hasSuperAdmin && !hasRequiredRole) {
+              autoSignOut();
+              router.push("/auth/sign-in");
+              return;
+            }
+          } else if (rolesFromUser.length === 0) {
+            // requireAdmin=true but user has no admin roles
             autoSignOut();
             router.push("/auth/sign-in");
             return;
@@ -74,7 +108,15 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
     };
 
     checkAccess();
-  }, [router, requireAdmin, authLoading, userLoading, authError, userError]);
+  }, [
+    router,
+    requireAdmin,
+    requiredRoles,
+    authLoading,
+    userLoading,
+    authError,
+    userError,
+  ]);
 
   // Show loading state
   if (isChecking || authLoading || userLoading) {

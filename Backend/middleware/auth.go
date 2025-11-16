@@ -122,10 +122,28 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// Extract admin roles from token if present
+		adminRoles := make([]string, 0)
+		if rawRoles, exists := claims["admin_roles"]; exists {
+			switch rolesValue := rawRoles.(type) {
+			case []interface{}:
+				for _, r := range rolesValue {
+					if roleStr, ok := r.(string); ok {
+						adminRoles = append(adminRoles, roleStr)
+					}
+				}
+			case []string:
+				adminRoles = append(adminRoles, rolesValue...)
+			}
+		}
+
 		// Set user information in context
 		c.Set("user_id", user.ID)
 		c.Set("user_type", string(user.UserType)) // Convert to string explicitly
 		c.Set("user", user)
+		if len(adminRoles) > 0 {
+			c.Set("admin_roles", adminRoles)
+		}
 
 		c.Next()
 	}
@@ -145,6 +163,81 @@ func AdminMiddleware() gin.HandlerFunc {
 			return
 		}
 		c.Next()
+	}
+}
+
+// RequireAdminRoles ensures the user is an admin with at least one of the required admin roles.
+// Super admins are always allowed.
+func RequireAdminRoles(requiredRoles ...models.AdminRoleCode) gin.HandlerFunc {
+	required := make(map[models.AdminRoleCode]struct{}, len(requiredRoles))
+	for _, role := range requiredRoles {
+		required[role] = struct{}{}
+	}
+
+	return func(c *gin.Context) {
+		// Must be an admin user_type
+		if c.GetString("user_type") != string(models.UserTypeAdmin) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Admin access required",
+			})
+			c.Abort()
+			return
+		}
+
+		// Read admin roles from context
+		rawRoles, exists := c.Get("admin_roles")
+		if !exists {
+			// If no specific roles are required, allow any admin user
+			if len(requiredRoles) == 0 {
+				c.Next()
+				return
+			}
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Admin role required",
+			})
+			c.Abort()
+			return
+		}
+
+		roleSlice, ok := rawRoles.([]string)
+		if !ok {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Invalid admin roles in context",
+			})
+			c.Abort()
+			return
+		}
+
+		// Super admin is always allowed
+		for _, roleCode := range roleSlice {
+			if roleCode == string(models.AdminRoleSuperAdmin) {
+				c.Next()
+				return
+			}
+		}
+
+		// If no specific roles required, any admin role is allowed
+		if len(requiredRoles) == 0 && len(roleSlice) > 0 {
+			c.Next()
+			return
+		}
+
+		// Check intersection with required roles
+		for _, roleCode := range roleSlice {
+			if _, ok := required[models.AdminRoleCode(roleCode)]; ok {
+				c.Next()
+				return
+			}
+		}
+
+		c.JSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": "Insufficient admin role",
+		})
+		c.Abort()
 	}
 }
 

@@ -3,7 +3,27 @@ import { api } from "@/lib/api-client";
 import { queryKeys } from "@/types/api";
 import { useProfile } from "./users";
 
+// Admin role codes should match backend AdminRoleCode values
+export type AdminRole =
+  | "super_admin"
+  | "booking_manager"
+  | "vendor_manager"
+  | "finance_manager"
+  | "support_agent"
+  | "content_manager"
+  | "properties_manager";
+
 // Auth response types
+interface AuthUser {
+  id: number;
+  phone: string;
+  name: string | null;
+  role: string;
+  wallet_balance: number;
+  created_at: string;
+  admin_roles?: AdminRole[];
+}
+
 interface RequestOTPResponse {
   success: boolean;
   message: string;
@@ -18,14 +38,7 @@ interface VerifyOTPResponse {
   success: boolean;
   message: string;
   data: {
-    user: {
-      id: number;
-      phone: string;
-      name: string | null;
-      role: string;
-      wallet_balance: number;
-      created_at: string;
-    };
+    user: AuthUser;
     access_token: string;
     refresh_token: string;
     expires_in: number;
@@ -37,14 +50,7 @@ interface RefreshTokenResponse {
   success: boolean;
   message: string;
   data: {
-    user: {
-      id: number;
-      phone: string;
-      name: string | null;
-      role: string;
-      wallet_balance: number;
-      created_at: string;
-    };
+    user: AuthUser;
     access_token: string;
     refresh_token: string;
     expires_in: number;

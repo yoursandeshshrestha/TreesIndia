@@ -347,7 +347,7 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	var user models.User
 	var isNewUser bool
 	
-	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
+	if err := ac.db.Where("phone = ?", req.Phone).Preload("AdminRoles").First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Create new user
 			user = models.User{
@@ -408,18 +408,27 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		go services.NotifyUserRegistration(&user)
 	}
 
+	// Prepare admin roles for response (if any)
+	adminRoleCodes := make([]string, 0)
+	if user.UserType == models.UserTypeAdmin {
+		for _, role := range user.AdminRoles {
+			adminRoleCodes = append(adminRoleCodes, string(role.Code))
+		}
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Login successful", gin.H{
 		"user": gin.H{
-					"id":                user.ID,
-		"phone":             user.Phone,
-		"name":              user.Name,
-		"role":              user.UserType,
-		"wallet_balance":    user.WalletBalance,
-		"created_at":        user.CreatedAt,
+			"id":             user.ID,
+			"phone":          user.Phone,
+			"name":           user.Name,
+			"role":           user.UserType,
+			"wallet_balance": user.WalletBalance,
+			"created_at":     user.CreatedAt,
+			"admin_roles":    adminRoleCodes,
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
-		"expires_in":    3600, // 1 hour in seconds
+		"expires_in":    3600,  // 1 hour in seconds
 		"is_new_user":   isNewUser, // Frontend uses this to show onboarding info
 	}))
 }
@@ -637,7 +646,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 	// Find user
 	var user models.User
-	if err := ac.db.Where("id = ? AND phone = ?", userID, phone).First(&user).Error; err != nil {
+	if err := ac.db.Where("id = ? AND phone = ?", userID, phone).Preload("AdminRoles").First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, views.CreateErrorResponse("User not found", "User account not found"))
 		return
 	}
@@ -655,14 +664,23 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 		return
 	}
 
+	// Prepare admin roles for response (if any)
+	adminRoleCodes := make([]string, 0)
+	if user.UserType == models.UserTypeAdmin {
+		for _, role := range user.AdminRoles {
+			adminRoleCodes = append(adminRoleCodes, string(role.Code))
+		}
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Token refreshed successfully", gin.H{
 		"user": gin.H{
-			"id":                user.ID,
-			"phone":             user.Phone,
-			"name":              user.Name,
-			"role":              user.UserType,
-			"wallet_balance":    user.WalletBalance,
-			"created_at":        user.CreatedAt,
+			"id":             user.ID,
+			"phone":          user.Phone,
+			"name":           user.Name,
+			"role":           user.UserType,
+			"wallet_balance": user.WalletBalance,
+			"created_at":     user.CreatedAt,
+			"admin_roles":    adminRoleCodes,
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
@@ -673,15 +691,31 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 // generateTokens generates access and refresh tokens
 func (ac *AuthController) generateTokens(user models.User) (string, string, error) {
-	// Generate access token (1 hour expiry)
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	// Load admin roles for admin users so they can be embedded in JWT
+	var adminRoleCodes []string
+	if user.UserType == models.UserTypeAdmin {
+		var loadedUser models.User
+		if err := ac.db.Preload("AdminRoles").First(&loadedUser, user.ID).Error; err == nil {
+			for _, role := range loadedUser.AdminRoles {
+				adminRoleCodes = append(adminRoleCodes, string(role.Code))
+			}
+		}
+	}
+
+	claims := jwt.MapClaims{
 		"user_id":   user.ID,
 		"phone":     user.Phone,
 		"user_type": user.UserType,
 		"exp":       time.Now().Add(time.Hour).Unix(),
 		"iat":       time.Now().Unix(),
 		"type":      "access",
-	})
+	}
+	if len(adminRoleCodes) > 0 {
+		claims["admin_roles"] = adminRoleCodes
+	}
+
+	// Generate access token (1 hour expiry)
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Generate refresh token (30 days expiry)
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

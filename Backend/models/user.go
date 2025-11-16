@@ -60,6 +60,9 @@ type User struct {
 	Worker                  *Worker                   `json:"worker,omitempty" gorm:"foreignKey:UserID"`
 	Broker                  *Broker                   `json:"broker,omitempty" gorm:"foreignKey:UserID"`
 	Vendors                 []Vendor                  `json:"vendors,omitempty" gorm:"foreignKey:UserID"`
+
+	// Admin roles (for user_type = admin)
+	AdminRoles []AdminRole `json:"admin_roles,omitempty" gorm:"many2many:user_admin_roles;"`
 }
 
 // TableName returns the table name for User
