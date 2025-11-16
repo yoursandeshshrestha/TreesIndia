@@ -17,6 +17,7 @@ import {
   MessageCircle,
   BookOpen,
 } from "lucide-react";
+import type { AdminRole } from "@/services/api/auth";
 
 export interface SidebarItem {
   id: string;
@@ -25,13 +26,18 @@ export interface SidebarItem {
   path?: string;
   children?: SidebarItem[];
   isGroup?: boolean;
+  allowedRoles?: AdminRole[]; // if undefined, visible to any admin; otherwise requires one of these roles (super_admin always allowed)
 }
 
 // Helper function to create section labels
-export const createSectionLabel = (label: string): SidebarItem => ({
+export const createSectionLabel = (
+  label: string,
+  allowedRoles?: AdminRole[]
+): SidebarItem => ({
   id: `${label.toLowerCase().replace(/\s+/g, "-")}-group`,
   label,
   isGroup: true,
+  allowedRoles,
 });
 
 // Helper function to create menu items
@@ -39,12 +45,14 @@ export const createMenuItem = (
   id: string,
   label: string,
   path: string,
-  icon?: React.ReactNode
+  icon?: React.ReactNode,
+  allowedRoles?: AdminRole[]
 ): SidebarItem => ({
   id,
   label,
   path,
   icon,
+  allowedRoles,
 });
 
 // Helper function to create menu items with children
@@ -52,12 +60,14 @@ export const createMenuWithChildren = (
   id: string,
   label: string,
   icon: React.ReactNode,
-  children: SidebarItem[]
+  children: SidebarItem[],
+  allowedRoles?: AdminRole[]
 ): SidebarItem => ({
   id,
   label,
   icon,
   children,
+  allowedRoles,
 });
 
 export const sidebarItems: SidebarItem[] = [
@@ -79,27 +89,32 @@ export const sidebarItems: SidebarItem[] = [
         "users",
         "All Users",
         "/dashboard/users-management",
-        <Users size={16} />
+        <Users size={16} />,
+        ["super_admin"]
       ),
       createMenuItem(
         "role-applications",
         "Role Applications",
         "/dashboard/role-applications",
-        <FileText size={16} />
+        <FileText size={16} />,
+        ["super_admin"]
       ),
       createMenuItem(
         "workers",
         "Workers",
         "/dashboard/workers",
-        <Users size={16} />
+        <Users size={16} />,
+        ["super_admin"]
       ),
       createMenuItem(
         "brokers",
         "Brokers",
         "/dashboard/brokers",
-        <Shield size={16} />
+        <Shield size={16} />,
+        ["super_admin"]
       ),
-    ]
+    ],
+    ["super_admin"]
   ),
 
   // Booking Management Section
@@ -111,24 +126,40 @@ export const sidebarItems: SidebarItem[] = [
       createMenuItem(
         "booking-overview",
         "Booking Overview",
-        "/dashboard/bookings/overview"
+        "/dashboard/bookings/overview",
+        undefined,
+        ["super_admin", "booking_manager", "support_agent"]
       ),
-      createMenuItem("all-bookings", "All Bookings", "/dashboard/bookings/all"),
+      createMenuItem(
+        "all-bookings",
+        "All Bookings",
+        "/dashboard/bookings/all",
+        undefined,
+        ["super_admin", "booking_manager", "support_agent"]
+      ),
       createMenuItem(
         "fixed-price-bookings",
         "Fixed Price Bookings",
-        "/dashboard/bookings/fixed-price"
+        "/dashboard/bookings/fixed-price",
+        undefined,
+        ["super_admin", "booking_manager"]
       ),
       createMenuItem(
         "inquiry-price-bookings",
         "Inquiry Price Bookings",
-        "/dashboard/bookings/inquiry-price"
+        "/dashboard/bookings/inquiry-price",
+        undefined,
+        ["super_admin", "booking_manager"]
       ),
     ]
   ),
 
-  // Services Section
-  createSectionLabel("Services"),
+  // Services Section (content + vendor focused roles)
+  createSectionLabel("Services", [
+    "super_admin",
+    "content_manager",
+    "vendor_manager",
+  ]),
 
   // Category Management Section
   createMenuWithChildren(
@@ -136,11 +167,19 @@ export const sidebarItems: SidebarItem[] = [
     "Category Management",
     <Layers size={16} />,
     [
-      createMenuItem("categories", "Categories", "/dashboard/categories"),
+      createMenuItem(
+        "categories",
+        "Categories",
+        "/dashboard/categories",
+        undefined,
+        ["super_admin", "content_manager"]
+      ),
       createMenuItem(
         "subcategories",
         "Subcategories",
-        "/dashboard/subcategories"
+        "/dashboard/subcategories",
+        undefined,
+        ["super_admin", "content_manager"]
       ),
     ]
   ),
@@ -151,17 +190,29 @@ export const sidebarItems: SidebarItem[] = [
     "Service Management",
     <Package size={16} />,
     [
-      createMenuItem("list-services", "List Services", "/dashboard/services"),
+      createMenuItem(
+        "list-services",
+        "List Services",
+        "/dashboard/services",
+        undefined,
+        ["super_admin", "content_manager", "vendor_manager"]
+      ),
       createMenuItem(
         "create-service",
         "Create New Service",
-        "/dashboard/services/create-service"
+        "/dashboard/services/create-service",
+        undefined,
+        ["super_admin", "content_manager", "vendor_manager"]
       ),
     ]
   ),
 
-  // Marketplace Section
-  createSectionLabel("Marketplace"),
+  // Marketplace Section (properties / vendor focused roles)
+  createSectionLabel("Marketplace", [
+    "super_admin",
+    "vendor_manager",
+    "properties_manager",
+  ]),
   createMenuWithChildren(
     "rental-property",
     "Rental & Property",
@@ -170,39 +221,54 @@ export const sidebarItems: SidebarItem[] = [
       createMenuItem(
         "all-properties",
         "All Properties",
-        "/dashboard/marketplace/rental-property/all"
+        "/dashboard/marketplace/rental-property/all",
+        undefined,
+        ["super_admin", "vendor_manager", "properties_manager"]
       ),
       createMenuItem(
         "create-property",
         "Create New Property",
-        "/dashboard/marketplace/rental-property/create"
+        "/dashboard/marketplace/rental-property/create",
+        undefined,
+        ["super_admin", "vendor_manager", "properties_manager"]
       ),
     ]
   ),
-  createMenuWithChildren("work-force", "Work Force", <HardHat size={16} />, [
-    createMenuItem(
-      "workers",
-      "Workers",
-      "/dashboard/marketplace/workforce/workers",
-      <UserCheck size={16} />
-    ),
-    createMenuItem(
-      "vendors",
-      "Vendors",
-      "/dashboard/marketplace/workforce/vendors",
-      <Truck size={16} />
-    ),
-  ]),
+  createMenuWithChildren(
+    "work-force",
+    "Work Force",
+    <HardHat size={16} />,
+    [
+      createMenuItem(
+        "workforce-workers",
+        "Workers",
+        "/dashboard/marketplace/workforce/workers",
+        <UserCheck size={16} />,
+        ["super_admin", "vendor_manager"]
+      ),
+      createMenuItem(
+        "vendors",
+        "Vendors",
+        "/dashboard/marketplace/workforce/vendors",
+        <Truck size={16} />,
+        ["super_admin", "vendor_manager"]
+      ),
+    ]
+  ),
   createMenuWithChildren("projects", "Projects", <Building size={16} />, [
     createMenuItem(
       "all-projects",
       "All Projects",
-      "/dashboard/marketplace/projects"
+      "/dashboard/marketplace/projects",
+      undefined,
+      ["super_admin", "vendor_manager", "properties_manager"]
     ),
     createMenuItem(
       "create-project",
       "Create New Project",
-      "/dashboard/marketplace/projects/create"
+      "/dashboard/marketplace/projects/create",
+      undefined,
+      ["super_admin", "vendor_manager", "properties_manager"]
     ),
   ]),
 
@@ -212,18 +278,32 @@ export const sidebarItems: SidebarItem[] = [
     "chat",
     "Chat",
     "/dashboard/communication/chat",
-    <MessageCircle size={16} />
+    <MessageCircle size={16} />,
+    [
+      "super_admin",
+      "support_agent",
+      "booking_manager",
+      "vendor_manager",
+      "finance_manager",
+      "content_manager",
+      "properties_manager",
+    ]
   ),
 
-  // Other Section
-  createSectionLabel("Other"),
+  // Other Section (content/finance/system)
+  createSectionLabel("Other", [
+    "super_admin",
+    "content_manager",
+    "finance_manager",
+  ]),
 
   // Banner Management
   createMenuItem(
     "banners",
     "Banner Management",
     "/dashboard/banners",
-    <ImageIcon size={16} />
+    <ImageIcon size={16} />,
+    ["super_admin", "content_manager"]
   ),
 
   // Website Management
@@ -231,7 +311,8 @@ export const sidebarItems: SidebarItem[] = [
     "website-management",
     "Website Management",
     "/dashboard/website-management",
-    <Settings size={16} />
+    <Settings size={16} />,
+    ["super_admin", "content_manager"]
   ),
 
   // Subscription Management
@@ -239,7 +320,8 @@ export const sidebarItems: SidebarItem[] = [
     "subscription-management",
     "Subscription Management",
     "/dashboard/subscription-management",
-    <CreditCard size={16} />
+    <CreditCard size={16} />,
+    ["super_admin", "finance_manager"]
   ),
 
   // Transaction Management
@@ -247,7 +329,8 @@ export const sidebarItems: SidebarItem[] = [
     "transaction-management",
     "Transaction Management",
     "/dashboard/transactions",
-    <CreditCard size={16} />
+    <CreditCard size={16} />,
+    ["super_admin", "finance_manager"]
   ),
 
   // Ledger Management
@@ -255,17 +338,19 @@ export const sidebarItems: SidebarItem[] = [
     "ledger-management",
     "Ledger Management",
     "/dashboard/ledger",
-    <BookOpen size={16} />
+    <BookOpen size={16} />,
+    ["super_admin", "finance_manager"]
   ),
 
-  // System Section
-  createSectionLabel("System"),
+  // System Section (super admin only)
+  createSectionLabel("System", ["super_admin"]),
 
   // System Configuration
   createMenuItem(
     "admin-configs",
     "System Configuration",
     "/dashboard/admin-configs",
-    <Settings size={16} />
+    <Settings size={16} />,
+    ["super_admin"]
   ),
 ];

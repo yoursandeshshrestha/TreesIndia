@@ -3,12 +3,13 @@ import { X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
-import { User } from "@/types/user";
+import { type User } from "@/types/user";
 import {
   GENDER_OPTIONS,
   validateUserForm,
   getDefaultUserData,
 } from "@/utils/userUtils";
+import { type AdminRole } from "@/services/api/auth";
 
 interface CreateEditUserModalProps {
   title: string;
@@ -27,7 +28,11 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
   initialData,
   mode,
 }) => {
-  const [formData, setFormData] = useState<Partial<User>>(getDefaultUserData());
+  const [formData, setFormData] = useState<
+    Partial<User> & {
+      admin_role?: AdminRole;
+    }
+  >(getDefaultUserData());
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -45,7 +50,12 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
         has_active_subscription: initialData.has_active_subscription,
       });
     } else {
-      setFormData(getDefaultUserData());
+      // For create mode in admin panel, we always create admin users with roles
+      setFormData({
+        ...getDefaultUserData(),
+        user_type: "admin",
+        is_active: true,
+      });
     }
     setErrors({});
   }, [initialData, mode, isOpen]);
@@ -59,12 +69,24 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      onSubmit(formData);
+    if (!validateForm()) {
+      return;
     }
+
+    // Always treat users created here as admin users with optional admin_role
+    const payload: Partial<User> & { admin_roles?: AdminRole[] } = {
+      ...formData,
+      user_type: "admin",
+      admin_roles: formData.admin_role ? [formData.admin_role] : undefined,
+    };
+
+    onSubmit(payload);
   };
 
-  const handleInputChange = (field: keyof User, value: unknown) => {
+  const handleInputChange = (
+    field: keyof (User & { admin_role?: AdminRole }),
+    value: unknown,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -157,6 +179,36 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
                     onChange={(value) => handleInputChange("gender", value)}
                     placeholder="Select gender"
                   />
+                </div>
+
+                {/* Admin Role (we always treat users created here as admin users) */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Admin Role
+                  </label>
+                  <SearchableDropdown
+                    options={[
+                      { label: "Super Admin", value: "super_admin" },
+                      { label: "Booking Manager", value: "booking_manager" },
+                      { label: "Vendor Manager", value: "vendor_manager" },
+                      { label: "Finance Manager", value: "finance_manager" },
+                      { label: "Support Agent", value: "support_agent" },
+                      { label: "Content Manager", value: "content_manager" },
+                      {
+                        label: "Properties Manager",
+                        value: "properties_manager",
+                      },
+                    ]}
+                    value={formData.admin_role || ""}
+                    onChange={(value) =>
+                      handleInputChange("admin_role", value as AdminRole)
+                    }
+                    placeholder="Select admin role"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Select the primary role for this admin to control what they
+                    can manage in the panel.
+                  </p>
                 </div>
               </div>
             </div>

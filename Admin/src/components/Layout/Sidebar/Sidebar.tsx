@@ -7,6 +7,7 @@ import { useAppDispatch } from "@/app/store";
 import { setSidebarOpen } from "@/app/store";
 import ProfileCard from "./ProfileCard";
 import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
+import { hasAdminRole } from "@/utils/authUtils";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -128,25 +129,42 @@ const Sidebar = () => {
     return false;
   };
 
-  // Filter items based on search
-  const filteredItems = sidebarItems.filter((item) => {
-    if (!searchTerm) return true;
+  // Filter items based on roles and search
+  const isItemAllowed = (item: SidebarItem): boolean => {
+    // If item has explicit allowedRoles, enforce them
+    if (item.allowedRoles && item.allowedRoles.length > 0) {
+      return hasAdminRole(item.allowedRoles);
+    }
 
-    const matchesItem = item.label
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesChildren = item.children?.some((child) => {
-      const matchesChild = child.label
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesNestedChildren = child.children?.some((nestedChild) =>
-        nestedChild.label.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      return matchesChild || matchesNestedChildren;
+    // For group/parent items without explicit roles, allow only if any child is allowed
+    if (item.children && item.children.length > 0) {
+      return item.children.some((child) => isItemAllowed(child));
+    }
+
+    // Otherwise visible to any authenticated admin
+    return true;
+  };
+
+  const filteredItems = sidebarItems
+    .filter(isItemAllowed)
+    .filter((item) => {
+      if (!searchTerm) return true;
+
+      const lowerSearch = searchTerm.toLowerCase();
+
+      const matchesItem = item.label.toLowerCase().includes(lowerSearch);
+      const matchesChildren = item.children?.some((child) => {
+        if (!isItemAllowed(child)) return false;
+        const matchesChild = child.label.toLowerCase().includes(lowerSearch);
+        const matchesNestedChildren = child.children?.some((nestedChild) => {
+          if (!isItemAllowed(nestedChild)) return false;
+          return nestedChild.label.toLowerCase().includes(lowerSearch);
+        });
+        return matchesChild || matchesNestedChildren;
+      });
+
+      return matchesItem || matchesChildren;
     });
-
-    return matchesItem || matchesChildren;
-  });
 
   // Keyboard navigation
   const handleKeyDown = (
