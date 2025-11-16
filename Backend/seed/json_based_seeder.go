@@ -652,18 +652,19 @@ func (js *JSONBasedSeeder) SeedAdminUser() error {
 
 	// Get existing admin users to avoid duplicates
 	var existingUsers []models.User
-	if err := js.sm.db.Where("user_type = ?", "admin").Find(&existingUsers).Error; err != nil {
+	if err := js.sm.db.Where("user_type = ?", "admin").Preload("AdminRoles").Find(&existingUsers).Error; err != nil {
 		logrus.Errorf("Failed to fetch existing admin users: %v", err)
 		return err
 	}
 
-	// Create a map for quick lookup using phone number
-	existingMap := make(map[string]bool)
+	// Create a map for quick lookup using phone number and track which users already have admin roles
+	existingMap := make(map[string]models.User)
 	for _, user := range existingUsers {
-		existingMap[user.Phone] = true
+		existingMap[user.Phone] = user
 	}
 
 	var usersToCreate []models.User
+	var usersNeedingRoles []models.User
 
 	for _, adminUserData := range adminUsersData {
 		adminMap, ok := adminUserData.(map[string]interface{})
@@ -673,8 +674,12 @@ func (js *JSONBasedSeeder) SeedAdminUser() error {
 
 		// Check if admin user already exists
 		phone := adminMap["phone"].(string)
-		if existingMap[phone] {
-			logrus.Infof("Admin user with phone %s already exists, skipping", phone)
+		if existingUser, exists := existingMap[phone]; exists {
+			logrus.Infof("Admin user with phone %s already exists", phone)
+			// If this existing admin has no admin roles yet, mark for role assignment
+			if len(existingUser.AdminRoles) == 0 {
+				usersNeedingRoles = append(usersNeedingRoles, existingUser)
+			}
 			continue
 		}
 
@@ -695,8 +700,28 @@ func (js *JSONBasedSeeder) SeedAdminUser() error {
 			return err
 		}
 		logrus.Infof("Created %d new admin users", len(usersToCreate))
+		// Newly created users also need roles
+		usersNeedingRoles = append(usersNeedingRoles, usersToCreate...)
 	} else {
 		logrus.Info("All admin users already exist")
+	}
+
+	// Assign default admin roles to admins that don't have any yet.
+	// For now, we make them super admins so they have full access.
+	if len(usersNeedingRoles) > 0 {
+		var superAdminRole models.AdminRole
+		if err := js.sm.db.Where("code = ?", models.AdminRoleSuperAdmin).First(&superAdminRole).Error; err != nil {
+			logrus.Errorf("Failed to find super_admin role while seeding admin users: %v", err)
+			return err
+		}
+
+		for _, adminUser := range usersNeedingRoles {
+			if err := js.sm.db.Model(&adminUser).Association("AdminRoles").Append(&superAdminRole); err != nil {
+				logrus.Errorf("Failed to assign super_admin role to admin user %s: %v", adminUser.Phone, err)
+				return err
+			}
+			logrus.Infof("Assigned super_admin role to admin user %s", adminUser.Phone)
+		}
 	}
 
 	logrus.Info("Admin users seeded successfully")
