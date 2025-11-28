@@ -21,9 +21,18 @@ import {
 
 // Hooks
 import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
+import { useAppSelector } from "@/app/store";
+import { selectUser } from "@/app/store/slices";
 
 // Types
 import { User as UserType } from "@/types/user";
+
+// Helper type for user objects that might have different ID field names
+type UserWithId = {
+  id?: number;
+  ID?: number;
+  user_id?: number;
+};
 
 interface WebSocketMessage {
   conversation_id: number;
@@ -45,6 +54,7 @@ function ChatManagementPage() {
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const reduxUser = useAppSelector(selectUser);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("admin");
   const [isHandlingUserContext, setIsHandlingUserContext] = useState(false);
@@ -112,15 +122,45 @@ function ChatManagementPage() {
         return; // Exit early to prevent error handling
       } else {
         // Create a new conversation via API
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-          toast.error("Admin user not found");
+        // Try to get admin user ID from multiple sources
+        const cookieUser = getCurrentUser();
+        const adminUser = reduxUser || cookieUser;
+        
+        if (!adminUser) {
+          toast.error("Admin user not found. Please refresh the page.");
+          return;
+        }
+
+        // Ensure we have both user IDs - handle different user object structures
+        const adminUserWithId = adminUser as UserWithId;
+        const adminUserId = adminUserWithId.id || adminUserWithId.ID || adminUserWithId.user_id;
+        const customerUserId = userContext.userId;
+
+        console.log("Creating conversation:", { 
+          cookieUser, 
+          reduxUser, 
+          adminUser, 
+          adminUserId, 
+          customerUserId, 
+          userContext 
+        });
+
+        if (!adminUserId || !customerUserId) {
+          console.error("Missing user information:", { 
+            adminUserId, 
+            customerUserId, 
+            cookieUser, 
+            reduxUser, 
+            adminUser, 
+            userContext 
+          });
+          toast.error(`Missing user information. Admin ID: ${adminUserId}, Customer ID: ${customerUserId}`);
           return;
         }
 
         const conversationData = {
-          user_1: currentUser.id,
-          user_2: userContext.userId,
+          user_1: customerUserId, // Customer who booked
+          user_2: adminUserId,     // Admin starting the conversation
         };
 
         const response = await conversationApi.createConversation(
@@ -151,7 +191,7 @@ function ChatManagementPage() {
     } finally {
       setIsHandlingUserContext(false);
     }
-  }, [conversations, isHandlingUserContext]);
+  }, [conversations, isHandlingUserContext, reduxUser]);
 
   const updateConversationList = useCallback(
     (data: WebSocketMessage) => {
@@ -347,16 +387,45 @@ function ChatManagementPage() {
         toast.success(`Opened conversation with ${user.name}`);
       } else {
         // Create a new conversation via API
-        // Get current admin user ID
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-          toast.error("Admin user not found");
+        // Try to get admin user ID from multiple sources
+        const cookieUser = getCurrentUser();
+        const adminUser = reduxUser || cookieUser;
+        
+        if (!adminUser) {
+          toast.error("Admin user not found. Please refresh the page.");
+          return;
+        }
+
+        // Ensure we have both user IDs - handle different user object structures
+        const adminUserWithId = adminUser as UserWithId;
+        const adminUserId = adminUserWithId.id || adminUserWithId.ID || adminUserWithId.user_id;
+        const customerUserId = user.ID;
+
+        console.log("Creating conversation from user selection:", { 
+          cookieUser, 
+          reduxUser, 
+          adminUser, 
+          adminUserId, 
+          customerUserId, 
+          user 
+        });
+
+        if (!adminUserId || !customerUserId) {
+          console.error("Missing user information:", { 
+            adminUserId, 
+            customerUserId, 
+            cookieUser, 
+            reduxUser, 
+            adminUser, 
+            user 
+          });
+          toast.error(`Missing user information. Admin ID: ${adminUserId}, Customer ID: ${customerUserId}`);
           return;
         }
 
         const conversationData = {
-          user_1: currentUser.id,
-          user_2: user.ID,
+          user_1: customerUserId, // Customer
+          user_2: adminUserId,     // Admin starting the conversation
         };
 
         const response = await conversationApi.createConversation(

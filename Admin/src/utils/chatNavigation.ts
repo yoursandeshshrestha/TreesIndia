@@ -4,6 +4,12 @@ import {
   DetailedBookingResponse,
 } from "@/types/booking";
 
+// Helper type for user objects that might have different ID field names
+type UserWithId = {
+  id?: number;
+  ID?: number;
+};
+
 /**
  * Utility function to navigate to chat page with user context
  * @param router - Next.js router instance
@@ -19,15 +25,32 @@ export const navigateToChat = (
 
   // Store user context in sessionStorage for the chat page to pick up
   if (typeof window !== "undefined") {
+    // Handle both lowercase 'id' and uppercase 'ID' for user
+    const userWithId = booking.user as UserWithId;
+    const userId = userWithId.id || userWithId.ID;
+    const userName = booking.user.name;
+    const userPhone = booking.user.phone;
+    const bookingId = 'id' in booking ? booking.id : booking.ID; // Handle both cases
+    
+    if (!userId) {
+      console.error("Failed to extract user ID from booking:", { 
+        booking, 
+        user: booking.user,
+        userId 
+      });
+      throw new Error("Unable to extract user ID from booking");
+    }
+    
     const userContext = {
-      userId: booking.user.id,
-      userName: booking.user.name,
-      userPhone: booking.user.phone,
-      bookingId: 'id' in booking ? booking.id : booking.ID, // Handle both cases
+      userId: userId,
+      userName: userName,
+      userPhone: userPhone,
+      bookingId: bookingId,
       bookingReference: booking.booking_reference,
       timestamp: Date.now(),
     };
 
+    console.log("Storing chat user context:", userContext);
     sessionStorage.setItem("chatUserContext", JSON.stringify(userContext));
   }
 };

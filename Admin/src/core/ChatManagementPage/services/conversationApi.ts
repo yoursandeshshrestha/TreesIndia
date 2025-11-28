@@ -1,4 +1,4 @@
-import { api } from "@/lib/api-client";
+import { api, apiClient } from "@/lib/api-client";
 
 // Types
 export interface Conversation {
@@ -57,6 +57,9 @@ export interface Message {
   read_at: string | null;
   created_at: string;
   updated_at: string;
+  attachment_type?: "image" | "video";
+  image_url?: string;
+  video_url?: string;
   sender: {
     ID: number;
     name: string;
@@ -69,7 +72,8 @@ export interface Message {
 // Note: Conversation creation is handled locally, no request interface needed
 
 export interface SendMessageRequest {
-  message: string;
+  message?: string;
+  file?: File;
 }
 
 export interface CreateConversationRequest {
@@ -247,16 +251,64 @@ export const conversationApi = {
     return (response as unknown as { data: { message: Message } }).data.message;
   },
 
-  // Admin send message
+  // Admin send message (supports file uploads)
   adminSendMessage: async (
     conversationId: number,
     data: SendMessageRequest
   ): Promise<Message> => {
-    const response = await api.post(
-      `/admin/conversations/${conversationId}/messages`,
-      data as unknown as Record<string, unknown>
-    );
-    return (response as unknown as { data: { message: Message } }).data.message;
+    // If file is present, use FormData for multipart upload
+    if (data.file) {
+      const formData = new FormData();
+      if (data.message) {
+        formData.append("message", data.message);
+      }
+      formData.append("file", data.file);
+      
+      // Calculate timeout based on file size (50MB max = ~60 seconds for slow connections)
+      const fileSizeMB = data.file.size / (1024 * 1024);
+      const timeout = Math.max(30000, Math.min(120000, fileSizeMB * 2000)); // 30s to 120s
+      
+      try {
+        // Use apiClient directly to properly handle FormData (bypasses the wrapper that expects Record<string, unknown>)
+        // The interceptor will automatically handle Content-Type for FormData
+        // Explicitly set Content-Type header (interceptor will delete it and let axios set it with boundary)
+        const response = await apiClient.post(
+          `/admin/conversations/${conversationId}/messages`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            timeout: timeout, // Dynamic timeout based on file size
+          }
+        );
+        // Response structure from backend: { success: true, message: "...", data: { message: {...} } }
+        const responseData = response.data as { success: boolean; data: { message: Message } };
+        if (!responseData.success || !responseData.data?.message) {
+          throw new Error("Invalid response structure");
+        }
+        return responseData.data.message;
+      } catch (error: unknown) {
+        // Check if it's a timeout error but request might have succeeded
+        if (error && typeof error === "object" && "code" in error) {
+          const axiosError = error as { code?: string; message?: string; response?: { status: number } };
+          // If it's a timeout (ECONNABORTED) or network error, but the file might have been uploaded
+          // We'll throw a special error that the component can handle gracefully
+          if (axiosError.code === "ECONNABORTED" || axiosError.code === "ERR_NETWORK") {
+            console.warn("Upload request timed out or network error, but file may have been uploaded successfully");
+            throw new Error("UPLOAD_TIMEOUT_BUT_SUCCESS");
+          }
+        }
+        throw error;
+      }
+    } else {
+      // Regular JSON request for text-only messages
+      const response = await api.post(
+        `/admin/conversations/${conversationId}/messages`,
+        { message: data.message } as unknown as Record<string, unknown>
+      );
+      return (response as unknown as { data: { message: Message } }).data.message;
+    }
   },
 
   // Mark message as read
