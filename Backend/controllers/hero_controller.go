@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"treesindia/models"
 	"treesindia/services"
+	"treesindia/utils"
 	"treesindia/views"
 
 	"github.com/gin-gonic/gin"
@@ -95,7 +95,7 @@ func (c *HeroController) CreateHeroImage(ctx *gin.Context) {
 
 	// Determine media type from content-type
 	contentType := file.Header.Get("Content-Type")
-	mediaType := getMediaType(contentType)
+	mediaType := utils.GetMediaType(contentType)
 	
 	// Validate file type
 	if mediaType == "" {
@@ -179,52 +179,4 @@ func (c *HeroController) DeleteHeroImage(ctx *gin.Context) {
 	}
 	
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero image deleted successfully", nil))
-}
-
-
-
-// isValidImageType checks if the content type is a valid image type
-func isValidImageType(contentType string) bool {
-	validTypes := []string{
-		"image/jpeg",
-		"image/jpg", 
-		"image/png",
-		"image/webp",
-	}
-	
-	for _, validType := range validTypes {
-		if strings.EqualFold(contentType, validType) {
-			return true
-		}
-	}
-	return false
-}
-
-// isValidVideoType checks if the content type is a valid video type
-func isValidVideoType(contentType string) bool {
-	validTypes := []string{
-		"video/mp4",
-		"video/webm",
-		"video/avi",
-		"video/quicktime", // .mov files
-		"video/x-msvideo", // .avi files
-	}
-	
-	for _, validType := range validTypes {
-		if strings.EqualFold(contentType, validType) {
-			return true
-		}
-	}
-	return false
-}
-
-// getMediaType determines if the file is an image or video
-func getMediaType(contentType string) string {
-	if isValidImageType(contentType) {
-		return "image"
-	}
-	if isValidVideoType(contentType) {
-		return "video"
-	}
-	return ""
 }

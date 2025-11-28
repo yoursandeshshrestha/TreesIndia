@@ -3,6 +3,7 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,10 +29,14 @@ func SetupServiceRoutes(router *gin.RouterGroup) {
 		services.GET("/search/advanced", searchController.SearchServicesWithFilters)
 	}
 
-	// Admin routes (authentication and admin role required)
+	// Admin routes (authentication and specific admin roles required)
 	adminServices := router.Group("/admin/services")
 	adminServices.Use(middleware.AuthMiddleware())
-	adminServices.Use(middleware.AdminMiddleware())
+	adminServices.Use(middleware.RequireAdminRoles(
+		models.AdminRoleSuperAdmin,
+		models.AdminRoleContentManager,
+		models.AdminRoleVendorManager,
+	))
 	{
 		adminServices.POST("", serviceController.CreateService)
 		adminServices.PUT("/:id", serviceController.UpdateService)

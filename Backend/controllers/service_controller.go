@@ -83,6 +83,21 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 	}()
 	
 	logrus.Info("ServiceController.CreateService called")
+	
+	// Log user information for debugging
+	userID, exists := c.Get("user_id")
+	if exists {
+		logrus.Infof("ServiceController.CreateService - User ID: %v", userID)
+	}
+	userType, exists := c.Get("user_type")
+	if exists {
+		logrus.Infof("ServiceController.CreateService - User Type: %v", userType)
+	}
+	adminRoles, exists := c.Get("admin_roles")
+	if exists {
+		logrus.Infof("ServiceController.CreateService - Admin Roles: %v", adminRoles)
+	}
+	
 	contentType := c.GetHeader("Content-Type")
 	var req models.CreateServiceRequest
 	var imageFiles []*multipart.FileHeader
@@ -139,9 +154,12 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 	} else {
 		// Handle JSON
 		if err := c.ShouldBindJSON(&req); err != nil {
+			logrus.Errorf("ServiceController.CreateService JSON binding error: %v", err)
 			c.JSON(400, views.CreateErrorResponse("Invalid request data", err.Error()))
 			return
 		}
+		logrus.Infof("ServiceController.CreateService parsed request: Name=%s, CategoryID=%d, SubcategoryID=%d, ServiceAreaIDs=%v", 
+			req.Name, req.CategoryID, req.SubcategoryID, req.ServiceAreaIDs)
 	}
 
 	// Validate required fields

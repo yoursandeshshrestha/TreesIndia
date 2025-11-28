@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"treesindia/database"
 	"treesindia/models"
 	"treesindia/views"
@@ -221,52 +222,162 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 
 	// Build query with filters
 	query := ac.db.Model(&models.User{})
+	hasWorkerJoin := false
 	
 	// Apply filters
 	if userType := c.Query("user_type"); userType != "" {
-		query = query.Where("user_type = ?", userType)
+		query = query.Where("users.user_type = ?", userType)
+		
+		// If querying for workers and availability parameters are present (for booking assignment),
+		// filter to only show Trees India workers
+		if userType == "worker" {
+			scheduledTime := c.Query("scheduled_time")
+			serviceDuration := c.Query("service_duration")
+			serviceID := c.Query("service_id")
+			
+			// If any availability parameter is present, filter for Trees India workers only
+			if scheduledTime != "" || serviceDuration != "" || serviceID != "" {
+				query = query.Joins("JOIN workers ON users.id = workers.user_id").
+					Where("workers.worker_type = ?", models.WorkerTypeTreesIndia)
+				hasWorkerJoin = true
+			}
+		}
 	}
 	
 	if isActive := c.Query("is_active"); isActive != "" {
 		if isActive == "true" {
-			query = query.Where("is_active = ?", true)
+			// Qualify column name to avoid ambiguity when workers table is joined
+			if hasWorkerJoin {
+				query = query.Where("users.is_active = ?", true)
+			} else {
+				query = query.Where("is_active = ?", true)
+			}
 		} else if isActive == "false" {
-			query = query.Where("is_active = ?", false)
+			if hasWorkerJoin {
+				query = query.Where("users.is_active = ?", false)
+			} else {
+				query = query.Where("is_active = ?", false)
+			}
 		}
 	}
 	
 	if roleStatus := c.Query("role_application_status"); roleStatus != "" {
-		query = query.Where("role_application_status = ?", roleStatus)
+		// Qualify column name to avoid ambiguity when workers table is joined
+		if hasWorkerJoin {
+			query = query.Where("users.role_application_status = ?", roleStatus)
+		} else {
+			query = query.Where("role_application_status = ?", roleStatus)
+		}
 	}
 	
 	if hasSubscription := c.Query("has_active_subscription"); hasSubscription != "" {
+		// Qualify column name to avoid ambiguity when workers table is joined
 		if hasSubscription == "true" {
-			query = query.Where("has_active_subscription = ?", true)
+			if hasWorkerJoin {
+				query = query.Where("users.has_active_subscription = ?", true)
+			} else {
+				query = query.Where("has_active_subscription = ?", true)
+			}
 		} else if hasSubscription == "false" {
-			query = query.Where("has_active_subscription = ?", false)
+			if hasWorkerJoin {
+				query = query.Where("users.has_active_subscription = ?", false)
+			} else {
+				query = query.Where("has_active_subscription = ?", false)
+			}
 		}
 	}
 	
 	if search := c.Query("search"); search != "" {
 		searchTerm := "%" + search + "%"
-		query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm)
+		// Qualify column names to avoid ambiguity when workers table is joined
+		if hasWorkerJoin {
+			query = query.Where("users.name ILIKE ? OR users.email ILIKE ? OR users.phone ILIKE ?", searchTerm, searchTerm, searchTerm)
+		} else {
+			query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm)
+		}
 	}
 	
 	if dateFrom := c.Query("date_from"); dateFrom != "" {
-		query = query.Where("created_at >= ?", dateFrom)
+		if hasWorkerJoin {
+			query = query.Where("users.created_at >= ?", dateFrom)
+		} else {
+			query = query.Where("created_at >= ?", dateFrom)
+		}
 	}
 	
 	if dateTo := c.Query("date_to"); dateTo != "" {
-		query = query.Where("created_at <= ?", dateTo)
+		if hasWorkerJoin {
+			query = query.Where("users.created_at <= ?", dateTo)
+		} else {
+			query = query.Where("created_at <= ?", dateTo)
+		}
 	}
 
 	// Get total count with filters
-	query.Count(&total)
+	// When workers table is joined, count distinct user IDs
+	var countResult struct {
+		Count int64
+	}
+	if hasWorkerJoin {
+		// Use subquery to count distinct users when joined
+		err := query.Select("COUNT(DISTINCT users.id) as count").Scan(&countResult).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count users", err.Error()))
+			return
+		}
+		total = countResult.Count
+	} else {
+		query.Count(&total)
+	}
 
 	// Get users with pagination and filters
-	if err := query.Preload("UserNotificationSettings").Preload("Subscription").Preload("Worker").Preload("Broker").Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
-		return
+	// When workers table is joined, use subquery to get distinct user IDs first
+	if hasWorkerJoin {
+		// First, get distinct user IDs with created_at for ordering
+		// Must include created_at in SELECT when using DISTINCT with ORDER BY
+		type UserIDWithDate struct {
+			ID        uint
+			CreatedAt time.Time
+		}
+		var userData []UserIDWithDate
+		subQuery := query.Select("DISTINCT users.id, users.created_at").Order("users.created_at DESC").Offset(offset).Limit(limit)
+		if err := subQuery.Scan(&userData).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
+			return
+		}
+		
+		// Extract user IDs
+		userIDs := make([]uint, len(userData))
+		for i, ud := range userData {
+			userIDs[i] = ud.ID
+		}
+		
+		// Then fetch full user data for those IDs, maintaining the order
+		if len(userIDs) > 0 {
+			if err := ac.db.Where("id IN ?", userIDs).
+				Preload("UserNotificationSettings").Preload("Subscription").Preload("Worker").Preload("Broker").
+				Find(&users).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
+				return
+			}
+			
+			// Reorder users to match the subquery order (by created_at DESC)
+			orderedUsers := make([]models.User, 0, len(userIDs))
+			for _, ud := range userData {
+				for i := range users {
+					if users[i].ID == ud.ID {
+						orderedUsers = append(orderedUsers, users[i])
+						break
+					}
+				}
+			}
+			users = orderedUsers
+		}
+	} else {
+		if err := query.Preload("UserNotificationSettings").Preload("Subscription").Preload("Worker").Preload("Broker").Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Users retrieved successfully", gin.H{

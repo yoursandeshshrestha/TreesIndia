@@ -104,7 +104,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Verify user exists and is active
 		var user models.User
-		if err := database.GetDB().First(&user, userID).Error; err != nil {
+		if err := database.GetDB().Preload("AdminRoles").First(&user, userID).Error; err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"message": "User not found",
@@ -122,18 +122,11 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Extract admin roles from token if present
+		// Load admin roles from database for admin users (always use fresh data)
 		adminRoles := make([]string, 0)
-		if rawRoles, exists := claims["admin_roles"]; exists {
-			switch rolesValue := rawRoles.(type) {
-			case []interface{}:
-				for _, r := range rolesValue {
-					if roleStr, ok := r.(string); ok {
-						adminRoles = append(adminRoles, roleStr)
-					}
-				}
-			case []string:
-				adminRoles = append(adminRoles, rolesValue...)
+		if user.UserType == models.UserTypeAdmin {
+			for _, role := range user.AdminRoles {
+				adminRoles = append(adminRoles, string(role.Code))
 			}
 		}
 

@@ -220,11 +220,22 @@ func main() {
 	simpleConversationRepo := repositories.NewSimpleConversationRepository(db)
 	simpleConversationMessageRepo := repositories.NewSimpleConversationMessageRepository(db)
 	userRepo := repositories.NewUserRepository()
+	// Initialize Cloudinary service for file uploads
+	cloudinaryService, err := services.NewCloudinaryService()
+	if err != nil {
+		logrus.Errorf("Failed to initialize CloudinaryService: %v", err)
+		// Don't panic, create a nil cloudinary service
+		cloudinaryService = nil
+	} else {
+		logrus.Info("CloudinaryService initialized successfully")
+	}
+
 	simpleConversationService := services.NewSimpleConversationService(
 		simpleConversationRepo,
 		simpleConversationMessageRepo,
 		userRepo,
 		simpleConversationWsService,
+		cloudinaryService,
 	)
 
 	// Initialize notification services
