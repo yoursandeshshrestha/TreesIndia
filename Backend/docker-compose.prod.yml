@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: treesindia-backend-prod
     ports:
       - "7080:7080"
@@ -16,15 +16,7 @@ services:
       - .env.production
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:${PORT}/",
-        ]
+      test: ["CMD", "curl", "-f", "http://localhost:7080/"]
       interval: 30s
       timeout: 10s
       retries: 3

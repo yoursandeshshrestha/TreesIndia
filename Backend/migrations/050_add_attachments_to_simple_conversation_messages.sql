@@ -30,3 +30,4 @@ DROP COLUMN IF EXISTS cloudinary_public_id;
 ALTER TABLE simple_conversation_messages
 ALTER COLUMN message SET NOT NULL;
 
+
