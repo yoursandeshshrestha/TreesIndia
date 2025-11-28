@@ -23,10 +23,7 @@ export function SubscriptionCards({
   togglingItems = new Set(),
 }: SubscriptionCardsProps) {
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
+    return `₹${price.toLocaleString("en-IN")}`;
   };
 
   const getDurationLabel = (durationDays: number) => {

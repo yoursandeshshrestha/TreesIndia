@@ -4,7 +4,7 @@ import {
   Calendar,
   Users,
   TrendingUp,
-  DollarSign,
+  IndianRupee,
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
@@ -91,7 +91,7 @@ const BookingStats: React.FC<BookingStatsProps> = ({
     {
       title: "Total Revenue",
       value: `₹${(stats.overview?.total_revenue || 0).toLocaleString()}`,
-      icon: DollarSign,
+      icon: IndianRupee,
       color: "text-green-600",
     },
     {
@@ -127,7 +127,7 @@ const BookingStats: React.FC<BookingStatsProps> = ({
       value: `₹${(
         stats.revenue_analytics?.average_per_booking || 0
       ).toLocaleString()}`,
-      icon: DollarSign,
+      icon: IndianRupee,
       color: "text-purple-600",
     },
   ];

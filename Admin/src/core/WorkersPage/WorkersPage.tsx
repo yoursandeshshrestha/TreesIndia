@@ -54,6 +54,7 @@ function WorkersPage() {
     search: "",
     is_active: "",
     worker_type: "",
+    user_type: "",
     date_from: "",
     date_to: "",
   });
@@ -65,6 +66,7 @@ function WorkersPage() {
     const search = searchParams.get("search");
     const is_active = searchParams.get("is_active");
     const worker_type = searchParams.get("worker_type");
+    const user_type = searchParams.get("user_type");
     const date_from = searchParams.get("date_from");
     const date_to = searchParams.get("date_to");
 
@@ -73,6 +75,7 @@ function WorkersPage() {
     if (search) setLocalSearch(search);
     if (is_active) setFilters((prev) => ({ ...prev, is_active }));
     if (worker_type) setFilters((prev) => ({ ...prev, worker_type }));
+    if (user_type) setFilters((prev) => ({ ...prev, user_type }));
     if (date_from) setFilters((prev) => ({ ...prev, date_from }));
     if (date_to) setFilters((prev) => ({ ...prev, date_to }));
 
@@ -100,10 +103,10 @@ function WorkersPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        user_type: "worker", // Always filter for workers
         ...(filters.search && { search: filters.search }),
         ...(filters.is_active && { is_active: filters.is_active }),
         ...(filters.worker_type && { worker_type: filters.worker_type }),
+        ...(filters.user_type && { user_type: filters.user_type }),
         ...(filters.date_from && { date_from: filters.date_from }),
         ...(filters.date_to && { date_to: filters.date_to }),
       });
@@ -114,7 +117,14 @@ function WorkersPage() {
       // Transform the data to map ID to id for compatibility
       // Note: The API returns users with worker/broker data
       const transformedWorkers = (response?.data?.users || [])
-        .filter((user: User) => user.user_type === "worker" && user.worker)
+        .filter((user: User) => {
+          // If user_type filter is set, only show matching users
+          if (filters.user_type) {
+            return user.user_type === filters.user_type && user.worker;
+          }
+          // Otherwise, show all users with worker data
+          return user.worker;
+        })
         .map((user: User) => {
           const worker = user.worker!; // Non-null assertion since we filtered for it
           return {
@@ -265,10 +275,16 @@ function WorkersPage() {
             search: "",
             is_active: "",
             worker_type: "",
+            user_type: "",
             date_from: "",
             date_to: "",
           });
           setLocalSearch("");
+        }}
+        user_type={filters.user_type}
+        onUserTypeChange={(value) => {
+          setFilters((prev) => ({ ...prev, user_type: value }));
+          setCurrentPage(1);
         }}
         isSearching={false}
       />

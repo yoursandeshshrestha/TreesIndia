@@ -10,7 +10,6 @@ import {
   Check,
   X,
   MessageSquare,
-  DollarSign,
   IndianRupee,
 } from "lucide-react";
 import {
@@ -498,7 +497,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
   const actions = [
     {
       label: "Quote",
-      icon: <DollarSign size={14} />,
+      icon: <IndianRupee size={14} />,
       onClick: (booking: OptimizedBookingResponse) => {
         if (onProvideQuote) {
           onProvideQuote(booking);

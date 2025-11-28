@@ -59,10 +59,7 @@ const FinancialAnalytics: React.FC<FinancialAnalyticsProps> = ({
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(amount);
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
   return (

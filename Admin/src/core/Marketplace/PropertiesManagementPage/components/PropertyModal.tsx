@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Upload, MapPin, Home, DollarSign, Square } from "lucide-react";
+import { X, Upload, MapPin, Home, IndianRupee, Square } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
@@ -497,7 +497,7 @@ export function PropertyModal({
             {/* Pricing */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2" />
+                <IndianRupee className="h-5 w-5 mr-2" />
                 Pricing
               </h3>
 

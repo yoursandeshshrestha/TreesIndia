@@ -20,6 +20,7 @@ function WebsiteManagementPage() {
     {
       id: "banner" as TabType,
       label: "Banner Images",
+      // eslint-disable-next-line jsx-a11y/alt-text
       icon: <Image size={16} />,
       description: "Manage promotional banner images (max 3)",
     },

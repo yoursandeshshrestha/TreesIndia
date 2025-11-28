@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle, Clock, AlertCircle, DollarSign } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, IndianRupee } from "lucide-react";
 import { PaymentProgress as PaymentProgressType } from "@/types/booking";
 
 interface PaymentProgressProps {
@@ -45,7 +45,7 @@ export default function PaymentProgress({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <DollarSign className="h-5 w-5 text-blue-600" />
+            <IndianRupee className="h-5 w-5 text-blue-600" />
             <h3 className="text-lg font-medium text-blue-900">
               Payment Progress
             </h3>

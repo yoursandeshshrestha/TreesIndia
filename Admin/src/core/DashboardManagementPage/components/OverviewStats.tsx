@@ -2,7 +2,7 @@ import React from "react";
 import {
   Users,
   Calendar,
-  Banknote,
+  IndianRupee,
   Package,
   Home,
   Building,
@@ -47,7 +47,7 @@ const OverviewStatsComponent: React.FC<OverviewStatsProps> = ({
       value: stats?.total_revenue
         ? `₹${stats.total_revenue.toLocaleString()}`
         : "₹0",
-      icon: Banknote,
+      icon: IndianRupee,
       trend: stats?.total_revenue ? { value: 15, isPositive: true } : undefined,
     },
     {

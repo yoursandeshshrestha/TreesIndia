@@ -3,7 +3,7 @@ import { useAvailableWorkers } from "@/hooks/useAvailableWorkers";
 import { User } from "@/types/user";
 import Button from "@/components/Button/Base/Button";
 import Spinner from "@/components/Loader/Spinner/Spinner";
-import { User as UserIcon, Clock, Star, DollarSign } from "lucide-react";
+import { User as UserIcon, Clock, Star, IndianRupee } from "lucide-react";
 
 interface WorkerUser extends User {
   worker?: {
@@ -193,7 +193,7 @@ export const AvailableWorkersSelector: React.FC<
                     {getWorkerExperience(workerUser)}y
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
-                    <DollarSign className="w-4 h-4 text-green-500 mr-1" />₹
+                    <IndianRupee className="w-4 h-4 text-green-500 mr-1" />
                     {getWorkerHourlyRate(workerUser)}/hr
                   </div>
                 </div>

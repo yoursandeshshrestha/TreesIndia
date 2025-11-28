@@ -6,7 +6,7 @@ import {
   Mail,
   Wallet,
   Calendar,
-  DollarSign,
+  IndianRupee,
 } from "lucide-react";
 import Table from "@/components/Table/Table";
 import { User } from "@/types/user";
@@ -298,7 +298,7 @@ const UserTable = ({
               label: "Add to Wallet",
               onClick: (row: User) => onWalletAddition(row),
               className: "text-green-700 bg-green-100 hover:bg-green-200",
-              icon: <DollarSign size={14} />,
+              icon: <IndianRupee size={14} />,
               disabled: () => selectionMode,
             },
             {
