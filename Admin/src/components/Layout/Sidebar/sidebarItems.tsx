@@ -16,6 +16,7 @@ import {
   Truck,
   MessageCircle,
   BookOpen,
+  MapPin,
 } from "lucide-react";
 import type { AdminRole } from "@/services/api/auth";
 
@@ -203,6 +204,13 @@ export const sidebarItems: SidebarItem[] = [
         "/dashboard/services/create-service",
         undefined,
         ["super_admin", "content_manager", "vendor_manager"]
+      ),
+      createMenuItem(
+        "service-areas",
+        "Service Areas",
+        "/dashboard/service-areas",
+        <MapPin size={16} />,
+        ["super_admin", "content_manager"]
       ),
     ]
   ),

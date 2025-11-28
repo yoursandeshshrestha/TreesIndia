@@ -24,7 +24,10 @@ export interface ServiceArea {
   city: string;
   state: string;
   country: string;
+  pincodes?: string[];
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Category {
@@ -54,6 +57,7 @@ export interface CreateServiceAreaRequest {
   city: string;
   state: string;
   country: string;
+  pincodes?: string[];
   is_active?: boolean;
 }
 

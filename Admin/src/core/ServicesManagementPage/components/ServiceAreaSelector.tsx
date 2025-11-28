@@ -29,8 +29,10 @@ export default function ServiceAreaSelector({
     city: "",
     state: "",
     country: "India",
+    pincodes: [],
     is_active: true,
   });
+  const [pincodeInput, setPincodeInput] = useState("");
   const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // Load existing service areas
@@ -51,6 +53,29 @@ export default function ServiceAreaSelector({
   useEffect(() => {
     loadServiceAreas();
   }, []);
+
+  // Add pincode to new area
+  const addPincodeToNewArea = () => {
+    const pincode = pincodeInput.trim();
+    if (pincode && /^\d{6}$/.test(pincode)) {
+      const currentPincodes = newArea.pincodes || [];
+      if (!currentPincodes.includes(pincode)) {
+        setNewArea({
+          ...newArea,
+          pincodes: [...currentPincodes, pincode],
+        });
+        setPincodeInput("");
+      }
+    }
+  };
+
+  // Remove pincode from new area
+  const removePincodeFromNewArea = (pincode: string) => {
+    setNewArea({
+      ...newArea,
+      pincodes: (newArea.pincodes || []).filter((p) => p !== pincode),
+    });
+  };
 
   // Create new service area
   const createNewServiceArea = async () => {
@@ -75,8 +100,10 @@ export default function ServiceAreaSelector({
         city: "",
         state: "",
         country: "India",
+        pincodes: [],
         is_active: true,
       });
+      setPincodeInput("");
       setShowCreateForm(false);
 
       toast.success("Service area created successfully");
@@ -93,7 +120,8 @@ export default function ServiceAreaSelector({
     (area) =>
       area.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
       area.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.country.toLowerCase().includes(searchTerm.toLowerCase())
+      area.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (area.pincodes && area.pincodes.some(p => p.includes(searchTerm)))
   );
 
   // Get selected service areas
@@ -148,27 +176,49 @@ export default function ServiceAreaSelector({
             {selectedAreas.map((area) => (
               <div
                 key={area.id}
-                className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm"
+                className="flex flex-col p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <MapPin className="h-5 w-5 text-green-600" />
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <MapPin className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {area.city}, {area.state}
+                      </p>
+                      <p className="text-xs text-gray-500">{area.country}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {area.city}, {area.state}
-                    </p>
-                    <p className="text-xs text-gray-500">{area.country}</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSelectedArea(area.id)}
+                    className="flex-shrink-0 p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                    title="Remove area"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeSelectedArea(area.id)}
-                  className="flex-shrink-0 p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                  title="Remove area"
-                >
-                  <X size={16} />
-                </button>
+                {area.pincodes && area.pincodes.length > 0 && (
+                  <div className="ml-8">
+                    <p className="text-xs text-gray-600 font-medium mb-1">Pincodes:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {area.pincodes.slice(0, 3).map((pincode) => (
+                        <span
+                          key={pincode}
+                          className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs"
+                        >
+                          {pincode}
+                        </span>
+                      ))}
+                      {area.pincodes.length > 3 && (
+                        <span className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs">
+                          +{area.pincodes.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -193,7 +243,7 @@ export default function ServiceAreaSelector({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by city, state, or country..."
+                placeholder="Search by city, state, country, or pincode..."
                 className="pl-10 h-11"
               />
             </div>
@@ -230,17 +280,36 @@ export default function ServiceAreaSelector({
                       onClick={() => toggleServiceArea(area.id)}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="flex-shrink-0 mt-1">
                             <MapPin className="h-5 w-5 text-gray-400" />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
                               {area.city}, {area.state}
                             </p>
                             <p className="text-xs text-gray-500">
                               {area.country}
                             </p>
+                            {area.pincodes && area.pincodes.length > 0 && (
+                              <div className="mt-2">
+                                <div className="flex flex-wrap gap-1">
+                                  {area.pincodes.slice(0, 5).map((pincode) => (
+                                    <span
+                                      key={pincode}
+                                      className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs"
+                                    >
+                                      {pincode}
+                                    </span>
+                                  ))}
+                                  {area.pincodes.length > 5 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                                      +{area.pincodes.length - 5} more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {isSelected && (
@@ -327,11 +396,76 @@ export default function ServiceAreaSelector({
                   />
                 </div>
               </div>
+
+              {/* Pincodes Section */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Pincodes (optional)
+                </label>
+                {newArea.pincodes && newArea.pincodes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {newArea.pincodes.map((pincode) => (
+                      <span
+                        key={pincode}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
+                      >
+                        {pincode}
+                        <button
+                          type="button"
+                          onClick={() => removePincodeFromNewArea(pincode)}
+                          className="hover:text-blue-900"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={pincodeInput}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      setPincodeInput(value);
+                    }}
+                    placeholder="Enter 6-digit pincode"
+                    className="h-10 flex-1"
+                    maxLength={6}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addPincodeToNewArea();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPincodeToNewArea}
+                    disabled={!pincodeInput.trim() || !/^\d{6}$/.test(pincodeInput)}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex items-center justify-end gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setNewArea({
+                      city: "",
+                      state: "",
+                      country: "India",
+                      pincodes: [],
+                      is_active: true,
+                    });
+                    setPincodeInput("");
+                  }}
                   className="flex items-center gap-2"
                 >
                   Cancel

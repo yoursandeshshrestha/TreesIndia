@@ -476,12 +476,45 @@ export default function ServiceDetailPage({
                     {service.service_areas.map((area) => (
                       <div
                         key={area.id}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                       >
-                        <MapPin size={16} className="text-gray-500" />
-                        <span className="text-gray-700">
-                          {area.city}, {area.state}
-                        </span>
+                        <div className="flex items-start gap-3">
+                          <MapPin size={18} className="text-primary-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 mb-1">
+                              {area.city}, {area.state}
+                            </div>
+                            {area.country && (
+                              <div className="text-sm text-gray-600 mb-2">
+                                {area.country}
+                              </div>
+                            )}
+                            {area.pincodes && area.pincodes.length > 0 ? (
+                              <div className="mt-2">
+                                <p className="text-xs text-gray-600 font-medium mb-1.5">
+                                  Pincodes ({area.pincodes.length}):
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {area.pincodes.map((pincode) => (
+                                    <Badge
+                                      key={pincode}
+                                      variant="outline"
+                                      className="bg-white text-gray-700 border-gray-300 text-xs"
+                                    >
+                                      {pincode}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-2">
+                                <span className="text-xs text-gray-400 italic">
+                                  No pincodes specified
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
