@@ -67,10 +67,7 @@ export const getUserTypeIcon = (userType: UserType) => {
 
 // Formatting Functions
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-  }).format(amount);
+  return `₹${amount.toLocaleString("en-IN")}`;
 };
 
 export const formatDate = (dateString: string, includeTime = false): string => {

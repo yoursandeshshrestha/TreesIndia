@@ -127,6 +127,7 @@ export interface WorkerFilterState {
   search: string;
   is_active: string;
   worker_type: string;
+  user_type: string;
   date_from: string;
   date_to: string;
 }

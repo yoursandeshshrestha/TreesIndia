@@ -213,6 +213,11 @@ export const formatCurrency = (
   amount: number,
   currency: string = "INR"
 ): string => {
+  // Use ₹ symbol explicitly for INR, fallback to Intl.NumberFormat for other currencies
+  if (currency === "INR") {
+    return `₹${amount.toLocaleString("en-IN")}`;
+  }
+
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: currency,
