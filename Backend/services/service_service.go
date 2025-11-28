@@ -110,9 +110,45 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 		IsActive:      isActive,
 	}
 
-	logrus.Info("ServiceService.CreateService calling repository.Create")
-	err := ss.serviceRepo.Create(service)
+	// Use a transaction to ensure atomicity
+	db := ss.serviceRepo.GetDB()
+	tx := db.Begin()
+	if tx.Error != nil {
+		logrus.Errorf("ServiceService.CreateService transaction begin error: %v", tx.Error)
+		return nil, tx.Error
+	}
+
+	// Rollback on any error
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			logrus.Errorf("ServiceService.CreateService panic, rolling back: %v", r)
+		}
+	}()
+
+	logrus.Info("ServiceService.CreateService calling repository.Create within transaction")
+	
+	// Verify category and subcategory exist before creating
+	var subcategory models.Subcategory
+	if err := tx.First(&subcategory, service.SubcategoryID).Error; err != nil {
+		tx.Rollback()
+		logrus.Errorf("ServiceService.CreateService subcategory lookup failed: %v", err)
+		return nil, err
+	}
+	logrus.Infof("ServiceService.CreateService found subcategory: ID=%d, Name=%s, ParentID=%d", subcategory.ID, subcategory.Name, subcategory.ParentID)
+	
+	var category models.Category
+	if err := tx.First(&category, service.CategoryID).Error; err != nil {
+		tx.Rollback()
+		logrus.Errorf("ServiceService.CreateService category lookup failed: %v", err)
+		return nil, err
+	}
+	logrus.Infof("ServiceService.CreateService found category: ID=%d, Name=%s", category.ID, category.Name)
+	
+	// Create service within transaction
+	err := tx.Create(service).Error
 	if err != nil {
+		tx.Rollback()
 		logrus.Errorf("ServiceService.CreateService repository.Create error: %v", err)
 		return nil, err
 	}
@@ -121,27 +157,77 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 
 	// Associate service areas with the service using many-to-many relationship
 	if len(req.ServiceAreaIDs) > 0 {
-		err = ss.serviceRepo.AssociateServiceAreas(service.ID, req.ServiceAreaIDs)
-		if err != nil {
-			logrus.Errorf("ServiceService.CreateService failed to associate service areas: %v", err)
-			// Clean up the created service if association fails
-			ss.serviceRepo.Delete(service.ID)
-			return nil, err
+		logrus.Infof("ServiceService.CreateService associating %d service areas", len(req.ServiceAreaIDs))
+		
+		// Insert associations into the junction table within the same transaction
+		for _, areaID := range req.ServiceAreaIDs {
+			// Check if association already exists
+			var count int64
+			if err := tx.Table("service_service_areas").
+				Where("service_id = ? AND service_area_id = ?", service.ID, areaID).
+				Count(&count).Error; err != nil {
+				tx.Rollback()
+				logrus.Errorf("ServiceService.CreateService error checking existing association: %v", err)
+				return nil, err
+			}
+			
+			// Only insert if association doesn't exist
+			if count == 0 {
+				if err := tx.Exec("INSERT INTO service_service_areas (service_id, service_area_id) VALUES (?, ?)", 
+					service.ID, areaID).Error; err != nil {
+					tx.Rollback()
+					logrus.Errorf("ServiceService.CreateService error inserting association: %v", err)
+					return nil, err
+				}
+				logrus.Infof("ServiceService.CreateService created association: service_id=%d, service_area_id=%d", service.ID, areaID)
+			} else {
+				logrus.Infof("ServiceService.CreateService association already exists: service_id=%d, service_area_id=%d", service.ID, areaID)
+			}
 		}
+		
 		logrus.Infof("ServiceService.CreateService associated %d service areas with service", len(req.ServiceAreaIDs))
+		
+		// Load service areas within the transaction so we can return them
+		var serviceAreas []models.ServiceArea
+		if err := tx.Table("service_areas").
+			Joins("JOIN service_service_areas ON service_areas.id = service_service_areas.service_area_id").
+			Where("service_service_areas.service_id = ?", service.ID).
+			Find(&serviceAreas).Error; err != nil {
+			logrus.Warnf("ServiceService.CreateService error loading service areas: %v", err)
+		} else {
+			service.ServiceAreas = serviceAreas
+			logrus.Infof("ServiceService.CreateService loaded %d service areas", len(serviceAreas))
+		}
+		
+		// Load category and subcategory within transaction
+		if err := tx.First(&category, service.CategoryID).Error; err == nil {
+			service.Category = category
+		}
+		if err := tx.First(&subcategory, service.SubcategoryID).Error; err == nil {
+			service.Subcategory = subcategory
+		}
 	}
 
-	// Fetch the created service with service areas
-	logrus.Info("ServiceService.CreateService fetching created service")
-	createdService, err := ss.serviceRepo.GetByID(service.ID)
-	if err != nil {
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		logrus.Errorf("ServiceService.CreateService transaction commit error: %v", err)
 		return nil, err
 	}
 
-	// Send notification to admins about new service
-	go NotifyServiceAdded(createdService)
+	logrus.Info("ServiceService.CreateService transaction committed successfully")
+	logrus.Infof("ServiceService.CreateService returning service with ID: %d", service.ID)
 
-	return createdService, nil
+	// Send notification to admins about new service (async, don't block)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logrus.Errorf("ServiceService.CreateService NotifyServiceAdded panic: %v", r)
+			}
+		}()
+		NotifyServiceAdded(service)
+	}()
+
+	return service, nil
 }
 
 // GetServiceByID retrieves a service by ID

@@ -49,6 +49,18 @@ func (s *OTPService) SendOTP(phone, purpose string) (string, error) {
 		return "", fmt.Errorf("failed to generate OTP: %w", err)
 	}
 
+	// In development mode, skip sending OTP via SMS
+	if s.config.IsDevelopment() {
+		fmt.Printf("Development mode: OTP not sent to phone. OTP=%s, phone=%s, purpose=%s\n", otp, phone, purpose)
+
+		// Save OTP to database
+		if err := s.SaveOTP(phone, otp, purpose); err != nil {
+			return "", fmt.Errorf("failed to save OTP: %w", err)
+		}
+
+		return otp, nil
+	}
+
 	// Clean phone number (remove +91 prefix)
 	cleanPhone := strings.TrimPrefix(phone, "+91")
 	cleanPhone = strings.TrimSpace(cleanPhone)

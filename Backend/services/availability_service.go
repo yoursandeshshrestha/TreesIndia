@@ -106,10 +106,26 @@ func (as *AvailabilityService) GetAvailableSlotsWithDuration(serviceID uint, dat
 		return nil, fmt.Errorf("failed to get worker assignments: %v", err)
 	}
 
-	// 6. Get total active workers
+	// 6. Get total active Trees India workers
 	totalWorkers, err := as.getTotalActiveWorkers()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get total workers: %v", err)
+	}
+	
+	logrus.Infof("GetAvailableSlotsWithDuration: totalWorkers=%d for serviceID=%d, date=%s", totalWorkers, serviceID, date)
+
+	// If no Trees India workers exist, return empty slots (all unavailable)
+	if totalWorkers == 0 {
+		logrus.Warnf("No Trees India workers available - returning empty slots for serviceID=%d, date=%s", serviceID, date)
+		return &AvailabilityResponse{
+			WorkingHours: map[string]string{
+				"start": startTimeConfig.Value,
+				"end":   endTimeConfig.Value,
+			},
+			ServiceDuration: serviceDurationMinutes,
+			BufferTime:      bufferTimeMinutes,
+			AvailableSlots:  []AvailableSlot{}, // Return empty slots
+		}, nil
 	}
 
 	// 7. Calculate available slots
@@ -139,35 +155,44 @@ func (as *AvailabilityService) GetAvailableSlotsWithDuration(serviceID uint, dat
 	return response, nil
 }
 
-// getWorkerAssignmentsForDate gets all worker assignments for a specific date
+// getWorkerAssignmentsForDate gets all worker assignments for Trees India workers for a specific date
 func (as *AvailabilityService) getWorkerAssignmentsForDate(date string) ([]models.WorkerAssignment, error) {
 	var assignments []models.WorkerAssignment
 	
-	// Query all worker assignments for the given date
-	err := as.workerAssignmentRepo.GetDB().Joins("JOIN bookings ON worker_assignments.booking_id = bookings.id").
-		Where("DATE(bookings.scheduled_date) = ? AND worker_assignments.status IN (?)", date, []string{"assigned", "accepted", "in_progress"}).
-		Preload("Booking").
+	// Query all worker assignments for the given date, filtering for Trees India workers only
+	db := as.workerAssignmentRepo.GetDB()
+	err := db.Joins("JOIN bookings ON worker_assignments.booking_id = bookings.id").
+		Joins("JOIN users ON worker_assignments.worker_id = users.id").
+		Joins("JOIN workers ON users.id = workers.user_id").
+		Where("DATE(bookings.scheduled_date) = ? AND worker_assignments.status IN (?) AND workers.worker_type = ?", 
+			date, []string{"assigned", "accepted", "in_progress"}, models.WorkerTypeTreesIndia).
+		Preload("Worker").Preload("Worker.Worker").Preload("Booking").
 		Find(&assignments).Error
 
 	return assignments, err
 }
 
-// getTotalActiveWorkers gets the total number of active workers
+// getTotalActiveWorkers gets the total number of active Trees India workers
 func (as *AvailabilityService) getTotalActiveWorkers() (int, error) {
-	var workers []models.User
-	err := as.userRepo.FindByUserType(&workers, models.UserTypeWorker)
+	var count int64
+	db := as.userRepo.GetDB()
+	
+	// Filter at database level: only count active workers with worker_type = 'treesindia_worker'
+	// Also ensure workers.is_active = true and workers.deleted_at IS NULL
+	err := db.Model(&models.User{}).
+		Joins("JOIN workers ON users.id = workers.user_id").
+		Where("users.user_type = ? AND users.is_active = ? AND users.deleted_at IS NULL", models.UserTypeWorker, true).
+		Where("workers.worker_type = ? AND workers.is_active = ? AND workers.deleted_at IS NULL", 
+			models.WorkerTypeTreesIndia, true).
+		Count(&count).Error
+	
 	if err != nil {
+		logrus.Errorf("Failed to count Trees India workers: %v", err)
 		return 0, err
 	}
 
-	activeCount := 0
-	for _, worker := range workers {
-		if worker.IsActive {
-			activeCount++
-		}
-	}
-
-	return activeCount, nil
+	logrus.Infof("Total active Trees India workers: %d", count)
+	return int(count), nil
 }
 
 // calculateAvailableSlots calculates available slots based on worker assignments
@@ -227,7 +252,8 @@ func (as *AvailabilityService) calculateAvailableSlots(
 			availableWorkers = 0
 		}
 		
-		isAvailable := availableWorkers > 0
+		// If no Trees India workers exist, slots are not available
+		isAvailable := totalWorkers > 0 && availableWorkers > 0
 		
 
 
@@ -244,13 +270,18 @@ func (as *AvailabilityService) calculateAvailableSlots(
 	return slots
 }
 
-// buildBusyWorkersMap builds a map of busy workers for each time slot
+// buildBusyWorkersMap builds a map of busy Trees India workers for each time slot
 func (as *AvailabilityService) buildBusyWorkersMap(assignments []models.WorkerAssignment, date time.Time, totalDurationMinutes int, location *time.Location) map[string][]uint {
 	busyWorkersMap := make(map[string][]uint)
 	
-	// First, handle actual worker assignments
+	// First, handle actual worker assignments (only Trees India workers)
 	for _, assignment := range assignments {
 		if assignment.Booking.ScheduledTime == nil {
+			continue
+		}
+		
+		// Only count Trees India workers
+		if assignment.Worker.Worker == nil || assignment.Worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
 			continue
 		}
 		

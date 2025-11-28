@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"unicode"
 
 	"treesindia/models"
 	"treesindia/repositories"
@@ -14,6 +15,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
+
+// isDigit checks if a byte is a digit
+func isDigit(b byte) bool {
+	return unicode.IsDigit(rune(b))
+}
 
 type BookingService struct {
 	bookingRepo      *repositories.BookingRepository
@@ -58,13 +64,39 @@ func (bs *BookingService) CreateBooking(userID uint, req *models.CreateBookingRe
 		return nil, nil, errors.New("service is not active")
 	}
 
-	// 1.5. Check service availability using city and state from the address object
-	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	// 1.5. Check service availability using flexible matching (city/state OR pincode)
+	// Extract pincode from postal_code or address string
+	pincode := req.Address.PostalCode
+	if pincode == "" {
+		// Try to extract 6-digit pincode from address string
+		// Look for 6-digit numbers in the address
+		addressStr := req.Address.Address
+		if len(addressStr) > 0 {
+			// Simple regex-like extraction: find 6-digit number
+			for i := 0; i <= len(addressStr)-6; i++ {
+				if isDigit(addressStr[i]) && isDigit(addressStr[i+1]) && isDigit(addressStr[i+2]) &&
+					isDigit(addressStr[i+3]) && isDigit(addressStr[i+4]) && isDigit(addressStr[i+5]) {
+					// Check if it's a word boundary (not part of a longer number)
+					if (i == 0 || !isDigit(addressStr[i-1])) && 
+					   (i+6 >= len(addressStr) || !isDigit(addressStr[i+6])) {
+						pincode = addressStr[i : i+6]
+						break
+					}
+				}
+			}
+		}
+	}
+	
+	available, err := bs.serviceAreaRepo.CheckServiceAvailabilityFlexible(req.ServiceID, req.Address.City, req.Address.State, pincode)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to check service availability: %v", err)
 	}
 	if !available {
-		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
+		locationInfo := req.Address.City + ", " + req.Address.State
+		if pincode != "" {
+			locationInfo += " (Pincode: " + pincode + ")"
+		}
+		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s). Please choose a different address or contact support for availability in your area", locationInfo)
 	}
 
 	// 2. Parse scheduled date and time
@@ -371,13 +403,36 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 		return nil, nil, errors.New("service is not inquiry-based")
 	}
 
-	// 3. Check service availability using the address from the inquiry request
-	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	// 3. Check service availability using flexible matching (city/state OR pincode)
+	// Extract pincode from postal_code or address string
+	pincode := req.Address.PostalCode
+	if pincode == "" {
+		// Try to extract 6-digit pincode from address string
+		addressStr := req.Address.Address
+		if len(addressStr) > 0 {
+			for i := 0; i <= len(addressStr)-6; i++ {
+				if isDigit(addressStr[i]) && isDigit(addressStr[i+1]) && isDigit(addressStr[i+2]) &&
+					isDigit(addressStr[i+3]) && isDigit(addressStr[i+4]) && isDigit(addressStr[i+5]) {
+					if (i == 0 || !isDigit(addressStr[i-1])) && 
+					   (i+6 >= len(addressStr) || !isDigit(addressStr[i+6])) {
+						pincode = addressStr[i : i+6]
+						break
+					}
+				}
+			}
+		}
+	}
+	
+	available, err := bs.serviceAreaRepo.CheckServiceAvailabilityFlexible(req.ServiceID, req.Address.City, req.Address.State, pincode)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to check service availability: %v", err)
 	}
 	if !available {
-		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
+		locationInfo := req.Address.City + ", " + req.Address.State
+		if pincode != "" {
+			locationInfo += " (Pincode: " + pincode + ")"
+		}
+		return nil, nil, fmt.Errorf("service is not available in your selected address location (%s). Please choose a different address or contact support for availability in your area", locationInfo)
 	}
 
 	// 4. Check inquiry booking fee
@@ -546,40 +601,46 @@ func (bs *BookingService) isTimeSlotAvailable(scheduledTime time.Time, serviceDu
 	// Calculate end time including buffer
 	endTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
 
-	// Get total active workers
-	var workers []models.User
-	err = bs.userRepo.FindByUserType(&workers, models.UserTypeWorker)
+	// Get total active Trees India workers only - filter at database level
+	var totalWorkers int64
+	db := bs.userRepo.GetDB()
+	err = db.Model(&models.User{}).
+		Joins("JOIN workers ON users.id = workers.user_id").
+		Where("users.user_type = ? AND users.is_active = ? AND workers.worker_type = ?", 
+			models.UserTypeWorker, true, models.WorkerTypeTreesIndia).
+		Count(&totalWorkers).Error
 	if err != nil {
 		return false, fmt.Errorf("failed to get workers: %v", err)
 	}
 
-	totalWorkers := 0
-	for _, worker := range workers {
-		if worker.IsActive {
-			totalWorkers++
-		}
-	}
-
-	// If no workers available, return false
+	// If no Trees India workers available, return false
 	if totalWorkers == 0 {
 		return false, nil
 	}
 
-	// Get worker assignments for this time period
+	// Get worker assignments for Trees India workers for this time period
 	workerAssignmentRepo := repositories.NewWorkerAssignmentRepository()
-	assignments, _, err := workerAssignmentRepo.GetWorkerAssignments(0, &repositories.WorkerAssignmentFilters{
-		Page:  1,
-		Limit: 100, // Get up to 100 assignments
-	})
+	db = workerAssignmentRepo.GetDB()
+	var assignments []models.WorkerAssignment
+	err = db.Joins("JOIN users ON worker_assignments.worker_id = users.id").
+		Joins("JOIN workers ON users.id = workers.user_id").
+		Where("workers.worker_type = ?", models.WorkerTypeTreesIndia).
+		Preload("Worker").Preload("Worker.Worker").Preload("Booking").Preload("Booking.Service").
+		Limit(100).Find(&assignments).Error
 	if err != nil {
 		return false, fmt.Errorf("failed to get worker assignments: %v", err)
 	}
 
-	// Count busy workers for this time slot
+	// Count busy Trees India workers for this time slot
 	busyWorkers := 0
 	for _, assignment := range assignments {
 		// Check if booking scheduled time is valid
 		if assignment.Booking.ScheduledTime == nil {
+			continue
+		}
+		
+		// Only count Trees India workers
+		if assignment.Worker.Worker == nil || assignment.Worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
 			continue
 		}
 		
@@ -607,28 +668,34 @@ func (bs *BookingService) isTimeSlotAvailable(scheduledTime time.Time, serviceDu
 	}
 
 	// Check if there are available workers
-	availableWorkers := totalWorkers - busyWorkers
+	availableWorkers := int(totalWorkers) - busyWorkers
 	return availableWorkers > 0, nil
 }
 
-// assignAvailableWorker finds and assigns an available worker for the given time period
+// assignAvailableWorker finds and assigns an available Trees India worker for the given time period
 func (bs *BookingService) assignAvailableWorker(startTime time.Time, serviceDurationMinutes int) (uint, error) {
-	// Get all active workers
+	// Get all active Trees India workers only - filter at database level
 	var workers []models.User
-	err := bs.userRepo.FindByUserType(&workers, models.UserTypeWorker)
+	db := bs.userRepo.GetDB()
+	err := db.Joins("JOIN workers ON users.id = workers.user_id").
+		Where("users.user_type = ? AND users.is_active = ? AND workers.worker_type = ?", 
+			models.UserTypeWorker, true, models.WorkerTypeTreesIndia).
+		Preload("Worker").
+		Find(&workers).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to get workers: %v", err)
+	}
+
+	// If no Trees India workers exist, return error
+	if len(workers) == 0 {
+		return 0, errors.New("no Trees India workers found")
 	}
 
 	// Calculate service end time
 	serviceEndTime := startTime.Add(time.Duration(serviceDurationMinutes) * time.Minute)
 
-	// Find first available worker
+	// Find first available Trees India worker
 	for _, worker := range workers {
-		if !worker.IsActive {
-			continue
-		}
-
 		// Check if worker has any conflicting bookings during this time period
 		hasConflict, err := bs.checkWorkerBookingConflict(worker.ID, startTime, serviceEndTime)
 		if err != nil {
@@ -640,7 +707,7 @@ func (bs *BookingService) assignAvailableWorker(startTime time.Time, serviceDura
 		}
 	}
 
-	return 0, errors.New("no available workers found")
+	return 0, errors.New("no available Trees India workers found")
 }
 
 // VerifyPaymentAndCreateBooking verifies payment and creates the booking
@@ -888,13 +955,19 @@ func (bs *BookingService) AssignWorker(bookingID uint, workerID uint, notes stri
 
 	// 2. Check if worker exists and is available
 	worker := &models.User{}
-	err = bs.userRepo.FindByID(worker, workerID)
+	db := bs.userRepo.GetDB()
+	err = db.Where("id = ?", workerID).Preload("Worker").First(worker).Error
 	if err != nil {
 		return nil, errors.New("worker not found")
 	}
 
 	if worker.UserType != models.UserTypeWorker {
 		return nil, errors.New("user is not a worker")
+	}
+
+	// Only allow Trees India workers to be assigned
+	if worker.Worker == nil || worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
+		return nil, errors.New("only Trees India workers can be assigned to bookings")
 	}
 
 	// 3. Create worker assignment
@@ -1001,13 +1074,19 @@ func (bs *BookingService) AssignWorkerToBooking(bookingID uint, workerID uint, a
 
 	// 2. Check if worker exists and is available
 	worker := &models.User{}
-	err = bs.userRepo.FindByID(worker, workerID)
+	db := bs.userRepo.GetDB()
+	err = db.Where("id = ?", workerID).Preload("Worker").First(worker).Error
 	if err != nil {
 		return nil, errors.New("worker not found")
 	}
 
 	if worker.UserType != models.UserTypeWorker {
 		return nil, errors.New("user is not a worker")
+	}
+
+	// Only allow Trees India workers to be assigned
+	if worker.Worker == nil || worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
+		return nil, errors.New("only Trees India workers can be assigned to bookings")
 	}
 
 	// 3. Check if the worker is available for this time slot
@@ -2078,13 +2157,36 @@ func (bs *BookingService) CreateInquiryBookingWithWallet(userID uint, req *model
 		return nil, errors.New("service is not inquiry-based")
 	}
 
-	// 3. Check service availability using the address from the inquiry request
-	available, err := bs.serviceAreaRepo.CheckServiceAvailability(req.ServiceID, req.Address.City, req.Address.State)
+	// 3. Check service availability using flexible matching (city/state OR pincode)
+	// Extract pincode from postal_code or address string
+	pincode := req.Address.PostalCode
+	if pincode == "" {
+		// Try to extract 6-digit pincode from address string
+		addressStr := req.Address.Address
+		if len(addressStr) > 0 {
+			for i := 0; i <= len(addressStr)-6; i++ {
+				if isDigit(addressStr[i]) && isDigit(addressStr[i+1]) && isDigit(addressStr[i+2]) &&
+					isDigit(addressStr[i+3]) && isDigit(addressStr[i+4]) && isDigit(addressStr[i+5]) {
+					if (i == 0 || !isDigit(addressStr[i-1])) && 
+					   (i+6 >= len(addressStr) || !isDigit(addressStr[i+6])) {
+						pincode = addressStr[i : i+6]
+						break
+					}
+				}
+			}
+		}
+	}
+	
+	available, err := bs.serviceAreaRepo.CheckServiceAvailabilityFlexible(req.ServiceID, req.Address.City, req.Address.State, pincode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check service availability: %v", err)
 	}
 	if !available {
-		return nil, fmt.Errorf("service is not available in your selected address location (%s, %s). Please choose a different address or contact support for availability in your area", req.Address.City, req.Address.State)
+		locationInfo := req.Address.City + ", " + req.Address.State
+		if pincode != "" {
+			locationInfo += " (Pincode: " + pincode + ")"
+		}
+		return nil, fmt.Errorf("service is not available in your selected address location (%s). Please choose a different address or contact support for availability in your area", locationInfo)
 	}
 
 	// 4. Check inquiry booking fee

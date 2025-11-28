@@ -34,7 +34,7 @@ type CreateServiceRequest struct {
 	Name          string   `json:"name" binding:"required"`
 	Description   string   `json:"description"`
 	PriceType     string   `json:"price_type" binding:"required,oneof=fixed inquiry"`
-	Price         *float64 `json:"price" binding:"price_required_for_fixed"` // Required if price_type is "fixed"
+	Price         *float64 `json:"price"` // Required if price_type is "fixed" (validated in service layer)
 	Duration      *string  `json:"duration" binding:"omitempty,duration"` // Custom validation
 	CategoryID    uint     `json:"category_id" binding:"required"`
 	SubcategoryID uint     `json:"subcategory_id" binding:"required"`
@@ -57,11 +57,12 @@ type UpdateServiceRequest struct {
 
 // ServiceAreaSummary represents a simplified service area response
 type ServiceAreaSummary struct {
-	ID        uint      `json:"id"`
-	City      string    `json:"city"`
-	State     string    `json:"state"`
-	Country   string    `json:"country"`
-	IsActive  bool      `json:"is_active"`
+	ID        uint     `json:"id"`
+	City      string   `json:"city"`
+	State     string   `json:"state"`
+	Country   string   `json:"country"`
+	Pincodes  []string `json:"pincodes"`
+	IsActive  bool     `json:"is_active"`
 }
 
 // ServiceSummary represents a simplified service response without nested objects
