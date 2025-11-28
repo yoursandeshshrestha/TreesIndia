@@ -74,6 +74,20 @@ func (sar *ServiceAreaRepository) FindServicesByLocation(serviceAreas *[]models.
 	return sar.db.Where("city ILIKE ? AND state ILIKE ? AND is_active = ?", city, state, true).Find(serviceAreas).Error
 }
 
+// FindServicesByLocationFlexible finds all services available by city/state OR pincode
+func (sar *ServiceAreaRepository) FindServicesByLocationFlexible(serviceAreas *[]models.ServiceArea, city, state, pincode string) error {
+	query := sar.db.Where("is_active = ?", true)
+
+	// Build OR condition: match city+state OR pincode
+	if pincode != "" {
+		query = query.Where("(city ILIKE ? AND state ILIKE ?) OR ? = ANY(pincodes)", city, state, pincode)
+	} else {
+		query = query.Where("city ILIKE ? AND state ILIKE ?", city, state)
+	}
+
+	return query.Find(serviceAreas).Error
+}
+
 // UpdateServiceArea updates a service area
 func (sar *ServiceAreaRepository) UpdateServiceArea(serviceArea *models.ServiceArea) error {
 	return sar.Update(serviceArea)
@@ -109,15 +123,46 @@ func (sar *ServiceAreaRepository) FindServiceAreasByState(serviceAreas *[]models
 	return sar.db.Where("state ILIKE ? AND is_active = ?", "%"+state+"%", true).Find(serviceAreas).Error
 }
 
-// CheckServiceAvailability checks if a service is available in a specific location
+// CheckServiceAvailability checks if a service is available in a specific location (city, state, or pincode)
 func (sar *ServiceAreaRepository) CheckServiceAvailability(serviceID uint, city, state string) (bool, error) {
 	var count int64
 	err := sar.db.Table("service_areas").
 		Joins("JOIN service_service_areas ON service_areas.id = service_service_areas.service_area_id").
-		Where("service_service_areas.service_id = ? AND service_areas.city ILIKE ? AND service_areas.state ILIKE ? AND service_areas.is_active = ?", 
+		Where("service_service_areas.service_id = ? AND service_areas.city ILIKE ? AND service_areas.state ILIKE ? AND service_areas.is_active = ?",
 			serviceID, city, state, true).
 		Count(&count).Error
-	
+
+	return count > 0, err
+}
+
+// CheckServiceAvailabilityByPincode checks if a service is available for a specific pincode
+func (sar *ServiceAreaRepository) CheckServiceAvailabilityByPincode(serviceID uint, pincode string) (bool, error) {
+	var count int64
+	err := sar.db.Table("service_areas").
+		Joins("JOIN service_service_areas ON service_areas.id = service_service_areas.service_area_id").
+		Where("service_service_areas.service_id = ? AND ? = ANY(service_areas.pincodes) AND service_areas.is_active = ?",
+			serviceID, pincode, true).
+		Count(&count).Error
+
+	return count > 0, err
+}
+
+// CheckServiceAvailabilityFlexible checks if a service is available by city/state OR pincode
+func (sar *ServiceAreaRepository) CheckServiceAvailabilityFlexible(serviceID uint, city, state, pincode string) (bool, error) {
+	var count int64
+	query := sar.db.Table("service_areas").
+		Joins("JOIN service_service_areas ON service_areas.id = service_service_areas.service_area_id").
+		Where("service_service_areas.service_id = ? AND service_areas.is_active = ?", serviceID, true)
+
+	// Build OR condition: match city+state OR pincode
+	if pincode != "" {
+		query = query.Where("(service_areas.city ILIKE ? AND service_areas.state ILIKE ?) OR ? = ANY(service_areas.pincodes)",
+			city, state, pincode)
+	} else {
+		query = query.Where("service_areas.city ILIKE ? AND service_areas.state ILIKE ?", city, state)
+	}
+
+	err := query.Count(&count).Error
 	return count > 0, err
 }
 

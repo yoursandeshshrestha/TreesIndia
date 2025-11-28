@@ -4,84 +4,98 @@
       "city": "Siliguri",
       "state": "West Bengal",
       "country": "India",
+      "pincodes": ["734001", "734002", "734003", "734004", "734005", "734006", "734007", "734008", "734009", "734010"],
       "is_active": true
     },
     {
       "city": "Darjeeling",
       "state": "West Bengal",
       "country": "India",
+      "pincodes": ["734101", "734102", "734103", "734104", "734201", "734202", "734203"],
       "is_active": true
     },
     {
       "city": "Kolkata",
       "state": "West Bengal",
       "country": "India",
+      "pincodes": ["700001", "700002", "700003", "700004", "700005", "700006", "700007", "700008", "700009", "700010", "700011", "700012", "700013", "700014", "700015", "700016", "700017", "700018", "700019", "700020"],
       "is_active": true
     },
     {
       "city": "Howrah",
       "state": "West Bengal",
       "country": "India",
+      "pincodes": ["711101", "711102", "711103", "711104", "711105", "711106", "711107", "711108", "711109", "711110"],
       "is_active": true
     },
     {
       "city": "Gangtok",
       "state": "Sikkim",
       "country": "India",
+      "pincodes": ["737101", "737102", "737103", "737104", "737105"],
       "is_active": true
     },
     {
       "city": "Namchi",
       "state": "Sikkim",
       "country": "India",
+      "pincodes": ["737126", "737121", "737128"],
       "is_active": true
     },
     {
       "city": "Guwahati",
       "state": "Assam",
       "country": "India",
+      "pincodes": ["781001", "781002", "781003", "781004", "781005", "781006", "781007", "781008", "781009", "781010"],
       "is_active": true
     },
     {
       "city": "Dibrugarh",
       "state": "Assam",
       "country": "India",
+      "pincodes": ["786001", "786002", "786003", "786004", "786005"],
       "is_active": true
     },
     {
       "city": "Patna",
       "state": "Bihar",
       "country": "India",
+      "pincodes": ["800001", "800002", "800003", "800004", "800005", "800006", "800007", "800008", "800009", "800010"],
       "is_active": true
     },
     {
       "city": "Gaya",
       "state": "Bihar",
       "country": "India",
+      "pincodes": ["823001", "823002", "823003", "823004"],
       "is_active": true
     },
     {
       "city": "Ranchi",
       "state": "Jharkhand",
       "country": "India",
+      "pincodes": ["834001", "834002", "834003", "834004", "834005", "834006", "834007", "834008", "834009", "834010"],
       "is_active": true
     },
     {
       "city": "Jamshedpur",
       "state": "Jharkhand",
       "country": "India",
+      "pincodes": ["831001", "831002", "831003", "831004", "831005", "831006", "831007", "831008", "831009", "831010"],
       "is_active": true
     },
     {
       "city": "Bhubaneswar",
       "state": "Odisha",
       "country": "India",
+      "pincodes": ["751001", "751002", "751003", "751004", "751005", "751006", "751007", "751008", "751009", "751010"],
       "is_active": true
     },
     {
       "city": "Cuttack",
       "state": "Odisha",
       "country": "India",
+      "pincodes": ["753001", "753002", "753003", "753004", "753005", "753006", "753007", "753008"],
       "is_active": true
     }
   ]

@@ -591,6 +591,20 @@ func (js *JSONBasedSeeder) SeedServiceAreas() error {
 			Country:  areaMap["country"].(string),
 			IsActive: areaMap["is_active"].(bool),
 		}
+
+		// Handle pincodes array if present
+		if pincodesInterface, ok := areaMap["pincodes"]; ok {
+			if pincodesArray, ok := pincodesInterface.([]interface{}); ok {
+				pincodes := make([]string, 0, len(pincodesArray))
+				for _, pc := range pincodesArray {
+					if pincodeStr, ok := pc.(string); ok {
+						pincodes = append(pincodes, pincodeStr)
+					}
+				}
+				serviceArea.Pincodes = pincodes
+			}
+		}
+
 		serviceAreas = append(serviceAreas, serviceArea)
 	}
 

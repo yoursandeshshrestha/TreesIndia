@@ -215,11 +215,12 @@ func (sac *ServiceAreaController) DeleteServiceArea(c *gin.Context) {
 
 // GetServicesByLocation gets all services available in a specific location
 // @Summary Get services by location
-// @Description Get all services available in a specific city and state
+// @Description Get all services available in a specific city and state, or by pincode
 // @Tags services
 // @Produce json
-// @Param city query string true "City name"
-// @Param state query string true "State name"
+// @Param city query string false "City name"
+// @Param state query string false "State name"
+// @Param pincode query string false "Pincode"
 // @Success 200 {object} views.Response{data=[]models.Service}
 // @Failure 400 {object} views.Response
 // @Router /api/v1/services/by-location [get]
@@ -232,13 +233,16 @@ func (sac *ServiceAreaController) GetServicesByLocation(c *gin.Context) {
 
 	city := c.Query("city")
 	state := c.Query("state")
+	pincode := c.Query("pincode")
 
-	if city == "" || state == "" {
-		c.JSON(400, views.CreateErrorResponse("City and state are required", ""))
+	// At least one of city/state or pincode must be provided
+	if (city == "" || state == "") && pincode == "" {
+		c.JSON(400, views.CreateErrorResponse("Either city and state, or pincode must be provided", ""))
 		return
 	}
 
-	services, err := sac.serviceAreaService.GetServicesByLocation(city, state)
+	// Use flexible matching that supports both city/state and pincode
+	services, err := sac.serviceAreaService.GetServicesByLocationFlexible(city, state, pincode)
 	if err != nil {
 		c.JSON(400, views.CreateErrorResponse("Failed to get services by location", err.Error()))
 		return
@@ -249,12 +253,13 @@ func (sac *ServiceAreaController) GetServicesByLocation(c *gin.Context) {
 
 // CheckServiceAvailability checks if a service is available in a specific location
 // @Summary Check service availability
-// @Description Check if a service is available in a specific city and state
+// @Description Check if a service is available in a specific city and state, or by pincode
 // @Tags services
 // @Produce json
 // @Param service_id path integer true "Service ID"
-// @Param city query string true "City name"
-// @Param state query string true "State name"
+// @Param city query string false "City name"
+// @Param state query string false "State name"
+// @Param pincode query string false "Pincode"
 // @Success 200 {object} views.Response{data=bool}
 // @Failure 400 {object} views.Response
 // @Router /api/v1/service-availability/{service_id} [get]
@@ -274,13 +279,16 @@ func (sac *ServiceAreaController) CheckServiceAvailability(c *gin.Context) {
 
 	city := c.Query("city")
 	state := c.Query("state")
+	pincode := c.Query("pincode")
 
-	if city == "" || state == "" {
-		c.JSON(400, views.CreateErrorResponse("City and state are required", ""))
+	// At least one of city/state or pincode must be provided
+	if (city == "" || state == "") && pincode == "" {
+		c.JSON(400, views.CreateErrorResponse("Either city and state, or pincode must be provided", ""))
 		return
 	}
 
-	available, err := sac.serviceAreaService.CheckServiceAvailability(uint(serviceID), city, state)
+	// Use flexible matching that supports both city/state and pincode
+	available, err := sac.serviceAreaService.CheckServiceAvailabilityFlexible(uint(serviceID), city, state, pincode)
 	if err != nil {
 		c.JSON(400, views.CreateErrorResponse("Failed to check service availability", err.Error()))
 		return

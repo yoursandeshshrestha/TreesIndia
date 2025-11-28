@@ -53,6 +53,7 @@ func (sas *ServiceAreaService) CreateServiceArea(req *models.CreateServiceAreaRe
 		City:      req.City,
 		State:     req.State,
 		Country:   req.Country,
+		Pincodes:  req.Pincodes,
 		IsActive:  isActive,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -107,6 +108,7 @@ func (sas *ServiceAreaService) UpdateServiceArea(id uint, req *models.UpdateServ
 	serviceArea.City = req.City
 	serviceArea.State = req.State
 	serviceArea.Country = req.Country
+	serviceArea.Pincodes = req.Pincodes
 	if req.IsActive != nil {
 		serviceArea.IsActive = *req.IsActive
 	}
@@ -138,10 +140,62 @@ func (sas *ServiceAreaService) CheckServiceAvailability(serviceID uint, city, st
 	return sas.serviceAreaRepo.CheckServiceAvailability(serviceID, city, state)
 }
 
+// CheckServiceAvailabilityByPincode checks if a service is available for a specific pincode
+func (sas *ServiceAreaService) CheckServiceAvailabilityByPincode(serviceID uint, pincode string) (bool, error) {
+	return sas.serviceAreaRepo.CheckServiceAvailabilityByPincode(serviceID, pincode)
+}
+
+// CheckServiceAvailabilityFlexible checks if a service is available by city/state OR pincode
+func (sas *ServiceAreaService) CheckServiceAvailabilityFlexible(serviceID uint, city, state, pincode string) (bool, error) {
+	return sas.serviceAreaRepo.CheckServiceAvailabilityFlexible(serviceID, city, state, pincode)
+}
+
 // GetServicesByLocation gets all services available in a specific location
 func (sas *ServiceAreaService) GetServicesByLocation(city, state string) ([]models.Service, error) {
 	var serviceAreas []models.ServiceArea
 	if err := sas.serviceAreaRepo.FindServicesByLocation(&serviceAreas, city, state); err != nil {
+		return nil, fmt.Errorf("failed to get service areas for location: %w", err)
+	}
+
+	// Extract unique service area IDs
+	serviceAreaIDs := make([]uint, 0, len(serviceAreas))
+	for _, area := range serviceAreas {
+		serviceAreaIDs = append(serviceAreaIDs, area.ID)
+	}
+
+	if len(serviceAreaIDs) == 0 {
+		return []models.Service{}, nil
+	}
+
+	// Get service IDs from the junction table
+	var serviceIDs []uint
+	if err := sas.serviceRepo.GetDB().Table("service_service_areas").
+		Select("DISTINCT service_id").
+		Where("service_area_id IN ?", serviceAreaIDs).
+		Pluck("service_id", &serviceIDs).Error; err != nil {
+		return nil, fmt.Errorf("failed to get service IDs: %w", err)
+	}
+
+	// Get services
+	var services []models.Service
+	for _, serviceID := range serviceIDs {
+		service, err := sas.serviceRepo.GetByID(serviceID)
+		if err != nil {
+			logrus.Warnf("Failed to get service ID %d: %v", serviceID, err)
+			continue
+		}
+		if service.IsActive {
+			services = append(services, *service)
+		}
+	}
+
+	return services, nil
+}
+
+// GetServicesByLocationFlexible gets all services available by city/state OR pincode
+func (sas *ServiceAreaService) GetServicesByLocationFlexible(city, state, pincode string) ([]models.Service, error) {
+	var serviceAreas []models.ServiceArea
+	if err := sas.serviceAreaRepo.FindServicesByLocationFlexible(&serviceAreas, city, state, pincode); err != nil {
 		return nil, fmt.Errorf("failed to get service areas for location: %w", err)
 	}
 
