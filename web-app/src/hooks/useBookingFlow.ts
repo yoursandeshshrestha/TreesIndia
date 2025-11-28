@@ -10,13 +10,14 @@ export const bookingKeys = {
   addresses: () => [...bookingKeys.all, "addresses"] as const,
   availableSlots: (serviceId: number, date: string, duration?: string) =>
     [...bookingKeys.all, "availableSlots", serviceId, date, duration] as const,
-  serviceAvailability: (serviceId: number, city: string, state: string) =>
+  serviceAvailability: (serviceId: number, city: string, state: string, pincode?: string) =>
     [
       ...bookingKeys.all,
       "serviceAvailability",
       serviceId,
       city,
       state,
+      pincode,
     ] as const,
   booking: (bookingId: number) =>
     [...bookingKeys.all, "booking", bookingId] as const,
@@ -63,12 +64,13 @@ export const useServiceAvailability = (
   serviceId: number,
   city: string,
   state: string,
-  enabled = true
+  enabled = true,
+  pincode?: string
 ) => {
   return useQuery({
-    queryKey: bookingKeys.serviceAvailability(serviceId, city, state),
+    queryKey: bookingKeys.serviceAvailability(serviceId, city, state, pincode),
     queryFn: () =>
-      bookingFlowApi.checkServiceAvailability(serviceId, city, state),
+      bookingFlowApi.checkServiceAvailability(serviceId, city, state, pincode),
     enabled: enabled && !!serviceId && !!city && !!state,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

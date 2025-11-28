@@ -60,13 +60,16 @@ export const bookingFlowApi = {
   checkServiceAvailability: async (
     serviceId: number,
     city: string,
-    state: string
+    state: string,
+    pincode?: string
   ): Promise<ServiceAvailabilityResponse> => {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/service-availability/${serviceId}?city=${encodeURIComponent(
-        city
-      )}&state=${encodeURIComponent(state)}`
-    );
+    let url = `${API_BASE_URL}/service-availability/${serviceId}?city=${encodeURIComponent(
+      city
+    )}&state=${encodeURIComponent(state)}`;
+    if (pincode) {
+      url += `&pincode=${encodeURIComponent(pincode)}`;
+    }
+    const response = await authenticatedFetch(url);
     return handleApiResponse(response);
   },
 

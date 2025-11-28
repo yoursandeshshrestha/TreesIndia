@@ -3,12 +3,37 @@
 // Social media icons removed - using text links instead
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { openAuthModal } from "@/store/slices/authModalSlice";
 
 interface FooterProps {
   className?: string;
 }
 
 export default function Footer({ className = "" }: FooterProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const dispatch = useAppDispatch();
+
+  const handleRegisterAsWorker = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      dispatch(openAuthModal({ redirectTo: "/apply/worker" }));
+    } else {
+      router.push("/apply/worker");
+    }
+  };
+
+  const handleRegisterAsBroker = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      dispatch(openAuthModal({ redirectTo: "/apply/broker" }));
+    } else {
+      router.push("/apply/broker");
+    }
+  };
   return (
     <footer
       className={`bg-[#f5f5f5] text-gray-800 relative overflow-hidden mt-20 ${className}`}
@@ -98,7 +123,8 @@ export default function Footer({ className = "" }: FooterProps) {
                 <li>
                   <a
                     href="/apply/worker"
-                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
+                    onClick={handleRegisterAsWorker}
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm cursor-pointer"
                   >
                     Register as a worker
                   </a>
@@ -106,7 +132,8 @@ export default function Footer({ className = "" }: FooterProps) {
                 <li>
                   <a
                     href="/apply/broker"
-                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm"
+                    onClick={handleRegisterAsBroker}
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm cursor-pointer"
                   >
                     Register as a broker
                   </a>

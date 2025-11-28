@@ -97,6 +97,35 @@ export default function AddressListModal({
     }
   };
 
+  // Extract pincode from address string or use postal_code
+  const extractPincode = (address: Address): string | undefined => {
+    // First try to use postal_code if available and valid
+    if (address.postal_code && /^\d{6}$/.test(address.postal_code.trim())) {
+      return address.postal_code.trim();
+    }
+    
+    // Otherwise, try to extract 6-digit pincode from address string
+    // Look for 6-digit numbers in the address
+    const pincodeMatches = address.address.match(/\b\d{6}\b/g);
+    if (pincodeMatches && pincodeMatches.length > 0) {
+      // Return the last 6-digit number found (usually the pincode is at the end)
+      return pincodeMatches[pincodeMatches.length - 1];
+    }
+    
+    // Also check city and state fields for pincode (sometimes pincode is in these fields)
+    const cityPincode = address.city?.match(/\b\d{6}\b/);
+    if (cityPincode) {
+      return cityPincode[0];
+    }
+    
+    const statePincode = address.state?.match(/\b\d{6}\b/);
+    if (statePincode) {
+      return statePincode[0];
+    }
+    
+    return undefined;
+  };
+
   const handleAddressSelection = async (addressId: number) => {
     setSelectedAddressId(addressId);
     setIsServiceAvailable(null);
@@ -116,17 +145,25 @@ export default function AddressListModal({
 
     try {
       setIsCheckingAvailability(true);
+      
+      // Extract pincode from address
+      const pincode = extractPincode(selectedAddress);
+      
       const isAvailable = await bookingFlowApi.checkServiceAvailability(
         selectedService.id,
         selectedAddress.city,
-        selectedAddress.state
+        selectedAddress.state,
+        pincode
       );
 
       setIsServiceAvailable(isAvailable.data);
 
       if (!isAvailable.data) {
+        const locationInfo = pincode 
+          ? `${selectedAddress.city}, ${selectedAddress.state} (Pincode: ${pincode})`
+          : `${selectedAddress.city}, ${selectedAddress.state}`;
         toast.error(
-          `This service is not available in your selected location (${selectedAddress.city}, ${selectedAddress.state}). Please select another address.`
+          `This service is not available in your selected location (${locationInfo}). Please select another address.`
         );
         setSelectedAddressId(null);
       }
