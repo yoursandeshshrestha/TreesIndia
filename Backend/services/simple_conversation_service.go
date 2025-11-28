@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/utils"
@@ -14,6 +16,7 @@ type SimpleConversationService struct {
 	messageRepo      *repositories.SimpleConversationMessageRepository
 	userRepo         *repositories.UserRepository
 	wsService        *SimpleConversationWebSocketService
+	cloudinaryService *CloudinaryService
 }
 
 func NewSimpleConversationService(
@@ -21,12 +24,14 @@ func NewSimpleConversationService(
 	messageRepo *repositories.SimpleConversationMessageRepository,
 	userRepo *repositories.UserRepository,
 	wsService *SimpleConversationWebSocketService,
+	cloudinaryService *CloudinaryService,
 ) *SimpleConversationService {
 	return &SimpleConversationService{
 		conversationRepo: conversationRepo,
 		messageRepo:      messageRepo,
 		userRepo:         userRepo,
 		wsService:        wsService,
+		cloudinaryService: cloudinaryService,
 	}
 }
 
@@ -252,12 +257,56 @@ func (s *SimpleConversationService) SendMessage(senderID uint, conversationID ui
 		return nil, err
 	}
 
+	// Handle file upload if present
+	var attachmentType *string
+	var imageURL *string
+	var videoURL *string
+	var cloudinaryPublicID *string
+	
+	if req.AttachmentFile != nil {
+		if s.cloudinaryService == nil {
+			return nil, errors.New("cloudinary service is not available")
+		}
+		
+		// Determine media type from file's Content-Type header (more reliable than file extension)
+		fileContentType := req.AttachmentFile.Header.Get("Content-Type")
+		mediaType := getMediaTypeFromContentType(fileContentType)
+		
+		if mediaType == "image" {
+			atType := "image"
+			attachmentType = &atType
+			url, publicID, uploadErr := s.cloudinaryService.UploadChatImage(req.AttachmentFile, "chat/images")
+			if uploadErr != nil {
+				logrus.Errorf("SimpleConversationService.SendMessage failed to upload image: %v", uploadErr)
+				return nil, fmt.Errorf("failed to upload image: %v", uploadErr)
+			}
+			imageURL = &url
+			cloudinaryPublicID = &publicID
+		} else if mediaType == "video" {
+			atType := "video"
+			attachmentType = &atType
+			url, publicID, uploadErr := s.cloudinaryService.UploadChatVideo(req.AttachmentFile, "chat/videos")
+			if uploadErr != nil {
+				logrus.Errorf("SimpleConversationService.SendMessage failed to upload video: %v", uploadErr)
+				return nil, fmt.Errorf("failed to upload video: %v", uploadErr)
+			}
+			videoURL = &url
+			cloudinaryPublicID = &publicID
+		} else {
+			return nil, fmt.Errorf("invalid file type: %s. Only JPEG, PNG, WebP images and MP4, WebM, AVI videos are allowed", fileContentType)
+		}
+	}
+
 	// Create message
 	message := &models.SimpleConversationMessage{
 		ConversationID: conversationID,
 		SenderID:       senderID,
 		Message:        req.Message,
 		IsRead:         false,
+		AttachmentType: attachmentType,
+		ImageURL:       imageURL,
+		VideoURL:       videoURL,
+		CloudinaryPublicID: cloudinaryPublicID,
 	}
 
 	// Save message
@@ -301,12 +350,27 @@ func (s *SimpleConversationService) SendMessage(senderID uint, conversationID ui
 				"sender_id":       message.SenderID,
 				"message":         message.Message,
 				"is_read":         message.IsRead,
+				"read_at":         message.ReadAt,
 				"created_at":      message.CreatedAt,
+				"updated_at":      message.UpdatedAt,
 				"sender": map[string]interface{}{
-					"id":   sender.ID,
-					"name": sender.Name,
+					"ID":        sender.ID,
+					"name":      sender.Name,
 					"user_type": sender.UserType,
+					"avatar":    sender.Avatar,
+					"phone":     sender.Phone,
 				},
+			}
+			
+			// Include attachment fields if present
+			if message.AttachmentType != nil {
+				messageData["attachment_type"] = *message.AttachmentType
+			}
+			if message.ImageURL != nil {
+				messageData["image_url"] = *message.ImageURL
+			}
+			if message.VideoURL != nil {
+				messageData["video_url"] = *message.VideoURL
 			}
 			logrus.Infof("Calling BroadcastSimpleConversationMessage for conversation %d", conversationID)
 			s.wsService.BroadcastSimpleConversationMessage(conversationID, messageData)
@@ -510,4 +574,27 @@ func (s *SimpleConversationService) GetAdminTotalUnreadCount(adminID uint) (int,
 
 	logrus.Infof("SimpleConversationService.GetAdminTotalUnreadCount returning total: %d", totalUnreadCount)
 	return totalUnreadCount, nil
+}
+
+// getMediaTypeFromContentType determines if the file is an image or video based on Content-Type
+func getMediaTypeFromContentType(contentType string) string {
+	contentTypeLower := strings.ToLower(contentType)
+	
+	// Check for image types
+	imageTypes := []string{"image/jpeg", "image/jpg", "image/png", "image/webp"}
+	for _, imgType := range imageTypes {
+		if strings.Contains(contentTypeLower, imgType) {
+			return "image"
+		}
+	}
+	
+	// Check for video types
+	videoTypes := []string{"video/mp4", "video/webm", "video/avi", "video/quicktime", "video/x-msvideo"}
+	for _, vidType := range videoTypes {
+		if strings.Contains(contentTypeLower, vidType) {
+			return "video"
+		}
+	}
+	
+	return ""
 }

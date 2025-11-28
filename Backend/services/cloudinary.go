@@ -46,8 +46,9 @@ func NewCloudinaryService() (*CloudinaryService, error) {
 	}, nil
 }
 
-// UploadImage uploads an image to Cloudinary with timeout
-func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder string) (string, error) {
+// UploadChatImage uploads an image to Cloudinary for chat messages with auto-delete tracking
+// Returns URL and publicID for tracking expiration
+func (cs *CloudinaryService) UploadChatImage(file *multipart.FileHeader, folder string) (string, string, error) {
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -56,7 +57,7 @@ func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder stri
 	src, err := file.Open()
 	if err != nil {
 		logrus.Errorf("Failed to open file %s: %v", file.Filename, err)
-		return "", fmt.Errorf("failed to open file: %v", err)
+		return "", "", fmt.Errorf("failed to open file: %v", err)
 	}
 	defer src.Close()
 
@@ -64,24 +65,38 @@ func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder stri
 	ext := filepath.Ext(file.Filename)
 	timestamp := time.Now().Unix()
 	filename := fmt.Sprintf("%s_%d%s", strings.TrimSuffix(file.Filename, ext), timestamp, ext)
+	publicID := fmt.Sprintf("%s/%s", folder, filename)
 
+	// Calculate expiration date (30 days from now)
+	expirationDate := time.Now().Add(30 * 24 * time.Hour)
+	
 	// Upload to Cloudinary with timeout context
+	// Note: Cloudinary doesn't support direct expiration in upload params
+	// We'll use tags to track chat media and handle deletion via background job
 	uploadParams := uploader.UploadParams{
-		PublicID:     fmt.Sprintf("%s/%s", folder, filename),
+		PublicID:     publicID,
 		Folder:       folder,
 		ResourceType: "image",
 		// Add optimization parameters for better performance
 		Transformation: "f_auto,q_auto", // Auto format and quality optimization
+		// Add tags for tracking and potential auto-deletion
+		Tags: []string{"chat_media", "auto_delete_30d"},
 	}
 	
 	result, err := cs.cld.Upload.Upload(ctx, src, uploadParams)
 	if err != nil {
 		logrus.Errorf("Failed to upload image to Cloudinary: %v", err)
-		return "", fmt.Errorf("failed to upload image to Cloudinary: %v", err)
+		return "", "", fmt.Errorf("failed to upload image to Cloudinary: %v", err)
 	}
 
-	logrus.Infof("Successfully uploaded %s to Cloudinary: %s", file.Filename, result.SecureURL)
-	return result.SecureURL, nil
+	logrus.Infof("Successfully uploaded chat image %s to Cloudinary: %s (expires: %s)", file.Filename, result.SecureURL, expirationDate.Format(time.RFC3339))
+	return result.SecureURL, result.PublicID, nil
+}
+
+// UploadImage uploads an image to Cloudinary with timeout (backward compatibility)
+func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder string) (string, error) {
+	url, _, err := cs.UploadChatImage(file, folder)
+	return url, err
 }
 
 // DeleteImage deletes an image from Cloudinary
@@ -99,8 +114,9 @@ func (cs *CloudinaryService) DeleteImage(publicID string) error {
 	return nil
 }
 
-// UploadVideo uploads a video to Cloudinary with timeout
-func (cs *CloudinaryService) UploadVideo(file *multipart.FileHeader, folder string) (string, error) {
+// UploadChatVideo uploads a video to Cloudinary for chat messages with auto-delete tracking
+// Returns URL and publicID for tracking expiration
+func (cs *CloudinaryService) UploadChatVideo(file *multipart.FileHeader, folder string) (string, string, error) {
 	// Create context with timeout (longer for videos)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -109,7 +125,7 @@ func (cs *CloudinaryService) UploadVideo(file *multipart.FileHeader, folder stri
 	src, err := file.Open()
 	if err != nil {
 		logrus.Errorf("Failed to open file %s: %v", file.Filename, err)
-		return "", fmt.Errorf("failed to open file: %v", err)
+		return "", "", fmt.Errorf("failed to open file: %v", err)
 	}
 	defer src.Close()
 
@@ -117,24 +133,38 @@ func (cs *CloudinaryService) UploadVideo(file *multipart.FileHeader, folder stri
 	ext := filepath.Ext(file.Filename)
 	timestamp := time.Now().Unix()
 	filename := fmt.Sprintf("%s_%d%s", strings.TrimSuffix(file.Filename, ext), timestamp, ext)
+	publicID := fmt.Sprintf("%s/%s", folder, filename)
+
+	// Calculate expiration date (30 days from now)
+	expirationDate := time.Now().Add(30 * 24 * time.Hour)
 
 	// Upload to Cloudinary with timeout context
+	// Note: Cloudinary doesn't support direct expiration in upload params
+	// We'll use tags to track chat media and handle deletion via background job
 	uploadParams := uploader.UploadParams{
-		PublicID:     fmt.Sprintf("%s/%s", folder, filename),
+		PublicID:     publicID,
 		Folder:       folder,
 		ResourceType: "video",
 		// Add optimization parameters for better performance
 		Transformation: "f_auto,q_auto", // Auto format and quality optimization
+		// Add tags for tracking and potential auto-deletion
+		Tags: []string{"chat_media", "auto_delete_30d"},
 	}
 	
 	result, err := cs.cld.Upload.Upload(ctx, src, uploadParams)
 	if err != nil {
 		logrus.Errorf("Failed to upload video to Cloudinary: %v", err)
-		return "", fmt.Errorf("failed to upload video to Cloudinary: %v", err)
+		return "", "", fmt.Errorf("failed to upload video to Cloudinary: %v", err)
 	}
 
-	logrus.Infof("Successfully uploaded video %s to Cloudinary: %s", file.Filename, result.SecureURL)
-	return result.SecureURL, nil
+	logrus.Infof("Successfully uploaded chat video %s to Cloudinary: %s (expires: %s)", file.Filename, result.SecureURL, expirationDate.Format(time.RFC3339))
+	return result.SecureURL, result.PublicID, nil
+}
+
+// UploadVideo uploads a video to Cloudinary with timeout (backward compatibility)
+func (cs *CloudinaryService) UploadVideo(file *multipart.FileHeader, folder string) (string, error) {
+	url, _, err := cs.UploadChatVideo(file, folder)
+	return url, err
 }
 
 // UploadMedia uploads either an image or video to Cloudinary based on content type

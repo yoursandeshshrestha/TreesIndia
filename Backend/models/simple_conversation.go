@@ -1,6 +1,7 @@
 package models
 
 import (
+	"mime/multipart"
 	"time"
 
 	"gorm.io/gorm"
@@ -49,6 +50,12 @@ type SimpleConversationMessage struct {
 	Message        string `json:"message" gorm:"column:message;not null"`
 	IsRead         bool   `json:"is_read" gorm:"column:is_read;default:false"`
 	ReadAt         *time.Time `json:"read_at" gorm:"column:read_at"`
+	
+	// Attachment fields
+	AttachmentType *string `json:"attachment_type" gorm:"column:attachment_type"` // "image" or "video"
+	ImageURL       *string `json:"image_url" gorm:"column:image_url"`
+	VideoURL       *string `json:"video_url" gorm:"column:video_url"`
+	CloudinaryPublicID *string `json:"cloudinary_public_id" gorm:"column:cloudinary_public_id"` // For auto-delete tracking
 
 	// Relationships
 	Conversation SimpleConversation `json:"conversation" gorm:"foreignKey:ConversationID;references:ID"`
@@ -61,14 +68,16 @@ func (SimpleConversationMessage) TableName() string {
 }
 
 // CreateSimpleConversationRequest represents the request structure for creating a conversation
+// Note: Either user_1 or user_2 can be omitted (will be set to authenticated user)
 type CreateSimpleConversationRequest struct {
-	User1 uint `json:"user_1" binding:"required"`
-	User2 uint `json:"user_2" binding:"required"`
+	User1 uint `json:"user_1"` // Optional: if omitted, will be set to authenticated user
+	User2 uint `json:"user_2"` // Optional: if omitted, will be set to authenticated user
 }
 
 // SendSimpleConversationMessageRequest represents the request structure for sending a message
 type SendSimpleConversationMessageRequest struct {
-	Message string `json:"message" binding:"required"`
+	Message       string                `json:"message" form:"message"` // Optional if attachment is provided
+	AttachmentFile *multipart.FileHeader `json:"-" form:"-"` // Multipart file (set by controller)
 }
 
 // GetSimpleConversationsRequest represents the request structure for getting conversations
