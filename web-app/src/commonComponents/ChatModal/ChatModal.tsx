@@ -157,7 +157,7 @@ export default function ChatModal() {
               stiffness: 300,
               duration: 0.3,
             }}
-            className="relative"
+            className="relative w-full max-w-full xl:w-[80vw] xl:max-w-[80vw]"
           >
             {/* Close Button */}
             <motion.button
@@ -178,12 +178,12 @@ export default function ChatModal() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
-              className="w-full max-w-none h-[85vh] sm:h-[90vh] md:h-[85vh] lg:h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden flex min-w-[300px]"
+              className="w-full h-[85vh] sm:h-[90vh] md:h-[85vh] lg:h-[80vh] xl:h-[85vh] bg-white rounded-2xl shadow-xl overflow-hidden flex min-w-[300px] lg:min-w-[800px]"
             >
               {/* Desktop Layout */}
               <div className="hidden md:flex w-full h-full">
                 {/* Conversations Sidebar */}
-                <div className="w-1/4 sm:w-1/3 md:w-1/3 min-w-[250px] sm:min-w-[300px] md:min-w-[350px] max-w-[400px] sm:max-w-[450px] md:max-w-[500px] bg-white border-r border-gray-200 flex flex-col">
+                <div className="w-1/4 sm:w-1/3 md:w-1/3 xl:w-1/4 min-w-[250px] sm:min-w-[300px] md:min-w-[350px] xl:min-w-[400px] max-w-[400px] sm:max-w-[450px] md:max-w-[500px] xl:max-w-none bg-white border-r border-gray-200 flex flex-col">
                   <div className="p-4 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-900">
                       Messages

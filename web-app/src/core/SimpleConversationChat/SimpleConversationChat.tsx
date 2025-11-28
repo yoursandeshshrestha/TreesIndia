@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { MessageCircle, Send, Loader2, User } from "lucide-react";
+import { MessageCircle, Send, Loader2, User, Image as ImageIcon, Video, X } from "lucide-react";
 import { useSimpleConversation } from "@/hooks/useSimpleConversations";
 import { useSimpleConversationWebSocket } from "@/hooks/useSimpleConversationWebSocket";
 import {
   SimpleConversationMessage,
   SimpleMessagesResponse,
+  sendConversationMessage,
 } from "@/lib/simpleConversationApi";
 import { displayChatDateTime } from "@/utils/displayUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { simpleConversationKeys } from "@/hooks/useSimpleConversations";
-import { playSound } from "@/utils/soundUtils";
+// Sound effects removed as requested
 
 interface SimpleConversationChatProps {
   conversationId: number;
@@ -24,6 +25,9 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMarkedAsReadRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
@@ -34,7 +38,6 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
     messages,
     isLoadingMessages,
     isSendingMessage,
-    sendMessage,
     markMessageRead,
     markConversationRead,
     currentUser,
@@ -51,18 +54,37 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
         (oldData: SimpleMessagesResponse | undefined) => {
           if (!oldData) return oldData;
 
-          // Check if message already exists to prevent duplicates
-          const messageExists = oldData.messages?.some(
-            (msg: SimpleConversationMessage) => msg.id === message.id
+          const messageData = message as unknown as SimpleConversationMessage;
+          // Check if message already exists
+          const existingIndex = oldData.messages?.findIndex(
+            (msg: SimpleConversationMessage) => msg.id === messageData.id
           );
-          if (messageExists) {
-            return oldData;
+
+          if (existingIndex !== undefined && existingIndex !== -1) {
+            // Update existing message (merge to preserve any fields that might be missing in WebSocket message)
+            const updated = [...(oldData.messages || [])];
+            const existing = updated[existingIndex];
+            updated[existingIndex] = {
+              ...existing,
+              ...messageData,
+              // Prefer new URL if provided, otherwise keep existing (preserves image/video URLs)
+              image_url: messageData.image_url || existing.image_url,
+              video_url: messageData.video_url || existing.video_url,
+              attachment_type: messageData.attachment_type || existing.attachment_type,
+              // Preserve message text if WebSocket message doesn't have it
+              message: messageData.message || existing.message,
+            };
+
+            return {
+              ...oldData,
+              messages: updated,
+            };
           }
 
           // Backend returns messages in DESC order (latest first)
           // Add new message at the beginning of the array
           const updatedMessages = [
-            message as unknown as SimpleConversationMessage,
+            messageData,
             ...(oldData.messages || []),
           ];
 
@@ -77,8 +99,7 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
       if (message.sender_id !== currentUser?.id && !message.is_read) {
         markMessageRead(message.id as number);
 
-        // Play receive sound for messages from other users
-        playSound("receive");
+        // Sound effects removed as requested
       }
     },
     onTyping: (userId: number, isTyping: boolean) => {
@@ -115,19 +136,165 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
   }, [conversationId]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || isSendingMessage) return;
+    if ((!newMessage.trim() && !selectedFile) || isSendingMessage) return;
+
+    const messageText = newMessage.trim();
+    const fileToSend = selectedFile;
+    const previewUrl = filePreview; // Save preview before clearing
+
+    // Clear inputs immediately for better UX
+    setNewMessage("");
+    setSelectedFile(null);
+    setFilePreview(null);
+
+    // Get current user for optimistic update
+    const currentUserId = currentUser?.id;
+
+    // Create optimistic message for immediate UI update
+    const tempMessageId = Date.now(); // Temporary ID until we get the real one
+    const isImage = fileToSend?.type.startsWith("image/");
+    const isVideo = fileToSend?.type.startsWith("video/");
+
+    const optimisticMessage: SimpleConversationMessage = {
+      id: tempMessageId,
+      conversation_id: conversationId,
+      sender_id: currentUserId || 0,
+      message: messageText || "",
+      is_read: false,
+      read_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      attachment_type: isImage ? "image" : isVideo ? "video" : undefined,
+      image_url: isImage && previewUrl ? previewUrl : undefined,
+      video_url: isVideo && previewUrl ? previewUrl : undefined,
+      sender: {
+        ID: currentUserId || 0,
+        name: currentUser?.name || "You",
+        user_type: currentUser?.user_type || "normal",
+        phone: currentUser?.phone,
+      },
+    };
+
+    // Add optimistic message immediately to cache
+    queryClient.setQueryData(
+      simpleConversationKeys.messages(conversationId),
+      (oldData: SimpleMessagesResponse | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          messages: [optimisticMessage, ...(oldData.messages || [])],
+        };
+      }
+    );
 
     try {
-      await sendMessage({ message: newMessage.trim() });
-      setNewMessage("");
+      // Send message via API (with file if present)
+      let sentMessage: SimpleConversationMessage | null = null;
+      try {
+        sentMessage = await sendConversationMessage(conversationId, {
+          message: messageText || undefined,
+          file: fileToSend || undefined,
+        });
+      } catch (apiError) {
+        // Handle special cases where request was successful but response couldn't be parsed
+        if (
+          apiError instanceof Error &&
+          (apiError.message === "EMPTY_RESPONSE_BUT_SUCCESS" ||
+            apiError.message === "PARSE_ERROR_BUT_SUCCESS" ||
+            apiError.message === "INVALID_FORMAT_BUT_SUCCESS" ||
+            apiError.message === "SUCCESS_BUT_NO_MESSAGE")
+        ) {
+          console.log("Request was successful but response couldn't be parsed. Relying on WebSocket for message update.");
+          // Keep the optimistic message - WebSocket will update it when it arrives
+          // Sound effects removed as requested
+          sendTypingIndicator(false);
+          return;
+        }
+        // Re-throw other errors
+        throw apiError;
+      }
 
-      // Play send sound after successful send
-      playSound("send");
+      // Sound effects removed as requested
+
+      // Replace optimistic message with real message from server
+      queryClient.setQueryData(
+        simpleConversationKeys.messages(conversationId),
+        (oldData: SimpleMessagesResponse | undefined) => {
+          if (!oldData) return oldData;
+
+          // Find optimistic message to preserve preview URL if needed
+          const optimisticMsg = oldData.messages?.find((msg) => msg.id === tempMessageId);
+          const optimisticImageUrl = optimisticMsg?.image_url;
+          const optimisticVideoUrl = optimisticMsg?.video_url;
+
+          // Remove the optimistic message
+          const filtered = oldData.messages?.filter((msg) => msg.id !== tempMessageId) || [];
+          // Check if message already exists (from WebSocket)
+          const existingIndex = filtered.findIndex((msg) => msg.id === sentMessage.id);
+
+          if (existingIndex !== -1) {
+            // Update existing message with complete data from API
+            // Use real URL if available, otherwise keep preview URL as fallback
+            const updated = [...filtered];
+            updated[existingIndex] = {
+              ...sentMessage,
+              image_url: sentMessage.image_url || optimisticImageUrl || updated[existingIndex].image_url,
+              video_url: sentMessage.video_url || optimisticVideoUrl || updated[existingIndex].video_url,
+            };
+            return {
+              ...oldData,
+              messages: updated,
+            };
+          } else {
+            // Add the real message if WebSocket hasn't already added it
+            // Use real URL if available, otherwise keep preview URL as fallback
+            const messageToAdd: SimpleConversationMessage = {
+              ...sentMessage,
+              image_url: sentMessage.image_url || optimisticImageUrl,
+              video_url: sentMessage.video_url || optimisticVideoUrl,
+            };
+            return {
+              ...oldData,
+              messages: [messageToAdd, ...filtered],
+            };
+          }
+        }
+      );
 
       // Stop typing indicator
       sendTypingIndicator(false);
     } catch (error) {
       console.error("Failed to send message:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      console.error("Error details:", {
+        error,
+        message: errorMessage,
+        conversationId,
+        hasFile: !!fileToSend,
+        fileType: fileToSend?.type,
+        fileSize: fileToSend?.size,
+      });
+      
+      // Show user-friendly error message
+      alert(`Failed to send message: ${errorMessage}`);
+      
+      // Remove optimistic message on error
+      queryClient.setQueryData(
+        simpleConversationKeys.messages(conversationId),
+        (oldData: SimpleMessagesResponse | undefined) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            messages: oldData.messages?.filter((msg) => msg.id !== tempMessageId) || [],
+          };
+        }
+      );
+      // Restore the message if sending failed
+      setNewMessage(messageText);
+      setSelectedFile(fileToSend);
+      if (fileToSend) {
+        setFilePreview(URL.createObjectURL(fileToSend));
+      }
     }
   };
 
@@ -147,6 +314,55 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
       sendTypingIndicator(true);
     } else if (isConnected) {
       sendTypingIndicator(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const fileName = file.name.toLowerCase();
+    const isImage = fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".png") || fileName.endsWith(".gif") ||
+      fileName.endsWith(".webp");
+    const isVideo = fileName.endsWith(".mp4") || fileName.endsWith(".mov") ||
+      fileName.endsWith(".avi") || fileName.endsWith(".webm");
+
+    if (!isImage && !isVideo) {
+      alert("Only images (max 5MB) and videos (max 50MB) are allowed");
+      return;
+    }
+
+    // Validate file size
+    if (isImage && file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+    if (isVideo && file.size > 50 * 1024 * 1024) {
+      alert("Video size must be less than 50MB");
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -298,7 +514,32 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
                           : "bg-white shadow-sm border border-gray-200"
                       }`}
                     >
-                      <p className="text-sm">{message.message}</p>
+                      {/* Display attachment if present */}
+                      {message.attachment_type === "image" && message.image_url && (
+                        <div className="mb-2">
+                          <img
+                            src={message.image_url}
+                            alt="Attachment"
+                            className="max-w-full max-h-64 rounded-lg object-contain"
+                          />
+                        </div>
+                      )}
+                      {message.attachment_type === "video" && message.video_url && (
+                        <div className="mb-2">
+                          <video
+                            src={message.video_url}
+                            controls
+                            className="max-w-full max-h-64 rounded-lg"
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      )}
+                      {message.message && (
+                        <p className={`text-sm ${message.sender_id === currentUser?.id ? "text-white" : "text-gray-900"}`}>
+                          {message.message}
+                        </p>
+                      )}
                     </div>
 
                     {/* Timestamp */}
@@ -323,7 +564,56 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 bg-white">
+        {/* File Preview */}
+        {filePreview && selectedFile && (
+          <div className="mb-3 relative inline-block">
+            <div className="relative">
+              {selectedFile.type.startsWith("image/") ? (
+                <img
+                  src={filePreview}
+                  alt="Preview"
+                  className="max-w-xs max-h-32 rounded-lg object-cover"
+                />
+              ) : (
+                <video
+                  src={filePreview}
+                  className="max-w-xs max-h-32 rounded-lg"
+                  controls={false}
+                />
+              )}
+              <button
+                onClick={handleRemoveFile}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{selectedFile.name}</p>
+          </div>
+        )}
+
         <div className="flex items-center space-x-3">
+          {/* File Upload Button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSendingMessage}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Attach image or video"
+          >
+            {selectedFile?.type.startsWith("video/") ? (
+              <Video size={20} />
+            ) : (
+              <ImageIcon size={20} />
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
           <div className="flex-1">
             <input
               type="text"
@@ -337,7 +627,7 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || isSendingMessage}
+            disabled={(!newMessage.trim() && !selectedFile) || isSendingMessage}
             className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isSendingMessage ? (
