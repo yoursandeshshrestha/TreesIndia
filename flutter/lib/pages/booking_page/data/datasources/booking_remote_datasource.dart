@@ -12,7 +12,7 @@ abstract class BookingRemoteDataSource {
   Future<AvailableSlotsResponseModel> getAvailableSlots(
       int serviceId, String date);
   Future<ServiceAvailabilityModel> checkServiceAvailability(
-      int serviceId, String city, String state);
+      int serviceId, String city, String state, String pincode);
   Future<BookingResponseModel> createFixedPriceBooking(
       CreateBookingRequestModel request);
   Future<BookingResponseModel> createWalletBooking(
@@ -95,7 +95,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   @override
   Future<ServiceAvailabilityModel> checkServiceAvailability(
-      int serviceId, String city, String state) async {
+      int serviceId, String city, String state, String pincode) async {
     try {
       final response = await dioClient.dio.get(
         ApiEndpoints.serviceAvailability.path
@@ -103,6 +103,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         queryParameters: {
           'city': city,
           'state': state,
+          'pincode': pincode,
         },
       );
 
