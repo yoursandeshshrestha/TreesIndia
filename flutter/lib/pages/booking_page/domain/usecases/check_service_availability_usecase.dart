@@ -6,7 +6,9 @@ class CheckServiceAvailabilityUseCase {
 
   CheckServiceAvailabilityUseCase(this.repository);
 
-  Future<ServiceAvailabilityEntity> call(int serviceId, String city, String state) async {
-    return await repository.checkServiceAvailability(serviceId, city, state);
+  Future<ServiceAvailabilityEntity> call(
+      int serviceId, String city, String state, String pincode) async {
+    return await repository.checkServiceAvailability(
+        serviceId, city, state, pincode);
   }
 }

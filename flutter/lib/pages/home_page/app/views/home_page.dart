@@ -121,15 +121,6 @@ class _HomePageState extends ConsumerState<HomePage>
       ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
       _loadProperties();
-
-      // Show success message to user
-      // if (mounted) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //      const InfoSnackbarWidget(message: 'Connection restored',
-      //       duration: Duration(seconds: 2),
-      //     ).createSnackBar(),
-      //   );
-      // }
     } catch (e) {
       debugPrint('Error refreshing page data: $e');
     }
@@ -227,7 +218,7 @@ class _HomePageState extends ConsumerState<HomePage>
                                 crossAxisCount: 3,
                                 crossAxisSpacing: AppSpacing.md,
                                 mainAxisSpacing: AppSpacing.md,
-                                childAspectRatio: 0.9,
+                                childAspectRatio: 0.85,
                               ),
                               itemCount: subcategoryState.subcategories.length,
                               itemBuilder: (context, index) {
@@ -323,7 +314,7 @@ class _HomePageState extends ConsumerState<HomePage>
             crossAxisCount: 3,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: 0.9,
+            childAspectRatio: 0.85,
           ),
           itemCount: marketplaceSubcategories.length,
           itemBuilder: (context, index) {
@@ -838,46 +829,43 @@ class _SubcategoryCardState extends State<_SubcategoryCard> {
         duration: const Duration(milliseconds: 150),
         transform:
             _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
-        child: SizedBox(
-          height: 120,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Icon container
-              Container(
-                width: double.infinity,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.build_outlined,
-                    size: 40,
-                    color: AppColors.brandNeutral600,
-                  ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Icon container
+            Container(
+              width: double.infinity,
+              height: 70,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.build_outlined,
+                  size: 40,
+                  color: AppColors.brandNeutral600,
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              // Title text
-              Expanded(
-                child: Text(
-                  widget.subcategory.name,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                    height: 1.3,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // Title text
+            Expanded(
+              child: Text(
+                widget.subcategory.name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                  height: 1.3,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -930,80 +918,77 @@ class _MarketplaceSubcategoryCardState
         duration: const Duration(milliseconds: 150),
         transform:
             _isPressed ? (Matrix4.identity()..scale(0.95)) : Matrix4.identity(),
-        child: SizedBox(
-          height: 120,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Icon container with lock overlay
-              Container(
-                width: double.infinity,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: widget.isLocked
-                      ? const Color(0xFFF0F0F0)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        _getIconForSlug(widget.subcategory.slug),
-                        size: 40,
-                        color: widget.isLocked
-                            ? AppColors.brandNeutral400
-                            : AppColors.brandNeutral600,
-                      ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Icon container with lock overlay
+            Container(
+              width: double.infinity,
+              height: 70,
+              decoration: BoxDecoration(
+                color: widget.isLocked
+                    ? const Color(0xFFF0F0F0)
+                    : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(
+                      _getIconForSlug(widget.subcategory.slug),
+                      size: 40,
+                      color: widget.isLocked
+                          ? AppColors.brandNeutral400
+                          : AppColors.brandNeutral600,
                     ),
-                    if (widget.isLocked)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.lock,
-                            size: 16,
-                            color: AppColors.brandNeutral600,
-                          ),
+                  ),
+                  if (widget.isLocked)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.lock,
+                          size: 16,
+                          color: AppColors.brandNeutral600,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              // Title text
-              Expanded(
-                child: Text(
-                  widget.subcategory.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: widget.isLocked
-                        ? AppColors.brandNeutral500
-                        : Colors.black,
-                    height: 1.3,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // Title text
+            Expanded(
+              child: Text(
+                widget.subcategory.name,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: widget.isLocked
+                      ? AppColors.brandNeutral500
+                      : Colors.black,
+                  height: 1.3,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

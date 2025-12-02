@@ -739,8 +739,8 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
           onTap: () async {
             final isAvailable = await ref
                 .read(bookingNotifierProvider.notifier)
-                .checkServiceAvailability(
-                    widget.service.id, address.city, address.state);
+                .checkServiceAvailability(widget.service.id, address.city,
+                    address.state, address.postalCode);
 
             if (!isAvailable) {
               if (mounted) {

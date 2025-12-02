@@ -101,10 +101,10 @@ class BookingNotifier extends StateNotifier<BookingState>
   }
 
   Future<bool> checkServiceAvailability(
-      int serviceId, String city, String state) async {
+      int serviceId, String city, String state, String pincode) async {
     try {
-      final availability =
-          await checkServiceAvailabilityUseCase(serviceId, city, state);
+      final availability = await checkServiceAvailabilityUseCase(
+          serviceId, city, state, pincode);
       return availability.isAvailable;
     } catch (error) {
       return false;

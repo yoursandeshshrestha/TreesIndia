@@ -24,8 +24,8 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<ServiceAvailabilityEntity> checkServiceAvailability(int serviceId, String city, String state) async {
-    final model = await remoteDataSource.checkServiceAvailability(serviceId, city, state);
+  Future<ServiceAvailabilityEntity> checkServiceAvailability(int serviceId, String city, String state, String pincode) async {
+    final model = await remoteDataSource.checkServiceAvailability(serviceId, city, state, pincode);
     return model.toEntity();
   }
 
