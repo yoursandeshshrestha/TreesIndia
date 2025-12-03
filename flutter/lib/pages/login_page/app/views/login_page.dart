@@ -55,7 +55,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(loginProvider);
 
-
     return Scaffold(
       backgroundColor: AppColors.brandNeutral50,
       resizeToAvoidBottomInset: true,

@@ -139,9 +139,6 @@ class AboutTreesIndiaPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildContactCard(
-                      Icons.phone, 'Phone', '+91 1800-123-4567', Colors.blue),
-                  const SizedBox(height: 16),
                   _buildContactCard(Icons.email, 'Email',
                       'support@treesindiaservices.com', Colors.green),
                   const SizedBox(height: 16),
