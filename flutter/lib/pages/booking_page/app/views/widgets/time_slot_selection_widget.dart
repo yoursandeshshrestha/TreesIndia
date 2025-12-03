@@ -40,6 +40,11 @@ class TimeSlotSelectionWidget extends ConsumerWidget {
     return Utils.formatDurationFromMinutes(duration);
   }
 
+  bool _hasTimeSlots() {
+    if (bookingState.availableSlots == null) return false;
+    return bookingState.availableSlots!.availableSlots.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
@@ -74,7 +79,7 @@ class TimeSlotSelectionWidget extends ConsumerWidget {
               );
             },
           )
-        else if (bookingState.availableSlots != null)
+        else if (bookingState.availableSlots != null && _hasTimeSlots())
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -84,40 +89,74 @@ class TimeSlotSelectionWidget extends ConsumerWidget {
               mainAxisSpacing: AppSpacing.sm,
               childAspectRatio: 2.8,
             ),
-            itemCount: bookingState.availableSlots!.availableSlots
-                .where((slot) => slot.isAvailable)
-                .length,
+            itemCount: bookingState.availableSlots!.availableSlots.length,
             itemBuilder: (context, index) {
-              final availableSlots = bookingState.availableSlots!.availableSlots
-                  .where((slot) => slot.isAvailable)
-                  .toList();
-              final slot = availableSlots[index];
+              final slot = bookingState.availableSlots!.availableSlots[index];
               final isSelected = selectedTime == slot.time;
+              final isAvailable = slot.isAvailable;
               final displayTime = _convertTo12HourFormat(slot.time);
 
               return GestureDetector(
-                onTap: () => onTimeSelected(slot.time),
+                onTap: isAvailable ? () => onTimeSelected(slot.time) : null,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF055c3a) : Colors.white,
+                    color: !isAvailable
+                        ? AppColors.brandNeutral100
+                        : isSelected
+                            ? const Color(0xFF055c3a)
+                            : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF055c3a)
-                          : AppColors.brandNeutral200,
+                      color: !isAvailable
+                          ? AppColors.brandNeutral200
+                          : isSelected
+                              ? const Color(0xFF055c3a)
+                              : AppColors.brandNeutral200,
                       width: 1,
                     ),
                   ),
                   child: Center(
                     child: B3Regular(
                       text: displayTime,
-                      color:
-                          isSelected ? Colors.white : AppColors.brandNeutral900,
+                      color: !isAvailable
+                          ? AppColors.brandNeutral400
+                          : isSelected
+                              ? Colors.white
+                              : AppColors.brandNeutral900,
                     ),
                   ),
                 ),
               );
             },
+          )
+        else if (bookingState.availableSlots != null && !_hasTimeSlots())
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.access_time_outlined,
+                    size: 80,
+                    color: AppColors.brandNeutral300,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  H4Bold(
+                    text: 'No time slots available',
+                    color: AppColors.brandNeutral700,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  B3Regular(
+                    text: 'Please select a different date or contact the service provider',
+                    color: AppColors.brandNeutral500,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
           )
         else if (bookingState.errorMessage != null)
           Container(

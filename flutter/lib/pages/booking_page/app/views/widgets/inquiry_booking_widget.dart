@@ -290,7 +290,7 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
           Container(
             padding: const EdgeInsets.all(0),
             decoration: BoxDecoration(
-              color: AppColors.brandNeutral50,
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -485,7 +485,7 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
       case 0:
         return 'Continue';
       case 1:
-        return 'Submit Inquiry';
+        return 'Proceed to Payment';
       default:
         return 'Continue';
     }
@@ -499,7 +499,6 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
         return () => _nextStep();
       case 1:
         return () => _showPaymentOptionsBottomSheet();
-      // return () => _submitInquiry();
       default:
         return null;
     }
@@ -1442,8 +1441,12 @@ class _InquiryBookingWidgetState extends ConsumerState<InquiryBookingWidget> {
             final walletState = ref.watch(walletNotifierProvider);
             final walletBalance =
                 walletState.walletSummary?.currentBalance ?? 0.0;
-            final servicePrice = widget.service.price?.toDouble() ?? 0.0;
-            final isWalletSufficient = walletBalance >= servicePrice;
+            final inquiryFee = double.tryParse(ref
+                    .watch(bookingNotifierProvider)
+                    .bookingConfig
+                    ?.inquiryBookingFee ?? '0') ??
+                0.0;
+            final isWalletSufficient = walletBalance >= inquiryFee;
 
             return Padding(
               padding: const EdgeInsets.all(24.0),
