@@ -29,6 +29,9 @@ export const metadata: Metadata = {
   description:
     "Professional home services including beauty, cleaning, repairs, and more. Book trusted professionals for all your home service needs.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
