@@ -6,7 +6,7 @@ import '../entities/service_availability_entity.dart';
 abstract class BookingRepository {
   Future<BookingConfigEntity> getBookingConfig();
   Future<AvailableSlotsResponseEntity> getAvailableSlots(int serviceId, String date);
-  Future<ServiceAvailabilityEntity> checkServiceAvailability(int serviceId, String city, String state);
+  Future<ServiceAvailabilityEntity> checkServiceAvailability(int serviceId, String city, String state, String pincode);
   Future<BookingResponseEntity> createFixedPriceBooking(CreateBookingRequestEntity request);
   Future<BookingResponseEntity> createWalletBooking(CreateBookingRequestEntity request);
   Future<InquiryBookingResponseEntity> createInquiryBooking(CreateInquiryBookingRequestEntity request);

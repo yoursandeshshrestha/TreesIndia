@@ -43,7 +43,7 @@ class BookingSummaryWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(0),
           decoration: BoxDecoration(
-            color: AppColors.brandNeutral50,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
