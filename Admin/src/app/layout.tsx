@@ -20,6 +20,9 @@ const geist = Geist_Mono({
 export const metadata: Metadata = {
   title: "TreesIndia",
   description: "The service company",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
