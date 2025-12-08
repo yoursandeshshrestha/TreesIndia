@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +21,7 @@ class BannerItem {
   });
 }
 
-class SimpleBannerWidget extends StatelessWidget {
+class SimpleBannerWidget extends StatefulWidget {
   final String? title;
   final List<BannerItem> items;
   final String? className;
@@ -31,6 +32,59 @@ class SimpleBannerWidget extends StatelessWidget {
     required this.items,
     this.className,
   });
+
+  @override
+  State<SimpleBannerWidget> createState() => _SimpleBannerWidgetState();
+}
+
+class _SimpleBannerWidgetState extends State<SimpleBannerWidget> {
+  late PageController _pageController;
+  Timer? _timer;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    if (widget.items.length > 1) {
+      _startAutoSlide();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSlide() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_pageController.hasClients) {
+        if (_currentPage < widget.items.length - 1) {
+          _currentPage++;
+        } else {
+          _currentPage = 0;
+        }
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentPage = index;
+    });
+    // Restart auto-slide timer when user manually swipes
+    if (widget.items.length > 1) {
+      _startAutoSlide();
+    }
+  }
 
   void _handleBannerTap(BuildContext context, BannerItem item) {
     if (item.link == null || item.link!.isEmpty) return;
@@ -57,11 +111,9 @@ class SimpleBannerWidget extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: item.image,
         width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.cover,
+        fit: BoxFit.fitWidth,
         placeholder: (context, url) => Container(
           width: double.infinity,
-          height: double.infinity,
           color: Colors.grey[300],
           child: const Center(
             child: CircularProgressIndicator(
@@ -72,7 +124,6 @@ class SimpleBannerWidget extends StatelessWidget {
         errorWidget: (context, url, error) {
           return Container(
             width: double.infinity,
-            height: double.infinity,
             color: Colors.grey[300],
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -100,12 +151,10 @@ class SimpleBannerWidget extends StatelessWidget {
       return Image.asset(
         item.image,
         width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.cover,
+        fit: BoxFit.fitWidth,
         errorBuilder: (context, error, stackTrace) {
           return Container(
             width: double.infinity,
-            height: double.infinity,
             color: Colors.grey[300],
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -135,14 +184,14 @@ class SimpleBannerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kDebugMode) {
-      print('SimpleBannerWidget build called with ${items.length} items');
-      print('Items: ${items.map((item) => item.image).toList()}');
+      print(
+          'SimpleBannerWidget build called with ${widget.items.length} items');
+      print('Items: ${widget.items.map((item) => item.image).toList()}');
     }
 
-    // Calculate dynamic dimensions based on screen width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bannerWidth = screenWidth * 0.8;
-    final bannerHeight = bannerWidth / 3; // Maintain 2:1 aspect ratio
+    if (widget.items.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -150,45 +199,66 @@ class SimpleBannerWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Banner Title (only show if title is provided)
-          if (title != null) ...[
+          if (widget.title != null) ...[
             H3Bold(
-              text: title!,
+              text: widget.title!,
               color: AppColors.brandNeutral800,
             ),
             const SizedBox(height: AppSpacing.md),
           ],
-          // Banner Images
-          SizedBox(
-            height: bannerHeight,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return GestureDetector(
-                  onTap: () => _handleBannerTap(context, item),
-                  child: Container(
-                    width: bannerWidth,
-                    height: bannerHeight,
-                    margin: EdgeInsets.only(
-                      right: index < items.length - 1 ? 12 : 0,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.brandNeutral200,
-                        width: 1,
+          // Banner Images - Auto Height, Full Width
+          AspectRatio(
+            aspectRatio: 16 / 9, // Default aspect ratio, image will fit within
+            child: SizedBox(
+              width: double.infinity,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                itemCount: widget.items.length,
+                itemBuilder: (context, index) {
+                  final item = widget.items[index];
+                  return GestureDetector(
+                    onTap: () => _handleBannerTap(context, item),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.brandNeutral200,
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _buildBannerImage(item),
                       ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: _buildBannerImage(item),
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
+          // Page Indicator
+          if (widget.items.length > 1) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.items.length,
+                (index) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentPage == index
+                        ? AppColors.stateGreen600
+                        : AppColors.brandNeutral300,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -88,7 +88,6 @@ class _BookingsListingPageState extends ConsumerState<BookingsListingPage>
   Widget build(BuildContext context) {
     final bookingsState = ref.watch(bookingsNotifierProvider);
 
-
     // Update tab controller if needed
     if (_tabController.index != _getIndexFromTab(bookingsState.currentTab)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

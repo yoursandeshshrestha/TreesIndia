@@ -420,7 +420,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-
   Widget _buildMenuItem({
     required IconData icon,
     required String label,

@@ -96,7 +96,6 @@ class _MyWorksPageState extends ConsumerState<MyWorksPage>
   Widget build(BuildContext context) {
     final myWorksState = ref.watch(myWorksNotifierProvider);
 
-
     // Update tab controller if needed
     if (_tabController.index != _getIndexFromTab(myWorksState.currentTab)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
