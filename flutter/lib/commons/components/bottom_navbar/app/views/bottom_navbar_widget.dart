@@ -89,63 +89,69 @@ class BottomNavBarWidget extends ConsumerWidget {
     bool hasNotification = false,
     int notificationCount = 0,
   }) {
-    return GestureDetector(
-      onTap: () => onTap(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onTap(index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 20, // text-lg equivalent
-                color: isActive
-                    ? const Color(0xFF055c3a)
-                    : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
-              ),
-              if (hasNotification)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.stateRed500,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: notificationCount > 0
-                        ? Text(
-                            notificationCount > 99
-                                ? '99+'
-                                : notificationCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          )
-                        : null,
+              Stack(
+                children: [
+                  Icon(
+                    icon,
+                    size: 20, // text-lg equivalent
+                    color: isActive
+                        ? const Color(0xFF055c3a)
+                        : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
                   ),
+                  if (hasNotification)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.stateRed500,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: notificationCount > 0
+                            ? Text(
+                                notificationCount > 99
+                                    ? '99+'
+                                    : notificationCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4), // gap-1 equivalent
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12, // text-xs
+                  fontWeight: FontWeight.w500, // font-medium
+                  color: isActive
+                      ? const Color(0xFF055c3a)
+                      : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: 4), // gap-1 equivalent
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12, // text-xs
-              fontWeight: FontWeight.w500, // font-medium
-              color: isActive
-                  ? const Color(0xFF055c3a)
-                  : const Color(0xFF9CA3AF), // text-[#055c3a] : text-gray-400
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

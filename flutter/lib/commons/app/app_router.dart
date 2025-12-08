@@ -157,6 +157,15 @@ class _MainPageWrapperState extends State<MainPageWrapper> {
 
 // auth_provider.dart
 
+// Fade transition builder
+Widget _fadeTransition(BuildContext context, Animation<double> animation,
+    Animation<double> secondaryAnimation, Widget child) {
+  return FadeTransition(
+    opacity: animation,
+    child: child,
+  );
+}
+
 class AppRouter {
   final GoRouter router;
 
@@ -249,247 +258,395 @@ class AppRouter {
             GoRoute(
               path: '/base',
               name: 'BaseRoute',
-              builder: (context, state) => const BaseRouteWidget(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const BaseRouteWidget(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             // Public Routes
             GoRoute(
               path: '/',
               name: 'SplashScreen',
-              builder: (context, state) => const SplashScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const SplashScreen(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             GoRoute(
               path: '/login',
               name: 'LoginPage',
-              builder: (context, state) => const LoginPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const LoginPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/otp-verification/:phoneNumber',
               name: 'OtpVerificationPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final phoneNumber = state.pathParameters['phoneNumber']!;
-                return OtpVerificationPage(phoneNumber: phoneNumber);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: OtpVerificationPage(phoneNumber: phoneNumber),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/location-onboarding',
               name: 'LocationOnboardingPage',
-              builder: (context, state) => const LocationOnboardingPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const LocationOnboardingPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/manual-location',
               name: 'ManualLocationPage',
-              builder: (context, state) => const ManualLocationPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const ManualLocationPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/location-loading',
               name: 'LocationLoadingPage',
-              builder: (context, state) => const LocationLoadingPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const LocationLoadingPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             // Protected Routes (Requires authentication) - converted from ShellRoute
             GoRoute(
               path: '/home',
               name: 'HomePage',
-              builder: (context, state) => const MainPageWrapper(
-                routePath: '/home',
-                child: HomePage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MainPageWrapper(
+                  routePath: '/home',
+                  child: HomePage(),
+                ),
+                transitionsBuilder: _fadeTransition,
               ),
             ),
             GoRoute(
               path: '/search',
               name: 'SearchPage',
-              builder: (context, state) => const SearchPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const SearchPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/profile',
               name: 'ProfilePage',
-              builder: (context, state) => const MainPageWrapper(
-                routePath: '/profile',
-                child: ProfilePage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MainPageWrapper(
+                  routePath: '/profile',
+                  child: ProfilePage(),
+                ),
+                transitionsBuilder: _fadeTransition,
               ),
             ),
             GoRoute(
               path: '/edit-profile',
               name: 'EditProfilePage',
-              builder: (context, state) => const EditProfilePage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const EditProfilePage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             GoRoute(
               path: '/wallet',
               name: 'WalletPage',
-              builder: (context, state) => const WalletPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const WalletPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             GoRoute(
               path: '/manage-addresses',
               name: 'ManageAddressesPage',
-              builder: (context, state) => const ManageAddressesPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const ManageAddressesPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/my-properties',
               name: 'MyPropertiesPage',
-              builder: (context, state) => const MyPropertiesPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MyPropertiesPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/my-vendor-profiles',
               name: 'MyVendorProfilesPage',
-              builder: (context, state) => const MyVendorProfilesPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MyVendorProfilesPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/worker-application',
               name: 'WorkerApplicationPage',
-              builder: (context, state) => const WorkerApplicationPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const WorkerApplicationPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/broker-application',
               name: 'BrokerApplicationPage',
-              builder: (context, state) => const BrokerApplicationPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const BrokerApplicationPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/my-subscription',
               name: 'MySubscriptionPage',
-              builder: (context, state) => const MySubscriptionPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MySubscriptionPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/subscription-plans',
               name: 'SubscriptionPlansListingPage',
-              builder: (context, state) => const SubscriptionPlansListingPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const SubscriptionPlansListingPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
 
             GoRoute(
               path: '/settings',
               name: 'SettingsPage',
-              builder: (context, state) => const SettingsPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const SettingsPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/about-trees-india',
               name: 'AboutTreesIndiaPage',
-              builder: (context, state) => const AboutTreesIndiaPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const AboutTreesIndiaPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/services',
               // path: '/services?:categoryId/:subcategoryId',
               name: 'ServicesPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final categoryId = state.uri.queryParameters['category'];
                 final subcategoryId = state.uri.queryParameters['subcategory'];
-                return ServicesPage(
-                  categoryId: categoryId,
-                  subcategoryId: subcategoryId,
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: ServicesPage(
+                    categoryId: categoryId,
+                    subcategoryId: subcategoryId,
+                  ),
+                  transitionsBuilder: _fadeTransition,
                 );
-                // return const ServicesPage();
               },
             ),
             GoRoute(
               path: '/service-detail/:serviceId',
               name: 'ServiceDetailPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final serviceData = state.extra as Map<String, dynamic>;
                 final service = serviceData['service'] as ServiceDetailEntity;
-                return ServiceDetailPage(service: service);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: ServiceDetailPage(service: service),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/bookings',
               name: 'BookingsListingPage',
-              builder: (context, state) => const MainPageWrapper(
-                routePath: '/bookings',
-                child: BookingsListingPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MainPageWrapper(
+                  routePath: '/bookings',
+                  child: BookingsListingPage(),
+                ),
+                transitionsBuilder: _fadeTransition,
               ),
             ),
             GoRoute(
               path: '/service/:serviceId/booking',
               name: 'BookingPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final serviceData = state.extra as Map<String, dynamic>;
                 final service = serviceData['service'] as ServiceDetailEntity;
-                return BookingPage(service: service);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: BookingPage(service: service),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/myworks',
               name: 'MyWorksPage',
-              builder: (context, state) => const MainPageWrapper(
-                routePath: '/myworks',
-                child: MyWorksPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MainPageWrapper(
+                  routePath: '/myworks',
+                  child: MyWorksPage(),
+                ),
+                transitionsBuilder: _fadeTransition,
               ),
             ),
             GoRoute(
               path: '/conversations',
               name: 'ConversationsPage',
-              builder: (context, state) => const MainPageWrapper(
-                routePath: '/conversations',
-                child: ConversationsPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MainPageWrapper(
+                  routePath: '/conversations',
+                  child: ConversationsPage(),
+                ),
+                transitionsBuilder: _fadeTransition,
               ),
             ),
             GoRoute(
               path: '/conversations/:conversationId',
               name: 'ConversationPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final conversationId =
                     int.parse(state.pathParameters['conversationId']!);
-                return ConversationPage(
-                  conversationId: conversationId,
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: ConversationPage(
+                    conversationId: conversationId,
+                  ),
+                  transitionsBuilder: _fadeTransition,
                 );
               },
             ),
             GoRoute(
               path: '/marketplace/rental-properties',
               name: 'RentalAndPropertiesPage',
-              builder: (context, state) => const RentalAndPropertiesPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const RentalAndPropertiesPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
-                path: '/rental-properties/:propertyId',
-                name: 'PropertyDetailsPage',
-                builder: (context, state) {
-                  final propertyId = state.pathParameters['propertyId']!;
-                  return PropertyDetailsPage(propertyId: propertyId);
-                }),
+              path: '/rental-properties/:propertyId',
+              name: 'PropertyDetailsPage',
+              pageBuilder: (context, state) {
+                final propertyId = state.pathParameters['propertyId']!;
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: PropertyDetailsPage(propertyId: propertyId),
+                  transitionsBuilder: _fadeTransition,
+                );
+              },
+            ),
             GoRoute(
               path: '/marketplace/projects',
               name: 'ProjectsPage',
-              builder: (context, state) => const MarketplaceProjectsPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MarketplaceProjectsPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/projects/:projectId',
               name: 'ProjectDetailsPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final projectId = state.pathParameters['projectId']!;
-                return ProjectDetailsPage(projectId: projectId);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: ProjectDetailsPage(projectId: projectId),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/marketplace/vendors',
               name: 'VendorsPage',
-              builder: (context, state) => const MarketplaceVendorsPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MarketplaceVendorsPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/vendors/:vendorId',
               name: 'VendorDetailsPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final vendorId = state.pathParameters['vendorId']!;
-                return VendorDetailsPage(vendorId: vendorId);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: VendorDetailsPage(vendorId: vendorId),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/marketplace/workers',
               name: 'WorkersPage',
-              builder: (context, state) => const MarketplaceWorkersPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MarketplaceWorkersPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
             GoRoute(
               path: '/workers/:workerId',
               name: 'WorkerDetailsPage',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final workerId = state.pathParameters['workerId']!;
-                return WorkerDetailsPage(workerId: workerId);
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: WorkerDetailsPage(workerId: workerId),
+                  transitionsBuilder: _fadeTransition,
+                );
               },
             ),
             GoRoute(
               path: '/notifications',
               name: 'NotificationsPage',
-              builder: (context, state) => const NotificationsPage(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const NotificationsPage(),
+                transitionsBuilder: _fadeTransition,
+              ),
             ),
           ],
         );
