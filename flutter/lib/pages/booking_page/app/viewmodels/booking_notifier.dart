@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/presenters/providers/provider_registry.dart';
 import 'package:trees_india/pages/booking_page/domain/usecases/create_inquiry_booking_with_wallet_usecase.dart';
 import '../../../../commons/environment/global_environment.dart';
@@ -205,6 +206,9 @@ class BookingNotifier extends StateNotifier<BookingState>
 
   void _openRazorpayCheckout(BookingResponseEntity bookingResponse) {
     final paymentOrder = bookingResponse.paymentOrder!;
+    final userProfile = ref.read(userProfileProvider).user;
+    final phoneNumber = userProfile?.phone ?? '';
+
     final options = {
       'key': GlobalEnvironment.razorpayKey,
       'amount': paymentOrder.amount,
@@ -213,7 +217,7 @@ class BookingNotifier extends StateNotifier<BookingState>
       'receipt': paymentOrder.receipt,
       'name': 'Trees India',
       'description': 'Service Booking Payment',
-      'prefill': {'contact': '', 'email': ''}
+      'prefill': {'contact': phoneNumber, 'email': userProfile?.email ?? ''}
     };
 
     try {
@@ -299,6 +303,9 @@ class BookingNotifier extends StateNotifier<BookingState>
       InquiryBookingResponseEntity inquiryResponse, int serviceId) {
     _currentServiceId = serviceId;
     final paymentOrder = inquiryResponse.paymentOrder!;
+    final userProfile = ref.read(userProfileProvider).user;
+    final phoneNumber = userProfile?.phone ?? '';
+
     final options = {
       'key': GlobalEnvironment.razorpayKey,
       'amount': paymentOrder.amount,
@@ -307,7 +314,7 @@ class BookingNotifier extends StateNotifier<BookingState>
       'receipt': paymentOrder.receipt,
       'name': 'Trees India',
       'description': 'Inquiry Fee Payment',
-      'prefill': {'contact': '', 'email': ''}
+      'prefill': {'contact': phoneNumber, 'email': userProfile?.email ?? ''}
     };
 
     try {

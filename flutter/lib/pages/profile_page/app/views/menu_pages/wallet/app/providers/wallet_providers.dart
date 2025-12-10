@@ -88,5 +88,6 @@ final walletNotifierProvider =
     completeWalletRechargeUseCase: completeWalletRechargeUseCase,
     cancelWalletRechargeUseCase: cancelWalletRechargeUseCase,
     razorpay: razorpay,
+    ref: ref,
   );
 });

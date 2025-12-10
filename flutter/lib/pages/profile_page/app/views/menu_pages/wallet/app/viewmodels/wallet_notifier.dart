@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/pages/profile_page/app/views/menu_pages/wallet/domain/entities/wallet_summary_entity.dart';
 import '../../../../../../../../commons/environment/global_environment.dart';
 import '../../domain/entities/wallet_recharge_entity.dart';
@@ -19,6 +20,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
   final CompleteWalletRechargeUseCase completeWalletRechargeUseCase;
   final CancelWalletRechargeUseCase cancelWalletRechargeUseCase;
   final Razorpay razorpay;
+  final Ref ref;
 
   WalletNotifier({
     required this.getWalletSummaryUseCase,
@@ -27,6 +29,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
     required this.completeWalletRechargeUseCase,
     required this.cancelWalletRechargeUseCase,
     required this.razorpay,
+    required this.ref,
   }) : super(const WalletState()) {
     razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -171,6 +174,9 @@ class WalletNotifier extends StateNotifier<WalletState> {
   }
 
   void _openRazorpayCheckout(WalletRechargeResponseEntity rechargeResponse) {
+    final userProfile = ref.read(userProfileProvider).user;
+    final phoneNumber = userProfile?.phone ?? '';
+
     final options = {
       'key': GlobalEnvironment.razorpayKey,
       'amount': rechargeResponse.paymentOrder.amount,
@@ -179,7 +185,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
       'receipt': rechargeResponse.paymentOrder.receipt,
       'name': 'Trees India',
       'description': 'Wallet Recharge',
-      'prefill': {'contact': '', 'email': ''}
+      'prefill': {'contact': phoneNumber, 'email': userProfile?.email ?? ''}
     };
 
     try {
@@ -278,6 +284,9 @@ class WalletNotifier extends StateNotifier<WalletState> {
 
     try {
       // Open Razorpay with existing order details
+      final userProfile = ref.read(userProfileProvider).user;
+      final phoneNumber = userProfile?.phone ?? '';
+
       final options = {
         'key': GlobalEnvironment.razorpayKey,
         'amount': (transaction.amount * 100).toInt(), // Convert to paise
@@ -285,7 +294,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
         'order_id': transaction.razorpayOrderId,
         'name': 'Trees India',
         'description': 'Complete Wallet Recharge Payment',
-        'prefill': {'contact': '', 'email': ''}
+        'prefill': {'contact': phoneNumber, 'email': userProfile?.email ?? ''}
       };
 
       // Store the transaction ID for completion
