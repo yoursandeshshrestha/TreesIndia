@@ -28,21 +28,13 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
   }
 
   Future<void> initializeAndLoadServices() async {
-    // Get user location
-    await _loadUserLocation();
-
-    if (state.userCity == null && state.userState == null) {
-      state = state.copyWith(
-        status: ServiceStatus.failure,
-        errorMessage: 'User location not available',
-      );
-      return;
-    }
+    // Don't load user location - we want to show all services without location restriction
+    // await _loadUserLocation();
 
     // Fetch category details if both IDs are provided
     await _fetchCategoryDetails();
 
-    // Load services
+    // Load all services without location filter
     await _loadServices(refresh: true);
   }
 

@@ -51,13 +51,19 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
   }) async {
     try {
       final url = ApiEndpoints.services.path;
-      var queryParameters = {
-        'city': city,
-        'state': state,
+      var queryParameters = <String, dynamic>{
         'page': page,
         'limit': limit,
         'exclude_inactive': true,
       };
+
+      // Only add city and state if they're not empty
+      if (city.isNotEmpty) {
+        queryParameters['city'] = city;
+      }
+      if (state.isNotEmpty) {
+        queryParameters['state'] = state;
+      }
 
       if (categoryId != null) {
         queryParameters['category'] = categoryId;
