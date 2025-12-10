@@ -45,10 +45,10 @@ class ServiceCardWidget extends StatelessWidget {
     final errorWidget = Container(
       width: double.infinity,
       height: double.infinity,
-      color: AppColors.brandNeutral200,
+      color: AppColors.brandNeutral100,
       child: const Icon(
-        Icons.image,
-        size: 40,
+        Icons.image_outlined,
+        size: 32,
         color: AppColors.brandNeutral400,
       ),
     );
@@ -97,127 +97,149 @@ class ServiceCardWidget extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.brandNeutral200,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.brandNeutral900.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
             ),
           ],
         ),
-        width: 160,
+        width: 240,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Service image
-            Container(
-              height: 100,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: AppColors.brandNeutral100,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+            // Service image with overlay gradient
+            Stack(
+              children: [
+                Container(
+                  height: 160,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: AppColors.brandNeutral100,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                    child: _buildImage(),
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+                // Subtle gradient overlay at bottom
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 40,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
-                child: _buildImage(),
-              ),
+              ],
             ),
 
             // Service details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Service name and rating
-                    Row(
-                      children: [
-                        Expanded(
-                          child: B3Bold(
-                            text: props.title,
-                            color: AppColors.brandNeutral900,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (props.rating != null) ...[
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.star,
-                            size: 14,
-                            color: Colors.amber,
-                          ),
-                          const SizedBox(width: 2),
-                          B4Regular(
-                            text: props.rating!.toStringAsFixed(1),
-                            color: AppColors.brandNeutral700,
-                          ),
-                        ],
-                      ],
-                    ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Service name
+                  B3Bold(
+                    text: props.title,
+                    color: AppColors.brandNeutral900,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
-                    const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.sm),
 
-                    // Category badge
-                    if (props.subcategory != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xs,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF055c3a).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: B4Regular(
-                          text: props.subcategory!,
-                          color: const Color(0xFF055c3a),
-                        ),
-                      ),
-
-                    const Spacer(),
-
-                    // Price and duration
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: B4Bold(
-                            text: props.price,
-                            color: const Color(0xFF055c3a),
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                  // Price and duration row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Price - more prominent
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.access_time,
-                              size: 12,
-                              color: AppColors.brandNeutral500,
-                            ),
-                            const SizedBox(width: 2),
-                            B4Regular(
-                              text: props.duration,
-                              color: AppColors.brandNeutral600,
+                            Text(
+                              props.price,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.stateGreen600,
+                                height: 1.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      // Duration badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandNeutral50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 14,
+                              color: AppColors.brandNeutral600,
+                            ),
+                            const SizedBox(width: 4),
+                            B4Regular(
+                              text: props.duration,
+                              color: AppColors.brandNeutral700,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
