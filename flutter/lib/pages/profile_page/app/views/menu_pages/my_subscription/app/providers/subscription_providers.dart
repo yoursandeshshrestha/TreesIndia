@@ -22,7 +22,8 @@ import '../notifiers/subscription_notifier.dart';
 import '../notifiers/subscription_plans_notifier.dart';
 
 // Data Source Provider
-final subscriptionRemoteDataSourceProvider = Provider<SubscriptionRemoteDataSource>((ref) {
+final subscriptionRemoteDataSourceProvider =
+    Provider<SubscriptionRemoteDataSource>((ref) {
   final dioClient = ref.read(dioClientProvider);
   final errorHandler = ref.read(errorHandlerProvider);
 
@@ -42,27 +43,32 @@ final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
 });
 
 // Use Case Providers
-final getMySubscriptionUseCaseProvider = Provider<GetMySubscriptionUseCase>((ref) {
+final getMySubscriptionUseCaseProvider =
+    Provider<GetMySubscriptionUseCase>((ref) {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return GetMySubscriptionUseCase(repository: repository);
 });
 
-final getSubscriptionHistoryUseCaseProvider = Provider<GetSubscriptionHistoryUseCase>((ref) {
+final getSubscriptionHistoryUseCaseProvider =
+    Provider<GetSubscriptionHistoryUseCase>((ref) {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return GetSubscriptionHistoryUseCase(repository: repository);
 });
 
-final getSubscriptionPlansUseCaseProvider = Provider<GetSubscriptionPlansUseCase>((ref) {
+final getSubscriptionPlansUseCaseProvider =
+    Provider<GetSubscriptionPlansUseCase>((ref) {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return GetSubscriptionPlansUseCase(repository: repository);
 });
 
-final createPaymentOrderUseCaseProvider = Provider<CreatePaymentOrderUseCase>((ref) {
+final createPaymentOrderUseCaseProvider =
+    Provider<CreatePaymentOrderUseCase>((ref) {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return CreatePaymentOrderUseCase(repository: repository);
 });
 
-final completeSubscriptionPurchaseUseCaseProvider = Provider<CompleteSubscriptionPurchaseUseCase>((ref) {
+final completeSubscriptionPurchaseUseCaseProvider =
+    Provider<CompleteSubscriptionPurchaseUseCase>((ref) {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return CompleteSubscriptionPurchaseUseCase(repository: repository);
 });
@@ -73,9 +79,11 @@ final razorpayProvider = Provider<Razorpay>((ref) {
 });
 
 // Notifier Providers
-final subscriptionNotifierProvider = StateNotifierProvider<SubscriptionNotifier, SubscriptionState>((ref) {
+final subscriptionNotifierProvider =
+    StateNotifierProvider<SubscriptionNotifier, SubscriptionState>((ref) {
   final getMySubscriptionUseCase = ref.watch(getMySubscriptionUseCaseProvider);
-  final getSubscriptionHistoryUseCase = ref.watch(getSubscriptionHistoryUseCaseProvider);
+  final getSubscriptionHistoryUseCase =
+      ref.watch(getSubscriptionHistoryUseCaseProvider);
 
   return SubscriptionNotifier(
     getMySubscriptionUseCase: getMySubscriptionUseCase,
@@ -83,10 +91,15 @@ final subscriptionNotifierProvider = StateNotifierProvider<SubscriptionNotifier,
   );
 });
 
-final subscriptionPlansNotifierProvider = StateNotifierProvider<SubscriptionPlansNotifier, SubscriptionPlansState>((ref) {
-  final getSubscriptionPlansUseCase = ref.watch(getSubscriptionPlansUseCaseProvider);
-  final createPaymentOrderUseCase = ref.watch(createPaymentOrderUseCaseProvider);
-  final completeSubscriptionPurchaseUseCase = ref.watch(completeSubscriptionPurchaseUseCaseProvider);
+final subscriptionPlansNotifierProvider =
+    StateNotifierProvider<SubscriptionPlansNotifier, SubscriptionPlansState>(
+        (ref) {
+  final getSubscriptionPlansUseCase =
+      ref.watch(getSubscriptionPlansUseCaseProvider);
+  final createPaymentOrderUseCase =
+      ref.watch(createPaymentOrderUseCaseProvider);
+  final completeSubscriptionPurchaseUseCase =
+      ref.watch(completeSubscriptionPurchaseUseCaseProvider);
   final razorpay = ref.watch(razorpayProvider);
 
   return SubscriptionPlansNotifier(
@@ -94,5 +107,6 @@ final subscriptionPlansNotifierProvider = StateNotifierProvider<SubscriptionPlan
     createPaymentOrderUseCase: createPaymentOrderUseCase,
     completeSubscriptionPurchaseUseCase: completeSubscriptionPurchaseUseCase,
     razorpay: razorpay,
+    ref: ref,
   );
 });

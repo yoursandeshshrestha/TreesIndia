@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import '../states/subscription_plans_state.dart';
 import '../../domain/entities/payment_order_entity.dart';
 import '../../domain/usecases/get_subscription_plans_usecase.dart';
@@ -11,12 +12,14 @@ class SubscriptionPlansNotifier extends StateNotifier<SubscriptionPlansState> {
   final CreatePaymentOrderUseCase createPaymentOrderUseCase;
   final CompleteSubscriptionPurchaseUseCase completeSubscriptionPurchaseUseCase;
   final Razorpay razorpay;
+  final Ref ref;
 
   SubscriptionPlansNotifier({
     required this.getSubscriptionPlansUseCase,
     required this.createPaymentOrderUseCase,
     required this.completeSubscriptionPurchaseUseCase,
     required this.razorpay,
+    required this.ref,
   }) : super(const SubscriptionPlansState()) {
     razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -89,6 +92,9 @@ class SubscriptionPlansNotifier extends StateNotifier<SubscriptionPlansState> {
     final selectedPlan = state.selectedPlan;
     if (selectedPlan == null) return;
 
+    final userProfile = ref.read(userProfileProvider).user;
+    final phoneNumber = userProfile?.phone ?? '';
+
     final options = {
       'key': paymentOrder.keyId,
       'amount': paymentOrder.order.amount,
@@ -97,8 +103,8 @@ class SubscriptionPlansNotifier extends StateNotifier<SubscriptionPlansState> {
       'name': 'Trees India',
       'description': 'Subscription: ${selectedPlan.name}',
       'prefill': {
-        'contact': '',
-        'email': '',
+        'contact': phoneNumber,
+        'email': userProfile?.email ?? '',
       },
       'theme': {
         'color': '#055c3a',
@@ -132,7 +138,8 @@ class SubscriptionPlansNotifier extends StateNotifier<SubscriptionPlansState> {
         razorpaySignature: response.signature!,
       );
 
-      final subscription = await completeSubscriptionPurchaseUseCase.execute(request);
+      final subscription =
+          await completeSubscriptionPurchaseUseCase.execute(request);
 
       state = state.copyWith(
         status: SubscriptionPlansStatus.purchaseSuccess,
