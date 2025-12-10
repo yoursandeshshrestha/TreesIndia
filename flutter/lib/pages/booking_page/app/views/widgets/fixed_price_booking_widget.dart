@@ -697,6 +697,14 @@ class _FixedPriceBookingWidgetState
     double? fetchedLatitude;
     double? fetchedLongitude;
 
+    // Validation state tracking
+    bool showNameError = false;
+    bool showAddressError = false;
+    bool showCityError = false;
+    bool showStateError = false;
+    bool showPincodeError = false;
+    bool showHouseNumberError = false;
+
     openCustomBottomSheet(
       context: bottomSheetContext,
       child: StatefulBuilder(
@@ -831,21 +839,37 @@ class _FixedPriceBookingWidgetState
                   hintText: 'City',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showCityError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide: BorderSide(
+                        color: showCityError
+                            ? AppColors.stateRed500
+                            : const Color(0xFF055c3a),
+                        width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showCityError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                onChanged: (value) {
+                  if (showCityError && value.isNotEmpty) {
+                    setState(() {
+                      showCityError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -856,21 +880,37 @@ class _FixedPriceBookingWidgetState
                   hintText: 'State',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showStateError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide: BorderSide(
+                        color: showStateError
+                            ? AppColors.stateRed500
+                            : const Color(0xFF055c3a),
+                        width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showStateError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                onChanged: (value) {
+                  if (showStateError && value.isNotEmpty) {
+                    setState(() {
+                      showStateError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -882,21 +922,37 @@ class _FixedPriceBookingWidgetState
                   hintText: 'Pincode',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showPincodeError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide: BorderSide(
+                        color: showPincodeError
+                            ? AppColors.stateRed500
+                            : const Color(0xFF055c3a),
+                        width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showPincodeError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                onChanged: (value) {
+                  if (showPincodeError && value.isNotEmpty) {
+                    setState(() {
+                      showPincodeError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -908,21 +964,37 @@ class _FixedPriceBookingWidgetState
                   hintText: 'Enter your complete address',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showAddressError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide: BorderSide(
+                        color: showAddressError
+                            ? AppColors.stateRed500
+                            : const Color(0xFF055c3a),
+                        width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showAddressError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                onChanged: (value) {
+                  if (showAddressError && value.isNotEmpty) {
+                    setState(() {
+                      showAddressError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -933,21 +1005,37 @@ class _FixedPriceBookingWidgetState
                   hintText: 'House/Flat Number',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showHouseNumberError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF055c3a), width: 1),
+                    borderSide: BorderSide(
+                        color: showHouseNumberError
+                            ? AppColors.stateRed500
+                            : const Color(0xFF055c3a),
+                        width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: AppColors.brandNeutral200, width: 1),
+                    borderSide: BorderSide(
+                        color: showHouseNumberError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1),
                   ),
                 ),
                 onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                onChanged: (value) {
+                  if (showHouseNumberError && value.isNotEmpty) {
+                    setState(() {
+                      showHouseNumberError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -995,6 +1083,9 @@ class _FixedPriceBookingWidgetState
                       onTap: () {
                         setState(() {
                           nameController.text = 'Home';
+                          if (showNameError) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -1009,7 +1100,11 @@ class _FixedPriceBookingWidgetState
                           border: Border.all(
                             color: nameController.text == 'Home'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Home')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1032,6 +1127,9 @@ class _FixedPriceBookingWidgetState
                       onTap: () {
                         setState(() {
                           nameController.text = 'Work';
+                          if (showNameError) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -1046,7 +1144,11 @@ class _FixedPriceBookingWidgetState
                           border: Border.all(
                             color: nameController.text == 'Work'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Work')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1069,6 +1171,9 @@ class _FixedPriceBookingWidgetState
                       onTap: () {
                         setState(() {
                           nameController.text = 'Other';
+                          if (showNameError) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -1083,7 +1188,11 @@ class _FixedPriceBookingWidgetState
                           border: Border.all(
                             color: nameController.text == 'Other'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Other')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1112,21 +1221,37 @@ class _FixedPriceBookingWidgetState
                     hintText: 'Enter custom label',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                      borderSide: BorderSide(
+                          color: showNameError
+                              ? AppColors.stateRed500
+                              : AppColors.brandNeutral200,
+                          width: 1),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF055c3a), width: 1),
+                      borderSide: BorderSide(
+                          color: showNameError
+                              ? AppColors.stateRed500
+                              : const Color(0xFF055c3a),
+                          width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                          color: AppColors.brandNeutral200, width: 1),
+                      borderSide: BorderSide(
+                          color: showNameError
+                              ? AppColors.stateRed500
+                              : AppColors.brandNeutral200,
+                          width: 1),
                     ),
                   ),
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                  onChanged: (value) {
+                    if (showNameError && value.isNotEmpty) {
+                      setState(() {
+                        showNameError = false;
+                      });
+                    }
+                  },
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
@@ -1143,11 +1268,78 @@ class _FixedPriceBookingWidgetState
                           ? null
                           : () async {
                               // Validate all required fields
+                              bool isValid = true;
+
+                              // Check name (required)
+                              if (nameController.text.trim().isEmpty) {
+                                setState(() {
+                                  showNameError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check address (required)
+                              if (addressController.text.trim().isEmpty) {
+                                setState(() {
+                                  showAddressError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check city (required)
+                              if (cityController.text.trim().isEmpty) {
+                                setState(() {
+                                  showCityError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check state (required)
+                              if (stateController.text.trim().isEmpty) {
+                                setState(() {
+                                  showStateError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check pincode (required)
+                              if (pincodeController.text.trim().isEmpty) {
+                                setState(() {
+                                  showPincodeError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check house number (required)
+                              if (houseNumberController.text.trim().isEmpty) {
+                                setState(() {
+                                  showHouseNumberError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              if (!isValid) {
+                                // Show validation error on root context
+                                if (rootContext.mounted) {
+                                  ScaffoldMessenger.of(rootContext)
+                                      .showSnackBar(
+                                    const ErrorSnackbarWidget(
+                                      message:
+                                          'Please fill all required fields',
+                                    ).createSnackBar(),
+                                  );
+                                }
+                                return;
+                              }
+
                               if (nameController.text.isNotEmpty &&
                                   addressController.text.isNotEmpty &&
                                   cityController.text.isNotEmpty &&
                                   stateController.text.isNotEmpty &&
-                                  pincodeController.text.isNotEmpty) {
+                                  pincodeController.text.isNotEmpty &&
+                                  houseNumberController.text
+                                      .trim()
+                                      .isNotEmpty) {
                                 try {
                                   // Create address request
                                   final createAddressRequest =
@@ -1161,9 +1353,7 @@ class _FixedPriceBookingWidgetState
                                     latitude: fetchedLatitude ?? 0.0,
                                     longitude: fetchedLongitude ?? 0.0,
                                     houseNumber:
-                                        houseNumberController.text.isNotEmpty
-                                            ? houseNumberController.text
-                                            : null,
+                                        houseNumberController.text.trim(),
                                     landmark: landmarkController.text.isNotEmpty
                                         ? landmarkController.text
                                         : null,
@@ -1205,17 +1395,6 @@ class _FixedPriceBookingWidgetState
                                       ).createSnackBar(),
                                     );
                                   }
-                                }
-                              } else {
-                                // Show validation error on root context
-                                if (rootContext.mounted) {
-                                  ScaffoldMessenger.of(rootContext)
-                                      .showSnackBar(
-                                    const ErrorSnackbarWidget(
-                                      message:
-                                          'Please fill all required fields',
-                                    ).createSnackBar(),
-                                  );
                                 }
                               }
                             },

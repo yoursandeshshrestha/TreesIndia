@@ -34,7 +34,6 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
   Widget build(BuildContext context) {
     final addressState = ref.watch(addressNotifierProvider);
 
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: const CustomAppBar(
@@ -182,39 +181,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Label (Home, Test, etc.) with Default badge
-                Row(
-                  children: [
-                    Text(
-                      address.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.brandNeutral900,
-                      ),
-                    ),
-                    if (address.isDefault) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.stateGreen100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'DEFAULT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.stateGreen700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                // Label (Home, Test, etc.)
+                Text(
+                  address.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brandNeutral900,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
 
@@ -249,22 +223,29 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 ),
               ),
               // Delete button
-              IconButton(
-                onPressed: address.isDefault
-                    ? null
-                    : () {
-                        _deleteAddress(address.id);
-                      },
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: address.isDefault
-                      ? AppColors.brandNeutral300
-                      : AppColors.stateRed700,
-                ),
-                constraints: const BoxConstraints(
-                  minWidth: 24,
-                  minHeight: 24,
-                ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final addressState = ref.watch(addressNotifierProvider);
+                  final isLastAddress = addressState.addresses.length == 1;
+
+                  return IconButton(
+                    onPressed: isLastAddress
+                        ? null
+                        : () {
+                            _deleteAddress(address.id);
+                          },
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: isLastAddress
+                          ? AppColors.brandNeutral300
+                          : AppColors.stateRed700,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 24,
+                      minHeight: 24,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -396,6 +377,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     double? fetchedLatitude;
     double? fetchedLongitude;
 
+    // Validation state tracking
+    bool showNameError = false;
+    bool showAddressError = false;
+    bool showCityError = false;
+    bool showStateError = false;
+    bool showPincodeError = false;
+    bool showHouseNumberError = false;
+
     openCustomBottomSheet(
       context: context,
       child: StatefulBuilder(
@@ -522,7 +511,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 label: 'Street Address',
                 hint: 'Enter complete address',
                 isRequired: true,
-                // onChanged: (value) => _updateLocationDetails(),
+                hasError: showAddressError,
+                onChanged: (value) {
+                  if (showAddressError && value.isNotEmpty) {
+                    setState(() {
+                      showAddressError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -536,7 +532,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                       hint: 'Enter pincode',
                       isRequired: true,
                       keyboardType: TextInputType.number,
-                      // onChanged: (value) => _updateLocationDetails(),
+                      hasError: showPincodeError,
+                      onChanged: (value) {
+                        if (showPincodeError && value.isNotEmpty) {
+                          setState(() {
+                            showPincodeError = false;
+                          });
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -546,7 +549,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                       label: 'City',
                       hint: 'Enter city',
                       isRequired: true,
-                      // onChanged: (value) => _updateLocationDetails(),
+                      hasError: showCityError,
+                      onChanged: (value) {
+                        if (showCityError && value.isNotEmpty) {
+                          setState(() {
+                            showCityError = false;
+                          });
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -560,7 +570,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 label: 'State',
                 hint: 'Enter state',
                 isRequired: true,
-                // onChanged: (value) => _updateLocationDetails(),
+                hasError: showStateError,
+                onChanged: (value) {
+                  if (showStateError && value.isNotEmpty) {
+                    setState(() {
+                      showStateError = false;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -568,8 +585,15 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                 controller: houseNumberController,
                 label: 'House/Flat Number',
                 hint: 'Enter House/Flat Number',
-                isRequired: false,
-                // onChanged: (value) => _updateLocationDetails(),
+                isRequired: true,
+                hasError: showHouseNumberError,
+                onChanged: (value) {
+                  if (showHouseNumberError && value.isNotEmpty) {
+                    setState(() {
+                      showHouseNumberError = false;
+                    });
+                  }
+                },
               ),
 
               // House/Flat Number and Landmark Row
@@ -602,6 +626,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           nameController.text == 'Home'
                               ? nameController.text = ''
                               : nameController.text = 'Home';
+                          if (showNameError && nameController.text.isNotEmpty) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -616,7 +643,14 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           border: Border.all(
                             color: nameController.text == 'Home'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Home')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width:
+                                (showNameError && nameController.text != 'Home')
+                                    ? 1
+                                    : 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -641,6 +675,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           nameController.text == 'Work'
                               ? nameController.text = ''
                               : nameController.text = 'Work';
+                          if (showNameError && nameController.text.isNotEmpty) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -655,7 +692,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           border: Border.all(
                             color: nameController.text == 'Work'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Work')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -680,6 +721,9 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           nameController.text == 'Other'
                               ? nameController.text = ''
                               : nameController.text = 'Other';
+                          if (showNameError && nameController.text.isNotEmpty) {
+                            showNameError = false;
+                          }
                         });
                       },
                       child: Container(
@@ -694,7 +738,11 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           border: Border.all(
                             color: nameController.text == 'Other'
                                 ? const Color(0xFF055c3a)
-                                : AppColors.brandNeutral300,
+                                : (showNameError &&
+                                        nameController.text != 'Other')
+                                    ? AppColors.stateRed500
+                                    : AppColors.brandNeutral300,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -725,18 +773,30 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                         TextStyles.b3Medium(color: AppColors.brandNeutral400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: AppColors.brandNeutral200),
+                      borderSide: BorderSide(
+                        color: showNameError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: AppColors.brandNeutral200),
+                      borderSide: BorderSide(
+                        color: showNameError
+                            ? AppColors.stateRed500
+                            : AppColors.brandNeutral200,
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: AppColors.stateGreen500),
+                      borderSide: BorderSide(
+                        color: showNameError
+                            ? AppColors.stateRed500
+                            : AppColors.stateGreen500,
+                        width: 1,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
@@ -745,6 +805,13 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                   ),
                   style: TextStyles.b3Medium(color: AppColors.brandNeutral900),
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                  onChanged: (value) {
+                    if (showNameError && value.isNotEmpty) {
+                      setState(() {
+                        showNameError = false;
+                      });
+                    }
+                  },
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
@@ -761,10 +828,74 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                           ? null
                           : () async {
                               // Validate all required fields
+                              bool isValid = true;
+
+                              // Check name (required)
+                              if (nameController.text.trim().isEmpty) {
+                                setState(() {
+                                  showNameError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check address (required)
+                              if (addressController.text.trim().isEmpty) {
+                                setState(() {
+                                  showAddressError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check city (required)
+                              if (cityController.text.trim().isEmpty) {
+                                setState(() {
+                                  showCityError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check state (required)
+                              if (stateController.text.trim().isEmpty) {
+                                setState(() {
+                                  showStateError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check pincode (required)
+                              if (pincodeController.text.trim().isEmpty) {
+                                setState(() {
+                                  showPincodeError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              // Check house number (required)
+                              if (houseNumberController.text.trim().isEmpty) {
+                                setState(() {
+                                  showHouseNumberError = true;
+                                });
+                                isValid = false;
+                              }
+
+                              if (!isValid) {
+                                // Show validation error
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const ErrorSnackbarWidget(
+                                    message: 'Please fill all required fields',
+                                  ).createSnackBar(),
+                                );
+                                return;
+                              }
+
                               if (addressController.text.isNotEmpty &&
                                   cityController.text.isNotEmpty &&
                                   stateController.text.isNotEmpty &&
-                                  pincodeController.text.isNotEmpty) {
+                                  pincodeController.text.isNotEmpty &&
+                                  nameController.text.trim().isNotEmpty &&
+                                  houseNumberController.text
+                                      .trim()
+                                      .isNotEmpty) {
                                 try {
                                   // Create address request
                                   final createAddressRequest =
@@ -786,7 +917,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                     landmark: landmarkController.text.isNotEmpty
                                         ? landmarkController.text
                                         : null,
-                                    isDefault: false, // Default to false
+                                    isDefault: false, // No default addresses
                                   );
 
                                   // Call the API to create address
@@ -1284,7 +1415,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
                                     landmark: landmarkController.text.isNotEmpty
                                         ? landmarkController.text
                                         : null,
-                                    isDefault: address.isDefault,
+                                    isDefault: false, // No default addresses
                                   );
 
                                   // Call the API to update address
@@ -1390,6 +1521,7 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
     int maxLines = 1,
     TextInputType? keyboardType,
     Function(String)? onChanged,
+    bool hasError = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1420,15 +1552,29 @@ class _ManageAddressesPageState extends ConsumerState<ManageAddressesPage> {
             hintStyle: TextStyles.b3Medium(color: AppColors.brandNeutral400),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.brandNeutral200),
+              borderSide: BorderSide(
+                color: hasError
+                    ? AppColors.stateRed500
+                    : AppColors.brandNeutral200,
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.brandNeutral200),
+              borderSide: BorderSide(
+                color: hasError
+                    ? AppColors.stateRed500
+                    : AppColors.brandNeutral200,
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.stateGreen500),
+              borderSide: BorderSide(
+                color:
+                    hasError ? AppColors.stateRed500 : AppColors.stateGreen500,
+                width: 1,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,

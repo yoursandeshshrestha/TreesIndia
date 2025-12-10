@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:trees_india/commons/app/user_profile_provider.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import 'package:trees_india/commons/constants/app_colors.dart';
 import 'package:trees_india/commons/constants/app_spacing.dart';
@@ -640,7 +641,8 @@ class _SegmentPaymentBottomSheetState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed: ${response.message ?? 'Unknown error'}'),
+          content:
+              Text('Payment failed: ${response.message ?? 'Unknown error'}'),
           backgroundColor: AppColors.stateRed600,
         ),
       );
@@ -687,7 +689,8 @@ class _SegmentPaymentBottomSheetState
       } else if (selectedPaymentMethod == 'razorpay') {
         // For Razorpay, get payment order details and launch Razorpay
         final bookingsState = ref.read(bookingsNotifierProvider);
-        final paymentOrder = bookingsState.quotePaymentResponse?.data.paymentOrder;
+        final paymentOrder =
+            bookingsState.quotePaymentResponse?.data.paymentOrder;
 
         if (paymentOrder != null) {
           setState(() => isProcessing = false);
@@ -713,6 +716,9 @@ class _SegmentPaymentBottomSheetState
   }
 
   Future<void> _launchRazorpay(dynamic paymentOrder) async {
+    final userProfile = ref.read(userProfileProvider).user;
+    final phoneNumber = userProfile?.phone ?? '';
+
     final options = {
       'key': GlobalEnvironment.razorpayKey,
       'amount': paymentOrder.amount,
@@ -721,7 +727,7 @@ class _SegmentPaymentBottomSheetState
       'receipt': paymentOrder.receipt,
       'name': 'Trees India',
       'description': 'Segment Payment',
-      'prefill': {'contact': '', 'email': ''}
+      'prefill': {'contact': phoneNumber, 'email': userProfile?.email ?? ''}
     };
 
     try {
