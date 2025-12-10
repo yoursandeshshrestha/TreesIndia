@@ -16,6 +16,7 @@ class HomePageState extends Equatable {
   final List<ServiceEntity> services;
   final List<SearchSuggestionEntity> searchSuggestions;
   final List<ServiceDetailEntity> popularServices;
+  final List<ServiceDetailEntity> allServices;
   final List<PropertyEntity> saleProperties;
   final List<PropertyEntity> rentProperties;
   final List<PromotionBannerEntity> promotionBanners;
@@ -25,6 +26,7 @@ class HomePageState extends Equatable {
   final bool isLoadingServices;
   final bool isLoadingSearchSuggestions;
   final bool isLoadingPopularServices;
+  final bool isLoadingAllServices;
   final bool isLoadingSaleProperties;
   final bool isLoadingRentProperties;
   final bool isLoadingPromotionBanners;
@@ -36,6 +38,7 @@ class HomePageState extends Equatable {
     this.services = const [],
     this.searchSuggestions = const [],
     this.popularServices = const [],
+    this.allServices = const [],
     this.saleProperties = const [],
     this.rentProperties = const [],
     this.promotionBanners = const [],
@@ -45,6 +48,7 @@ class HomePageState extends Equatable {
     this.isLoadingServices = false,
     this.isLoadingSearchSuggestions = false,
     this.isLoadingPopularServices = false,
+    this.isLoadingAllServices = false,
     this.isLoadingSaleProperties = false,
     this.isLoadingRentProperties = false,
     this.isLoadingPromotionBanners = false,
@@ -57,6 +61,7 @@ class HomePageState extends Equatable {
     List<ServiceEntity>? services,
     List<SearchSuggestionEntity>? searchSuggestions,
     List<ServiceDetailEntity>? popularServices,
+    List<ServiceDetailEntity>? allServices,
     List<PropertyEntity>? saleProperties,
     List<PropertyEntity>? rentProperties,
     List<PromotionBannerEntity>? promotionBanners,
@@ -66,6 +71,7 @@ class HomePageState extends Equatable {
     bool? isLoadingServices,
     bool? isLoadingSearchSuggestions,
     bool? isLoadingPopularServices,
+    bool? isLoadingAllServices,
     bool? isLoadingSaleProperties,
     bool? isLoadingRentProperties,
     bool? isLoadingPromotionBanners,
@@ -77,6 +83,7 @@ class HomePageState extends Equatable {
       services: services ?? this.services,
       searchSuggestions: searchSuggestions ?? this.searchSuggestions,
       popularServices: popularServices ?? this.popularServices,
+      allServices: allServices ?? this.allServices,
       saleProperties: saleProperties ?? this.saleProperties,
       rentProperties: rentProperties ?? this.rentProperties,
       promotionBanners: promotionBanners ?? this.promotionBanners,
@@ -89,6 +96,8 @@ class HomePageState extends Equatable {
           isLoadingSearchSuggestions ?? this.isLoadingSearchSuggestions,
       isLoadingPopularServices:
           isLoadingPopularServices ?? this.isLoadingPopularServices,
+      isLoadingAllServices:
+          isLoadingAllServices ?? this.isLoadingAllServices,
       isLoadingSaleProperties:
           isLoadingSaleProperties ?? this.isLoadingSaleProperties,
       isLoadingRentProperties:
@@ -106,6 +115,7 @@ class HomePageState extends Equatable {
         services,
         searchSuggestions,
         popularServices,
+        allServices,
         saleProperties,
         rentProperties,
         promotionBanners,
@@ -115,6 +125,7 @@ class HomePageState extends Equatable {
         isLoadingServices,
         isLoadingSearchSuggestions,
         isLoadingPopularServices,
+        isLoadingAllServices,
         isLoadingSaleProperties,
         isLoadingRentProperties,
         isLoadingPromotionBanners,

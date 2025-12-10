@@ -4,6 +4,7 @@ import '../../domain/usecases/get_subcategories_usecase.dart';
 import '../../domain/usecases/get_promotion_banners_usecase.dart';
 import '../../../services_page/domain/usecases/get_search_suggestions_usecase.dart';
 import '../../../services_page/domain/usecases/get_popular_services_usecase.dart';
+import '../../../services_page/domain/usecases/get_services_usecase.dart';
 import '../../../rental_and_properties/domain/usecases/get_properties_usecase.dart';
 import '../../../rental_and_properties/domain/entities/property_filters_entity.dart';
 import 'home_page_state.dart';
@@ -13,6 +14,7 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
   final GetSubcategoriesUseCase getSubcategoriesUseCase;
   final GetSearchSuggestionsUseCase getSearchSuggestionsUseCase;
   final GetPopularServicesUseCase getPopularServicesUseCase;
+  final GetServicesUseCase getServicesUseCase;
   final GetPropertiesUsecase getPropertiesUsecase;
   final GetPromotionBannersUseCase getPromotionBannersUseCase;
 
@@ -21,6 +23,7 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
     required this.getSubcategoriesUseCase,
     required this.getSearchSuggestionsUseCase,
     required this.getPopularServicesUseCase,
+    required this.getServicesUseCase,
     required this.getPropertiesUsecase,
     required this.getPromotionBannersUseCase,
   }) : super(const HomePageState());
@@ -91,6 +94,28 @@ class HomePageNotifier extends StateNotifier<HomePageState> {
     } catch (error) {
       this.state = this.state.copyWith(
         isLoadingPopularServices: false,
+        errorMessage: error.toString(),
+      );
+    }
+  }
+
+  Future<void> loadAllServices({String? city, String? state}) async {
+    this.state = this.state.copyWith(isLoadingAllServices: true);
+
+    try {
+      final response = await getServicesUseCase.call(
+        city: city ?? '',
+        state: state ?? '',
+        page: 1,
+        limit: 20,
+      );
+      this.state = this.state.copyWith(
+        isLoadingAllServices: false,
+        allServices: response.services,
+      );
+    } catch (error) {
+      this.state = this.state.copyWith(
+        isLoadingAllServices: false,
         errorMessage: error.toString(),
       );
     }

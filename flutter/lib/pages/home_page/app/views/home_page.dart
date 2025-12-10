@@ -50,7 +50,7 @@ class _HomePageState extends ConsumerState<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
     });
-    // Load popular services, properties, and banners when the page initializes
+    // Load services (without location filter), properties, and banners when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPopularServices();
       ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
@@ -80,8 +80,7 @@ class _HomePageState extends ConsumerState<HomePage>
         setState(() {
           _currentLocation = location;
         });
-        // Reload popular services and properties when location changes
-        _loadPopularServices();
+        // Only reload properties when location changes (services show all without location filter)
         _loadProperties();
       }
     } catch (e) {
@@ -91,9 +90,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void _loadPopularServices() {
     final notifier = ref.read(homePageNotifierProvider.notifier);
-    // final city = _currentLocation?.city;
-    // final state = _currentLocation?.state;
-
+    // Load all services without location restriction
     notifier.loadPopularServices();
   }
 
@@ -116,11 +113,11 @@ class _HomePageState extends ConsumerState<HomePage>
     // Reload all page data when connectivity is restored
     try {
       ref.read(profileProvider.notifier).loadProfile();
-      _loadPopularServices();
       ref.read(categoryNotifierProvider.notifier).loadCategories();
       ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
       _loadProperties();
+      // Services are loaded once on init and don't need location-based refresh
     } catch (e) {
       debugPrint('Error refreshing page data: $e');
     }

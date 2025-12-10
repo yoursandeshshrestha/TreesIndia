@@ -16,6 +16,7 @@ import '../../domain/usecases/get_subcategories_usecase.dart';
 import '../../domain/usecases/get_promotion_banners_usecase.dart';
 import '../../../services_page/domain/usecases/get_search_suggestions_usecase.dart';
 import '../../../services_page/domain/usecases/get_popular_services_usecase.dart';
+import '../../../services_page/domain/usecases/get_services_usecase.dart';
 import '../../../services_page/app/providers/service_providers.dart';
 import '../../../rental_and_properties/domain/usecases/get_properties_usecase.dart';
 import '../../../rental_and_properties/app/providers/property_providers.dart';
@@ -94,6 +95,12 @@ final getPopularServicesUseCaseProvider =
   return GetPopularServicesUseCase(repository);
 });
 
+final getServicesUseCaseProvider =
+    Provider<GetServicesUseCase>((ref) {
+  final repository = ref.read(serviceRepositoryProvider);
+  return GetServicesUseCase(repository);
+});
+
 // Property Use Case Provider (from rental_and_properties module)
 final getPropertiesUseCaseProviderForHome =
     Provider<GetPropertiesUsecase>((ref) {
@@ -115,6 +122,7 @@ final homePageNotifierProvider =
   final getSearchSuggestionsUseCase =
       ref.read(getSearchSuggestionsUseCaseProvider);
   final getPopularServicesUseCase = ref.read(getPopularServicesUseCaseProvider);
+  final getServicesUseCase = ref.read(getServicesUseCaseProvider);
   final getPropertiesUseCase = ref.read(getPropertiesUseCaseProviderForHome);
   final getPromotionBannersUseCase =
       ref.read(getPromotionBannersUseCaseProvider);
@@ -124,6 +132,7 @@ final homePageNotifierProvider =
     getSubcategoriesUseCase: getSubcategoriesUseCase,
     getSearchSuggestionsUseCase: getSearchSuggestionsUseCase,
     getPopularServicesUseCase: getPopularServicesUseCase,
+    getServicesUseCase: getServicesUseCase,
     getPropertiesUsecase: getPropertiesUseCase,
     getPromotionBannersUseCase: getPromotionBannersUseCase,
   );
