@@ -29,7 +29,7 @@ class PopularServicesWidget extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               H4Bold(
-                text: 'Most booked services',
+                text: 'All services',
                 color: AppColors.brandNeutral900,
               ),
               GestureDetector(
@@ -49,7 +49,7 @@ class PopularServicesWidget extends ConsumerWidget {
 
           // Service Cards
           SizedBox(
-            height: 180,
+            height: 250,
             child: homePageState.isLoadingPopularServices
                 ? ListView.builder(
                     scrollDirection: Axis.horizontal,
@@ -66,7 +66,7 @@ class PopularServicesWidget extends ConsumerWidget {
                 : homePageState.popularServices.isEmpty
                     ? Center(
                         child: B2Regular(
-                          text: 'No popular services available',
+                          text: 'No services available',
                           color: AppColors.brandNeutral600,
                         ),
                       )
