@@ -67,14 +67,14 @@ echo "✓ Goose is available: $(which goose)"
 echo "📦 Updating dependencies..."
 go mod tidy > /dev/null 2>&1
 
-# Build application
+# Build application (skip optimizations for faster build on slow servers)
 echo "🔨 Building application..."
-if go build -ldflags="-w -s" -o main . 2>/dev/null; then
+go build -o main .
+if [ $? -eq 0 ]; then
     echo "✅ Build successful!"
 else
-    echo "⚠️  Build with optimizations failed, trying without..."
-    go build -o main .
-    echo "✅ Build successful!"
+    echo "❌ Build failed!"
+    exit 1
 fi
 
 # Load environment variables
