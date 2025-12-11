@@ -275,6 +275,9 @@ func main() {
 	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
 	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
+	
+	// Setup admin notification routes
+	routes.SetupAdminNotificationRoutesWithController(r.Group("/api/v1/admin"), notificationController)
 
 	// Setup in-app notification services
 	notificationWsService := services.NewNotificationWebSocketService()

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -562,6 +563,50 @@ func (ac *AdminController) UpdateUserByID(c *gin.Context) {
 	}))
 }
 
+// safeDelete safely deletes records, handling cases where the table doesn't exist
+// It uses savepoints to handle errors gracefully without aborting the entire transaction
+func (ac *AdminController) safeDelete(tx *gorm.DB, model interface{}, condition string, args ...interface{}) error {
+	// Generate a unique savepoint name using a simple counter or timestamp
+	// Using a simple approach: create savepoint, attempt delete, handle errors
+	savepointName := fmt.Sprintf("sp_%d", time.Now().UnixNano())
+	
+	// Create a savepoint before attempting the delete
+	if err := tx.Exec("SAVEPOINT " + savepointName).Error; err != nil {
+		return err
+	}
+
+	// Attempt the delete
+	var result *gorm.DB
+	if condition != "" {
+		result = tx.Unscoped().Where(condition, args...).Delete(model)
+	} else {
+		result = tx.Unscoped().Delete(model)
+	}
+
+	if result.Error != nil {
+		errMsg := result.Error.Error()
+		// If table doesn't exist or transaction is aborted, rollback to savepoint and continue
+		if strings.Contains(errMsg, "does not exist") || 
+		   strings.Contains(errMsg, "SQLSTATE 42P01") ||
+		   strings.Contains(errMsg, "transaction is aborted") ||
+		   strings.Contains(errMsg, "SQLSTATE 25P02") {
+			// Rollback to savepoint to recover from the error
+			tx.Exec("ROLLBACK TO SAVEPOINT " + savepointName)
+			// Release the savepoint
+			tx.Exec("RELEASE SAVEPOINT " + savepointName)
+			return nil // Table doesn't exist or transaction recovered, this is OK
+		}
+		// For other errors, rollback to savepoint and return the error
+		tx.Exec("ROLLBACK TO SAVEPOINT " + savepointName)
+		tx.Exec("RELEASE SAVEPOINT " + savepointName)
+		return result.Error
+	}
+
+	// Release the savepoint on success
+	tx.Exec("RELEASE SAVEPOINT " + savepointName)
+	return nil
+}
+
 // DeleteUserByID godoc
 // @Summary Delete user by ID
 // @Description Permanently delete a user (admin only)
@@ -600,14 +645,262 @@ func (ac *AdminController) DeleteUserByID(c *gin.Context) {
 		return
 	}
 
-	// Hard delete the user
-	if err := ac.db.Unscoped().Delete(&user).Error; err != nil {
+	// Start a transaction to ensure all deletions are atomic
+	tx := ac.db.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to start transaction", tx.Error.Error()))
+		return
+	}
+
+	// Delete all related data in the correct order to avoid foreign key constraint violations
+
+	// 1. Delete chat messages where user is the sender
+	if err := ac.safeDelete(tx, &models.ChatMessage{}, "sender_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat messages", err.Error()))
+		return
+	}
+
+	// 1a. Get all conversation IDs where user is a participant
+	var conversationIDs []uint
+	if err := tx.Model(&models.SimpleConversation{}).Where("user_1 = ? OR user_2 = ?", userID, userID).Pluck("id", &conversationIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user conversations", err.Error()))
+		return
+	}
+
+	// 1b. Set last_message_id to NULL in simple_conversations to break circular foreign key
+	if len(conversationIDs) > 0 {
+		if err := tx.Model(&models.SimpleConversation{}).Where("id IN ?", conversationIDs).Update("last_message_id", nil).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update simple conversations", err.Error()))
+			return
+		}
+
+		// 1c. Delete ALL messages in conversations where user is a participant (not just messages sent by user)
+		if err := tx.Unscoped().Where("conversation_id IN ?", conversationIDs).Delete(&models.SimpleConversationMessage{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete simple conversation messages", err.Error()))
+			return
+		}
+
+		// 1d. Delete simple conversations where user is a participant
+		if err := tx.Unscoped().Where("id IN ?", conversationIDs).Delete(&models.SimpleConversation{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete simple conversations", err.Error()))
+			return
+		}
+	}
+
+	// 2. Delete chat rooms associated with user's bookings, properties, or worker inquiries
+	// First, get all bookings, properties, and worker inquiries for this user
+	var bookingIDs []uint
+	if err := tx.Model(&models.Booking{}).Where("user_id = ?", userID).Pluck("id", &bookingIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user bookings", err.Error()))
+		return
+	}
+
+	var propertyIDs []uint
+	if err := tx.Model(&models.Property{}).Where("user_id = ?", userID).Pluck("id", &propertyIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user properties", err.Error()))
+		return
+	}
+
+	var workerInquiryIDs []uint
+	if err := tx.Model(&models.WorkerInquiry{}).Where("user_id = ?", userID).Pluck("id", &workerInquiryIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get user worker inquiries", err.Error()))
+		return
+	}
+
+	// Delete chat rooms associated with these entities
+	if len(bookingIDs) > 0 {
+		if err := ac.safeDelete(tx, &models.ChatRoom{}, "booking_id IN ?", bookingIDs); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for bookings", err.Error()))
+			return
+		}
+	}
+
+	if len(propertyIDs) > 0 {
+		if err := ac.safeDelete(tx, &models.ChatRoom{}, "property_id IN ?", propertyIDs); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for properties", err.Error()))
+			return
+		}
+	}
+
+	if len(workerInquiryIDs) > 0 {
+		if err := ac.safeDelete(tx, &models.ChatRoom{}, "worker_inquiry_id IN ?", workerInquiryIDs); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat rooms for worker inquiries", err.Error()))
+			return
+		}
+	}
+
+	// 3. Delete payments (skip if table doesn't exist)
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Payment{}).Error; err != nil {
+		// Check if error is "relation does not exist" - if so, skip this deletion
+		if !strings.Contains(err.Error(), "does not exist") {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete payments", err.Error()))
+			return
+		}
+		// Table doesn't exist, continue with other deletions
+	}
+
+	// 4. Delete bookings (skip if table doesn't exist)
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Booking{}).Error; err != nil {
+		// Check if error is "relation does not exist" - if so, skip this deletion
+		if !strings.Contains(err.Error(), "does not exist") {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete bookings", err.Error()))
+			return
+		}
+		// Table doesn't exist, continue with other deletions
+	}
+
+	// 5. Delete worker inquiries (skip if table doesn't exist)
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.WorkerInquiry{}).Error; err != nil {
+		// Check if error is "relation does not exist" - if so, skip this deletion
+		if !strings.Contains(err.Error(), "does not exist") {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker inquiries", err.Error()))
+			return
+		}
+		// Table doesn't exist, continue with other deletions
+	}
+
+	// 6. Delete properties
+	if err := ac.safeDelete(tx, &models.Property{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete properties", err.Error()))
+		return
+	}
+
+	// 7. Delete addresses
+	if err := ac.safeDelete(tx, &models.Address{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete addresses", err.Error()))
+		return
+	}
+
+	// 8. Delete user documents
+	if err := ac.safeDelete(tx, &models.UserDocument{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user documents", err.Error()))
+		return
+	}
+
+	// 9. Delete user skills
+	if err := ac.safeDelete(tx, &models.UserSkill{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user skills", err.Error()))
+		return
+	}
+
+	// 10. Delete subscription warnings
+	if err := ac.safeDelete(tx, &models.SubscriptionWarning{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete subscription warnings", err.Error()))
+		return
+	}
+
+	// 11. Delete user subscriptions
+	if err := ac.safeDelete(tx, &models.UserSubscription{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user subscriptions", err.Error()))
+		return
+	}
+
+	// 12. Delete user notification settings
+	if err := ac.safeDelete(tx, &models.UserNotificationSettings{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete notification settings", err.Error()))
+		return
+	}
+
+	// 13. Delete locations
+	if err := ac.safeDelete(tx, &models.Location{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete locations", err.Error()))
+		return
+	}
+
+	// 14. Delete worker record if exists (must be before role_applications)
+	if err := ac.safeDelete(tx, &models.Worker{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker record", err.Error()))
+		return
+	}
+
+	// 15. Delete broker record if exists (must be before role_applications)
+	if err := ac.safeDelete(tx, &models.Broker{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete broker record", err.Error()))
+		return
+	}
+
+	// 16. Delete role applications (after workers and brokers due to foreign key)
+	if err := ac.safeDelete(tx, &models.RoleApplication{}, "user_id = ?", userID); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete role applications", err.Error()))
+		return
+	}
+
+	// 17. Delete chat room participants (using raw SQL as no model exists)
+	if err := tx.Exec("DELETE FROM chat_room_participants WHERE user_id = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat room participants", err.Error()))
+		return
+	}
+
+	// 18. Delete wallet transactions (using raw SQL as no model exists)
+	if err := tx.Exec("DELETE FROM wallet_transactions WHERE user_id = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete wallet transactions", err.Error()))
+		return
+	}
+
+	// 19. Handle reference columns - set to NULL where user is referenced but not the owner
+	// Update properties where user is the approver
+	if err := tx.Model(&models.Property{}).Where("approved_by = ?", userID).Update("approved_by", nil).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update property approvals", err.Error()))
+		return
+	}
+
+	// Update role applications where user is the reviewer
+	if err := tx.Model(&models.RoleApplication{}).Where("reviewed_by = ?", userID).Update("reviewed_by", nil).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update role application reviews", err.Error()))
+		return
+	}
+
+	// Update worker inquiries where user responded
+	if err := tx.Model(&models.WorkerInquiry{}).Where("responded_by = ?", userID).Update("responded_by", nil).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update worker inquiry responses", err.Error()))
+		return
+	}
+
+	// Finally, delete the user account
+	if err := tx.Unscoped().Delete(&user).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user", err.Error()))
 		return
 	}
 
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to commit transaction", err.Error()))
+		return
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User deleted successfully", gin.H{
-		"message": "User has been permanently deleted",
+		"message": "User and all associated data have been permanently deleted",
 	}))
 }
 
