@@ -23,15 +23,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Production-specific settings
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: "0.5"
-        reservations:
-          memory: 512M
-          cpus: "0.25"
     # Security settings
     security_opt:
       - no-new-privileges:true
@@ -42,4 +33,3 @@ services:
 networks:
   treesindia-network:
     driver: bridge
-    enable_ipv6: true
