@@ -55,12 +55,18 @@ RUN chown -R appuser:appgroup /app
 # Switch to non-root user
 USER appuser
 
-# Expose port
-EXPOSE 7080
+# Accept PORT as build argument (defaults to 7080 for backward compatibility)
+ARG PORT=7080
 
-# Health check
+# Set PORT as environment variable (will be overridden by .env.production at runtime)
+ENV PORT=${PORT}
+
+# Expose port (uses environment variable)
+EXPOSE ${PORT}
+
+# Health check (uses PORT environment variable from .env.production at runtime)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:7080/ || exit 1
+  CMD sh -c "curl -f http://localhost:${PORT}/ || exit 1"
 
 # Run the application
 CMD ["./main"]

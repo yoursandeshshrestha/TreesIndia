@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        PORT: ${PORT}
     container_name: treesindia-backend-prod
     ports:
       - "${PORT}:${PORT}"
