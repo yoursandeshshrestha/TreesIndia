@@ -27,12 +27,16 @@ deps:
 
 # Build the application (development)
 build:
+	@echo "Updating go.mod..."
+	@go mod tidy
 	@echo "Building application (development mode)..."
 	@go build -o main .
 	@echo "✓ Build complete: ./main"
 
 # Build the application (production) - for current platform
 build-prod:
+	@echo "Updating go.mod..."
+	@go mod tidy
 	@echo "Building application (production mode with optimizations)..."
 	@go build -ldflags="-w -s" -o main .
 	@echo "✓ Production build complete: ./main"
