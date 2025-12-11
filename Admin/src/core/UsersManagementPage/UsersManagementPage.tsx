@@ -47,6 +47,7 @@ function UsersManagementPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isWalletAdditionModalOpen, setIsWalletAdditionModalOpen] =
     useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -155,15 +156,24 @@ function UsersManagementPage() {
   };
 
   const handleDeleteUser = async (user: User) => {
+    setIsDeletingUser(true);
     try {
       await api.delete(`/admin/users/${user.ID}`);
       toast.success("User deleted successfully");
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
       loadUsers();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete user", err);
-      toast.error("Failed to delete user");
+      // Extract error message from ApiError
+      const errorMessage =
+        err?.message ||
+        err?.data?.message ||
+        err?.data?.error ||
+        "Failed to delete user";
+      toast.error(errorMessage);
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -285,6 +295,7 @@ function UsersManagementPage() {
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
+        isLoading={isDeletingUser}
       />
 
       <ManualWalletAdditionForm
