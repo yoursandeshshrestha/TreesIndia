@@ -29,11 +29,39 @@ if pgrep -f "./main" > /dev/null; then
     sleep 2
 fi
 
-# Install goose if needed
+# Install goose to system location so it's always in PATH
 if ! command -v goose &> /dev/null; then
     echo "📦 Installing goose migration tool..."
-    go install github.com/pressly/goose/v3/cmd/goose@latest > /dev/null 2>&1
+    
+    # Try to install to system location first
+    if [ -w /usr/local/bin ]; then
+        go install github.com/pressly/goose/v3/cmd/goose@latest
+        if [ -f "$(go env GOPATH)/bin/goose" ]; then
+            cp "$(go env GOPATH)/bin/goose" /usr/local/bin/goose
+            chmod +x /usr/local/bin/goose
+            echo "✓ Goose installed to /usr/local/bin/goose"
+        elif [ -f "$HOME/go/bin/goose" ]; then
+            cp "$HOME/go/bin/goose" /usr/local/bin/goose
+            chmod +x /usr/local/bin/goose
+            echo "✓ Goose installed to /usr/local/bin/goose"
+        fi
+    else
+        # Fallback: install to Go bin and add to PATH
+        go install github.com/pressly/goose/v3/cmd/goose@latest
+        export PATH="$PATH:$(go env GOPATH)/bin:$HOME/go/bin"
+        echo "✓ Goose installed to Go bin directory"
+    fi
 fi
+
+# Verify goose is accessible
+if ! command -v goose &> /dev/null; then
+    echo "❌ Error: goose is not accessible. Please install manually:"
+    echo "   go install github.com/pressly/goose/v3/cmd/goose@latest"
+    echo "   Then add $(go env GOPATH)/bin to your PATH"
+    exit 1
+fi
+
+echo "✓ Goose is available: $(which goose)"
 
 # Update dependencies
 echo "📦 Updating dependencies..."
@@ -53,12 +81,15 @@ fi
 export ENV=production
 export $(grep -v '^#' .env.production | grep -v '^$' | xargs)
 
+# Ensure PATH includes Go bin and system bins for goose
+export PATH="/usr/local/bin:/usr/local/go/bin:$(go env GOPATH)/bin:$HOME/go/bin:$PATH"
+
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-# Run in background
+# Run in background with full PATH preserved
 echo "🚀 Starting server in background..."
-nohup ./main > logs/app.log 2>&1 &
+nohup env PATH="$PATH" ./main > logs/app.log 2>&1 &
 PID=$!
 
 # Wait a moment to check if it started
@@ -78,3 +109,4 @@ else
     echo "❌ Backend failed to start. Check logs/app.log for errors."
     exit 1
 fi
+

@@ -72,3 +72,4 @@ clean:
 	@rm -f main main.exe
 	@go clean
 	@echo "✓ Clean complete"
+

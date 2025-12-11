@@ -18,3 +18,4 @@ if pgrep -f "./main" > /dev/null; then
 else
     echo "ℹ️  Backend is not running"
 fi
+
