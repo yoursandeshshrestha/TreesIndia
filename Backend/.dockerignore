@@ -17,6 +17,8 @@ main.exe
 main-*
 tmp/
 build-errors.log
+*.test
+*.out
 
 # IDE
 .vscode/
@@ -54,3 +56,5 @@ generate_swagger.sh
 
 # Temporary files
 tmp/
+*.tmp
+*.temp
