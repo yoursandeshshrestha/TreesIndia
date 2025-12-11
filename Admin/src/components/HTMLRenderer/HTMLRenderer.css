@@ -1,0 +1,102 @@
+.html-content {
+  line-height: 1.6;
+}
+
+.html-content h1,
+.html-content h2,
+.html-content h3,
+.html-content h4,
+.html-content h5,
+.html-content h6 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.html-content h1 {
+  font-size: 2em;
+}
+
+.html-content h2 {
+  font-size: 1.5em;
+}
+
+.html-content h3 {
+  font-size: 1.25em;
+}
+
+.html-content h4 {
+  font-size: 1.1em;
+}
+
+.html-content p {
+  margin-bottom: 1em;
+}
+
+.html-content ul,
+.html-content ol {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+.html-content li {
+  margin-bottom: 0.5em;
+}
+
+.html-content strong {
+  font-weight: 600;
+}
+
+.html-content em {
+  font-style: italic;
+}
+
+.html-content a {
+  color: #00a871;
+  text-decoration: underline;
+}
+
+.html-content a:hover {
+  color: #008f5f;
+}
+
+.html-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.5em 0;
+}
+
+.html-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.html-content blockquote {
+  border-left: 4px solid #00a871;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.html-content code {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.html-content pre {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.html-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
