@@ -58,6 +58,7 @@ dependencies:
   web_socket_channel: ^3.0.1
   url_launcher: ^6.3.1
   cached_network_image: ^3.4.1
+  flutter_widget_from_html: ^0.15.2
 
 dev_dependencies:
   flutter_test:
@@ -123,12 +124,12 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/logo/pixelcut-export.png
+  image: assets/logo/logo-white.png
   branding: assets/logo/treesindia-logo.png
   android: true
   ios: true
   web: false
+  android_gravity: center
   ios_content_mode: scaleAspectFit
   branding_mode: bottom
-  branding_bottom_padding: 24
   fullscreen: true
