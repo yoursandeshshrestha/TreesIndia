@@ -17,6 +17,7 @@ import {
   MessageCircle,
   BookOpen,
   MapPin,
+  Bell,
 } from "lucide-react";
 import type { AdminRole } from "@/services/api/auth";
 
@@ -242,27 +243,22 @@ export const sidebarItems: SidebarItem[] = [
       ),
     ]
   ),
-  createMenuWithChildren(
-    "work-force",
-    "Work Force",
-    <HardHat size={16} />,
-    [
-      createMenuItem(
-        "workforce-workers",
-        "Workers",
-        "/dashboard/marketplace/workforce/workers",
-        <UserCheck size={16} />,
-        ["super_admin", "vendor_manager"]
-      ),
-      createMenuItem(
-        "vendors",
-        "Vendors",
-        "/dashboard/marketplace/workforce/vendors",
-        <Truck size={16} />,
-        ["super_admin", "vendor_manager"]
-      ),
-    ]
-  ),
+  createMenuWithChildren("work-force", "Work Force", <HardHat size={16} />, [
+    createMenuItem(
+      "workforce-workers",
+      "Workers",
+      "/dashboard/marketplace/workforce/workers",
+      <UserCheck size={16} />,
+      ["super_admin", "vendor_manager"]
+    ),
+    createMenuItem(
+      "vendors",
+      "Vendors",
+      "/dashboard/marketplace/workforce/vendors",
+      <Truck size={16} />,
+      ["super_admin", "vendor_manager"]
+    ),
+  ]),
   createMenuWithChildren("projects", "Projects", <Building size={16} />, [
     createMenuItem(
       "all-projects",
@@ -296,6 +292,13 @@ export const sidebarItems: SidebarItem[] = [
       "content_manager",
       "properties_manager",
     ]
+  ),
+  createMenuItem(
+    "fcm-notifications",
+    "FCM Notifications",
+    "/dashboard/notifications/fcm",
+    <Bell size={16} />,
+    ["super_admin", "support_agent", "content_manager"]
   ),
 
   // Other Section (content/finance/system)

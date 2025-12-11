@@ -28,6 +28,8 @@ const SearchableDropdown = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const optionsListRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -42,6 +44,7 @@ const SearchableDropdown = ({
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        setSelectedIndex(-1);
       }
     };
 
@@ -50,10 +53,66 @@ const SearchableDropdown = ({
   }, []);
 
   useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
+    if (isOpen) {
+      // Focus search input
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+      // Set initial selected index to current value if it exists
+      if (value !== undefined) {
+        const currentIndex = filteredOptions.findIndex(
+          (opt) => opt.value === value
+        );
+        if (currentIndex >= 0) {
+          setSelectedIndex(currentIndex);
+        }
+      }
     }
   }, [isOpen]);
+
+  // Reset selected index when search term or filtered options change
+  useEffect(() => {
+    setSelectedIndex(-1);
+    // Reset refs array when options change
+    optionRefs.current = new Array(filteredOptions.length).fill(null);
+  }, [searchTerm, filteredOptions.length]);
+
+  // Scroll selected option into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && optionRefs.current[selectedIndex]) {
+      optionRefs.current[selectedIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [selectedIndex]);
+
+  // Helper function to find next enabled option
+  const findNextEnabledIndex = (
+    currentIndex: number,
+    direction: "up" | "down"
+  ): number => {
+    if (filteredOptions.length === 0) return -1;
+
+    let nextIndex = currentIndex;
+    const maxAttempts = filteredOptions.length;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      if (direction === "down") {
+        nextIndex = nextIndex < filteredOptions.length - 1 ? nextIndex + 1 : 0;
+      } else {
+        nextIndex = nextIndex > 0 ? nextIndex - 1 : filteredOptions.length - 1;
+      }
+
+      if (!filteredOptions[nextIndex]?.disabled) {
+        return nextIndex;
+      }
+      attempts++;
+    }
+
+    return -1;
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
@@ -67,27 +126,177 @@ const SearchableDropdown = ({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
-        );
+        setSelectedIndex((prev) => {
+          if (prev < 0 && filteredOptions.length > 0) {
+            const firstEnabled = findNextEnabledIndex(-1, "down");
+            return firstEnabled >= 0 ? firstEnabled : 0;
+          }
+          const nextIndex = findNextEnabledIndex(prev, "down");
+          return nextIndex >= 0 ? nextIndex : prev;
+        });
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        setSelectedIndex((prev) => {
+          if (prev < 0 && filteredOptions.length > 0) {
+            const lastEnabled = findNextEnabledIndex(
+              filteredOptions.length,
+              "up"
+            );
+            return lastEnabled >= 0 ? lastEnabled : filteredOptions.length - 1;
+          }
+          const nextIndex = findNextEnabledIndex(prev, "up");
+          return nextIndex >= 0 ? nextIndex : prev;
+        });
+        break;
+      case "Home":
+        e.preventDefault();
+        if (filteredOptions.length > 0) {
+          const firstEnabled = findNextEnabledIndex(-1, "down");
+          setSelectedIndex(firstEnabled >= 0 ? firstEnabled : 0);
+        }
+        break;
+      case "End":
+        e.preventDefault();
+        if (filteredOptions.length > 0) {
+          const lastEnabled = findNextEnabledIndex(
+            filteredOptions.length,
+            "up"
+          );
+          setSelectedIndex(
+            lastEnabled >= 0 ? lastEnabled : filteredOptions.length - 1
+          );
+        }
         break;
       case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < filteredOptions.length) {
-          onChange(filteredOptions[selectedIndex].value);
-          setIsOpen(false);
-          setSearchTerm("");
-          setSelectedIndex(-1);
+          const option = filteredOptions[selectedIndex];
+          if (!option.disabled) {
+            onChange(option.value);
+            setIsOpen(false);
+            setSearchTerm("");
+            setSelectedIndex(-1);
+          }
+        } else if (filteredOptions.length === 1) {
+          // If only one option, select it
+          const option = filteredOptions[0];
+          if (!option.disabled) {
+            onChange(option.value);
+            setIsOpen(false);
+            setSearchTerm("");
+            setSelectedIndex(-1);
+          }
         }
         break;
       case "Escape":
         e.preventDefault();
         setIsOpen(false);
         setSearchTerm("");
+        setSelectedIndex(-1);
+        break;
+      case "Tab":
+        // Allow Tab to close dropdown and move focus
+        setIsOpen(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Don't interfere with normal typing
+    if (
+      e.key.length === 1 &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      ![
+        "ArrowDown",
+        "ArrowUp",
+        "Home",
+        "End",
+        "Enter",
+        "Escape",
+        "Tab",
+      ].includes(e.key)
+    ) {
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          if (prev < 0 && filteredOptions.length > 0) {
+            const firstEnabled = findNextEnabledIndex(-1, "down");
+            return firstEnabled >= 0 ? firstEnabled : 0;
+          }
+          const nextIndex = findNextEnabledIndex(prev, "down");
+          return nextIndex >= 0 ? nextIndex : prev;
+        });
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          if (prev < 0 && filteredOptions.length > 0) {
+            const lastEnabled = findNextEnabledIndex(
+              filteredOptions.length,
+              "up"
+            );
+            return lastEnabled >= 0 ? lastEnabled : filteredOptions.length - 1;
+          }
+          const nextIndex = findNextEnabledIndex(prev, "up");
+          return nextIndex >= 0 ? nextIndex : prev;
+        });
+        break;
+      case "Home":
+        e.preventDefault();
+        if (filteredOptions.length > 0) {
+          const firstEnabled = findNextEnabledIndex(-1, "down");
+          setSelectedIndex(firstEnabled >= 0 ? firstEnabled : 0);
+        }
+        break;
+      case "End":
+        e.preventDefault();
+        if (filteredOptions.length > 0) {
+          const lastEnabled = findNextEnabledIndex(
+            filteredOptions.length,
+            "up"
+          );
+          setSelectedIndex(
+            lastEnabled >= 0 ? lastEnabled : filteredOptions.length - 1
+          );
+        }
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < filteredOptions.length) {
+          const option = filteredOptions[selectedIndex];
+          if (!option.disabled) {
+            onChange(option.value);
+            setIsOpen(false);
+            setSearchTerm("");
+            setSelectedIndex(-1);
+          }
+        } else if (filteredOptions.length === 1) {
+          // If only one option, select it
+          const option = filteredOptions[0];
+          if (!option.disabled) {
+            onChange(option.value);
+            setIsOpen(false);
+            setSearchTerm("");
+            setSelectedIndex(-1);
+          }
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSearchTerm("");
+        setSelectedIndex(-1);
+        break;
+      case "Tab":
+        // Allow Tab to close dropdown and move focus
+        setIsOpen(false);
         setSelectedIndex(-1);
         break;
     }
@@ -170,12 +379,17 @@ const SearchableDropdown = ({
                 placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 onClick={(e) => e.stopPropagation()}
+                aria-autocomplete="list"
+                aria-controls="dropdown-options"
+                aria-expanded={isOpen}
               />
             </div>
           </div>
 
           <div
+            ref={optionsListRef}
             className="overflow-auto"
             role="listbox"
             id="dropdown-options"
@@ -194,16 +408,22 @@ const SearchableDropdown = ({
               filteredOptions.map((option, index) => (
                 <div
                   key={option.value}
-                  className={`px-3 py-2 text-sm cursor-pointer ${
+                  ref={(el) => {
+                    optionRefs.current[index] = el;
+                  }}
+                  className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
                     option.disabled
                       ? "text-gray-400 cursor-not-allowed"
                       : "hover:bg-gray-100"
-                  } ${selectedIndex === index ? "bg-gray-100" : ""} ${
+                  } ${selectedIndex === index ? "bg-blue-100" : ""} ${
                     option.value === value ? "bg-blue-50" : ""
                   }`}
                   onClick={() => handleOptionClick(option)}
                   role="option"
-                  aria-selected={option.value === value}
+                  aria-selected={
+                    option.value === value || selectedIndex === index
+                  }
+                  onMouseEnter={() => setSelectedIndex(index)}
                 >
                   <div className="flex items-center">
                     {option.icon && <span className="mr-2">{option.icon}</span>}
