@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: treesindia-backend
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     volumes:
       - ./FCM-FIREBASE:/app/FCM-FIREBASE:ro
     networks:
@@ -23,7 +23,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:8080/",
+          "http://localhost:${PORT}/",
         ]
       interval: 30s
       timeout: 10s
