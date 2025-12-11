@@ -7,10 +7,10 @@ services:
       context: .
       dockerfile: Dockerfile.prod
       args:
-        PORT: ${PORT}
+        PORT: ${PORT:-8080}
     container_name: treesindia-backend-prod
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT:-8080}:${PORT:-8080}"
     volumes:
       - ./FCM-FIREBASE:/app/FCM-FIREBASE:ro
     networks:
@@ -19,7 +19,7 @@ services:
       - .env.production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT}/"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/"]
       interval: 30s
       timeout: 10s
       retries: 3
