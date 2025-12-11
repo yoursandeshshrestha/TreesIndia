@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"treesindia/models"
 	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
@@ -379,5 +381,143 @@ func (nc *NotificationController) GetDeviceStats(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    stats,
+	})
+}
+
+// SendNotificationToUser sends an FCM notification to a specific user (admin only)
+// @Summary Send FCM notification to user
+// @Description Send an FCM push notification to a specific user by user ID (admin only)
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Param request body services.NotificationRequest true "Notification request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /admin/notifications/send [post]
+func (nc *NotificationController) SendNotificationToUser(c *gin.Context) {
+	var req services.NotificationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request data",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Validate that user_id is provided
+	if req.UserID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "user_id is required",
+		})
+		return
+	}
+
+	// Send notification
+	result, err := nc.enhancedNotificationService.SendNotification(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to send notification",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Notification sent successfully",
+		"data":    result,
+	})
+}
+
+// SendNotificationToMultipleUsers sends FCM notifications to multiple users (admin only)
+// @Summary Send FCM notifications to multiple users
+// @Description Send FCM push notifications to multiple users by their user IDs (admin only)
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Request body with user_ids array and notification details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /admin/notifications/send-bulk [post]
+func (nc *NotificationController) SendNotificationToMultipleUsers(c *gin.Context) {
+	var req struct {
+		UserIDs     []uint                  `json:"user_ids" binding:"required"`
+		Type        models.NotificationType `json:"type" binding:"required"`
+		Title       string                  `json:"title" binding:"required"`
+		Body        string                  `json:"body" binding:"required"`
+		Data        map[string]string       `json:"data,omitempty"`
+		ImageURL    string                  `json:"image_url,omitempty"`
+		ClickAction string                  `json:"click_action,omitempty"`
+		Priority    string                  `json:"priority,omitempty"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request data",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if len(req.UserIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "At least one user_id is required",
+		})
+		return
+	}
+
+	// Create notification request
+	notificationReq := &services.NotificationRequest{
+		Type:        req.Type,
+		Title:       req.Title,
+		Body:        req.Body,
+		Data:        req.Data,
+		ImageURL:    req.ImageURL,
+		ClickAction: req.ClickAction,
+		Priority:    req.Priority,
+	}
+
+	// Send to multiple users
+	results, err := nc.enhancedNotificationService.SendNotificationToMultipleUsers(req.UserIDs, notificationReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to send notifications",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Calculate summary
+	successCount := 0
+	failureCount := 0
+	for _, result := range results {
+		if result.PushSuccess {
+			successCount++
+		} else {
+			failureCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("Notifications sent: %d successful, %d failed", successCount, failureCount),
+		"data": gin.H{
+			"results":       results,
+			"success_count": successCount,
+			"failure_count": failureCount,
+			"total":         len(results),
+		},
 	})
 }
