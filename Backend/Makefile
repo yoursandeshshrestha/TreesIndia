@@ -38,7 +38,8 @@ build-prod:
 	@echo "Updating go.mod..."
 	@go mod tidy
 	@echo "Building application (production mode with optimizations)..."
-	@go build -ldflags="-w -s" -o main .
+	@echo "This may take a few minutes, please wait..."
+	@go build -v -ldflags="-w -s" -o main . 2>&1 | tail -20
 	@echo "✓ Production build complete: ./main"
 
 # Build for Linux (for deployment to Linux server)
