@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
-import Textarea from "@/components/Textarea/Base/Textarea";
+import { TinyMCEEditor } from "@/components/TinyMCE";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import DurationPicker from "@/components/DurationPicker";
 import { Category, Subcategory, CreateServiceRequest } from "./types";
@@ -343,13 +343,13 @@ export default function CreateServicePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    handleInputChange("description", e.target.value)
+                <TinyMCEEditor
+                  value={formData.description || ""}
+                  onChange={(content) =>
+                    handleInputChange("description", content)
                   }
                   placeholder="Enter service description"
-                  rows={3}
+                  height={300}
                 />
               </div>
 

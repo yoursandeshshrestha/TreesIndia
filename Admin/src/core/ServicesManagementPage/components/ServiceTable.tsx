@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 import { Service } from "../types";
 
 interface ServiceTableProps {
@@ -87,7 +88,11 @@ export default function ServiceTable({
             <div className="font-medium text-gray-900">{service.name}</div>
             {service.description && (
               <div className="text-sm text-gray-500 truncate max-w-xs">
-                {service.description}
+                <HTMLRenderer
+                  html={service.description}
+                  className="truncate"
+                  stripDataAttributes={true}
+                />
               </div>
             )}
           </div>

@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Service } from "../types";
 import Badge from "@/components/Badge/Badge";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 
 interface ServiceGridProps {
   services: Service[];
@@ -116,9 +117,13 @@ export default function ServiceGrid({ services }: ServiceGridProps) {
                   {service.name}
                 </h3>
                 {service.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {service.description}
-                  </p>
+                  <div className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    <HTMLRenderer
+                      html={service.description}
+                      className="line-clamp-2"
+                      stripDataAttributes={true}
+                    />
+                  </div>
                 )}
               </div>
 

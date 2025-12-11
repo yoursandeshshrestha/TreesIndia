@@ -31,6 +31,7 @@ import Badge from "@/components/Badge/Badge";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import { ServiceModal } from "./ServiceModal";
 import { Loader } from "@/components/Loader";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 import { toast } from "sonner";
 
 interface ServiceDetailPageProps {
@@ -209,16 +210,19 @@ export default function ServiceDetailPage({
 
     try {
       setDeletingImageUrl(imageUrl);
-      
-      const response = await apiClient.delete(`/admin/services/${service.id}/images`, {
-        data: { image_url: imageUrl },
-      });
-      
+
+      const response = await apiClient.delete(
+        `/admin/services/${service.id}/images`,
+        {
+          data: { image_url: imageUrl },
+        }
+      );
+
       console.log("Delete response:", response);
-      
+
       // Reload service data from server to ensure consistency
       await loadService();
-      
+
       toast.success("Image deleted successfully");
     } catch (err) {
       console.error("Failed to delete image", err);
@@ -460,9 +464,11 @@ export default function ServiceDetailPage({
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">
                     Description
                   </h2>
-                  <p className="text-gray-700 leading-relaxed">
-                    {service.description}
-                  </p>
+                  <HTMLRenderer
+                    html={service.description}
+                    className="text-gray-700 leading-relaxed"
+                    stripDataAttributes={true}
+                  />
                 </div>
               )}
 
@@ -479,7 +485,10 @@ export default function ServiceDetailPage({
                         className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                       >
                         <div className="flex items-start gap-3">
-                          <MapPin size={18} className="text-primary-600 mt-0.5 flex-shrink-0" />
+                          <MapPin
+                            size={18}
+                            className="text-primary-600 mt-0.5 flex-shrink-0"
+                          />
                           <div className="flex-1">
                             <div className="font-medium text-gray-900 mb-1">
                               {area.city}, {area.state}

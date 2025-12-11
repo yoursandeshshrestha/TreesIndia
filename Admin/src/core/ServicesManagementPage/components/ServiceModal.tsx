@@ -5,7 +5,7 @@ import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import Button from "@/components/Button/Base/Button";
 import { BaseInput as Input } from "@/components/Input";
-import Textarea from "@/components/Textarea/Base/Textarea";
+import { TinyMCEEditor } from "@/components/TinyMCE";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import DurationPicker from "@/components/DurationPicker";
 import {
@@ -217,7 +217,12 @@ export function ServiceModal({
 
     if (files.length > 0) {
       const maxSize = 3 * 1024 * 1024; // 3MB
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       const validFiles: File[] = [];
       let hasError = false;
 
@@ -225,14 +230,22 @@ export function ServiceModal({
       files.forEach((file) => {
         // Check file size
         if (file.size > maxSize) {
-          toast.error(`"${file.name}" is too large. Maximum size is 3MB (file is ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+          toast.error(
+            `"${file.name}" is too large. Maximum size is 3MB (file is ${(
+              file.size /
+              1024 /
+              1024
+            ).toFixed(2)}MB)`
+          );
           hasError = true;
           return;
         }
 
         // Check file type
         if (!allowedTypes.includes(file.type)) {
-          toast.error(`"${file.name}" is not a valid image type. Only JPEG, PNG, GIF, and WebP are allowed.`);
+          toast.error(
+            `"${file.name}" is not a valid image type. Only JPEG, PNG, GIF, and WebP are allowed.`
+          );
           hasError = true;
           return;
         }
@@ -250,19 +263,26 @@ export function ServiceModal({
         validFiles.forEach((file) => {
           const reader = new FileReader();
           reader.onload = (event) => {
-            setNewImagePreviews((prev) => [...prev, event.target?.result as string]);
+            setNewImagePreviews((prev) => [
+              ...prev,
+              event.target?.result as string,
+            ]);
           };
           reader.readAsDataURL(file);
         });
 
         if (!hasError) {
-          toast.success(`${validFiles.length} image${validFiles.length > 1 ? 's' : ''} added successfully`);
+          toast.success(
+            `${validFiles.length} image${
+              validFiles.length > 1 ? "s" : ""
+            } added successfully`
+          );
         }
       }
 
       // Reset the input value so the same file can be selected again if needed
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -371,13 +391,13 @@ export function ServiceModal({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    handleInputChange("description", e.target.value)
+                <TinyMCEEditor
+                  value={formData.description || ""}
+                  onChange={(content) =>
+                    handleInputChange("description", content)
                   }
                   placeholder="Enter service description"
-                  rows={3}
+                  height={300}
                 />
               </div>
 
