@@ -6,6 +6,7 @@ import { openAuthModal } from "@/store/slices/authModalSlice";
 import { openServiceDetailModal } from "@/store/slices/serviceDetailModalSlice";
 import { Service } from "@/types/api";
 import { Clock } from "lucide-react";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 
 interface ServiceCardProps {
   service: Service;
@@ -47,7 +48,9 @@ export function ServiceCard({ service, showDivider }: ServiceCardProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6">
         <div className="flex-1 w-full">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base sm:text-lg font-bold text-black">{service.name}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">
+              {service.name}
+            </h3>
           </div>
 
           {/* Price Type and Duration */}
@@ -67,7 +70,13 @@ export function ServiceCard({ service, showDivider }: ServiceCardProps) {
             {formatPrice(service.price, service.price_type)}
           </p>
           {service.description && (
-            <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2 sm:line-clamp-none">{service.description}</p>
+            <div className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2 sm:line-clamp-none">
+              <HTMLRenderer
+                html={service.description}
+                className="line-clamp-2 sm:line-clamp-none"
+                stripDataAttributes={true}
+              />
+            </div>
           )}
           <button
             onClick={() => dispatch(openServiceDetailModal(service))}
@@ -100,7 +109,9 @@ export function ServiceCard({ service, showDivider }: ServiceCardProps) {
           </button>
         </div>
       </div>
-      {showDivider && <div className="border-t border-gray-200 mt-4 sm:mt-6"></div>}
+      {showDivider && (
+        <div className="border-t border-gray-200 mt-4 sm:mt-6"></div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { BookingPageSkeleton } from "./BookingPageSkeleton";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 
 interface MainContentProps {
   service?: {
@@ -41,9 +42,14 @@ export function MainContent({
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                 {service.name}
               </h2>
-              <p className="text-gray-600 text-sm mb-3">
-                {service.description}
-              </p>
+              {service.description && (
+                <div className="text-gray-600 text-sm mb-3">
+                  <HTMLRenderer
+                    html={service.description}
+                    stripDataAttributes={true}
+                  />
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center gap-3">
                 <span

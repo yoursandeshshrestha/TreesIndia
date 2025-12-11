@@ -8,6 +8,7 @@ import { closeServiceDetailModal } from "@/store/slices/serviceDetailModalSlice"
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { openAuthModal } from "@/store/slices/authModalSlice";
+import { HTMLRenderer } from "@/components/HTMLRenderer";
 
 export default function ServiceDetailModal() {
   const dispatch = useAppDispatch();
@@ -87,7 +88,7 @@ export default function ServiceDetailModal() {
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl w-full min-w-[300px] max-w-none shadow-xl max-h-[95vh] sm:max-h-[90vh] md:max-h-[85vh] flex flex-col"
+              className="bg-white rounded-2xl w-full min-w-[300px] max-w-none lg:max-w-4xl shadow-xl max-h-[95vh] sm:max-h-[90vh] md:max-h-[85vh] flex flex-col"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
@@ -152,9 +153,11 @@ export default function ServiceDetailModal() {
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                       About this service
                     </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
-                      {service.description}
-                    </p>
+                    <HTMLRenderer
+                      html={service.description}
+                      className="text-gray-700 leading-relaxed text-sm sm:text-base"
+                      stripDataAttributes={true}
+                    />
                   </div>
                 )}
               </div>
