@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:trees_india/commons/components/text/app/views/custom_text_library.dart';
 import '../../../../../commons/constants/app_colors.dart';
 import '../../../../../commons/constants/app_spacing.dart';
@@ -148,7 +149,7 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
       title: 'Service Details',
       children: [
         _buildDetailRow('Service', booking.service.name),
-        _buildDetailRow('Description', booking.service.description),
+        _buildHtmlDetailRow('Description', booking.service.description),
         if (booking.service.price != null)
           _buildDetailRow('Price', '₹${booking.service.price}'),
         if (booking.service.duration != null)
@@ -431,6 +432,48 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
             child: B3Medium(
               text: value,
               color: AppColors.brandNeutral800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHtmlDetailRow(String label, String htmlValue) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: B3Regular(
+              text: label,
+              color: AppColors.brandNeutral600,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: HtmlWidget(
+              htmlValue.replaceAll(RegExp(r'\s+data-(start|end)="[^"]*"'), ''),
+              textStyle: const TextStyle(
+                color: AppColors.brandNeutral800,
+                fontSize: 14,
+                height: 1.6,
+              ),
+              customStylesBuilder: (element) {
+                if (element.localName == 'p') {
+                  return {
+                    'margin': '0',
+                    'padding': '0',
+                    'margin-bottom': '4px'
+                  };
+                }
+                if (element.localName == 'body') {
+                  return {'margin': '0', 'padding': '0'};
+                }
+                return null;
+              },
             ),
           ),
         ],

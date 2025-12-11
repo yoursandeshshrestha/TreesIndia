@@ -42,7 +42,7 @@ class AboutTreesIndiaPage extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.all(8),
                     child: Image.asset(
-                      'assets/logo/treesindia-logo.png',
+                      'assets/logo/logo.png',
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -141,6 +141,12 @@ class AboutTreesIndiaPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildContactCard(Icons.email, 'Email',
                       'support@treesindiaservices.com', Colors.green),
+                  const SizedBox(height: 16),
+                  _buildContactCard(
+                      Icons.phone, 'Phone', '+91 9641864615', Colors.blue),
+                  const SizedBox(height: 16),
+                  _buildContactCard(
+                      Icons.phone, 'Phone', '+91 7363952622', Colors.blue),
                   const SizedBox(height: 16),
                   _buildContactCard(
                       Icons.location_on,
