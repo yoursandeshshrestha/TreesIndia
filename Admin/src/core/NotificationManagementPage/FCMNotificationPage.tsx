@@ -35,7 +35,6 @@ function FCMNotificationPage() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,7 +55,6 @@ function FCMNotificationPage() {
   }, []);
 
   const loadUsers = async () => {
-    setIsLoadingUsers(true);
     try {
       const params = new URLSearchParams({
         limit: "1000", // Get more users for selection
@@ -64,7 +62,18 @@ function FCMNotificationPage() {
       const response = await api.get(`/admin/users?${params}`);
 
       // Handle different response structures
-      let usersArray: any[] = [];
+      interface ApiUser {
+        ID?: number;
+        id?: number;
+        name?: string;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        phone?: string;
+        phone_number?: string;
+      }
+
+      let usersArray: ApiUser[] = [];
 
       // The API returns: { data: { users: [...], pagination: {...} } }
       if (response && response.data) {
@@ -79,8 +88,8 @@ function FCMNotificationPage() {
       }
 
       setUsers(
-        usersArray.map((user: any) => ({
-          id: user.ID || user.id,
+        usersArray.map((user: ApiUser) => ({
+          id: user.ID || user.id || 0,
           name:
             user.name ||
             `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
@@ -89,11 +98,9 @@ function FCMNotificationPage() {
           phone: user.phone || user.phone_number || "",
         }))
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to load users:", error);
       toast.error("Failed to load users");
-    } finally {
-      setIsLoadingUsers(false);
     }
   };
 
@@ -144,8 +151,14 @@ function FCMNotificationPage() {
         priority: "normal",
       });
       setSelectedUsers([]);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to send notification");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String(error.message)
+            : "Failed to send notification";
+      toast.error(errorMessage);
     }
   };
 
@@ -186,8 +199,14 @@ function FCMNotificationPage() {
         priority: "normal",
       });
       setSelectedUsers([]);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to send notifications");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String(error.message)
+            : "Failed to send notifications";
+      toast.error(errorMessage);
     }
   };
 
@@ -282,7 +301,7 @@ function FCMNotificationPage() {
                     }))}
                     value={formData.type}
                     onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, type: value }))
+                      setFormData((prev) => ({ ...prev, type: String(value) }))
                     }
                     placeholder="Select notification type"
                   />
@@ -301,7 +320,7 @@ function FCMNotificationPage() {
                     ]}
                     value={formData.priority}
                     onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, priority: value }))
+                      setFormData((prev) => ({ ...prev, priority: String(value) }))
                     }
                     placeholder="Select priority"
                   />
@@ -432,6 +451,7 @@ function FCMNotificationPage() {
 }
 
 export default FCMNotificationPage;
+
 
 
 

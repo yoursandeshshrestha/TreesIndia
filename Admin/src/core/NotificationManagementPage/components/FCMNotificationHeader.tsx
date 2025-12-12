@@ -1,10 +1,4 @@
-import { Bell } from "lucide-react";
-
-interface FCMNotificationHeaderProps {
-  onRefresh?: () => void;
-}
-
-const FCMNotificationHeader = ({ onRefresh }: FCMNotificationHeaderProps) => {
+const FCMNotificationHeader = () => {
   return (
     <div className="flex justify-between items-center">
       <div>
@@ -18,6 +12,7 @@ const FCMNotificationHeader = ({ onRefresh }: FCMNotificationHeaderProps) => {
 };
 
 export default FCMNotificationHeader;
+
 
 
 

@@ -2,6 +2,7 @@
 
 import { Editor } from "@tinymce/tinymce-react";
 import { useRef } from "react";
+import type { Editor as TinyMCEEditorType } from "tinymce";
 
 interface TinyMCEEditorProps {
   value: string;
@@ -18,7 +19,7 @@ export default function TinyMCEEditor({
   height = 400,
   className = "",
 }: TinyMCEEditorProps) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<TinyMCEEditorType | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || "";
 
@@ -75,6 +76,7 @@ export default function TinyMCEEditor({
     </div>
   );
 }
+
 
 
 

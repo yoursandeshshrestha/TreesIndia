@@ -163,14 +163,26 @@ function UsersManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
       loadUsers();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete user", err);
       // Extract error message from ApiError
-      const errorMessage =
-        err?.message ||
-        err?.data?.message ||
-        err?.data?.error ||
-        "Failed to delete user";
+      let errorMessage = "Failed to delete user";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "message" in err
+      ) {
+        errorMessage = String(err.message);
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "data" in err
+      ) {
+        const data = err.data as { message?: string; error?: string };
+        errorMessage = data?.message || data?.error || errorMessage;
+      }
       toast.error(errorMessage);
     } finally {
       setIsDeletingUser(false);

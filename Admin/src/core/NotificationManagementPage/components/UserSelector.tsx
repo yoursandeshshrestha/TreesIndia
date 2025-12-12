@@ -52,7 +52,20 @@ const UserSelector: React.FC<UserSelectorProps> = ({ onClose, onSelect }) => {
       const fetchedUsers: User[] = [];
 
       // Handle different response structures
-      let usersArray: any[] = [];
+      interface ApiUser {
+        ID?: number;
+        id?: number;
+        name?: string;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        phone?: string;
+        phone_number?: string;
+        avatar?: string;
+        profile_picture?: string;
+      }
+
+      let usersArray: ApiUser[] = [];
 
       // The API returns: { data: { users: [...], pagination: {...} } }
       if (response && response.data) {
@@ -66,17 +79,21 @@ const UserSelector: React.FC<UserSelectorProps> = ({ onClose, onSelect }) => {
         }
       }
 
-      usersArray.forEach((user: any) => {
-        fetchedUsers.push({
-          id: user.ID || user.id,
-          name:
-            user.name ||
-            `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-            "Unknown",
-          email: user.email || "",
-          phone: user.phone || user.phone_number || "",
-          avatar: user.avatar || user.profile_picture || undefined,
-        });
+      usersArray.forEach((user: ApiUser) => {
+        const userId = user.ID ?? user.id;
+        // Only add users with a valid ID
+        if (userId !== undefined) {
+          fetchedUsers.push({
+            id: userId,
+            name:
+              user.name ||
+              `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+              "Unknown",
+            email: user.email || "",
+            phone: user.phone || user.phone_number || "",
+            avatar: user.avatar || user.profile_picture || undefined,
+          });
+        }
       });
 
       setUsers(fetchedUsers);
