@@ -28,6 +28,8 @@
 		<true/>
 		<key>NSCameraUsageDescription</key>
 		<string>This app needs access to your camera to take photos.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app uses a camera library that supports video recording, but only photo capture is enabled.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>This app needs location access to provide better recommendations and services based on your location.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>

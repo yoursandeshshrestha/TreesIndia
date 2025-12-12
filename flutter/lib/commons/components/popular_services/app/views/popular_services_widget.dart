@@ -20,8 +20,9 @@ class PopularServicesWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final homePageState = ref.watch(homePageNotifierProvider);
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      color: Colors.transparent,
       child: Column(
         children: [
           // Header
@@ -48,7 +49,8 @@ class PopularServicesWidget extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
 
           // Service Cards
-          SizedBox(
+          Container(
+            color: Colors.transparent,
             height: 250,
             child: homePageState.isLoadingPopularServices
                 ? ListView.builder(
@@ -75,7 +77,8 @@ class PopularServicesWidget extends ConsumerWidget {
                         itemCount: homePageState.popularServices.length,
                         itemBuilder: (context, index) {
                           final service = homePageState.popularServices[index];
-                          return Padding(
+                          return Container(
+                            color: Colors.transparent,
                             padding: EdgeInsets.only(
                               right: index <
                                       homePageState.popularServices.length - 1
