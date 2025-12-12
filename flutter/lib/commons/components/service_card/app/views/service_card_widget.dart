@@ -96,20 +96,20 @@ class ServiceCardWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.brandNeutral200,
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.brandNeutral900.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-              spreadRadius: 0,
-            ),
-          ],
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: AppColors.brandNeutral900.withValues(alpha: 0.08),
+          //     blurRadius: 12,
+          //     offset: const Offset(0, 4),
+          //     spreadRadius: 0,
+          //   ),
+          // ],
         ),
         width: 240,
         child: Column(
@@ -153,10 +153,10 @@ class ServiceCardWidget extends StatelessWidget {
                           Colors.black.withValues(alpha: 0.1),
                         ],
                       ),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
+                      // borderRadius: const BorderRadius.only(
+                      //   bottomLeft: Radius.circular(16),
+                      //   bottomRight: Radius.circular(16),
+                      // ),
                     ),
                   ),
                 ),
@@ -179,7 +179,7 @@ class ServiceCardWidget extends StatelessWidget {
                   B3Bold(
                     text: props.title,
                     color: AppColors.brandNeutral900,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
 

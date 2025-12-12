@@ -140,7 +140,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
               // Subtitle
               B2Regular(
-                text: 'We have sent a 4-digit verification code to',
+                text: 'We have sent a 6-digit verification code to',
                 color: AppColors.brandNeutral600,
               ),
               const SizedBox(height: AppSpacing.xs),
