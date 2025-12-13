@@ -16,7 +16,6 @@ import {
   Truck,
   MessageCircle,
   BookOpen,
-  MapPin,
   Bell,
 } from "lucide-react";
 import type { AdminRole } from "@/services/api/auth";
@@ -153,7 +152,8 @@ export const sidebarItems: SidebarItem[] = [
         undefined,
         ["super_admin", "booking_manager"]
       ),
-    ]
+    ],
+    ["super_admin", "booking_manager", "support_agent"]
   ),
 
   // Services Section (content + vendor focused roles)
@@ -164,26 +164,12 @@ export const sidebarItems: SidebarItem[] = [
   ]),
 
   // Category Management Section
-  createMenuWithChildren(
+  createMenuItem(
     "categories",
     "Category Management",
+    "/dashboard/categories",
     <Layers size={16} />,
-    [
-      createMenuItem(
-        "categories",
-        "Categories",
-        "/dashboard/categories",
-        undefined,
-        ["super_admin", "content_manager"]
-      ),
-      createMenuItem(
-        "subcategories",
-        "Subcategories",
-        "/dashboard/subcategories",
-        undefined,
-        ["super_admin", "content_manager"]
-      ),
-    ]
+    ["super_admin", "content_manager"]
   ),
 
   // Service Management Section
@@ -210,10 +196,11 @@ export const sidebarItems: SidebarItem[] = [
         "service-areas",
         "Service Areas",
         "/dashboard/service-areas",
-        <MapPin size={16} />,
+        undefined,
         ["super_admin", "content_manager"]
       ),
-    ]
+    ],
+    ["super_admin", "content_manager"]
   ),
 
   // Marketplace Section (properties / vendor focused roles)
@@ -241,40 +228,53 @@ export const sidebarItems: SidebarItem[] = [
         undefined,
         ["super_admin", "vendor_manager", "properties_manager"]
       ),
-    ]
+    ],
+    ["super_admin", "vendor_manager", "properties_manager"]
   ),
-  createMenuWithChildren("work-force", "Work Force", <HardHat size={16} />, [
-    createMenuItem(
-      "workforce-workers",
-      "Workers",
-      "/dashboard/marketplace/workforce/workers",
-      <UserCheck size={16} />,
-      ["super_admin", "vendor_manager"]
-    ),
-    createMenuItem(
-      "vendors",
-      "Vendors",
-      "/dashboard/marketplace/workforce/vendors",
-      <Truck size={16} />,
-      ["super_admin", "vendor_manager"]
-    ),
-  ]),
-  createMenuWithChildren("projects", "Projects", <Building size={16} />, [
-    createMenuItem(
-      "all-projects",
-      "All Projects",
-      "/dashboard/marketplace/projects",
-      undefined,
-      ["super_admin", "vendor_manager", "properties_manager"]
-    ),
-    createMenuItem(
-      "create-project",
-      "Create New Project",
-      "/dashboard/marketplace/projects/create",
-      undefined,
-      ["super_admin", "vendor_manager", "properties_manager"]
-    ),
-  ]),
+  createMenuWithChildren(
+    "work-force",
+    "Work Force",
+    <HardHat size={16} />,
+    [
+      createMenuItem(
+        "workforce-workers",
+        "Workers",
+        "/dashboard/marketplace/workforce/workers",
+        <UserCheck size={16} />,
+        ["super_admin", "vendor_manager"]
+      ),
+      createMenuItem(
+        "vendors",
+        "Vendors",
+        "/dashboard/marketplace/workforce/vendors",
+        <Truck size={16} />,
+        ["super_admin", "vendor_manager"]
+      ),
+    ],
+    ["super_admin", "vendor_manager"]
+  ),
+  createMenuWithChildren(
+    "projects",
+    "Projects",
+    <Building size={16} />,
+    [
+      createMenuItem(
+        "all-projects",
+        "All Projects",
+        "/dashboard/marketplace/projects",
+        undefined,
+        ["super_admin", "vendor_manager", "properties_manager"]
+      ),
+      createMenuItem(
+        "create-project",
+        "Create New Project",
+        "/dashboard/marketplace/projects/create",
+        undefined,
+        ["super_admin", "vendor_manager", "properties_manager"]
+      ),
+    ],
+    ["super_admin", "vendor_manager", "properties_manager"]
+  ),
 
   // Communication Section
   createSectionLabel("Communication"),

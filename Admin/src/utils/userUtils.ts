@@ -22,8 +22,6 @@ export const GENDER_OPTIONS = [
   { label: "Prefer not to say", value: "prefer_not_to_say" as Gender },
 ];
 
-
-
 // Status Options
 export const STATUS_OPTIONS = [
   { label: "All Status", value: "" },
@@ -51,8 +49,6 @@ export const getUserTypeColor = (userType: UserType): string => {
 export const getStatusColor = (isActive: boolean): string => {
   return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 };
-
-
 
 // Icon Mappings
 export const getUserTypeIcon = (userType: UserType) => {
@@ -89,8 +85,6 @@ export const formatUserType = (userType: UserType): string => {
   return userType.charAt(0).toUpperCase() + userType.slice(1);
 };
 
-
-
 export const formatGender = (gender: Gender): string => {
   return (
     gender.replace("_", " ").charAt(0).toUpperCase() +
@@ -122,8 +116,6 @@ export const validateUserForm = (
     errors.wallet_balance = "Wallet balance cannot be negative";
   }
 
-
-
   return errors;
 };
 
@@ -131,7 +123,7 @@ export const validateUserForm = (
 export const getDefaultUserData = (): Partial<User> => ({
   name: "",
   email: "",
-  phone: "",
+  phone: "+91",
   user_type: "normal",
   gender: undefined,
   is_active: true,

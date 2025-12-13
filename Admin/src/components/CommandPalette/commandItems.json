@@ -18,14 +18,14 @@
     "label": "Categories",
     "description": "Go to categories",
     "path": "/dashboard/categories",
-    "keywords": ["categories", "category", "classification", "types"]
-  },
-  {
-    "id": "subcategories",
-    "label": "Subcategories",
-    "description": "Go to subcategories",
-    "path": "/dashboard/subcategories",
-    "keywords": ["subcategories", "subcategory", "sub", "classification"]
+    "keywords": [
+      "categories",
+      "category",
+      "classification",
+      "types",
+      "subcategories",
+      "subcategory"
+    ]
   },
   {
     "id": "services",

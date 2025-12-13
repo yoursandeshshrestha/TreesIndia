@@ -85,7 +85,7 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
 
   const handleInputChange = (
     field: keyof (User & { admin_role?: AdminRole }),
-    value: unknown,
+    value: unknown
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -99,6 +99,32 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
         [field]: "",
       }));
     }
+  };
+
+  // Handle phone number change - ensure +91 prefix is always present
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    // Remove all non-digit characters
+    const digitsOnly = inputValue.replace(/\D/g, "");
+    // Limit to 10 digits (Indian phone number length)
+    const limitedDigits = digitsOnly.slice(0, 10);
+    // Always prepend +91 (the prefix is non-removable)
+    const fullPhone = `+91${limitedDigits}`;
+    handleInputChange("phone", fullPhone);
+  };
+
+  // Get the phone number part without +91 prefix for display
+  const getPhoneNumberPart = (phone: string | undefined): string => {
+    if (!phone) return "";
+    // Remove +91 prefix if present
+    if (phone.startsWith("+91")) {
+      return phone.slice(3);
+    }
+    // If phone doesn't start with +91, extract just the digits (for edit mode)
+    // This handles cases where existing phone might be in different format
+    const digitsOnly = phone.replace(/\D/g, "");
+    // If it's 10 digits, return as is; otherwise return last 10 digits
+    return digitsOnly.length <= 10 ? digitsOnly : digitsOnly.slice(-10);
   };
 
   if (!isOpen) return null;
@@ -144,13 +170,23 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
                   </label>
-                  <Input
-                    type="tel"
-                    value={formData.phone || ""}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="+1234567890"
-                    error={errors.phone}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value="+91"
+                      disabled
+                      fullWidth={false}
+                      className="w-10 flex-shrink-0"
+                    />
+                    <Input
+                      type="tel"
+                      value={getPhoneNumberPart(formData.phone)}
+                      onChange={handlePhoneChange}
+                      placeholder="9876543210"
+                      error={errors.phone}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
 
                 <div>
