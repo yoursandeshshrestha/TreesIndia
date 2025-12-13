@@ -16,10 +16,8 @@ type Service struct {
 	PriceType     string         `json:"price_type" gorm:"not null;default:'inquiry'"` // "fixed" or "inquiry"
 	Price         *float64       `json:"price"` // Fixed price (nil if inquiry-based)
 	Duration      *string        `json:"duration"` // Optional duration
-	CategoryID    uint           `json:"category_id" gorm:"not null"`
-	SubcategoryID uint           `json:"subcategory_id" gorm:"not null"`
-	Category      Category       `json:"category" gorm:"foreignKey:CategoryID"` // Include category name
-	Subcategory   Subcategory    `json:"subcategory" gorm:"foreignKey:SubcategoryID"` // Include subcategory name
+	CategoryID    uint           `json:"category_id" gorm:"not null"` // References categories.id (typically Level 3)
+	Category      Category       `json:"category" gorm:"foreignKey:CategoryID"` // Include category with hierarchy
 	IsActive      bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -36,8 +34,7 @@ type CreateServiceRequest struct {
 	PriceType     string   `json:"price_type" binding:"required,oneof=fixed inquiry"`
 	Price         *float64 `json:"price"` // Required if price_type is "fixed" (validated in service layer)
 	Duration      *string  `json:"duration" binding:"omitempty,duration"` // Custom validation
-	CategoryID    uint     `json:"category_id" binding:"required"`
-	SubcategoryID uint     `json:"subcategory_id" binding:"required"`
+	CategoryID    uint     `json:"category_id" binding:"required"` // Typically Level 3 category
 	IsActive      *bool    `json:"is_active"`
 	ServiceAreaIDs []uint  `json:"service_area_ids" binding:"required,min=1"` // At least one service area ID required
 }
@@ -49,8 +46,7 @@ type UpdateServiceRequest struct {
 	PriceType     string   `json:"price_type" binding:"omitempty,oneof=fixed inquiry"`
 	Price         *float64 `json:"price"`
 	Duration      *string  `json:"duration"`
-	CategoryID    *uint    `json:"category_id"`
-	SubcategoryID *uint    `json:"subcategory_id"`
+	CategoryID    *uint    `json:"category_id"` // Typically Level 3 category
 	IsActive      *bool    `json:"is_active"`
 	ServiceAreaIDs []uint  `json:"service_area_ids" binding:"omitempty,min=1"` // Optional but if provided, at least one required
 }
@@ -76,13 +72,43 @@ type ServiceSummary struct {
 	Price         *float64       `json:"price"` // Fixed price (nil if inquiry-based)
 	Duration      *string        `json:"duration"` // Optional duration
 	CategoryID    uint           `json:"category_id" gorm:"not null"`
-	SubcategoryID uint           `json:"subcategory_id" gorm:"not null"`
 	CategoryName  string         `json:"category_name"` // Just the category name
-	SubcategoryName string       `json:"subcategory_name"` // Just the subcategory name
+	CategoryPath  string         `json:"category_path"` // Full category path like "home service → electrician → ac repair"
 	IsActive      bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 	ServiceAreas  []ServiceAreaSummary `json:"service_areas,omitempty"` // Include simplified service areas
+}
+
+// BuildCategoryPath builds the full category path from a Category object
+func BuildCategoryPath(category *Category) string {
+	if category == nil {
+		return ""
+	}
+	
+	path := []string{}
+	current := category
+	
+	// Traverse up the parent chain
+	for current != nil {
+		path = append([]string{current.Name}, path...)
+		current = current.Parent
+	}
+	
+	if len(path) == 0 {
+		return ""
+	}
+	
+	// Join with arrow separator
+	result := ""
+	for i, name := range path {
+		if i > 0 {
+			result += " → "
+		}
+		result += name
+	}
+	
+	return result
 }
 

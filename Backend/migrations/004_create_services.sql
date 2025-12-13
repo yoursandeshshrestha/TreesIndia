@@ -1,5 +1,6 @@
 -- +goose Up
--- Create services table (depends on categories and subcategories)
+-- Create services table (depends on categories)
+-- Services now reference a single category_id (typically Level 3, the deepest level)
 CREATE TABLE IF NOT EXISTS services (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -12,11 +13,9 @@ CREATE TABLE IF NOT EXISTS services (
     price_type TEXT NOT NULL DEFAULT 'inquiry',
     price DECIMAL,
     duration TEXT,
-    category_id BIGINT NOT NULL,
-    subcategory_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL, -- References categories.id (typically Level 3)
     is_active BOOLEAN DEFAULT true,
-    FOREIGN KEY (category_id) REFERENCES categories(id),
-    FOREIGN KEY (subcategory_id) REFERENCES subcategories(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 -- +goose Down

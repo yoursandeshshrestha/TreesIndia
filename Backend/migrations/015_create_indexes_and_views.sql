@@ -10,16 +10,11 @@ CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
 -- Indexes for categories table
 CREATE INDEX IF NOT EXISTS idx_categories_is_active ON categories(is_active);
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
-
--- Indexes for subcategories table
-CREATE INDEX IF NOT EXISTS idx_subcategories_parent_id ON subcategories(parent_id);
-CREATE INDEX IF NOT EXISTS idx_subcategories_is_active ON subcategories(is_active);
-CREATE INDEX IF NOT EXISTS idx_subcategories_slug ON subcategories(slug);
+-- Note: idx_categories_parent_id is created in 002_create_categories.sql
 
 -- Indexes for services table
 CREATE INDEX IF NOT EXISTS idx_services_slug ON services(slug);
 CREATE INDEX IF NOT EXISTS idx_services_category_id ON services(category_id);
-CREATE INDEX IF NOT EXISTS idx_services_subcategory_id ON services(subcategory_id);
 CREATE INDEX IF NOT EXISTS idx_services_is_active ON services(is_active);
 
 -- Indexes for bookings table
@@ -117,12 +112,8 @@ DROP INDEX IF EXISTS idx_bookings_service_id;
 DROP INDEX IF EXISTS idx_bookings_user_id;
 DROP INDEX IF EXISTS idx_bookings_booking_reference;
 DROP INDEX IF EXISTS idx_services_is_active;
-DROP INDEX IF EXISTS idx_services_subcategory_id;
 DROP INDEX IF EXISTS idx_services_category_id;
 DROP INDEX IF EXISTS idx_services_slug;
-DROP INDEX IF EXISTS idx_subcategories_slug;
-DROP INDEX IF EXISTS idx_subcategories_is_active;
-DROP INDEX IF EXISTS idx_subcategories_parent_id;
 DROP INDEX IF EXISTS idx_categories_slug;
 DROP INDEX IF EXISTS idx_categories_is_active;
 DROP INDEX IF EXISTS idx_users_is_active;

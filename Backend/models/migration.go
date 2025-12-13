@@ -28,7 +28,6 @@ func RunMigrations() error {
 	models := []interface{}{
 		&User{},
 		&Category{},
-		&Subcategory{},
 		&Service{},
 		&Location{},
 		&RoleApplication{},
@@ -74,18 +73,12 @@ func CreateIndexes() error {
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)").Error; err != nil {
 		return err
 	}
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_subcategories_parent_id ON subcategories(parent_id)").Error; err != nil {
-		return err
-	}
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_subcategories_name ON subcategories(name)").Error; err != nil {
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id)").Error; err != nil {
 		return err
 	}
 
 	// Service indexes
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_services_category_id ON services(category_id)").Error; err != nil {
-		return err
-	}
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_services_subcategory_id ON services(subcategory_id)").Error; err != nil {
 		return err
 	}
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_services_is_active ON services(is_active)").Error; err != nil {
