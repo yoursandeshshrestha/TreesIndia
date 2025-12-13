@@ -3,29 +3,29 @@ import { Search, X } from "lucide-react";
 import Input from "@/components/Input/Base/Input";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Button from "@/components/Button/Base/Button";
-import { Category, Subcategory } from "../types";
+import { Category } from "../types";
 
 interface ServiceFiltersProps {
   search: string;
   status: string;
   priceType: string;
   categoryId: string;
-  subcategoryId: string;
+  subcategoryId?: string; // Legacy - kept for backward compatibility
   sortBy: string;
   sortOrder: string;
   categories: Category[];
-  subcategories: Subcategory[];
+  subcategories?: Category[]; // Legacy - kept for backward compatibility, now returns child categories
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onPriceTypeChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
-  onSubcategoryChange: (value: string) => void;
+  onSubcategoryChange?: (value: string) => void; // Legacy - optional
   onSortByChange: (value: string) => void;
   onSortOrderChange: (value: string) => void;
   onClear: () => void;
   onClearSearch: () => void;
   onCategoryDropdownOpen: () => void;
-  onSubcategoryDropdownOpen: () => void;
+  onSubcategoryDropdownOpen?: () => void; // Legacy - optional
   isSearching?: boolean;
 }
 
@@ -38,7 +38,7 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
   sortBy,
   sortOrder,
   categories,
-  subcategories,
+  subcategories = [],
   onSearchChange,
   onStatusChange,
   onPriceTypeChange,
@@ -144,15 +144,19 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
           width="15rem"
           onOpen={onCategoryDropdownOpen}
         />
-        <SearchableDropdown
-          options={subcategoryOptions}
-          value={subcategoryId}
-          onChange={(val) => onSubcategoryChange(val as string)}
-          placeholder="Subcategory"
-          className="w-48 h-10"
-          width="15rem"
-          onOpen={onSubcategoryDropdownOpen}
-        />
+        {/* Subcategory filter removed - using unified category structure */}
+        {onSubcategoryChange && (
+          <SearchableDropdown
+            options={subcategoryOptions}
+            value={subcategoryId || ""}
+            onChange={(val) => onSubcategoryChange?.(val as string)}
+            placeholder="Subcategory (Legacy)"
+            disabled={!categoryId || subcategories.length === 0}
+            className="w-48 h-10"
+            width="15rem"
+            onOpen={onSubcategoryDropdownOpen}
+          />
+        )}
         <SearchableDropdown
           options={sortByOptions}
           value={sortBy}

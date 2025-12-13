@@ -18,7 +18,6 @@ import { ServiceModal } from "@/core/ServicesManagementPage/components/ServiceMo
 import {
   Service,
   Category,
-  Subcategory,
   CreateServiceRequest,
   UpdateServiceRequest,
 } from "./types";
@@ -28,7 +27,7 @@ interface ServiceFilterState {
   status: string;
   priceType: string;
   categoryId: string;
-  subcategoryId: string;
+  subcategoryId: string; // Legacy - kept for backward compatibility
   sortBy: string;
   sortOrder: string;
 }
@@ -41,10 +40,9 @@ function ServicesManagementPage() {
   // State management
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  // Subcategories removed - using unified category structure
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -96,7 +94,7 @@ function ServicesManagementPage() {
           type: filters.priceType === "fixed" ? "fixed-price" : "inquiry-based",
         }),
         ...(filters.categoryId && { category: filters.categoryId }),
-        ...(filters.subcategoryId && { subcategory: filters.subcategoryId }),
+        // Subcategory filter removed - use categoryId instead
         ...(filters.sortBy && { sort_by: filters.sortBy }),
         ...(filters.sortOrder && { sort_order: filters.sortOrder }),
       });
@@ -141,7 +139,9 @@ function ServicesManagementPage() {
   const loadCategories = async () => {
     setIsLoadingCategories(true);
     try {
-      const response = await apiClient.get("/services/categories");
+      const response = await apiClient.get(
+        "/admin/categories?include=children"
+      );
       const categories = response.data.data || [];
       setCategories(categories);
     } catch {
@@ -175,18 +175,7 @@ function ServicesManagementPage() {
     }
   };
 
-  const handleSubcategoryDropdownOpen = async () => {
-    if (subcategories.length === 0) {
-      // Load all subcategories (independent of category)
-      try {
-        const response = await apiClient.get("/subcategories");
-        const subcategories = response.data.data || [];
-        setSubcategories(subcategories);
-      } catch {
-        // Handle error silently for dropdown
-      }
-    }
-  };
+  // handleSubcategoryDropdownOpen removed - using unified category structure
 
   const handleDeleteService = async (service: Service) => {
     try {
@@ -247,8 +236,7 @@ function ServicesManagementPage() {
       await loadCategories();
     }
 
-    // Load subcategories for the service's category
-    loadSubcategories(service.category_id);
+    // Subcategory loading removed - using unified category structure
   };
 
   // Wrapper function for the table action (non-async)
@@ -274,8 +262,7 @@ function ServicesManagementPage() {
       const description = data.description || selectedService.description || "";
       const priceType = data.price_type || selectedService.price_type;
       const categoryId = data.category_id || selectedService.category_id;
-      const subcategoryId =
-        data.subcategory_id || selectedService.subcategory_id;
+      // subcategoryId removed - using single category_id
       const isActive =
         data.is_active !== undefined
           ? data.is_active
@@ -288,8 +275,10 @@ function ServicesManagementPage() {
       if (data.price !== undefined && data.price !== null) {
         formData.append("price", data.price.toString());
       }
+      if (data.duration) {
+        formData.append("duration", data.duration);
+      }
       formData.append("category_id", categoryId?.toString() || "0");
-      formData.append("subcategory_id", subcategoryId?.toString() || "0");
       formData.append("is_active", isActive?.toString() || "true");
 
       // Add images
@@ -418,14 +407,10 @@ function ServicesManagementPage() {
           }}
           service={selectedService}
           categories={categories}
-          subcategories={subcategories}
+          // subcategories prop removed
           onSubmit={handleUpdateService}
-          isLoading={
-            isSubmitting || isLoadingCategories || isLoadingSubcategories
-          }
-          onCategoryChange={(categoryId: number) =>
-            loadSubcategories(categoryId)
-          }
+          isLoading={isSubmitting || isLoadingCategories}
+          // onCategoryChange removed - no longer needed
         />
 
         <ServiceFilters
@@ -437,7 +422,7 @@ function ServicesManagementPage() {
           sortBy={filters.sortBy}
           sortOrder={filters.sortOrder}
           categories={categories}
-          subcategories={subcategories}
+          // subcategories prop removed
           onSearchChange={(value) => {
             setLocalSearch(value);
             setIsSearching(true);
@@ -458,10 +443,7 @@ function ServicesManagementPage() {
             }));
             setCurrentPage(1);
           }}
-          onSubcategoryChange={(value) => {
-            setFilters((prev) => ({ ...prev, subcategoryId: value }));
-            setCurrentPage(1);
-          }}
+          // onSubcategoryChange removed - using unified category structure
           onSortByChange={(value) => {
             setFilters((prev) => ({ ...prev, sortBy: value }));
             setCurrentPage(1);
@@ -476,7 +458,7 @@ function ServicesManagementPage() {
             setIsSearching(false);
           }}
           onCategoryDropdownOpen={handleCategoryDropdownOpen}
-          onSubcategoryDropdownOpen={handleSubcategoryDropdownOpen}
+          // onSubcategoryDropdownOpen removed
           isSearching={isSearching}
         />
 

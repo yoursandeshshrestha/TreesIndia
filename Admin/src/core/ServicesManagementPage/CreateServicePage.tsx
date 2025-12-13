@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
@@ -9,7 +9,8 @@ import { BaseInput as Input } from "@/components/Input";
 import { TinyMCEEditor } from "@/components/TinyMCE";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import DurationPicker from "@/components/DurationPicker";
-import { Category, Subcategory, CreateServiceRequest } from "./types";
+import CategoryTreeSelector from "./components/CategoryTreeSelector";
+import { Category, CreateServiceRequest } from "./types";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import ServiceAreaSelector from "./components/ServiceAreaSelector";
@@ -17,10 +18,8 @@ import ServiceAreaSelector from "./components/ServiceAreaSelector";
 export default function CreateServicePage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -33,7 +32,6 @@ export default function CreateServicePage() {
     price: undefined,
     duration: "",
     category_id: 0,
-    subcategory_id: 0,
     is_active: true,
     service_area_ids: [],
   });
@@ -43,7 +41,9 @@ export default function CreateServicePage() {
 
     setIsLoadingCategories(true);
     try {
-      const response = await apiClient.get("/services/categories");
+      const response = await apiClient.get(
+        "/admin/categories?include=children"
+      );
       const categories = response.data.data || [];
       setCategories(categories);
     } catch (error) {
@@ -51,24 +51,6 @@ export default function CreateServicePage() {
       toast.error("Failed to load categories");
     } finally {
       setIsLoadingCategories(false);
-    }
-  };
-
-  const loadSubcategories = async (categoryId?: number) => {
-    setIsLoadingSubcategories(true);
-    try {
-      let url = "/subcategories";
-      if (categoryId) {
-        url += `/category/${categoryId}`;
-      }
-      const response = await apiClient.get(url);
-      const subcategories = response.data.data || [];
-      setSubcategories(subcategories);
-    } catch (error) {
-      console.error("Error loading subcategories:", error);
-      toast.error("Failed to load subcategories");
-    } finally {
-      setIsLoadingSubcategories(false);
     }
   };
 
@@ -85,10 +67,6 @@ export default function CreateServicePage() {
 
     if (!formData.category_id) {
       newErrors.category_id = "Category is required";
-    }
-
-    if (!formData.subcategory_id) {
-      newErrors.subcategory_id = "Subcategory is required";
     }
 
     if (
@@ -186,16 +164,8 @@ export default function CreateServicePage() {
     setFormData((prev) => ({
       ...prev,
       category_id: categoryIdNum,
-      subcategory_id: 0, // Reset subcategory when category changes
     }));
-    setErrors((prev) => ({ ...prev, category_id: "", subcategory_id: "" }));
-
-    if (categoryIdNum) {
-      // Load subcategories for the selected category
-      loadSubcategories(categoryIdNum);
-    } else {
-      setSubcategories([]);
-    }
+    setErrors((prev) => ({ ...prev, category_id: "" }));
   };
 
   const handleServiceAreasChange = (serviceAreaIds: number[]) => {
@@ -270,15 +240,10 @@ export default function CreateServicePage() {
     { value: "fixed", label: "Fixed Price" },
   ];
 
-  const categoryOptions = categories.map((category) => ({
-    value: category.id.toString(),
-    label: category.name,
-  }));
-
-  const subcategoryOptions = subcategories.map((subcategory) => ({
-    value: subcategory.id.toString(),
-    label: subcategory.name,
-  }));
+  // Load categories on mount
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -394,61 +359,34 @@ export default function CreateServicePage() {
               </div>
             </div>
 
-            {/* Category and Subcategory */}
+            {/* Category Selection */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Category & Subcategory
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900">Category</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
-                  </label>
-                  <SearchableDropdown
-                    options={categoryOptions}
-                    value={formData.category_id.toString()}
-                    onChange={(value) => handleCategoryChange(value as string)}
-                    placeholder="Select category"
-                    className={errors.category_id ? "border-red-500" : ""}
-                    width="100%"
-                    loading={isLoadingCategories}
-                    onOpen={loadCategories}
-                  />
-                  {errors.category_id && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.category_id}
+              <div>
+                {isLoadingCategories ? (
+                  <div className="border border-gray-200 rounded-lg p-8 text-center">
+                    <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">
+                      Loading categories...
                     </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subcategory *
-                  </label>
-                  <SearchableDropdown
-                    options={subcategoryOptions}
-                    value={formData.subcategory_id.toString()}
-                    onChange={(value) =>
-                      handleInputChange(
-                        "subcategory_id",
-                        parseInt(value as string)
-                      )
-                    }
-                    placeholder="Select subcategory"
-                    disabled={
-                      !formData.category_id || subcategories.length === 0
-                    }
-                    className={errors.subcategory_id ? "border-red-500" : ""}
-                    width="100%"
-                    loading={isLoadingSubcategories}
-                  />
-                  {errors.subcategory_id && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.subcategory_id}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <CategoryTreeSelector
+                      categories={categories}
+                      selectedCategoryId={formData.category_id}
+                      onSelect={(categoryId) =>
+                        handleCategoryChange(categoryId.toString())
+                      }
+                    />
+                    {errors.category_id && (
+                      <p className="text-sm text-red-600 mt-2">
+                        {errors.category_id}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 

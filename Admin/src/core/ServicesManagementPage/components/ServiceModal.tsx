@@ -8,10 +8,10 @@ import { BaseInput as Input } from "@/components/Input";
 import { TinyMCEEditor } from "@/components/TinyMCE";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import DurationPicker from "@/components/DurationPicker";
+import CategoryTreeSelector from "./CategoryTreeSelector";
 import {
   Service,
   Category,
-  Subcategory,
   CreateServiceRequest,
   UpdateServiceRequest,
 } from "../types";
@@ -21,14 +21,12 @@ interface ServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   service?: Service | null;
-  categories: Category[];
-  subcategories: Subcategory[];
+  categories: Category[]; // All categories (including nested)
   onSubmit: (
     data: CreateServiceRequest | UpdateServiceRequest,
     imageFiles?: File[]
   ) => Promise<void>;
   isLoading?: boolean;
-  onCategoryChange?: (categoryId: number) => void;
   onDeleteImage?: (imageUrl: string) => Promise<void>;
 }
 
@@ -37,10 +35,8 @@ export function ServiceModal({
   onClose,
   service,
   categories,
-  subcategories,
   onSubmit,
   isLoading = false,
-  onCategoryChange,
   onDeleteImage,
 }: ServiceModalProps) {
   const [formData, setFormData] = useState<CreateServiceRequest>({
@@ -49,8 +45,7 @@ export function ServiceModal({
     price_type: "inquiry",
     price: undefined,
     duration: "",
-    category_id: 0,
-    subcategory_id: 0,
+    category_id: 0, // Now points to the deepest level category (typically Level 3)
     is_active: true,
     service_area_ids: [],
   });
@@ -70,8 +65,7 @@ export function ServiceModal({
         price_type: service.price_type,
         price: service.price,
         duration: service.duration || "",
-        category_id: service.category_id,
-        subcategory_id: service.subcategory_id,
+        category_id: service.category_id, // Now single category_id
         is_active: service.is_active,
         service_area_ids: service.service_areas?.map((area) => area.id) || [],
       });
@@ -86,7 +80,6 @@ export function ServiceModal({
         price: undefined,
         duration: "",
         category_id: 0,
-        subcategory_id: 0,
         is_active: true,
         service_area_ids: [],
       });
@@ -96,27 +89,9 @@ export function ServiceModal({
     }
     setErrors({});
     setDeletingImageUrl(null);
-  }, [service, isOpen, categories.length, subcategories.length]);
+  }, [service, isOpen]);
 
-  // Additional effect to handle subcategory loading after formData is set
-  useEffect(() => {
-    if (service && formData.category_id && subcategories.length > 0) {
-      // Check if the current subcategory_id is valid for the loaded subcategories
-      const validSubcategory = subcategories.find(
-        (sub) =>
-          sub.id === formData.subcategory_id &&
-          sub.parent_id === formData.category_id
-      );
-
-      if (!validSubcategory && formData.subcategory_id !== 0) {
-        // Reset subcategory if it's not valid for the current category
-        setFormData((prev) => ({
-          ...prev,
-          subcategory_id: 0,
-        }));
-      }
-    }
-  }, [service, formData.category_id, subcategories, formData.subcategory_id]);
+  // Subcategory logic removed - services now use single category_id
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -131,10 +106,6 @@ export function ServiceModal({
 
     if (!formData.category_id) {
       newErrors.category_id = "Category is required";
-    }
-
-    if (!formData.subcategory_id) {
-      newErrors.subcategory_id = "Subcategory is required";
     }
 
     if (
@@ -202,14 +173,8 @@ export function ServiceModal({
     setFormData((prev) => ({
       ...prev,
       category_id: categoryIdNum,
-      subcategory_id: 0, // Reset subcategory when category changes
     }));
-    setErrors((prev) => ({ ...prev, category_id: "", subcategory_id: "" }));
-
-    // Call the callback to load subcategories for the selected category
-    if (onCategoryChange && categoryIdNum > 0) {
-      onCategoryChange(categoryIdNum);
-    }
+    setErrors((prev) => ({ ...prev, category_id: "" }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,16 +282,6 @@ export function ServiceModal({
     { value: "fixed", label: "Fixed Price" },
   ];
 
-  const categoryOptions = categories.map((category) => ({
-    value: category.id.toString(),
-    label: category.name,
-  }));
-
-  const subcategoryOptions = subcategories.map((subcategory) => ({
-    value: subcategory.id.toString(),
-    label: subcategory.name,
-  }));
-
   if (!isOpen) return null;
 
   return (
@@ -346,268 +301,241 @@ export function ServiceModal({
         </div>
 
         {/* Form Content */}
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Basic Information
-              </h3>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="p-6 space-y-6 overflow-y-auto flex-1">
+            <div className="flex flex-col gap-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Basic Information
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Service Name *
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("name", e.target.value)
-                    }
-                    placeholder="Enter service name"
-                    error={errors.name}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price Type *
-                  </label>
-                  <SearchableDropdown
-                    options={priceTypeOptions}
-                    value={formData.price_type}
-                    onChange={(value) =>
-                      handleInputChange("price_type", value as string)
-                    }
-                    placeholder="Select price type"
-                    className={errors.price_type ? "border-red-500" : ""}
-                    width="100%"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <TinyMCEEditor
-                  value={formData.description || ""}
-                  onChange={(content) =>
-                    handleInputChange("description", content)
-                  }
-                  placeholder="Enter service description"
-                  height={300}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {formData.price_type === "fixed" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Price (₹) *
+                      Service Name *
                     </label>
                     <Input
-                      type="number"
-                      value={formData.price || ""}
+                      type="text"
+                      value={formData.name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange(
-                          "price",
-                          parseFloat(e.target.value) || undefined
-                        )
+                        handleInputChange("name", e.target.value)
                       }
-                      placeholder="Enter price"
-                      min="0"
-                      step="0.01"
-                      error={errors.price}
+                      placeholder="Enter service name"
+                      error={errors.name}
                     />
                   </div>
-                )}
 
-                {formData.price_type === "fixed" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Duration
+                      Price Type *
                     </label>
-                    <DurationPicker
-                      value={formData.duration}
-                      onChange={(duration) =>
-                        handleInputChange("duration", duration)
+                    <SearchableDropdown
+                      options={priceTypeOptions}
+                      value={formData.price_type}
+                      onChange={(value) =>
+                        handleInputChange("price_type", value as string)
                       }
-                      placeholder="Select service duration"
-                      className="w-full"
+                      placeholder="Select price type"
+                      className={errors.price_type ? "border-red-500" : ""}
+                      width="100%"
                     />
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* Category and Subcategory */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Category & Subcategory
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
+                    Description
                   </label>
-                  <SearchableDropdown
-                    options={categoryOptions}
-                    value={formData.category_id.toString()}
-                    onChange={(value) => handleCategoryChange(value as string)}
-                    placeholder="Select category"
-                    className={errors.category_id ? "border-red-500" : ""}
-                    width="100%"
+                  <TinyMCEEditor
+                    value={formData.description || ""}
+                    onChange={(content) =>
+                      handleInputChange("description", content)
+                    }
+                    placeholder="Enter service description"
+                    height={300}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {formData.price_type === "fixed" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Price (₹) *
+                      </label>
+                      <Input
+                        type="number"
+                        value={formData.price || ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleInputChange(
+                            "price",
+                            parseFloat(e.target.value) || undefined
+                          )
+                        }
+                        placeholder="Enter price"
+                        min="0"
+                        step="0.01"
+                        error={errors.price}
+                      />
+                    </div>
+                  )}
+
+                  {formData.price_type === "fixed" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Duration
+                      </label>
+                      <DurationPicker
+                        value={formData.duration}
+                        onChange={(duration) =>
+                          handleInputChange("duration", duration)
+                        }
+                        placeholder="Select service duration"
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Category Selection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">Category</h3>
+
+                <div>
+                  <CategoryTreeSelector
+                    key={`category-selector-${formData.category_id}-${categories.length}`}
+                    categories={categories}
+                    selectedCategoryId={formData.category_id}
+                    onSelect={(categoryId) =>
+                      handleCategoryChange(categoryId.toString())
+                    }
                   />
                   {errors.category_id && (
-                    <p className="text-sm text-red-600 mt-1">
+                    <p className="text-sm text-red-600 mt-2">
                       {errors.category_id}
                     </p>
                   )}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subcategory *
-                  </label>
-                  <SearchableDropdown
-                    options={subcategoryOptions}
-                    value={formData.subcategory_id.toString()}
-                    onChange={(value) =>
-                      handleInputChange(
-                        "subcategory_id",
-                        parseInt(value as string)
-                      )
-                    }
-                    placeholder="Select subcategory"
-                    disabled={
-                      !formData.category_id || subcategories.length === 0
-                    }
-                    className={errors.subcategory_id ? "border-red-500" : ""}
-                    width="100%"
-                  />
-                  {errors.subcategory_id && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.subcategory_id}
-                    </p>
-                  )}
-                </div>
               </div>
-            </div>
 
-            {/* Image Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Service Images
-              </h3>
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Service Images
+                </h3>
 
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-                className="hidden"
-              />
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
 
-              {/* Images and Upload Area */}
-              <div className="flex flex-wrap gap-4">
-                {/* Existing images from server */}
-                {existingImages.length > 0 && (
-                  <>
-                    {existingImages.map((imageUrl, index) => (
-                      <div key={`existing-${index}`} className="relative group">
-                        <Image
-                          src={imageUrl}
-                          width={150}
-                          height={150}
-                          alt={`Existing ${index + 1}`}
-                          className="w-32 h-32 object-cover rounded-lg border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExistingImage(imageUrl)}
-                          disabled={deletingImageUrl === imageUrl}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete image"
+                {/* Images and Upload Area */}
+                <div className="flex flex-wrap gap-4">
+                  {/* Existing images from server */}
+                  {existingImages.length > 0 && (
+                    <>
+                      {existingImages.map((imageUrl, index) => (
+                        <div
+                          key={`existing-${index}`}
+                          className="relative group"
                         >
-                          {deletingImageUrl === imageUrl ? (
-                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <X size={14} />
-                          )}
-                        </button>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {/* New image previews */}
-                {newImagePreviews.length > 0 && (
-                  <>
-                    {newImagePreviews.map((preview, index) => (
-                      <div key={`new-${index}`} className="relative">
-                        <Image
-                          src={preview}
-                          width={150}
-                          height={150}
-                          alt={`New Preview ${index + 1}`}
-                          className="w-32 h-32 object-cover rounded-lg border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveNewImage(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                        >
-                          <X size={14} />
-                        </button>
-                        <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded">
-                          New
+                          <Image
+                            src={imageUrl}
+                            width={150}
+                            height={150}
+                            alt={`Existing ${index + 1}`}
+                            className="w-32 h-32 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingImage(imageUrl)}
+                            disabled={deletingImageUrl === imageUrl}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete image"
+                          >
+                            {deletingImageUrl === imageUrl ? (
+                              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <X size={14} />
+                            )}
+                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </>
-                )}
+                      ))}
+                    </>
+                  )}
 
-                {/* Upload area */}
-                <div
-                  onClick={handleImageClick}
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors w-32 h-32 flex flex-col items-center justify-center"
-                >
-                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-700 mb-1">
-                    Add Image
-                  </p>
-                  <p className="text-xs text-gray-500 leading-tight">
-                    PNG, JPG, WebP
-                  </p>
-                  <p className="text-xs text-gray-500 leading-tight">
-                    up to 3MB
-                  </p>
+                  {/* New image previews */}
+                  {newImagePreviews.length > 0 && (
+                    <>
+                      {newImagePreviews.map((preview, index) => (
+                        <div key={`new-${index}`} className="relative">
+                          <Image
+                            src={preview}
+                            width={150}
+                            height={150}
+                            alt={`New Preview ${index + 1}`}
+                            className="w-32 h-32 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNewImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                          <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                            New
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Upload area */}
+                  <div
+                    onClick={handleImageClick}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors w-32 h-32 flex flex-col items-center justify-center"
+                  >
+                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-sm font-medium text-gray-700 mb-1">
+                      Add Image
+                    </p>
+                    <p className="text-xs text-gray-500 leading-tight">
+                      PNG, JPG, WebP
+                    </p>
+                    <p className="text-xs text-gray-500 leading-tight">
+                      up to 3MB
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Form Actions - Fixed at bottom */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t rounded-b-lg  border-gray-200 bg-white">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            loading={isLoading}
-            disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={handleSubmit}
-          >
-            {service ? "Update Service" : "Create Service"}
-          </Button>
-        </div>
+          {/* Form Actions - Fixed at bottom */}
+          <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-white">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={isLoading}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {service ? "Update Service" : "Create Service"}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

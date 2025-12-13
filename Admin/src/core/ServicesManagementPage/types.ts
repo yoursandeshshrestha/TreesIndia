@@ -7,12 +7,10 @@ export interface Service {
   price_type: "fixed" | "inquiry";
   price?: number;
   duration?: string;
-  category_id: number;
-  subcategory_id: number;
+  category_id: number; // Now points to the deepest level category (typically Level 3)
+  category?: Category; // Nested category object with hierarchy
   category_name?: string; // Keep for backward compatibility
-  subcategory_name?: string; // Keep for backward compatibility
-  category?: Category; // New nested object
-  subcategory?: Subcategory; // New nested object
+  category_path?: string; // Full category path like "home service → electrician → ac repair"
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -36,6 +34,10 @@ export interface Category {
   slug: string;
   description?: string;
   image?: string;
+  icon?: string;
+  parent_id?: number | null;
+  parent?: Category; // Parent category reference
+  children?: Category[]; // Child categories
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -67,8 +69,7 @@ export interface CreateServiceRequest {
   price_type: "fixed" | "inquiry";
   price?: number;
   duration?: string;
-  category_id: number;
-  subcategory_id: number;
+  category_id: number; // Typically Level 3 category
   is_active?: boolean;
   service_area_ids: number[];
 }
@@ -79,8 +80,7 @@ export interface UpdateServiceRequest {
   price_type?: "fixed" | "inquiry";
   price?: number;
   duration?: string;
-  category_id?: number;
-  subcategory_id?: number;
+  category_id?: number; // Typically Level 3 category
   is_active?: boolean;
 }
 
@@ -88,8 +88,8 @@ export interface ServiceFilters {
   search?: string;
   status?: "active" | "inactive" | "all";
   priceType?: "fixed" | "inquiry" | "all";
-  categoryId?: number;
-  subcategoryId?: number;
+  categoryId?: number; // Can filter by any level category
+  subcategoryId?: number; // Legacy - kept for backward compatibility, treated as categoryId
   sortBy?: "name" | "price" | "createdAt" | "updatedAt";
   sortOrder?: "asc" | "desc";
 }

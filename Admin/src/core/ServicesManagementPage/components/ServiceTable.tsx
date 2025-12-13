@@ -11,7 +11,31 @@ import { useRouter } from "next/navigation";
 import Table from "@/components/Table/Table";
 import Toggle from "@/components/Toggle";
 import { HTMLRenderer } from "@/components/HTMLRenderer";
-import { Service } from "../types";
+import { Service, Category } from "../types";
+
+// Helper function to build full category path
+const getCategoryPath = (
+  category: Category | undefined,
+  fallbackName?: string
+): string => {
+  if (!category) {
+    return fallbackName || "N/A";
+  }
+
+  const path: string[] = [];
+  let current: Category | undefined = category;
+
+  // Traverse up the parent chain
+  while (current) {
+    path.unshift(current.name);
+    current = current.parent;
+  }
+
+  // Return the path if we have one, otherwise just the category name
+  return path.length > 0
+    ? path.join(" → ")
+    : category.name || fallbackName || "N/A";
+};
 
 interface ServiceTableProps {
   services: Service[];
@@ -101,16 +125,19 @@ export default function ServiceTable({
     },
     {
       header: "Category",
-      accessor: (service: Service) => (
-        <div className="text-sm">
-          <div className="font-medium text-gray-900">
-            {service.category?.name || service.category_name || "N/A"}
+      accessor: (service: Service) => {
+        const categoryPath =
+          service.category_path ||
+          getCategoryPath(service.category, service.category_name);
+
+        return (
+          <div className="text-sm">
+            <div className="font-medium text-gray-900" title={categoryPath}>
+              {categoryPath}
+            </div>
           </div>
-          <div className="text-gray-500">
-            {service.subcategory?.name || service.subcategory_name || "N/A"}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
 
     {

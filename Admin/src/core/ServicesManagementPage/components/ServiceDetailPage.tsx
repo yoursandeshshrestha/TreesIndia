@@ -34,6 +34,30 @@ import { Loader } from "@/components/Loader";
 import { HTMLRenderer } from "@/components/HTMLRenderer";
 import { toast } from "sonner";
 
+// Helper function to build full category path
+const getCategoryPath = (
+  category: Category | undefined,
+  fallbackName?: string
+): string => {
+  if (!category) {
+    return fallbackName || "N/A";
+  }
+
+  const path: string[] = [];
+  let current: Category | undefined = category;
+
+  // Traverse up the parent chain
+  while (current) {
+    path.unshift(current.name);
+    current = current.parent;
+  }
+
+  // Return the path if we have one, otherwise just the category name
+  return path.length > 0
+    ? path.join(" → ")
+    : category.name || fallbackName || "N/A";
+};
+
 interface ServiceDetailPageProps {
   serviceId: string;
 }
@@ -87,7 +111,9 @@ export default function ServiceDetailPage({
   const loadCategories = async () => {
     try {
       setIsLoadingCategories(true);
-      const response = await apiClient.get("/categories");
+      const response = await apiClient.get(
+        "/admin/categories?include=children"
+      );
       const categoriesData = response.data.data || [];
       setCategories(categoriesData);
     } catch (err) {
@@ -138,6 +164,9 @@ export default function ServiceDetailPage({
 
       if (data.price !== undefined && data.price !== null) {
         formData.append("price", data.price.toString());
+      }
+      if (data.duration) {
+        formData.append("duration", data.duration);
       }
       formData.append("category_id", categoryId?.toString() || "0");
       formData.append("subcategory_id", subcategoryId?.toString() || "0");
@@ -348,17 +377,21 @@ export default function ServiceDetailPage({
                     <Package className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Category</p>
-                      <p className="font-medium">
-                        {service.category?.name || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Package className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Subcategory</p>
-                      <p className="font-medium">
-                        {service.subcategory?.name || "N/A"}
+                      <p
+                        className="font-medium"
+                        title={
+                          service.category_path ||
+                          getCategoryPath(
+                            service.category,
+                            service.category_name
+                          )
+                        }
+                      >
+                        {service.category_path ||
+                          getCategoryPath(
+                            service.category,
+                            service.category_name
+                          )}
                       </p>
                     </div>
                   </div>

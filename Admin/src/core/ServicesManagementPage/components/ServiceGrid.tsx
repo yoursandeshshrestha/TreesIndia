@@ -11,9 +11,33 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Service } from "../types";
+import { Service, Category } from "../types";
 import Badge from "@/components/Badge/Badge";
 import { HTMLRenderer } from "@/components/HTMLRenderer";
+
+// Helper function to build full category path
+const getCategoryPath = (
+  category: Category | undefined,
+  fallbackName?: string
+): string => {
+  if (!category) {
+    return fallbackName || "N/A";
+  }
+
+  const path: string[] = [];
+  let current: Category | undefined = category;
+
+  // Traverse up the parent chain
+  while (current) {
+    path.unshift(current.name);
+    current = current.parent;
+  }
+
+  // Return the path if we have one, otherwise just the category name
+  return path.length > 0
+    ? path.join(" → ")
+    : category.name || fallbackName || "N/A";
+};
 
 interface ServiceGridProps {
   services: Service[];
@@ -129,18 +153,17 @@ export default function ServiceGrid({ services }: ServiceGridProps) {
 
               {/* Category */}
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Package size={14} />
-                <span className="font-medium">
-                  {service.category?.name || service.category_name || "N/A"}
+                <Package size={14} className="flex-shrink-0" />
+                <span
+                  className="font-medium truncate"
+                  title={
+                    service.category_path ||
+                    getCategoryPath(service.category, service.category_name)
+                  }
+                >
+                  {service.category_path ||
+                    getCategoryPath(service.category, service.category_name)}
                 </span>
-                {(service.subcategory?.name || service.subcategory_name) && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      {service.subcategory?.name || service.subcategory_name}
-                    </span>
-                  </>
-                )}
               </div>
 
               {/* Service Areas */}

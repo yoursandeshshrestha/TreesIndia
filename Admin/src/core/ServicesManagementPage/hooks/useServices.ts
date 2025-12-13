@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Service,
   Category,
-  Subcategory,
   CreateServiceRequest,
   UpdateServiceRequest,
 } from "../types";
@@ -11,7 +10,7 @@ import { apiClient } from "@/lib/api-client";
 export function useServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  // Subcategories removed - using unified category structure
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,33 +19,38 @@ export function useServices() {
     status?: string;
     priceType?: string;
     categoryId?: number;
-    subcategoryId?: number;
+    // subcategoryId removed - use categoryId instead
     sortBy?: string;
     sortOrder?: string;
   }) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
       if (filters?.search) params.append("search", filters.search);
       if (filters?.status && filters.status !== "all") {
-        params.append("exclude_inactive", filters.status === "inactive" ? "false" : "true");
+        params.append(
+          "exclude_inactive",
+          filters.status === "inactive" ? "false" : "true"
+        );
       }
       if (filters?.priceType && filters.priceType !== "all") {
-        params.append("type", filters.priceType === "fixed" ? "fixed-price" : "inquiry-based");
+        params.append(
+          "type",
+          filters.priceType === "fixed" ? "fixed-price" : "inquiry-based"
+        );
       }
-      if (filters?.categoryId) params.append("category", filters.categoryId.toString());
-      if (filters?.subcategoryId) params.append("subcategory", filters.subcategoryId.toString());
+      if (filters?.categoryId)
+        params.append("category", filters.categoryId.toString());
+      // Subcategory filter removed - use categoryId instead
       if (filters?.sortBy) params.append("sort_by", filters.sortBy);
       if (filters?.sortOrder) params.append("sort_order", filters.sortOrder);
 
       const response = await apiClient.get(`/services?${params.toString()}`);
       setServices(response.data.data || []);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch services"
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch services");
     } finally {
       setIsLoading(false);
     }
@@ -61,17 +65,21 @@ export function useServices() {
     }
   };
 
+  // fetchSubcategories removed - use fetchCategories with parent_id instead
   const fetchSubcategories = async (categoryId?: number) => {
-    try {
-      if (categoryId) {
-        const response = await apiClient.get(`/services/categories/${categoryId}/subcategories`);
-        setSubcategories(response.data.data || []);
-      } else {
-        setSubcategories([]);
+    // Legacy function - now returns children of the category
+    if (categoryId) {
+      try {
+        const response = await apiClient.get(
+          `/admin/categories?parent_id=${categoryId}`
+        );
+        return response.data.data || [];
+      } catch (err) {
+        console.error("Failed to fetch child categories:", err);
+        return [];
       }
-    } catch (err) {
-      console.error("Failed to fetch subcategories:", err);
     }
+    return [];
   };
 
   const createService = async (
@@ -88,9 +96,9 @@ export function useServices() {
         formData.append("description", data.description || "");
         formData.append("price_type", data.price_type);
         formData.append("category_id", data.category_id.toString());
-        formData.append("subcategory_id", data.subcategory_id.toString());
+        // subcategory_id removed - using single category_id
         formData.append("is_active", data.is_active?.toString() || "true");
-        
+
         if (data.price !== undefined) {
           formData.append("price", data.price.toString());
         }
@@ -131,12 +139,15 @@ export function useServices() {
         // Use FormData for file upload
         const formData = new FormData();
         if (data.name) formData.append("name", data.name);
-        if (data.description !== undefined) formData.append("description", data.description);
+        if (data.description !== undefined)
+          formData.append("description", data.description);
         if (data.price_type) formData.append("price_type", data.price_type);
-        if (data.category_id) formData.append("category_id", data.category_id.toString());
-        if (data.subcategory_id) formData.append("subcategory_id", data.subcategory_id.toString());
-        if (data.is_active !== undefined) formData.append("is_active", data.is_active.toString());
-        
+        if (data.category_id)
+          formData.append("category_id", data.category_id.toString());
+        // subcategory_id removed - using single category_id
+        if (data.is_active !== undefined)
+          formData.append("is_active", data.is_active.toString());
+
         if (data.price !== undefined) {
           formData.append("price", data.price.toString());
         }
@@ -200,10 +211,25 @@ export function useServices() {
     fetchCategories();
   }, []);
 
+  // Get all child categories (subcategories) from the categories tree
+  const getAllChildCategories = (): Category[] => {
+    const children: Category[] = [];
+    const extractChildren = (cats: Category[]) => {
+      cats.forEach((cat) => {
+        if (cat.children) {
+          children.push(...cat.children);
+          extractChildren(cat.children);
+        }
+      });
+    };
+    extractChildren(categories);
+    return children;
+  };
+
   return {
     services,
     categories,
-    subcategories,
+    subcategories: getAllChildCategories(), // Return all child categories for backward compatibility
     isLoading,
     error,
     fetchServices,
