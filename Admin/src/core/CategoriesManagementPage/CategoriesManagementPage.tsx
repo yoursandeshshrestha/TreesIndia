@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import { Loader, Tag } from "lucide-react";
 
 // Components
 import CategoryHeader from "@/core/CategoriesManagementPage/components/CategoryHeader";
-import CategoryFilters from "@/core/CategoriesManagementPage/components/CategoryFilters";
 import CategoryTable from "@/core/CategoriesManagementPage/components/CategoryTable";
 import { CategoryModal } from "./components/CategoryModal";
 import { SubcategoryModal } from "./components/SubcategoryModal";
@@ -32,6 +31,7 @@ function CategoriesManagementPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
     new Set()
   );
+  const hasInitializedExpansion = useRef(false);
 
   // Modal states
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -75,9 +75,12 @@ function CategoriesManagementPage() {
     setIsSearching(false);
   }, [debouncedSearch, filters.search]);
 
-  const handleCreateCategory = async (categoryData: CreateCategoryRequest) => {
+  const handleCreateCategory = async (
+    categoryData: CreateCategoryRequest,
+    imageFile?: File
+  ) => {
     try {
-      await createCategory(categoryData);
+      await createCategory(categoryData, imageFile);
       toast.success(`Category "${categoryData.name}" created successfully`);
       setIsCategoryModalOpen(false);
       fetchCategories();
@@ -86,11 +89,14 @@ function CategoriesManagementPage() {
     }
   };
 
-  const handleUpdateCategory = async (categoryData: CreateCategoryRequest) => {
+  const handleUpdateCategory = async (
+    categoryData: CreateCategoryRequest,
+    imageFile?: File
+  ) => {
     if (!selectedCategory) return;
 
     try {
-      await updateCategory(selectedCategory.id, categoryData);
+      await updateCategory(selectedCategory.id, categoryData, imageFile);
       toast.success(`Category "${categoryData.name}" updated successfully`);
       setIsCategoryModalOpen(false);
       setSelectedCategory(null);
@@ -247,22 +253,16 @@ function CategoriesManagementPage() {
     setExpandedCategories(newExpanded);
   };
 
-
-  // Filter categories based on current filters
-  const filteredCategories = apiCategories.filter((category) => {
-    const matchesSearch =
-      !filters.search ||
-      category.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      category.description
-        ?.toLowerCase()
-        .includes(filters.search.toLowerCase());
-
-    const matchesStatus =
-      !filters.status ||
-      (filters.status === "active" ? category.is_active : !category.is_active);
-
-    return matchesSearch && matchesStatus;
-  });
+  // Auto-expand all root categories when categories are first loaded
+  useEffect(() => {
+    if (apiCategories.length > 0 && !hasInitializedExpansion.current) {
+      const rootCategories = apiCategories.filter((cat) => !cat.parent_id);
+      const newExpanded = new Set<number>();
+      rootCategories.forEach((cat) => newExpanded.add(cat.id));
+      setExpandedCategories(newExpanded);
+      hasInitializedExpansion.current = true;
+    }
+  }, [apiCategories]);
 
   if (apiLoading && apiCategories.length === 0) {
     return (
@@ -291,11 +291,18 @@ function CategoriesManagementPage() {
           setSelectedCategory(null);
         }}
         category={selectedCategory}
-        onSubmit={async (data) => {
+        categories={apiCategories}
+        onSubmit={async (data, imageFile) => {
           if (selectedCategory) {
-            await handleUpdateCategory(data as CreateCategoryRequest);
+            await handleUpdateCategory(
+              data as CreateCategoryRequest,
+              imageFile
+            );
           } else {
-            await handleCreateCategory(data as CreateCategoryRequest);
+            await handleCreateCategory(
+              data as CreateCategoryRequest,
+              imageFile
+            );
           }
         }}
       />
@@ -350,46 +357,8 @@ function CategoriesManagementPage() {
         variant="danger"
       />
 
-      <CategoryFilters
-        search={localSearch}
-        status={filters.status}
-        sortBy={filters.sortBy}
-        sortOrder={filters.sortOrder}
-        onSearchChange={(value) => {
-          setLocalSearch(value);
-          setIsSearching(true);
-        }}
-        onStatusChange={(value) => {
-          setFilters((prev) => ({ ...prev, status: value }));
-          fetchCategories();
-        }}
-        onSortByChange={(value) => {
-          setFilters((prev) => ({ ...prev, sortBy: value }));
-          fetchCategories();
-        }}
-        onSortOrderChange={(value) => {
-          setFilters((prev) => ({ ...prev, sortOrder: value }));
-          fetchCategories();
-        }}
-        onClear={() => {
-          setFilters({
-            search: "",
-            status: "",
-            sortBy: "name",
-            sortOrder: "asc",
-          });
-          setLocalSearch("");
-          setIsSearching(false);
-        }}
-        onClearSearch={() => {
-          setLocalSearch("");
-          setIsSearching(false);
-        }}
-        isSearching={isSearching}
-      />
-
       <CategoryTable
-        categories={filteredCategories}
+        categories={apiCategories}
         expandedCategories={expandedCategories}
         togglingItems={togglingItems}
         onToggleExpansion={toggleCategoryExpansion}
@@ -401,16 +370,6 @@ function CategoriesManagementPage() {
         onToggleCategoryStatus={handleToggleCategoryStatus}
         onToggleSubcategoryStatus={handleToggleSubcategoryStatus}
       />
-
-      {filteredCategories.length === 0 && !apiLoading && (
-        <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
-          <div className="text-center">
-            <Tag className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-            <p className="text-lg font-medium">No categories found</p>
-            <p className="text-sm">Try adjusting your search or filters</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

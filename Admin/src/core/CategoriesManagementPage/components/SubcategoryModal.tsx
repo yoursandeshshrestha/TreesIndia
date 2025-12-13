@@ -164,6 +164,32 @@ export function SubcategoryModal({
     fileInputRef.current?.click();
   };
 
+  // Helper function to get full path of a category
+  const getCategoryPath = (
+    category: Category,
+    allCategories: Category[]
+  ): string => {
+    const path: string[] = [category.name];
+    let current = category;
+
+    while (current.parent_id) {
+      const parent = allCategories.find((c) => c.id === current.parent_id);
+      if (parent) {
+        path.unshift(parent.name);
+        current = parent;
+      } else {
+        break;
+      }
+    }
+
+    return path.join(" > ");
+  };
+
+  // Get all categories for parent selection (excluding the current subcategory being edited)
+  const availableParentCategories = categories.filter(
+    (cat) => !subcategory || cat.id !== subcategory.id
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -206,8 +232,8 @@ export function SubcategoryModal({
                 </div>
               ) : (
                 <SearchableDropdown
-                  options={categories.map((category) => ({
-                    label: category.name,
+                  options={availableParentCategories.map((category) => ({
+                    label: getCategoryPath(category, categories),
                     value: category.id.toString(),
                   }))}
                   value={formData.parent_id.toString()}
@@ -310,21 +336,22 @@ export function SubcategoryModal({
               <p className="text-sm text-red-600">{errors.image}</p>
             )}
           </div>
+
+          {/* Form Actions */}
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {subcategory ? "Update Subcategory" : "Create Subcategory"}
+            </Button>
+          </div>
         </form>
-        {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-3 p-6 rounded-b-lg border-t border-gray-200 bg-white sticky bottom-0 z-floating">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            loading={isSubmitting}
-            disabled={isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {subcategory ? "Update Subcategory" : "Create Subcategory"}
-          </Button>
-        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Layers } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 
@@ -16,16 +16,19 @@ const CategoryHeader = ({
   onCreateCategory,
 }: CategoryHeaderProps) => {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-2xl font-bold">Categories Management</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+          Categories Management
+        </h1>
         <p className="text-sm text-gray-500">
           Manage service categories and their subcategories
         </p>
       </div>
-      <div className="flex gap-2">
-        <div className="flex items-center gap-2 ">
-          <span className="text-sm text-gray-500">Rows per page:</span>
+
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Rows per page:</span>
           <SearchableDropdown
             options={[
               { label: "10", value: "10" },
@@ -39,10 +42,11 @@ const CategoryHeader = ({
             width="5rem"
           />
         </div>
+
         <Button
           variant="outline"
           size="sm"
-          className="w-30 h-10"
+          className="h-9"
           leftIcon={<RefreshCw size={16} />}
           onClick={onRefresh}
         >
@@ -52,7 +56,7 @@ const CategoryHeader = ({
         <Button
           variant="primary"
           size="sm"
-          className="w-34 h-10 whitespace-nowrap"
+          className="h-9"
           leftIcon={<Plus size={16} />}
           onClick={onCreateCategory}
         >

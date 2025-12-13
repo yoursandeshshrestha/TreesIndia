@@ -14,13 +14,15 @@ export function useCategories() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (parentId?: string | null) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiClient.get(
-        "/admin/categories?include=subcategories"
-      );
+      // Use parent_id query param: "root" for root categories, specific ID for children
+      const url = parentId
+        ? `/admin/categories?parent_id=${parentId}&include=children`
+        : "/admin/categories?include=children";
+      const response = await apiClient.get(url);
       setCategories(response.data.data || []);
     } catch (err) {
       setError(
@@ -32,10 +34,32 @@ export function useCategories() {
   };
 
   const createCategory = async (
-    data: CreateCategoryRequest
+    data: CreateCategoryRequest,
+    imageFile?: File
   ): Promise<Category> => {
     try {
-      const response = await apiClient.post("/admin/categories", data);
+      let response;
+
+      if (imageFile) {
+        // Use FormData for file upload
+        const formData = new FormData();
+        formData.append("name", data.name);
+        if (data.description) formData.append("description", data.description);
+        if (data.icon) formData.append("icon", data.icon);
+        if (data.parent_id !== undefined && data.parent_id !== null) {
+          formData.append("parent_id", data.parent_id.toString());
+        }
+        formData.append("is_active", (data.is_active ?? true).toString());
+        formData.append("image", imageFile);
+
+        response = await apiClient.post("/admin/categories", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Use JSON for data without file
+        response = await apiClient.post("/admin/categories", data);
+      }
+
       const newCategory = response.data.data;
       setCategories((prev) => [...prev, newCategory]);
       return newCategory;
@@ -48,10 +72,34 @@ export function useCategories() {
 
   const updateCategory = async (
     id: number,
-    data: UpdateCategoryRequest
+    data: UpdateCategoryRequest,
+    imageFile?: File
   ): Promise<Category> => {
     try {
-      const response = await apiClient.put(`/admin/categories/${id}`, data);
+      let response;
+
+      if (imageFile) {
+        // Use FormData for file upload
+        const formData = new FormData();
+        if (data.name) formData.append("name", data.name);
+        if (data.description) formData.append("description", data.description);
+        if (data.icon) formData.append("icon", data.icon);
+        if (data.parent_id !== undefined) {
+          formData.append("parent_id", data.parent_id?.toString() || "null");
+        }
+        if (data.is_active !== undefined) {
+          formData.append("is_active", data.is_active.toString());
+        }
+        formData.append("image", imageFile);
+
+        response = await apiClient.put(`/admin/categories/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Use JSON for data without file
+        response = await apiClient.put(`/admin/categories/${id}`, data);
+      }
+
       const updatedCategory = response.data.data;
       setCategories((prev) =>
         prev.map((cat) => (cat.id === id ? updatedCategory : cat))
@@ -75,105 +123,35 @@ export function useCategories() {
     }
   };
 
+  // Legacy: createSubcategory now uses unified category endpoint
   const createSubcategory = async (
     data: CreateSubcategoryRequest,
     iconFile?: File
   ): Promise<Subcategory> => {
-    try {
-      let response;
-
-      if (iconFile) {
-        // Use FormData for file upload
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("description", data.description || "");
-        formData.append("parent_id", data.parent_id.toString());
-        formData.append("is_active", data.is_active?.toString() || "true");
-        formData.append("icon", iconFile);
-
-        response = await apiClient.post("/admin/subcategories", formData);
-      } else {
-        // Use JSON for data without file
-        response = await apiClient.post("/admin/subcategories", data);
-      }
-
-      const newSubcategory = response.data.data;
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === data.parent_id
-            ? {
-                ...cat,
-                subcategories: [...(cat.subcategories || []), newSubcategory],
-              }
-            : cat
-        )
-      );
-      return newSubcategory;
-    } catch (err) {
-      throw new Error(
-        err instanceof Error ? err.message : "Failed to create subcategory"
-      );
-    }
+    // Convert to CreateCategoryRequest and use createCategory
+    return createCategory(
+      data as CreateCategoryRequest,
+      iconFile
+    ) as Promise<Subcategory>;
   };
 
+  // Legacy: updateSubcategory now uses unified category endpoint
   const updateSubcategory = async (
     id: number,
     data: UpdateSubcategoryRequest,
     iconFile?: File
   ): Promise<Subcategory> => {
-    try {
-      let response;
-
-      if (iconFile) {
-        // Use FormData for file upload
-        const formData = new FormData();
-        if (data.name) formData.append("name", data.name);
-        if (data.description) formData.append("description", data.description);
-        if (data.parent_id)
-          formData.append("parent_id", data.parent_id.toString());
-        if (data.is_active !== undefined)
-          formData.append("is_active", data.is_active.toString());
-        formData.append("icon", iconFile);
-
-        response = await apiClient.put(`/admin/subcategories/${id}`, formData);
-      } else {
-        // Use JSON for data without file
-        response = await apiClient.put(`/admin/subcategories/${id}`, data);
-      }
-
-      const updatedSubcategory = response.data.data;
-      setCategories((prev) =>
-        prev.map((cat) => ({
-          ...cat,
-          subcategories: (cat.subcategories || []).map((sub) =>
-            sub.id === id ? updatedSubcategory : sub
-          ),
-        }))
-      );
-      return updatedSubcategory;
-    } catch (err) {
-      throw new Error(
-        err instanceof Error ? err.message : "Failed to update subcategory"
-      );
-    }
+    // Convert to UpdateCategoryRequest and use updateCategory
+    return updateCategory(
+      id,
+      data as UpdateCategoryRequest,
+      iconFile
+    ) as Promise<Subcategory>;
   };
 
+  // Legacy: deleteSubcategory now uses unified category endpoint
   const deleteSubcategory = async (id: number): Promise<void> => {
-    try {
-      await apiClient.delete(`/admin/subcategories/${id}`);
-      setCategories((prev) =>
-        prev.map((cat) => ({
-          ...cat,
-          subcategories: (cat.subcategories || []).filter(
-            (sub) => sub.id !== id
-          ),
-        }))
-      );
-    } catch (err) {
-      throw new Error(
-        err instanceof Error ? err.message : "Failed to delete subcategory"
-      );
-    }
+    return deleteCategory(id);
   };
 
   const toggleCategoryStatus = async (id: number): Promise<Category> => {
@@ -191,28 +169,9 @@ export function useCategories() {
     }
   };
 
+  // Legacy: toggleSubcategoryStatus now uses unified category endpoint
   const toggleSubcategoryStatus = async (id: number): Promise<Subcategory> => {
-    try {
-      const response = await apiClient.patch(
-        `/admin/subcategories/${id}/toggle`
-      );
-      const updatedSubcategory = response.data.data;
-      setCategories((prev) =>
-        prev.map((cat) => ({
-          ...cat,
-          subcategories: (cat.subcategories || []).map((sub) =>
-            sub.id === id ? updatedSubcategory : sub
-          ),
-        }))
-      );
-      return updatedSubcategory;
-    } catch (err) {
-      throw new Error(
-        err instanceof Error
-          ? err.message
-          : "Failed to toggle subcategory status"
-      );
-    }
+    return toggleCategoryStatus(id) as Promise<Subcategory>;
   };
 
   useEffect(() => {
