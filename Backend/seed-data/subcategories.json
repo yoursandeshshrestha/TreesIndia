@@ -1,58 +1,23 @@
 {
   "subcategories": [
     {
-      "name": "Plumbing",
-      "slug": "plumbing",
-      "description": "Professional plumbing services",
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": "Electrical and electronic services",
       "parent_category": "Home Services",
       "is_active": true
     },
     {
-      "name": "Pest Control",
-      "slug": "pest-control",
-      "description": "Effective pest control solutions",
-      "parent_category": "Home Services",
-      "is_active": true
-    },
-    {
-      "name": "Painting",
-      "slug": "painting",
-      "description": "Interior and exterior painting services",
-      "parent_category": "Home Services",
-      "is_active": true
-    },
-    {
-      "name": "Electrical",
-      "slug": "electrical",
-      "description": "Electrical repair and installation services",
-      "parent_category": "Home Services",
-      "is_active": true
-    },
-    {
-      "name": "Cleaning",
-      "slug": "cleaning",
-      "description": "Professional cleaning services",
-      "parent_category": "Home Services",
+      "name": "AC Repair",
+      "slug": "ac-repair",
+      "description": "Air conditioning repair and maintenance services",
+      "parent_category": "Electronics",
       "is_active": true
     },
     {
       "name": "Renovation",
       "slug": "renovation",
-      "description": "Complete home renovation services",
-      "parent_category": "Construction Services",
-      "is_active": true
-    },
-    {
-      "name": "Plan Sanction",
-      "slug": "plan-sanction",
-      "description": "Building plan approval and sanction services",
-      "parent_category": "Construction Services",
-      "is_active": true
-    },
-    {
-      "name": "Promoting Services",
-      "slug": "promoting-services",
-      "description": "Construction project promotion and marketing",
+      "description": "Home and building renovation services",
       "parent_category": "Construction Services",
       "is_active": true
     }

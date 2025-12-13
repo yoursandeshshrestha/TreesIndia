@@ -1,94 +1,77 @@
 {
   "services": [
     {
-      "name": "Tap Repair",
-      "slug": "tap-repair",
-      "description": "Professional tap repair and replacement service",
+      "name": "AC Repair Service",
+      "slug": "ac-repair-service",
+      "description": "Professional AC repair and maintenance service. Our expert technicians provide comprehensive AC repair solutions including refrigerant recharge, compressor repair, filter replacement, and general maintenance to keep your air conditioning system running efficiently.",
       "price_type": "fixed",
-      "price": 500.0,
-      "duration": "2 hours",
+      "price": 1.0,
+      "duration": "3 hours",
       "category": "Home Services",
-      "subcategory": "Plumbing",
+      "subcategory": "AC Repair",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok"
+      ],
       "is_active": true
     },
     {
-      "name": "Pipe Installation",
-      "slug": "pipe-installation",
-      "description": "Complete pipe installation and repair service",
-      "price_type": "fixed",
-      "price": 1000.0,
-      "duration": "4 hours",
-      "category": "Home Services",
-      "subcategory": "Plumbing",
-      "is_active": true
-    },
-    {
-      "name": "General Pest Control",
-      "slug": "general-pest-control",
-      "description": "Complete pest control treatment for your home",
-      "price_type": "fixed",
-      "price": 1500.0,
-      "duration": "6 hours",
-      "category": "Home Services",
-      "subcategory": "Pest Control",
-      "is_active": true
-    },
-    {
-      "name": "Interior Painting",
-      "slug": "interior-painting",
-      "description": "Professional interior painting service",
+      "name": "AC Maintenance Inquiry",
+      "slug": "ac-maintenance-inquiry",
+      "description": "AC maintenance service - quote based on requirements. Get customized maintenance plans for your air conditioning units. Our service includes regular check-ups, cleaning, and preventive maintenance to ensure optimal performance and longevity of your AC systems.",
       "price_type": "inquiry",
       "category": "Home Services",
-      "subcategory": "Painting",
+      "subcategory": "AC Repair",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi"
+      ],
       "is_active": true
     },
     {
-      "name": "Switch Repair",
-      "slug": "switch-repair",
-      "description": "Electrical switch repair and replacement",
+      "name": "Home Renovation Service",
+      "slug": "home-renovation-service",
+      "description": "Complete home renovation service. Transform your living space with our comprehensive home renovation solutions. We handle everything from planning and design to execution, including interior remodeling, structural changes, flooring, painting, and finishing work.",
       "price_type": "fixed",
-      "price": 300.0,
-      "duration": "1 hour",
-      "category": "Home Services",
-      "subcategory": "Electrical",
+      "price": 1.0,
+      "duration": "2 hours",
+      "category": "Construction Services",
+      "subcategory": "Renovation",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati"
+      ],
       "is_active": true
     },
     {
-      "name": "House Cleaning",
-      "slug": "house-cleaning",
-      "description": "Complete house cleaning service",
-      "price_type": "fixed",
-      "price": 1200.0,
-      "duration": "4 hours",
-      "category": "Home Services",
-      "subcategory": "Cleaning",
-      "is_active": true
-    },
-    {
-      "name": "Kitchen Renovation",
-      "slug": "kitchen-renovation",
-      "description": "Complete kitchen renovation and remodeling",
+      "name": "Building Renovation Inquiry",
+      "slug": "building-renovation-inquiry",
+      "description": "Building renovation service - quote based on project requirements. Professional building renovation services for commercial and residential properties. We provide detailed project planning, cost estimation, and execution for complete building makeovers including structural repairs, facade renovation, and interior upgrades.",
       "price_type": "inquiry",
       "category": "Construction Services",
       "subcategory": "Renovation",
-      "is_active": true
-    },
-    {
-      "name": "Building Plan Approval",
-      "slug": "building-plan-approval",
-      "description": "Building plan design and approval services",
-      "price_type": "inquiry",
-      "category": "Construction Services",
-      "subcategory": "Plan Sanction",
-      "is_active": true
-    },
-    {
-      "name": "Project Marketing",
-      "slug": "project-marketing",
-      "description": "Construction project marketing and promotion",
-      "price_type": "inquiry",
-      "category": "Construction Services",
-      "subcategory": "Promoting Services",
+      "service_areas": [
+        "Siliguri",
+        "Darjeeling",
+        "Kolkata",
+        "Howrah",
+        "Gangtok",
+        "Namchi",
+        "Guwahati",
+        "Dibrugarh"
+      ],
       "is_active": true
     }
   ]

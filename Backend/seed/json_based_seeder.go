@@ -115,66 +115,131 @@ func (js *JSONBasedSeeder) SeedSubcategories() error {
 		return err
 	}
 
-	// Create category map for quick lookup
+	// Create category map for quick lookup (includes all categories at all levels)
 	categoryMap := make(map[string]uint)
 	for _, cat := range categories {
 		categoryMap[cat.Name] = cat.ID
 	}
 
-	var subcategories []models.Subcategory
+	// Get existing categories (all levels) for lookup
+	var existingCategories []models.Category
+	if err := js.sm.db.Find(&existingCategories).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing categories: %v", err)
+		return err
+	}
+	
+	// Update category map with existing categories
+	for _, cat := range existingCategories {
+		categoryMap[cat.Name] = cat.ID
+	}
+
+	// Process subcategories in multiple passes to handle hierarchy
+	// Create categories level by level (Level 2 first, then Level 3, etc.)
+	
+	type subcategoryInfo struct {
+		category models.Category
+		parentName string
+	}
+	
+	var allSubcategories []subcategoryInfo
 	for _, subcatData := range subcategoriesData {
 		subcatMap, ok := subcatData.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		categoryName := subcatMap["parent_category"].(string)
-		categoryID, exists := categoryMap[categoryName]
+		parentCategoryName := subcatMap["parent_category"].(string)
+		parentID, exists := categoryMap[parentCategoryName]
 		if !exists {
-			logrus.Warnf("Category not found: %s", categoryName)
-			continue
+			logrus.Warnf("Parent category not found: %s (will retry later)", parentCategoryName)
 		}
 
-		subcategory := models.Subcategory{
+		var parentIDPtr *uint
+		if exists {
+			parentIDPtr = &parentID
+		}
+
+		// Get icon if present (optional)
+		var icon string
+		if iconVal, ok := subcatMap["icon"]; ok {
+			if iconStr, ok := iconVal.(string); ok {
+				icon = iconStr
+			}
+		}
+
+		subcategory := models.Category{
 			Name:        subcatMap["name"].(string),
 			Slug:        subcatMap["slug"].(string),
 			Description: subcatMap["description"].(string),
-			ParentID:    categoryID,
+			Icon:        icon,
+			ParentID:    parentIDPtr,
 			IsActive:    subcatMap["is_active"].(bool),
 		}
-		subcategories = append(subcategories, subcategory)
+		allSubcategories = append(allSubcategories, subcategoryInfo{
+			category: subcategory,
+			parentName: parentCategoryName,
+		})
 	}
 
-	// Get existing subcategories in one query
-	var existingSubcategories []models.Subcategory
-	if err := js.sm.db.Find(&existingSubcategories).Error; err != nil {
-		logrus.Errorf("Failed to fetch existing subcategories: %v", err)
-		return err
-	}
+	// Create categories level by level
+	created := make(map[string]bool)
+	maxIterations := 10 // Prevent infinite loops
+	iteration := 0
 
-	// Create a map for quick lookup
-	existingMap := make(map[string]bool)
-	for _, subcat := range existingSubcategories {
-		existingMap[subcat.Name] = true
-	}
-
-	// Filter out subcategories that already exist
-	var subcategoriesToCreate []models.Subcategory
-	for _, subcategory := range subcategories {
-		if !existingMap[subcategory.Name] {
-			subcategoriesToCreate = append(subcategoriesToCreate, subcategory)
+	for len(created) < len(allSubcategories) && iteration < maxIterations {
+		iteration++
+		var toCreate []subcategoryInfo
+		
+		for _, subcatInfo := range allSubcategories {
+			if created[subcatInfo.category.Name] {
+				continue
+			}
+			
+			// Check if parent exists in categoryMap
+			parentID, parentExists := categoryMap[subcatInfo.parentName]
+			if parentExists {
+				parentIDPtr := parentID
+				subcatInfo.category.ParentID = &parentIDPtr
+				toCreate = append(toCreate, subcatInfo)
+			}
 		}
+
+		if len(toCreate) == 0 {
+			logrus.Warnf("No more categories can be created. Remaining: %d", len(allSubcategories)-len(created))
+			break // No more categories can be created
+		}
+
+		// Create categories in this level
+		for _, subcatInfo := range toCreate {
+			// Check if it already exists
+			var existing models.Category
+			if err := js.sm.db.Where("name = ?", subcatInfo.category.Name).First(&existing).Error; err == nil {
+				categoryMap[subcatInfo.category.Name] = existing.ID
+				created[subcatInfo.category.Name] = true
+				logrus.Infof("Category already exists: %s", subcatInfo.category.Name)
+				continue
+			}
+
+			// Create the category
+			if err := js.sm.db.Create(&subcatInfo.category).Error; err != nil {
+				logrus.Errorf("Failed to create category %s: %v", subcatInfo.category.Name, err)
+				continue
+			}
+
+			// Update maps
+			categoryMap[subcatInfo.category.Name] = subcatInfo.category.ID
+			created[subcatInfo.category.Name] = true
+			existingCategories = append(existingCategories, subcatInfo.category)
+			logrus.Infof("Created category: %s (parent: %s)", subcatInfo.category.Name, subcatInfo.parentName)
+		}
+
+		logrus.Infof("Created %d categories in iteration %d", len(toCreate), iteration)
 	}
 
-	// Bulk create new subcategories
-	if len(subcategoriesToCreate) > 0 {
-		if err := js.sm.db.Create(&subcategoriesToCreate).Error; err != nil {
-			logrus.Errorf("Failed to create subcategories: %v", err)
-			return err
-		}
-		logrus.Infof("Created %d new subcategories", len(subcategoriesToCreate))
+	if len(created) < len(allSubcategories) {
+		logrus.Warnf("Could not create all categories. Created: %d/%d", len(created), len(allSubcategories))
 	} else {
-		logrus.Info("All subcategories already exist")
+		logrus.Infof("Successfully created all %d categories", len(created))
 	}
 
 	logrus.Info("Subcategories seeded successfully")
@@ -212,9 +277,9 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		categoryMap[cat.Name] = cat.ID
 	}
 
-	// Get all subcategories for lookup
-	var subcategories []models.Subcategory
-	if err := js.sm.db.Find(&subcategories).Error; err != nil {
+	// Get all subcategories (level 2 categories) for lookup
+	var subcategories []models.Category
+	if err := js.sm.db.Where("parent_id IS NOT NULL").Find(&subcategories).Error; err != nil {
 		logrus.Errorf("Failed to fetch subcategories: %v", err)
 		return err
 	}
@@ -225,17 +290,29 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		subcategoryMap[subcat.Name] = subcat.ID
 	}
 
-	var services []models.Service
+	// Get all service areas for lookup
+	var serviceAreas []models.ServiceArea
+	if err := js.sm.db.Find(&serviceAreas).Error; err != nil {
+		logrus.Errorf("Failed to fetch service areas: %v", err)
+		return err
+	}
+
+	// Create service area map by city name for quick lookup
+	serviceAreaMap := make(map[string]uint)
+	for _, area := range serviceAreas {
+		serviceAreaMap[area.City] = area.ID
+	}
+
+	// Structure to hold service data with its service area associations
+	type serviceWithAreas struct {
+		service      models.Service
+		serviceAreas []string // City names from JSON
+	}
+
+	var servicesWithAreas []serviceWithAreas
 	for _, serviceData := range servicesData {
 		serviceMap, ok := serviceData.(map[string]interface{})
 		if !ok {
-			continue
-		}
-
-		categoryName := serviceMap["category"].(string)
-		categoryID, exists := categoryMap[categoryName]
-		if !exists {
-			logrus.Warnf("Category not found: %s", categoryName)
 			continue
 		}
 
@@ -258,18 +335,39 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			price = &priceValue
 		}
 
-		service := models.Service{
-			Name:         serviceMap["name"].(string),
-			Slug:         serviceMap["slug"].(string),
-			Description:  serviceMap["description"].(string),
-			PriceType:    serviceMap["price_type"].(string),
-			Price:        price,
-			Duration:     duration,
-			CategoryID:   categoryID,
-			SubcategoryID: subcategoryID,
-			IsActive:     serviceMap["is_active"].(bool),
+		// Parse description (required)
+		description := ""
+		if desc, ok := serviceMap["description"].(string); ok {
+			description = desc
 		}
-		services = append(services, service)
+
+		service := models.Service{
+			Name:        serviceMap["name"].(string),
+			Slug:        serviceMap["slug"].(string),
+			Description: description,
+			PriceType:   serviceMap["price_type"].(string),
+			Price:       price,
+			Duration:    duration,
+			CategoryID:  subcategoryID, // Services now reference the subcategory (level 2) directly
+			IsActive:    serviceMap["is_active"].(bool),
+		}
+
+		// Parse service areas (optional)
+		var serviceAreaCities []string
+		if serviceAreasInterface, ok := serviceMap["service_areas"]; ok {
+			if serviceAreasArray, ok := serviceAreasInterface.([]interface{}); ok {
+				for _, areaInterface := range serviceAreasArray {
+					if areaName, ok := areaInterface.(string); ok {
+						serviceAreaCities = append(serviceAreaCities, areaName)
+					}
+				}
+			}
+		}
+
+		servicesWithAreas = append(servicesWithAreas, serviceWithAreas{
+			service:      service,
+			serviceAreas: serviceAreaCities,
+		})
 	}
 
 	// Get existing services in one query (including soft-deleted ones)
@@ -288,24 +386,87 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		logrus.Debugf("Existing service slug: %s", service.Slug)
 	}
 
-	// Filter out services that already exist
-	var servicesToCreate []models.Service
-	for _, service := range services {
-		if !existingMap[service.Slug] {
-			servicesToCreate = append(servicesToCreate, service)
-			logrus.Infof("Will create service: %s (slug: %s)", service.Name, service.Slug)
+	// Filter out services that already exist and prepare for creation
+	var servicesToCreate []serviceWithAreas
+	for _, swa := range servicesWithAreas {
+		if !existingMap[swa.service.Slug] {
+			servicesToCreate = append(servicesToCreate, swa)
+			logrus.Infof("Will create service: %s (slug: %s)", swa.service.Name, swa.service.Slug)
 		} else {
-			logrus.Infof("Service already exists, skipping: %s (slug: %s)", service.Name, service.Slug)
+			logrus.Infof("Service already exists, skipping: %s (slug: %s)", swa.service.Name, swa.service.Slug)
 		}
 	}
 
-	// Bulk create new services
+	// Create services and their service area associations
 	if len(servicesToCreate) > 0 {
-		if err := js.sm.db.Create(&servicesToCreate).Error; err != nil {
-			logrus.Errorf("Failed to create services: %v", err)
-			return err
+		// Get existing associations to avoid duplicates
+		var existingAssociations []struct {
+			ServiceID     uint `gorm:"column:service_id"`
+			ServiceAreaID uint `gorm:"column:service_area_id"`
 		}
-		logrus.Infof("Created %d new services", len(servicesToCreate))
+		if err := js.sm.db.Table("service_service_areas").Find(&existingAssociations).Error; err != nil {
+			logrus.Warnf("Failed to fetch existing associations: %v", err)
+		}
+
+		existingAssocMap := make(map[string]bool)
+		for _, assoc := range existingAssociations {
+			key := fmt.Sprintf("%d-%d", assoc.ServiceID, assoc.ServiceAreaID)
+			existingAssocMap[key] = true
+		}
+
+		// Create services one by one to get their IDs for associations
+		for _, swa := range servicesToCreate {
+			// Create the service
+			if err := js.sm.db.Create(&swa.service).Error; err != nil {
+				logrus.Errorf("Failed to create service %s: %v", swa.service.Name, err)
+				continue
+			}
+
+			logrus.Infof("Created service: %s (ID: %d)", swa.service.Name, swa.service.ID)
+
+			// Create service area associations if provided
+			if len(swa.serviceAreas) > 0 {
+				var associationsToCreate []struct {
+					ServiceID     uint `gorm:"column:service_id"`
+					ServiceAreaID uint `gorm:"column:service_area_id"`
+				}
+
+				for _, cityName := range swa.serviceAreas {
+					areaID, exists := serviceAreaMap[cityName]
+					if !exists {
+						logrus.Warnf("Service area not found for city: %s (service: %s)", cityName, swa.service.Name)
+						continue
+					}
+
+					key := fmt.Sprintf("%d-%d", swa.service.ID, areaID)
+					if existingAssocMap[key] {
+						logrus.Debugf("Association already exists: service %d - area %d", swa.service.ID, areaID)
+						continue
+					}
+
+					associationsToCreate = append(associationsToCreate, struct {
+						ServiceID     uint `gorm:"column:service_id"`
+						ServiceAreaID uint `gorm:"column:service_area_id"`
+					}{
+						ServiceID:     swa.service.ID,
+						ServiceAreaID: areaID,
+					})
+				}
+
+				// Bulk create associations for this service
+				if len(associationsToCreate) > 0 {
+					if err := js.sm.db.Table("service_service_areas").Create(&associationsToCreate).Error; err != nil {
+						logrus.Errorf("Failed to create service area associations for service %s: %v", swa.service.Name, err)
+						continue
+					}
+					logrus.Infof("Created %d service area associations for service: %s", len(associationsToCreate), swa.service.Name)
+				}
+			} else {
+				logrus.Warnf("No service areas specified for service: %s", swa.service.Name)
+			}
+		}
+
+		logrus.Infof("Created %d new services with service area mappings", len(servicesToCreate))
 	} else {
 		logrus.Info("All services already exist")
 	}
