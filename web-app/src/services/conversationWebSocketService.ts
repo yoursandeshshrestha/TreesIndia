@@ -33,7 +33,25 @@ class ConversationWebSocketService {
     this.isConnecting = true;
 
     try {
-      const wsUrl = `ws://localhost:8080/api/v1/ws/conversations/monitor?token=${token}`;
+      // Always derive protocol from API URL to ensure consistency
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+      const apiBase = apiUrl.replace(/\/api\/v1$/, ""); // Remove /api/v1 suffix
+      const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
+
+      // If NEXT_PUBLIC_WS_URL is set, extract host/port from it, otherwise use API URL
+      let hostAndPath = apiBase.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      if (process.env.NEXT_PUBLIC_WS_URL) {
+        // Extract host/port from WS URL (ignore protocol)
+        const wsUrlMatch =
+          process.env.NEXT_PUBLIC_WS_URL.match(/^wss?:\/\/(.+)$/);
+        if (wsUrlMatch) {
+          hostAndPath = wsUrlMatch[1];
+        }
+      }
+
+      const baseUrl = `${wsProtocol}://${hostAndPath}`;
+      const wsUrl = `${baseUrl}/api/v1/ws/conversations/monitor?token=${token}`;
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
@@ -127,13 +145,16 @@ class ConversationWebSocketService {
             conversation_id: messageData.conversation_id,
             message: {
               id: messageData.message.id || Date.now(),
-              message: messageData.message.message || '',
-              created_at: messageData.message.created_at || new Date().toISOString(),
+              message: messageData.message.message || "",
+              created_at:
+                messageData.message.created_at || new Date().toISOString(),
               sender_id: messageData.message.sender_id || 0,
-              sender: messageData.message.sender ? {
-                user_type: messageData.message.sender.user_type || 'user'
-              } : undefined
-            }
+              sender: messageData.message.sender
+                ? {
+                    user_type: messageData.message.sender.user_type || "user",
+                  }
+                : undefined,
+            },
           };
           // Emit message updates to conversation store for other components
           conversationStore.emitUpdate(conversationUpdateData);

@@ -30,7 +30,25 @@ class NotificationWebSocketService {
     notificationStore.setError(null);
 
     try {
-      const wsUrl = `ws://localhost:8080/api/v1/in-app-notifications/ws?token=${token}`;
+      // Always derive protocol from API URL to ensure consistency
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+      const apiBase = apiUrl.replace(/\/api\/v1$/, ""); // Remove /api/v1 suffix
+      const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
+
+      // If NEXT_PUBLIC_WS_URL is set, extract host/port from it, otherwise use API URL
+      let hostAndPath = apiBase.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      if (process.env.NEXT_PUBLIC_WS_URL) {
+        // Extract host/port from WS URL (ignore protocol)
+        const wsUrlMatch =
+          process.env.NEXT_PUBLIC_WS_URL.match(/^wss?:\/\/(.+)$/);
+        if (wsUrlMatch) {
+          hostAndPath = wsUrlMatch[1];
+        }
+      }
+
+      const baseUrl = `${wsProtocol}://${hostAndPath}`;
+      const wsUrl = `${baseUrl}/api/v1/in-app-notifications/ws?token=${token}`;
 
       this.ws = new WebSocket(wsUrl);
 
