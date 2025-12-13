@@ -125,11 +125,7 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 				}
 			}
 			
-			if subcategoryIDStr := c.PostForm("subcategory_id"); subcategoryIDStr != "" {
-				if subcategoryID, err := strconv.ParseUint(subcategoryIDStr, 10, 32); err == nil {
-					req.SubcategoryID = uint(subcategoryID)
-				}
-			}
+			// SubcategoryID removed - services now use single CategoryID
 			
 			if priceStr := c.PostForm("price"); priceStr != "" {
 				if price, err := strconv.ParseFloat(priceStr, 64); err == nil {
@@ -158,8 +154,8 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 			c.JSON(400, views.CreateErrorResponse("Invalid request data", err.Error()))
 			return
 		}
-		logrus.Infof("ServiceController.CreateService parsed request: Name=%s, CategoryID=%d, SubcategoryID=%d, ServiceAreaIDs=%v", 
-			req.Name, req.CategoryID, req.SubcategoryID, req.ServiceAreaIDs)
+		logrus.Infof("ServiceController.CreateService parsed request: Name=%s, CategoryID=%d, ServiceAreaIDs=%v", 
+			req.Name, req.CategoryID, req.ServiceAreaIDs)
 	}
 
 	// Validate required fields
@@ -175,10 +171,7 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 		c.JSON(400, views.CreateErrorResponse("Category ID is required", ""))
 		return
 	}
-	if req.SubcategoryID == 0 {
-		c.JSON(400, views.CreateErrorResponse("Subcategory ID is required", ""))
-		return
-	}
+	// SubcategoryID validation removed - services now use single CategoryID
 	
 	// Validate service areas
 	if len(req.ServiceAreaIDs) == 0 {
@@ -411,7 +404,7 @@ func (sc *ServiceController) GetServicesBySubcategory(c *gin.Context) {
 	excludeInactive := c.Query("exclude_inactive") == "true"
 	logrus.Infof("ServiceController.GetServicesBySubcategory subcategoryID: %d, excludeInactive: %v", subcategoryID, excludeInactive)
 
-	services, err := sc.serviceService.GetServicesBySubcategory(uint(subcategoryID), excludeInactive)
+	services, err := sc.serviceService.GetServicesByCategory(uint(subcategoryID), excludeInactive)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServicesBySubcategory error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
@@ -443,9 +436,8 @@ func (sc *ServiceController) GetServicesBySubcategory(c *gin.Context) {
 			Price:           service.Price,
 			Duration:        service.Duration,
 			CategoryID:      service.CategoryID,
-			SubcategoryID:   service.SubcategoryID,
 			CategoryName:    service.Category.Name,
-			SubcategoryName: service.Subcategory.Name,
+			CategoryPath:    models.BuildCategoryPath(&service.Category),
 			IsActive:        service.IsActive,
 			CreatedAt:       service.CreatedAt,
 			UpdatedAt:       service.UpdatedAt,
@@ -520,9 +512,8 @@ func (sc *ServiceController) GetServicesByLocation(c *gin.Context) {
 			Price:           service.Price,
 			Duration:        service.Duration,
 			CategoryID:      service.CategoryID,
-			SubcategoryID:   service.SubcategoryID,
 			CategoryName:    service.Category.Name,
-			SubcategoryName: service.Subcategory.Name,
+			CategoryPath:    models.BuildCategoryPath(&service.Category),
 			IsActive:        service.IsActive,
 			CreatedAt:       service.CreatedAt,
 			UpdatedAt:       service.UpdatedAt,
@@ -577,10 +568,7 @@ func (sc *ServiceController) UpdateService(c *gin.Context) {
 		}
 		
 		if subcategoryIDStr := c.PostForm("subcategory_id"); subcategoryIDStr != "" {
-			if subcategoryID, err := strconv.ParseUint(subcategoryIDStr, 10, 32); err == nil {
-				subcategoryID := uint(subcategoryID)
-				req.SubcategoryID = &subcategoryID
-			}
+			// SubcategoryID removed - services now use single CategoryID
 		}
 		
 		if priceStr := c.PostForm("price"); priceStr != "" {

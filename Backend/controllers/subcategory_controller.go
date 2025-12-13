@@ -20,26 +20,29 @@ import (
 
 type SubcategoryController struct {
 	*BaseController
-	subcategoryService *services.SubcategoryService
+	subcategoryService interface{} // Deprecated - use CategoryController instead
 	validationHelper   *utils.ValidationHelper
 }
 
 func NewSubcategoryController() *SubcategoryController {
-	subcategoryService, err := services.NewSubcategoryService()
+	// NOTE: SubcategoryController is deprecated - use CategoryController instead
+	// This controller is kept for backward compatibility but functionality has been merged into CategoryController
+	categoryService, err := services.NewCategoryService()
 	if err != nil {
-		logrus.Errorf("Failed to initialize SubcategoryService: %v", err)
-		logrus.Error("This is likely due to missing Cloudinary configuration")
-		logrus.Error("Please ensure CLOUDINARY_URL is set in your environment variables")
+		logrus.Errorf("Failed to initialize CategoryService: %v", err)
 		return &SubcategoryController{
-			BaseController:     NewBaseController(),
+			BaseController:   NewBaseController(),
 			subcategoryService: nil,
-			validationHelper:   utils.NewValidationHelper(),
+			validationHelper: utils.NewValidationHelper(),
 		}
 	}
 	
+	// Use CategoryService instead (temporary workaround)
+	_ = categoryService
+	
 	return &SubcategoryController{
 		BaseController:     NewBaseController(),
-		subcategoryService: subcategoryService,
+		subcategoryService: nil, // Deprecated - use CategoryController
 		validationHelper:   utils.NewValidationHelper(),
 	}
 }
@@ -64,7 +67,7 @@ func (sc *SubcategoryController) GetSubcategories(c *gin.Context) {
 	excludeInactive := c.Query("exclude_inactive") == "true"
 
 	// Build query
-	query := db.Model(&models.Subcategory{})
+	query := db.Model(&models.Category{}).Where("parent_id IS NOT NULL")
 
 	// Filter by parent_id
 	if parentID != "" {
@@ -87,7 +90,7 @@ func (sc *SubcategoryController) GetSubcategories(c *gin.Context) {
 	}
 
 	// Get subcategories with parent information
-	var subcategories []models.Subcategory
+	var subcategories []models.Category
 	if err := query.Preload("Parent").Order("name ASC").Find(&subcategories).Error; err != nil {
 		logrus.Error("Failed to fetch subcategories:", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch subcategories", err.Error()))
@@ -108,7 +111,7 @@ func (sc *SubcategoryController) GetSubcategoryByID(c *gin.Context) {
 
 	db := database.GetDB()
 
-	var subcategory models.Subcategory
+	var subcategory models.Category
 	if err := db.Preload("Parent").First(&subcategory, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("Subcategory not found", "Subcategory with the specified ID does not exist"))
@@ -248,8 +251,14 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 			return
 		}
 		
-		// Check if Cloudinary service is available
-		cloudinaryService := sc.subcategoryService.GetCloudinaryService()
+		// Check if Cloudinary service is available (use CategoryService)
+		categoryService, err := services.NewCategoryService()
+		if err != nil {
+			logrus.Error("Cloudinary service is not available")
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
+			return
+		}
+		cloudinaryService := categoryService.GetCloudinaryService()
 		if cloudinaryService == nil {
 			logrus.Error("Cloudinary service is not available")
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
@@ -279,18 +288,24 @@ func (sc *SubcategoryController) CreateSubcategory(c *gin.Context) {
 		return
 	}
 
-	// Use the service layer to create the subcategory
-	// Convert the controller request to service request
-	serviceReq := &services.CreateSubcategoryRequest{
-		Name:        req.Name,
-		Description: req.Description,
-		Icon:        req.Icon,
-		ParentID:    req.ParentID,
-		IsActive:    req.IsActive,
-	}
+		// Use CategoryService to create the category (subcategory is now a category with parent_id)
+		categoryService, err := services.NewCategoryService()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to initialize service", err.Error()))
+			return
+		}
+		
+		// Convert the controller request to service request
+		serviceReq := &services.CreateCategoryRequest{
+			Name:        req.Name,
+			Description: req.Description,
+			Icon:        req.Icon,
+			ParentID:    req.ParentID,
+			IsActive:    req.IsActive,
+		}
 
-	// Create subcategory using service (this will handle image upload if needed)
-	subcategory, err := sc.subcategoryService.CreateSubcategory(serviceReq, nil) // No file since we already uploaded
+		// Create category using service (this will handle image upload if needed)
+		subcategory, err := categoryService.CreateCategory(serviceReq, nil) // No file since we already uploaded
 	if err != nil {
 		logrus.Error("Failed to create subcategory:", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create subcategory", err.Error()))
@@ -432,7 +447,13 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 			}
 			
 			// Check if Cloudinary service is available
-			cloudinaryService := sc.subcategoryService.GetCloudinaryService()
+			categoryService, err := services.NewCategoryService()
+		if err != nil {
+			logrus.Error("Cloudinary service is not available")
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
+			return
+		}
+		cloudinaryService := categoryService.GetCloudinaryService()
 			if cloudinaryService == nil {
 				logrus.Error("Cloudinary service is not available")
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Cloudinary service unavailable", "Image upload service is not configured. Please contact administrator."))
@@ -461,8 +482,15 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 		return
 	}
 
+	// Use CategoryService to update the category
+	categoryService, err := services.NewCategoryService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to initialize service", err.Error()))
+		return
+	}
+	
 	// Convert to service request type
-	serviceReq := &services.CreateSubcategoryRequest{
+	serviceReq := &services.CreateCategoryRequest{
 		Name:        req.Name,
 		Description: req.Description,
 		Icon:        req.Icon,
@@ -470,7 +498,7 @@ func (sc *SubcategoryController) UpdateSubcategory(c *gin.Context) {
 		IsActive:    req.IsActive,
 	}
 
-	subcategory, err := sc.subcategoryService.UpdateSubcategory(uint(id), serviceReq)
+	subcategory, err := categoryService.UpdateCategory(uint(id), serviceReq, imageFile)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to update subcategory", err.Error()))
 		return
@@ -488,7 +516,13 @@ func (sc *SubcategoryController) DeleteSubcategory(c *gin.Context) {
 		return
 	}
 
-	if err := sc.subcategoryService.DeleteSubcategory(uint(id)); err != nil {
+	categoryService, err := services.NewCategoryService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to initialize service", err.Error()))
+		return
+	}
+	
+	if err := categoryService.DeleteCategory(uint(id)); err != nil {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to delete subcategory", err.Error()))
 		return
 	}
@@ -505,10 +539,13 @@ func (sc *SubcategoryController) GetSubcategoriesByCategory(c *gin.Context) {
 		return
 	}
 
-	// Get query parameters
-	excludeInactive := c.Query("exclude_inactive") == "true"
-
-	subcategories, err := sc.subcategoryService.GetSubcategoriesByCategory(uint(categoryID), excludeInactive)
+	categoryService, err := services.NewCategoryService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to initialize service", err.Error()))
+		return
+	}
+	
+	subcategories, err := categoryService.GetChildrenByParentID(uint(categoryID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch subcategories", err.Error()))
 		return
@@ -527,7 +564,13 @@ func (sc *SubcategoryController) ToggleStatus(c *gin.Context) {
 	}
 
 	// Toggle status using service
-	subcategory, err := sc.subcategoryService.ToggleStatus(uint(id))
+	categoryService, err := services.NewCategoryService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to initialize service", err.Error()))
+		return
+	}
+	
+	subcategory, err := categoryService.ToggleStatus(uint(id))
 	if err != nil {
 		logrus.Error("Failed to toggle subcategory status:", err)
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to toggle subcategory status", err.Error()))

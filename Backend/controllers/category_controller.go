@@ -1,16 +1,14 @@
 package controllers
 
 import (
-	"errors"
+	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
-	"treesindia/database"
-	"treesindia/models"
 	"treesindia/services"
 	"treesindia/utils"
 	"treesindia/views"
@@ -44,53 +42,27 @@ func NewCategoryController() *CategoryController {
 type CreateCategoryRequest struct {
 	Name        string      `json:"name" form:"name" binding:"required,min=2,max=100"`
 	Description string      `json:"description" form:"description" binding:"max=500"`
-	IsActive    interface{} `json:"is_active" form:"is_active"` // Can be boolean or string
+	Icon        string      `json:"icon" form:"icon" binding:"max=255"` // Icon name or URL
+	ParentID    interface{} `json:"parent_id" form:"parent_id"`         // Optional: NULL for root (Level 1)
+	IsActive    interface{} `json:"is_active" form:"is_active"`         // Can be boolean or string
 }
 
 // GetCategories returns all categories with optional filtering
 func (cc *CategoryController) GetCategories(c *gin.Context) {
-	db := database.GetDB()
-
 	// Get query parameters
-	includeSubcategories := c.Query("include") == "subcategories"
+	parentID := c.Query("parent_id") // "root" or specific ID
+	includeChildren := c.Query("include") == "children"
 	isActive := c.Query("is_active")
-	excludeInactive := c.Query("exclude_inactive") == "true"
 
-	// Build query
-	query := db.Model(&models.Category{})
-
-	// Filter by active status
-	if isActive != "" {
-		active := isActive == "true"
-		query = query.Where("is_active = ?", active)
-	} else if excludeInactive {
-		// If exclude_inactive is true, only show active categories
-		query = query.Where("is_active = ?", true)
-	}
-
-	// Get categories
-	var categories []models.Category
-	if err := query.Order("name ASC").Find(&categories).Error; err != nil {
+	// Use service layer
+	response, err := cc.categoryService.GetCategories(parentID, includeChildren, isActive)
+	if err != nil {
 		logrus.Error("Failed to fetch categories:", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch categories", err.Error()))
 		return
 	}
 
-	// Include subcategories if requested
-	if includeSubcategories {
-		for i := range categories {
-			subQuery := db.Where("parent_id = ?", categories[i].ID)
-			if excludeInactive {
-				// Also exclude inactive subcategories if exclude_inactive is true
-				subQuery = subQuery.Where("is_active = ?", true)
-			}
-			if err := subQuery.Find(&categories[i].Subcategories).Error; err != nil {
-				logrus.Error("Failed to fetch category subcategories:", err)
-			}
-		}
-	}
-
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("Categories retrieved successfully", categories))
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Categories retrieved successfully", response.Categories))
 }
 
 // GetCategoryByID returns a specific category by ID
@@ -102,11 +74,9 @@ func (cc *CategoryController) GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	db := database.GetDB()
-
-	var category models.Category
-	if err := db.Preload("Subcategories").First(&category, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	category, err := cc.categoryService.GetCategoryByID(uint(id))
+	if err != nil {
+		if err.Error() == "category not found" {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("Category not found", "Category with the specified ID does not exist"))
 			return
 		}
@@ -117,56 +87,47 @@ func (cc *CategoryController) GetCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Category retrieved successfully", category))
 }
 
-// CreateCategory creates a new category
+// CreateCategory creates a new category (supports all levels)
 func (cc *CategoryController) CreateCategory(c *gin.Context) {
+	contentType := c.GetHeader("Content-Type")
 	var req CreateCategoryRequest
-	
-	// Handle JSON request
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-		return
-	}
+	var imageFile *multipart.FileHeader
 
-	// Convert IsActive from interface{} to bool
-	var isActive bool
-	switch v := req.IsActive.(type) {
-	case bool:
-		isActive = v
-	case string:
-		if v == "true" {
-			isActive = true
-		} else if v == "false" {
-			isActive = false
-		} else {
-			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid is_active", "IsActive must be true or false"))
+	// Handle JSON or form-data
+	if strings.Contains(contentType, "application/json") {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 			return
 		}
-	default:
-		isActive = true // default to true
-	}
-
-	// Generate slug from name using global slug utility
-	slug := utils.GenerateSlug(req.Name)
-
-	// Check if slug already exists
-	db := database.GetDB()
-	var existingCategory models.Category
-	if err := db.Where("slug = ?", slug).First(&existingCategory).Error; err == nil {
-		c.JSON(http.StatusConflict, views.CreateErrorResponse("Category already exists", "A category with this name already exists"))
+	} else if strings.Contains(contentType, "multipart/form-data") {
+		// Handle form-data with optional file upload
+		if file, err := c.FormFile("image"); err == nil {
+			imageFile = file
+		}
+		req.Name = c.PostForm("name")
+		req.Description = c.PostForm("description")
+		req.Icon = c.PostForm("icon")
+		req.ParentID = c.PostForm("parent_id")
+		req.IsActive = c.PostForm("is_active")
+	} else {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
 		return
 	}
 
-	// Create category
-	category := models.Category{
+	// Convert to service request
+	serviceReq := &services.CreateCategoryRequest{
 		Name:        req.Name,
-		Slug:        slug,
 		Description: req.Description,
-		IsActive:    isActive,
+		Icon:        req.Icon,
+		ParentID:    req.ParentID,
+		IsActive:    req.IsActive,
 	}
 
-	if err := db.Create(&category).Error; err != nil {
+	// Create category using service
+	category, err := cc.categoryService.CreateCategory(serviceReq, imageFile)
+	if err != nil {
 		logrus.Error("Failed to create category:", err)
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create category", err.Error()))
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to create category", err.Error()))
 		return
 	}
 
@@ -182,11 +143,28 @@ func (cc *CategoryController) UpdateCategory(c *gin.Context) {
 		return
 	}
 
+	contentType := c.GetHeader("Content-Type")
 	var req CreateCategoryRequest
-	
-	// Handle JSON request
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+	var imageFile *multipart.FileHeader
+
+	// Handle JSON or form-data
+	if strings.Contains(contentType, "application/json") {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
+			return
+		}
+	} else if strings.Contains(contentType, "multipart/form-data") {
+		// Handle form-data with optional file upload
+		if file, err := c.FormFile("image"); err == nil {
+			imageFile = file
+		}
+		req.Name = c.PostForm("name")
+		req.Description = c.PostForm("description")
+		req.Icon = c.PostForm("icon")
+		req.ParentID = c.PostForm("parent_id")
+		req.IsActive = c.PostForm("is_active")
+	} else {
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Unsupported content type", "Please use application/json or multipart/form-data"))
 		return
 	}
 
@@ -194,11 +172,13 @@ func (cc *CategoryController) UpdateCategory(c *gin.Context) {
 	serviceReq := &services.CreateCategoryRequest{
 		Name:        req.Name,
 		Description: req.Description,
+		Icon:        req.Icon,
+		ParentID:    req.ParentID,
 		IsActive:    req.IsActive,
 	}
 
 	// Update category using service
-	category, err := cc.categoryService.UpdateCategory(uint(id), serviceReq)
+	category, err := cc.categoryService.UpdateCategory(uint(id), serviceReq, imageFile)
 	if err != nil {
 		logrus.Error("Failed to update category:", err)
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to update category", err.Error()))
