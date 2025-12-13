@@ -1884,7 +1884,7 @@ func (bs *BookingService) ConvertToDetailedBookingResponse(booking *models.Booki
 			Price:       booking.Service.Price,
 			Duration:    booking.Service.Duration,
 			Category:    bs.convertToDetailedCategory(&booking.Service.Category),
-			Subcategory: bs.convertToDetailedSubcategory(&booking.Service.Subcategory),
+			// Subcategory removed - using unified Category hierarchy
 			IsActive:    booking.Service.IsActive,
 			CreatedAt:   booking.Service.CreatedAt,
 			UpdatedAt:   booking.Service.UpdatedAt,
@@ -1943,19 +1943,7 @@ func (bs *BookingService) convertToDetailedCategory(category *models.Category) *
 	}
 }
 
-func (bs *BookingService) convertToDetailedSubcategory(subcategory *models.Subcategory) *models.DetailedSubcategory {
-	if subcategory == nil || subcategory.ID == 0 {
-		return nil
-	}
-	return &models.DetailedSubcategory{
-		ID:          subcategory.ID,
-		Name:        subcategory.Name,
-		Slug:        subcategory.Slug,
-		Description: subcategory.Description,
-		Icon:        subcategory.Icon,
-		IsActive:    subcategory.IsActive,
-	}
-}
+// convertToDetailedSubcategory removed - using unified Category hierarchy
 
 func (bs *BookingService) getRelatedBookings(userID uint, excludeBookingID uint) []models.RelatedBooking {
 	// This would typically query the database for related bookings

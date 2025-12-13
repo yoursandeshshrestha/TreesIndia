@@ -30,23 +30,15 @@ func (sr *ServiceRepository) Create(service *models.Service) error {
 	}()
 	
 	logrus.Infof("ServiceRepository.Create called for service: %s", service.Name)
-	logrus.Infof("ServiceRepository.Create service data: CategoryID=%d, SubcategoryID=%d", service.CategoryID, service.SubcategoryID)
+	logrus.Infof("ServiceRepository.Create service data: CategoryID=%d", service.CategoryID)
 	
-	// First, let's verify the subcategory exists
-	var subcategory models.Subcategory
-	if err := sr.GetDB().First(&subcategory, service.SubcategoryID).Error; err != nil {
-		logrus.Errorf("ServiceRepository.Create subcategory lookup failed: %v", err)
-		return err
-	}
-	logrus.Infof("ServiceRepository.Create found subcategory: ID=%d, Name=%s, ParentID=%d", subcategory.ID, subcategory.Name, subcategory.ParentID)
-	
-	// Also verify the category exists
+	// Verify the category exists
 	var category models.Category
 	if err := sr.GetDB().First(&category, service.CategoryID).Error; err != nil {
 		logrus.Errorf("ServiceRepository.Create category lookup failed: %v", err)
 		return err
 	}
-	logrus.Infof("ServiceRepository.Create found category: ID=%d, Name=%s", category.ID, category.Name)
+	logrus.Infof("ServiceRepository.Create found category: ID=%d, Name=%s, Level=%d", category.ID, category.Name, category.GetLevel())
 	
 	err := sr.GetDB().Create(service).Error
 	if err != nil {
@@ -69,7 +61,7 @@ func (sr *ServiceRepository) GetByID(id uint) (*models.Service, error) {
 	logrus.Infof("ServiceRepository.GetByID called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByID service not found with ID: %d", id)
@@ -94,7 +86,7 @@ func (sr *ServiceRepository) GetByIDWithRelations(id uint) (*models.Service, err
 	logrus.Infof("ServiceRepository.GetByIDWithRelations called with ID: %d", id)
 	
 	var service models.Service
-	err := sr.GetDB().Preload("Category").Preload("Subcategory.Parent").Preload("ServiceAreas").First(&service, id).Error
+	err := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas").First(&service, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrus.Infof("ServiceRepository.GetByIDWithRelations service not found with ID: %d", id)
@@ -120,34 +112,40 @@ func (sr *ServiceRepository) GetWithFilters(priceType *string, category *string,
 		priceType, category, subcategory, priceMin, priceMax, excludeInactive)
 	
 	var services []models.Service
-	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas")
 	
 	// Filter by price type
 	if priceType != nil {
 		query = query.Where("price_type = ?", *priceType)
 	}
 	
-	// Filter by category (by name or ID)
+	// Filter by category (by name or ID) - can be any level
 	if category != nil {
 		// Try to parse as ID first
 		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
-			query = query.Where("category_id = ?", categoryID)
+			// Filter by exact category ID or any of its descendants
+			query = query.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?) OR category_id IN (SELECT id FROM categories WHERE parent_id IN (SELECT id FROM categories WHERE parent_id = ?))", 
+				categoryID, categoryID, categoryID)
 		} else {
-			// If not a number, treat as category name
+			// If not a number, treat as category name (searches in category hierarchy)
 			query = query.Joins("JOIN categories ON services.category_id = categories.id").
 				Where("categories.name ILIKE ?", "%"+*category+"%")
 		}
 	}
 	
-	// Filter by subcategory (by name or ID)
+	// Filter by subcategory (now treated as a category filter - for backward compatibility)
+	// This can filter by Level 2 categories or their children
 	if subcategory != nil {
 		// Try to parse as ID first
 		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-			query = query.Where("subcategory_id = ?", subcategoryID)
+			// Filter by this category or its children (Level 3)
+			query = query.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)", 
+				subcategoryID, subcategoryID)
 		} else {
-			// If not a number, treat as subcategory name
-			query = query.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
-				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+			// If not a number, treat as category name
+			query = query.Joins("JOIN categories cat ON services.category_id = cat.id").
+				Joins("LEFT JOIN categories parent ON cat.parent_id = parent.id").
+				Where("(cat.name ILIKE ? OR parent.name ILIKE ?)", "%"+*subcategory+"%", "%"+*subcategory+"%")
 		}
 	}
 	
@@ -189,34 +187,39 @@ func (sr *ServiceRepository) GetWithFiltersPaginated(priceType *string, category
 	var total int64
 	
 	// Build base query
-	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas")
 	
 	// Filter by price type
 	if priceType != nil {
 		query = query.Where("price_type = ?", *priceType)
 	}
 	
-	// Filter by category (by name or ID)
+	// Filter by category (by name or ID) - can be any level
 	if category != nil {
 		// Try to parse as ID first
 		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
-			query = query.Where("category_id = ?", categoryID)
+			// Filter by exact category ID or any of its descendants
+			query = query.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?) OR category_id IN (SELECT id FROM categories WHERE parent_id IN (SELECT id FROM categories WHERE parent_id = ?))", 
+				categoryID, categoryID, categoryID)
 		} else {
-			// If not a number, treat as category name
+			// If not a number, treat as category name (searches in category hierarchy)
 			query = query.Joins("JOIN categories ON services.category_id = categories.id").
 				Where("categories.name ILIKE ?", "%"+*category+"%")
 		}
 	}
 	
-	// Filter by subcategory (by name or ID)
+	// Filter by subcategory (now treated as a category filter - for backward compatibility)
 	if subcategory != nil {
 		// Try to parse as ID first
 		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-			query = query.Where("subcategory_id = ?", subcategoryID)
+			// Filter by this category or its children (Level 3)
+			query = query.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)", 
+				subcategoryID, subcategoryID)
 		} else {
-			// If not a number, treat as subcategory name
-			query = query.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
-				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+			// If not a number, treat as category name
+			query = query.Joins("JOIN categories cat ON services.category_id = cat.id").
+				Joins("LEFT JOIN categories parent ON cat.parent_id = parent.id").
+				Where("(cat.name ILIKE ? OR parent.name ILIKE ?)", "%"+*subcategory+"%", "%"+*subcategory+"%")
 		}
 	}
 	
@@ -257,7 +260,9 @@ func (sr *ServiceRepository) GetWithFiltersPaginated(priceType *string, category
 	
 	if category != nil {
 		if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
-			countQuery = countQuery.Where("category_id = ?", categoryID)
+			// Filter by exact category ID or any of its descendants
+			countQuery = countQuery.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?) OR category_id IN (SELECT id FROM categories WHERE parent_id IN (SELECT id FROM categories WHERE parent_id = ?))", 
+				categoryID, categoryID, categoryID)
 		} else {
 			countQuery = countQuery.Joins("JOIN categories ON services.category_id = categories.id").
 				Where("categories.name ILIKE ?", "%"+*category+"%")
@@ -266,10 +271,13 @@ func (sr *ServiceRepository) GetWithFiltersPaginated(priceType *string, category
 	
 	if subcategory != nil {
 		if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-			countQuery = countQuery.Where("subcategory_id = ?", subcategoryID)
+			// Filter by this category or its children (Level 3)
+			countQuery = countQuery.Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)", 
+				subcategoryID, subcategoryID)
 		} else {
-			countQuery = countQuery.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
-				Where("subcategories.name ILIKE ?", "%"+*subcategory+"%")
+			countQuery = countQuery.Joins("JOIN categories cat ON services.category_id = cat.id").
+				Joins("LEFT JOIN categories parent ON cat.parent_id = parent.id").
+				Where("(cat.name ILIKE ? OR parent.name ILIKE ?)", "%"+*subcategory+"%", "%"+*subcategory+"%")
 		}
 	}
 	
@@ -309,7 +317,7 @@ func (sr *ServiceRepository) GetAll(excludeInactive bool) ([]models.Service, err
 	}()
 	
 	var services []models.Service
-	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas")
 	
 	if excludeInactive {
 		query = query.Where("is_active = ?", true)
@@ -325,18 +333,20 @@ func (sr *ServiceRepository) GetAll(excludeInactive bool) ([]models.Service, err
 	return services, nil
 }
 
-// GetBySubcategory retrieves services by subcategory ID
-func (sr *ServiceRepository) GetBySubcategory(subcategoryID uint, excludeInactive bool) ([]models.Service, error) {
+// GetByCategory retrieves services by category ID (includes services in child categories)
+func (sr *ServiceRepository) GetByCategory(categoryID uint, excludeInactive bool) ([]models.Service, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Errorf("ServiceRepository.GetBySubcategory panic: %v", r)
+			logrus.Errorf("ServiceRepository.GetByCategory panic: %v", r)
 		}
 	}()
 	
-	logrus.Infof("ServiceRepository.GetBySubcategory called with subcategoryID: %d, excludeInactive: %v", subcategoryID, excludeInactive)
+	logrus.Infof("ServiceRepository.GetByCategory called with categoryID: %d, excludeInactive: %v", categoryID, excludeInactive)
 	
 	var services []models.Service
-	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas").Where("subcategory_id = ?", subcategoryID)
+	// Get services in this category or any of its children (Level 3)
+	query := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas").
+		Where("category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)", categoryID, categoryID)
 	
 	if excludeInactive {
 		query = query.Where("is_active = ?", true)
@@ -380,7 +390,7 @@ func (sr *ServiceRepository) GetSummariesWithFiltersPaginated(priceType *string,
 	
 	// Use the same approach as GetByID - get all services first, then filter and paginate
 	var allServices []models.Service
-	query := sr.GetDB().Preload("Category").Preload("Subcategory").Preload("ServiceAreas")
+	query := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas")
 	
 	// Get all services first (like GetByID does)
 	if err := query.Find(&allServices).Error; err != nil {
@@ -411,16 +421,29 @@ func (sr *ServiceRepository) GetSummariesWithFiltersPaginated(priceType *string,
 			}
 		}
 		
-		// Filter by subcategory
+		// Filter by subcategory (now treated as category filter)
 		if subcategory != nil {
 			if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-				if service.SubcategoryID != uint(subcategoryID) {
+				// Check if service category matches or is a child of the subcategory
+				var cat models.Category
+				if err := sr.GetDB().First(&cat, service.CategoryID).Error; err != nil {
+					continue
+				}
+				// Check if category is the subcategory or a child of it
+				if cat.ID != uint(subcategoryID) && (cat.ParentID == nil || *cat.ParentID != uint(subcategoryID)) {
 					continue
 				}
 			} else {
-				// Get subcategory name
-				var subcat models.Subcategory
-				if err := sr.GetDB().First(&subcat, service.SubcategoryID).Error; err != nil || !strings.Contains(strings.ToLower(subcat.Name), strings.ToLower(*subcategory)) {
+				// Get category and check name match
+				var cat models.Category
+				if err := sr.GetDB().Preload("Parent").First(&cat, service.CategoryID).Error; err != nil {
+					continue
+				}
+				matched := strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*subcategory))
+				if !matched && cat.Parent != nil {
+					matched = strings.Contains(strings.ToLower(cat.Parent.Name), strings.ToLower(*subcategory))
+				}
+				if !matched {
 					continue
 				}
 			}
@@ -499,35 +522,27 @@ func (sr *ServiceRepository) GetSummariesWithFiltersPaginated(priceType *string,
 			})
 		}
 		
-		// Get category and subcategory names
-		var categoryName, subcategoryName string
-		if service.CategoryID > 0 {
-			var category models.Category
-			if err := sr.GetDB().First(&category, service.CategoryID).Error; err == nil {
-				categoryName = category.Name
-			}
-		}
-		if service.SubcategoryID > 0 {
-			var subcategory models.Subcategory
-			if err := sr.GetDB().First(&subcategory, service.SubcategoryID).Error; err == nil {
-				subcategoryName = subcategory.Name
-			}
+		// Get category name and path from preloaded category
+		var categoryName string
+		var categoryPath string
+		if service.Category.ID > 0 {
+			categoryName = service.Category.Name
+			categoryPath = models.BuildCategoryPath(&service.Category)
 		}
 		
-		// Convert to ServiceSummary (exactly like GetByID)
+		// Convert to ServiceSummary
 		serviceSummary := models.ServiceSummary{
 			ID:              service.ID,
 			Name:            service.Name,
 			Slug:            service.Slug,
 			Description:     service.Description,
-			Images:          service.Images, // This will work exactly like GetByID
+			Images:          service.Images,
 			PriceType:       service.PriceType,
 			Price:           service.Price,
 			Duration:        service.Duration,
 			CategoryID:      service.CategoryID,
-			SubcategoryID:   service.SubcategoryID,
 			CategoryName:    categoryName,
-			SubcategoryName: subcategoryName,
+			CategoryPath:    categoryPath,
 			IsActive:        service.IsActive,
 			CreatedAt:       service.CreatedAt,
 			UpdatedAt:       service.UpdatedAt,
@@ -651,7 +666,8 @@ func (sr *ServiceRepository) GetPopularServices(limit int, city, state string) (
 		}
 		
 		// Fetch the full service data for the found IDs, ordered by creation date
-		if err := sr.GetDB().Where("id IN ?", serviceIDs).
+		if err := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+			Where("id IN ?", serviceIDs).
 			Order("created_at DESC").
 			Limit(limit).
 			Find(&services).Error; err != nil {
@@ -660,7 +676,8 @@ func (sr *ServiceRepository) GetPopularServices(limit int, city, state string) (
 		}
 	} else {
 		// No location filtering, get all active services
-		if err := sr.GetDB().Where("is_active = ?", true).
+		if err := sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+			Where("is_active = ?", true).
 			Order("created_at DESC").
 			Limit(limit).
 			Find(&services).Error; err != nil {
@@ -672,21 +689,13 @@ func (sr *ServiceRepository) GetPopularServices(limit int, city, state string) (
 	// Convert to ServiceSummary format
 	var serviceSummaries []models.ServiceSummary
 	for _, service := range services {
-		// Get category and subcategory names
-		var categoryName, subcategoryName string
-		if service.CategoryID > 0 {
-			var category models.Category
-			if err := sr.GetDB().First(&category, service.CategoryID).Error; err == nil {
-				categoryName = category.Name
-			}
+		// Get category name and path from preloaded category
+		var categoryName string
+		var categoryPath string
+		if service.Category.ID > 0 {
+			categoryName = service.Category.Name
+			categoryPath = models.BuildCategoryPath(&service.Category)
 		}
-		if service.SubcategoryID > 0 {
-			var subcategory models.Subcategory
-			if err := sr.GetDB().First(&subcategory, service.SubcategoryID).Error; err == nil {
-				subcategoryName = subcategory.Name
-			}
-		}
-		
 		// Get service areas
 		var serviceAreas []models.ServiceAreaSummary
 		if err := sr.GetDB().Table("service_service_areas").
@@ -708,9 +717,8 @@ func (sr *ServiceRepository) GetPopularServices(limit int, city, state string) (
 			Price:           service.Price,
 			Duration:        service.Duration,
 			CategoryID:      service.CategoryID,
-			SubcategoryID:   service.SubcategoryID,
 			CategoryName:    categoryName,
-			SubcategoryName: subcategoryName,
+			CategoryPath:    categoryPath,
 			IsActive:        service.IsActive,
 			CreatedAt:       service.CreatedAt,
 			UpdatedAt:       service.UpdatedAt,
@@ -772,10 +780,10 @@ func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType 
 		}
 		
 		// Create query with location-filtered service IDs
-		query = sr.GetDB().Preload("ServiceAreas").Where("id IN ?", serviceIDs)
+		query = sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas").Where("id IN ?", serviceIDs)
 	} else {
 		// No location filtering, get all services
-		query = sr.GetDB().Preload("ServiceAreas")
+		query = sr.GetDB().Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").Preload("ServiceAreas")
 	}
 	
 	// Get all matching services first
@@ -807,16 +815,29 @@ func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType 
 			}
 		}
 		
-		// Filter by subcategory
+		// Filter by subcategory (now treated as category filter)
 		if subcategory != nil {
 			if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-				if service.SubcategoryID != uint(subcategoryID) {
+				// Check if service category matches or is a child of the subcategory
+				var cat models.Category
+				if err := sr.GetDB().First(&cat, service.CategoryID).Error; err != nil {
+					continue
+				}
+				// Check if category is the subcategory or a child of it
+				if cat.ID != uint(subcategoryID) && (cat.ParentID == nil || *cat.ParentID != uint(subcategoryID)) {
 					continue
 				}
 			} else {
-				// Get subcategory name
-				var subcat models.Subcategory
-				if err := sr.GetDB().First(&subcat, service.SubcategoryID).Error; err != nil || !strings.Contains(strings.ToLower(subcat.Name), strings.ToLower(*subcategory)) {
+				// Get category and check name match
+				var cat models.Category
+				if err := sr.GetDB().Preload("Parent").First(&cat, service.CategoryID).Error; err != nil {
+					continue
+				}
+				matched := strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*subcategory))
+				if !matched && cat.Parent != nil {
+					matched = strings.Contains(strings.ToLower(cat.Parent.Name), strings.ToLower(*subcategory))
+				}
+				if !matched {
 					continue
 				}
 			}
@@ -895,21 +916,13 @@ func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType 
 			})
 		}
 		
-		// Get category and subcategory names
-		var categoryName, subcategoryName string
-		if service.CategoryID > 0 {
-			var category models.Category
-			if err := sr.GetDB().First(&category, service.CategoryID).Error; err == nil {
-				categoryName = category.Name
-			}
+		// Get category name and path from preloaded category
+		var categoryName string
+		var categoryPath string
+		if service.Category.ID > 0 {
+			categoryName = service.Category.Name
+			categoryPath = models.BuildCategoryPath(&service.Category)
 		}
-		if service.SubcategoryID > 0 {
-			var subcategory models.Subcategory
-			if err := sr.GetDB().First(&subcategory, service.SubcategoryID).Error; err == nil {
-				subcategoryName = subcategory.Name
-			}
-		}
-		
 		// Convert to ServiceSummary
 		serviceSummary := models.ServiceSummary{
 			ID:              service.ID,
@@ -921,9 +934,8 @@ func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType 
 			Price:           service.Price,
 			Duration:        service.Duration,
 			CategoryID:      service.CategoryID,
-			SubcategoryID:   service.SubcategoryID,
 			CategoryName:    categoryName,
-			SubcategoryName: subcategoryName,
+			CategoryPath:    categoryPath,
 			IsActive:        service.IsActive,
 			CreatedAt:       service.CreatedAt,
 			UpdatedAt:       service.UpdatedAt,

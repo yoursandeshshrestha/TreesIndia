@@ -602,7 +602,7 @@ func (s *ChatbotService) fetchServiceData(query *models.ChatbotQuery, session *m
 	db := database.GetDB()
 	
 	// Build query with proper joins and preloading
-	queryBuilder := db.Preload("Category").Preload("Subcategory").Preload("ServiceAreas").
+	queryBuilder := db.Preload("Category").Preload("Category.Parent").Preload("ServiceAreas").
 		Where("is_active = true")
 	
 	// Apply filters
@@ -623,10 +623,12 @@ func (s *ChatbotService) fetchServiceData(query *models.ChatbotQuery, session *m
 			Where("categories.name ILIKE ? OR categories.slug ILIKE ?", "%"+categoryName+"%", "%"+categoryName+"%")
 	}
 	
-	// Filter by subcategory if mentioned
+	// Filter by subcategory if mentioned (now searches in category hierarchy)
 	if subcategoryName, ok := query.Entities["service_subcategory"].(string); ok {
-		queryBuilder = queryBuilder.Joins("JOIN subcategories ON services.subcategory_id = subcategories.id").
-			Where("subcategories.name ILIKE ? OR subcategories.slug ILIKE ?", "%"+subcategoryName+"%", "%"+subcategoryName+"%")
+		queryBuilder = queryBuilder.Joins("JOIN categories cat ON services.category_id = cat.id").
+			Joins("LEFT JOIN categories parent ON cat.parent_id = parent.id").
+			Where("(cat.name ILIKE ? OR cat.slug ILIKE ? OR parent.name ILIKE ? OR parent.slug ILIKE ?)", 
+				"%"+subcategoryName+"%", "%"+subcategoryName+"%", "%"+subcategoryName+"%", "%"+subcategoryName+"%")
 	}
 	
 	// Filter by price type if mentioned
@@ -671,12 +673,12 @@ func (s *ChatbotService) fetchServiceData(query *models.ChatbotQuery, session *m
 			}
 		}
 		
-		// Add subcategory information
-		if service.Subcategory.ID != 0 {
+		// Add parent category information (if category has a parent)
+		if service.Category.Parent != nil && service.Category.Parent.ID != 0 {
 			serviceData["subcategory"] = map[string]interface{}{
-				"id":   service.Subcategory.ID,
-				"name": service.Subcategory.Name,
-				"slug": service.Subcategory.Slug,
+				"id":   service.Category.Parent.ID,
+				"name": service.Category.Parent.Name,
+				"slug": service.Category.Parent.Slug,
 			}
 		}
 		

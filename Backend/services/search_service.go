@@ -349,7 +349,7 @@ func (ss *SearchService) searchByPrice(filters models.SearchFilters, page, limit
 	offset := (page - 1) * limit
 	
 	query := ss.db.Model(&models.Service{}).
-		Preload("Category").Preload("Subcategory").
+		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
 		Where("services.is_active = ?", true)
 
 	// Apply price filters
@@ -385,7 +385,7 @@ func (ss *SearchService) searchByServiceType(filters models.SearchFilters, page,
 	offset := (page - 1) * limit
 	
 	query := ss.db.Model(&models.Service{}).
-		Preload("Category").Preload("Subcategory").
+		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
 		Where("services.is_active = ?", true)
 
 	// Apply service type filter
@@ -418,14 +418,14 @@ func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, li
 	offset := (page - 1) * limit
 	
 	query := ss.db.Model(&models.Service{}).
-		Preload("Category").Preload("Subcategory").
+		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
 		Where("services.is_active = ?", true)
 
 	// Apply keyword filters
 	if len(filters.Keywords) > 0 {
 		// Add joins once outside the loop to avoid duplicate table references
 		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
-			Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id")
+			Joins("LEFT JOIN categories parent_cat ON categories.parent_id = parent_cat.id")
 		
 		// Build OR conditions for all keywords
 		var keywordConditions []string
@@ -470,7 +470,7 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 	offset := (page - 1) * limit
 	
 	query := ss.db.Model(&models.Service{}).
-		Preload("Category").Preload("Subcategory").
+		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
 		Where("services.is_active = ?", true)
 
 	// Apply price filters
@@ -490,7 +490,7 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 	if len(filters.Keywords) > 0 {
 		// Add joins once outside the loop to avoid duplicate table references
 		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
-			Joins("LEFT JOIN subcategories ON services.subcategory_id = subcategories.id")
+			Joins("LEFT JOIN categories parent_cat ON categories.parent_id = parent_cat.id")
 		
 		// Build OR conditions for all keywords
 		var keywordConditions []string
@@ -542,8 +542,7 @@ func (ss *SearchService) convertToSearchResults(services []models.Service, match
 			Description:   service.Description,
 			CategoryID:    service.CategoryID,
 			Category:      service.Category.Name,
-			SubcategoryID: service.SubcategoryID,
-			Subcategory:   service.Subcategory.Name,
+			// Subcategory removed - using unified Category hierarchy
 			PriceType:     service.PriceType,
 			Price:         service.Price,
 			Duration:      service.Duration,
@@ -581,8 +580,7 @@ func (ss *SearchService) convertToSearchResultsWithRelevance(services []models.S
 			Description:   service.Description,
 			CategoryID:    service.CategoryID,
 			Category:      service.Category.Name,
-			SubcategoryID: service.SubcategoryID,
-			Subcategory:   service.Subcategory.Name,
+			// Subcategory removed - using unified Category hierarchy
 			PriceType:     service.PriceType,
 			Price:         service.Price,
 			Duration:      service.Duration,
@@ -631,8 +629,8 @@ func (ss *SearchService) calculateRelevanceScore(service models.Service, keyword
 			score += 60.0
 		}
 		
-		// Subcategory match
-		if strings.Contains(strings.ToLower(service.Subcategory.Name), keyword) {
+		// Parent category match (if category has a parent)
+		if service.Category.Parent != nil && strings.Contains(strings.ToLower(service.Category.Parent.Name), keyword) {
 			score += 60.0
 		}
 		

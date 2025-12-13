@@ -3,10 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"strconv"
 	"treesindia/models"
 	"treesindia/repositories"
 	"treesindia/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -35,6 +38,8 @@ func NewCategoryService() (*CategoryService, error) {
 type CreateCategoryRequest struct {
 	Name        string      `json:"name" form:"name" binding:"required,min=2,max=100"`
 	Description string      `json:"description" form:"description" binding:"max=500"`
+	Icon        string      `json:"icon" form:"icon" binding:"max=255"` // Icon name or URL
+	ParentID    interface{} `json:"parent_id" form:"parent_id"`         // Optional: NULL for root (Level 1)
 	IsActive    interface{} `json:"is_active" form:"is_active"`
 }
 
@@ -45,12 +50,32 @@ type GetCategoriesResponse struct {
 }
 
 // GetCategories gets categories with optional filtering
-func (cs *CategoryService) GetCategories(includeSubcategories bool, isActive string) (*GetCategoriesResponse, error) {
+// parentID: optional filter by parent (empty string = root categories, specific ID = children of that parent)
+// includeChildren: whether to include child categories
+// isActive: filter by active status
+func (cs *CategoryService) GetCategories(parentID string, includeChildren bool, isActive string) (*GetCategoriesResponse, error) {
 	var categories []models.Category
 	query := cs.categoryRepo.GetDB().Model(&models.Category{})
 
 	// Apply filters
 	filters := make(map[string]string)
+
+	// Filter by parent_id
+	if parentID != "" {
+		if parentID == "root" || parentID == "null" {
+			// Get root categories (Level 1)
+			query = query.Where("parent_id IS NULL")
+			filters["parent_id"] = "root"
+		} else {
+			// Get children of specific parent
+			if parsedID, err := strconv.ParseUint(parentID, 10, 32); err == nil {
+				query = query.Where("parent_id = ?", parsedID)
+				filters["parent_id"] = parentID
+			}
+		}
+	} else {
+		// No parent filter - get all categories
+	}
 
 	if isActive != "" {
 		filters["is_active"] = isActive
@@ -63,11 +88,11 @@ func (cs *CategoryService) GetCategories(includeSubcategories bool, isActive str
 		return nil, fmt.Errorf("failed to fetch categories: %w", err)
 	}
 
-	// Include subcategories if requested
-	if includeSubcategories {
+	// Include children if requested
+	if includeChildren {
 		for i := range categories {
-			if err := cs.categoryRepo.GetDB().Where("parent_id = ?", categories[i].ID).Find(&categories[i].Subcategories).Error; err != nil {
-				return nil, fmt.Errorf("failed to fetch category subcategories: %w", err)
+			if err := cs.categoryRepo.GetDB().Preload("Children").Where("parent_id = ?", categories[i].ID).Find(&categories[i].Children).Error; err != nil {
+				return nil, fmt.Errorf("failed to fetch category children: %w", err)
 			}
 		}
 	}
@@ -78,10 +103,10 @@ func (cs *CategoryService) GetCategories(includeSubcategories bool, isActive str
 	}, nil
 }
 
-// GetCategoryByID gets a category by ID
+// GetCategoryByID gets a category by ID with parent and children
 func (cs *CategoryService) GetCategoryByID(id uint) (*models.Category, error) {
 	var category models.Category
-	if err := cs.categoryRepo.GetDB().Preload("Subcategories").First(&category, id).Error; err != nil {
+	if err := cs.categoryRepo.GetDB().Preload("Parent").Preload("Children").First(&category, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("category not found")
 		}
@@ -91,8 +116,79 @@ func (cs *CategoryService) GetCategoryByID(id uint) (*models.Category, error) {
 	return &category, nil
 }
 
-// CreateCategory creates a new category
-func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest) (*models.Category, error) {
+// CreateCategory creates a new category (supports all levels)
+func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest, imageFile *multipart.FileHeader) (*models.Category, error) {
+	logrus.Info("CategoryService.CreateCategory called")
+	logrus.Infof("Request data: Name=%s, Description=%s, Icon=%s, ParentID=%v, IsActive=%v",
+		req.Name, req.Description, req.Icon, req.ParentID, req.IsActive)
+
+	// Handle image upload if provided
+	var iconURL string
+	if imageFile != nil {
+		logrus.Info("Image file provided, uploading to Cloudinary")
+		// Validate file size (max 10MB)
+		if err := cs.validationHelper.ValidateFileSize(imageFile.Size, 10*1024*1024); err != nil {
+			return nil, fmt.Errorf("file too large: %w", err)
+		}
+
+		// Validate file type
+		fileContentType := imageFile.Header.Get("Content-Type")
+		if err := cs.validationHelper.ValidateFileType(fileContentType, []string{"image/"}); err != nil {
+			return nil, fmt.Errorf("invalid file type: %w", err)
+		}
+
+		// Upload image to Cloudinary
+		var err error
+		iconURL, err = cs.cloudinaryService.UploadImage(imageFile, "categories")
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload image: %w", err)
+		}
+		logrus.Infof("Image uploaded successfully: %s", iconURL)
+	} else if req.Icon != "" {
+		logrus.Infof("Using provided icon: %s", req.Icon)
+		iconURL = req.Icon
+	}
+
+	// Convert ParentID from interface{} to *uint
+	var parentID *uint
+	if req.ParentID != nil {
+		switch v := req.ParentID.(type) {
+		case float64:
+			if v > 0 && v == float64(uint(v)) {
+				id := uint(v)
+				parentID = &id
+			} else {
+				return nil, fmt.Errorf("parent ID must be a positive integer")
+			}
+		case string:
+			if v == "" || v == "null" || v == "root" {
+				parentID = nil // Root category
+			} else {
+				if parsed, err := strconv.ParseUint(v, 10, 32); err == nil {
+					id := uint(parsed)
+					parentID = &id
+				} else {
+					return nil, fmt.Errorf("parent ID must be a valid integer")
+				}
+			}
+		default:
+			parentID = nil // Default to root
+		}
+
+		// Validate parent exists if provided
+		if parentID != nil {
+			var parent models.Category
+			if err := cs.categoryRepo.FindByID(&parent, *parentID); err != nil {
+				return nil, fmt.Errorf("parent category not found")
+			}
+			// Optional: Check if parent is at level 2 (to enforce max 3 levels)
+			level := parent.GetLevel()
+			if level >= 3 {
+				return nil, fmt.Errorf("cannot create category: maximum depth (3 levels) reached")
+			}
+		}
+	}
+
 	// Convert IsActive from interface{} to bool
 	var isActive bool
 	switch v := req.IsActive.(type) {
@@ -121,6 +217,8 @@ func (cs *CategoryService) CreateCategory(req *CreateCategoryRequest) (*models.C
 		Name:        req.Name,
 		Slug:        slug,
 		Description: req.Description,
+		Icon:        iconURL,
+		ParentID:    parentID,
 		IsActive:    isActive,
 	}
 
@@ -154,10 +252,36 @@ func (cs *CategoryService) ToggleStatus(id uint) (*models.Category, error) {
 }
 
 // UpdateCategory updates a category
-func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest) (*models.Category, error) {
+func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest, imageFile *multipart.FileHeader) (*models.Category, error) {
+	logrus.Info("CategoryService.UpdateCategory called")
 	var category models.Category
 	if err := cs.categoryRepo.FindByID(&category, id); err != nil {
 		return nil, fmt.Errorf("category not found: %w", err)
+	}
+
+	// Handle image upload if provided
+	if imageFile != nil {
+		logrus.Info("Image file provided, uploading to Cloudinary")
+		// Validate file size (max 10MB)
+		if err := cs.validationHelper.ValidateFileSize(imageFile.Size, 10*1024*1024); err != nil {
+			return nil, fmt.Errorf("file too large: %w", err)
+		}
+
+		// Validate file type
+		fileContentType := imageFile.Header.Get("Content-Type")
+		if err := cs.validationHelper.ValidateFileType(fileContentType, []string{"image/"}); err != nil {
+			return nil, fmt.Errorf("invalid file type: %w", err)
+		}
+
+		// Upload image to Cloudinary
+		iconURL, err := cs.cloudinaryService.UploadImage(imageFile, "categories")
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload image: %w", err)
+		}
+		category.Icon = iconURL
+		logrus.Infof("Image uploaded successfully: %s", iconURL)
+	} else if req.Icon != "" {
+		category.Icon = req.Icon
 	}
 
 	// Update fields
@@ -175,6 +299,57 @@ func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest) (
 		category.Description = req.Description
 	}
 
+	// Handle ParentID if provided
+	if req.ParentID != nil {
+		var parentID *uint
+		switch v := req.ParentID.(type) {
+		case float64:
+			if v > 0 && v == float64(uint(v)) {
+				id := uint(v)
+				parentID = &id
+			} else {
+				return nil, fmt.Errorf("parent ID must be a positive integer")
+			}
+		case string:
+			if v == "" || v == "null" || v == "root" {
+				parentID = nil
+			} else {
+				if parsed, err := strconv.ParseUint(v, 10, 32); err == nil {
+					id := uint(parsed)
+					parentID = &id
+				} else {
+					return nil, fmt.Errorf("parent ID must be a valid integer")
+				}
+			}
+		default:
+			// Keep existing parent_id
+			parentID = category.ParentID
+		}
+
+		// Validate parent exists if provided and prevent circular references
+		if parentID != nil {
+			if *parentID == id {
+				return nil, fmt.Errorf("category cannot be its own parent")
+			}
+			var parent models.Category
+			if err := cs.categoryRepo.FindByID(&parent, *parentID); err != nil {
+				return nil, fmt.Errorf("parent category not found")
+			}
+			// Check if this would create a cycle
+			if cs.wouldCreateCycle(id, *parentID) {
+				return nil, fmt.Errorf("cannot update: would create circular reference")
+			}
+			// Check level limit
+			level := parent.GetLevel()
+			if level >= 3 {
+				return nil, fmt.Errorf("cannot update: maximum depth (3 levels) reached")
+			}
+			category.ParentID = parentID
+		} else {
+			category.ParentID = nil
+		}
+	}
+
 	// Handle IsActive
 	if req.IsActive != nil {
 		switch v := req.IsActive.(type) {
@@ -189,7 +364,32 @@ func (cs *CategoryService) UpdateCategory(id uint, req *CreateCategoryRequest) (
 		return nil, fmt.Errorf("failed to update category: %w", err)
 	}
 
+	// Load the updated category with relationships
+	if err := cs.categoryRepo.GetDB().Preload("Parent").Preload("Children").First(&category, category.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to load updated category: %w", err)
+	}
+
 	return &category, nil
+}
+
+// wouldCreateCycle checks if setting parentID would create a circular reference
+func (cs *CategoryService) wouldCreateCycle(categoryID uint, newParentID uint) bool {
+	// Check if newParentID is a descendant of categoryID
+	currentID := newParentID
+	for i := 0; i < 10; i++ { // Max 10 levels to prevent infinite loop
+		var parent models.Category
+		if err := cs.categoryRepo.FindByID(&parent, currentID); err != nil {
+			return false // Parent not found, no cycle
+		}
+		if parent.ParentID == nil {
+			return false // Reached root, no cycle
+		}
+		if *parent.ParentID == categoryID {
+			return true // Found cycle
+		}
+		currentID = *parent.ParentID
+	}
+	return false
 }
 
 // DeleteCategory deletes a category
@@ -199,14 +399,24 @@ func (cs *CategoryService) DeleteCategory(id uint) error {
 		return fmt.Errorf("category not found: %w", err)
 	}
 
-	// Check if category has subcategories
-	var subcategoryCount int64
-	if err := cs.categoryRepo.GetDB().Model(&models.Subcategory{}).Where("parent_id = ?", id).Count(&subcategoryCount).Error; err != nil {
-		return fmt.Errorf("failed to check category subcategories: %w", err)
+	// Check if category has children
+	var childrenCount int64
+	if err := cs.categoryRepo.GetDB().Model(&models.Category{}).Where("parent_id = ?", id).Count(&childrenCount).Error; err != nil {
+		return fmt.Errorf("failed to check category children: %w", err)
 	}
 
-	if subcategoryCount > 0 {
-		return fmt.Errorf("cannot delete category with subcategories")
+	if childrenCount > 0 {
+		return fmt.Errorf("cannot delete category with children")
+	}
+
+	// Check if category is used by any services
+	var serviceCount int64
+	if err := cs.categoryRepo.GetDB().Model(&models.Service{}).Where("category_id = ?", id).Count(&serviceCount).Error; err != nil {
+		return fmt.Errorf("failed to check category services: %w", err)
+	}
+
+	if serviceCount > 0 {
+		return fmt.Errorf("cannot delete category: it is used by %d service(s)", serviceCount)
 	}
 
 	if err := cs.categoryRepo.Delete(&category); err != nil {
@@ -221,9 +431,27 @@ func (cs *CategoryService) GetCategoryStats() (map[string]int64, error) {
 	return cs.categoryRepo.GetCategoryStats()
 }
 
-// GetCategoryTree gets the complete category tree
+// GetCategoryTree gets the complete category tree (all levels)
 func (cs *CategoryService) GetCategoryTree() ([]models.Category, error) {
 	return cs.categoryRepo.GetCategoryTree()
+}
+
+// GetRootCategories gets only root categories (Level 1)
+func (cs *CategoryService) GetRootCategories() ([]models.Category, error) {
+	var categories []models.Category
+	if err := cs.categoryRepo.FindActiveRootCategories(&categories); err != nil {
+		return nil, fmt.Errorf("failed to fetch root categories: %w", err)
+	}
+	return categories, nil
+}
+
+// GetChildrenByParentID gets all children of a specific parent category
+func (cs *CategoryService) GetChildrenByParentID(parentID uint) ([]models.Category, error) {
+	var categories []models.Category
+	if err := cs.categoryRepo.FindActiveByParentID(&categories, parentID); err != nil {
+		return nil, fmt.Errorf("failed to fetch children: %w", err)
+	}
+	return categories, nil
 }
 
 // GetCloudinaryService returns the Cloudinary service instance

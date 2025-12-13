@@ -31,14 +31,39 @@ func (cr *CategoryRepository) FindActiveCategories(categories *[]models.Category
 	return cr.db.Where("is_active = ?", true).Order("name ASC").Find(categories).Error
 }
 
-// FindWithSubcategories finds categories with their subcategories
-func (cr *CategoryRepository) FindWithSubcategories(categories *[]models.Category) error {
-	return cr.db.Preload("Subcategories").Order("name ASC").Find(categories).Error
+// FindWithChildren finds categories with their children (all levels)
+func (cr *CategoryRepository) FindWithChildren(categories *[]models.Category) error {
+	return cr.db.Preload("Children").Order("name ASC").Find(categories).Error
 }
 
-// FindActiveWithSubcategories finds active categories with their subcategories
-func (cr *CategoryRepository) FindActiveWithSubcategories(categories *[]models.Category) error {
-	return cr.db.Preload("Subcategories", "is_active = ?", true).Where("is_active = ?", true).Order("name ASC").Find(categories).Error
+// FindActiveWithChildren finds active categories with their active children
+func (cr *CategoryRepository) FindActiveWithChildren(categories *[]models.Category) error {
+	return cr.db.Preload("Children", "is_active = ?", true).Where("is_active = ?", true).Order("name ASC").Find(categories).Error
+}
+
+// FindRootCategories finds only root categories (Level 1, no parent)
+func (cr *CategoryRepository) FindRootCategories(categories *[]models.Category) error {
+	return cr.db.Where("parent_id IS NULL").Order("name ASC").Find(categories).Error
+}
+
+// FindActiveRootCategories finds active root categories
+func (cr *CategoryRepository) FindActiveRootCategories(categories *[]models.Category) error {
+	return cr.db.Where("parent_id IS NULL AND is_active = ?", true).Order("name ASC").Find(categories).Error
+}
+
+// FindByParentID finds all categories with a specific parent
+func (cr *CategoryRepository) FindByParentID(categories *[]models.Category, parentID uint) error {
+	return cr.db.Where("parent_id = ?", parentID).Order("name ASC").Find(categories).Error
+}
+
+// FindActiveByParentID finds active categories with a specific parent
+func (cr *CategoryRepository) FindActiveByParentID(categories *[]models.Category, parentID uint) error {
+	return cr.db.Where("parent_id = ? AND is_active = ?", parentID, true).Order("name ASC").Find(categories).Error
+}
+
+// FindWithFullTree preloads the complete hierarchy (children and their children recursively)
+func (cr *CategoryRepository) FindWithFullTree(categories *[]models.Category) error {
+	return cr.db.Preload("Children.Children").Order("name ASC").Find(categories).Error
 }
 
 // FindByActiveStatus finds categories by active status
@@ -88,9 +113,31 @@ func (cr *CategoryRepository) GetCategoryStats() (map[string]int64, error) {
 	return stats, nil
 }
 
-// GetCategoryTree gets the complete category tree with subcategories
+// GetCategoryTree gets the complete category tree with all levels
 func (cr *CategoryRepository) GetCategoryTree() ([]models.Category, error) {
 	var categories []models.Category
-	err := cr.db.Preload("Subcategories", "is_active = ?", true).Where("is_active = ?", true).Order("name ASC").Find(&categories).Error
+	// Get root categories and preload children recursively (up to 3 levels)
+	err := cr.db.Preload("Children.Children", "is_active = ?", true).
+		Preload("Children", "is_active = ?", true).
+		Where("parent_id IS NULL AND is_active = ?", true).
+		Order("name ASC").
+		Find(&categories).Error
+	return categories, err
+}
+
+// GetCategoryTreeByLevel gets categories up to a specific level
+func (cr *CategoryRepository) GetCategoryTreeByLevel(maxLevel int) ([]models.Category, error) {
+	var categories []models.Category
+	query := cr.db.Where("parent_id IS NULL AND is_active = ?", true)
+	
+	// Preload children based on maxLevel
+	if maxLevel >= 2 {
+		query = query.Preload("Children", "is_active = ?", true)
+	}
+	if maxLevel >= 3 {
+		query = query.Preload("Children.Children", "is_active = ?", true)
+	}
+	
+	err := query.Order("name ASC").Find(&categories).Error
 	return categories, err
 }

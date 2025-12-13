@@ -98,16 +98,15 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 	logrus.Infof("ServiceService.CreateService creating service with isActive: %v", isActive)
 
 	service := &models.Service{
-		Name:          req.Name,
-		Slug:          slug,
-		Description:   req.Description,
-		Images:        pq.StringArray(imageURLs),
-		PriceType:     req.PriceType,
-		Price:         req.Price,
-		Duration:      req.Duration,
-		CategoryID:    req.CategoryID,
-		SubcategoryID: req.SubcategoryID,
-		IsActive:      isActive,
+		Name:        req.Name,
+		Slug:        slug,
+		Description: req.Description,
+		Images:      pq.StringArray(imageURLs),
+		PriceType:   req.PriceType,
+		Price:       req.Price,
+		Duration:    req.Duration,
+		CategoryID:  req.CategoryID,
+		IsActive:    isActive,
 	}
 
 	// Use a transaction to ensure atomicity
@@ -128,22 +127,14 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 
 	logrus.Info("ServiceService.CreateService calling repository.Create within transaction")
 	
-	// Verify category and subcategory exist before creating
-	var subcategory models.Subcategory
-	if err := tx.First(&subcategory, service.SubcategoryID).Error; err != nil {
-		tx.Rollback()
-		logrus.Errorf("ServiceService.CreateService subcategory lookup failed: %v", err)
-		return nil, err
-	}
-	logrus.Infof("ServiceService.CreateService found subcategory: ID=%d, Name=%s, ParentID=%d", subcategory.ID, subcategory.Name, subcategory.ParentID)
-	
+	// Verify category exists before creating
 	var category models.Category
 	if err := tx.First(&category, service.CategoryID).Error; err != nil {
 		tx.Rollback()
 		logrus.Errorf("ServiceService.CreateService category lookup failed: %v", err)
 		return nil, err
 	}
-	logrus.Infof("ServiceService.CreateService found category: ID=%d, Name=%s", category.ID, category.Name)
+	logrus.Infof("ServiceService.CreateService found category: ID=%d, Name=%s, Level=%d", category.ID, category.Name, category.GetLevel())
 	
 	// Create service within transaction
 	err := tx.Create(service).Error
@@ -199,12 +190,9 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 			logrus.Infof("ServiceService.CreateService loaded %d service areas", len(serviceAreas))
 		}
 		
-		// Load category and subcategory within transaction
-		if err := tx.First(&category, service.CategoryID).Error; err == nil {
+		// Load category within transaction
+		if err := tx.Preload("Parent").Preload("Parent.Parent").First(&category, service.CategoryID).Error; err == nil {
 			service.Category = category
-		}
-		if err := tx.First(&subcategory, service.SubcategoryID).Error; err == nil {
-			service.Subcategory = subcategory
 		}
 	}
 
@@ -278,7 +266,7 @@ func (ss *ServiceService) GetServiceCategories() ([]models.Category, error) {
 }
 
 // GetServiceSubcategories retrieves subcategories for a category
-func (ss *ServiceService) GetServiceSubcategories(categoryID uint) ([]models.Subcategory, error) {
+func (ss *ServiceService) GetServiceSubcategories(categoryID uint) ([]models.Category, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Errorf("ServiceService.GetServiceSubcategories panic: %v", r)
@@ -287,15 +275,15 @@ func (ss *ServiceService) GetServiceSubcategories(categoryID uint) ([]models.Sub
 	
 	logrus.Infof("ServiceService.GetServiceSubcategories called with categoryID: %d", categoryID)
 	
-	var subcategories []models.Subcategory
-	err := ss.serviceRepo.GetDB().Where("parent_id = ? AND is_active = ?", categoryID, true).Find(&subcategories).Error
+	var categories []models.Category
+	err := ss.serviceRepo.GetDB().Where("parent_id = ? AND is_active = ?", categoryID, true).Find(&categories).Error
 	if err != nil {
 		logrus.Errorf("ServiceService.GetServiceSubcategories error: %v", err)
 		return nil, err
 	}
 	
-	logrus.Infof("ServiceService.GetServiceSubcategories returning %d subcategories", len(subcategories))
-	return subcategories, nil
+	logrus.Infof("ServiceService.GetServiceSubcategories returning %d categories", len(categories))
+	return categories, nil
 }
 
 // GetServicesWithFilters retrieves services with advanced filtering
@@ -360,23 +348,23 @@ func (ss *ServiceService) GetAllServices(excludeInactive bool) ([]models.Service
 	return services, nil
 }
 
-// GetServicesBySubcategory retrieves services by subcategory ID
-func (ss *ServiceService) GetServicesBySubcategory(subcategoryID uint, excludeInactive bool) ([]models.Service, error) {
+// GetServicesByCategory retrieves services by category ID (includes services in child categories)
+func (ss *ServiceService) GetServicesByCategory(categoryID uint, excludeInactive bool) ([]models.Service, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Errorf("ServiceService.GetServicesBySubcategory panic: %v", r)
+			logrus.Errorf("ServiceService.GetServicesByCategory panic: %v", r)
 		}
 	}()
 	
-	logrus.Infof("ServiceService.GetServicesBySubcategory called with subcategoryID: %d, excludeInactive: %v", subcategoryID, excludeInactive)
+	logrus.Infof("ServiceService.GetServicesByCategory called with categoryID: %d, excludeInactive: %v", categoryID, excludeInactive)
 	
-	services, err := ss.serviceRepo.GetBySubcategory(subcategoryID, excludeInactive)
+	services, err := ss.serviceRepo.GetByCategory(categoryID, excludeInactive)
 	if err != nil {
-		logrus.Errorf("ServiceService.GetServicesBySubcategory error: %v", err)
+		logrus.Errorf("ServiceService.GetServicesByCategory error: %v", err)
 		return nil, err
 	}
 	
-	logrus.Infof("ServiceService.GetServicesBySubcategory returning %d services", len(services))
+	logrus.Infof("ServiceService.GetServicesByCategory returning %d services", len(services))
 	return services, nil
 }
 
@@ -417,9 +405,7 @@ func (ss *ServiceService) UpdateService(id uint, req *models.UpdateServiceReques
 	if req.Duration != nil {
 		service.Duration = req.Duration
 	}
-	if req.SubcategoryID != nil {
-		service.SubcategoryID = *req.SubcategoryID
-	}
+	// SubcategoryID removed - services now use single CategoryID
 	if req.IsActive != nil {
 		service.IsActive = *req.IsActive
 	}
