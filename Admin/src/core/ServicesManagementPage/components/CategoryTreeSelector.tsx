@@ -261,7 +261,10 @@ const CategoryTreeSelector: React.FC<CategoryTreeSelectorProps> = ({
 
       // If not found in flattened list, search recursively in tree
       if (!selectedCategory) {
-        selectedCategory = findCategoryInTree(categories, selectedCategoryId);
+        selectedCategory = findCategoryInTree(
+          categories,
+          selectedCategoryId
+        ) as Category;
       }
 
       if (selectedCategory) {
@@ -333,3 +336,4 @@ const CategoryTreeSelector: React.FC<CategoryTreeSelectorProps> = ({
 };
 
 export default CategoryTreeSelector;
+
