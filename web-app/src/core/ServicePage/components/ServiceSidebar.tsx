@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Category, Subcategory } from "@/types/api";
 import { ChevronRight } from "lucide-react";
 
@@ -64,7 +65,12 @@ export function ServiceSidebar({
           selectedSubcategory || selectedCategory ? "mt-4 sm:mt-6" : "mt-0"
         } hidden lg:block`}
       >
-        <div className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors">
+        <Link
+          href="/terms-and-conditions"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors block"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Image
@@ -80,7 +86,7 @@ export function ServiceSidebar({
             </div>
             <ChevronRight className="w-5 h-5 text-gray-900 text-sm" />
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );
