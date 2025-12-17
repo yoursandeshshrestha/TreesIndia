@@ -141,8 +141,8 @@ const formatNotificationMessage = (notification: InAppNotification): string => {
   // For new assignment notifications, clean up any raw JSON in the message
   if (notification.type === "new_assignment" && notification.data) {
     const address = notification.data.address;
-    if (address) {
-      const formattedAddress = formatAddress(address);
+    if (address && (typeof address === "string" || typeof address === "object")) {
+      const formattedAddress = formatAddress(address as string | object);
 
       // Find " at " followed by JSON object
       const atIndex = message.lastIndexOf(" at ");
@@ -376,13 +376,17 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                       {formatNotificationMessage(notification)}
                     </p>
                     {notification.type === "new_assignment" &&
-                      notification.data?.address && (
+                      notification.data?.address &&
+                      (typeof notification.data.address === "string" ||
+                        typeof notification.data.address === "object") && (
                         <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-500">
                           <p className="font-medium text-gray-700 mb-1">
                             Location:
                           </p>
                           <p className="text-gray-600">
-                            {formatAddress(notification.data.address)}
+                            {formatAddress(
+                              notification.data.address as string | object
+                            )}
                           </p>
                           {notification.data.scheduled_date && (
                             <p className="text-gray-500 mt-1">

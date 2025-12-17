@@ -517,10 +517,13 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
                       {/* Display attachment if present */}
                       {message.attachment_type === "image" && message.image_url && (
                         <div className="mb-2">
-                          <img
+                          <Image
                             src={message.image_url}
                             alt="Attachment"
+                            width={256}
+                            height={256}
                             className="max-w-full max-h-64 rounded-lg object-contain"
+                            unoptimized
                           />
                         </div>
                       )}
@@ -569,10 +572,13 @@ export const SimpleConversationChat: React.FC<SimpleConversationChatProps> = ({
           <div className="mb-3 relative inline-block">
             <div className="relative">
               {selectedFile.type.startsWith("image/") ? (
-                <img
+                <Image
                   src={filePreview}
                   alt="Preview"
+                  width={256}
+                  height={128}
                   className="max-w-xs max-h-32 rounded-lg object-cover"
+                  unoptimized
                 />
               ) : (
                 <video
