@@ -31,3 +31,4 @@ echo ""
 echo "To view logs: docker logs -f treesindia-postgres-local"
 echo "To stop: docker stop treesindia-postgres-local"
 echo "To remove: docker rm -f treesindia-postgres-local"
+

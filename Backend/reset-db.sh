@@ -28,3 +28,4 @@ docker exec -e PGPASSWORD="$DB_PASSWORD" "$CONTAINER_NAME" \
 echo "✅ Database reset complete!"
 echo ""
 echo "The database will be migrated and seeded automatically when you restart the application."
+
