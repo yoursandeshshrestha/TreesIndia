@@ -557,9 +557,11 @@ func (bs *BookingService) CreateInquiryBooking(userID uint, req *models.CreateIn
 // checkWorkerBookingConflict checks if a worker has any conflicting bookings
 func (bs *BookingService) checkWorkerBookingConflict(workerID uint, startTime time.Time, endTime time.Time) (bool, error) {
 	// Get all bookings for this worker that overlap with the requested time
+	// Exclude cancelled bookings
 	var conflictingBookings []models.Booking
 	err := bs.bookingRepo.GetDB().Joins("JOIN worker_assignments ON bookings.id = worker_assignments.booking_id").
-		Where("worker_assignments.worker_id = ? AND worker_assignments.status IN (?)", workerID, []string{"reserved", "assigned", "accepted", "in_progress"}).
+		Where("worker_assignments.worker_id = ? AND worker_assignments.status IN (?) AND bookings.status != ?", 
+			workerID, []string{"reserved", "assigned", "accepted", "in_progress"}, models.BookingStatusCancelled).
 		Where("(bookings.scheduled_time < ? AND bookings.scheduled_end_time > ?) OR "+
 			"(bookings.scheduled_time >= ? AND bookings.scheduled_time < ?) OR "+
 			"(bookings.scheduled_end_time > ? AND bookings.scheduled_end_time <= ?)",
@@ -580,31 +582,15 @@ func (bs *BookingService) checkWorkerBookingConflict(workerID uint, startTime ti
 
 // isTimeSlotAvailable checks if a time slot is available for booking using Go-based calculation
 func (bs *BookingService) isTimeSlotAvailable(scheduledTime time.Time, serviceDurationMinutes int, serviceID uint, location string) (bool, error) {
-	// Get buffer time configuration
-	adminConfigRepo := repositories.NewAdminConfigRepository()
-	bufferTimeConfig, err := adminConfigRepo.GetByKey("booking_buffer_time_minutes")
-	if err != nil {
-		// Default 30 minutes buffer if not configured
-		bufferTimeConfig = &models.AdminConfig{Value: "30"}
-	}
-	
-	bufferTimeMinutes, err := strconv.Atoi(bufferTimeConfig.Value)
-	if err != nil {
-		bufferTimeMinutes = 30 // Default fallback
-	}
-
 	// Ensure service duration is valid
 	if serviceDurationMinutes <= 0 {
 		serviceDurationMinutes = 120 // Default to 2 hours if invalid
 	}
 
-	// Calculate end time including buffer
-	endTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
-
 	// Get total active Trees India workers only - filter at database level
 	var totalWorkers int64
 	db := bs.userRepo.GetDB()
-	err = db.Model(&models.User{}).
+	err := db.Model(&models.User{}).
 		Joins("JOIN workers ON users.id = workers.user_id").
 		Where("users.user_type = ? AND users.is_active = ? AND workers.worker_type = ?", 
 			models.UserTypeWorker, true, models.WorkerTypeTreesIndia).
@@ -618,58 +604,46 @@ func (bs *BookingService) isTimeSlotAvailable(scheduledTime time.Time, serviceDu
 		return false, nil
 	}
 
-	// Get worker assignments for Trees India workers for this time period
-	workerAssignmentRepo := repositories.NewWorkerAssignmentRepository()
-	db = workerAssignmentRepo.GetDB()
-	var assignments []models.WorkerAssignment
-	err = db.Joins("JOIN users ON worker_assignments.worker_id = users.id").
-		Joins("JOIN workers ON users.id = workers.user_id").
-		Where("workers.worker_type = ?", models.WorkerTypeTreesIndia).
-		Preload("Worker").Preload("Worker.Worker").Preload("Booking").Preload("Booking.Service").
-		Limit(100).Find(&assignments).Error
+	// Use AvailabilityService to check slot availability for consistency
+	// This ensures the same logic is used for both showing available slots and validating bookings
+	availabilityService := NewAvailabilityService()
+	
+	// Use IST timezone (same as AvailabilityService) to format the date and time
+	istLocation, err := time.LoadLocation("Asia/Kolkata")
 	if err != nil {
-		return false, fmt.Errorf("failed to get worker assignments: %v", err)
+		istLocation = time.FixedZone("IST", 5*60*60+30*60)
 	}
-
-	// Count busy Trees India workers for this time slot
-	busyWorkers := 0
-	for _, assignment := range assignments {
-		// Check if booking scheduled time is valid
-		if assignment.Booking.ScheduledTime == nil {
-			continue
-		}
-		
-		// Only count Trees India workers
-		if assignment.Worker.Worker == nil || assignment.Worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
-			continue
-		}
-		
-		// Get the actual service duration for this assignment
-		assignmentServiceDuration := serviceDurationMinutes // Default to requested service duration
-		if assignment.Booking.Service.Duration != nil && *assignment.Booking.Service.Duration != "" {
-			duration, err := utils.ParseDuration(*assignment.Booking.Service.Duration)
-			if err == nil {
-				assignmentServiceDuration = duration.ToMinutes()
-			}
-		}
-		
-		// Ensure assignment service duration is valid
-		if assignmentServiceDuration <= 0 {
-			assignmentServiceDuration = 120 // Default to 2 hours if invalid
-		}
-		
-		// Calculate assignment end time using the actual service duration
-		assignmentEndTime := assignment.Booking.ScheduledTime.Add(time.Duration(assignmentServiceDuration+bufferTimeMinutes) * time.Minute)
-		
-		// Check if there's overlap
-		if scheduledTime.Before(assignmentEndTime) && endTime.After(*assignment.Booking.ScheduledTime) {
-			busyWorkers++
+	
+	// Convert scheduledTime to IST for consistent comparison
+	scheduledTimeIST := scheduledTime.In(istLocation)
+	dateStr := scheduledTimeIST.Format("2006-01-02")
+	slotKey := scheduledTimeIST.Format("15:04")
+	
+	logrus.Infof("isTimeSlotAvailable: Checking slot - date=%s, time=%s (IST), serviceID=%d, duration=%d", 
+		dateStr, slotKey, serviceID, serviceDurationMinutes)
+	
+	// Get available slots for this date using the same service
+	availabilityResponse, err := availabilityService.GetAvailableSlotsWithDuration(serviceID, dateStr, location, nil)
+	if err != nil {
+		logrus.Errorf("isTimeSlotAvailable: Failed to get available slots - %v", err)
+		return false, fmt.Errorf("failed to get available slots: %v", err)
+	}
+	
+	logrus.Infof("isTimeSlotAvailable: Found %d slots for date=%s", len(availabilityResponse.AvailableSlots), dateStr)
+	
+	// Find the specific time slot in the available slots (format in IST to match slot keys)
+	for _, slot := range availabilityResponse.AvailableSlots {
+		if slot.Time == slotKey {
+			logrus.Infof("isTimeSlotAvailable: Found slot %s - available=%v, workers=%d", 
+				slotKey, slot.IsAvailable, slot.AvailableWorkers)
+			// Return the availability status from the same calculation used to show slots
+			return slot.IsAvailable, nil
 		}
 	}
-
-	// Check if there are available workers
-	availableWorkers := int(totalWorkers) - busyWorkers
-	return availableWorkers > 0, nil
+	
+	// If slot not found in available slots list, it's not available
+	logrus.Warnf("isTimeSlotAvailable: Slot %s not found in available slots list for date=%s", slotKey, dateStr)
+	return false, nil
 }
 
 // assignAvailableWorker finds and assigns an available Trees India worker for the given time period
@@ -2012,20 +1986,23 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 		return nil, errors.New("invalid scheduled date format")
 	}
 
+	// Parse the scheduled time and create it in IST timezone (same as CreateBooking)
+	istLocation, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		istLocation = time.FixedZone("IST", 5*60*60+30*60) // UTC+5:30 as fallback
+	}
+	
 	scheduledTime, err := time.Parse("15:04", req.ScheduledTime)
 	if err != nil {
 		return nil, errors.New("invalid scheduled time format")
 	}
+	
+	// Create the scheduled time in IST timezone for the given date (same as CreateBooking)
+	scheduledTime = time.Date(scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0, istLocation)
 
-	// 5. Combine date and time
-	scheduledDateTime := time.Date(
-		scheduledDate.Year(), scheduledDate.Month(), scheduledDate.Day(),
-		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
-		scheduledDate.Location(),
-	)
-
-	// 6. Validate scheduled time is in the future
-	if scheduledDateTime.Before(time.Now()) {
+	// 5. Validate scheduled time is in the future
+	if scheduledTime.Before(time.Now()) {
 		return nil, errors.New("scheduled time must be in the future")
 	}
 
@@ -2035,28 +2012,51 @@ func (bs *BookingService) CreateBookingWithWallet(userID uint, req *models.Creat
 		location = req.Address.City + ", " + req.Address.State
 	}
 	
-	serviceDurationMinutes := 60 // Default duration
-	if service.Duration != nil {
-		durationStr := *service.Duration
-		if duration, err := strconv.Atoi(durationStr); err == nil {
-			serviceDurationMinutes = duration
+	// Calculate service duration using the same parsing logic as availability service
+	serviceDurationMinutes := 120 // Default 2 hours (same as availability service)
+	if service.Duration != nil && *service.Duration != "" {
+		duration, err := utils.ParseDuration(*service.Duration)
+		if err != nil {
+			logrus.Warnf("CreateBookingWithWallet: Failed to parse service duration '%s', using default - %v", *service.Duration, err)
+			serviceDurationMinutes = 120 // Use default on parse error
+		} else {
+			serviceDurationMinutes = duration.ToMinutes()
 		}
 	}
 	
+	// Log for debugging
+	logrus.Infof("CreateBookingWithWallet: Checking slot availability - date=%s, time=%s (IST), serviceID=%d, duration=%d", 
+		req.ScheduledDate, scheduledTime.Format("15:04"), req.ServiceID, serviceDurationMinutes)
+	
 	isSlotAvailable, err := bs.isTimeSlotAvailable(scheduledTime, serviceDurationMinutes, req.ServiceID, location)
 	if err != nil {
+		logrus.Errorf("CreateBookingWithWallet: Slot availability check failed - %v", err)
 		return nil, fmt.Errorf("failed to check slot availability: %v", err)
 	}
 	
 	if !isSlotAvailable {
+		logrus.Warnf("CreateBookingWithWallet: Slot not available - date=%s, time=%s (IST), serviceID=%d", 
+			req.ScheduledDate, scheduledTime.Format("15:04"), req.ServiceID)
 		return nil, errors.New("selected time slot is not available")
 	}
+	
+	logrus.Infof("CreateBookingWithWallet: Slot available - date=%s, time=%s (IST), serviceID=%d", 
+		req.ScheduledDate, scheduledTime.Format("15:04"), req.ServiceID)
 
 	// 8. Generate booking reference
 	bookingReference := bs.generateBookingReference()
 
 	// 9. Calculate scheduled end time
-	bufferTimeMinutes := 15
+	// Get buffer time from config (same as other booking methods)
+	adminConfigRepo := repositories.NewAdminConfigRepository()
+	bufferTimeConfig, err := adminConfigRepo.GetByKey("booking_buffer_time_minutes")
+	if err != nil {
+		bufferTimeConfig = &models.AdminConfig{Value: "30"} // Default 30 minutes
+	}
+	bufferTimeMinutes, err := strconv.Atoi(bufferTimeConfig.Value)
+	if err != nil {
+		bufferTimeMinutes = 30 // Default fallback
+	}
 	scheduledEndTime := scheduledTime.Add(time.Duration(serviceDurationMinutes+bufferTimeMinutes) * time.Minute)
 
 	// 10. Convert address object to JSON string for storage
@@ -2311,14 +2311,14 @@ func (bs *BookingService) sendWorkerAssignmentNotification(assignment *models.Wo
 		return
 	}
 
-	// Send notification to user about worker assignment
+	// Send notification to user (customer) about worker assignment
 	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
 	if err != nil {
-		logrus.Errorf("Failed to send worker assignment notification: %v", err)
+		logrus.Errorf("Failed to send worker assignment notification to user: %v", err)
 	}
 
 	// Send notification to worker about new assignment
-	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
+	err = notificationService.NotifyWorkerAssignedToWork(booking, &worker, &booking.Service)
 	if err != nil {
 		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
 	}

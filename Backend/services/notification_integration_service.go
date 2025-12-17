@@ -1,8 +1,12 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"treesindia/models"
+
+	"github.com/sirupsen/logrus"
 )
 
 // NotificationIntegrationService provides helper methods to integrate notifications with existing services
@@ -64,7 +68,7 @@ func (nis *NotificationIntegrationService) NotifyBookingCreated(booking *models.
 
 // NotifyWorkerAssigned notifies user about worker assignment
 func (nis *NotificationIntegrationService) NotifyWorkerAssigned(booking *models.Booking, worker *models.User, service *models.Service) error {
-	message := fmt.Sprintf("Admin assigned worker %s to your booking", worker.Name)
+	message := fmt.Sprintf("Worker %s has been assigned to your booking", worker.Name)
 	
 	data := map[string]interface{}{
 		"booking_id":   booking.ID,
@@ -78,6 +82,89 @@ func (nis *NotificationIntegrationService) NotifyWorkerAssigned(booking *models.
 		booking.UserID,
 		models.InAppNotificationTypeWorkerAssigned,
 		"Worker Assigned",
+		message,
+		data,
+	)
+}
+
+// NotifyWorkerAssignedToWork notifies worker about new assignment
+func (nis *NotificationIntegrationService) NotifyWorkerAssignedToWork(booking *models.Booking, worker *models.User, service *models.Service) error {
+	// Parse and format address
+	addressStr := "Unknown address"
+	var addressObj models.BookingAddress
+	if booking.Address != nil && *booking.Address != "" {
+		// Try to parse the address JSON
+		err := json.Unmarshal([]byte(*booking.Address), &addressObj)
+		if err == nil {
+			// Format address nicely
+			addressParts := []string{}
+			if addressObj.HouseNumber != "" {
+				addressParts = append(addressParts, addressObj.HouseNumber)
+			}
+			if addressObj.Address != "" {
+				addressParts = append(addressParts, addressObj.Address)
+			}
+			if addressObj.Landmark != "" {
+				addressParts = append(addressParts, addressObj.Landmark)
+			}
+			if addressObj.City != "" {
+				addressParts = append(addressParts, addressObj.City)
+			}
+			if addressObj.State != "" {
+				addressParts = append(addressParts, addressObj.State)
+			}
+			if addressObj.PostalCode != "" {
+				addressParts = append(addressParts, addressObj.PostalCode)
+			}
+			
+			if len(addressParts) > 0 {
+				addressStr = strings.Join(addressParts, ", ")
+			} else if addressObj.Name != "" {
+				addressStr = addressObj.Name
+			}
+		} else {
+			// If parsing fails, use the raw string
+			addressStr = *booking.Address
+		}
+	}
+	
+	scheduledInfo := ""
+	if booking.ScheduledDate != nil {
+		scheduledInfo = fmt.Sprintf(" on %s", booking.ScheduledDate.Format("Jan 2, 2006"))
+		if booking.ScheduledTime != nil {
+			scheduledInfo += fmt.Sprintf(" at %s", booking.ScheduledTime.Format("3:04 PM"))
+		}
+	}
+	
+	message := fmt.Sprintf("You have been assigned to a new %s booking%s at %s", service.Name, scheduledInfo, addressStr)
+	
+	data := map[string]interface{}{
+		"booking_id":   booking.ID,
+		"booking_ref":  booking.BookingReference,
+		"service_name": service.Name,
+		"address":      addressStr,
+		"user_id":      booking.UserID,
+	}
+	
+	// Include parsed address object in data for frontend use
+	if booking.Address != nil && *booking.Address != "" {
+		var addressObj models.BookingAddress
+		if err := json.Unmarshal([]byte(*booking.Address), &addressObj); err == nil {
+			data["address_object"] = addressObj
+		}
+	}
+	
+	if booking.ScheduledDate != nil {
+		data["scheduled_date"] = booking.ScheduledDate
+	}
+	if booking.ScheduledTime != nil {
+		data["scheduled_time"] = booking.ScheduledTime
+	}
+
+	return nis.notificationService.CreateNotificationForUser(
+		worker.ID,
+		models.InAppNotificationTypeNewAssignment,
+		"New Assignment",
 		message,
 		data,
 	)
@@ -404,31 +491,29 @@ func (nis *NotificationIntegrationService) NotifyQuoteExpired(quote *models.Quot
 	)
 }
 
-// NotifyAssignmentAccepted notifies worker and admin about assignment acceptance
+// NotifyAssignmentAccepted notifies admin and customer about assignment acceptance
+// Note: Worker is NOT notified since they performed the action themselves
 func (nis *NotificationIntegrationService) NotifyAssignmentAccepted(assignment *models.WorkerAssignment, booking *models.Booking, worker *models.User, service *models.Service) error {
-	// Notify worker
-	address := "Unknown address"
-	if booking.Address != nil {
-		address = *booking.Address
-	}
-	workerMessage := fmt.Sprintf("Assignment accepted: %s at %s", service.Name, address)
-	workerData := map[string]interface{}{
+	// Notify customer that worker accepted the assignment
+	customerMessage := fmt.Sprintf("Worker %s has accepted your %s booking assignment", worker.Name, service.Name)
+	customerData := map[string]interface{}{
 		"assignment_id": assignment.ID,
 		"booking_id":    booking.ID,
 		"booking_ref":   booking.BookingReference,
 		"service_name":  service.Name,
-		"address":       address,
+		"worker_name":   worker.Name,
+		"worker_id":     worker.ID,
 	}
 
 	err := nis.notificationService.CreateNotificationForUser(
-		worker.ID,
+		booking.UserID,
 		models.InAppNotificationTypeWorkerAssigned,
-		"Assignment Accepted",
-		workerMessage,
-		workerData,
+		"Worker Accepted Assignment",
+		customerMessage,
+		customerData,
 	)
 	if err != nil {
-		return err
+		logrus.Errorf("Failed to send assignment accepted notification to customer: %v", err)
 	}
 
 	// Notify admin

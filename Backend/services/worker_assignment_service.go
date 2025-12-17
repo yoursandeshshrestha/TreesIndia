@@ -156,16 +156,19 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 	// Get the assignment
 	assignment, err := was.workerAssignmentRepo.GetByID(assignmentID)
 	if err != nil {
+		logrus.Errorf("Failed to get assignment %d: %v", assignmentID, err)
 		return nil, errors.New("assignment not found")
 	}
 
 	// Verify the assignment belongs to the worker
 	if assignment.WorkerID != workerID {
+		logrus.Warnf("Worker %d attempted to accept assignment %d belonging to worker %d", workerID, assignmentID, assignment.WorkerID)
 		return nil, errors.New("unauthorized access to assignment")
 	}
 
 	// Check if assignment can be accepted
 	if assignment.Status != models.AssignmentStatusAssigned {
+		logrus.Warnf("Assignment %d cannot be accepted: current status is %s, expected %s", assignmentID, assignment.Status, models.AssignmentStatusAssigned)
 		return nil, errors.New("assignment cannot be accepted in current status")
 	}
 
@@ -509,14 +512,14 @@ func (was *WorkerAssignmentService) sendWorkerAssignmentNotification(assignment 
 		return
 	}
 
-	// Send notification to user about worker assignment
+	// Send notification to user (customer) about worker assignment
 	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
 	if err != nil {
-		logrus.Errorf("Failed to send worker assignment notification: %v", err)
+		logrus.Errorf("Failed to send worker assignment notification to user: %v", err)
 	}
 
 	// Send notification to worker about new assignment
-	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
+	err = notificationService.NotifyWorkerAssignedToWork(booking, &worker, &booking.Service)
 	if err != nil {
 		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
 	}

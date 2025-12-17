@@ -160,12 +160,13 @@ func (as *AvailabilityService) getWorkerAssignmentsForDate(date string) ([]model
 	var assignments []models.WorkerAssignment
 	
 	// Query all worker assignments for the given date, filtering for Trees India workers only
+	// Exclude assignments for cancelled bookings
 	db := as.workerAssignmentRepo.GetDB()
 	err := db.Joins("JOIN bookings ON worker_assignments.booking_id = bookings.id").
 		Joins("JOIN users ON worker_assignments.worker_id = users.id").
 		Joins("JOIN workers ON users.id = workers.user_id").
-		Where("DATE(bookings.scheduled_date) = ? AND worker_assignments.status IN (?) AND workers.worker_type = ?", 
-			date, []string{"assigned", "accepted", "in_progress"}, models.WorkerTypeTreesIndia).
+		Where("DATE(bookings.scheduled_date) = ? AND worker_assignments.status IN (?) AND workers.worker_type = ? AND bookings.status != ?", 
+			date, []string{"assigned", "accepted", "in_progress"}, models.WorkerTypeTreesIndia, models.BookingStatusCancelled).
 		Preload("Worker").Preload("Worker.Worker").Preload("Booking").
 		Find(&assignments).Error
 
@@ -280,6 +281,11 @@ func (as *AvailabilityService) buildBusyWorkersMap(assignments []models.WorkerAs
 			continue
 		}
 		
+		// Skip cancelled bookings (extra safety check)
+		if assignment.Booking.Status == models.BookingStatusCancelled {
+			continue
+		}
+		
 		// Only count Trees India workers
 		if assignment.Worker.Worker == nil || assignment.Worker.Worker.WorkerType != models.WorkerTypeTreesIndia {
 			continue
@@ -342,6 +348,11 @@ func (as *AvailabilityService) buildBusyWorkersMap(assignments []models.WorkerAs
 	// ALL confirmed bookings should block time slots, regardless of worker assignment status
 	for _, booking := range confirmedBookings {
 		if booking.ScheduledTime == nil {
+			continue
+		}
+		
+		// Skip cancelled bookings (extra safety check)
+		if booking.Status == models.BookingStatusCancelled {
 			continue
 		}
 		
