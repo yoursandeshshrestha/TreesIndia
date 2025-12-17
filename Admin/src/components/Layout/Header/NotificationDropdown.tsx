@@ -25,6 +25,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isLoadingMoreRef = useRef(false);
+  const hasRefetchedRef = useRef(false);
 
   const limit = 10;
 
@@ -32,12 +33,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const {
     data: notificationsData,
     isLoading: isLoadingNotifications,
+    refetch: refetchNotifications,
   } = useNotifications({
     limit,
     page: currentPage,
   });
 
-  const { data: unreadCountData } = useUnreadCount();
+  const { data: unreadCountData, refetch: refetchUnreadCount } =
+    useUnreadCount();
 
   // Mark all as read hook
   const markAllAsReadMutation = useMarkAllAsRead();
@@ -81,18 +84,22 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Load notifications
   useEffect(() => {
-    if (notificationsData?.data) {
+    // Only load notifications when dropdown is open
+    if (isOpen && notificationsData?.data !== undefined) {
       if (currentPage === 1) {
-        setNotifications(notificationsData.data);
+        setNotifications(notificationsData.data || []);
       } else {
-        setNotifications((prev) => [...prev, ...notificationsData.data]);
+        setNotifications((prev) => [
+          ...prev,
+          ...(notificationsData.data || []),
+        ]);
       }
       // Use pagination metadata to determine if there are more notifications
       setHasMore(notificationsData.pagination?.has_next || false);
       // Reset loading ref when data is loaded
       isLoadingMoreRef.current = false;
     }
-  }, [notificationsData, currentPage, limit]);
+  }, [isOpen, notificationsData, currentPage, limit]);
 
   // Reset loading ref on error
   useEffect(() => {
@@ -108,9 +115,23 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     }
   }, [unreadCountData]);
 
+  // Refetch data when dropdown opens
+  useEffect(() => {
+    if (isOpen && !hasRefetchedRef.current) {
+      // Refetch both queries to ensure they're in sync
+      refetchNotifications();
+      refetchUnreadCount();
+      hasRefetchedRef.current = true;
+    } else if (!isOpen) {
+      // Reset refetch flag when dropdown closes
+      hasRefetchedRef.current = false;
+    }
+  }, [isOpen, refetchNotifications, refetchUnreadCount]);
+
   // Reset state when dropdown closes
   useEffect(() => {
     if (!isOpen) {
+      // Clear notifications and reset pagination when closing
       setNotifications([]);
       setCurrentPage(1);
       setHasMore(true);
@@ -255,6 +276,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           <div className="p-4 text-center">
             <Bell size={32} className="text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-gray-500">No notifications yet</p>
+            {unreadCount > 0 && (
+              <p className="text-xs text-gray-400 mt-2">
+                There may be unread notifications that couldn&apos;t be loaded.
+              </p>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
