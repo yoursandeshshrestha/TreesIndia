@@ -144,7 +144,20 @@ export function CategoryModal({
     field: keyof CreateCategoryRequest,
     value: string | boolean | number | null
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value as any }));
+    setFormData((prev) => {
+      const updated = { ...prev };
+      // Type-safe assignment based on field type
+      if (field === "name") {
+        updated[field] = value as string;
+      } else if (field === "description" || field === "icon") {
+        updated[field] = (value as string) || undefined;
+      } else if (field === "is_active") {
+        updated[field] = value as boolean;
+      } else if (field === "parent_id") {
+        updated[field] = value as number | null;
+      }
+      return updated;
+    });
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
