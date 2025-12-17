@@ -55,8 +55,19 @@ const formatAddress = (address: string | object | undefined): string => {
   return String(address);
 };
 
+// Address object type for notifications
+interface AddressObject {
+  house_number?: string;
+  address?: string;
+  landmark?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  name?: string;
+}
+
 // Format address object into readable string
-const formatAddressObject = (addressObj: any): string => {
+const formatAddressObject = (addressObj: AddressObject): string => {
   const parts: string[] = [];
 
   if (addressObj.house_number) parts.push(addressObj.house_number);
@@ -85,7 +96,7 @@ const extractJSONFromString = (
   let braceCount = 0;
   let inString = false;
   let escapeNext = false;
-  let start = startIndex;
+  const start = startIndex;
 
   for (let i = startIndex; i < str.length; i++) {
     const char = str[i];
