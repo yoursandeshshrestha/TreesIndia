@@ -154,7 +154,6 @@ export default function ServiceDetailPage({
       const description = data.description || service.description || "";
       const priceType = data.price_type || service.price_type;
       const categoryId = data.category_id || service.category_id;
-      const subcategoryId = data.subcategory_id || service.subcategory_id;
       const isActive =
         data.is_active !== undefined ? data.is_active : service.is_active;
 
@@ -169,7 +168,6 @@ export default function ServiceDetailPage({
         formData.append("duration", data.duration);
       }
       formData.append("category_id", categoryId?.toString() || "0");
-      formData.append("subcategory_id", subcategoryId?.toString() || "0");
       formData.append("is_active", isActive?.toString() || "true");
 
       // Add images
@@ -690,14 +688,10 @@ export default function ServiceDetailPage({
         onClose={() => setIsEditModalOpen(false)}
         service={service}
         categories={categories}
-        subcategories={subcategories}
         onSubmit={handleUpdateService}
         isLoading={
           isSubmitting || isLoadingCategories || isLoadingSubcategories
         }
-        onCategoryChange={(categoryId: number) => {
-          loadSubcategories(categoryId);
-        }}
         onDeleteImage={handleDeleteImage}
       />
 
