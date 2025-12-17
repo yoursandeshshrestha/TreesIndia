@@ -51,7 +51,7 @@ func (ss *SearchService) GetSearchSuggestions() (*models.SearchSuggestionsRespon
 
 	// Get popular services (most booked + highest rated)
 	var services []models.Service
-	err := ss.db.Preload("Category").Preload("Subcategory").
+	err := ss.db.Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
 		Where("services.is_active = ?", true).
 		Order("services.created_at DESC").
 		Limit(5).
@@ -435,7 +435,7 @@ func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, li
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
 				keywordConditions = append(keywordConditions, 
-					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?)")
+					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR parent_cat.name ILIKE ?)")
 				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
 		}
@@ -500,7 +500,7 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
 				keywordConditions = append(keywordConditions, 
-					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR subcategories.name ILIKE ?)")
+					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR parent_cat.name ILIKE ?)")
 				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
 		}
