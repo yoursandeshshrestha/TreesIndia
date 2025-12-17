@@ -68,7 +68,7 @@ const SearchableDropdown = ({
         }
       }
     }
-  }, [isOpen]);
+  }, [isOpen, value, filteredOptions]);
 
   // Reset selected index when search term or filtered options change
   useEffect(() => {
@@ -383,7 +383,6 @@ const SearchableDropdown = ({
                 onClick={(e) => e.stopPropagation()}
                 aria-autocomplete="list"
                 aria-controls="dropdown-options"
-                aria-expanded={isOpen}
               />
             </div>
           </div>
