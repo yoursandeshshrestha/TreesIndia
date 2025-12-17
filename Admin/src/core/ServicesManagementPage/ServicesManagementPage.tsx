@@ -151,22 +151,6 @@ function ServicesManagementPage() {
     }
   };
 
-  const loadSubcategories = async (categoryId?: number) => {
-    setIsLoadingSubcategories(true);
-    try {
-      let url = "/subcategories";
-      if (categoryId) {
-        url += `/category/${categoryId}`;
-      }
-      const response = await apiClient.get(url);
-      const subcategories = response.data.data || [];
-      setSubcategories(subcategories);
-    } catch {
-      toast.error("Failed to load subcategories");
-    } finally {
-      setIsLoadingSubcategories(false);
-    }
-  };
 
   // Lazy loading functions
   const handleCategoryDropdownOpen = async () => {
@@ -342,9 +326,11 @@ function ServicesManagementPage() {
       !filters.categoryId ||
       service.category_id === parseInt(filters.categoryId);
 
+    // subcategory_id removed - using single category_id
+    // Legacy filter support: if subcategoryId filter is provided, treat it as categoryId
     const matchesSubcategory =
       !filters.subcategoryId ||
-      service.subcategory_id === parseInt(filters.subcategoryId);
+      service.category_id === parseInt(filters.subcategoryId);
 
     return (
       matchesSearch &&
