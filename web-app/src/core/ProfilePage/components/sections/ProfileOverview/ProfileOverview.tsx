@@ -58,8 +58,13 @@ export function ProfileOverview() {
       toast.success("Profile updated successfully");
       setIsEditing(false);
       refetchProfile();
-    } catch {
-      toast.error("Failed to update profile");
+    } catch (error) {
+      // Extract error message from the error object
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile";
+      toast.error(errorMessage);
     }
   };
 

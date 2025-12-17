@@ -99,15 +99,19 @@ export interface CompleteAssignmentRequest {
   photos?: string[];
 }
 
-// Helper function to handle API responses
+// Helper function to handle API responses for single item responses
 const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      errorData.message || `HTTP error! status: ${response.status}`
+      errorData.message ||
+        errorData.error ||
+        `HTTP error! status: ${response.status}`
     );
   }
-  return response.json();
+  const data = await response.json();
+  // Extract data from response if it's wrapped in a response object
+  return data.data || data;
 };
 
 export const workerAssignmentApi = {
@@ -126,7 +130,10 @@ export const workerAssignmentApi = {
       params.toString() ? `?${params.toString()}` : ""
     }`;
     const response = await authenticatedFetch(url);
-    return handleApiResponse(response);
+    const fullResponse = await response.json();
+    // Backend returns { success, message, data: { assignments, pagination }, timestamp }
+    // Frontend expects the same structure
+    return fullResponse as WorkerAssignmentResponse;
   },
 
   // Get specific worker assignment
@@ -136,7 +143,9 @@ export const workerAssignmentApi = {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/worker/assignments/${assignmentId}`
     );
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    // Backend returns assignment directly in data, wrap it
+    return { assignment: result as WorkerAssignment };
   },
 
   // Accept assignment
@@ -154,7 +163,9 @@ export const workerAssignmentApi = {
         body: JSON.stringify(data),
       }
     );
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    // Backend returns assignment directly in data, wrap it
+    return { assignment: result as WorkerAssignment };
   },
 
   // Reject assignment
@@ -172,7 +183,9 @@ export const workerAssignmentApi = {
         body: JSON.stringify(data),
       }
     );
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    // Backend returns assignment directly in data, wrap it
+    return { assignment: result as WorkerAssignment };
   },
 
   // Start assignment
@@ -190,7 +203,9 @@ export const workerAssignmentApi = {
         body: JSON.stringify(data),
       }
     );
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    // Backend returns assignment directly in data, wrap it
+    return { assignment: result as WorkerAssignment };
   },
 
   // Complete assignment
@@ -208,6 +223,8 @@ export const workerAssignmentApi = {
         body: JSON.stringify(data),
       }
     );
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    // Backend returns assignment directly in data, wrap it
+    return { assignment: result as WorkerAssignment };
   },
 };

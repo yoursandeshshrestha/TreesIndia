@@ -92,10 +92,19 @@ export const authenticatedFetch = async (
     ...options.headers,
   };
 
-  // Only set Content-Type to application/json if not already set and not FormData
+  // Only set Content-Type to application/json if:
+  // 1. Not already set
+  // 2. Not FormData
+  // 3. Request has a body (not GET/HEAD requests)
+  const method = (options.method || "GET").toUpperCase();
+  const hasBody = options.body !== undefined && options.body !== null;
+
   if (
     !(options.headers as Record<string, string>)?.["Content-Type"] &&
-    !(options.body instanceof FormData)
+    !(options.body instanceof FormData) &&
+    hasBody &&
+    method !== "GET" &&
+    method !== "HEAD"
   ) {
     (headers as Record<string, string>)["Content-Type"] = "application/json";
   }

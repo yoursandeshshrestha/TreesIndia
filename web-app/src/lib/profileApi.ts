@@ -3,6 +3,75 @@ import { authenticatedFetch } from "./auth-api";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
+// Helper function to parse and format Go validation error messages
+function formatValidationError(errorMessage: string): string {
+  // Pattern: Key: 'ProfileUpdateRequest.Name' Error:Field validation for 'Name' failed on the 'required' tag
+  // Handle variations with or without spaces after Error:
+  const validationPattern = /Key:\s*'[^']*\.(\w+)'\s*Error:?\s*Field validation for\s*'(\w+)'\s*failed on the\s*'(\w+)'\s*tag/i;
+  const match = errorMessage.match(validationPattern);
+
+  if (match) {
+    const fieldName = match[2] || match[1]; // Use the field name from the error message
+    const validationTag = match[3];
+
+    // Convert field names to user-friendly labels
+    const fieldLabels: Record<string, string> = {
+      Name: "Name",
+      Email: "Email",
+      Gender: "Gender",
+      Phone: "Phone",
+      name: "Name",
+      email: "Email",
+      gender: "Gender",
+      phone: "Phone",
+    };
+
+    const friendlyFieldName = fieldLabels[fieldName] || fieldName;
+
+    // Convert validation tags to user-friendly messages
+    const validationMessages: Record<string, string> = {
+      required: `${friendlyFieldName} is required`,
+      email: `${friendlyFieldName} must be a valid email address`,
+      min: `${friendlyFieldName} is too short`,
+      max: `${friendlyFieldName} is too long`,
+      alphanum: `${friendlyFieldName} must contain only letters and numbers`,
+      numeric: `${friendlyFieldName} must be a number`,
+    };
+
+    return (
+      validationMessages[validationTag] ||
+      `${friendlyFieldName} validation failed (${validationTag})`
+    );
+  }
+
+  // If it doesn't match the pattern, try to extract a simpler message
+  // Handle cases like "Email already exists" or other direct messages
+  if (errorMessage.includes("already exists")) {
+    return errorMessage;
+  }
+
+  // Return a cleaned version if it's still a validation error format
+  if (errorMessage.includes("Field validation")) {
+    // Try to extract just the meaningful part
+    const simpleMatch = errorMessage.match(/Field validation for '(\w+)' failed/);
+    if (simpleMatch) {
+      const fieldName = simpleMatch[1];
+      const fieldLabels: Record<string, string> = {
+        Name: "Name",
+        Email: "Email",
+        Gender: "Gender",
+        name: "Name",
+        email: "Email",
+        gender: "Gender",
+      };
+      return `${fieldLabels[fieldName] || fieldName} is invalid`;
+    }
+  }
+
+  // Return the original message if we can't parse it
+  return errorMessage;
+}
+
 // Profile types
 export interface UserProfile {
   id: number;
@@ -118,7 +187,25 @@ export async function updateUserProfile(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error("API Error Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+      });
+
+      // Extract the specific error message from the backend response
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      if (errorData.error) {
+        // Backend returns error in 'error' field - format validation errors
+        errorMessage = formatValidationError(errorData.error);
+      } else if (errorData.message) {
+        // Backend returns error in 'message' field - format validation errors
+        errorMessage = formatValidationError(errorData.message);
+      }
+
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

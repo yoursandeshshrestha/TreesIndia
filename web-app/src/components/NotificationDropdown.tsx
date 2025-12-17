@@ -28,6 +28,143 @@ const formatTimeAgo = (dateString: string) => {
   return date.toLocaleDateString();
 };
 
+// Parse and format address from JSON string or object
+const formatAddress = (address: string | object | undefined): string => {
+  if (!address) return "Unknown address";
+
+  // If it's already a string and not JSON, return it
+  if (typeof address === "string") {
+    // Check if it's a JSON string
+    if (address.trim().startsWith("{") && address.trim().endsWith("}")) {
+      try {
+        const parsed = JSON.parse(address);
+        return formatAddressObject(parsed);
+      } catch {
+        // If parsing fails, return as is
+        return address;
+      }
+    }
+    return address;
+  }
+
+  // If it's an object, format it
+  if (typeof address === "object") {
+    return formatAddressObject(address);
+  }
+
+  return String(address);
+};
+
+// Format address object into readable string
+const formatAddressObject = (addressObj: any): string => {
+  const parts: string[] = [];
+
+  if (addressObj.house_number) parts.push(addressObj.house_number);
+  if (addressObj.address) parts.push(addressObj.address);
+  if (addressObj.landmark) parts.push(addressObj.landmark);
+  if (addressObj.city) parts.push(addressObj.city);
+  if (addressObj.state) parts.push(addressObj.state);
+  if (addressObj.postal_code) parts.push(addressObj.postal_code);
+
+  if (parts.length > 0) {
+    return parts.join(", ");
+  }
+
+  if (addressObj.name) return addressObj.name;
+
+  return "Unknown address";
+};
+
+// Extract JSON object from string (handles nested objects)
+const extractJSONFromString = (
+  str: string,
+  startIndex: number
+): { json: string; endIndex: number } | null => {
+  if (str[startIndex] !== "{") return null;
+
+  let braceCount = 0;
+  let inString = false;
+  let escapeNext = false;
+  let start = startIndex;
+
+  for (let i = startIndex; i < str.length; i++) {
+    const char = str[i];
+
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escapeNext = true;
+      continue;
+    }
+
+    if (char === '"' && !escapeNext) {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === "{") {
+        braceCount++;
+      } else if (char === "}") {
+        braceCount--;
+        if (braceCount === 0) {
+          return {
+            json: str.substring(start, i + 1),
+            endIndex: i + 1,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+// Clean message by removing raw JSON addresses and replacing with formatted ones
+const formatNotificationMessage = (notification: InAppNotification): string => {
+  let message = notification.message;
+
+  // For new assignment notifications, clean up any raw JSON in the message
+  if (notification.type === "new_assignment" && notification.data) {
+    const address = notification.data.address;
+    if (address) {
+      const formattedAddress = formatAddress(address);
+
+      // Find " at " followed by JSON object
+      const atIndex = message.lastIndexOf(" at ");
+      if (atIndex !== -1) {
+        const jsonStart = atIndex + 4; // After " at "
+        const jsonResult = extractJSONFromString(message, jsonStart);
+
+        if (jsonResult) {
+          try {
+            // Verify it's a valid address JSON by checking for address fields
+            const parsed = JSON.parse(jsonResult.json);
+            if (parsed.city || parsed.address || parsed.state) {
+              // Replace the JSON with formatted address
+              message = message.substring(0, atIndex + 4) + formattedAddress;
+            }
+          } catch {
+            // If parsing fails, just use the formatted address from data
+            message = message.substring(0, atIndex + 4) + formattedAddress;
+          }
+        } else if (
+          message.includes('"city"') ||
+          message.includes('"address"')
+        ) {
+          // Fallback: if we detect JSON-like content but extraction failed, replace from "at " onwards
+          message = message.substring(0, atIndex + 4) + formattedAddress;
+        }
+      }
+    }
+  }
+
+  return message;
+};
+
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   isOpen,
   onClose,
@@ -43,13 +180,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const limit = 10;
 
   // API hooks
-  const {
-    data: notificationsData,
-    isLoading: isLoadingNotifications,
-  } = useNotifications({
-    limit,
-    page: currentPage,
-  });
+  const { data: notificationsData, isLoading: isLoadingNotifications } =
+    useNotifications({
+      limit,
+      page: currentPage,
+    });
 
   const { data: unreadCountData } = useUnreadCount();
 
@@ -133,7 +268,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const handleMarkAllAsRead = () => {
     markAllAsRead();
   };
-
 
   if (!isOpen) return null;
 
@@ -227,9 +361,44 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         {formatTimeAgo(notification.created_at)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {notification.message}
+                    <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap break-words">
+                      {formatNotificationMessage(notification)}
                     </p>
+                    {notification.type === "new_assignment" &&
+                      notification.data?.address && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-500">
+                          <p className="font-medium text-gray-700 mb-1">
+                            Location:
+                          </p>
+                          <p className="text-gray-600">
+                            {formatAddress(notification.data.address)}
+                          </p>
+                          {notification.data.scheduled_date && (
+                            <p className="text-gray-500 mt-1">
+                              {new Date(
+                                notification.data.scheduled_date as string
+                              ).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                              {notification.data.scheduled_time && (
+                                <>
+                                  {" "}
+                                  at{" "}
+                                  {new Date(
+                                    notification.data.scheduled_time as string
+                                  ).toLocaleTimeString("en-US", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })}
+                                </>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     {!notification.is_read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     )}
