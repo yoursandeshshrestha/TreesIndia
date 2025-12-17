@@ -3,20 +3,19 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { closeSearchModal } from "@/store/slices/searchModalSlice";
+import { openServiceDetailModal } from "@/store/slices/serviceDetailModalSlice";
 import { useSearchSuggestions, useSearchServices } from "@/hooks/useSearch";
 import { useDebouncedValue } from "@/utils/debounce";
 import { SearchService, SearchSuggestion } from "@/services/searchService";
-import PopularSearchItem from "./components/PopularSearchItem";
+import { Service } from "@/types/api";
 import CompactServiceCard from "../ServiceCard/CompactServiceCard";
 import Input from "@/commonComponents/Input/Base/Input";
 import BouncingDots from "../BouncingDots/BouncingDots";
 
 export default function ServiceSearchModal() {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const isOpen = useAppSelector((state) => state.searchModal.isOpen);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,15 +66,20 @@ export default function ServiceSearchModal() {
   const handleSuggestionClick = (
     suggestion: SearchSuggestion | SearchService
   ) => {
-    const query =
-      "keyword" in suggestion ? suggestion.keyword : suggestion.name;
-    setSearchQuery(query);
-    setShowSuggestions(false);
-    // Just fill the input, don't navigate
+    // If it's a service, open the detail modal
+    if ("id" in suggestion && "slug" in suggestion) {
+      dispatch(openServiceDetailModal(suggestion as unknown as Service));
+      handleClose();
+    } else {
+      // If it's a keyword, just fill the input
+      const query = (suggestion as SearchSuggestion).keyword;
+      setSearchQuery(query);
+      setShowSuggestions(false);
+    }
   };
 
   const handleServiceClick = (service: SearchService) => {
-    router.push(`/services/${service.slug}`);
+    dispatch(openServiceDetailModal(service as unknown as Service));
     handleClose();
   };
 
@@ -83,7 +87,6 @@ export default function ServiceSearchModal() {
     if (!showSuggestions) return;
 
     const suggestions = [
-      ...(suggestionsData?.keywords || []),
       ...(suggestionsData?.services || []),
     ];
 
@@ -197,41 +200,10 @@ export default function ServiceSearchModal() {
                       </div>
                     ) : (
                       <>
-                        {/* Popular Keywords */}
-                        {suggestionsData?.keywords &&
-                          suggestionsData.keywords.length > 0 && (
-                            <div className="mb-6">
-                              <div className="mb-3">
-                                <h3 className="font-semibold text-gray-900">
-                                  Popular Searches
-                                </h3>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {suggestionsData.keywords.map(
-                                  (keyword, index) => (
-                                    <PopularSearchItem
-                                      key={keyword.keyword}
-                                      text={keyword.keyword}
-                                      onClick={() =>
-                                        handleSuggestionClick(keyword)
-                                      }
-                                      isSelected={selectedIndex === index}
-                                    />
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-
                         {/* Popular Services */}
                         {suggestionsData?.services &&
                           suggestionsData.services.length > 0 && (
                             <div>
-                              <div className="mb-3">
-                                <h3 className="font-semibold text-gray-900">
-                                  Popular Services
-                                </h3>
-                              </div>
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                                 {suggestionsData.services.map((service) => (
                                   <CompactServiceCard
