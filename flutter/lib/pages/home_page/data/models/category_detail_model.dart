@@ -17,6 +17,11 @@ class CategoryDetailModel extends CategoryModel {
   });
 
   factory CategoryDetailModel.fromJson(Map<String, dynamic> json) {
+    // Handle both 'children' (from backend) and 'subcategories' (legacy) fields
+    final childrenJson = json['children'] as List<dynamic>?;
+    final subcategoriesJson = json['subcategories'] as List<dynamic>?;
+    final categoriesList = childrenJson ?? subcategoriesJson ?? [];
+    
     return CategoryDetailModel(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -25,10 +30,9 @@ class CategoryDetailModel extends CategoryModel {
       isActive: json['is_active'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      subcategories: (json['subcategories'] as List<dynamic>?)
-              ?.map((e) => SubcategoryModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      subcategories: categoriesList
+              .map((e) => SubcategoryModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
     );
   }
 

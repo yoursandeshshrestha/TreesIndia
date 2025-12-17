@@ -7,8 +7,8 @@ class SubcategoryEntity extends Equatable {
   final String slug;
   final String description;
   final String icon;
-  final int parentId;
-  final CategoryEntity parent;
+  final int? parentId;
+  final CategoryEntity? parent;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -19,15 +19,15 @@ class SubcategoryEntity extends Equatable {
     required this.slug,
     required this.description,
     required this.icon,
-    required this.parentId,
-    required this.parent,
+    this.parentId,
+    this.parent,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         id,
         name,
         slug,

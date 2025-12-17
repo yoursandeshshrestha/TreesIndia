@@ -68,17 +68,21 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
     );
   }
 
+  Timer? _refreshDebounceTimer;
+
   void _handleWebSocketMessage(ConversationWebSocketMessage message) {
     if (!_mounted) return;
 
     switch (message.type) {
       case 'new_message':
         if (message.conversationId == conversationId) {
-          // Only refresh if we're not already loading messages to prevent race conditions
-          if (state.status != ConversationStatus.loadingMessages &&
-              state.status != ConversationStatus.refreshing) {
-            refreshMessages();
-          }
+          // Always refresh when a new message arrives, but debounce rapid messages
+          _refreshDebounceTimer?.cancel();
+          _refreshDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+            if (_mounted) {
+              _refreshMessagesFromWebSocket();
+            }
+          });
         }
         break;
       case 'conversation_read':
@@ -86,6 +90,42 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
           _markMessagesAsRead();
         }
         break;
+    }
+  }
+
+  Future<void> _refreshMessagesFromWebSocket() async {
+    if (!_mounted) return;
+    
+    // Force refresh even if already loading - new messages should always appear
+    try {
+      // Set status to refreshing to show we're updating
+      state = state.copyWith(
+        status: ConversationStatus.refreshing,
+        errorMessage: null,
+      );
+
+      final response = await _getConversationMessagesUseCase.execute(
+        conversationId,
+        page: 1,
+        limit: _pageLimit,
+      );
+
+      if (!_mounted) return;
+
+      state = state.copyWith(
+        status: ConversationStatus.loaded,
+        messages: response.messages,
+        currentPage: 1,
+        hasMoreMessages: response.messages.length == _pageLimit,
+        errorMessage: null,
+      );
+    } catch (e) {
+      if (!_mounted) return;
+      debugPrint('Error refreshing messages from WebSocket: $e');
+      // Don't set error status - just keep current state
+      state = state.copyWith(
+        status: ConversationStatus.loaded,
+      );
     }
   }
 
@@ -241,6 +281,7 @@ class ConversationNotifier extends StateNotifier<ConversationState> {
   @override
   void dispose() {
     _mounted = false;
+    _refreshDebounceTimer?.cancel();
     _messageSubscription?.cancel();
     _statusSubscription?.cancel();
     super.dispose();

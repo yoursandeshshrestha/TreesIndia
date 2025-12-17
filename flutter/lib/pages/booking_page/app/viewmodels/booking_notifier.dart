@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:trees_india/commons/app/user_profile_provider.dart';
@@ -82,10 +83,23 @@ class BookingNotifier extends StateNotifier<BookingState>
 
     try {
       final slots = await getAvailableSlotsUseCase(serviceId, date);
+      
+      // Clear selected time if it's no longer available for the new date
+      String? selectedTime = state.selectedTime;
+      if (selectedTime != null) {
+        final slotExists = slots.availableSlots.any(
+          (slot) => slot.time == selectedTime && slot.isAvailable,
+        );
+        if (!slotExists) {
+          selectedTime = null;
+        }
+      }
+      
       state = state.copyWith(
         status: BookingStatus.success,
         availableSlots: slots,
         selectedDate: date,
+        selectedTime: selectedTime,
         isLoading: false,
       );
     } catch (error) {
@@ -98,7 +112,30 @@ class BookingNotifier extends StateNotifier<BookingState>
   }
 
   void selectTimeSlot(String time) {
-    state = state.copyWith(selectedTime: time);
+    // Validate that the selected time slot is available
+    if (state.availableSlots != null) {
+      try {
+        final slot = state.availableSlots!.availableSlots.firstWhere(
+          (slot) => slot.time == time,
+        );
+        
+        // Only allow selection if slot is available
+        if (slot.isAvailable) {
+          state = state.copyWith(selectedTime: time);
+        } else {
+          // Slot is not available - don't allow selection
+          debugPrint('Cannot select unavailable time slot: $time');
+          return;
+        }
+      } catch (e) {
+        // Slot not found in available slots list
+        debugPrint('Time slot not found: $time');
+        return;
+      }
+    } else {
+      // If no slots loaded, still allow selection (will be validated on booking creation)
+      state = state.copyWith(selectedTime: time);
+    }
   }
 
   Future<bool> checkServiceAvailability(
@@ -127,6 +164,13 @@ class BookingNotifier extends StateNotifier<BookingState>
       // If payment is required, open Razorpay
       if (response.paymentRequired == true && response.paymentOrder != null) {
         _openRazorpayCheckout(response);
+      } else if (response.paymentRequired == true && response.paymentOrder == null) {
+        // Payment is required but order is missing
+        state = state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: 'Payment is required but payment order was not created. Please try again or contact support.',
+          isLoading: false,
+        );
       }
     } catch (error) {
       state = state.copyWith(
@@ -172,6 +216,13 @@ class BookingNotifier extends StateNotifier<BookingState>
       // If payment is required, open Razorpay for inquiry fee
       if (response.paymentRequired == true && response.paymentOrder != null) {
         _openInquiryRazorpayCheckout(response, request.serviceId);
+      } else if (response.paymentRequired == true && response.paymentOrder == null) {
+        // Payment is required but order is missing
+        state = state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: 'Payment is required but payment order was not created. Please try again or contact support.',
+          isLoading: false,
+        );
       }
     } catch (error) {
       state = state.copyWith(
@@ -205,7 +256,44 @@ class BookingNotifier extends StateNotifier<BookingState>
   }
 
   void _openRazorpayCheckout(BookingResponseEntity bookingResponse) {
+    // Validate payment order exists
+    if (bookingResponse.paymentOrder == null) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Payment order not found. Please try again.',
+      );
+      return;
+    }
+
     final paymentOrder = bookingResponse.paymentOrder!;
+    
+    // Validate Razorpay key
+    if (GlobalEnvironment.razorpayKey.isEmpty) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Payment gateway not configured. Please contact support.',
+      );
+      return;
+    }
+
+    // Validate payment amount
+    if (paymentOrder.amount <= 0) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Invalid payment amount. Please contact support.',
+      );
+      return;
+    }
+
+    // Validate required payment order fields
+    if (paymentOrder.id.isEmpty || paymentOrder.currency.isEmpty) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Invalid payment order details. Please try again.',
+      );
+      return;
+    }
+
     final userProfile = ref.read(userProfileProvider).user;
     final phoneNumber = userProfile?.phone ?? '';
 
@@ -225,7 +313,7 @@ class BookingNotifier extends StateNotifier<BookingState>
     } catch (error) {
       state = state.copyWith(
         status: BookingStatus.failure,
-        errorMessage: 'Failed to open payment gateway: $error',
+        errorMessage: 'Failed to open payment gateway: ${error.toString()}. Please try again.',
       );
     }
   }
@@ -302,7 +390,45 @@ class BookingNotifier extends StateNotifier<BookingState>
   void _openInquiryRazorpayCheckout(
       InquiryBookingResponseEntity inquiryResponse, int serviceId) {
     _currentServiceId = serviceId;
+    
+    // Validate payment order exists
+    if (inquiryResponse.paymentOrder == null) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Payment order not found. Please try again.',
+      );
+      return;
+    }
+
     final paymentOrder = inquiryResponse.paymentOrder!;
+    
+    // Validate Razorpay key
+    if (GlobalEnvironment.razorpayKey.isEmpty) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Payment gateway not configured. Please contact support.',
+      );
+      return;
+    }
+
+    // Validate payment amount
+    if (paymentOrder.amount <= 0) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Invalid payment amount. Please contact support.',
+      );
+      return;
+    }
+
+    // Validate required payment order fields
+    if (paymentOrder.id.isEmpty || paymentOrder.currency.isEmpty) {
+      state = state.copyWith(
+        status: BookingStatus.failure,
+        errorMessage: 'Invalid payment order details. Please try again.',
+      );
+      return;
+    }
+
     final userProfile = ref.read(userProfileProvider).user;
     final phoneNumber = userProfile?.phone ?? '';
 
@@ -322,7 +448,7 @@ class BookingNotifier extends StateNotifier<BookingState>
     } catch (error) {
       state = state.copyWith(
         status: BookingStatus.failure,
-        errorMessage: 'Failed to open payment gateway: $error',
+        errorMessage: 'Failed to open payment gateway: ${error.toString()}. Please try again.',
       );
     }
   }

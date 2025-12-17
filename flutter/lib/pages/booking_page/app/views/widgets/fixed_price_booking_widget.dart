@@ -234,6 +234,36 @@ class _FixedPriceBookingWidgetState
               bookingState: bookingState,
               selectedTime: _selectedTime,
               onTimeSelected: (time) {
+                // Validate slot is available before updating state
+                final slots = bookingState.availableSlots;
+                if (slots != null) {
+                  try {
+                    final slot = slots.availableSlots.firstWhere(
+                      (slot) => slot.time == time,
+                    );
+                    if (!slot.isAvailable) {
+                      // Don't allow selection of unavailable slots
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('This time slot is not available. Please select a different time.'),
+                          backgroundColor: AppColors.stateRed600,
+                        ),
+                      );
+                      return;
+                    }
+                  } catch (e) {
+                    // Slot not found
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('This time slot is not available. Please select a different time.'),
+                        backgroundColor: AppColors.stateRed600,
+                      ),
+                    );
+                    return;
+                  }
+                }
+                
+                // Slot is available, proceed with selection
                 setState(() {
                   _selectedTime = time;
                 });
@@ -388,7 +418,45 @@ class _FixedPriceBookingWidgetState
   }
 
   void _createBooking() {
-    if (_selectedAddress == null) return;
+    if (_selectedAddress == null || _selectedDate == null || _selectedTime == null) return;
+
+    // Validate that the selected time slot is available
+    final bookingState = ref.read(bookingNotifierProvider);
+    if (bookingState.availableSlots != null) {
+      try {
+        final selectedSlot = bookingState.availableSlots!.availableSlots.firstWhere(
+          (slot) => slot.time == _selectedTime,
+        );
+        
+        if (!selectedSlot.isAvailable) {
+          // Show error message and clear selection
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Selected time slot is not available. Please select a different time.'),
+              backgroundColor: AppColors.stateRed600,
+            ),
+          );
+          setState(() {
+            _selectedTime = null;
+          });
+          ref.read(bookingNotifierProvider.notifier).selectTimeSlot('');
+          return;
+        }
+      } catch (e) {
+        // Time slot not found in available slots
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected time slot is not available. Please select a different time.'),
+            backgroundColor: AppColors.stateRed600,
+          ),
+        );
+        setState(() {
+          _selectedTime = null;
+        });
+        ref.read(bookingNotifierProvider.notifier).selectTimeSlot('');
+        return;
+      }
+    }
 
     final request = CreateBookingRequestEntity(
       serviceId: widget.service.id,
@@ -1613,7 +1681,45 @@ class _FixedPriceBookingWidgetState
   }
 
   void _createWalletBooking() {
-    if (_selectedAddress == null) return;
+    if (_selectedAddress == null || _selectedDate == null || _selectedTime == null) return;
+
+    // Validate that the selected time slot is available
+    final bookingState = ref.read(bookingNotifierProvider);
+    if (bookingState.availableSlots != null) {
+      try {
+        final selectedSlot = bookingState.availableSlots!.availableSlots.firstWhere(
+          (slot) => slot.time == _selectedTime,
+        );
+        
+        if (!selectedSlot.isAvailable) {
+          // Show error message and clear selection
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Selected time slot is not available. Please select a different time.'),
+              backgroundColor: AppColors.stateRed600,
+            ),
+          );
+          setState(() {
+            _selectedTime = null;
+          });
+          ref.read(bookingNotifierProvider.notifier).selectTimeSlot('');
+          return;
+        }
+      } catch (e) {
+        // Time slot not found in available slots
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected time slot is not available. Please select a different time.'),
+            backgroundColor: AppColors.stateRed600,
+          ),
+        );
+        setState(() {
+          _selectedTime = null;
+        });
+        ref.read(bookingNotifierProvider.notifier).selectTimeSlot('');
+        return;
+      }
+    }
 
     final request = CreateBookingRequestEntity(
       serviceId: widget.service.id,

@@ -31,9 +31,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
     _loadAppVersion();
-    // Load profile data when page initializes
+    // Load profile data when page initializes (only if authenticated)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileProvider.notifier).loadProfile();
+      final authState = ref.read(authProvider);
+      if (authState.isLoggedIn && authState.token != null) {
+        ref.read(profileProvider.notifier).loadProfile();
+      }
     });
   }
 
@@ -308,13 +311,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         },
                       ),
 
-                      _buildMenuItem(
-                        icon: Icons.home_outlined,
-                        label: 'My Properties',
-                        onTap: () {
-                          context.push('/my-properties');
-                        },
-                      ),
+                      // Show My Properties only if user is not a worker
+                      if (profileState.userType != 'worker')
+                        _buildMenuItem(
+                          icon: Icons.home_outlined,
+                          label: 'My Properties',
+                          onTap: () {
+                            context.push('/my-properties');
+                          },
+                        ),
 
                       // Show My Vendor Profiles only for users with active subscription
                       if (profileState.subscription != null &&
@@ -327,27 +332,32 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           },
                         ),
 
-                      _buildMenuItem(
-                        icon: Icons.work_outline,
-                        label: 'Apply for Worker',
-                        onTap: () {
-                          context.push('/worker-application');
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.work_outline,
-                        label: 'Apply for Broker',
-                        onTap: () {
-                          context.push('/broker-application');
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.home_outlined,
-                        label: 'My Subscription',
-                        onTap: () {
-                          context.push('/my-subscription');
-                        },
-                      ),
+                      // Show Apply for Worker and Apply for Broker only if user is not a worker
+                      if (profileState.userType != 'worker') ...[
+                        _buildMenuItem(
+                          icon: Icons.work_outline,
+                          label: 'Apply for Worker',
+                          onTap: () {
+                            context.push('/worker-application');
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.work_outline,
+                          label: 'Apply for Broker',
+                          onTap: () {
+                            context.push('/broker-application');
+                          },
+                        ),
+                      ],
+                      // Show My Subscription only if user is not a worker
+                      if (profileState.userType != 'worker')
+                        _buildMenuItem(
+                          icon: Icons.home_outlined,
+                          label: 'My Subscription',
+                          onTap: () {
+                            context.push('/my-subscription');
+                          },
+                        ),
 
                       _buildMenuItem(
                         icon: Icons.settings_outlined,

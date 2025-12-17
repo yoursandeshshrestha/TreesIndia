@@ -165,17 +165,53 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-        return BookingResponseModel.fromJson(data);
+        
+        // Handle both wrapped and unwrapped responses
+        Map<String, dynamic> responseData;
+        if (data['success'] == true && data['data'] != null) {
+          // Response is wrapped in standard format
+          responseData = data['data'] as Map<String, dynamic>;
+        } else if (data['booking'] != null) {
+          // Response is direct (unwrapped)
+          responseData = data as Map<String, dynamic>;
+        } else {
+          throw Exception('Invalid response format from server');
+        }
+        
+        return BookingResponseModel.fromJson(responseData);
       } else {
-        throw Exception('Failed to create wallet booking');
+        // Try to extract error message from response
+        final errorData = response.data;
+        final errorMessage = errorData['error'] ?? 
+                           errorData['message'] ?? 
+                           'Failed to create wallet booking';
+        throw Exception(errorMessage);
       }
     } catch (e) {
       if (e is DioException) {
-        errorHandler.handleNetworkError(e);
+        // Try to extract detailed error message from response
+        if (e.response?.data != null) {
+          final errorData = e.response!.data;
+          // Prefer 'details' field as it contains the actual error, then 'error', then 'message'
+          String? errorMessage;
+          if (errorData['details'] != null && errorData['details'].toString().isNotEmpty) {
+            errorMessage = errorData['details'].toString();
+          } else if (errorData['error'] != null) {
+            errorMessage = errorData['error'].toString();
+          } else if (errorData['message'] != null) {
+            errorMessage = errorData['message'].toString();
+          } else {
+            errorMessage = errorHandler.handleNetworkError(e);
+          }
+          throw Exception(errorMessage);
+        } else {
+          final errorMessage = errorHandler.handleNetworkError(e);
+          throw Exception(errorMessage);
+        }
       } else {
-        errorHandler.handleGenericError(e);
+        final errorMessage = errorHandler.handleGenericError(e);
+        throw Exception(errorMessage);
       }
-      throw Exception('Could not create wallet booking. Please try again.');
     }
   }
 
@@ -215,18 +251,53 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-        return BookingResponseModel.fromJson(data);
+        
+        // Handle both wrapped and unwrapped responses
+        Map<String, dynamic> responseData;
+        if (data['success'] == true && data['data'] != null) {
+          // Response is wrapped in standard format
+          responseData = data['data'] as Map<String, dynamic>;
+        } else if (data['booking'] != null) {
+          // Response is direct (unwrapped)
+          responseData = data as Map<String, dynamic>;
+        } else {
+          throw Exception('Invalid response format from server');
+        }
+        
+        return BookingResponseModel.fromJson(responseData);
       } else {
-        throw Exception('Failed to create inquiry booking with wallet');
+        // Try to extract error message from response
+        final errorData = response.data;
+        final errorMessage = errorData['error'] ?? 
+                           errorData['message'] ?? 
+                           'Failed to create inquiry booking with wallet';
+        throw Exception(errorMessage);
       }
     } catch (e) {
       if (e is DioException) {
-        errorHandler.handleNetworkError(e);
+        // Try to extract detailed error message from response
+        if (e.response?.data != null) {
+          final errorData = e.response!.data;
+          // Prefer 'details' field as it contains the actual error, then 'error', then 'message'
+          String? errorMessage;
+          if (errorData['details'] != null && errorData['details'].toString().isNotEmpty) {
+            errorMessage = errorData['details'].toString();
+          } else if (errorData['error'] != null) {
+            errorMessage = errorData['error'].toString();
+          } else if (errorData['message'] != null) {
+            errorMessage = errorData['message'].toString();
+          } else {
+            errorMessage = errorHandler.handleNetworkError(e);
+          }
+          throw Exception(errorMessage);
+        } else {
+          final errorMessage = errorHandler.handleNetworkError(e);
+          throw Exception(errorMessage);
+        }
       } else {
-        errorHandler.handleGenericError(e);
+        final errorMessage = errorHandler.handleGenericError(e);
+        throw Exception(errorMessage);
       }
-      throw Exception(
-          'Could not create inquiry booking with wallet. Please try again.');
     }
   }
 

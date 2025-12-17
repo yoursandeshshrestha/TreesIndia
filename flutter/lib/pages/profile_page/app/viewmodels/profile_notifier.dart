@@ -61,18 +61,43 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
           isLoading: false,
           errorMessage: response.message,
         );
-        _notificationService.showErrorSnackBar(response.message);
+        // Only show error snackbar if it's not an authentication-related error
+        final errorMessage = response.message.toLowerCase();
+        final isAuthError = errorMessage.contains('unauthorized') ||
+            errorMessage.contains('401') ||
+            errorMessage.contains('session') ||
+            errorMessage.contains('expired') ||
+            errorMessage.contains('invalid credentials') ||
+            errorMessage.contains('access denied');
+        
+        if (!isAuthError) {
+          _notificationService.showErrorSnackBar(response.message);
+        }
       }
     } catch (e) {
       debugPrint('Error loading profile: $e');
       if (!_mounted) return;
 
+      // Check if error is authentication-related
+      final errorString = e.toString().toLowerCase();
+      final isAuthError = errorString.contains('unauthorized') ||
+          errorString.contains('401') ||
+          errorString.contains('session') ||
+          errorString.contains('expired') ||
+          errorString.contains('invalid credentials') ||
+          errorString.contains('access denied') ||
+          errorString.contains('403');
+
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load profile. Please try again.',
+        errorMessage: isAuthError ? null : 'Failed to load profile. Please try again.',
       );
-      _notificationService
-          .showErrorSnackBar('Failed to load profile. Please try again.');
+      
+      // Only show error snackbar if it's not an authentication-related error
+      if (!isAuthError) {
+        _notificationService
+            .showErrorSnackBar('Failed to load profile. Please try again.');
+      }
     }
   }
 

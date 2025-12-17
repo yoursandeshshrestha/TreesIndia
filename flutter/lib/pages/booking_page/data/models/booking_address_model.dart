@@ -35,6 +35,8 @@ class BookingAddressModel extends BookingAddressEntity {
       'postal_code': postalCode,
       'latitude': latitude,
       'longitude': longitude,
+      'landmark': '', // Optional field, default to empty string
+      'house_number': '', // Optional field, default to empty string
     };
   }
 

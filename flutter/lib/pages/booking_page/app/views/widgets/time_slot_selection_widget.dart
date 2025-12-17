@@ -96,36 +96,55 @@ class TimeSlotSelectionWidget extends ConsumerWidget {
               final isAvailable = slot.isAvailable;
               final displayTime = _convertTo12HourFormat(slot.time);
 
-              return GestureDetector(
-                onTap: isAvailable ? () => onTimeSelected(slot.time) : null,
-                child: Container(
-                  decoration: BoxDecoration(
+              Widget slotButton = Container(
+                decoration: BoxDecoration(
+                  color: !isAvailable
+                      ? AppColors.brandNeutral100
+                      : isSelected
+                          ? const Color(0xFF055c3a)
+                          : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
                     color: !isAvailable
-                        ? AppColors.brandNeutral100
+                        ? AppColors.brandNeutral200
                         : isSelected
                             ? const Color(0xFF055c3a)
-                            : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: !isAvailable
-                          ? AppColors.brandNeutral200
-                          : isSelected
-                              ? const Color(0xFF055c3a)
-                              : AppColors.brandNeutral200,
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: B3Regular(
-                      text: displayTime,
-                      color: !isAvailable
-                          ? AppColors.brandNeutral400
-                          : isSelected
-                              ? Colors.white
-                              : AppColors.brandNeutral900,
-                    ),
+                            : AppColors.brandNeutral200,
+                    width: 1,
                   ),
                 ),
+                child: Center(
+                  child: B3Regular(
+                    text: displayTime,
+                    color: !isAvailable
+                        ? AppColors.brandNeutral400
+                        : isSelected
+                            ? Colors.white
+                            : AppColors.brandNeutral900,
+                  ),
+                ),
+              );
+
+              // If slot is not available, wrap in IgnorePointer to disable interaction
+              if (!isAvailable) {
+                return IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: slotButton,
+                  ),
+                );
+              }
+
+              // Available slot - make it tappable
+              // Double-check availability before allowing tap
+              return GestureDetector(
+                onTap: () {
+                  // Verify slot is still available before calling callback
+                  if (slot.isAvailable) {
+                    onTimeSelected(slot.time);
+                  }
+                },
+                child: slotButton,
               );
             },
           )

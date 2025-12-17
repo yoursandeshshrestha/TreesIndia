@@ -57,13 +57,15 @@ class ServiceRemoteDataSourceImpl implements ServiceRemoteDataSource {
         'exclude_inactive': true,
       };
 
-      // Only add city and state if they're not empty
-      if (city.isNotEmpty) {
-        queryParameters['city'] = city;
-      }
-      if (state.isNotEmpty) {
-        queryParameters['state'] = state;
-      }
+      // Don't filter by location - show all services for the category
+      // Only add city and state if they have actual non-empty values
+      // (Empty strings would still trigger location filtering in backend)
+      // if (city.isNotEmpty) {
+      //   queryParameters['city'] = city;
+      // }
+      // if (state.isNotEmpty) {
+      //   queryParameters['state'] = state;
+      // }
 
       if (categoryId != null) {
         queryParameters['category'] = categoryId;

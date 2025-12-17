@@ -48,7 +48,11 @@ class _HomePageState extends ConsumerState<HomePage>
     super.initState();
     _loadCurrentLocation();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileProvider.notifier).loadProfile();
+      // Only load profile if user is authenticated
+      final authState = ref.read(authProvider);
+      if (authState.isLoggedIn && authState.token != null) {
+        ref.read(profileProvider.notifier).loadProfile();
+      }
     });
     // Load services (without location filter), properties, and banners when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,7 +116,11 @@ class _HomePageState extends ConsumerState<HomePage>
   void _refreshPageData() {
     // Reload all page data when connectivity is restored
     try {
-      ref.read(profileProvider.notifier).loadProfile();
+      // Only load profile if user is authenticated
+      final authState = ref.read(authProvider);
+      if (authState.isLoggedIn && authState.token != null) {
+        ref.read(profileProvider.notifier).loadProfile();
+      }
       ref.read(categoryNotifierProvider.notifier).loadCategories();
       ref.read(homePageNotifierProvider.notifier).loadPromotionBanners();
       _initializeNotifications();
@@ -246,7 +254,11 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget _buildMarketplaceOptions(
       BuildContext context, CategoryEntity categoryEntity) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileProvider.notifier).loadProfile();
+      // Only load profile if user is authenticated
+      final authState = ref.read(authProvider);
+      if (authState.isLoggedIn && authState.token != null) {
+        ref.read(profileProvider.notifier).loadProfile();
+      }
     });
     // Create hardcoded marketplace subcategories
     final marketplaceSubcategories = [

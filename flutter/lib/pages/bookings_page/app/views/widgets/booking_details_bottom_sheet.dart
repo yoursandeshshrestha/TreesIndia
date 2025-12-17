@@ -227,68 +227,12 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
     final assignment = booking.workerAssignment!;
     List<Widget> children = [];
 
-    // Worker Information
+    // Worker Information - Only Name
     if (assignment.worker != null) {
-      children.addAll([
+      children.add(
         _buildDetailRow(
             'Worker Name', assignment.worker!.name ?? 'Not Provided'),
-        _buildDetailRow(
-            'Worker Phone', assignment.worker!.phone ?? 'Not available'),
-        _buildDetailRow('Worker Type', assignment.worker!.userType ?? 'Worker'),
-      ]);
-    }
-
-    // Assignment Status and Details
-    children.addAll([
-      _buildDetailRow(
-          'Assignment Status', _formatAssignmentStatus(assignment.status)),
-      _buildDetailRow('Assigned At', _formatDateTime(assignment.assignedAt)),
-    ]);
-
-    // Status-specific timestamps
-    if (assignment.acceptedAt != null) {
-      children.add(_buildDetailRow(
-          'Accepted At', _formatDateTime(assignment.acceptedAt!)));
-    }
-    if (assignment.rejectedAt != null) {
-      children.add(_buildDetailRow(
-          'Rejected At', _formatDateTime(assignment.rejectedAt!)));
-    }
-    if (assignment.startedAt != null) {
-      children.add(_buildDetailRow(
-          'Started At', _formatDateTime(assignment.startedAt!)));
-    }
-    if (assignment.completedAt != null) {
-      children.add(_buildDetailRow(
-          'Completed At', _formatDateTime(assignment.completedAt!)));
-    }
-
-    // Assignment Notes
-    if (assignment.assignmentNotes != null &&
-        assignment.assignmentNotes!.isNotEmpty) {
-      children.add(
-          _buildDetailRow('Assignment Notes', assignment.assignmentNotes!));
-    }
-    if (assignment.acceptanceNotes != null &&
-        assignment.acceptanceNotes!.isNotEmpty) {
-      children.add(
-          _buildDetailRow('Acceptance Notes', assignment.acceptanceNotes!));
-    }
-    if (assignment.rejectionNotes != null &&
-        assignment.rejectionNotes!.isNotEmpty) {
-      children
-          .add(_buildDetailRow('Rejection Notes', assignment.rejectionNotes!));
-    }
-    if (assignment.rejectionReason != null &&
-        assignment.rejectionReason!.isNotEmpty) {
-      children.add(
-          _buildDetailRow('Rejection Reason', assignment.rejectionReason!));
-    }
-
-    // Assigned by information
-    if (assignment.assignedByUser != null) {
-      children.add(_buildDetailRow(
-          'Assigned By', assignment.assignedByUser!.name ?? 'Unknown'));
+      );
     }
 
     return _buildSection(
@@ -560,27 +504,6 @@ class BookingDetailsBottomSheet extends ConsumerWidget {
 
   String _formatPaymentMethod(String method) {
     return method[0].toUpperCase() + method.substring(1);
-  }
-
-  String _formatAssignmentStatus(String? status) {
-    if (status == null) return 'Unknown';
-    switch (status.toLowerCase()) {
-      case 'assigned':
-        return 'Assigned';
-      case 'accepted':
-        return 'Accepted';
-      case 'rejected':
-        return 'Rejected';
-      case 'in_progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      default:
-        return status
-            .split('_')
-            .map((word) => word[0].toUpperCase() + word.substring(1))
-            .join(' ');
-    }
   }
 
   String _formatDate(DateTime date) {

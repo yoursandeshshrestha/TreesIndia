@@ -9,8 +9,8 @@ class SubcategoryModel extends Equatable {
   final String slug;
   final String description;
   final String icon;
-  final int parentId;
-  final CategoryModel parent;
+  final int? parentId;
+  final CategoryModel? parent;
   final bool isActive;
 
   const SubcategoryModel({
@@ -21,8 +21,8 @@ class SubcategoryModel extends Equatable {
     required this.slug,
     required this.description,
     required this.icon,
-    required this.parentId,
-    required this.parent,
+    this.parentId,
+    this.parent,
     required this.isActive,
   });
 
@@ -37,9 +37,10 @@ class SubcategoryModel extends Equatable {
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String? ?? '',
       icon: json['icon'] as String? ?? '',
-      parentId: json['parent_id'] as int? ?? 0,
-      parent:
-          CategoryModel.fromJson(json['parent'] as Map<String, dynamic>? ?? {}),
+      parentId: json['parent_id'] as int?,
+      parent: json['parent'] != null
+          ? CategoryModel.fromJson(json['parent'] as Map<String, dynamic>)
+          : null,
       isActive: json['is_active'] as bool? ?? false,
     );
   }
@@ -54,7 +55,7 @@ class SubcategoryModel extends Equatable {
       'description': description,
       'icon': icon,
       'parent_id': parentId,
-      'parent': parent.toJson(),
+      'parent': parent?.toJson(),
       'is_active': isActive,
     };
   }

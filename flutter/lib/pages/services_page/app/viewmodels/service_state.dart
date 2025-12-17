@@ -12,6 +12,7 @@ class ServiceState extends Equatable {
   final PaginationEntity? pagination;
   final CategoryEntity? currentCategory;
   final SubcategoryEntity? currentSubcategory;
+  final List<SubcategoryEntity> level3Categories; // Level 3 categories (children of Level 2)
   final int? currentCategoryId;
   final int? currentSubcategoryId;
   final String? userCity;
@@ -26,6 +27,7 @@ class ServiceState extends Equatable {
     this.pagination,
     this.currentCategory,
     this.currentSubcategory,
+    this.level3Categories = const [],
     this.currentCategoryId,
     this.currentSubcategoryId,
     this.userCity,
@@ -41,6 +43,7 @@ class ServiceState extends Equatable {
     PaginationEntity? pagination,
     CategoryEntity? currentCategory,
     SubcategoryEntity? currentSubcategory,
+    List<SubcategoryEntity>? level3Categories,
     int? currentCategoryId,
     int? currentSubcategoryId,
     String? userCity,
@@ -55,6 +58,7 @@ class ServiceState extends Equatable {
       pagination: pagination ?? this.pagination,
       currentCategory: currentCategory ?? this.currentCategory,
       currentSubcategory: currentSubcategory ?? this.currentSubcategory,
+      level3Categories: level3Categories ?? this.level3Categories,
       currentCategoryId: currentCategoryId ?? this.currentCategoryId,
       currentSubcategoryId: currentSubcategoryId ?? this.currentSubcategoryId,
       userCity: userCity ?? this.userCity,
@@ -72,6 +76,7 @@ class ServiceState extends Equatable {
         pagination,
         currentCategory,
         currentSubcategory,
+        level3Categories,
         currentCategoryId,
         currentSubcategoryId,
         userCity,
