@@ -34,7 +34,6 @@ func (crr *ChatRoomRepository) GetByID(id uint) (*models.ChatRoom, error) {
 	var chatRoom models.ChatRoom
 	err := crr.db.Preload("Booking.User").
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
 		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages.Sender").
@@ -51,7 +50,6 @@ func (crr *ChatRoomRepository) GetByBookingID(bookingID uint) (*models.ChatRoom,
 	err := crr.db.Where("booking_id = ? AND is_active = ?", bookingID, true).
 		Preload("Booking.User").
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
 		Preload("Booking.WorkerAssignment.AssignedByUser").
 		First(&chatRoom).Error
@@ -90,7 +88,6 @@ func (crr *ChatRoomRepository) GetUserRooms(userID uint, roomType *models.RoomTy
 	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
 		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
@@ -164,7 +161,6 @@ func (crr *ChatRoomRepository) GetClosedRooms(userID uint, page, limit int) ([]m
 	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
 		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
@@ -207,7 +203,6 @@ func (crr *ChatRoomRepository) GetAllRooms(page, limit int) ([]models.ChatRoom, 
 	// Preload relationships with booking, user, service, worker assignment, and worker
 	query = query.Preload("Booking.User").
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.WorkerAssignment.Worker").
 		Preload("Booking.WorkerAssignment.AssignedByUser").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {

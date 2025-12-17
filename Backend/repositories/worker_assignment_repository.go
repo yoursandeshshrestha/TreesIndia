@@ -4,6 +4,7 @@ import (
 	"treesindia/database"
 	"treesindia/models"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,17 +31,25 @@ func (war *WorkerAssignmentRepository) Create(assignment *models.WorkerAssignmen
 // GetByID gets a worker assignment by ID
 func (war *WorkerAssignmentRepository) GetByID(id uint) (*models.WorkerAssignment, error) {
 	var assignment models.WorkerAssignment
-	err := war.db.Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser").First(&assignment, id).Error
+	// Preload relationships
+	err := war.db.
+		Preload("Booking.Service.Category").
+		Preload("Booking.User").
+		Preload("Worker").
+		Preload("AssignedByUser").
+		First(&assignment, id).Error
 	if err != nil {
+		logrus.Errorf("Failed to get worker assignment by ID %d: %v", id, err)
 		return nil, err
 	}
+	logrus.Infof("Retrieved assignment ID %d with status: %s, worker_id: %d", assignment.ID, assignment.Status, assignment.WorkerID)
 	return &assignment, nil
 }
 
 // GetByBookingID gets worker assignment by booking ID
 func (war *WorkerAssignmentRepository) GetByBookingID(bookingID uint) (*models.WorkerAssignment, error) {
 	var assignment models.WorkerAssignment
-	err := war.db.Where("booking_id = ?", bookingID).Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser").First(&assignment).Error
+	err := war.db.Where("booking_id = ?", bookingID).Preload("Booking.Service.Category").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser").First(&assignment).Error
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +61,6 @@ func (war *WorkerAssignmentRepository) GetByWorkerAndBooking(workerID uint, book
 	var assignment models.WorkerAssignment
 	err := war.db.Where("worker_id = ? AND booking_id = ?", workerID, bookingID).
 		Preload("Booking.Service.Category").
-		Preload("Booking.Service.Subcategory").
 		Preload("Booking.User").
 		Preload("Worker").
 		Preload("AssignedByUser").
@@ -65,7 +73,11 @@ func (war *WorkerAssignmentRepository) GetByWorkerAndBooking(workerID uint, book
 
 // Update updates an existing worker assignment
 func (war *WorkerAssignmentRepository) Update(assignment *models.WorkerAssignment) error {
-	return war.db.Save(assignment).Error
+	// Use Omit to exclude preloaded relationships from being saved
+	// This prevents issues when assignment has preloaded Booking, Worker, etc.
+	return war.db.Model(assignment).
+		Omit("Booking", "Worker", "AssignedByUser", "CreatedAt").
+		Save(assignment).Error
 }
 
 // Delete deletes a worker assignment by ID
@@ -86,20 +98,27 @@ func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filte
 		filters.Limit = 10 // Default limit
 	}
 
-	query := war.db.Where("worker_id = ?", workerID)
+	// Build base query for counting
+	countQuery := war.db.Model(&models.WorkerAssignment{}).Where("worker_id = ?", workerID)
+
+	// Build query for fetching data
+	query := war.db.Model(&models.WorkerAssignment{}).Where("worker_id = ?", workerID)
 
 	// Apply filters
 	if filters.Status != "" {
+		countQuery = countQuery.Where("status = ?", filters.Status)
 		query = query.Where("status = ?", filters.Status)
 	}
 	if filters.Date != "" {
-		query = query.Joins("JOIN bookings ON worker_assignments.booking_id = bookings.id").
-			Where("bookings.scheduled_date = ?", filters.Date)
+		// Use raw SQL subquery to avoid conflicts with preloads
+		countQuery = countQuery.Where("booking_id IN (SELECT id FROM bookings WHERE scheduled_date = ?)", filters.Date)
+		query = query.Where("booking_id IN (SELECT id FROM bookings WHERE scheduled_date = ?)", filters.Date)
 	}
 
 	// Count total
-	err := query.Model(&models.WorkerAssignment{}).Count(&total).Error
+	err := countQuery.Count(&total).Error
 	if err != nil {
+		logrus.Errorf("Failed to count worker assignments: %v", err)
 		return nil, nil, err
 	}
 
@@ -108,11 +127,12 @@ func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filte
 	query = query.Offset(offset).Limit(filters.Limit)
 
 	// Preload relationships
-	query = query.Preload("Booking.Service.Category").Preload("Booking.Service.Subcategory").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser")
+	query = query.Preload("Booking.Service.Category").Preload("Booking.User").Preload("Worker").Preload("AssignedByUser")
 
 	// Execute query
 	err = query.Order("created_at DESC").Find(&assignments).Error
 	if err != nil {
+		logrus.Errorf("Failed to find worker assignments: %v", err)
 		return nil, nil, err
 	}
 

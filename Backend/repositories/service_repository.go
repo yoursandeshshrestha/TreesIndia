@@ -364,7 +364,11 @@ func (sr *ServiceRepository) GetByCategory(categoryID uint, excludeInactive bool
 
 // Update updates a service
 func (sr *ServiceRepository) Update(service *models.Service) error {
-	return sr.GetDB().Save(service).Error
+	// Use Omit to exclude preloaded relationships from being saved
+	// This prevents issues when service has preloaded Category, ServiceAreas, etc.
+	return sr.GetDB().Model(service).
+		Omit("Category", "ServiceAreas", "CreatedAt").
+		Save(service).Error
 }
 
 // Delete deletes a service
@@ -800,39 +804,55 @@ func (sr *ServiceRepository) GetSummariesWithLocationFiltersPaginated(priceType 
 			continue
 		}
 		
-		// Filter by category
+		// Filter by category - use preloaded Category data
 		if category != nil {
 			if categoryID, err := strconv.ParseUint(*category, 10, 32); err == nil {
-				if service.CategoryID != uint(categoryID) {
+				// Check if service category matches or is a descendant of the category
+				cat := service.Category
+				matched := false
+				if cat.ID == uint(categoryID) {
+					matched = true
+				} else if cat.ParentID != nil && *cat.ParentID == uint(categoryID) {
+					// Direct child
+					matched = true
+				} else if cat.Parent != nil && cat.Parent.ParentID != nil && *cat.Parent.ParentID == uint(categoryID) {
+					// Grandchild
+					matched = true
+				}
+				if !matched {
 					continue
 				}
 			} else {
-				// Get category name
-				var cat models.Category
-				if err := sr.GetDB().First(&cat, service.CategoryID).Error; err != nil || !strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*category)) {
+				// Use preloaded category data
+				cat := service.Category
+				if !strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*category)) {
 					continue
 				}
 			}
 		}
 		
-		// Filter by subcategory (now treated as category filter)
+		// Filter by subcategory (now treated as category filter) - use preloaded Category data
 		if subcategory != nil {
 			if subcategoryID, err := strconv.ParseUint(*subcategory, 10, 32); err == nil {
-				// Check if service category matches or is a child of the subcategory
-				var cat models.Category
-				if err := sr.GetDB().First(&cat, service.CategoryID).Error; err != nil {
-					continue
+				// Use preloaded category data - check if service category matches or is a child of the subcategory
+				cat := service.Category
+				matched := false
+				if cat.ID == uint(subcategoryID) {
+					// Direct match
+					matched = true
+				} else if cat.ParentID != nil && *cat.ParentID == uint(subcategoryID) {
+					// Direct child (Level 3 of Level 2)
+					matched = true
+				} else if cat.Parent != nil && cat.Parent.ParentID != nil && *cat.Parent.ParentID == uint(subcategoryID) {
+					// Grandchild (Level 3 of Level 2, checking through parent chain)
+					matched = true
 				}
-				// Check if category is the subcategory or a child of it
-				if cat.ID != uint(subcategoryID) && (cat.ParentID == nil || *cat.ParentID != uint(subcategoryID)) {
+				if !matched {
 					continue
 				}
 			} else {
-				// Get category and check name match
-				var cat models.Category
-				if err := sr.GetDB().Preload("Parent").First(&cat, service.CategoryID).Error; err != nil {
-					continue
-				}
+				// Use preloaded category data
+				cat := service.Category
 				matched := strings.Contains(strings.ToLower(cat.Name), strings.ToLower(*subcategory))
 				if !matched && cat.Parent != nil {
 					matched = strings.Contains(strings.ToLower(cat.Parent.Name), strings.ToLower(*subcategory))

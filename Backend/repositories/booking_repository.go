@@ -61,7 +61,11 @@ func (br *BookingRepository) GetByID(id uint) (*models.Booking, error) {
 
 // Update updates a booking
 func (br *BookingRepository) Update(booking *models.Booking) error {
-	return br.db.Save(booking).Error
+	// Use Omit to exclude preloaded relationships from being saved
+	// This prevents issues when booking has preloaded User, Service, WorkerAssignment, etc.
+	return br.db.Model(booking).
+		Omit("User", "Service", "WorkerAssignment", "BufferRequests", "PaymentSegments", "Payment", "CreatedAt").
+		Save(booking).Error
 }
 
 // GetUserBookings gets bookings for a user with filters
@@ -257,11 +261,13 @@ func (br *BookingRepository) GetExpiredTemporaryHolds() ([]models.Booking, error
 }
 
 // GetConfirmedBookingsForDate gets confirmed bookings for a specific date
+// Excludes cancelled bookings
 func (br *BookingRepository) GetConfirmedBookingsForDate(date time.Time) ([]models.Booking, error) {
 	var bookings []models.Booking
-	err := br.db.Where("DATE(scheduled_date) = ? AND status IN (?)", 
-		date.Format("2006-01-02"), 
-		[]string{string(models.BookingStatusConfirmed), string(models.BookingStatusAssigned)}).
+	err := br.db.Where("DATE(scheduled_date) = ? AND status IN (?) AND status != ?",
+		date.Format("2006-01-02"),
+		[]string{string(models.BookingStatusConfirmed), string(models.BookingStatusAssigned)},
+		string(models.BookingStatusCancelled)).
 		Find(&bookings).Error
 	return bookings, err
 }
