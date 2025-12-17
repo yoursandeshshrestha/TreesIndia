@@ -68,7 +68,6 @@ func NewServiceController() *ServiceController {
 // @Param price formData number false "Fixed price (required if price_type is fixed)"
 // @Param duration formData string false "Service duration"
 // @Param category_id formData integer true "Category ID"
-// @Param subcategory_id formData integer true "Subcategory ID"
 // @Param is_active formData boolean false "Is active (default: true)"
 // @Param images formData file false "Service images"
 // @Success 201 {object} views.Response{data=models.Service}
@@ -539,7 +538,6 @@ func (sc *ServiceController) GetServicesByLocation(c *gin.Context) {
 // @Param price_type formData string false "Price type (fixed or inquiry)"
 // @Param price formData number false "Fixed price"
 // @Param duration formData string false "Service duration"
-// @Param subcategory_id formData integer false "Subcategory ID"
 // @Param is_active formData boolean false "Is active"
 // @Param images formData file false "Additional service images"
 // @Success 200 {object} views.Response{data=models.Service}
@@ -565,10 +563,6 @@ func (sc *ServiceController) UpdateService(c *gin.Context) {
 		req.PriceType = c.PostForm("price_type")
 		if duration := c.PostForm("duration"); duration != "" {
 			req.Duration = &duration
-		}
-		
-		if subcategoryIDStr := c.PostForm("subcategory_id"); subcategoryIDStr != "" {
-			// SubcategoryID removed - services now use single CategoryID
 		}
 		
 		if priceStr := c.PostForm("price"); priceStr != "" {
