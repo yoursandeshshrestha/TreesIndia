@@ -9,8 +9,6 @@ interface CategoryTableProps {
   onToggleExpansion: (categoryId: number) => void;
   onEditCategory: (category: Category) => void;
   onDeleteCategory: (category: Category) => void;
-  onEditSubcategory: (subcategory: Subcategory) => void;
-  onDeleteSubcategory: (subcategory: Subcategory) => void;
   onAddSubcategory: (categoryId: number) => void;
   onToggleCategoryStatus: (category: Category) => void;
   onToggleSubcategoryStatus: (subcategory: Subcategory) => void;
@@ -23,8 +21,6 @@ const CategoryTable = ({
   onToggleExpansion,
   onEditCategory,
   onDeleteCategory,
-  onEditSubcategory,
-  onDeleteSubcategory,
   onAddSubcategory,
   onToggleCategoryStatus,
   onToggleSubcategoryStatus,

@@ -8,7 +8,6 @@ import {
   Folder,
   FolderOpen,
   Tag,
-  MoreVertical,
 } from "lucide-react";
 import Toggle from "@/components/Toggle";
 import { Category } from "../types";
@@ -36,7 +35,6 @@ interface CategoryTreeNodeProps {
   onAddSubcategory: (categoryId: number) => void;
   onToggleCategoryStatus: (category: Category) => void;
   level: number;
-  isLast: boolean;
   parentPath: string[];
 }
 
@@ -50,7 +48,6 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
   onAddSubcategory,
   onToggleCategoryStatus,
   level,
-  isLast,
   parentPath,
 }) => {
   const hasChildren =
@@ -150,7 +147,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
       {/* Children */}
       {hasChildren && isExpanded && (
         <div>
-          {children.map((child, index) => (
+          {children.map((child) => (
             <CategoryTreeNode
               key={child.id}
               category={child}
@@ -162,7 +159,6 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
               onAddSubcategory={onAddSubcategory}
               onToggleCategoryStatus={onToggleCategoryStatus}
               level={level + 1}
-              isLast={index === children.length - 1}
               parentPath={getFullPath()}
             />
           ))}
@@ -208,8 +204,6 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
   onDeleteCategory,
   onAddSubcategory,
   onToggleCategoryStatus,
-  level = 0,
-  parentPath = [],
 }) => {
   const hasTreeStructure = categories.some(
     (cat) =>
@@ -242,7 +236,7 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
           </div>
         ) : (
           <div>
-            {rootCategories.map((category, index) => (
+            {rootCategories.map((category) => (
               <CategoryTreeNode
                 key={category.id}
                 category={category}
@@ -254,7 +248,6 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
                 onAddSubcategory={onAddSubcategory}
                 onToggleCategoryStatus={onToggleCategoryStatus}
                 level={0}
-                isLast={index === rootCategories.length - 1}
                 parentPath={[]}
               />
             ))}
@@ -266,4 +259,5 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
 };
 
 export default CategoryTree;
+
 
