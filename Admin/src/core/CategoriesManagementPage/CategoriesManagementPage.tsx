@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
-import { Loader, Tag } from "lucide-react";
+import { Loader } from "lucide-react";
 
 // Components
 import CategoryHeader from "@/core/CategoriesManagementPage/components/CategoryHeader";
@@ -22,8 +22,7 @@ import {
 } from "./types";
 
 function CategoriesManagementPage() {
-  const [isSearching, setIsSearching] = useState(false);
-  const [localSearch, setLocalSearch] = useState("");
+  const [localSearch] = useState("");
   const debouncedSearch = useDebounce(localSearch, 300);
 
   // State management
@@ -71,8 +70,6 @@ function CategoriesManagementPage() {
     if (debouncedSearch !== filters.search) {
       setFilters((prev) => ({ ...prev, search: debouncedSearch }));
     }
-    // Stop searching when debounced value is applied
-    setIsSearching(false);
   }, [debouncedSearch, filters.search]);
 
   const handleCreateCategory = async (
@@ -220,18 +217,8 @@ function CategoriesManagementPage() {
     setIsCategoryModalOpen(true);
   };
 
-  const handleEditSubcategory = (subcategory: Subcategory) => {
-    setSelectedSubcategory(subcategory);
-    setIsSubcategoryModalOpen(true);
-  };
-
   const handleDeleteCategoryClick = (category: Category) => {
     setSelectedCategory(category);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteSubcategoryClick = (subcategory: Subcategory) => {
-    setSelectedSubcategory(subcategory);
     setIsDeleteModalOpen(true);
   };
 
@@ -364,8 +351,6 @@ function CategoriesManagementPage() {
         onToggleExpansion={toggleCategoryExpansion}
         onEditCategory={handleEditCategory}
         onDeleteCategory={handleDeleteCategoryClick}
-        onEditSubcategory={handleEditSubcategory}
-        onDeleteSubcategory={handleDeleteSubcategoryClick}
         onAddSubcategory={handleAddSubcategory}
         onToggleCategoryStatus={handleToggleCategoryStatus}
         onToggleSubcategoryStatus={handleToggleSubcategoryStatus}

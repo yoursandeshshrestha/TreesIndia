@@ -1,4 +1,4 @@
-import { Plus, RefreshCw, Layers } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 

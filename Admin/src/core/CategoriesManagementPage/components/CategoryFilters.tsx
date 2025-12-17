@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, X, Filter } from "lucide-react";
+import { Search, X } from "lucide-react";
 import CustomInput from "@/components/Input/Base/Input";
 import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import Button from "@/components/Button/Base/Button";
