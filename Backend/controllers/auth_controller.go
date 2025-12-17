@@ -101,36 +101,25 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 		return
 	}
 
-	// Check if user exists, if not create one
+	// Check if user exists (for existing users, check if account is active)
 	var user models.User
-	var isNewUser bool
+	var isExistingUser bool
 	
 	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			// Create new user
-			user = models.User{
-				Phone:           req.Phone,
-				UserType:        models.UserTypeNormal, // Default role is user
-				IsActive:        true,
-				WalletBalance:    0,  // Default 0 balance
-			}
-			
-			if err := ac.db.Create(&user).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
-				return
-			}
-			isNewUser = true
+			// User doesn't exist yet - will be created after OTP verification
+			isExistingUser = false
 		} else {
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
 			return
 		}
 	} else {
-		// Existing user
+		// Existing user - check if account is active
 		if !user.IsActive {
 			c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Account disabled", "Your account has been disabled"))
 			return
 		}
-		isNewUser = false
+		isExistingUser = true
 	}
 
 	// Generate and send OTP via 2Factor API
@@ -142,19 +131,15 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 		return
 	}
 	
-	// User OTP notification removed as per user request
-	// Send admin notification for OTP request monitoring
-	go services.NotifyOTPRequestedToAdmin(&user, req.Phone)
-	
-	// If new user, also notify admin about new user registration
-	if isNewUser {
-		go services.NotifyUserRegistration(&user)
+	// Send admin notification for OTP request monitoring (only for existing users)
+	if isExistingUser {
+		go services.NotifyOTPRequestedToAdmin(&user, req.Phone)
 	}
 	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
 		"phone":      req.Phone,
 		"expires_in": 300, // 5 minutes (300 seconds)
-		"is_new_user": isNewUser,
+		"is_new_user": !isExistingUser,
 	}))
 }
 
