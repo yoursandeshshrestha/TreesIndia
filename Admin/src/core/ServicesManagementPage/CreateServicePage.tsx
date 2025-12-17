@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
@@ -36,7 +36,7 @@ export default function CreateServicePage() {
     service_area_ids: [],
   });
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     if (categories.length > 0) return; // Already loaded
 
     setIsLoadingCategories(true);
@@ -52,7 +52,7 @@ export default function CreateServicePage() {
     } finally {
       setIsLoadingCategories(false);
     }
-  };
+  }, [categories.length]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -243,7 +243,7 @@ export default function CreateServicePage() {
   // Load categories on mount
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   return (
     <div className="min-h-screen bg-gray-50">
