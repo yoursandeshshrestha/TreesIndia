@@ -115,17 +115,11 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({
         <div className="p-6">
           {/* User Header */}
           <div className="flex items-start space-x-6 mb-8">
-            <div className="flex-shrink-0">
-              {user.avatar ? (
-                renderAvatar(user.avatar, user.name)
-              ) : (
-                <div className="h-24 w-24 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-3xl font-medium text-gray-700">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
+            {user.avatar && (
+              <div className="flex-shrink-0">
+                {renderAvatar(user.avatar, user.name)}
+              </div>
+            )}
 
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">

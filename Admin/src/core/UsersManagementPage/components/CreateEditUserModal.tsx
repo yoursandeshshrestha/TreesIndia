@@ -176,7 +176,7 @@ const CreateEditUserModal: React.FC<CreateEditUserModalProps> = ({
                       value="+91"
                       disabled
                       fullWidth={false}
-                      className="w-10 flex-shrink-0"
+                      className="w-16 flex-shrink-0"
                     />
                     <Input
                       type="tel"

@@ -1,5 +1,4 @@
 import {
-  Eye,
   Edit2,
   Trash2,
   Phone,
@@ -44,20 +43,6 @@ const renderAvatar = (src: string, alt: string) => {
         src={src}
         alt={alt}
         className="h-10 w-10 rounded-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = "none";
-          const parent = target.parentElement;
-          if (parent) {
-            parent.innerHTML = `
-              <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <span class="text-sm font-medium text-gray-700">${alt
-                  .charAt(0)
-                  .toUpperCase()}</span>
-              </div>
-            `;
-          }
-        }}
       />
     );
   }
@@ -68,20 +53,6 @@ const renderAvatar = (src: string, alt: string) => {
       width={40}
       height={40}
       alt={alt}
-      onError={(e) => {
-        const target = e.target as HTMLImageElement;
-        target.style.display = "none";
-        const parent = target.parentElement;
-        if (parent) {
-          parent.innerHTML = `
-            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span class="text-sm font-medium text-gray-700">${alt
-                .charAt(0)
-                .toUpperCase()}</span>
-              </div>
-          `;
-        }
-      }}
     />
   );
 };
@@ -148,17 +119,11 @@ const UserTable = ({
               header: "User Information",
               accessor: (row: User) => (
                 <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    {row.avatar ? (
-                      renderAvatar(row.avatar, displayValue(row.name, "User"))
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-700">
-                          {row.name ? row.name.charAt(0).toUpperCase() : "U"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {row.avatar && (
+                    <div className="flex-shrink-0">
+                      {renderAvatar(row.avatar, displayValue(row.name, "User"))}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div
                       className="text-sm font-medium text-gray-900 truncate"
@@ -167,12 +132,14 @@ const UserTable = ({
                       {displayValue(row.name, "Name not provided")}
                     </div>
                     <div className="flex flex-col items-start space-x-2 text-xs text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Mail className="h-3 w-3" />
-                        <span className="truncate">
-                          {displayValue(row.email, "Email not provided")}
-                        </span>
-                      </div>
+                      {row.email && (
+                        <div className="flex items-center space-x-1">
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate">
+                            {row.email}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-1">
                         <Phone className="h-3 w-3" />
                         <span>
@@ -280,13 +247,6 @@ const UserTable = ({
             (user) => user.ID && selectedUsers.includes(user.ID.toString())
           )}
           actions={[
-            {
-              label: () => "View Details",
-              onClick: () => {},
-              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
-              icon: <Eye size={14} />,
-              disabled: () => selectionMode,
-            },
             {
               label: "Edit User",
               onClick: (row: User) => onEditUser(row),
