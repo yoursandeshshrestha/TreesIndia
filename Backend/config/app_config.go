@@ -94,9 +94,9 @@ type AppConfig struct {
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() *AppConfig {
-	// Only load .env file if not in Docker/production
-	// In Docker, environment variables are set by docker-compose
-	if os.Getenv("ENV") != "production" {
+	// Don't load .env file if DB_HOST is already set (Docker sets it via docker-compose)
+	// This prevents .env files from overriding Docker environment variables
+	if os.Getenv("DB_HOST") == "" {
 		if err := godotenv.Load(); err != nil {
 			// .env file not found, continue with environment variables
 		}
