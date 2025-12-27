@@ -94,7 +94,7 @@ type AppConfig struct {
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() *AppConfig {
-	// Load .env file if it exists
+	// Load .env file if it exists (won't override existing env vars)
 	if err := godotenv.Load(); err != nil {
 		// .env file not found, continue with environment variables
 	}
@@ -187,28 +187,15 @@ func LoadConfig() *AppConfig {
 func (ac *AppConfig) GetDatabaseURL() string {
 	// If DATABASE_URL is provided, use it directly
 	if ac.DatabaseURL != "" {
-		// Clean up any line breaks or extra spaces
 		cleanURL := strings.TrimSpace(ac.DatabaseURL)
 		cleanURL = strings.ReplaceAll(cleanURL, "\n", "")
 		cleanURL = strings.ReplaceAll(cleanURL, "\r", "")
-		// Fix localhost in DATABASE_URL to use IPv4 (127.0.0.1) to avoid IPv6 issues
-		// Replace localhost: with 127.0.0.1: in connection strings
-		cleanURL = strings.ReplaceAll(cleanURL, "localhost:", "127.0.0.1:")
-		// Replace host=localhost with host=127.0.0.1 in connection strings
-		cleanURL = strings.ReplaceAll(cleanURL, "host=localhost", "host=127.0.0.1")
 		return cleanURL
 	}
 	
-	// Fix localhost to use IPv4 (127.0.0.1) to avoid IPv6 issues
-	host := ac.DatabaseHost
-	if host == "localhost" {
-		host = "127.0.0.1"
-	}
-	
-	// Otherwise, construct from individual components
-	constructedURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, ac.DatabasePort, ac.DatabaseUser, ac.DatabasePassword, ac.DatabaseName, ac.DatabaseSSLMode)
-	return constructedURL
+	// Construct from individual components
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		ac.DatabaseHost, ac.DatabasePort, ac.DatabaseUser, ac.DatabasePassword, ac.DatabaseName, ac.DatabaseSSLMode)
 }
 
 // IsDevelopment returns true if the environment is development
