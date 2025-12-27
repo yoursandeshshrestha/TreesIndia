@@ -191,12 +191,23 @@ func (ac *AppConfig) GetDatabaseURL() string {
 		cleanURL := strings.TrimSpace(ac.DatabaseURL)
 		cleanURL = strings.ReplaceAll(cleanURL, "\n", "")
 		cleanURL = strings.ReplaceAll(cleanURL, "\r", "")
+		// Fix localhost in DATABASE_URL to use IPv4 (127.0.0.1) to avoid IPv6 issues
+		// Replace localhost: with 127.0.0.1: in connection strings
+		cleanURL = strings.ReplaceAll(cleanURL, "localhost:", "127.0.0.1:")
+		// Replace host=localhost with host=127.0.0.1 in connection strings
+		cleanURL = strings.ReplaceAll(cleanURL, "host=localhost", "host=127.0.0.1")
 		return cleanURL
+	}
+	
+	// Fix localhost to use IPv4 (127.0.0.1) to avoid IPv6 issues
+	host := ac.DatabaseHost
+	if host == "localhost" {
+		host = "127.0.0.1"
 	}
 	
 	// Otherwise, construct from individual components
 	constructedURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		ac.DatabaseHost, ac.DatabasePort, ac.DatabaseUser, ac.DatabasePassword, ac.DatabaseName, ac.DatabaseSSLMode)
+		host, ac.DatabasePort, ac.DatabaseUser, ac.DatabasePassword, ac.DatabaseName, ac.DatabaseSSLMode)
 	return constructedURL
 }
 
