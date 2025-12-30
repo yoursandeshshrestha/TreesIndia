@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"mime/multipart"
 	"treesindia/models"
 	"treesindia/repositories"
@@ -24,6 +25,23 @@ func NewServiceService(serviceRepo *repositories.ServiceRepository, cloudinary *
 		serviceAreaRepo: repositories.NewServiceAreaRepository(),
 		cloudinary:      cloudinary,
 	}
+}
+
+// roundServicePrice rounds service price to nearest integer, ensuring minimum of 1
+func roundServicePrice(price *float64) *float64 {
+	if price == nil {
+		return nil
+	}
+	
+	// Round to nearest integer
+	rounded := math.Round(*price)
+	
+	// Ensure minimum price is 1
+	if rounded < 1 {
+		rounded = 1
+	}
+	
+	return &rounded
 }
 
 // CreateService creates a new service
@@ -97,13 +115,20 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 
 	logrus.Infof("ServiceService.CreateService creating service with isActive: %v", isActive)
 
+	// Round price if provided
+	var roundedPrice *float64
+	if req.Price != nil {
+		roundedPrice = roundServicePrice(req.Price)
+		logrus.Infof("ServiceService.CreateService rounded price from %v to %v", *req.Price, *roundedPrice)
+	}
+
 	service := &models.Service{
 		Name:        req.Name,
 		Slug:        slug,
 		Description: req.Description,
 		Images:      pq.StringArray(imageURLs),
 		PriceType:   req.PriceType,
-		Price:       req.Price,
+		Price:       roundedPrice,
 		Duration:    req.Duration,
 		CategoryID:  req.CategoryID,
 		IsActive:    isActive,
@@ -400,7 +425,10 @@ func (ss *ServiceService) UpdateService(id uint, req *models.UpdateServiceReques
 		service.Description = req.Description
 	}
 	if req.Price != nil {
-		service.Price = req.Price
+		// Round price if provided
+		roundedPrice := roundServicePrice(req.Price)
+		logrus.Infof("UpdateService rounded price from %v to %v", *req.Price, *roundedPrice)
+		service.Price = roundedPrice
 	}
 	if req.Duration != nil {
 		service.Duration = req.Duration
