@@ -594,6 +594,7 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		"name":              user.Name,
 		"phone":             user.Phone,
 		"email":             user.Email,
+		"avatar":            user.Avatar,
 		"user_type":         user.UserType,
 		"is_active":         user.IsActive,
 		"wallet_balance":    user.WalletBalance,
