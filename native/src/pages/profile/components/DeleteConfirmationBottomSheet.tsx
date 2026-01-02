@@ -1,0 +1,157 @@
+import React, { useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+interface DeleteConfirmationBottomSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading?: boolean;
+}
+
+export default function DeleteConfirmationBottomSheet({
+  visible,
+  onClose,
+  onConfirm,
+  isLoading = false,
+}: DeleteConfirmationBottomSheetProps) {
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(500)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          tension: 65,
+          friction: 11,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      overlayOpacity.setValue(0);
+      sheetTranslateY.setValue(500);
+    }
+  }, [visible]);
+
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 500,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+    >
+      <View className="flex-1">
+        <Animated.View
+          className="absolute inset-0 bg-black/50"
+          style={{ opacity: overlayOpacity }}
+        >
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={handleClose}
+          />
+        </Animated.View>
+
+        <Animated.View
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
+          style={{
+            transform: [{ translateY: sheetTranslateY }],
+          }}
+        >
+          <SafeAreaView edges={['bottom']}>
+            <View className="px-6 pt-6 pb-12">
+              {/* Handle bar */}
+              <View className="items-center mb-6">
+                <View className="w-10 h-1 bg-[#D1D5DB] rounded-full" />
+              </View>
+
+              {/* Header */}
+              <Text
+                className="text-2xl font-semibold text-[#111928] mb-4"
+                style={{ fontFamily: 'Inter-SemiBold' }}
+              >
+                Delete Account
+              </Text>
+
+              {/* Description */}
+              <Text
+                className="text-base text-[#6B7280] mb-8"
+                style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
+              >
+                Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.
+              </Text>
+
+              {/* Buttons */}
+              <View className="flex-row" style={{ gap: 12 }}>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  disabled={isLoading}
+                  className="flex-1 border border-[#D1D5DB] rounded-xl py-4 items-center"
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    className="text-base font-medium text-[#374151]"
+                    style={{ fontFamily: 'Inter-Medium' }}
+                  >
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={onConfirm}
+                  disabled={isLoading}
+                  className="flex-1 bg-[#DC2626] rounded-xl py-4 items-center"
+                  activeOpacity={0.7}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      className="text-base font-semibold text-white"
+                      style={{ fontFamily: 'Inter-SemiBold' }}
+                    >
+                      Continue
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </SafeAreaView>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+}
+
