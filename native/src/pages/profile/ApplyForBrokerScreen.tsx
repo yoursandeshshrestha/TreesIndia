@@ -1,0 +1,997 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Keyboard,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { useAppSelector } from '../../store/hooks';
+import { brokerApplicationService, type UserApplicationResponse } from '../../services';
+import Button from '../../components/ui/Button';
+import Input from '../../components/common/Input';
+import BackIcon from '../../components/icons/BackIcon';
+import AddressIcon from '../../components/icons/AddressIcon';
+
+interface ApplyForBrokerScreenProps {
+  onBack: () => void;
+}
+
+type Step = 'personal' | 'documents' | 'address' | 'brokerDetails' | 'review';
+
+interface ContactInfo {
+  name: string;
+  email: string;
+  phone: string;
+  alternative_number: string;
+}
+
+interface AddressInfo {
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
+}
+
+interface BrokerDetails {
+  license: string;
+  agency: string;
+}
+
+interface FileInfo {
+  uri: string;
+  type: string;
+  name: string;
+}
+
+export default function ApplyForBrokerScreen({ onBack }: ApplyForBrokerScreenProps) {
+  const { user } = useAppSelector((state) => state.auth);
+  const [currentStep, setCurrentStep] = useState<Step>('personal');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingApplication, setExistingApplication] = useState<UserApplicationResponse['data'] | null>(null);
+
+  // Form data
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    name: '',
+    email: '',
+    phone: user?.phone || '',
+    alternative_number: '',
+  });
+  const [addressInfo, setAddressInfo] = useState<AddressInfo>({
+    street: '',
+    city: '',
+    state: '',
+    pincode: '',
+    landmark: '',
+  });
+  const [brokerDetails, setBrokerDetails] = useState<BrokerDetails>({
+    license: '',
+    agency: '',
+  });
+
+  // Files
+  const [aadharCard, setAadharCard] = useState<FileInfo | null>(null);
+  const [panCard, setPanCard] = useState<FileInfo | null>(null);
+  const [profilePic, setProfilePic] = useState<FileInfo | null>(null);
+
+  // Errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  const steps: { id: Step; title: string }[] = [
+    { id: 'personal', title: 'Personal Information' },
+    { id: 'documents', title: 'Document Upload' },
+    { id: 'address', title: 'Address Information' },
+    { id: 'brokerDetails', title: 'Broker Details' },
+    { id: 'review', title: 'Review & Submit' },
+  ];
+
+  useEffect(() => {
+    loadExistingApplication();
+  }, []);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setContactInfo((prev) => ({
+        ...prev,
+        name: user.name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+      }));
+    }
+  }, [user]);
+
+  const loadExistingApplication = async () => {
+    try {
+      setIsLoading(true);
+      const response = await brokerApplicationService.getUserApplication();
+      if (response.data) {
+        setExistingApplication(response.data);
+      }
+    } catch (error: any) {
+      // If application not found (404), it's normal - user hasn't applied yet
+      // Only log other errors
+      if (error?.status !== 404) {
+        console.error('Failed to load application:', error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Location permission is required to use this feature. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      // Get current location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const { latitude, longitude } = location.coords;
+
+      // Reverse geocode to get address
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+
+      if (geocode && geocode.length > 0) {
+        const addressData = geocode[0];
+
+        // Build street address from available fields
+        const streetParts: string[] = [];
+        if (addressData.streetNumber) streetParts.push(addressData.streetNumber);
+        if (addressData.street) streetParts.push(addressData.street);
+        if (addressData.district) streetParts.push(addressData.district);
+        const streetAddress = streetParts.length > 0 
+          ? streetParts.join(', ') 
+          : addressData.name || '';
+
+        // Populate form fields
+        const updatedAddress: AddressInfo = { ...addressInfo };
+        
+        if (streetAddress) {
+          updatedAddress.street = streetAddress;
+        }
+        if (addressData.city) {
+          updatedAddress.city = addressData.city;
+        }
+        if (addressData.region) {
+          updatedAddress.state = addressData.region;
+        }
+        if (addressData.postalCode) {
+          updatedAddress.pincode = addressData.postalCode;
+        }
+        if (addressData.name && addressData.name !== streetAddress) {
+          updatedAddress.landmark = addressData.name;
+        }
+
+        setAddressInfo(updatedAddress);
+
+        // Clear any existing errors
+        if (errors.street || errors.city || errors.state || errors.pincode) {
+          const newErrors = { ...errors };
+          delete newErrors.street;
+          delete newErrors.city;
+          delete newErrors.state;
+          delete newErrors.pincode;
+          setErrors(newErrors);
+        }
+      } else {
+        Alert.alert(
+          'Location Found',
+          'Location coordinates retrieved, but address details could not be determined. Please fill in the address manually.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('Location error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to get your current location. Please try again or enter the address manually.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const pickImage = async (type: 'aadhar' | 'pan' | 'profile') => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const fileInfo: FileInfo = {
+          uri: asset.uri,
+          type: 'image/jpeg',
+          name: `${type}_${Date.now()}.jpg`,
+        };
+
+        switch (type) {
+          case 'aadhar':
+            setAadharCard(fileInfo);
+            break;
+          case 'pan':
+            setPanCard(fileInfo);
+            break;
+          case 'profile':
+            setProfilePic(fileInfo);
+            break;
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const validateStep = (step: Step): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    switch (step) {
+      case 'personal':
+        if (!contactInfo.name.trim()) {
+          newErrors.name = 'Full name is required';
+        }
+        if (!contactInfo.email.trim()) {
+          newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactInfo.email)) {
+          newErrors.email = 'Please enter a valid email address';
+        }
+        if (!contactInfo.alternative_number.trim()) {
+          newErrors.alternative_number = 'Alternative phone number is required';
+        } else if (!/^\+?[0-9]{10,20}$/.test(contactInfo.alternative_number.replace(/\s/g, ''))) {
+          newErrors.alternative_number = 'Please enter a valid phone number';
+        }
+        break;
+
+      case 'documents':
+        if (!aadharCard) newErrors.aadhar_card = 'Aadhar card is required';
+        if (!panCard) newErrors.pan_card = 'PAN card is required';
+        if (!profilePic) newErrors.profile_pic = 'Profile picture is required';
+        break;
+
+      case 'address':
+        if (!addressInfo.street.trim()) newErrors.street = 'Street address is required';
+        if (!addressInfo.city.trim()) newErrors.city = 'City is required';
+        if (!addressInfo.state.trim()) newErrors.state = 'State is required';
+        if (!addressInfo.pincode.trim()) newErrors.pincode = 'Pincode is required';
+        break;
+
+      case 'brokerDetails':
+        if (!brokerDetails.license.trim()) {
+          newErrors.license = 'License number is required';
+        }
+        if (!brokerDetails.agency.trim()) {
+          newErrors.agency = 'Agency name is required';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) {
+      return;
+    }
+
+    const stepIndex = steps.findIndex((s) => s.id === currentStep);
+    if (stepIndex < steps.length - 1) {
+      setCurrentStep(steps[stepIndex + 1].id);
+      setErrors({});
+    }
+  };
+
+  const handlePrevious = () => {
+    const stepIndex = steps.findIndex((s) => s.id === currentStep);
+    if (stepIndex > 0) {
+      setCurrentStep(steps[stepIndex - 1].id);
+      setErrors({});
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep('review')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const applicationData = {
+        license: brokerDetails.license,
+        agency: brokerDetails.agency,
+        contact_info: JSON.stringify(contactInfo),
+        address: JSON.stringify(addressInfo),
+        aadhar_card: aadharCard!,
+        pan_card: panCard!,
+        profile_pic: profilePic!,
+      };
+
+      await brokerApplicationService.submitApplication(applicationData);
+      Alert.alert(
+        'Success',
+        'Your application has been submitted successfully. We will review it and get back to you soon.',
+        [{ text: 'OK', onPress: onBack }]
+      );
+    } catch (error: any) {
+      Alert.alert('Error', error?.message || 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStepIndicator = () => {
+    const currentIndex = steps.findIndex((s) => s.id === currentStep);
+    const currentStepData = steps[currentIndex];
+    
+    return (
+      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+        {/* Progress bar */}
+        <View className="flex-row mb-4" style={{ gap: 4 }}>
+          {steps.map((_, index) => {
+            const isCompleted = index < currentIndex;
+            const isActive = index === currentIndex;
+            
+            return (
+              <View
+                key={index}
+                className="flex-1"
+                style={{
+                  height: 4,
+                  backgroundColor:
+                    isCompleted
+                      ? '#055c3a' // Button color - completed
+                      : isActive
+                      ? '#055c3a' // Button color - active
+                      : '#E5E7EB', // gray-200 - pending
+                  borderRadius: 2,
+                }}
+              />
+            );
+          })}
+        </View>
+
+        {/* Step info */}
+        <View>
+          <Text
+            className="text-xs text-[#6B7280] mb-1"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Step {currentIndex + 1} of {steps.length}
+          </Text>
+          <Text
+            className="text-sm font-bold text-[#111928]"
+            style={{ fontFamily: 'Inter-Bold' }}
+          >
+            {currentStepData.title}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderPersonalInfo = () => (
+    <View className="px-6 pt-6">
+      <Text
+        className="text-2xl font-semibold text-[#111928] mb-2"
+        style={{ fontFamily: 'Inter-SemiBold' }}
+      >
+        Personal Information
+      </Text>
+      <Text
+        className="text-sm text-[#6B7280] mb-6"
+        style={{ fontFamily: 'Inter-Regular' }}
+      >
+        Please provide your contact information
+      </Text>
+
+      <View className="mb-4">
+        <Input
+          label="Full Name"
+          value={contactInfo.name}
+          onChangeText={(text) => setContactInfo({ ...contactInfo, name: text })}
+          placeholder="Enter your full name"
+          error={errors.name}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Email Address"
+          value={contactInfo.email}
+          onChangeText={(text) => setContactInfo({ ...contactInfo, email: text })}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={errors.email}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Phone Number"
+          value={contactInfo.phone}
+          editable={false}
+          placeholder="Phone number"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Alternative Phone Number"
+          value={contactInfo.alternative_number}
+          onChangeText={(text) => setContactInfo({ ...contactInfo, alternative_number: text })}
+          placeholder="Enter alternative phone number"
+          keyboardType="phone-pad"
+          error={errors.alternative_number}
+          required
+        />
+      </View>
+    </View>
+  );
+
+  const renderDocuments = () => (
+    <View className="px-6 pt-6">
+      <Text
+        className="text-2xl font-semibold text-[#111928] mb-2"
+        style={{ fontFamily: 'Inter-SemiBold' }}
+      >
+        Documents
+      </Text>
+      <Text
+        className="text-sm text-[#6B7280] mb-6"
+        style={{ fontFamily: 'Inter-Regular' }}
+      >
+        Please upload the required documents
+      </Text>
+
+      <View>
+        <View className="mb-4">
+          <Text
+            className="text-sm font-semibold text-[#111928] mb-2"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Aadhar Card {errors.aadhar_card && <Text className="text-[#DC2626]">*</Text>}
+          </Text>
+          <TouchableOpacity
+            onPress={() => pickImage('aadhar')}
+            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
+            activeOpacity={0.7}
+          >
+            {aadharCard && (
+              <Image
+                source={{ uri: aadharCard.uri }}
+                className="w-12 h-12 rounded-lg mr-3"
+                resizeMode="cover"
+              />
+            )}
+            <Text
+              className={`flex-1 text-sm ${aadharCard ? 'text-[#111928]' : 'text-[#6B7280]'}`}
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              {aadharCard ? 'Change Aadhar Card' : 'Upload Aadhar Card'}
+            </Text>
+          </TouchableOpacity>
+          {errors.aadhar_card && (
+            <Text className="text-xs text-[#DC2626] mt-1">{errors.aadhar_card}</Text>
+          )}
+        </View>
+
+        <View className="mb-4">
+          <Text
+            className="text-sm font-semibold text-[#111928] mb-2"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            PAN Card {errors.pan_card && <Text className="text-[#DC2626]">*</Text>}
+          </Text>
+          <TouchableOpacity
+            onPress={() => pickImage('pan')}
+            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
+            activeOpacity={0.7}
+          >
+            {panCard && (
+              <Image
+                source={{ uri: panCard.uri }}
+                className="w-12 h-12 rounded-lg mr-3"
+                resizeMode="cover"
+              />
+            )}
+            <Text
+              className={`flex-1 text-sm ${panCard ? 'text-[#111928]' : 'text-[#6B7280]'}`}
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              {panCard ? 'Change PAN Card' : 'Upload PAN Card'}
+            </Text>
+          </TouchableOpacity>
+          {errors.pan_card && (
+            <Text className="text-xs text-[#DC2626] mt-1">{errors.pan_card}</Text>
+          )}
+        </View>
+
+        <View className="mb-4">
+          <Text
+            className="text-sm font-semibold text-[#111928] mb-2"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Profile Picture {errors.profile_pic && <Text className="text-[#DC2626]">*</Text>}
+          </Text>
+          <TouchableOpacity
+            onPress={() => pickImage('profile')}
+            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
+            activeOpacity={0.7}
+          >
+            {profilePic && (
+              <Image
+                source={{ uri: profilePic.uri }}
+                className="w-12 h-12 rounded-lg mr-3"
+                resizeMode="cover"
+              />
+            )}
+            <Text
+              className={`flex-1 text-sm ${profilePic ? 'text-[#111928]' : 'text-[#6B7280]'}`}
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              {profilePic ? 'Change Profile Picture' : 'Upload Profile Picture'}
+            </Text>
+          </TouchableOpacity>
+          {errors.profile_pic && (
+            <Text className="text-xs text-[#DC2626] mt-1">{errors.profile_pic}</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderAddress = () => (
+    <View className="px-6 pt-6">
+      <Text
+        className="text-2xl font-semibold text-[#111928] mb-2"
+        style={{ fontFamily: 'Inter-SemiBold' }}
+      >
+        Address Information
+      </Text>
+      <Text
+        className="text-sm text-[#6B7280] mb-6"
+        style={{ fontFamily: 'Inter-Regular' }}
+      >
+        Please provide your address details
+      </Text>
+
+      {/* Use Current Location Button */}
+      <TouchableOpacity
+        onPress={handleUseCurrentLocation}
+        disabled={isLoadingLocation}
+        className="flex-row items-center justify-center border border-[#055c3a] rounded-lg py-3 mb-6"
+        activeOpacity={0.7}
+      >
+        {isLoadingLocation ? (
+          <>
+            <ActivityIndicator size="small" color="#055c3a" />
+            <Text
+              className="text-sm font-medium text-[#055c3a] ml-2"
+              style={{ fontFamily: 'Inter-Medium' }}
+            >
+              Getting location...
+            </Text>
+          </>
+        ) : (
+          <>
+            <AddressIcon size={20} color="#055c3a" />
+            <Text
+              className="text-sm font-medium text-[#055c3a] ml-2"
+              style={{ fontFamily: 'Inter-Medium' }}
+            >
+              Use Current Location
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <View className="mb-4">
+        <Input
+          label="Street Address"
+          value={addressInfo.street}
+          onChangeText={(text) => setAddressInfo({ ...addressInfo, street: text })}
+          placeholder="Enter street address"
+          error={errors.street}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="City"
+          value={addressInfo.city}
+          onChangeText={(text) => setAddressInfo({ ...addressInfo, city: text })}
+          placeholder="Enter city"
+          error={errors.city}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="State"
+          value={addressInfo.state}
+          onChangeText={(text) => setAddressInfo({ ...addressInfo, state: text })}
+          placeholder="Enter state"
+          error={errors.state}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Pincode"
+          value={addressInfo.pincode}
+          onChangeText={(text) => setAddressInfo({ ...addressInfo, pincode: text })}
+          placeholder="Enter pincode"
+          keyboardType="number-pad"
+          error={errors.pincode}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Landmark (Optional)"
+          value={addressInfo.landmark || ''}
+          onChangeText={(text) => setAddressInfo({ ...addressInfo, landmark: text })}
+          placeholder="Enter landmark"
+        />
+      </View>
+    </View>
+  );
+
+  const renderBrokerDetails = () => (
+    <View className="px-6 pt-6">
+      <Text
+        className="text-2xl font-semibold text-[#111928] mb-2"
+        style={{ fontFamily: 'Inter-SemiBold' }}
+      >
+        Broker Details
+      </Text>
+      <Text
+        className="text-sm text-[#6B7280] mb-6"
+        style={{ fontFamily: 'Inter-Regular' }}
+      >
+        Enter your broker license and agency information
+      </Text>
+
+      <View className="mb-4">
+        <Input
+          label="License Number"
+          value={brokerDetails.license}
+          onChangeText={(text) => setBrokerDetails({ ...brokerDetails, license: text })}
+          placeholder="Enter your broker license number"
+          error={errors.license}
+          required
+        />
+      </View>
+
+      <View className="mb-4">
+        <Input
+          label="Agency Name"
+          value={brokerDetails.agency}
+          onChangeText={(text) => setBrokerDetails({ ...brokerDetails, agency: text })}
+          placeholder="Enter your broker agency name"
+          error={errors.agency}
+          required
+        />
+      </View>
+
+      {/* Info Box */}
+      <View className="bg-white rounded-xl border border-[#E5E7EB] mt-4 overflow-hidden">
+        <View className="px-4 py-4 border-b border-[#E5E7EB]">
+          <Text
+            className="text-base font-semibold text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Important Information
+          </Text>
+        </View>
+        <View className="px-4 py-4">
+          <View className="flex-row items-start mb-2">
+            <View
+              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              style={{ marginTop: 8 }}
+            />
+            <Text
+              className="flex-1 text-sm text-[#374151]"
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+            >
+              Ensure your broker license is valid and active
+            </Text>
+          </View>
+          <View className="flex-row items-start mb-2">
+            <View
+              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              style={{ marginTop: 8 }}
+            />
+            <Text
+              className="flex-1 text-sm text-[#374151]"
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+            >
+              Agency name must match official registration
+            </Text>
+          </View>
+          <View className="flex-row items-start">
+            <View
+              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              style={{ marginTop: 8 }}
+            />
+            <Text
+              className="flex-1 text-sm text-[#374151]"
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+            >
+              All details will be verified before approval
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderReview = () => (
+    <View className="px-6 pt-6">
+      <Text
+        className="text-2xl font-semibold text-[#111928] mb-2"
+        style={{ fontFamily: 'Inter-SemiBold' }}
+      >
+        Review Your Application
+      </Text>
+      <Text
+        className="text-sm text-[#6B7280] mb-6"
+        style={{ fontFamily: 'Inter-Regular' }}
+      >
+        Please review all information before submitting
+      </Text>
+
+      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+        <Text
+          className="text-base font-semibold text-[#111928] mb-3"
+          style={{ fontFamily: 'Inter-SemiBold' }}
+        >
+          Personal Information
+        </Text>
+        <Text className="text-sm text-[#374151] mb-1">Name: {contactInfo.name}</Text>
+        <Text className="text-sm text-[#374151] mb-1">Email: {contactInfo.email}</Text>
+        <Text className="text-sm text-[#374151] mb-1">Phone: {contactInfo.phone}</Text>
+        <Text className="text-sm text-[#374151]">Alt. Phone: {contactInfo.alternative_number}</Text>
+      </View>
+
+      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+        <Text
+          className="text-base font-semibold text-[#111928] mb-3"
+          style={{ fontFamily: 'Inter-SemiBold' }}
+        >
+          Address
+        </Text>
+        <Text className="text-sm text-[#374151] mb-1">{addressInfo.street}</Text>
+        <Text className="text-sm text-[#374151] mb-1">
+          {addressInfo.city}, {addressInfo.state} - {addressInfo.pincode}
+        </Text>
+        {addressInfo.landmark && (
+          <Text className="text-sm text-[#374151]">Landmark: {addressInfo.landmark}</Text>
+        )}
+      </View>
+
+      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+        <Text
+          className="text-base font-semibold text-[#111928] mb-3"
+          style={{ fontFamily: 'Inter-SemiBold' }}
+        >
+          Broker Details
+        </Text>
+        <Text className="text-sm text-[#374151] mb-1">License Number: {brokerDetails.license}</Text>
+        <Text className="text-sm text-[#374151]">Agency Name: {brokerDetails.agency}</Text>
+      </View>
+      <View className="pb-8" />
+    </View>
+  );
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 'personal':
+        return renderPersonalInfo();
+      case 'documents':
+        return renderDocuments();
+      case 'address':
+        return renderAddress();
+      case 'brokerDetails':
+        return renderBrokerDetails();
+      case 'review':
+        return renderReview();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#055c3a" />
+          <Text
+            className="text-sm text-[#6B7280] mt-4"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Loading...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (existingApplication) {
+    const statusColors: Record<string, string> = {
+      pending: '#F59E0B',
+      approved: '#10B981',
+      rejected: '#EF4444',
+    };
+
+    return (
+      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+            <BackIcon size={24} color="#111928" />
+          </TouchableOpacity>
+          <Text
+            className="text-xl font-semibold text-[#111928] ml-2"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Apply for Broker
+          </Text>
+        </View>
+
+        <ScrollView className="flex-1 bg-[#F9FAFB]">
+          <View className="px-6 pt-6">
+            <View className="bg-white rounded-xl border border-[#E5E7EB] p-6 items-center">
+              <View
+                className="px-4 py-2 rounded-lg mb-4"
+                style={{ backgroundColor: `${statusColors[existingApplication.status] || '#6B7280'}20` }}
+              >
+                <Text
+                  className="text-sm font-semibold capitalize"
+                  style={{
+                    color: statusColors[existingApplication.status] || '#6B7280',
+                    fontFamily: 'Inter-SemiBold',
+                  }}
+                >
+                  {existingApplication.status}
+                </Text>
+              </View>
+              <Text
+                className="text-base text-[#374151] text-center"
+                style={{ fontFamily: 'Inter-Regular' }}
+              >
+                {existingApplication.status === 'pending' &&
+                  'Your application is under review. We will notify you once it is processed.'}
+                {existingApplication.status === 'approved' &&
+                  'Congratulations! Your application has been approved.'}
+                {existingApplication.status === 'rejected' &&
+                  existingApplication.rejection_reason
+                    ? `Your application was rejected: ${existingApplication.rejection_reason}`
+                    : 'Your application was rejected. Please contact support for more information.'}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        {/* Header */}
+        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+            <BackIcon size={24} color="#111928" />
+          </TouchableOpacity>
+          <Text
+            className="text-xl font-semibold text-[#111928] ml-2"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Apply for Broker
+          </Text>
+        </View>
+
+        {/* Step Indicator */}
+        {renderStepIndicator()}
+
+        {/* Content */}
+        <ScrollView
+          className="flex-1 bg-[#F9FAFB]"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {renderCurrentStep()}
+        </ScrollView>
+
+        {/* Navigation Buttons */}
+        <View className={`px-6 pt-4 bg-white border-t border-[#E5E7EB] ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
+          <View className="flex-row" style={{ gap: 12 }}>
+            {currentStep !== 'personal' && (
+              <View className="flex-1">
+                <Button
+                  label="Previous"
+                  onPress={handlePrevious}
+                  variant="outline"
+                  disabled={isSubmitting}
+                />
+              </View>
+            )}
+            <View className="flex-1">
+              {currentStep === 'review' ? (
+                <Button
+                  label={isSubmitting ? 'Submitting...' : 'Submit Application'}
+                  onPress={handleSubmit}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <Button
+                  label="Next"
+                  onPress={handleNext}
+                  disabled={isSubmitting}
+                />
+              )}
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
