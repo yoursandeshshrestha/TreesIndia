@@ -666,6 +666,8 @@ func (pc *PropertyController) UpdateProperty(c *gin.Context) {
 	contentType := c.GetHeader("Content-Type")
 	
 	if strings.Contains(contentType, "multipart/form-data") {
+		// Initialize map for form-data
+		updates = make(map[string]interface{})
 		// Handle form-data request
 		err = pc.parseFormDataPropertyUpdate(c, &updates)
 	} else {
@@ -773,6 +775,85 @@ func (pc *PropertyController) DeleteUserProperty(c *gin.Context) {
 	}
 	
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Property deleted successfully", nil))
+}
+
+// UpdateUserProperty updates a user's own property
+// @Summary Update user property
+// @Description Update a property owned by the authenticated user
+// @Tags properties
+// @Accept json
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "Property ID"
+// @Param property body object false "Property update data"
+// @Success 200 {object} views.SuccessResponse
+// @Failure 400 {object} views.ErrorResponse
+// @Failure 401 {object} views.ErrorResponse
+// @Failure 403 {object} views.ErrorResponse
+// @Failure 404 {object} views.ErrorResponse
+// @Router /api/v1/user/properties/{id} [put]
+// @Security ApiKeyAuth
+func (pc *PropertyController) UpdateUserProperty(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("PropertyController.UpdateUserProperty panic: %v", r)
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Internal server error", "Something went wrong"))
+		}
+	}()
+	
+	logrus.Infof("PropertyController.UpdateUserProperty called")
+	
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Errorf("PropertyController.UpdateUserProperty user_id not found in context")
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+	
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		logrus.Errorf("PropertyController.UpdateUserProperty invalid ID: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid property ID", "ID must be a valid number"))
+		return
+	}
+	
+	var updates map[string]interface{}
+	
+	// Check content type to determine how to parse the request
+	contentType := c.GetHeader("Content-Type")
+	
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Initialize map for form-data
+		updates = make(map[string]interface{})
+		// Handle form-data request
+		err = pc.parseFormDataPropertyUpdate(c, &updates)
+		if err != nil {
+			logrus.Errorf("PropertyController.UpdateUserProperty form data parsing error: %v", err)
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid form data", err.Error()))
+			return
+		}
+	} else {
+		// Handle JSON request
+		err = c.ShouldBindJSON(&updates)
+		if err != nil {
+			logrus.Errorf("PropertyController.UpdateUserProperty JSON binding error: %v", err)
+			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid JSON", err.Error()))
+			return
+		}
+	}
+	
+	logrus.Infof("PropertyController.UpdateUserProperty updates map: %+v", updates)
+	
+	err = pc.propertyService.UpdateUserProperty(uint(id), updates, userID.(uint))
+	if err != nil {
+		logrus.Errorf("PropertyController.UpdateUserProperty service error: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to update property", err.Error()))
+		return
+	}
+	
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Property updated successfully", nil))
 }
 
 // UpdatePropertyStatus updates a property's status (admin only)

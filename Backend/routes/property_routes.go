@@ -25,6 +25,7 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 	{
 		userProperties.POST("", propertyController.CreateProperty)                // Create property listing (users and brokers)
 		userProperties.GET("", propertyController.GetUserProperties)              // Get user's properties (works for both users and brokers)
+		userProperties.PUT("/:id", propertyController.UpdateUserProperty)        // Update user's property
 		userProperties.DELETE("/:id", propertyController.DeleteUserProperty)      // Delete user's property
 	}
 	

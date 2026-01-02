@@ -491,6 +491,297 @@ func (ps *PropertyService) DeleteUserProperty(id uint, userID uint) error {
 	return nil
 }
 
+// UpdateUserProperty updates a user's own property
+func (ps *PropertyService) UpdateUserProperty(id uint, updates map[string]interface{}, userID uint) error {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("PropertyService.UpdateUserProperty panic: %v", r)
+		}
+	}()
+	
+	logrus.Infof("PropertyService.UpdateUserProperty called for property ID: %d by user ID: %d", id, userID)
+	
+	// Check if property exists and belongs to the user
+	property, err := ps.propertyRepo.GetByID(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.UpdateUserProperty property not found: %v", err)
+		return err
+	}
+	
+	// Check if property belongs to the user
+	if property.UserID != userID {
+		logrus.Errorf("PropertyService.UpdateUserProperty property does not belong to user: property user ID %d, requesting user ID %d", property.UserID, userID)
+		return fmt.Errorf("property does not belong to you")
+	}
+	
+	// Apply updates (similar to UpdateProperty but without admin-only fields)
+	if title, exists := updates["title"]; exists {
+		if titleStr, ok := title.(string); ok {
+			property.Title = titleStr
+			property.Slug = ps.generateSlug(property.Title)
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected title type: %T", title)
+		}
+	}
+	if description, exists := updates["description"]; exists {
+		if descStr, ok := description.(string); ok {
+			property.Description = descStr
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected description type: %T", description)
+		}
+	}
+	if propertyType, exists := updates["property_type"]; exists {
+		if propTypeStr, ok := propertyType.(string); ok {
+			property.PropertyType = models.PropertyType(propTypeStr)
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected property_type type: %T", propertyType)
+		}
+	}
+	if listingType, exists := updates["listing_type"]; exists {
+		if listTypeStr, ok := listingType.(string); ok {
+			property.ListingType = models.ListingType(listTypeStr)
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected listing_type type: %T", listingType)
+		}
+	}
+	if salePrice, exists := updates["sale_price"]; exists {
+		if salePrice != nil {
+			var price float64
+			var ok bool
+			switch v := salePrice.(type) {
+			case float64:
+				price = v
+				ok = true
+			case int:
+				price = float64(v)
+				ok = true
+			case int64:
+				price = float64(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected sale_price type: %T", v)
+			}
+			if ok {
+				property.SalePrice = &price
+			}
+		} else {
+			property.SalePrice = nil
+		}
+	}
+	if monthlyRent, exists := updates["monthly_rent"]; exists {
+		if monthlyRent != nil {
+			var rent float64
+			var ok bool
+			switch v := monthlyRent.(type) {
+			case float64:
+				rent = v
+				ok = true
+			case int:
+				rent = float64(v)
+				ok = true
+			case int64:
+				rent = float64(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected monthly_rent type: %T", v)
+			}
+			if ok {
+				property.MonthlyRent = &rent
+			}
+		} else {
+			property.MonthlyRent = nil
+		}
+	}
+	if priceNegotiable, exists := updates["price_negotiable"]; exists {
+		if val, ok := priceNegotiable.(bool); ok {
+			property.PriceNegotiable = val
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected price_negotiable type: %T", priceNegotiable)
+		}
+	}
+	if bedrooms, exists := updates["bedrooms"]; exists {
+		if bedrooms != nil {
+			var bedroomsInt int
+			var ok bool
+			switch v := bedrooms.(type) {
+			case int:
+				bedroomsInt = v
+				ok = true
+			case float64:
+				bedroomsInt = int(v)
+				ok = true
+			case int64:
+				bedroomsInt = int(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected bedrooms type: %T", v)
+			}
+			if ok {
+				property.Bedrooms = &bedroomsInt
+			}
+		} else {
+			property.Bedrooms = nil
+		}
+	}
+	if bathrooms, exists := updates["bathrooms"]; exists {
+		if bathrooms != nil {
+			var bathroomsInt int
+			var ok bool
+			switch v := bathrooms.(type) {
+			case int:
+				bathroomsInt = v
+				ok = true
+			case float64:
+				bathroomsInt = int(v)
+				ok = true
+			case int64:
+				bathroomsInt = int(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected bathrooms type: %T", v)
+			}
+			if ok {
+				property.Bathrooms = &bathroomsInt
+			}
+		} else {
+			property.Bathrooms = nil
+		}
+	}
+	if area, exists := updates["area"]; exists {
+		if area != nil {
+			var areaFloat float64
+			var ok bool
+			switch v := area.(type) {
+			case float64:
+				areaFloat = v
+				ok = true
+			case int:
+				areaFloat = float64(v)
+				ok = true
+			case int64:
+				areaFloat = float64(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected area type: %T", v)
+			}
+			if ok {
+				property.Area = &areaFloat
+			}
+		} else {
+			property.Area = nil
+		}
+	}
+	if floorNumber, exists := updates["floor_number"]; exists {
+		if floorNumber != nil {
+			var floorInt int
+			var ok bool
+			switch v := floorNumber.(type) {
+			case int:
+				floorInt = v
+				ok = true
+			case float64:
+				floorInt = int(v)
+				ok = true
+			case int64:
+				floorInt = int(v)
+				ok = true
+			default:
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected floor_number type: %T", v)
+			}
+			if ok {
+				property.FloorNumber = &floorInt
+			}
+		} else {
+			property.FloorNumber = nil
+		}
+	}
+	if age, exists := updates["age"]; exists {
+		if age != nil {
+			if ageStr, ok := age.(string); ok {
+				ageEnum := models.PropertyAge(ageStr)
+				property.Age = &ageEnum
+			} else {
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected age type: %T", age)
+			}
+		} else {
+			property.Age = nil
+		}
+	}
+	if furnishingStatus, exists := updates["furnishing_status"]; exists {
+		if furnishingStatus != nil {
+			if statusStr, ok := furnishingStatus.(string); ok {
+				status := models.FurnishingStatus(statusStr)
+				property.FurnishingStatus = &status
+			} else {
+				logrus.Warnf("PropertyService.UpdateUserProperty unexpected furnishing_status type: %T", furnishingStatus)
+			}
+		} else {
+			property.FurnishingStatus = nil
+		}
+	}
+	if state, exists := updates["state"]; exists {
+		if stateStr, ok := state.(string); ok {
+			property.State = stateStr
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected state type: %T", state)
+		}
+	}
+	if city, exists := updates["city"]; exists {
+		if cityStr, ok := city.(string); ok {
+			property.City = cityStr
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected city type: %T", city)
+		}
+	}
+	if address, exists := updates["address"]; exists {
+		if addressStr, ok := address.(string); ok {
+			property.Address = addressStr
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected address type: %T", address)
+		}
+	}
+	if pincode, exists := updates["pincode"]; exists {
+		if pincodeStr, ok := pincode.(string); ok {
+			property.Pincode = pincodeStr
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected pincode type: %T", pincode)
+		}
+	}
+	// Note: Users cannot update status, is_approved, uploaded_by_admin, priority_score, subscription_required, treesindia_assured
+	// These are admin-only fields
+	
+	if images, exists := updates["images"]; exists {
+		if imageArray, ok := images.([]string); ok {
+			property.Images = models.JSONStringArray(imageArray)
+		} else if imageArray, ok := images.(models.JSONStringArray); ok {
+			property.Images = imageArray
+		} else {
+			logrus.Warnf("PropertyService.UpdateUserProperty unexpected images type: %T", images)
+		}
+		if len(property.Images) > 0 {
+			if err := ps.validateImages(property.Images); err != nil {
+				return err
+			}
+		}
+	}
+	
+	// Validate property data
+	if err := ps.validateProperty(property); err != nil {
+		logrus.Errorf("PropertyService.UpdateUserProperty validation error: %v", err)
+		return err
+	}
+	
+	// Update property
+	err = ps.propertyRepo.Update(property)
+	if err != nil {
+		logrus.Errorf("PropertyService.UpdateUserProperty repository error: %v", err)
+		return err
+	}
+	
+	logrus.Infof("PropertyService.UpdateUserProperty successfully updated property ID: %d", id)
+	return nil
+}
+
 // ApproveProperty approves a user property listing
 func (ps *PropertyService) ApproveProperty(id uint, adminID uint) error {
 	logrus.Infof("PropertyService.ApproveProperty called for property ID: %d by admin ID: %d", id, adminID)
