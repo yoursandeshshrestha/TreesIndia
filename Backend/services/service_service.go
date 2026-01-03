@@ -559,22 +559,22 @@ func (ss *ServiceService) GetServiceSummariesWithFiltersPaginated(priceType *str
 }
 
 // GetServiceSummariesWithLocationFiltersPaginated retrieves service summaries with advanced filtering including location and pagination
-func (ss *ServiceService) GetServiceSummariesWithLocationFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, city, state string, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.ServiceSummary, int64, error) {
+func (ss *ServiceService) GetServiceSummariesWithLocationFiltersPaginated(priceType *string, category *string, subcategory *string, priceMin *float64, priceMax *float64, city, state, search string, excludeInactive bool, page int, limit int, sortBy string, sortOrder string) ([]models.ServiceSummary, int64, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Errorf("ServiceService.GetServiceSummariesWithLocationFiltersPaginated panic: %v", r)
 		}
 	}()
-	
-	logrus.Infof("ServiceService.GetServiceSummariesWithLocationFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, city: %s, state: %s, excludeInactive: %v, page: %d, limit: %d", 
-		priceType, category, subcategory, priceMin, priceMax, city, state, excludeInactive, page, limit)
-	
-	services, total, err := ss.serviceRepo.GetSummariesWithLocationFiltersPaginated(priceType, category, subcategory, priceMin, priceMax, city, state, excludeInactive, page, limit, sortBy, sortOrder)
+
+	logrus.Infof("ServiceService.GetServiceSummariesWithLocationFiltersPaginated called with priceType: %v, category: %v, subcategory: %v, priceMin: %v, priceMax: %v, city: %s, state: %s, search: %s, excludeInactive: %v, page: %d, limit: %d",
+		priceType, category, subcategory, priceMin, priceMax, city, state, search, excludeInactive, page, limit)
+
+	services, total, err := ss.serviceRepo.GetSummariesWithLocationFiltersPaginated(priceType, category, subcategory, priceMin, priceMax, city, state, search, excludeInactive, page, limit, sortBy, sortOrder)
 	if err != nil {
 		logrus.Errorf("ServiceService.GetServiceSummariesWithLocationFiltersPaginated error: %v", err)
 		return nil, 0, err
 	}
-	
+
 	logrus.Infof("ServiceService.GetServiceSummariesWithLocationFiltersPaginated returning %d services (total: %d)", len(services), total)
 	return services, total, nil
 }
