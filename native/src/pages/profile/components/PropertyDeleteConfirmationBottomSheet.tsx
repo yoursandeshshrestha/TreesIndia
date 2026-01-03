@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
-  Animated,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -24,8 +25,9 @@ export default function PropertyDeleteConfirmationBottomSheet({
   propertyTitle,
   isDeleting = false,
 }: PropertyDeleteConfirmationBottomSheetProps) {
+  const [isClosing, setIsClosing] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(500)).current;
+  const translateY = useRef(new Animated.Value(500)).current;
 
   useEffect(() => {
     if (visible) {
@@ -33,35 +35,38 @@ export default function PropertyDeleteConfirmationBottomSheet({
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.spring(sheetTranslateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          tension: 65,
-          friction: 11,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
-      overlayOpacity.setValue(0);
-      sheetTranslateY.setValue(500);
     }
   }, [visible]);
 
   const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(sheetTranslateY, {
+      Animated.timing(translateY, {
         toValue: 500,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start(() => {
       onClose();
+      setIsClosing(false);
     });
   };
 
@@ -99,7 +104,10 @@ export default function PropertyDeleteConfirmationBottomSheet({
             bottom: 0,
             left: 0,
             right: 0,
-            transform: [{ translateY: sheetTranslateY }],
+            backgroundColor: 'white',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            transform: [{ translateY }],
           }}
         >
           <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import { type Property } from '../../../services';
 import LocationIcon from '../../../components/icons/LocationIcon';
 import BedIcon from '../../../components/icons/BedIcon';
@@ -50,7 +50,25 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
       onPress={onPress}
     >
       {/* Image Section */}
-      <View className="relative mb-3" style={{ height: 300, borderRadius: 12, overflow: 'hidden' }}>
+      <View 
+        className="relative mb-3" 
+        style={{ 
+          height: 300, 
+          borderRadius: 20, 
+          overflow: 'hidden',
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.25,
+              shadowRadius: 15,
+            },
+            android: {
+              elevation: 10,
+            },
+          }),
+        }}
+      >
         {primaryImage ? (
           <Image
             source={{ uri: primaryImage }}

@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
-  Animated,
   ScrollView,
   Image,
   Dimensions,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Property } from '../../../services';
@@ -43,9 +44,10 @@ export default function PropertyDetailBottomSheet({
   onEdit,
   isDeleting = false,
 }: PropertyDetailBottomSheetProps) {
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(500)).current;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isClosing, setIsClosing] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(500)).current;
 
   useEffect(() => {
     if (visible) {
@@ -53,36 +55,41 @@ export default function PropertyDetailBottomSheet({
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.spring(sheetTranslateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          tension: 65,
-          friction: 11,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
       ]).start();
     } else {
-      overlayOpacity.setValue(0);
-      sheetTranslateY.setValue(500);
       setCurrentImageIndex(0);
     }
   }, [visible]);
 
   const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(sheetTranslateY, {
+      Animated.timing(translateY, {
         toValue: 500,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start(() => {
       onClose();
+      setIsClosing(false);
+      setCurrentImageIndex(0);
     });
   };
 
@@ -163,7 +170,10 @@ export default function PropertyDetailBottomSheet({
             left: 0,
             right: 0,
             maxHeight: '90%',
-            transform: [{ translateY: sheetTranslateY }],
+            backgroundColor: 'white',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            transform: [{ translateY }],
           }}
         >
           <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">

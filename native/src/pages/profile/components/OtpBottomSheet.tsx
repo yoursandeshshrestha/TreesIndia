@@ -5,10 +5,11 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  Animated,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,10 +31,10 @@ export default function OtpBottomSheet({
   const [otp, setOtp] = useState('');
   const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', '']);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
-
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(500)).current;
+  const translateY = useRef(new Animated.Value(500)).current;
 
   useEffect(() => {
     if (visible) {
@@ -44,40 +45,42 @@ export default function OtpBottomSheet({
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.spring(sheetTranslateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          tension: 65,
-          friction: 11,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        // Auto-focus first input when sheet opens
-        setTimeout(() => {
-          inputRefs.current[0]?.focus();
-        }, 100);
-      });
-    } else {
-      overlayOpacity.setValue(0);
-      sheetTranslateY.setValue(500);
+      ]).start();
+      // Auto-focus first input when sheet opens
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 400);
     }
   }, [visible]);
 
   const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(sheetTranslateY, {
+      Animated.timing(translateY, {
         toValue: 500,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start(() => {
       onClose();
+      setIsClosing(false);
     });
   };
 
@@ -173,8 +176,15 @@ export default function OtpBottomSheet({
       >
         <View className="flex-1">
           <Animated.View
-            className="absolute inset-0 bg-black/50"
-            style={{ opacity: overlayOpacity }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              opacity: overlayOpacity,
+            }}
           >
             <TouchableOpacity
               className="flex-1"
@@ -184,10 +194,16 @@ export default function OtpBottomSheet({
           </Animated.View>
 
           <Animated.View
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
             style={{
-              transform: [{ translateY: sheetTranslateY }],
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
               maxHeight: '90%',
+              backgroundColor: 'white',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              transform: [{ translateY }],
             }}
           >
             <SafeAreaView edges={['bottom']} className="flex-1">

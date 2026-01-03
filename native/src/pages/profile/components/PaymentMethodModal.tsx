@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Modal, TouchableOpacity, Alert, Animated, Platform, Image } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Modal, TouchableOpacity, Alert, Platform, Image, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WalletIcon from '../../../components/icons/WalletIcon';
 
@@ -20,56 +20,51 @@ export default function PaymentMethodModal({
   amount,
   isLoading = false,
 }: PaymentMethodModalProps) {
-  const [selectedMethod, setSelectedMethod] = React.useState<'wallet' | 'razorpay' | null>(null);
-  const canUseWallet = walletBalance >= amount;
-
-  // Reset selection when modal opens/closes
-  React.useEffect(() => {
-    if (visible) {
-      setSelectedMethod(null);
-    }
-  }, [visible]);
-
+  const [selectedMethod, setSelectedMethod] = useState<'wallet' | 'razorpay' | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(500)).current;
+  const translateY = useRef(new Animated.Value(500)).current;
+  const canUseWallet = walletBalance >= amount;
 
   useEffect(() => {
     if (visible) {
-      // Animate in
+      setSelectedMethod(null);
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.spring(sheetTranslateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          tension: 65,
-          friction: 11,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
-      // Reset values when not visible
-      overlayOpacity.setValue(0);
-      sheetTranslateY.setValue(500);
     }
   }, [visible]);
 
   const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(sheetTranslateY, {
+      Animated.timing(translateY, {
         toValue: 500,
-        duration: 200,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start(() => {
       onClose();
+      setIsClosing(false);
     });
   };
 
@@ -102,8 +97,15 @@ export default function PaymentMethodModal({
     >
       <View className="flex-1">
         <Animated.View
-          className="absolute inset-0 bg-black/50"
-          style={{ opacity: overlayOpacity }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            opacity: overlayOpacity,
+          }}
         >
           <TouchableOpacity
             className="flex-1"
@@ -113,10 +115,16 @@ export default function PaymentMethodModal({
         </Animated.View>
 
         <Animated.View
-          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
           style={{
-            transform: [{ translateY: sheetTranslateY }],
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
             maxHeight: '90%',
+            backgroundColor: 'white',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            transform: [{ translateY }],
           }}
         >
           <SafeAreaView edges={['bottom']} className="flex-1">
