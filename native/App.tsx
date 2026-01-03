@@ -25,6 +25,12 @@ import ApplyForWorkerScreen from './src/pages/profile/ApplyForWorkerScreen';
 import ApplyForBrokerScreen from './src/pages/profile/ApplyForBrokerScreen';
 import MyPropertiesScreen from './src/pages/profile/MyPropertiesScreen';
 import AddPropertyScreen from './src/pages/profile/AddPropertyScreen';
+import AddressSelectionScreen from './src/pages/home/components/AddressSelectionScreen';
+import ServiceSearchScreen from './src/pages/home/components/ServiceSearchScreen';
+import PropertiesScreen from './src/pages/properties/PropertiesScreen';
+import ServicesScreen from './src/pages/services/ServicesScreen';
+import CategoryServicesScreen from './src/pages/services/CategoryServicesScreen';
+import ProjectsScreen from './src/pages/projects/ProjectsScreen';
 import './global.css';
 
 // Component to initialize auth state
@@ -50,10 +56,15 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 // Main app content
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'addressSelection' | 'serviceSearch' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'categoryServices'>('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [otpPhoneNumber, setOtpPhoneNumber] = useState('');
+  const [propertiesInitialFilters, setPropertiesInitialFilters] = useState<any>(null);
+  const [servicesInitialFilters, setServicesInitialFilters] = useState<any>(null);
+  const [projectsInitialFilters, setProjectsInitialFilters] = useState<any>(null);
+  const [categoryForServices, setCategoryForServices] = useState<any>(null);
+  const [categoryStack, setCategoryStack] = useState<any[]>([]);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const handleSplashFinish = () => {
@@ -213,9 +224,130 @@ function AppContent() {
       );
     }
 
+    if (currentScreen === 'addressSelection') {
+      return (
+        <AddressSelectionScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onAddressSelected={() => {
+            // Address was selected and saved, refresh home screen
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'serviceSearch') {
+      return (
+        <ServiceSearchScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onServiceSelect={(service) => {
+            // TODO: Handle service selection - navigate to service details or booking
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'browseProperties') {
+      return (
+        <PropertiesScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+            setPropertiesInitialFilters(null);
+          }}
+          initialFilters={propertiesInitialFilters}
+        />
+      );
+    }
+
+    if (currentScreen === 'browseServices') {
+      return (
+        <ServicesScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+            setServicesInitialFilters(null);
+          }}
+          initialFilters={servicesInitialFilters}
+        />
+      );
+    }
+
+    if (currentScreen === 'browseProjects') {
+      return (
+        <ProjectsScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+            setProjectsInitialFilters(null);
+          }}
+          initialFilters={projectsInitialFilters}
+        />
+      );
+    }
+
+    if (currentScreen === 'categoryServices') {
+      return (
+        <CategoryServicesScreen
+          onBack={() => {
+            if (categoryStack.length > 0) {
+              // Pop from stack and show previous category
+              const newStack = [...categoryStack];
+              const previousCategory = newStack.pop();
+              setCategoryStack(newStack);
+              setCategoryForServices(previousCategory);
+            } else {
+              // Go back to home
+              setCurrentScreen('home');
+              setActiveTab('home');
+              setCategoryForServices(null);
+            }
+          }}
+          category={categoryForServices}
+          onNavigateToSubcategory={(subcategory) => {
+            // Push current category to stack and navigate to subcategory
+            setCategoryStack([...categoryStack, categoryForServices]);
+            setCategoryForServices(subcategory);
+          }}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'home':
-        return <HomeScreen />;
+        return (
+          <HomeScreen
+            onNavigateToAddressSelection={() => setCurrentScreen('addressSelection')}
+            onNavigateToServiceSearch={() => setCurrentScreen('serviceSearch')}
+            onNavigateToProperties={(filters) => {
+              setPropertiesInitialFilters(filters);
+              setCurrentScreen('browseProperties');
+            }}
+            onNavigateToServices={(filters) => {
+              setServicesInitialFilters(filters);
+              setCurrentScreen('browseServices');
+            }}
+            onNavigateToProjects={(filters) => {
+              setProjectsInitialFilters(filters);
+              setCurrentScreen('browseProjects');
+            }}
+            onNavigateToCategoryServices={(category) => {
+              setCategoryForServices(category);
+              setCategoryStack([]);
+              setCurrentScreen('categoryServices');
+            }}
+            addressRefreshTrigger={Date.now()} // Refresh address when screen is shown
+          />
+        );
       case 'booking':
         return <BookingScreen />;
       case 'chat':
@@ -264,7 +396,7 @@ function AppContent() {
       <View className="flex-1">
         {renderScreen()}
       </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && (
+      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       )}
     </View>
