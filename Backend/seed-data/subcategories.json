@@ -15,10 +15,199 @@
       "is_active": true
     },
     {
+      "name": "Split AC Repair",
+      "slug": "split-ac-repair",
+      "description": "Split air conditioner repair services",
+      "parent_category": "AC Repair",
+      "is_active": true
+    },
+    {
+      "name": "Premium Service",
+      "slug": "premium-service",
+      "description": "Premium split AC service with extended warranty",
+      "parent_category": "Split AC Repair",
+      "is_active": true
+    },
+    {
+      "name": "Window AC Repair",
+      "slug": "window-ac-repair",
+      "description": "Window air conditioner repair services",
+      "parent_category": "AC Repair",
+      "is_active": true
+    },
+    {
+      "name": "AC Installation",
+      "slug": "ac-installation",
+      "description": "Air conditioner installation services",
+      "parent_category": "AC Repair",
+      "is_active": true
+    },
+    {
+      "name": "AC Maintenance",
+      "slug": "ac-maintenance",
+      "description": "Air conditioner maintenance and servicing",
+      "parent_category": "AC Repair",
+      "is_active": true
+    },
+    {
+      "name": "Plumbing",
+      "slug": "plumbing",
+      "description": "Plumbing services for homes and offices",
+      "parent_category": "Home Services",
+      "is_active": true
+    },
+    {
+      "name": "General Plumbing",
+      "slug": "general-plumbing",
+      "description": "General plumbing services",
+      "parent_category": "Plumbing",
+      "is_active": true
+    },
+    {
+      "name": "Repair",
+      "slug": "plumbing-repair",
+      "description": "Plumbing repair services",
+      "parent_category": "Plumbing",
+      "is_active": true
+    },
+    {
+      "name": "Leak Repair",
+      "slug": "leak-repair",
+      "description": "Water leak repair services",
+      "parent_category": "Repair",
+      "is_active": true
+    },
+    {
+      "name": "Installation",
+      "slug": "plumbing-installation",
+      "description": "Plumbing installation services",
+      "parent_category": "Plumbing",
+      "is_active": true
+    },
+    {
+      "name": "Bathroom Fixtures",
+      "slug": "bathroom-fixtures",
+      "description": "Bathroom fixture installation",
+      "parent_category": "Installation",
+      "is_active": true
+    },
+    {
+      "name": "Kitchen Fixtures",
+      "slug": "kitchen-fixtures",
+      "description": "Kitchen fixture installation",
+      "parent_category": "Installation",
+      "is_active": true
+    },
+    {
+      "name": "Premium Installation",
+      "slug": "premium-installation",
+      "description": "Premium kitchen fixture installation",
+      "parent_category": "Kitchen Fixtures",
+      "is_active": true
+    },
+    {
+      "name": "Electrical",
+      "slug": "electrical",
+      "description": "Electrical services for homes and offices",
+      "parent_category": "Home Services",
+      "is_active": true
+    },
+    {
+      "name": "General Electrical",
+      "slug": "general-electrical",
+      "description": "General electrical services",
+      "parent_category": "Electrical",
+      "is_active": true
+    },
+    {
+      "name": "House Wiring",
+      "slug": "house-wiring",
+      "description": "Complete house electrical wiring",
+      "parent_category": "Electrical",
+      "is_active": true
+    },
+    {
+      "name": "Switch Installation",
+      "slug": "switch-installation",
+      "description": "Electrical switch and socket installation",
+      "parent_category": "Electrical",
+      "is_active": true
+    },
+    {
       "name": "Renovation",
       "slug": "renovation",
       "description": "Home and building renovation services",
       "parent_category": "Construction Services",
+      "is_active": true
+    },
+    {
+      "name": "Home Renovation",
+      "slug": "home-renovation",
+      "description": "Complete home renovation services",
+      "parent_category": "Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Complete Renovation",
+      "slug": "complete-renovation",
+      "description": "Full home renovation service",
+      "parent_category": "Home Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Kitchen Renovation",
+      "slug": "kitchen-renovation",
+      "description": "Kitchen renovation and remodeling",
+      "parent_category": "Home Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Luxury Renovation",
+      "slug": "luxury-renovation",
+      "description": "Luxury kitchen renovation with premium materials",
+      "parent_category": "Kitchen Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Bathroom Renovation",
+      "slug": "bathroom-renovation",
+      "description": "Bathroom renovation and remodeling",
+      "parent_category": "Home Renovation",
+      "is_active": true
+    },
+    {
+      "name": "Construction",
+      "slug": "construction",
+      "description": "Building construction services",
+      "parent_category": "Construction Services",
+      "is_active": true
+    },
+    {
+      "name": "Building Construction",
+      "slug": "building-construction",
+      "description": "Complete building construction services",
+      "parent_category": "Construction",
+      "is_active": true
+    },
+    {
+      "name": "Residential Building",
+      "slug": "residential-building",
+      "description": "Residential building construction",
+      "parent_category": "Building Construction",
+      "is_active": true
+    },
+    {
+      "name": "Premium Construction",
+      "slug": "premium-construction",
+      "description": "Premium residential construction with luxury finishes",
+      "parent_category": "Residential Building",
+      "is_active": true
+    },
+    {
+      "name": "Commercial Building",
+      "slug": "commercial-building",
+      "description": "Commercial building construction",
+      "parent_category": "Building Construction",
       "is_active": true
     }
   ]

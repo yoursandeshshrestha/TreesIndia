@@ -1,0 +1,90 @@
+{
+  "projects": [
+    {
+      "title": "Green Valley Residential Complex",
+      "description": "A modern residential complex with state-of-the-art amenities, located in a prime area. Features include 24/7 security, landscaped gardens, clubhouse, and parking facilities. Perfect for families seeking a comfortable and secure living environment.",
+      "project_type": "residential",
+      "status": "on_going",
+      "state": "West Bengal",
+      "city": "Siliguri",
+      "address": "Sevoke Road, Siliguri",
+      "pincode": "734001",
+      "estimated_duration_days": 730,
+      "contact_info": {
+        "phone": "+91-9876543210",
+        "email": "info@greenvalley.com",
+        "contact_person": "Mr. Rajesh Kumar"
+      },
+      "images": ["../assets/projects/1.jpeg"]
+    },
+    {
+      "title": "Tech Park Commercial Hub",
+      "description": "A premium commercial development designed for modern businesses. Features include smart office spaces, conference rooms, high-speed internet, and excellent connectivity. Ideal for IT companies, startups, and corporate offices.",
+      "project_type": "commercial",
+      "status": "starting_soon",
+      "state": "Assam",
+      "city": "Guwahati",
+      "address": "GS Road, Guwahati",
+      "pincode": "781005",
+      "estimated_duration_days": 1095,
+      "contact_info": {
+        "phone": "+91-9876543211",
+        "email": "sales@techpark.com",
+        "contact_person": "Ms. Priya Sharma"
+      },
+      "images": ["../assets/projects/2.jpeg"]
+    },
+    {
+      "title": "Highway Infrastructure Development",
+      "description": "Major infrastructure project connecting key cities with a modern 4-lane highway. This project will significantly improve connectivity and reduce travel time. Includes bridges, tunnels, and modern road infrastructure.",
+      "project_type": "infrastructure",
+      "status": "on_going",
+      "state": "West Bengal",
+      "city": "Kolkata",
+      "address": "NH-10, Near Barasat",
+      "pincode": "700124",
+      "estimated_duration_days": 1825,
+      "contact_info": {
+        "phone": "+91-9876543212",
+        "email": "info@highwayproject.gov.in",
+        "contact_person": "Mr. Amit Das"
+      },
+      "images": ["../assets/projects/3.jpeg"]
+    },
+    {
+      "title": "Luxury Apartments - Skyline Towers",
+      "description": "Premium residential towers offering luxurious 3 and 4 BHK apartments with breathtaking views. Features include rooftop infinity pool, gymnasium, spa, concierge services, and world-class amenities. A perfect blend of luxury and comfort.",
+      "project_type": "residential",
+      "status": "starting_soon",
+      "state": "Sikkim",
+      "city": "Gangtok",
+      "address": "MG Marg, Gangtok",
+      "pincode": "737101",
+      "estimated_duration_days": 1095,
+      "contact_info": {
+        "phone": "+91-9876543213",
+        "email": "sales@skylinetowers.com",
+        "contact_person": "Ms. Anjali Mehta"
+      },
+      "images": ["../assets/projects/4.jpeg"]
+    },
+    {
+      "title": "Smart City Commercial Plaza",
+      "description": "A futuristic commercial plaza designed for the modern business ecosystem. Features include smart building management, eco-friendly design, retail spaces, food courts, and entertainment zones. Located in the heart of the city with excellent connectivity.",
+      "project_type": "commercial",
+      "status": "on_going",
+      "state": "West Bengal",
+      "city": "Darjeeling",
+      "address": "Mall Road, Darjeeling",
+      "pincode": "734101",
+      "estimated_duration_days": 1460,
+      "contact_info": {
+        "phone": "+91-9876543214",
+        "email": "info@smartplaza.com",
+        "contact_person": "Mr. Vikram Singh"
+      },
+      "images": ["../assets/projects/5.jpeg"]
+    }
+  ]
+}
+
