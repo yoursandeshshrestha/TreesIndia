@@ -15,7 +15,7 @@ import (
 
 // CategoryService handles category business logic
 type CategoryService struct {
-	categoryRepo     *repositories.CategoryRepository
+	categoryRepo      *repositories.CategoryRepository
 	cloudinaryService *CloudinaryService
 	validationHelper  *utils.ValidationHelper
 }
@@ -28,7 +28,7 @@ func NewCategoryService() (*CategoryService, error) {
 	}
 
 	return &CategoryService{
-		categoryRepo:     repositories.NewCategoryRepository(),
+		categoryRepo:      repositories.NewCategoryRepository(),
 		cloudinaryService: cloudinaryService,
 		validationHelper:  utils.NewValidationHelper(),
 	}, nil
@@ -88,12 +88,10 @@ func (cs *CategoryService) GetCategories(parentID string, includeChildren bool, 
 		return nil, fmt.Errorf("failed to fetch categories: %w", err)
 	}
 
-	// Include children if requested
+	// Include children if requested - recursively load all levels
 	if includeChildren {
-		for i := range categories {
-			if err := cs.categoryRepo.GetDB().Preload("Children").Where("parent_id = ?", categories[i].ID).Find(&categories[i].Children).Error; err != nil {
-				return nil, fmt.Errorf("failed to fetch category children: %w", err)
-			}
+		if err := cs.loadChildrenRecursively(&categories); err != nil {
+			return nil, fmt.Errorf("failed to fetch category children: %w", err)
 		}
 	}
 
@@ -457,4 +455,25 @@ func (cs *CategoryService) GetChildrenByParentID(parentID uint) ([]models.Catego
 // GetCloudinaryService returns the Cloudinary service instance
 func (cs *CategoryService) GetCloudinaryService() *CloudinaryService {
 	return cs.cloudinaryService
+}
+
+// loadChildrenRecursively recursively loads all children for all categories
+func (cs *CategoryService) loadChildrenRecursively(categories *[]models.Category) error {
+	for i := range *categories {
+		// Load direct children
+		if err := cs.categoryRepo.GetDB().
+			Where("parent_id = ?", (*categories)[i].ID).
+			Order("name ASC").
+			Find(&(*categories)[i].Children).Error; err != nil {
+			return err
+		}
+
+		// Recursively load children of children
+		if len((*categories)[i].Children) > 0 {
+			if err := cs.loadChildrenRecursively(&(*categories)[i].Children); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -97,6 +98,59 @@ func (cs *CloudinaryService) UploadChatImage(file *multipart.FileHeader, folder 
 func (cs *CloudinaryService) UploadImage(file *multipart.FileHeader, folder string) (string, error) {
 	url, _, err := cs.UploadChatImage(file, folder)
 	return url, err
+}
+
+// UploadImageFromPath uploads an image from a local file path to Cloudinary
+func (cs *CloudinaryService) UploadImageFromPath(filePath string, folder string) (string, error) {
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		logrus.Errorf("Failed to open file %s: %v", filePath, err)
+		return "", fmt.Errorf("failed to open file: %v", err)
+	}
+	defer file.Close()
+
+	// Get file info for filename
+	fileInfo, err := file.Stat()
+	if err != nil {
+		logrus.Errorf("Failed to get file info for %s: %v", filePath, err)
+		return "", fmt.Errorf("failed to get file info: %v", err)
+	}
+
+	// Generate unique filename
+	ext := filepath.Ext(fileInfo.Name())
+	if ext == "" {
+		ext = ".jpg" // Default extension if none found
+	}
+	baseName := strings.TrimSuffix(fileInfo.Name(), ext)
+	// Remove any existing extension from baseName to avoid double extensions
+	baseName = strings.TrimSuffix(baseName, filepath.Ext(baseName))
+	timestamp := time.Now().UnixNano() // Use nanoseconds for better uniqueness
+	filename := fmt.Sprintf("%s_%d%s", baseName, timestamp, ext)
+	// Don't include folder in publicID when Folder is set, to avoid duplication
+	publicID := filename
+
+	// Upload to Cloudinary with timeout context
+	uploadParams := uploader.UploadParams{
+		PublicID:     publicID,
+		Folder:       folder,
+		ResourceType: "image",
+		// Add optimization parameters for better performance
+		Transformation: "f_auto,q_auto", // Auto format and quality optimization
+	}
+
+	result, err := cs.cld.Upload.Upload(ctx, file, uploadParams)
+	if err != nil {
+		logrus.Errorf("Failed to upload image to Cloudinary: %v", err)
+		return "", fmt.Errorf("failed to upload image to Cloudinary: %v", err)
+	}
+
+	logrus.Infof("Successfully uploaded image %s to Cloudinary: %s", filePath, result.SecureURL)
+	return result.SecureURL, nil
 }
 
 // DeleteImage deletes an image from Cloudinary
