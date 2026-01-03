@@ -1,0 +1,653 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+  StatusBar,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
+import BackIcon from '../../../components/icons/BackIcon';
+import SearchIcon from '../../../components/icons/SearchIcon';
+import LocationIcon from '../../../components/icons/LocationIcon';
+import AddressIcon from '../../../components/icons/AddressIcon';
+import { locationSearchService, LocationPrediction } from '../../../services/api/location-search.service';
+import { userLocationService, CreateLocationRequest } from '../../../services/api/user-location.service';
+import { addressService, type Address } from '../../../services';
+
+interface AddressSelectionScreenProps {
+  onBack: () => void;
+  onAddressSelected?: () => void;
+}
+
+const RECENT_SEARCHES_KEY = 'address_recent_searches';
+const MAX_RECENT_SEARCHES = 5;
+
+export default function AddressSelectionScreen({
+  onBack,
+  onAddressSelected,
+}: AddressSelectionScreenProps) {
+  const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<LocationPrediction[]>([]);
+  const [recentSearches, setRecentSearches] = useState<LocationPrediction[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const searchInputRef = useRef<TextInput>(null);
+
+  // Load recent searches and saved addresses on mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsInitialLoading(true);
+      await Promise.all([loadRecentSearches(), loadSavedAddresses()]);
+      setIsInitialLoading(false);
+    };
+    loadInitialData();
+  }, []);
+
+  const loadRecentSearches = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
+      if (stored) {
+        const recent = JSON.parse(stored);
+        setRecentSearches(Array.isArray(recent) ? recent : []);
+      }
+    } catch (error) {
+      console.error('Failed to load recent searches:', error);
+    }
+  };
+
+  const loadSavedAddresses = async () => {
+    try {
+      const addresses = await addressService.getAddresses();
+      setSavedAddresses(addresses);
+    } catch (error) {
+      console.error('Failed to load saved addresses:', error);
+      setSavedAddresses([]);
+    }
+  };
+
+  const saveRecentSearch = async (location: LocationPrediction) => {
+    try {
+      const updated = [location, ...recentSearches.filter(
+        (item) => item.place_id !== location.place_id
+      )].slice(0, MAX_RECENT_SEARCHES);
+      
+      setRecentSearches(updated);
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to save recent search:', error);
+    }
+  };
+
+  const handleSelectSavedAddress = async (address: Address) => {
+    try {
+      const locationData: CreateLocationRequest = {
+        city: address.city || '',
+        state: address.state || '',
+        country: address.country || 'India',
+        address: address.address || undefined,
+        postal_code: address.postalCode || address.postal_code || undefined,
+        latitude: address.latitude || 0,
+        longitude: address.longitude || 0,
+      };
+
+      await saveLocation(locationData);
+    } catch (error: any) {
+      console.error('Select saved address error:', error);
+      Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
+    }
+  };
+
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        performSearch(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const performSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const results = await locationSearchService.searchLocations(
+        query,
+        currentLocation?.lat,
+        currentLocation?.lng
+      );
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Location permission is required to use this feature. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      // Get current location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const { latitude, longitude } = location.coords;
+      setCurrentLocation({ lat: latitude, lng: longitude });
+
+      // Reverse geocode to get address
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+
+      if (geocode && geocode.length > 0) {
+        const addressData = geocode[0];
+
+        // Build address components
+        const streetParts: string[] = [];
+        if (addressData.streetNumber) streetParts.push(addressData.streetNumber);
+        if (addressData.street) streetParts.push(addressData.street);
+        const streetAddress = streetParts.length > 0 ? streetParts.join(', ') : addressData.name || '';
+
+        const city = addressData.city || addressData.subregion || '';
+        const state = addressData.region || addressData.district || '';
+        const postalCode = addressData.postalCode || '';
+        const country = addressData.country || 'India';
+
+        // Validate required fields
+        if (!city.trim() || !state.trim() || !country.trim()) {
+          Alert.alert(
+            'Error',
+            'Could not determine complete location information. Please try searching manually.',
+            [{ text: 'OK' }]
+          );
+          setIsLoadingLocation(false);
+          return;
+        }
+
+        // Create location
+        const locationDataToSave: CreateLocationRequest = {
+          city: city.trim(),
+          state: state.trim(),
+          country: country.trim(),
+          address: streetAddress.trim() || undefined,
+          postal_code: postalCode.trim() || undefined,
+          latitude: latitude,
+          longitude: longitude,
+        };
+
+        await saveLocation(locationDataToSave);
+      } else {
+        Alert.alert(
+          'Error',
+          'Could not determine address from location. Please try searching manually.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('Location error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to get your current location. Please try again or search manually.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const saveLocation = async (locationData: CreateLocationRequest) => {
+    try {
+      // Save/update user location (one per user)
+      await userLocationService.createOrUpdateLocation(locationData);
+      onAddressSelected?.();
+      onBack();
+    } catch (error: any) {
+      console.error('Save location error:', error);
+      Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
+    }
+  };
+
+  const handleSelectLocation = async (location: LocationPrediction) => {
+    try {
+      // Save to recent searches
+      await saveRecentSearch(location);
+
+      // Extract location components - backend requires: city, state, country (address and postal_code are optional)
+      const city = location.city || '';
+      const state = location.state || '';
+      const country = location.country || 'India';
+      const address = location.address_line1 || location.formatted_address || location.description || '';
+      const postalCode = location.postcode || '';
+
+      // Validate required fields - backend requires: city, state, country
+      if (!city.trim() || !state.trim()) {
+        Alert.alert('Error', 'City and state information is required. Please select a different location.');
+        return;
+      }
+
+      if (!country.trim()) {
+        Alert.alert('Error', 'Country information is required. Please select a different location.');
+        return;
+      }
+
+      const locationData: CreateLocationRequest = {
+        city: city.trim(),
+        state: state.trim(),
+        country: country.trim(),
+        address: address.trim() || undefined,
+        postal_code: postalCode.trim() || undefined,
+        latitude: location.latitude || 0,
+        longitude: location.longitude || 0,
+      };
+
+      await saveLocation(locationData);
+    } catch (error: any) {
+      console.error('Select location error:', error);
+      Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
+    }
+  };
+
+  const renderLocationItem = (item: LocationPrediction, isRecent: boolean = false) => (
+    <TouchableOpacity
+      onPress={() => handleSelectLocation(item)}
+      activeOpacity={0.7}
+      className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]"
+    >
+      <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3">
+        {isRecent ? (
+          <SearchIcon size={18} color="#6B7280" />
+        ) : (
+          <LocationIcon size={18} color="#6B7280" />
+        )}
+      </View>
+      <View className="flex-1">
+        <Text
+          className="text-base font-medium text-[#111928] mb-1"
+          style={{ fontFamily: 'Inter-Medium' }}
+          numberOfLines={1}
+        >
+          {item.description || item.formatted_address}
+        </Text>
+        {(item.city || item.state) && (
+          <Text
+            className="text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}
+            numberOfLines={1}
+          >
+            {[item.city, item.state].filter(Boolean).join(', ')}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderSavedAddressItem = (address: Address, index: number, total: number) => (
+    <TouchableOpacity
+      onPress={() => handleSelectSavedAddress(address)}
+      activeOpacity={0.7}
+      className="py-4"
+    >
+      <View className="flex-row items-start">
+        <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3 mt-0.5">
+          <AddressIcon size={18} color="#6B7280" />
+        </View>
+        <View className="flex-1">
+          <Text
+            className="text-base font-bold text-[#111928] mb-1"
+            style={{ fontFamily: 'Inter-Bold' }}
+            numberOfLines={1}
+          >
+            {address.name}
+          </Text>
+          <Text
+            className="text-sm text-[#4B5563]"
+            style={{ fontFamily: 'Inter-Regular' }}
+            numberOfLines={2}
+          >
+            {address.fullAddress || `${address.address}, ${address.city}, ${address.state} ${address.postalCode || address.postal_code || ''}`.trim()}
+          </Text>
+        </View>
+      </View>
+      {index < total - 1 && <View className="h-px bg-[#E5E7EB] mt-4" />}
+    </TouchableOpacity>
+  );
+
+  const renderSkeletonLoader = () => {
+    return (
+      <View className="px-6 py-4">
+        {/* Skeleton for Saved Addresses */}
+        <View className="mb-8">
+          <View className="h-3 w-32 bg-gray-200 rounded mb-4" />
+          <View className="bg-white rounded-xl">
+            {[1, 2].map((index) => (
+              <View key={index} className="py-4">
+                <View className="flex-row items-start">
+                  <View className="w-8 h-8 rounded-full bg-gray-200 mr-3" />
+                  <View className="flex-1">
+                    <View className="h-4 bg-gray-200 rounded mb-2 w-3/4" />
+                    <View className="h-3 bg-gray-200 rounded w-full" />
+                  </View>
+                </View>
+                {index < 2 && <View className="h-px bg-[#E5E7EB] mt-4" />}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Skeleton for Recent Searches */}
+        <View className="mb-8">
+          <View className="h-3 w-32 bg-gray-200 rounded mb-4" />
+          <View className="bg-white rounded-xl">
+            {[1, 2, 3].map((index) => (
+              <View key={index} className="py-3">
+                <View className="flex-row items-start">
+                  <View className="w-8 h-8 rounded-full bg-gray-200 mr-3" />
+                  <View className="flex-1">
+                    <View className="h-4 bg-gray-200 rounded mb-2 w-2/3" />
+                    <View className="h-3 bg-gray-200 rounded w-1/2" />
+                  </View>
+                </View>
+                {index < 3 && <View className="h-px bg-[#E5E7EB] mt-3" />}
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const renderContent = () => {
+    // Show skeleton loader during initial load
+    if (isInitialLoading && searchQuery.trim().length === 0) {
+      return renderSkeletonLoader();
+    }
+
+    // Show searching state
+    if (isSearching) {
+      return (
+        <View className="items-center justify-center py-20">
+          <ActivityIndicator size="large" color="#00a871" />
+          <Text
+            className="text-sm text-[#6B7280] mt-4"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Searching...
+          </Text>
+        </View>
+      );
+    }
+
+    // Typing but less than 2 characters
+    if (searchQuery.trim().length > 0 && searchQuery.trim().length < 2) {
+      return (
+        <View className="items-center justify-center py-20">
+          <Text
+            className="text-base font-medium text-[#6B7280] mb-2"
+            style={{ fontFamily: 'Inter-Medium' }}
+          >
+            Type at least 2 characters
+          </Text>
+          <Text
+            className="text-sm text-[#9CA3AF] text-center px-6"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Continue typing to see location suggestions
+          </Text>
+        </View>
+      );
+    }
+
+    // No results found after search
+    if (searchResults.length === 0 && searchQuery.trim().length >= 2) {
+      return (
+        <View className="items-center justify-center py-20">
+          <Text
+            className="text-base font-medium text-[#6B7280] mb-2"
+            style={{ fontFamily: 'Inter-Medium' }}
+          >
+            No locations found
+          </Text>
+          <Text
+            className="text-sm text-[#9CA3AF] text-center px-6"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Try searching with a different term
+          </Text>
+        </View>
+      );
+    }
+
+    // Show search results
+    if (searchResults.length > 0) {
+      return (
+        <>
+          {searchResults.map((item) => (
+            <View key={item.place_id || `${item.latitude}-${item.longitude}`}>
+              {renderLocationItem(item, false)}
+            </View>
+          ))}
+        </>
+      );
+    }
+
+    // Default view: Show saved addresses and recent searches
+    return (
+      <View className="px-6 py-4">
+        {/* Saved Addresses Section */}
+        {savedAddresses.length > 0 && (
+          <View className="mb-8">
+            <Text
+              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Saved Addresses
+            </Text>
+            <View className="bg-white rounded-xl">
+              {savedAddresses.map((address, index) => (
+                <View key={address.id}>
+                  {renderSavedAddressItem(address, index, savedAddresses.length)}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Recent Searches Section */}
+        {recentSearches.length > 0 && (
+          <View className="mb-8">
+            <Text
+              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Recent Searches
+            </Text>
+            <View className="bg-white rounded-xl">
+              {recentSearches.map((item, index) => (
+                <View key={item.place_id || `${item.latitude}-${item.longitude}`}>
+                  <TouchableOpacity
+                    onPress={() => handleSelectLocation(item)}
+                    activeOpacity={0.7}
+                    className="py-3"
+                  >
+                    <View className="flex-row items-start">
+                      <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3 mt-0.5">
+                        <SearchIcon size={18} color="#6B7280" />
+                      </View>
+                      <View className="flex-1">
+                        <Text
+                          className="text-base font-bold text-[#111928] mb-1"
+                          style={{ fontFamily: 'Inter-Bold' }}
+                          numberOfLines={1}
+                        >
+                          {item.description || item.formatted_address}
+                        </Text>
+                        {(item.city || item.state) && (
+                          <Text
+                            className="text-sm text-[#4B5563]"
+                            style={{ fontFamily: 'Inter-Regular' }}
+                            numberOfLines={2}
+                          >
+                            {[item.city, item.state].filter(Boolean).join(', ')}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                  {index < recentSearches.length - 1 && <View className="h-px bg-[#E5E7EB]" />}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Empty State */}
+        {savedAddresses.length === 0 && recentSearches.length === 0 && (
+          <View className="items-center justify-center py-20">
+            <SearchIcon size={64} color="#9CA3AF" />
+            <Text
+              className="text-base font-medium text-[#6B7280] mt-4 mb-2"
+              style={{ fontFamily: 'Inter-Medium' }}
+            >
+              Start typing to search
+            </Text>
+            <Text
+              className="text-sm text-[#9CA3AF] text-center px-6"
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              Enter your location to see suggestions
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  return (
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+
+      {/* Header - Fixed at top with safe area */}
+      <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
+        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+          <TouchableOpacity
+            onPress={onBack}
+            className="mr-4 p-2 -ml-2"
+            activeOpacity={0.7}
+          >
+            <BackIcon size={24} color="#111928" />
+          </TouchableOpacity>
+          <View className="flex-1 flex-row items-center bg-[#F9FAFB] rounded-lg px-4 py-3 border border-[#E5E7EB]">
+            <SearchIcon size={20} color="#6B7280" />
+            <TextInput
+              ref={searchInputRef}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search for a location..."
+              placeholderTextColor="#9CA3AF"
+              className="flex-1 ml-3 text-base text-[#111928]"
+              style={{
+                fontFamily: 'Inter-Regular',
+                paddingVertical: 0,
+                margin: 0,
+                fontSize: 16,
+                lineHeight: Platform.OS === 'ios' ? 20 : 22,
+                textAlignVertical: 'center',
+                ...(Platform.OS === 'android' && {
+                  includeFontPadding: false,
+                  textAlignVertical: 'center',
+                }),
+              }}
+              returnKeyType="search"
+              onSubmitEditing={() => {
+                if (searchQuery.trim().length >= 2) {
+                  performSearch(searchQuery);
+                }
+              }}
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Use Current Location Button - Fixed below header */}
+      <View className="px-6 py-4 border-b border-[#E5E7EB]">
+        <TouchableOpacity
+          onPress={handleUseCurrentLocation}
+          disabled={isLoadingLocation}
+          className="flex-row items-center"
+          activeOpacity={0.7}
+        >
+          {isLoadingLocation ? (
+            <>
+              <ActivityIndicator size="small" color="#055c3a" />
+              <Text
+                className="text-base font-medium text-[#055c3a] ml-3"
+                style={{ fontFamily: 'Inter-Medium' }}
+              >
+                Getting your location...
+              </Text>
+            </>
+          ) : (
+            <>
+              <AddressIcon size={20} color="#055c3a" />
+              <Text
+                className="text-base font-medium text-[#055c3a] ml-3"
+                style={{ fontFamily: 'Inter-Medium' }}
+              >
+                Use current location
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Search Results - Scrollable content area */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          {renderContent()}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
