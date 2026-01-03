@@ -50,6 +50,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
   level,
   parentPath,
 }) => {
+  const [iconError, setIconError] = React.useState(false);
   const hasChildren =
     (category.children || category.subcategories || []).length > 0;
   const isExpanded = expandedNodes.has(category.id);
@@ -59,6 +60,12 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
   const getFullPath = () => {
     return [...parentPath, category.name];
   };
+
+  const isImageIcon = category.icon && (
+    category.icon.startsWith("http://") || 
+    category.icon.startsWith("https://") || 
+    category.icon.startsWith("data:")
+  );
 
   return (
     <div className="relative">
@@ -85,16 +92,27 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
             ))}
         </button>
 
-        {/* Icon - light gray outlined */}
+        {/* Icon - show category icon if available, otherwise use default icons */}
         <div className="flex-shrink-0 text-gray-400">
-          {hasChildren ? (
-            isExpanded ? (
-              <FolderOpen className="w-5 h-5" strokeWidth={1.5} />
-            ) : (
-              <Folder className="w-5 h-5" strokeWidth={1.5} />
-            )
+          {isImageIcon && !iconError ? (
+            // If icon is a URL or data URL, display as image
+            <img
+              src={category.icon}
+              alt={category.name}
+              className="w-5 h-5 object-contain rounded"
+              onError={() => setIconError(true)}
+            />
           ) : (
-            <Tag className="w-5 h-5" strokeWidth={1.5} />
+            // Default icons based on children state
+            hasChildren ? (
+              isExpanded ? (
+                <FolderOpen className="w-5 h-5" strokeWidth={1.5} />
+              ) : (
+                <Folder className="w-5 h-5" strokeWidth={1.5} />
+              )
+            ) : (
+              <Tag className="w-5 h-5" strokeWidth={1.5} />
+            )
           )}
         </div>
 
