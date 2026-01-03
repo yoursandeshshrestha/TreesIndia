@@ -109,3 +109,24 @@ func (jl *JSONLoader) LoadSubscriptionPlans() (map[string]interface{}, error) {
 	err := jl.LoadJSONFile("subscription_plans.json", &data)
 	return data, err
 }
+
+// LoadProperties loads properties from JSON file
+func (jl *JSONLoader) LoadProperties() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("properties.json", &data)
+	return data, err
+}
+
+// LoadProjects loads projects from JSON file
+func (jl *JSONLoader) LoadProjects() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("projects.json", &data)
+	return data, err
+}
+
+// LoadVendors loads vendors from JSON file
+func (jl *JSONLoader) LoadVendors() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("vendors.json", &data)
+	return data, err
+}

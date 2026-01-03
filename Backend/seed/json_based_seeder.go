@@ -1,9 +1,14 @@
 package seed
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 	"treesindia/models"
+	"treesindia/utils"
 
 	"github.com/sirupsen/logrus"
 )
@@ -127,7 +132,7 @@ func (js *JSONBasedSeeder) SeedSubcategories() error {
 		logrus.Errorf("Failed to fetch existing categories: %v", err)
 		return err
 	}
-	
+
 	// Update category map with existing categories
 	for _, cat := range existingCategories {
 		categoryMap[cat.Name] = cat.ID
@@ -135,12 +140,12 @@ func (js *JSONBasedSeeder) SeedSubcategories() error {
 
 	// Process subcategories in multiple passes to handle hierarchy
 	// Create categories level by level (Level 2 first, then Level 3, etc.)
-	
+
 	type subcategoryInfo struct {
-		category models.Category
+		category   models.Category
 		parentName string
 	}
-	
+
 	var allSubcategories []subcategoryInfo
 	for _, subcatData := range subcategoriesData {
 		subcatMap, ok := subcatData.(map[string]interface{})
@@ -176,7 +181,7 @@ func (js *JSONBasedSeeder) SeedSubcategories() error {
 			IsActive:    subcatMap["is_active"].(bool),
 		}
 		allSubcategories = append(allSubcategories, subcategoryInfo{
-			category: subcategory,
+			category:   subcategory,
 			parentName: parentCategoryName,
 		})
 	}
@@ -189,12 +194,12 @@ func (js *JSONBasedSeeder) SeedSubcategories() error {
 	for len(created) < len(allSubcategories) && iteration < maxIterations {
 		iteration++
 		var toCreate []subcategoryInfo
-		
+
 		for _, subcatInfo := range allSubcategories {
 			if created[subcatInfo.category.Name] {
 				continue
 			}
-			
+
 			// Check if parent exists in categoryMap
 			parentID, parentExists := categoryMap[subcatInfo.parentName]
 			if parentExists {
@@ -264,30 +269,25 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		return fmt.Errorf("invalid services JSON structure")
 	}
 
-	// Get all categories for lookup
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, services will be created without images")
+	}
+
+	// Get all categories for lookup (all levels)
 	var categories []models.Category
 	if err := js.sm.db.Find(&categories).Error; err != nil {
 		logrus.Errorf("Failed to fetch categories: %v", err)
 		return err
 	}
 
-	// Create category map for quick lookup
+	// Create category map for quick lookup by name
 	categoryMap := make(map[string]uint)
 	for _, cat := range categories {
 		categoryMap[cat.Name] = cat.ID
-	}
-
-	// Get all subcategories (level 2 categories) for lookup
-	var subcategories []models.Category
-	if err := js.sm.db.Where("parent_id IS NOT NULL").Find(&subcategories).Error; err != nil {
-		logrus.Errorf("Failed to fetch subcategories: %v", err)
-		return err
-	}
-
-	// Create subcategory map for quick lookup
-	subcategoryMap := make(map[string]uint)
-	for _, subcat := range subcategories {
-		subcategoryMap[subcat.Name] = subcat.ID
 	}
 
 	// Get all service areas for lookup
@@ -303,6 +303,13 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		serviceAreaMap[area.City] = area.ID
 	}
 
+	// Get the base path (backend directory)
+	basePath, err := os.Getwd()
+	if err != nil {
+		logrus.Warnf("Failed to get working directory: %v", err)
+		basePath = "."
+	}
+
 	// Structure to hold service data with its service area associations
 	type serviceWithAreas struct {
 		service      models.Service
@@ -316,10 +323,86 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			continue
 		}
 
-		subcategoryName := serviceMap["subcategory"].(string)
-		subcategoryID, exists := subcategoryMap[subcategoryName]
-		if !exists {
-			logrus.Warnf("Subcategory not found: %s", subcategoryName)
+		// Parse category_path (supports 3, 4, 5+ levels)
+		var categoryID uint
+		var categoryPath []string
+		if categoryPathInterface, ok := serviceMap["category_path"].([]interface{}); ok {
+			for _, pathItem := range categoryPathInterface {
+				if pathStr, ok := pathItem.(string); ok {
+					categoryPath = append(categoryPath, pathStr)
+				}
+			}
+			// Validate: Services cannot be attached to Level 1 or Level 2
+			if len(categoryPath) < 3 {
+				logrus.Warnf("Service cannot be attached to Level 1 or 2. Path must be at least 3 levels deep. Service: %s, Path: %v", serviceMap["name"], categoryPath)
+				continue
+			}
+
+			// Get the last category in the path (Level 3, 4, 5, etc. - the deepest level)
+			lastCategoryName := categoryPath[len(categoryPath)-1]
+			if catID, exists := categoryMap[lastCategoryName]; exists {
+				// Verify this is not a Level 1 or Level 2 category by checking path length
+				// Path length should be at least 3 (Level 1, Level 2, Level 3+)
+				if len(categoryPath) < 3 {
+					logrus.Warnf("Service cannot be attached to Level 1 or 2. Path must be at least 3 levels. Service: %s, Path: %v", serviceMap["name"], categoryPath)
+					continue
+				}
+
+				// Also verify by checking the category's actual level in database
+				var category models.Category
+				if err := js.sm.db.Preload("Parent.Parent").First(&category, catID).Error; err == nil {
+					// Calculate level by counting ancestors
+					level := 1
+					current := &category
+					for current.ParentID != nil {
+						level++
+						if current.Parent != nil {
+							current = current.Parent
+						} else {
+							break
+						}
+					}
+
+					if level <= 2 {
+						logrus.Warnf("Service cannot be attached to Level %d category: %s. Service: %s", level, lastCategoryName, serviceMap["name"])
+						continue
+					}
+				}
+				categoryID = catID
+			} else {
+				logrus.Warnf("Category not found in path: %s (full path: %v)", lastCategoryName, categoryPath)
+				continue
+			}
+		} else if subcategoryName, ok := serviceMap["subcategory"].(string); ok {
+			// Fallback to old format for backward compatibility
+			if catID, exists := categoryMap[subcategoryName]; exists {
+				// Verify it's not Level 1 or 2
+				var category models.Category
+				if err := js.sm.db.Preload("Parent.Parent").First(&category, catID).Error; err == nil {
+					// Calculate level by counting ancestors
+					level := 1
+					current := &category
+					for current.ParentID != nil {
+						level++
+						if current.Parent != nil {
+							current = current.Parent
+						} else {
+							break
+						}
+					}
+
+					if level <= 2 {
+						logrus.Warnf("Service cannot be attached to Level %d category: %s", level, subcategoryName)
+						continue
+					}
+				}
+				categoryID = catID
+			} else {
+				logrus.Warnf("Subcategory not found: %s", subcategoryName)
+				continue
+			}
+		} else {
+			logrus.Warnf("No category_path or subcategory found for service")
 			continue
 		}
 
@@ -341,6 +424,51 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			description = desc
 		}
 
+		// Parse and upload images
+		var imageURLs []string
+		if imagesArray, ok := serviceMap["images"].([]interface{}); ok && len(imagesArray) > 0 {
+			for _, imagePathInterface := range imagesArray {
+				imagePath, ok := imagePathInterface.(string)
+				if !ok {
+					continue
+				}
+
+				// Resolve relative path
+				var fullPath string
+				if filepath.IsAbs(imagePath) {
+					fullPath = imagePath
+				} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+					fullPath = filepath.Join(basePath, imagePath)
+					fullPath, err = filepath.Abs(fullPath)
+					if err != nil {
+						logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+						continue
+					}
+				} else {
+					fullPath = filepath.Join(basePath, imagePath)
+				}
+				fullPath = filepath.Clean(fullPath)
+
+				// Check if file exists
+				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+					logrus.Warnf("Image file not found: %s", fullPath)
+					continue
+				}
+
+				// Upload to Cloudinary if uploader is available
+				if cloudinaryUploader != nil {
+					url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "services")
+					if err != nil {
+						logrus.Errorf("Failed to upload image %s: %v", fullPath, err)
+						continue
+					}
+					imageURLs = append(imageURLs, url)
+				} else {
+					logrus.Warnf("Cloudinary uploader not available, skipping image upload for %s", fullPath)
+				}
+			}
+		}
+
 		service := models.Service{
 			Name:        serviceMap["name"].(string),
 			Slug:        serviceMap["slug"].(string),
@@ -348,7 +476,8 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			PriceType:   serviceMap["price_type"].(string),
 			Price:       price,
 			Duration:    duration,
-			CategoryID:  subcategoryID, // Services now reference the subcategory (level 2) directly
+			CategoryID:  categoryID,
+			Images:      imageURLs,
 			IsActive:    serviceMap["is_active"].(bool),
 		}
 
@@ -475,9 +604,9 @@ func (js *JSONBasedSeeder) SeedServices() error {
 	return nil
 }
 
-// SeedWorkers seeds worker users from JSON
+// SeedWorkers seeds worker users and worker records from JSON
 func (js *JSONBasedSeeder) SeedWorkers() error {
-	logrus.Info("Seeding worker users...")
+	logrus.Info("Seeding workers...")
 
 	// Load workers from JSON
 	jsonLoader := NewJSONLoader()
@@ -493,6 +622,14 @@ func (js *JSONBasedSeeder) SeedWorkers() error {
 		return fmt.Errorf("invalid workers JSON structure")
 	}
 
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, workers will be created without document images")
+	}
+
 	// Get existing users to avoid duplicates
 	var existingUsers []models.User
 	if err := js.sm.db.Where("user_type = ?", "worker").Find(&existingUsers).Error; err != nil {
@@ -500,49 +637,220 @@ func (js *JSONBasedSeeder) SeedWorkers() error {
 		return err
 	}
 
-	// Create a map for quick lookup using phone number
-	existingMap := make(map[string]bool)
-	for _, user := range existingUsers {
-		existingMap[user.Phone] = true
+	// Get existing workers to avoid duplicates
+	var existingWorkers []models.Worker
+	if err := js.sm.db.Find(&existingWorkers).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing workers: %v", err)
+		return err
 	}
 
-	var usersToCreate []models.User
+	// Create maps for quick lookup
+	existingUserMap := make(map[string]models.User)
+	for _, user := range existingUsers {
+		existingUserMap[user.Phone] = user
+	}
 
+	existingWorkerMap := make(map[uint]models.Worker)
+	for _, worker := range existingWorkers {
+		existingWorkerMap[worker.UserID] = worker
+	}
+
+	// Get the base path (backend directory)
+	basePath, err := os.Getwd()
+	if err != nil {
+		logrus.Warnf("Failed to get working directory: %v", err)
+		basePath = "."
+	}
+
+	createdCount := 0
+	updatedCount := 0
+
+	// Process each worker
 	for _, workerData := range workersData {
 		workerMap, ok := workerData.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		// Check if worker already exists
 		phone := workerMap["phone"].(string)
-		if existingMap[phone] {
-			logrus.Infof("Worker with phone %s already exists, skipping", phone)
+		var user models.User
+		var isExistingUser bool
+
+		// Check if user already exists
+		if existingUser, ok := existingUserMap[phone]; ok {
+			user = existingUser
+			isExistingUser = true
+			logrus.Infof("Found existing user for phone %s: %s", phone, user.Name)
+		} else {
+			// Create new user
+			user = models.User{
+				Name:     workerMap["name"].(string),
+				Phone:    phone,
+				UserType: "worker",
+				IsActive: workerMap["is_active"].(bool),
+			}
+
+			if err := js.sm.db.Create(&user).Error; err != nil {
+				logrus.Errorf("Failed to create worker user %s: %v", user.Name, err)
+				continue
+			}
+			logrus.Infof("Created new user for worker: %s (ID: %d)", user.Name, user.ID)
+		}
+
+		// Check if worker record already exists
+		if _, hasWorkerRecord := existingWorkerMap[user.ID]; hasWorkerRecord {
+			logrus.Infof("Worker record already exists for user %s (ID: %d), skipping", user.Name, user.ID)
 			continue
 		}
 
-		// Create user with worker type
-		user := models.User{
-			Name:     workerMap["name"].(string),
-			Phone:    phone,
-			UserType: "worker",
-			IsActive: workerMap["is_active"].(bool),
+		// Parse worker type
+		workerTypeStr := workerMap["worker_type"].(string)
+		workerType := models.WorkerType(workerTypeStr)
+
+		// Parse experience
+		experience := 0
+		if exp, ok := workerMap["experience_years"].(float64); ok {
+			experience = int(exp)
 		}
-		usersToCreate = append(usersToCreate, user)
+
+		// Parse skills
+		var skillsJSON string
+		if skillsArray, ok := workerMap["skills"].([]interface{}); ok {
+			skillsList := make([]string, 0, len(skillsArray))
+			for _, skill := range skillsArray {
+				if skillStr, ok := skill.(string); ok {
+					skillsList = append(skillsList, skillStr)
+				}
+			}
+			skillsBytes, _ := json.Marshal(skillsList)
+			skillsJSON = string(skillsBytes)
+		}
+
+		// Parse contact info
+		contactInfo := map[string]interface{}{}
+		if altNum, ok := workerMap["alternative_number"].(string); ok {
+			contactInfo["alternative_number"] = altNum
+		}
+		contactInfoBytes, _ := json.Marshal(contactInfo)
+		contactInfoJSON := string(contactInfoBytes)
+
+		// Parse address
+		address := map[string]interface{}{
+			"street":  workerMap["address"].(string),
+			"city":    workerMap["city"].(string),
+			"state":   workerMap["state"].(string),
+			"pincode": workerMap["pincode"].(string),
+		}
+		addressBytes, _ := json.Marshal(address)
+		addressJSON := string(addressBytes)
+
+		// Parse banking info
+		bankingInfo := map[string]interface{}{
+			"account_number":      workerMap["account_number"].(string),
+			"ifsc_code":           workerMap["ifsc_code"].(string),
+			"bank_name":           workerMap["bank_name"].(string),
+			"account_holder_name": workerMap["account_holder_name"].(string),
+		}
+		bankingInfoBytes, _ := json.Marshal(bankingInfo)
+		bankingInfoJSON := string(bankingInfoBytes)
+
+		// Upload documents
+		documents := map[string]interface{}{}
+
+		// Helper function to upload document
+		uploadDocument := func(fieldName, imagePath string) {
+			if imagePath == "" {
+				return
+			}
+
+			// Resolve relative path
+			var fullPath string
+			if filepath.IsAbs(imagePath) {
+				fullPath = imagePath
+			} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+				fullPath = filepath.Join(basePath, imagePath)
+				fullPath, err = filepath.Abs(fullPath)
+				if err != nil {
+					logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+					return
+				}
+			} else {
+				fullPath = filepath.Join(basePath, imagePath)
+			}
+			fullPath = filepath.Clean(fullPath)
+
+			// Check if file exists
+			if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+				logrus.Warnf("Document file not found: %s", fullPath)
+				return
+			}
+
+			// Upload to Cloudinary if uploader is available
+			if cloudinaryUploader != nil {
+				url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "workers/documents")
+				if err != nil {
+					logrus.Errorf("Failed to upload document %s: %v", fullPath, err)
+					return
+				}
+				documents[fieldName] = url
+			} else {
+				logrus.Warnf("Cloudinary uploader not available, skipping document upload for %s", fullPath)
+			}
+		}
+
+		// Upload profile picture
+		if profilePic, ok := workerMap["profile_pic"].(string); ok {
+			uploadDocument("profile_pic", profilePic)
+		}
+
+		// Upload aadhar card
+		if aadharCard, ok := workerMap["aadhar_card"].(string); ok {
+			uploadDocument("aadhar_card", aadharCard)
+		}
+
+		// Upload pan card
+		if panCard, ok := workerMap["pan_card"].(string); ok {
+			uploadDocument("pan_card", panCard)
+		}
+
+		// Upload police verification
+		if policeVerification, ok := workerMap["police_verification"].(string); ok {
+			uploadDocument("police_verification", policeVerification)
+		}
+
+		documentsBytes, _ := json.Marshal(documents)
+		documentsJSON := string(documentsBytes)
+
+		// Create worker record
+		worker := models.Worker{
+			UserID:      user.ID,
+			WorkerType:  workerType,
+			ContactInfo: contactInfoJSON,
+			Address:     addressJSON,
+			BankingInfo: bankingInfoJSON,
+			Documents:   documentsJSON,
+			Skills:      skillsJSON,
+			Experience:  experience,
+			IsAvailable: true,
+			IsActive:    workerMap["is_active"].(bool),
+		}
+
+		// Create worker
+		if err := js.sm.db.Create(&worker).Error; err != nil {
+			logrus.Errorf("Failed to create worker record for %s: %v", user.Name, err)
+			// Only delete user if we just created it
+			if !isExistingUser {
+				js.sm.db.Delete(&user)
+			}
+			continue
+		}
+
+		logrus.Infof("Created worker: %s (ID: %d, Type: %s)", user.Name, worker.ID, workerType)
+		createdCount++
 	}
 
-	// Bulk create users
-	if len(usersToCreate) > 0 {
-		if err := js.sm.db.Create(&usersToCreate).Error; err != nil {
-			logrus.Errorf("Failed to create worker users: %v", err)
-			return err
-		}
-		logrus.Infof("Created %d new worker users", len(usersToCreate))
-	} else {
-		logrus.Info("All worker users already exist")
-	}
-
-	logrus.Info("Worker users seeded successfully")
+	logrus.Infof("Created %d new workers, updated %d existing workers", createdCount, updatedCount)
+	logrus.Info("Workers seeded successfully")
 	return nil
 }
 
@@ -1012,7 +1320,7 @@ func (js *JSONBasedSeeder) SeedServiceAreaAssociations() error {
 			}
 
 			key := fmt.Sprintf("%d-%d", serviceID, areaID)
-			
+
 			// Skip if association already exists
 			if existingAssocMap[key] {
 				continue
@@ -1039,14 +1347,14 @@ func (js *JSONBasedSeeder) SeedServiceAreaAssociations() error {
 			if end > len(associationsToCreate) {
 				end = len(associationsToCreate)
 			}
-			
+
 			batch := associationsToCreate[i:end]
 			if err := js.sm.db.Table("service_service_areas").Create(&batch).Error; err != nil {
 				logrus.Errorf("Failed to create associations batch %d-%d: %v", i+1, end, err)
 				return err
 			}
 		}
-		
+
 		logrus.Infof("Created %d new service-service area associations", createdCount)
 	} else {
 		logrus.Info("All service-service area associations already exist")
@@ -1155,7 +1463,7 @@ func (js *JSONBasedSeeder) SeedSubscriptionPlans() error {
 			}
 
 			if durationDays != expectedDays {
-				logrus.Warnf("Duration days mismatch for plan %s (%s): expected %d, got %d", 
+				logrus.Warnf("Duration days mismatch for plan %s (%s): expected %d, got %d",
 					name, durationType, expectedDays, durationDays)
 				durationDays = expectedDays // Fix the duration days
 			}
@@ -1189,5 +1497,692 @@ func (js *JSONBasedSeeder) SeedSubscriptionPlans() error {
 
 	logrus.Infof("Created %d new subscription plans", createdCount)
 	logrus.Info("Subscription plans seeded successfully")
+	return nil
+}
+
+// SeedProperties seeds properties from JSON
+func (js *JSONBasedSeeder) SeedProperties() error {
+	logrus.Info("Seeding properties...")
+
+	// Load properties from JSON
+	jsonLoader := NewJSONLoader()
+	data, err := jsonLoader.LoadProperties()
+	if err != nil {
+		logrus.Errorf("Failed to load properties JSON: %v", err)
+		return err
+	}
+
+	// Parse properties from JSON
+	propertiesData, ok := data["properties"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid properties JSON structure")
+	}
+
+	// Get an admin user for properties
+	var adminUser models.User
+	if err := js.sm.db.Where("user_type = ?", "admin").First(&adminUser).Error; err != nil {
+		logrus.Errorf("Failed to find admin user: %v", err)
+		return fmt.Errorf("admin user not found, please seed admin users first")
+	}
+
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, properties will be created without images")
+	}
+
+	// Get existing properties to avoid duplicates (including soft-deleted ones for slug checking)
+	var existingProperties []models.Property
+	if err := js.sm.db.Unscoped().Find(&existingProperties).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing properties: %v", err)
+		return err
+	}
+
+	// Create a map for quick lookup by slug (including soft-deleted)
+	existingMap := make(map[string]bool)
+	for _, prop := range existingProperties {
+		existingMap[prop.Slug] = true
+	}
+
+	// Slug helper
+	slugHelper := utils.NewSlugHelper()
+
+	createdCount := 0
+
+	// Process each property
+	for _, propertyData := range propertiesData {
+		propMap, ok := propertyData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Generate slug from title
+		title := propMap["title"].(string)
+		baseSlug := slugHelper.GenerateSlug(title)
+
+		// Ensure unique slug by checking database
+		slug := baseSlug
+		counter := 1
+		for {
+			// Check both in-memory map and database
+			if !existingMap[slug] {
+				var existing models.Property
+				if err := js.sm.db.Where("slug = ?", slug).First(&existing).Error; err != nil {
+					// Slug doesn't exist in database, we can use it
+					break
+				}
+				// Slug exists in database, mark it in map and try next
+				existingMap[slug] = true
+			}
+			// Slug exists, try next
+			slug = fmt.Sprintf("%s-%d", baseSlug, counter)
+			counter++
+			if counter > 1000 {
+				// Safety check to prevent infinite loop
+				logrus.Errorf("Could not generate unique slug for property: %s", title)
+				break
+			}
+		}
+		existingMap[slug] = true
+
+		// Create property model
+		property := models.Property{
+			Title:             title,
+			Description:       propMap["description"].(string),
+			PropertyType:      models.PropertyType(propMap["property_type"].(string)),
+			ListingType:       models.ListingType(propMap["listing_type"].(string)),
+			Slug:              slug,
+			State:             propMap["state"].(string),
+			City:              propMap["city"].(string),
+			UserID:            adminUser.ID,
+			UploadedByAdmin:   true,
+			TreesIndiaAssured: true,
+			IsApproved:        true,
+			Status:            models.PropertyStatusAvailable,
+			PriceNegotiable:   propMap["price_negotiable"].(bool),
+		}
+
+		// Handle optional fields
+		if salePrice, ok := propMap["sale_price"].(float64); ok && salePrice > 0 {
+			property.SalePrice = &salePrice
+		}
+
+		if monthlyRent, ok := propMap["monthly_rent"].(float64); ok && monthlyRent > 0 {
+			property.MonthlyRent = &monthlyRent
+		}
+
+		if bedrooms, ok := propMap["bedrooms"].(float64); ok && bedrooms > 0 {
+			bedroomsInt := int(bedrooms)
+			property.Bedrooms = &bedroomsInt
+		}
+
+		if bathrooms, ok := propMap["bathrooms"].(float64); ok && bathrooms > 0 {
+			bathroomsInt := int(bathrooms)
+			property.Bathrooms = &bathroomsInt
+		}
+
+		if area, ok := propMap["area"].(float64); ok && area > 0 {
+			property.Area = &area
+		}
+
+		if floorNumber, ok := propMap["floor_number"].(float64); ok && floorNumber > 0 {
+			floorNumberInt := int(floorNumber)
+			property.FloorNumber = &floorNumberInt
+		}
+
+		if ageStr, ok := propMap["age"].(string); ok && ageStr != "" {
+			age := models.PropertyAge(ageStr)
+			property.Age = &age
+		}
+
+		if furnishingStr, ok := propMap["furnishing_status"].(string); ok && furnishingStr != "" {
+			furnishing := models.FurnishingStatus(furnishingStr)
+			property.FurnishingStatus = &furnishing
+		}
+
+		if address, ok := propMap["address"].(string); ok && address != "" {
+			property.Address = address
+		}
+
+		if pincode, ok := propMap["pincode"].(string); ok && pincode != "" {
+			property.Pincode = pincode
+		}
+
+		// Handle images - upload from local paths
+		if imagesArray, ok := propMap["images"].([]interface{}); ok && len(imagesArray) > 0 {
+			var imageURLs []string
+
+			// Get the base path (backend directory)
+			basePath, err := os.Getwd()
+			if err != nil {
+				logrus.Warnf("Failed to get working directory: %v", err)
+				basePath = "."
+			}
+
+			for _, imagePathInterface := range imagesArray {
+				imagePath, ok := imagePathInterface.(string)
+				if !ok {
+					continue
+				}
+
+				// Resolve relative path - if it starts with ../, resolve from basePath
+				var fullPath string
+				if filepath.IsAbs(imagePath) {
+					fullPath = imagePath
+				} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+					// Resolve relative to basePath
+					fullPath = filepath.Join(basePath, imagePath)
+					fullPath, err = filepath.Abs(fullPath)
+					if err != nil {
+						logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+						continue
+					}
+				} else {
+					// Relative to basePath
+					fullPath = filepath.Join(basePath, imagePath)
+				}
+				// Clean the path
+				fullPath = filepath.Clean(fullPath)
+
+				// Check if file exists
+				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+					logrus.Warnf("Image file not found: %s", fullPath)
+					continue
+				}
+
+				// Upload to Cloudinary if uploader is available
+				if cloudinaryUploader != nil {
+					url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "properties")
+					if err != nil {
+						logrus.Errorf("Failed to upload image %s: %v", fullPath, err)
+						continue
+					}
+					imageURLs = append(imageURLs, url)
+				} else {
+					// If Cloudinary is not available, use placeholder or skip
+					logrus.Warnf("Cloudinary uploader not available, skipping image upload for %s", fullPath)
+				}
+			}
+
+			if len(imageURLs) > 0 {
+				property.Images = models.JSONStringArray(imageURLs)
+			}
+		}
+
+		// Set approved at time
+		now := time.Now()
+		property.ApprovedAt = &now
+		property.ApprovedBy = &adminUser.ID
+
+		// Create property
+		if err := js.sm.db.Create(&property).Error; err != nil {
+			logrus.Errorf("Failed to create property %s: %v", title, err)
+			continue
+		}
+
+		logrus.Infof("Created property: %s (ID: %d, Slug: %s)", title, property.ID, slug)
+		createdCount++
+	}
+
+	logrus.Infof("Created %d new properties", createdCount)
+	logrus.Info("Properties seeded successfully")
+	return nil
+}
+
+// SeedProjects seeds projects from JSON
+func (js *JSONBasedSeeder) SeedProjects() error {
+	logrus.Info("Seeding projects...")
+
+	// Load projects from JSON
+	jsonLoader := NewJSONLoader()
+	data, err := jsonLoader.LoadProjects()
+	if err != nil {
+		logrus.Errorf("Failed to load projects JSON: %v", err)
+		return err
+	}
+
+	// Parse projects from JSON
+	projectsData, ok := data["projects"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid projects JSON structure")
+	}
+
+	// Get an admin user for projects
+	var adminUser models.User
+	if err := js.sm.db.Where("user_type = ?", "admin").First(&adminUser).Error; err != nil {
+		logrus.Errorf("Failed to find admin user: %v", err)
+		return fmt.Errorf("admin user not found, please seed admin users first")
+	}
+
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, projects will be created without images")
+	}
+
+	// Get existing projects to avoid duplicates (including soft-deleted ones for slug checking)
+	var existingProjects []models.Project
+	if err := js.sm.db.Unscoped().Find(&existingProjects).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing projects: %v", err)
+		return err
+	}
+
+	// Create a map for quick lookup by slug (including soft-deleted)
+	existingMap := make(map[string]bool)
+	for _, proj := range existingProjects {
+		existingMap[proj.Slug] = true
+	}
+
+	// Slug helper
+	slugHelper := utils.NewSlugHelper()
+
+	createdCount := 0
+
+	// Process each project
+	for _, projectData := range projectsData {
+		projMap, ok := projectData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Generate slug from title
+		title := projMap["title"].(string)
+		baseSlug := slugHelper.GenerateSlug(title)
+
+		// Ensure unique slug by checking database
+		slug := baseSlug
+		counter := 1
+		for {
+			// Check both in-memory map and database
+			if !existingMap[slug] {
+				var existing models.Project
+				if err := js.sm.db.Where("slug = ?", slug).First(&existing).Error; err != nil {
+					// Slug doesn't exist in database, we can use it
+					break
+				}
+				// Slug exists in database, mark it in map and try next
+				existingMap[slug] = true
+			}
+			// Slug exists, try next
+			slug = fmt.Sprintf("%s-%d", baseSlug, counter)
+			counter++
+			if counter > 1000 {
+				// Safety check to prevent infinite loop
+				logrus.Errorf("Could not generate unique slug for project: %s", title)
+				break
+			}
+		}
+		existingMap[slug] = true
+
+		// Parse contact info
+		var contactInfo models.JSONB
+		if contactInfoInterface, ok := projMap["contact_info"].(map[string]interface{}); ok {
+			contactInfo = models.JSONB(contactInfoInterface)
+		} else {
+			// Default contact info if not provided
+			contactInfo = models.JSONB{
+				"phone":          "+91-0000000000",
+				"email":          "info@project.com",
+				"contact_person": "Project Manager",
+			}
+		}
+
+		// Create project model
+		project := models.Project{
+			Title:           title,
+			Description:     projMap["description"].(string),
+			Slug:            slug,
+			ProjectType:     models.ProjectType(projMap["project_type"].(string)),
+			Status:          models.ProjectStatus(projMap["status"].(string)),
+			State:           projMap["state"].(string),
+			City:            projMap["city"].(string),
+			Address:         projMap["address"].(string),
+			Pincode:         projMap["pincode"].(string),
+			ContactInfo:     contactInfo,
+			UserID:          adminUser.ID,
+			UploadedByAdmin: true,
+		}
+
+		// Handle estimated duration
+		if estimatedDuration, ok := projMap["estimated_duration_days"].(float64); ok && estimatedDuration > 0 {
+			project.EstimatedDuration = int(estimatedDuration)
+		}
+
+		// Handle images - upload from local paths
+		if imagesArray, ok := projMap["images"].([]interface{}); ok && len(imagesArray) > 0 {
+			var imageURLs []string
+
+			// Get the base path (backend directory)
+			basePath, err := os.Getwd()
+			if err != nil {
+				logrus.Warnf("Failed to get working directory: %v", err)
+				basePath = "."
+			}
+
+			for _, imagePathInterface := range imagesArray {
+				imagePath, ok := imagePathInterface.(string)
+				if !ok {
+					continue
+				}
+
+				// Resolve relative path - if it starts with ../, resolve from basePath
+				var fullPath string
+				if filepath.IsAbs(imagePath) {
+					fullPath = imagePath
+				} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+					// Resolve relative to basePath
+					fullPath = filepath.Join(basePath, imagePath)
+					fullPath, err = filepath.Abs(fullPath)
+					if err != nil {
+						logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+						continue
+					}
+				} else {
+					// Relative to basePath
+					fullPath = filepath.Join(basePath, imagePath)
+				}
+				// Clean the path
+				fullPath = filepath.Clean(fullPath)
+
+				// Check if file exists
+				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+					logrus.Warnf("Image file not found: %s", fullPath)
+					continue
+				}
+
+				// Upload to Cloudinary if uploader is available
+				if cloudinaryUploader != nil {
+					url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "projects")
+					if err != nil {
+						logrus.Errorf("Failed to upload image %s: %v", fullPath, err)
+						continue
+					}
+					imageURLs = append(imageURLs, url)
+				} else {
+					// If Cloudinary is not available, use placeholder or skip
+					logrus.Warnf("Cloudinary uploader not available, skipping image upload for %s", fullPath)
+				}
+			}
+
+			if len(imageURLs) > 0 {
+				project.Images = models.JSONStringArray(imageURLs)
+			} else {
+				// Images are required, so we need at least one
+				logrus.Warnf("No images uploaded for project: %s, but images are required", title)
+				// Continue anyway, but log a warning
+			}
+		} else {
+			logrus.Warnf("No images specified for project: %s, but images are required", title)
+		}
+
+		// Create project
+		if err := js.sm.db.Create(&project).Error; err != nil {
+			logrus.Errorf("Failed to create project %s: %v", title, err)
+			continue
+		}
+
+		logrus.Infof("Created project: %s (ID: %d, Slug: %s)", title, project.ID, slug)
+		createdCount++
+	}
+
+	logrus.Infof("Created %d new projects", createdCount)
+	logrus.Info("Projects seeded successfully")
+	return nil
+}
+
+// SeedVendors seeds vendors from JSON
+func (js *JSONBasedSeeder) SeedVendors() error {
+	logrus.Info("Seeding vendors...")
+
+	// Load vendors from JSON
+	jsonLoader := NewJSONLoader()
+	data, err := jsonLoader.LoadVendors()
+	if err != nil {
+		logrus.Errorf("Failed to load vendors JSON: %v", err)
+		return err
+	}
+
+	// Parse vendors from JSON
+	vendorsData, ok := data["vendors"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid vendors JSON structure")
+	}
+
+	// Get an admin user for vendors (or create vendor users)
+	var adminUser models.User
+	if err := js.sm.db.Where("user_type = ?", "admin").First(&adminUser).Error; err != nil {
+		logrus.Errorf("Failed to find admin user: %v", err)
+		return fmt.Errorf("admin user not found, please seed admin users first")
+	}
+
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, vendors will be created without images")
+	}
+
+	// Get existing users to avoid duplicates
+	var existingUsers []models.User
+	if err := js.sm.db.Where("user_type = ?", "vendor").Or("user_type = ?", "broker").Find(&existingUsers).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing vendor users: %v", err)
+		return err
+	}
+
+	// Get existing vendors to avoid duplicates
+	var existingVendors []models.Vendor
+	if err := js.sm.db.Find(&existingVendors).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing vendors: %v", err)
+		return err
+	}
+
+	// Create maps for quick lookup
+	existingUserMap := make(map[string]models.User)
+	for _, user := range existingUsers {
+		existingUserMap[user.Phone] = user
+	}
+
+	existingVendorMap := make(map[uint]bool)
+	for _, vendor := range existingVendors {
+		existingVendorMap[vendor.UserID] = true
+	}
+
+	// Get the base path (backend directory)
+	basePath, err := os.Getwd()
+	if err != nil {
+		logrus.Warnf("Failed to get working directory: %v", err)
+		basePath = "."
+	}
+
+	createdCount := 0
+
+	// Process each vendor
+	for _, vendorData := range vendorsData {
+		vendorMap, ok := vendorData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		phone := vendorMap["phone"].(string)
+		var user models.User
+		var isExistingUser bool
+
+		// Check if user already exists
+		if existingUser, ok := existingUserMap[phone]; ok {
+			user = existingUser
+			isExistingUser = true
+			logrus.Infof("Found existing user for phone %s: %s", phone, user.Name)
+		} else {
+			// Create new user with vendor type
+			user = models.User{
+				Name:     vendorMap["name"].(string),
+				Phone:    phone,
+				UserType: "vendor",
+				IsActive: true,
+			}
+
+			if err := js.sm.db.Create(&user).Error; err != nil {
+				logrus.Errorf("Failed to create vendor user %s: %v", user.Name, err)
+				continue
+			}
+			logrus.Infof("Created new user for vendor: %s (ID: %d)", user.Name, user.ID)
+		}
+
+		// Check if vendor record already exists
+		if existingVendorMap[user.ID] {
+			logrus.Infof("Vendor record already exists for user %s (ID: %d), skipping", user.Name, user.ID)
+			continue
+		}
+
+		// Parse business address
+		address := map[string]interface{}{
+			"street":  vendorMap["address"].(string),
+			"city":    vendorMap["city"].(string),
+			"state":   vendorMap["state"].(string),
+			"pincode": vendorMap["pincode"].(string),
+		}
+		if landmark, ok := vendorMap["landmark"].(string); ok && landmark != "" {
+			address["landmark"] = landmark
+		}
+		addressBytes, _ := json.Marshal(address)
+		addressJSON := string(addressBytes)
+
+		// Parse services offered
+		var servicesJSON string
+		if servicesArray, ok := vendorMap["services_offered"].([]interface{}); ok {
+			servicesList := make([]string, 0, len(servicesArray))
+			for _, service := range servicesArray {
+				if serviceStr, ok := service.(string); ok {
+					servicesList = append(servicesList, serviceStr)
+				}
+			}
+			servicesBytes, _ := json.Marshal(servicesList)
+			servicesJSON = string(servicesBytes)
+		}
+
+		// Upload profile picture
+		var profilePictureURL string
+		if profilePic, ok := vendorMap["profile_picture"].(string); ok && profilePic != "" {
+			// Resolve relative path
+			var fullPath string
+			if filepath.IsAbs(profilePic) {
+				fullPath = profilePic
+			} else if strings.HasPrefix(profilePic, "../") || strings.HasPrefix(profilePic, "..\\") {
+				fullPath = filepath.Join(basePath, profilePic)
+				fullPath, err = filepath.Abs(fullPath)
+				if err != nil {
+					logrus.Warnf("Failed to resolve absolute path for %s: %v", profilePic, err)
+				} else {
+					fullPath = filepath.Clean(fullPath)
+					if _, err := os.Stat(fullPath); err == nil {
+						if cloudinaryUploader != nil {
+							url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "vendors")
+							if err != nil {
+								logrus.Errorf("Failed to upload profile picture %s: %v", fullPath, err)
+							} else {
+								profilePictureURL = url
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Upload business gallery images
+		var galleryURLs []string
+		if galleryArray, ok := vendorMap["business_gallery"].([]interface{}); ok && len(galleryArray) > 0 {
+			for _, imagePathInterface := range galleryArray {
+				imagePath, ok := imagePathInterface.(string)
+				if !ok {
+					continue
+				}
+
+				// Resolve relative path
+				var fullPath string
+				if filepath.IsAbs(imagePath) {
+					fullPath = imagePath
+				} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+					fullPath = filepath.Join(basePath, imagePath)
+					fullPath, err = filepath.Abs(fullPath)
+					if err != nil {
+						logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+						continue
+					}
+				} else {
+					fullPath = filepath.Join(basePath, imagePath)
+				}
+				fullPath = filepath.Clean(fullPath)
+
+				// Check if file exists
+				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+					logrus.Warnf("Gallery image file not found: %s", fullPath)
+					continue
+				}
+
+				// Upload to Cloudinary if uploader is available
+				if cloudinaryUploader != nil {
+					url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "vendors/gallery")
+					if err != nil {
+						logrus.Errorf("Failed to upload gallery image %s: %v", fullPath, err)
+						continue
+					}
+					galleryURLs = append(galleryURLs, url)
+				} else {
+					logrus.Warnf("Cloudinary uploader not available, skipping gallery image upload for %s", fullPath)
+				}
+			}
+		}
+
+		// Convert gallery to JSON
+		var galleryJSON string
+		if len(galleryURLs) > 0 {
+			galleryBytes, _ := json.Marshal(galleryURLs)
+			galleryJSON = string(galleryBytes)
+		}
+
+		// Parse years in business
+		yearsInBusiness := 0
+		if years, ok := vendorMap["years_in_business"].(float64); ok {
+			yearsInBusiness = int(years)
+		}
+
+		// Create vendor record
+		vendor := models.Vendor{
+			VendorName:          vendorMap["vendor_name"].(string),
+			BusinessDescription: vendorMap["business_description"].(string),
+			ContactPersonName:   vendorMap["contact_person_name"].(string),
+			ContactPersonPhone:  vendorMap["contact_person_phone"].(string),
+			ContactPersonEmail:  vendorMap["contact_person_email"].(string),
+			BusinessAddress:     addressJSON,
+			BusinessType:        vendorMap["business_type"].(string),
+			YearsInBusiness:     yearsInBusiness,
+			ServicesOffered:     servicesJSON,
+			ProfilePicture:      profilePictureURL,
+			BusinessGallery:     galleryJSON,
+			IsActive:            true,
+			UserID:              user.ID,
+		}
+
+		// Create vendor
+		if err := js.sm.db.Create(&vendor).Error; err != nil {
+			logrus.Errorf("Failed to create vendor record for %s: %v", user.Name, err)
+			// Only delete user if we just created it
+			if !isExistingUser {
+				js.sm.db.Delete(&user)
+			}
+			continue
+		}
+
+		logrus.Infof("Created vendor: %s (ID: %d, Business: %s)", user.Name, vendor.ID, vendor.VendorName)
+		createdCount++
+	}
+
+	logrus.Infof("Created %d new vendors", createdCount)
+	logrus.Info("Vendors seeded successfully")
 	return nil
 }

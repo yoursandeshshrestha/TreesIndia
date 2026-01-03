@@ -8,9 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// CloudinaryUploader is an interface for uploading images
+// This allows us to avoid importing services package which would create a cycle
+type CloudinaryUploader interface {
+	UploadImageFromPath(filePath string, folder string) (string, error)
+}
+
 // SeedManager handles all seeding operations
 type SeedManager struct {
-	db *gorm.DB
+	db              *gorm.DB
+	cloudinaryUploader CloudinaryUploader
 }
 
 // NewSeedManager creates a new seed manager
@@ -18,6 +25,11 @@ func NewSeedManager() *SeedManager {
 	return &SeedManager{
 		db: database.GetDB(),
 	}
+}
+
+// SetCloudinaryUploader sets the Cloudinary uploader for image uploads
+func (sm *SeedManager) SetCloudinaryUploader(uploader CloudinaryUploader) {
+	sm.cloudinaryUploader = uploader
 }
 
 // SeedAll runs all seeding operations in the correct order
@@ -42,6 +54,7 @@ func (sm *SeedManager) SeedAll() error {
 		{"Subscription Plans", jsonSeeder.SeedSubscriptionPlans},
 		{"Workers", jsonSeeder.SeedWorkers},
 		{"Promotion Banners", jsonSeeder.SeedPromotionBanners},
+		{"Properties", jsonSeeder.SeedProperties},
 	}
 
 	// Execute seeders in order
@@ -86,6 +99,9 @@ func (sm *SeedManager) SeedIndividualComponents(components ...string) error {
 		"subscription_plans":      jsonSeeder.SeedSubscriptionPlans,
 		"workers":                 jsonSeeder.SeedWorkers,
 		"promotion_banners":       jsonSeeder.SeedPromotionBanners,
+		"properties":              jsonSeeder.SeedProperties,
+		"projects":                jsonSeeder.SeedProjects,
+		"vendors":                 jsonSeeder.SeedVendors,
 	}
 
 	// Execute requested seeders
