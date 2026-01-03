@@ -277,6 +277,7 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 	priceMaxStr := c.Query("price_max")      // Maximum price
 	city := c.Query("city")                  // City name for location filtering
 	state := c.Query("state")                // State name for location filtering
+	search := c.Query("search")              // Search query for name/description
 	excludeInactive := c.Query("exclude_inactive") == "true"
 	
 	// Get pagination parameters
@@ -299,8 +300,8 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		}
 	}
 	
-	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, city: %s, state: %s, excludeInactive: %v", 
-		serviceType, category, subcategory, priceMinStr, priceMaxStr, city, state, excludeInactive)
+	logrus.Infof("ServiceController.GetServices filters - type: %s, category: %s, subcategory: %s, price_min: %s, price_max: %s, city: %s, state: %s, search: %s, excludeInactive: %v",
+		serviceType, category, subcategory, priceMinStr, priceMaxStr, city, state, search, excludeInactive)
 
 	// Parse price range
 	var priceMin, priceMax *float64
@@ -346,7 +347,7 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 		sortOrder = "asc"
 	}
 	
-	services, total, err := sc.serviceService.GetServiceSummariesWithLocationFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, city, state, excludeInactive, page, limit, sortBy, sortOrder)
+	services, total, err := sc.serviceService.GetServiceSummariesWithLocationFiltersPaginated(priceType, categoryPtr, subcategoryPtr, priceMin, priceMax, city, state, search, excludeInactive, page, limit, sortBy, sortOrder)
 	if err != nil {
 		logrus.Errorf("ServiceController.GetServices error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to retrieve services", err.Error()))
