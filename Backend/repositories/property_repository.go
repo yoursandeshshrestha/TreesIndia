@@ -353,7 +353,7 @@ func (pr *PropertyRepository) applyFilters(query *gorm.DB, filters map[string]in
 			}
 		case "bedrooms":
 			if bedrooms, ok := value.(int); ok && bedrooms > 0 {
-				query = query.Where("bedrooms >= ?", bedrooms)
+				query = query.Where("bedrooms = ?", bedrooms)
 			}
 		case "bathrooms":
 			if bathrooms, ok := value.(int); ok && bathrooms > 0 {
@@ -474,7 +474,7 @@ func (pr *PropertyRepository) applyPendingFilters(query *gorm.DB, filters map[st
 			}
 		case "bedrooms":
 			if bedrooms, ok := value.(int); ok && bedrooms > 0 {
-				query = query.Where("bedrooms >= ?", bedrooms)
+				query = query.Where("bedrooms = ?", bedrooms)
 			}
 		case "bathrooms":
 			if bathrooms, ok := value.(int); ok && bathrooms > 0 {
