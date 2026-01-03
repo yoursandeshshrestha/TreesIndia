@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout } from '../../store/slices/authSlice';
 import ProfileHeader from './components/ProfileHeader';
@@ -29,6 +29,7 @@ interface ProfileScreenProps {
 }
 
 export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties }: ProfileScreenProps) {
+  const insets = useSafeAreaInsets();
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -89,7 +90,9 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
   const isBroker = user?.user_type === 'broker';
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <View style={{ paddingTop: insets.top, backgroundColor: 'white' }} />
       <View className="flex-1">
         {/* Profile Header Section - Airbnb Style */}
         <View className="px-6 pt-8 pb-8">
@@ -226,6 +229,6 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutModal(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }

@@ -137,32 +137,32 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
         <View className="px-6 py-4">
           {/* Active Subscription Section */}
           {hasActiveSubscription && currentSubscription ? (
-            <>
+            <View>
               <ActiveSubscriptionCard subscription={currentSubscription} />
               <View className="h-6" />
-            </>
+            </View>
           ) : (
-            <>
+            <View>
               <EmptySubscriptionState />
               <View className="h-6" />
-            </>
+            </View>
           )}
 
           {/* Buy Subscription Button */}
           {!hasActiveSubscription && (
-            <>
+            <View>
               <Button
                 label="Buy Subscription"
                 onPress={handleBuySubscription}
                 variant="solid"
               />
               <View className="h-6" />
-            </>
+            </View>
           )}
 
           {/* Billing History Section */}
           {subscriptionHistory.length > 0 && (
-            <>
+            <View>
               <Text
                 className="text-lg font-bold text-[#111928] mb-4"
                 style={{ fontFamily: 'Inter-Bold' }}
@@ -177,7 +177,7 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
                   )}
                 </View>
               ))}
-            </>
+            </View>
           )}
 
           {/* Bottom spacing for refresh */}

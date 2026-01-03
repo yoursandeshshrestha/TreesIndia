@@ -101,7 +101,7 @@ export default function SubscriptionPlansScreen({
   };
 
   const handlePaymentMethodSelect = async (method: 'wallet' | 'razorpay') => {
-    if (!selectedPlanId) return;
+    if (!selectedPlanId || !selectedDurationType) return;
 
     setIsPurchasing(true);
     setShowPaymentModal(false);
@@ -109,8 +109,8 @@ export default function SubscriptionPlansScreen({
     try {
       if (method === 'wallet') {
         // Direct purchase with wallet
-        await subscriptionService.purchaseSubscription(selectedPlanId, 'wallet');
-        
+        await subscriptionService.purchaseSubscription(selectedPlanId, 'wallet', selectedDurationType);
+
         Alert.alert(
           'Success',
           'Subscription purchased successfully!',
