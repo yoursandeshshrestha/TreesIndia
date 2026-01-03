@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BookingScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={['top']}>
+    <View className="flex-1 bg-[#F9FAFB]">
+      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      <View style={{ paddingTop: insets.top, backgroundColor: '#F9FAFB' }} />
       <ScrollView className="flex-1">
         <View className="px-6 pt-6">
           <Text
@@ -37,7 +41,7 @@ export default function BookingScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
