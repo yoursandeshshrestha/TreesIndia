@@ -1,0 +1,20 @@
+{
+  "name": "treesindia-backend",
+  "version": "1.0.0",
+  "description": "TREESINDIA Backend API",
+  "scripts": {
+    "seed:all": "go run cmd/seed-all/main.go",
+    "seed:properties": "go run cmd/seed-properties/main.go",
+    "seed:project": "go run cmd/seed-project/main.go",
+    "seed:services": "go run cmd/seed-services/main.go",
+    "seed:worker": "go run cmd/seed-worker/main.go",
+    "seed:vendor": "go run cmd/seed-vendor/main.go",
+    "delete:properties": "go run cmd/delete-properties/main.go",
+    "delete:projects": "go run cmd/delete-projects/main.go",
+    "delete:services": "go run cmd/delete-services/main.go",
+    "delete:vendors": "go run cmd/delete-vendors/main.go",
+    "delete:workers": "go run cmd/delete-workers/main.go"
+  },
+  "private": true
+}
+
