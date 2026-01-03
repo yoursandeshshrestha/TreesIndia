@@ -189,14 +189,30 @@ func (pc *ProjectController) GetProjectBySlug(c *gin.Context) {
 // @Router /projects [get]
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	
+
 	// Parse query parameters
 	limit := pc.getIntQuery(c, "limit", 20)
 	offset := pc.getIntQuery(c, "offset", 0)
-	
+
+	// Check if this is a search query
+	if searchQuery := c.Query("search"); searchQuery != "" {
+		// Use search functionality
+		projects, err := pc.projectService.SearchProjects(userID, searchQuery, limit, offset)
+		if err != nil {
+			if err.Error() == "active subscription required to search projects" {
+				c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to search projects", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, views.CreateSuccessResponse( "Projects retrieved successfully", projects))
+		return
+	}
+
 	// Build filters
 	filters := make(map[string]interface{})
-	
+
 	if projectType := c.Query("project_type"); projectType != "" {
 		filters["project_type"] = projectType
 	}
