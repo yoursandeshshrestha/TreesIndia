@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../../components/ui/Button';
@@ -33,8 +34,28 @@ export default function RechargeBottomSheet({
   const [manualAmount, setManualAmount] = useState<string>('');
   const [showMinimumError, setShowMinimumError] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = useRef(new Animated.Value(300)).current;
+  const translateY = useRef(new Animated.Value(500)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
 
   const handleSelectQuickAmount = (amount: number) => {
     setSelectedAmount(amount);
@@ -46,7 +67,7 @@ export default function RechargeBottomSheet({
     // Remove non-numeric characters except decimal point
     const numericValue = value.replace(/[^0-9.]/g, '');
     setManualAmount(numericValue);
-    
+
     const amount = parseFloat(numericValue) || 0;
     setSelectedAmount(amount);
     setShowMinimumError(numericValue.length > 0 && amount > 0 && amount < MINIMUM_AMOUNT);
@@ -72,45 +93,29 @@ export default function RechargeBottomSheet({
     }
   };
 
-  useEffect(() => {
-    if (visible) {
-      // Animate in
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(sheetTranslateY, {
-          toValue: 0,
-          tension: 65,
-          friction: 11,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Animate out
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 300,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible, overlayOpacity, sheetTranslateY]);
-
   const handleClose = () => {
-    if (!isProcessing && !isLoading) {
-      setSelectedAmount(0);
-      setManualAmount('');
-      setShowMinimumError(false);
-      onClose();
+    if (!isProcessing && !isLoading && !isClosing) {
+      setIsClosing(true);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 500,
+          duration: 250,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setSelectedAmount(0);
+        setManualAmount('');
+        setShowMinimumError(false);
+        setIsClosing(false);
+        onClose();
+      });
     }
   };
 
@@ -123,8 +128,12 @@ export default function RechargeBottomSheet({
     >
       <View className="flex-1 justify-end">
         <Animated.View
-          className="absolute inset-0"
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             opacity: overlayOpacity,
           }}
@@ -137,7 +146,10 @@ export default function RechargeBottomSheet({
         </Animated.View>
         <Animated.View
           style={{
-            transform: [{ translateY: sheetTranslateY }],
+            backgroundColor: 'white',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            transform: [{ translateY }],
           }}
         >
           <KeyboardAvoidingView

@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { walletService, type WalletSummary, type WalletTransaction } from '../../services';
 import { razorpayService } from '../../utils/razorpay';
 import { useAppSelector } from '../../store/hooks';
@@ -23,6 +24,7 @@ interface WalletScreenProps {
 }
 
 export default function WalletScreen({ onBack }: WalletScreenProps) {
+  const insets = useSafeAreaInsets();
   const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -372,7 +374,9 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
   // Only show loading screen if we don't have data yet
   if (isLoading && !isRefreshing && !walletSummary) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <View className="flex-1 bg-white">
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        <View style={{ paddingTop: insets.top, backgroundColor: 'white' }} />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
           <Text
@@ -382,28 +386,31 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
             Loading wallet...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && !walletSummary) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-        {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4 p-2 -ml-2"
-            activeOpacity={0.7}
-          >
-            <BackIcon size={24} color="#111928" />
-          </TouchableOpacity>
-          <Text
-            className="text-xl font-semibold text-[#111928] flex-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
-            My Wallet
-          </Text>
+      <View className="flex-1 bg-white">
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
+          {/* Header */}
+          <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+            <TouchableOpacity
+              onPress={onBack}
+              className="mr-4 p-2 -ml-2"
+              activeOpacity={0.7}
+            >
+              <BackIcon size={24} color="#111928" />
+            </TouchableOpacity>
+            <Text
+              className="text-xl font-semibold text-[#111928] flex-1"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              My Wallet
+            </Text>
+          </View>
         </View>
 
         <View className="flex-1 items-center justify-center px-6">
@@ -432,27 +439,30 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity
-          onPress={onBack}
-          className="mr-4 p-2 -ml-2"
-          activeOpacity={0.7}
-        >
-          <BackIcon size={24} color="#111928" />
-        </TouchableOpacity>
-        <Text
-          className="text-xl font-semibold text-[#111928] flex-1"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
-          My Wallet
-        </Text>
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
+        {/* Header */}
+        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+          <TouchableOpacity
+            onPress={onBack}
+            className="mr-4 p-2 -ml-2"
+            activeOpacity={0.7}
+          >
+            <BackIcon size={24} color="#111928" />
+          </TouchableOpacity>
+          <Text
+            className="text-xl font-semibold text-[#111928] flex-1"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            My Wallet
+          </Text>
+        </View>
       </View>
 
       <ScrollView
@@ -554,7 +564,7 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         onRecharge={handleRechargeSubmit}
         isLoading={isRecharging}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
