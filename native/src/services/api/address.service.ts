@@ -50,53 +50,68 @@ export interface UpdateAddressRequest {
 
 class AddressService {
   async getAddresses(): Promise<Address[]> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/addresses`);
-    const data = await handleResponse<any>(response);
-    
-    // Handle different response formats
-    // Backend returns: { success: true, message: "...", data: [...] }
-    // handleResponse extracts: data.data || data, so we should get the array
-    // But handle edge cases where response might be different
-    let addresses: Address[] = [];
-    
-    if (Array.isArray(data)) {
-      addresses = data;
-    } else if (data && typeof data === 'object') {
-      // Try to extract array from various possible structures
-      if (Array.isArray(data.addresses)) {
-        addresses = data.addresses;
-      } else if (Array.isArray(data.data)) {
-        addresses = data.data;
-      } else if (Array.isArray(data.items)) {
-        addresses = data.items;
-      } else if (data.data === null || data.data === undefined) {
-        // Backend returns { data: null } when no addresses exist
-        addresses = [];
-      } else {
-        // If it's an object but not an array, log and return empty
-        console.warn('Unexpected address response format - expected array, got:', typeof data, data);
-        addresses = [];
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/addresses`);
+      
+      if (!response.ok) {
+        console.error('Address fetch failed:', response.status, response.statusText);
+        return [];
       }
-    } else {
-      // If data is not an array or object, return empty array
-      console.warn('Unexpected address response format - not array or object:', typeof data, data);
-      addresses = [];
-    }
-    
-    // Ensure we have an array before mapping
-    if (!Array.isArray(addresses)) {
-      console.error('Addresses is not an array after processing:', addresses);
+      
+      const rawData = await response.json();
+      
+      // Backend returns: { success: true, message: "...", data: [...] }
+      let addresses: Address[] = [];
+      
+      // Extract data from response
+      if (rawData && typeof rawData === 'object') {
+        if (Array.isArray(rawData.data)) {
+          addresses = rawData.data;
+        } else if (Array.isArray(rawData)) {
+          // handleResponse might have already extracted the array
+          addresses = rawData;
+        } else if (rawData.data === null || rawData.data === undefined) {
+          // Backend returns { data: null } when no addresses exist
+          addresses = [];
+        }
+      }
+      
+      // Ensure we have an array before mapping
+      if (!Array.isArray(addresses)) {
+        console.error('Addresses is not an array after processing:', addresses);
+        return [];
+      }
+      
+      // Normalize the data and compute fullAddress
+      // Backend returns snake_case: is_default, postal_code, house_number
+      const normalized = addresses.map((addr: any) => {
+        const normalizedAddr: Address = {
+          id: addr.id,
+          name: addr.name || '',
+          address: addr.address || '',
+          city: addr.city || '',
+          state: addr.state || '',
+          country: addr.country || 'India',
+          postal_code: addr.postal_code || addr.postalCode || '',
+          postalCode: addr.postal_code || addr.postalCode || '',
+          latitude: addr.latitude || 0,
+          longitude: addr.longitude || 0,
+          house_number: addr.house_number || addr.houseNumber || '',
+          houseNumber: addr.house_number || addr.houseNumber || '',
+          landmark: addr.landmark || '',
+          is_default: addr.is_default !== undefined ? addr.is_default : (addr.isDefault !== undefined ? addr.isDefault : false),
+          isDefault: addr.is_default !== undefined ? addr.is_default : (addr.isDefault !== undefined ? addr.isDefault : false),
+        };
+        
+        normalizedAddr.fullAddress = this.buildFullAddress(normalizedAddr);
+        return normalizedAddr;
+      });
+      
+      return normalized;
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
       return [];
     }
-    
-    // Normalize the data and compute fullAddress
-    return addresses.map((addr) => ({
-      ...addr,
-      postalCode: addr.postal_code || addr.postalCode,
-      houseNumber: addr.house_number || addr.houseNumber,
-      isDefault: addr.is_default || addr.isDefault,
-      fullAddress: this.buildFullAddress(addr),
-    }));
   }
 
   async createAddress(data: CreateAddressRequest): Promise<Address> {

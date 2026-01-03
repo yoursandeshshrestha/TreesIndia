@@ -169,7 +169,11 @@ class SubscriptionService {
   /**
    * Purchase a subscription (for wallet payment)
    */
-  async purchaseSubscription(planId: number, paymentMethod: 'wallet' | 'razorpay'): Promise<UserSubscription> {
+  async purchaseSubscription(
+    planId: number,
+    paymentMethod: 'wallet' | 'razorpay',
+    durationType: 'monthly' | 'yearly'
+  ): Promise<UserSubscription> {
     const response = await authenticatedFetch(`${API_BASE_URL}/subscriptions/purchase`, {
       method: 'POST',
       headers: {
@@ -178,6 +182,7 @@ class SubscriptionService {
       body: JSON.stringify({
         plan_id: planId,
         payment_method: paymentMethod,
+        duration_type: durationType,
       }),
     });
 
