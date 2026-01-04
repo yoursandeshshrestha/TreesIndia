@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import ConfirmModal from "@/components/ConfirmModal/ConfirmModal";
 import Pagination from "@/components/Pagination/Pagination";
-import { Loader } from "@/components/Loader";
+import { Loader, Users } from "lucide-react";
 import { api } from "@/lib/api-client";
 
 // Components
@@ -33,6 +33,7 @@ interface WorkersResponse {
 
 function WorkersPage() {
   const searchParams = useSearchParams();
+  const [isSearching, setIsSearching] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const debouncedSearch = useDebounce(localSearch, 300);
 
@@ -54,7 +55,7 @@ function WorkersPage() {
     search: "",
     is_active: "",
     worker_type: "",
-    user_type: "",
+    user_type: "worker", // Always set to worker
     date_from: "",
     date_to: "",
   });
@@ -66,7 +67,6 @@ function WorkersPage() {
     const search = searchParams.get("search");
     const is_active = searchParams.get("is_active");
     const worker_type = searchParams.get("worker_type");
-    const user_type = searchParams.get("user_type");
     const date_from = searchParams.get("date_from");
     const date_to = searchParams.get("date_to");
 
@@ -75,9 +75,9 @@ function WorkersPage() {
     if (search) setLocalSearch(search);
     if (is_active) setFilters((prev) => ({ ...prev, is_active }));
     if (worker_type) setFilters((prev) => ({ ...prev, worker_type }));
-    if (user_type) setFilters((prev) => ({ ...prev, user_type }));
     if (date_from) setFilters((prev) => ({ ...prev, date_from }));
     if (date_to) setFilters((prev) => ({ ...prev, date_to }));
+    // Note: user_type is always "worker" for this page
 
     loadWorkers();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -90,23 +90,17 @@ function WorkersPage() {
     }
   }, [debouncedSearch, filters.search]);
 
-  // Load workers when filters or pagination changes
-  useEffect(() => {
-    loadWorkers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, itemsPerPage, filters]);
-
-  const loadWorkers = async () => {
+  const loadWorkers = useCallback(async () => {
     setIsLoading(true);
 
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
+        user_type: "worker", // Always filter for workers
         ...(filters.search && { search: filters.search }),
         ...(filters.is_active && { is_active: filters.is_active }),
         ...(filters.worker_type && { worker_type: filters.worker_type }),
-        ...(filters.user_type && { user_type: filters.user_type }),
         ...(filters.date_from && { date_from: filters.date_from }),
         ...(filters.date_to && { date_to: filters.date_to }),
       });
@@ -115,18 +109,28 @@ function WorkersPage() {
       const response = data as WorkersResponse;
 
       // Transform the data to map ID to id for compatibility
-      // Note: The API returns users with worker/broker data
+      // Note: The API returns users with worker data preloaded
       const transformedWorkers = (response?.data?.users || [])
         .filter((user: User) => {
-          // If user_type filter is set, only show matching users
-          if (filters.user_type) {
-            return user.user_type === filters.user_type && user.worker;
-          }
-          // Otherwise, show all users with worker data
-          return user.worker;
+          // Only include users that have worker data
+          return user.worker != null;
         })
         .map((user: User) => {
           const worker = user.worker!; // Non-null assertion since we filtered for it
+
+          // Helper function to parse JSON if it's a string, otherwise return as-is
+          const parseIfString = <T,>(value: T | string, defaultValue: T): T => {
+            if (!value) return defaultValue;
+            if (typeof value === 'string') {
+              try {
+                return JSON.parse(value);
+              } catch {
+                return defaultValue;
+              }
+            }
+            return value as T;
+          };
+
           return {
             ID: user.ID, // Use user ID for navigation
             id: user.ID, // Add lowercase id for compatibility
@@ -136,35 +140,27 @@ function WorkersPage() {
             user_id: worker.user_id,
             role_application_id: worker.role_application_id,
             worker_type: worker.worker_type,
-            contact_info: worker.contact_info
-              ? JSON.parse(worker.contact_info)
-              : { alternative_number: "" },
-            address: worker.address
-              ? JSON.parse(worker.address)
-              : {
-                  street: "",
-                  city: "",
-                  state: "",
-                  pincode: "",
-                  landmark: "",
-                },
-            banking_info: worker.banking_info
-              ? JSON.parse(worker.banking_info)
-              : {
-                  account_number: "",
-                  ifsc_code: "",
-                  bank_name: "",
-                  account_holder_name: "",
-                },
-            documents: worker.documents
-              ? JSON.parse(worker.documents)
-              : {
-                  aadhar_card: "",
-                  pan_card: "",
-                  profile_pic: user.avatar || "",
-                  police_verification: "",
-                },
-            skills: worker.skills ? JSON.parse(worker.skills) : [],
+            contact_info: parseIfString(worker.contact_info, { alternative_number: "" }),
+            address: parseIfString(worker.address, {
+              street: "",
+              city: "",
+              state: "",
+              pincode: "",
+              landmark: "",
+            }),
+            banking_info: parseIfString(worker.banking_info, {
+              account_number: "",
+              ifsc_code: "",
+              bank_name: "",
+              account_holder_name: "",
+            }),
+            documents: parseIfString(worker.documents, {
+              aadhar_card: "",
+              pan_card: "",
+              profile_pic: user.avatar || "",
+              police_verification: "",
+            }),
+            skills: parseIfString(worker.skills, []),
             experience_years: worker.experience_years,
             is_available: worker.is_available,
             rating: worker.rating,
@@ -187,7 +183,12 @@ function WorkersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, filters]);
+
+  // Load workers when filters or pagination changes
+  useEffect(() => {
+    loadWorkers();
+  }, [currentPage, itemsPerPage, filters, loadWorkers]);
 
   const handleDeleteWorker = async (worker: EnhancedWorker) => {
     try {
@@ -207,31 +208,16 @@ function WorkersPage() {
     setIsDeleteModalOpen(true);
   };
 
-  // Filter workers based on current filters
-  const filteredWorkers = workers.filter((worker) => {
-    const matchesSearch =
-      !filters.search ||
-      worker.user?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      worker.user?.email
-        ?.toLowerCase()
-        .includes(filters.search.toLowerCase()) ||
-      worker.user?.phone?.includes(filters.search);
-
-    const matchesActive =
-      !filters.is_active ||
-      worker.user?.is_active.toString() === filters.is_active;
-    const matchesType =
-      !filters.worker_type || worker.worker_type === filters.worker_type;
-
-    return matchesSearch && matchesActive && matchesType;
-  });
-
   if (isLoading && workers.length === 0) {
-    return <Loader fullScreen />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <WorkerHeader
         itemsPerPage={itemsPerPage}
         onItemsPerPageChange={(newItemsPerPage) => {
@@ -261,6 +247,7 @@ function WorkersPage() {
         worker_type={filters.worker_type}
         onSearchChange={(value) => {
           setLocalSearch(value);
+          setIsSearching(true);
         }}
         onActiveChange={(value) => {
           setFilters((prev) => ({ ...prev, is_active: value }));
@@ -275,27 +262,38 @@ function WorkersPage() {
             search: "",
             is_active: "",
             worker_type: "",
-            user_type: "",
+            user_type: "worker", // Keep worker filter
             date_from: "",
             date_to: "",
           });
           setLocalSearch("");
+          setIsSearching(false);
         }}
         user_type={filters.user_type}
         onUserTypeChange={(value) => {
           setFilters((prev) => ({ ...prev, user_type: value }));
           setCurrentPage(1);
         }}
-        isSearching={false}
+        isSearching={isSearching}
       />
 
       <WorkerTable
-        workers={filteredWorkers}
+        workers={workers}
         onDeleteWorker={handleDeleteWorkerClick}
       />
 
+      {workers.length === 0 && !isLoading && (
+        <div className="text-gray-400 text-center h-[400px] w-full flex items-center justify-center">
+          <div className="text-center">
+            <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <p className="text-lg font-medium">No workers found</p>
+            <p className="text-sm">Try adjusting your search or filters</p>
+          </div>
+        </div>
+      )}
+
       {totalPages > 1 && (
-        <div className="mt-6">
+        <div className="mt-6 px-4">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -303,7 +301,7 @@ function WorkersPage() {
           />
         </div>
       )}
-    </>
+    </div>
   );
 }
 
