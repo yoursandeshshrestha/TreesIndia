@@ -36,6 +36,7 @@ function UsersManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
 
   const [selectionMode] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -115,6 +116,7 @@ function UsersManagementPage() {
       const response = apiResponse.data;
       setUsers(response?.users || []);
       setTotalPages(response?.pagination?.total_pages || 1);
+      setTotalUsers(response?.pagination?.total || 0);
     } catch (err) {
       console.error("Failed to load users", err);
       toast.error("Error loading users");
@@ -368,6 +370,7 @@ function UsersManagementPage() {
 
       <UserTable
         users={filteredUsers}
+        totalUsers={totalUsers}
         selectionMode={selectionMode}
         selectedUsers={selectedUsers}
         onSelectionChange={(selected) =>

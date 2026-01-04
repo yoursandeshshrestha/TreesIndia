@@ -22,6 +22,7 @@ import Image from "next/image";
 
 interface UserTableProps {
   users: User[];
+  totalUsers?: number; // Total count from pagination
   selectionMode: boolean;
   selectedUsers: string[];
   onSelectionChange: (selectedRows: User[]) => void;
@@ -59,6 +60,7 @@ const renderAvatar = (src: string, alt: string) => {
 
 const UserTable = ({
   users,
+  totalUsers,
   selectionMode,
   selectedUsers,
   onSelectionChange,
@@ -70,7 +72,7 @@ const UserTable = ({
 }: UserTableProps) => {
   // Calculate statistics
   const stats = {
-    total: users.length,
+    total: totalUsers ?? users.length, // Use totalUsers from pagination if available
     active: users.filter((u) => u.is_active).length,
     inactive: users.filter((u) => u.is_active === false).length,
     withSubscription: users.filter((u) => u.has_active_subscription).length,
