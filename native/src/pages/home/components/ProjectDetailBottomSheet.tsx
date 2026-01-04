@@ -5,7 +5,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
   Linking,
   Alert,
@@ -19,6 +18,11 @@ import PhoneIcon from '../../../components/icons/PhoneIcon';
 import TimeIcon from '../../../components/icons/TimeIcon';
 import TypeIcon from '../../../components/icons/TypeIcon';
 import CalendarIcon from '../../../components/icons/CalendarIcon';
+import NotFoundIcon from '../../../components/icons/NotFoundIcon';
+import ProfileIcon from '../../../components/icons/ProfileIcon';
+import MailIcon from '../../../components/icons/MailIcon';
+import InfoIcon from '../../../components/icons/InfoIcon';
+import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 
 interface ProjectDetailBottomSheetProps {
   visible: boolean;
@@ -60,25 +64,8 @@ export default function ProjectDetailBottomSheet({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsClosing(false);
-      setCurrentImageIndex(0);
-      onClose();
-    });
+    setCurrentImageIndex(0);
+    onClose();
   };
 
   const getStatusLabel = () => {
@@ -146,33 +133,23 @@ export default function ProjectDetailBottomSheet({
     }
   };
 
-  const handleCall = (phoneNumber: string) => {
-    const phone = `tel:${phoneNumber}`;
-    Linking.canOpenURL(phone)
+  const handleCall = () => {
+    if (!project.contact_info?.phone) {
+      Alert.alert('Contact Unavailable', 'Contact information is not available for this project.');
+      return;
+    }
+
+    const phoneNumber = `tel:${project.contact_info.phone}`;
+    Linking.canOpenURL(phoneNumber)
       .then((supported) => {
         if (supported) {
-          return Linking.openURL(phone);
+          return Linking.openURL(phoneNumber);
         } else {
           Alert.alert('Error', 'Unable to open phone dialer.');
         }
       })
       .catch(() => {
         Alert.alert('Error', 'Unable to open phone dialer.');
-      });
-  };
-
-  const handleEmail = (email: string) => {
-    const emailUrl = `mailto:${email}`;
-    Linking.canOpenURL(emailUrl)
-      .then((supported) => {
-        if (supported) {
-          return Linking.openURL(emailUrl);
-        } else {
-          Alert.alert('Error', 'Unable to open email client.');
-        }
-      })
-      .catch(() => {
-        Alert.alert('Error', 'Unable to open email client.');
       });
   };
 
@@ -258,7 +235,7 @@ export default function ProjectDetailBottomSheet({
                     }}
                   >
                     {images.map((imageUri, index) => (
-                      <Image
+                      <ImageWithSkeleton
                         key={index}
                         source={{ uri: imageUri }}
                         style={{ width: SCREEN_WIDTH, height: 250 }}
@@ -282,9 +259,9 @@ export default function ProjectDetailBottomSheet({
                 </View>
               ) : (
                 <View className="h-[250px] bg-[#F3F4F6] items-center justify-center mb-6">
-                  <Text className="text-6xl mb-4">🏗️</Text>
+                  <NotFoundIcon size={64} color="#9CA3AF" />
                   <Text
-                    className="text-base text-[#9CA3AF]"
+                    className="text-base text-[#9CA3AF] mt-4"
                     style={{ fontFamily: 'Inter-Regular' }}
                   >
                     No Images Available
@@ -456,123 +433,129 @@ export default function ProjectDetailBottomSheet({
                   </View>
                 </View>
 
-                {/* Contact Information */}
+                {/* Contact Person */}
                 {project.contact_info && (project.contact_info.phone || project.contact_info.email || project.contact_info.contact_person) && (
-                  <View className="mb-4">
+                  <View className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-6">
                     <Text
-                      className="text-xl font-semibold text-[#111928] mb-4"
+                      className="text-sm font-semibold text-[#6B7280] mb-3"
                       style={{ fontFamily: 'Inter-SemiBold' }}
                     >
-                      Contact Information
+                      Contact Person
                     </Text>
-
-                    <View className="mb-4 bg-white border border-[#E5E7EB] rounded-xl p-4">
-                      {project.contact_info.contact_person && (
-                        <View className="mb-3">
-                          <Text
-                            className="text-sm text-[#6B7280] mb-1"
-                            style={{ fontFamily: 'Inter-Regular' }}
-                          >
-                            Contact Person
-                          </Text>
-                          <Text
-                            className="text-base font-semibold text-[#111928]"
-                            style={{ fontFamily: 'Inter-SemiBold' }}
-                          >
-                            {project.contact_info.contact_person}
-                          </Text>
-                        </View>
-                      )}
-
-                      {project.contact_info.phone && (
-                        <TouchableOpacity
-                          onPress={() => handleCall(project.contact_info!.phone!)}
-                          className="bg-[#00a871] rounded-xl py-3 flex-row items-center justify-center mb-2"
-                          activeOpacity={0.7}
-                          disabled={isClosing}
+                    {project.contact_info.contact_person && (
+                      <View className="flex-row items-center mb-2">
+                        <ProfileIcon size={16} color="#111928" />
+                        <Text
+                          className="text-base text-[#111928] ml-2"
+                          style={{ fontFamily: 'Inter-Regular' }}
                         >
-                          <PhoneIcon size={18} color="#FFFFFF" />
-                          <Text
-                            className="text-white font-semibold ml-2 text-sm"
-                            style={{ fontFamily: 'Inter-SemiBold' }}
-                          >
-                            {project.contact_info.phone}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-
-                      {project.contact_info.email && (
-                        <TouchableOpacity
-                          onPress={() => handleEmail(project.contact_info!.email!)}
-                          className="border border-[#00a871] rounded-xl py-3 flex-row items-center justify-center"
-                          activeOpacity={0.7}
-                          disabled={isClosing}
+                          {project.contact_info.contact_person}
+                        </Text>
+                      </View>
+                    )}
+                    {project.contact_info.phone && (
+                      <View className="flex-row items-center mb-2">
+                        <PhoneIcon size={16} color="#111928" />
+                        <Text
+                          className="text-base text-[#111928] ml-2"
+                          style={{ fontFamily: 'Inter-Regular' }}
                         >
-                          <Text
-                            className="text-[#00a871] font-semibold text-sm"
-                            style={{ fontFamily: 'Inter-SemiBold' }}
-                          >
-                            {project.contact_info.email}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                          {project.contact_info.phone}
+                        </Text>
+                      </View>
+                    )}
+                    {project.contact_info.email && (
+                      <View className="flex-row items-center">
+                        <MailIcon size={16} color="#111928" />
+                        <Text
+                          className="text-base text-[#111928] ml-2"
+                          style={{ fontFamily: 'Inter-Regular' }}
+                        >
+                          {project.contact_info.email}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
 
-                    {/* Professional Warning Message */}
-                    <View className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                      <View className="border-b border-[#E5E7EB]">
-                        <View className="px-4 py-3">
+                {/* Professional Warning Message */}
+                {project.contact_info && (project.contact_info.phone || project.contact_info.email || project.contact_info.contact_person) && (
+                  <View className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+                    <View className="border-b border-[#E5E7EB]">
+                      <View className="px-4 py-3">
+                        <View className="flex-row items-center">
+                          <InfoIcon size={18} color="#111928" />
                           <Text
-                            className="text-sm font-semibold text-[#111928]"
+                            className="text-sm font-semibold text-[#111928] ml-2"
                             style={{ fontFamily: 'Inter-SemiBold' }}
                           >
-                            ⚠️ Important Notice
+                            Important Notice
                           </Text>
                         </View>
                       </View>
-                      <View className="px-4 py-3">
-                        <View className="flex-row items-start mb-2">
-                          <View
-                            className="w-1 h-1 rounded-full bg-[#9CA3AF]"
-                            style={{ marginTop: 8, marginRight: 12 }}
-                          />
-                          <Text
-                            className="flex-1 text-sm text-[#374151]"
-                            style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-                          >
-                            Use contact information responsibly for genuine project inquiries only
-                          </Text>
-                        </View>
-                        <View className="flex-row items-start mb-2">
-                          <View
-                            className="w-1 h-1 rounded-full bg-[#9CA3AF]"
-                            style={{ marginTop: 8, marginRight: 12 }}
-                          />
-                          <Text
-                            className="flex-1 text-sm text-[#374151]"
-                            style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-                          >
-                            Spam, harassment, or misuse of contact details is strictly prohibited
-                          </Text>
-                        </View>
-                        <View className="flex-row items-start">
-                          <View
-                            className="w-1 h-1 rounded-full bg-[#9CA3AF]"
-                            style={{ marginTop: 8, marginRight: 12 }}
-                          />
-                          <Text
-                            className="flex-1 text-sm text-[#374151]"
-                            style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-                          >
-                            Reported users face immediate account suspension without prior notice
-                          </Text>
-                        </View>
+                    </View>
+                    <View className="px-4 py-3">
+                      <View className="flex-row items-start mb-2">
+                        <View
+                          className="w-1 h-1 rounded-full bg-[#9CA3AF]"
+                          style={{ marginTop: 8, marginRight: 12 }}
+                        />
+                        <Text
+                          className="flex-1 text-sm text-[#374151]"
+                          style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+                        >
+                          Use contact information responsibly for genuine project inquiries only
+                        </Text>
+                      </View>
+                      <View className="flex-row items-start mb-2">
+                        <View
+                          className="w-1 h-1 rounded-full bg-[#9CA3AF]"
+                          style={{ marginTop: 8, marginRight: 12 }}
+                        />
+                        <Text
+                          className="flex-1 text-sm text-[#374151]"
+                          style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+                        >
+                          Spam, harassment, or misuse of contact details is strictly prohibited
+                        </Text>
+                      </View>
+                      <View className="flex-row items-start">
+                        <View
+                          className="w-1 h-1 rounded-full bg-[#9CA3AF]"
+                          style={{ marginTop: 8, marginRight: 12 }}
+                        />
+                        <Text
+                          className="flex-1 text-sm text-[#374151]"
+                          style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
+                        >
+                          Reported users face immediate account suspension without prior notice
+                        </Text>
                       </View>
                     </View>
                   </View>
                 )}
               </View>
             </ScrollView>
+
+            {/* Contact Button */}
+            {project.contact_info?.phone && (
+              <View className="px-6 pb-4 pt-2 border-t border-[#E5E7EB] bg-white">
+                <TouchableOpacity
+                  onPress={handleCall}
+                  className="bg-[#055c3a] rounded-lg py-3.5 items-center flex-row justify-center"
+                  activeOpacity={0.7}
+                  style={{ gap: 8 }}
+                >
+                  <PhoneIcon size={20} color="#FFFFFF" />
+                  <Text
+                    className="text-white text-base font-semibold"
+                    style={{ fontFamily: 'Inter-SemiBold' }}
+                  >
+                    Contact Project Owner
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </SafeAreaView>
         </Animated.View>
       </View>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -11,10 +11,18 @@ import PropertyDetailBottomSheet from './components/PropertyDetailBottomSheet';
 import ServiceDetailBottomSheet from './components/ServiceDetailBottomSheet';
 import CategoryBottomSheet from './components/CategoryBottomSheet';
 import ProjectDetailBottomSheet from './components/ProjectDetailBottomSheet';
-import { bannerService, PromotionBanner, categoryService, Category, homepageIconService, HomepageCategoryIcon, serviceService, Service, propertyService, Property, projectService, Project } from '../../services';
+import { bannerService, PromotionBanner, categoryService, Category, homepageIconService, HomepageCategoryIcon, serviceService, Service, propertyService, Property, projectService, Project, workerService, Worker, vendorService, Vendor, VendorFilters } from '../../services';
 import { PropertyFilters } from '../properties/components/FilterBottomSheet';
 import { ServiceFilters } from '../services/components/ServiceFilterBottomSheet';
+import { WorkerFilters } from '../workers/components/WorkerFilterBottomSheet';
 import ProjectCard from '../../components/ProjectCard';
+import WorkerCard from '../../components/WorkerCard';
+import WorkerDetailBottomSheet from '../workers/components/WorkerDetailBottomSheet';
+import VendorCard from '../../components/VendorCard';
+import VendorDetailBottomSheet from '../../components/VendorDetailBottomSheet';
+import SubscriptionRequiredBottomSheet from '../../components/SubscriptionRequiredBottomSheet';
+import NotFoundIcon from '../../components/icons/NotFoundIcon';
+import ImageWithSkeleton from '../../components/ImageWithSkeleton';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const BANNER_ASPECT_RATIO = 16 / 9;
@@ -33,11 +41,14 @@ interface HomeScreenProps {
   onNavigateToProperties?: (filters?: PropertyFilters) => void;
   onNavigateToServices?: (filters?: ServiceFilters) => void;
   onNavigateToProjects?: (filters?: ProjectFilters) => void;
+  onNavigateToWorkers?: (filters?: WorkerFilters) => void;
+  onNavigateToVendors?: (filters?: VendorFilters) => void;
   onNavigateToCategoryServices?: (category: Category) => void;
+  onNavigateToSubscription?: () => void;
   addressRefreshTrigger?: number; // Trigger to refresh address when returning from selection
 }
 
-export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToServiceSearch, onNavigateToProperties, onNavigateToServices, onNavigateToProjects, onNavigateToCategoryServices, addressRefreshTrigger }: HomeScreenProps) {
+export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToServiceSearch, onNavigateToProperties, onNavigateToServices, onNavigateToProjects, onNavigateToWorkers, onNavigateToVendors, onNavigateToCategoryServices, onNavigateToSubscription, addressRefreshTrigger }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [banners, setBanners] = useState<PromotionBanner[]>([]);
@@ -78,6 +89,14 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
+  // Workers Section
+  const [topWorkers, setTopWorkers] = useState<Worker[]>([]);
+  const [isLoadingWorkers, setIsLoadingWorkers] = useState(true);
+
+  // Vendors Section
+  const [topVendors, setTopVendors] = useState<Vendor[]>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = useState(true);
+
   // Bottom Sheet States
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showPropertyDetailSheet, setShowPropertyDetailSheet] = useState(false);
@@ -87,6 +106,14 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showProjectDetailSheet, setShowProjectDetailSheet] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [showWorkerDetailSheet, setShowWorkerDetailSheet] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [showVendorDetailSheet, setShowVendorDetailSheet] = useState(false);
+
+  // Subscription state
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [showSubscriptionSheet, setShowSubscriptionSheet] = useState(false);
 
   useEffect(() => {
     loadBanners();
@@ -102,6 +129,8 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
     loadProperties2BHK();
     loadProperties3BHK();
     loadPropertiesUnder10K();
+    loadTopWorkers();
+    loadTopVendors();
     return () => {
       if (autoSlideTimerRef.current) {
         clearInterval(autoSlideTimerRef.current);
@@ -291,13 +320,23 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
     try {
       setIsLoadingProjects(true);
       const response = await projectService.getAllProjects(1, 20);
-      if (response.data && Array.isArray(response.data)) {
-        const projectsWithImages = response.data.filter(proj =>
+
+      if (response.success && response.data) {
+        // Parse subscription status
+        if (response.data.user_subscription) {
+          setHasActiveSubscription(
+            response.data.user_subscription.has_active_subscription
+          );
+        }
+
+        // Handle projects array
+        const projectsData = response.data.projects || [];
+        const projectsWithImages = projectsData.filter(proj =>
           proj.images && Array.isArray(proj.images) && proj.images.length > 0
         );
         const projectsToShow = projectsWithImages.length > 0
           ? projectsWithImages.slice(0, 10)
-          : response.data.slice(0, 10);
+          : projectsData.slice(0, 10);
         setProjects(projectsToShow);
       } else {
         setProjects([]);
@@ -311,6 +350,74 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
       setProjects([]);
     } finally {
       setIsLoadingProjects(false);
+    }
+  };
+
+  const loadTopWorkers = async () => {
+    try {
+      setIsLoadingWorkers(true);
+      const response = await workerService.getWorkersWithFilters({
+        page: 1,
+        limit: 10,
+        is_active: true,
+        sortBy: 'rating',
+        sortOrder: 'desc',
+      });
+
+      if (response.success && response.data) {
+        // Parse subscription status
+        if (response.data.user_subscription) {
+          setHasActiveSubscription(
+            response.data.user_subscription.has_active_subscription
+          );
+        }
+
+        setTopWorkers(response.data.workers);
+      } else {
+        setTopWorkers([]);
+      }
+    } catch (error) {
+      // Silently handle subscription errors - workers section just won't show
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (!errorMessage.includes('Subscription required')) {
+        console.error('Failed to load top workers:', error);
+      }
+      setTopWorkers([]);
+    } finally {
+      setIsLoadingWorkers(false);
+    }
+  };
+
+  const loadTopVendors = async () => {
+    try {
+      setIsLoadingVendors(true);
+
+      const response = await vendorService.getVendorsWithFilters({
+        page: 1,
+        limit: 10,
+      });
+
+      if (response.success && response.data) {
+        // Parse subscription status
+        if (response.data.user_subscription) {
+          setHasActiveSubscription(
+            response.data.user_subscription.has_active_subscription
+          );
+        }
+
+        setTopVendors(response.data.vendors);
+      } else {
+        setTopVendors([]);
+      }
+    } catch (error) {
+      // Silently handle subscription errors - vendors section just won't show
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (!errorMessage.includes('Subscription required')) {
+        console.error('Failed to load top vendors:', error);
+      }
+      setTopVendors([]);
+    } finally {
+      setIsLoadingVendors(false);
     }
   };
 
@@ -386,16 +493,38 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
     return homepageIcons.find((icon) => icon.name.toLowerCase() === categoryName.toLowerCase()) || null;
   };
 
-  const getFallbackIcon = (categoryName: string): string => {
-    const lowerName = categoryName.toLowerCase();
-    if (lowerName.includes('home')) {
-      return '🏠';
-    } else if (lowerName.includes('construction')) {
-      return '🏗️';
-    } else if (lowerName.includes('marketplace')) {
-      return '🛒';
+  const handleProjectPress = (project: Project) => {
+    if (!hasActiveSubscription) {
+      setShowSubscriptionSheet(true);
+      return;
     }
-    return '📦';
+    setSelectedProject(project);
+    setShowProjectDetailSheet(true);
+  };
+
+  const handleWorkerPress = (worker: Worker) => {
+    if (!hasActiveSubscription) {
+      setShowSubscriptionSheet(true);
+      return;
+    }
+    setSelectedWorker(worker);
+    setShowWorkerDetailSheet(true);
+  };
+
+  const handleVendorPress = (vendor: Vendor) => {
+    if (!hasActiveSubscription) {
+      setShowSubscriptionSheet(true);
+      return;
+    }
+    setSelectedVendor(vendor);
+    setShowVendorDetailSheet(true);
+  };
+
+  const handleSubscribePress = () => {
+    setShowSubscriptionSheet(false);
+    if (onNavigateToSubscription) {
+      onNavigateToSubscription();
+    }
   };
 
   return (
@@ -465,7 +594,7 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
                       onPress={() => handleBannerPress(banner)}
                       style={{ width: SCREEN_WIDTH }}
                     >
-                      <Image
+                      <ImageWithSkeleton
                         source={{ uri: banner.image }}
                         style={{
                           width: SCREEN_WIDTH,
@@ -520,7 +649,6 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
                 const categoryEntity = getCategoryEntity(fixedCategory.slug);
                 const homepageIcon = getHomepageIcon(fixedCategory.name);
                 const iconUrl = homepageIcon?.icon_url;
-                const fallbackIcon = getFallbackIcon(fixedCategory.name);
                 // Check if icon is a URL (http/https)
                 const isImageUrl = iconUrl && iconUrl.trim() !== '' && (iconUrl.startsWith('http://') || iconUrl.startsWith('https://'));
                 
@@ -546,15 +674,13 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
                       {/* Icon container - fixed height */}
                       <View className="items-center justify-center" style={{ height: 80 }}>
                         {isImageUrl ? (
-                          <Image
+                          <ImageWithSkeleton
                             source={{ uri: iconUrl }}
                             style={{ width: 40, height: 40 }}
                             resizeMode="contain"
-                            onError={(error) => {
-                            }}
                           />
                         ) : (
-                          <Text style={{ fontSize: 40 }}>{fallbackIcon}</Text>
+                          <NotFoundIcon size={40} color="#9CA3AF" />
                         )}
                       </View>
                       {/* Title - fixed position */}
@@ -726,10 +852,8 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
                   >
                     <ProjectCard
                       project={project}
-                      onPress={() => {
-                        setSelectedProject(project);
-                        setShowProjectDetailSheet(true);
-                      }}
+                      onPress={() => handleProjectPress(project)}
+                      shouldBlur={!hasActiveSubscription}
                       width={200}
                     />
                   </View>
@@ -790,6 +914,108 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
                         setShowServiceDetailSheet(true);
                       }}
                       showBookButton={true}
+                      width={200}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        )}
+
+        {/* Top Rated Workers Section */}
+        {!isLoadingWorkers && topWorkers.length > 0 && (
+          <View className="pt-4 pb-4">
+            <View className="flex-row justify-between items-center mb-4 px-6">
+              <Text
+                className="text-xl font-bold text-[#111928]"
+                style={{ fontFamily: 'Inter-Bold' }}
+              >
+                Top Rated Workers
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (onNavigateToWorkers) {
+                    onNavigateToWorkers();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  className="text-sm font-medium text-[#00a871]"
+                  style={{ fontFamily: 'Inter-Medium' }}
+                >
+                  See all
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ height: 240 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 24 }}
+              >
+                {topWorkers.map((worker, index) => (
+                  <View
+                    key={worker.id}
+                    style={{ marginLeft: index === 0 ? 24 : 16 }}
+                  >
+                    <WorkerCard
+                      worker={worker}
+                      onPress={() => handleWorkerPress(worker)}
+                      shouldBlur={!hasActiveSubscription}
+                      width={200}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        )}
+
+        {/* Top Vendors Section */}
+        {!isLoadingVendors && topVendors.length > 0 && (
+          <View className="pt-4 pb-4">
+            <View className="flex-row justify-between items-center mb-4 px-6">
+              <Text
+                className="text-xl font-bold text-[#111928]"
+                style={{ fontFamily: 'Inter-Bold' }}
+              >
+                Top Vendors
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (onNavigateToVendors) {
+                    onNavigateToVendors();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  className="text-sm font-medium text-[#00a871]"
+                  style={{ fontFamily: 'Inter-Medium' }}
+                >
+                  See all
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ height: 240 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 24 }}
+              >
+                {topVendors.map((vendor, index) => (
+                  <View
+                    key={vendor.id}
+                    style={{ marginLeft: index === 0 ? 24 : 16 }}
+                  >
+                    <VendorCard
+                      vendor={vendor}
+                      onPress={() => handleVendorPress(vendor)}
+                      shouldBlur={!hasActiveSubscription}
                       width={200}
                     />
                   </View>
@@ -1131,6 +1357,38 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
           project={selectedProject}
         />
       )}
+
+      {/* Worker Detail Bottom Sheet */}
+      {selectedWorker && (
+        <WorkerDetailBottomSheet
+          visible={showWorkerDetailSheet}
+          onClose={() => {
+            setShowWorkerDetailSheet(false);
+            setSelectedWorker(null);
+          }}
+          worker={selectedWorker}
+        />
+      )}
+
+      {/* Vendor Detail Bottom Sheet */}
+      {selectedVendor && (
+        <VendorDetailBottomSheet
+          visible={showVendorDetailSheet}
+          onClose={() => {
+            setShowVendorDetailSheet(false);
+            setSelectedVendor(null);
+          }}
+          vendor={selectedVendor}
+        />
+      )}
+
+      {/* Subscription Required Bottom Sheet */}
+      <SubscriptionRequiredBottomSheet
+        visible={showSubscriptionSheet}
+        onClose={() => setShowSubscriptionSheet(false)}
+        onSubscribe={handleSubscribePress}
+        contentType="project"
+      />
     </View>
   );
 }

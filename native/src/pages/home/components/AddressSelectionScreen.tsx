@@ -12,7 +12,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import BackIcon from '../../../components/icons/BackIcon';
 import SearchIcon from '../../../components/icons/SearchIcon';
@@ -21,14 +20,28 @@ import AddressIcon from '../../../components/icons/AddressIcon';
 import { locationSearchService, LocationPrediction } from '../../../services/api/location-search.service';
 import { userLocationService, CreateLocationRequest } from '../../../services/api/user-location.service';
 import { addressService, type Address } from '../../../services';
+import { searchHistoryService, SearchHistoryEntry } from '../../../services/api/search-history.service';
 
 interface AddressSelectionScreenProps {
   onBack: () => void;
   onAddressSelected?: () => void;
 }
 
-const RECENT_SEARCHES_KEY = 'address_recent_searches';
-const MAX_RECENT_SEARCHES = 5;
+// Helper function to convert SearchHistoryEntry to LocationPrediction
+const convertSearchHistoryToLocationPrediction = (history: SearchHistoryEntry): LocationPrediction => ({
+  place_id: history.place_id,
+  description: history.description,
+  formatted_address: history.formatted_address,
+  city: history.city,
+  state: history.state,
+  country: history.country,
+  country_code: history.country_code,
+  postcode: history.postcode,
+  latitude: history.latitude,
+  longitude: history.longitude,
+  address_line1: history.address_line1,
+  address_line2: history.address_line2,
+});
 
 export default function AddressSelectionScreen({
   onBack,
@@ -57,13 +70,12 @@ export default function AddressSelectionScreen({
 
   const loadRecentSearches = async () => {
     try {
-      const stored = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
-      if (stored) {
-        const recent = JSON.parse(stored);
-        setRecentSearches(Array.isArray(recent) ? recent : []);
-      }
+      const histories = await searchHistoryService.getRecentSearches(10);
+      const predictions = histories.map(convertSearchHistoryToLocationPrediction);
+      setRecentSearches(predictions);
     } catch (error) {
       console.error('Failed to load recent searches:', error);
+      setRecentSearches([]);
     }
   };
 
@@ -79,12 +91,23 @@ export default function AddressSelectionScreen({
 
   const saveRecentSearch = async (location: LocationPrediction) => {
     try {
-      const updated = [location, ...recentSearches.filter(
-        (item) => item.place_id !== location.place_id
-      )].slice(0, MAX_RECENT_SEARCHES);
-      
-      setRecentSearches(updated);
-      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      await searchHistoryService.saveSearchHistory({
+        place_id: location.place_id,
+        description: location.description,
+        formatted_address: location.formatted_address,
+        city: location.city,
+        state: location.state,
+        country: location.country,
+        country_code: location.country_code,
+        postcode: location.postcode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address_line1: location.address_line1,
+        address_line2: location.address_line2,
+      });
+
+      // Reload recent searches after saving
+      await loadRecentSearches();
     } catch (error) {
       console.error('Failed to save recent search:', error);
     }

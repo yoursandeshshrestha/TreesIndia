@@ -5,7 +5,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
   Linking,
   Alert,
@@ -24,6 +23,10 @@ import CalendarIcon from '../../../components/icons/CalendarIcon';
 import FurnishingIcon from '../../../components/icons/FurnishingIcon';
 import LocationIcon from '../../../components/icons/LocationIcon';
 import PhoneIcon from '../../../components/icons/PhoneIcon';
+import NotFoundIcon from '../../../components/icons/NotFoundIcon';
+import ProfileIcon from '../../../components/icons/ProfileIcon';
+import InfoIcon from '../../../components/icons/InfoIcon';
+import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 
 interface PropertyDetailBottomSheetProps {
   visible: boolean;
@@ -65,25 +68,8 @@ export default function PropertyDetailBottomSheet({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsClosing(false);
-      setCurrentImageIndex(0);
-      onClose();
-    });
+    setCurrentImageIndex(0);
+    onClose();
   };
 
   const getDisplayPrice = () => {
@@ -232,7 +218,7 @@ export default function PropertyDetailBottomSheet({
                     }}
                   >
                     {images.map((imageUri, index) => (
-                      <Image
+                      <ImageWithSkeleton
                         key={index}
                         source={{ uri: imageUri }}
                         style={{ width: SCREEN_WIDTH, height: 250 }}
@@ -256,9 +242,9 @@ export default function PropertyDetailBottomSheet({
                 </View>
               ) : (
                 <View className="h-[250px] bg-[#F3F4F6] items-center justify-center mb-6">
-                  <Text className="text-6xl mb-4">🏠</Text>
+                  <NotFoundIcon size={64} color="#9CA3AF" />
                   <Text
-                    className="text-base text-[#9CA3AF]"
+                    className="text-base text-[#9CA3AF] mt-4"
                     style={{ fontFamily: 'Inter-Regular' }}
                   >
                     No Images Available
@@ -499,61 +485,51 @@ export default function PropertyDetailBottomSheet({
                   </View>
                 </View>
 
-                {/* Contact Information */}
+                {/* Contact Person */}
                 {property.contact_number && (
-                  <View className="mb-4">
-                    {/* Owner Information */}
-                    {property.owner_name && (
-                      <View className="mb-3">
-                        <Text
-                          className="text-sm text-[#6B7280] mb-1"
-                          style={{ fontFamily: 'Inter-Regular' }}
-                        >
-                          Owner
-                        </Text>
-                        <Text
-                          className="text-base font-semibold text-[#111928]"
-                          style={{ fontFamily: 'Inter-SemiBold' }}
-                        >
-                          {property.owner_name}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Contact Number with Call Button */}
-                    <View className="mb-4">
+                  <>
+                    <View className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-6">
                       <Text
-                        className="text-sm text-[#6B7280] mb-2"
-                        style={{ fontFamily: 'Inter-Regular' }}
+                        className="text-sm font-semibold text-[#6B7280] mb-3"
+                        style={{ fontFamily: 'Inter-SemiBold' }}
                       >
-                        Contact Number
+                        Contact Person
                       </Text>
-                      <TouchableOpacity
-                        onPress={handleCall}
-                        className="bg-[#00a871] rounded-xl py-4 flex-row items-center justify-center"
-                        activeOpacity={0.7}
-                        disabled={isClosing}
-                      >
-                        <PhoneIcon size={20} color="#FFFFFF" />
+                      {property.owner_name && (
+                        <View className="flex-row items-center mb-2">
+                          <ProfileIcon size={16} color="#111928" />
+                          <Text
+                            className="text-base text-[#111928] ml-2"
+                            style={{ fontFamily: 'Inter-Regular' }}
+                          >
+                            {property.owner_name}
+                          </Text>
+                        </View>
+                      )}
+                      <View className="flex-row items-center mb-2">
+                        <PhoneIcon size={16} color="#111928" />
                         <Text
-                          className="text-white font-semibold ml-2 text-base"
-                          style={{ fontFamily: 'Inter-SemiBold' }}
+                          className="text-base text-[#111928] ml-2"
+                          style={{ fontFamily: 'Inter-Regular' }}
                         >
                           {property.contact_number}
                         </Text>
-                      </TouchableOpacity>
+                      </View>
                     </View>
 
                     {/* Professional Warning Message */}
-                    <View className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                    <View className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
                       <View className="border-b border-[#E5E7EB]">
                         <View className="px-4 py-3">
-                          <Text
-                            className="text-sm font-semibold text-[#111928]"
-                            style={{ fontFamily: 'Inter-SemiBold' }}
-                          >
-                            ⚠️ Important Notice
-                          </Text>
+                          <View className="flex-row items-center">
+                            <InfoIcon size={18} color="#111928" />
+                            <Text
+                              className="text-sm font-semibold text-[#111928] ml-2"
+                              style={{ fontFamily: 'Inter-SemiBold' }}
+                            >
+                              Important Notice
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <View className="px-4 py-3">
@@ -595,10 +571,30 @@ export default function PropertyDetailBottomSheet({
                         </View>
                       </View>
                     </View>
-                  </View>
+                  </>
                 )}
               </View>
             </ScrollView>
+
+            {/* Contact Button */}
+            {property.contact_number && (
+              <View className="px-6 pb-4 pt-2 border-t border-[#E5E7EB] bg-white">
+                <TouchableOpacity
+                  onPress={handleCall}
+                  className="bg-[#055c3a] rounded-lg py-3.5 items-center flex-row justify-center"
+                  activeOpacity={0.7}
+                  style={{ gap: 8 }}
+                >
+                  <PhoneIcon size={20} color="#FFFFFF" />
+                  <Text
+                    className="text-white text-base font-semibold"
+                    style={{ fontFamily: 'Inter-SemiBold' }}
+                  >
+                    Contact Property Owner
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </SafeAreaView>
         </Animated.View>
       </View>

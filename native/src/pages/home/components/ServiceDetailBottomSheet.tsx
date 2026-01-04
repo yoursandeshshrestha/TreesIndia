@@ -5,7 +5,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
   useWindowDimensions,
   Animated,
@@ -17,6 +16,8 @@ import { type Service } from '../../../services';
 import StarIcon from '../../../components/icons/StarIcon';
 import TimeIcon from '../../../components/icons/TimeIcon';
 import CategoryIcon from '../../../components/icons/CategoryIcon';
+import NotFoundIcon from '../../../components/icons/NotFoundIcon';
+import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 
 interface ServiceDetailBottomSheetProps {
   visible: boolean;
@@ -62,25 +63,8 @@ export default function ServiceDetailBottomSheet({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onClose();
-      setIsClosing(false);
-      setCurrentImageIndex(0);
-    });
+    setCurrentImageIndex(0);
+    onClose();
   };
 
   const getDisplayPrice = () => {
@@ -177,7 +161,7 @@ export default function ServiceDetailBottomSheet({
                     }}
                   >
                     {images.map((imageUri, index) => (
-                      <Image
+                      <ImageWithSkeleton
                         key={index}
                         source={{ uri: imageUri }}
                         style={{ width: SCREEN_WIDTH, height: 250 }}
@@ -201,9 +185,9 @@ export default function ServiceDetailBottomSheet({
                 </View>
               ) : (
                 <View className="h-[250px] bg-[#F3F4F6] items-center justify-center mb-6">
-                  <Text className="text-6xl mb-4">🔧</Text>
+                  <NotFoundIcon size={64} color="#9CA3AF" />
                   <Text
-                    className="text-base text-[#9CA3AF]"
+                    className="text-base text-[#9CA3AF] mt-4"
                     style={{ fontFamily: 'Inter-Regular' }}
                   >
                     No Images Available
