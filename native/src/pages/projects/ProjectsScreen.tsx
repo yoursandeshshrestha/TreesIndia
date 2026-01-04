@@ -16,17 +16,19 @@ import { projectService, type Project } from '../../services';
 import ProjectCard from '../../components/ProjectCard';
 import ProjectDetailBottomSheet from '../home/components/ProjectDetailBottomSheet';
 import ProjectFilterBottomSheet, { type ProjectFilters } from './components/ProjectFilterBottomSheet';
+import SubscriptionRequiredBottomSheet from '../../components/SubscriptionRequiredBottomSheet';
 import SearchIcon from '../../components/icons/SearchIcon';
 
 interface ProjectsScreenProps {
   onBack: () => void;
   initialFilters?: ProjectFilters;
+  onNavigateToSubscription?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 columns with padding
 
-export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScreenProps) {
+export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSubscription }: ProjectsScreenProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,7 +38,8 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [subscriptionRequired, setSubscriptionRequired] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [showSubscriptionSheet, setShowSubscriptionSheet] = useState(false);
 
   const [filters, setFilters] = useState<ProjectFilters>(initialFilters || {});
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,26 +60,37 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
       });
 
       if (response.success && response.data) {
+        // Service now returns: { projects: [...], pagination: {...}, user_subscription: {...} }
+        const projectsArray = response.data.projects || [];
+
         if (page === 1) {
-          setProjects(response.data);
+          setProjects(projectsArray);
         } else {
-          setProjects((prev) => [...prev, ...response.data!]);
+          setProjects((prev) => [...prev, ...projectsArray]);
+        }
+
+        // Parse subscription status
+        if (response.data.user_subscription) {
+          setHasActiveSubscription(
+            response.data.user_subscription.has_active_subscription
+          );
         }
 
         // Check if there are more pages
-        if (response.pagination) {
-          setHasMore(response.pagination.page < response.pagination.total_pages);
+        if (response.data.pagination) {
+          setHasMore(response.data.pagination.page < response.data.pagination.total_pages);
         } else {
           setHasMore(false);
         }
+      } else {
+        // If no data, set empty array
+        if (page === 1) {
+          setProjects([]);
+        }
+        setHasMore(false);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '';
-      if (errorMessage.includes('Subscription required')) {
-        setSubscriptionRequired(true);
-      } else {
-        console.error('Error loading projects:', error);
-      }
+      console.error('Error loading projects:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -107,8 +121,19 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
   };
 
   const handleProjectPress = (project: Project) => {
+    if (!hasActiveSubscription) {
+      setShowSubscriptionSheet(true);
+      return;
+    }
     setSelectedProject(project);
     setShowDetailSheet(true);
+  };
+
+  const handleSubscribePress = () => {
+    setShowSubscriptionSheet(false);
+    if (onNavigateToSubscription) {
+      onNavigateToSubscription();
+    }
   };
 
   const handleApplyFilters = (newFilters: ProjectFilters) => {
@@ -152,38 +177,6 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
   };
 
   const renderEmptyState = () => {
-    if (subscriptionRequired) {
-      return (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-6xl mb-4">🔒</Text>
-          <Text
-            className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
-            Subscription Required
-          </Text>
-          <Text
-            className="text-sm text-[#6B7280] text-center mb-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
-            Projects are available exclusively for premium subscribers. Upgrade your plan to access exclusive projects and opportunities.
-          </Text>
-          <TouchableOpacity
-            onPress={onBack}
-            className="bg-[#00a871] px-6 py-3 rounded-lg"
-            activeOpacity={0.7}
-          >
-            <Text
-              className="text-base font-semibold text-white"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
-              Go Back
-            </Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="text-6xl mb-4">🏗️</Text>
@@ -383,6 +376,7 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
             <ProjectCard
               project={item}
               onPress={() => handleProjectPress(item)}
+              shouldBlur={!hasActiveSubscription}
               width={CARD_WIDTH}
             />
           )}
@@ -415,6 +409,14 @@ export default function ProjectsScreen({ onBack, initialFilters }: ProjectsScree
         onClose={() => setShowFilterSheet(false)}
         onApply={handleApplyFilters}
         initialFilters={filters}
+      />
+
+      {/* Subscription Required Bottom Sheet */}
+      <SubscriptionRequiredBottomSheet
+        visible={showSubscriptionSheet}
+        onClose={() => setShowSubscriptionSheet(false)}
+        onSubscribe={handleSubscribePress}
+        contentType="project"
       />
     </SafeAreaView>
   );
