@@ -2,6 +2,7 @@ package routes
 
 import (
 	"treesindia/controllers"
+	"treesindia/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,22 +11,15 @@ import (
 func SetupWorkerRoutes(router *gin.RouterGroup) {
 	workerController := controllers.NewWorkerController()
 
-	// Public worker routes (no authentication required)
-	publicGroup := router.Group("/public")
+	// Authenticated worker routes (subscription required)
+	workersGroup := router.Group("/workers")
+	workersGroup.Use(middleware.AuthMiddleware())
 	{
-		publicWorkerGroup := publicGroup.Group("/workers")
-		{
-			// GET /api/v1/public/workers - Get public worker listings
-			publicWorkerGroup.GET("", workerController.GetPublicWorkers)
-			// GET /api/v1/public/workers/:id - Get worker by ID
-			publicWorkerGroup.GET("/:id", workerController.GetWorkerByID)
-		}
-	}
-
-	// Worker stats routes (no authentication required)
-	workerStatsGroup := router.Group("/workers")
-	{
+		// GET /api/v1/workers - Get worker listings with filters (requires subscription)
+		workersGroup.GET("", workerController.GetWorkers)
 		// GET /api/v1/workers/stats - Get worker statistics
-		workerStatsGroup.GET("/stats", workerController.GetWorkerStats)
+		workersGroup.GET("/stats", workerController.GetWorkerStats)
+		// GET /api/v1/workers/:id - Get worker by ID (requires subscription)
+		workersGroup.GET("/:id", workerController.GetWorkerByID)
 	}
 }
