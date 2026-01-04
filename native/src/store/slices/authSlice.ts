@@ -8,6 +8,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  hasActiveSubscription: false,
+  subscriptionExpiryDate: null,
 };
 
 // Async thunks
@@ -113,6 +115,21 @@ export const getCurrentUser = createAsyncThunk(
   }
 );
 
+export const updateSubscriptionStatus = createAsyncThunk(
+  'auth/updateSubscriptionStatus',
+  async (_, { rejectWithValue }) => {
+    try {
+      const user = await apiClient.getCurrentUser();
+      return {
+        hasActiveSubscription: user.has_active_subscription || false,
+        subscriptionExpiryDate: user.subscription_expiry_date || null,
+      };
+    } catch (err) {
+      return rejectWithValue('Failed to update subscription status');
+    }
+  }
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: 'auth',
@@ -131,6 +148,14 @@ const authSlice = createSlice({
         state.isLoading = false;
       }
     },
+    updateAvatar: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          avatar: action.payload,
+        };
+      }
+    },
   },
   extraReducers: (builder) => {
     // Initialize auth
@@ -144,6 +169,8 @@ const authSlice = createSlice({
         state.isAuthenticated = action.payload.isAuthenticated;
         if (action.payload.user) {
           state.user = action.payload.user;
+          state.hasActiveSubscription = action.payload.user.has_active_subscription || false;
+          state.subscriptionExpiryDate = action.payload.user.subscription_expiry_date || null;
         }
         state.error = null;
       })
@@ -179,6 +206,8 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
+        state.hasActiveSubscription = action.payload.user?.has_active_subscription || false;
+        state.subscriptionExpiryDate = action.payload.user?.subscription_expiry_date || null;
         state.error = null;
       })
       .addCase(verifyOTP.rejected, (state, action) => {
@@ -222,6 +251,11 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = true;
+        // Check both has_active_subscription and subscription === "active"
+        const hasActiveSub = action.payload?.has_active_subscription === true || 
+                            action.payload?.subscription === 'active';
+        state.hasActiveSubscription = hasActiveSub;
+        state.subscriptionExpiryDate = action.payload?.subscription_expiry_date || null;
         state.error = null;
       })
       .addCase(getCurrentUser.rejected, (state) => {
@@ -229,9 +263,15 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
       });
+
+    // Update subscription status
+    builder.addCase(updateSubscriptionStatus.fulfilled, (state, action) => {
+      state.hasActiveSubscription = action.payload.hasActiveSubscription;
+      state.subscriptionExpiryDate = action.payload.subscriptionExpiryDate;
+    });
   },
 });
 
-export const { clearError, setLoading, setAuthenticated } = authSlice.actions;
+export const { clearError, setLoading, setAuthenticated, updateAvatar } = authSlice.actions;
 export default authSlice.reducer;
 

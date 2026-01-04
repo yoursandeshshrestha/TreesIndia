@@ -20,6 +20,9 @@ export { bannerService, type PromotionBanner } from './api/banner.service';
 export { categoryService, type Category } from './api/category.service';
 export { homepageIconService, type HomepageCategoryIcon } from './api/homepage-icon.service';
 export { projectService, type Project, type ProjectListResponse, type ProjectResponse, type ContactInfo } from './api/project.service';
+export { workerService, type Worker, type WorkerListResponse, type WorkerResponse, type WorkerFilters } from './api/worker.service';
+export { vendorService, type Vendor, type VendorListResponse, type VendorResponse, type VendorFilters } from './api/vendor.service';
+export { searchHistoryService, type SearchHistoryEntry, type SaveSearchHistoryRequest } from './api/search-history.service';
 
 // Legacy API client for backward compatibility
 // TODO: Remove this once all imports are updated

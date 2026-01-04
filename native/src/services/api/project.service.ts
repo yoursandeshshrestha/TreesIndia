@@ -30,12 +30,18 @@ export interface Project {
 export interface ProjectListResponse {
   success: boolean;
   message: string;
-  data?: Project[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
+  data?: {
+    projects: Project[];
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      total_pages: number;
+    };
+    user_subscription?: {
+      has_active_subscription: boolean;
+      subscription_expiry_date: string | null;
+    };
   };
 }
 
@@ -72,7 +78,10 @@ class ProjectService {
     let projects: Project[] = [];
     let rawProjects: any[] = [];
 
-    if (Array.isArray(jsonData.data)) {
+    // Handle both old format (array) and new format (object with projects array)
+    if (jsonData.data && jsonData.data.projects && Array.isArray(jsonData.data.projects)) {
+      rawProjects = jsonData.data.projects;
+    } else if (Array.isArray(jsonData.data)) {
       rawProjects = jsonData.data;
     } else if (jsonData.data === null || jsonData.data === undefined) {
       rawProjects = [];
@@ -163,8 +172,11 @@ class ProjectService {
     return {
       success: jsonData.success !== false,
       message: jsonData.message || 'Projects retrieved successfully',
-      data: projects,
-      pagination: jsonData.pagination,
+      data: {
+        projects: projects,
+        pagination: jsonData.data?.pagination || jsonData.pagination,
+        user_subscription: jsonData.data?.user_subscription,
+      },
     };
   }
 
@@ -224,7 +236,11 @@ class ProjectService {
     let projects: Project[] = [];
     let rawProjects: any[] = [];
 
-    if (Array.isArray(jsonData.data)) {
+    // Backend returns: { success: true, data: { projects: [...], user_subscription: {...} } }
+    if (jsonData.data && jsonData.data.projects && Array.isArray(jsonData.data.projects)) {
+      rawProjects = jsonData.data.projects;
+    } else if (Array.isArray(jsonData.data)) {
+      // Fallback: if data is directly an array
       rawProjects = jsonData.data;
     } else if (jsonData.data === null || jsonData.data === undefined) {
       rawProjects = [];
@@ -318,11 +334,18 @@ class ProjectService {
       ? projectsWithImages.slice(0, filters.limit || 20)
       : projects.slice(0, filters.limit || 20);
 
+    // Extract pagination and user_subscription from the response
+    const pagination = jsonData.data?.pagination || jsonData.pagination;
+    const userSubscription = jsonData.data?.user_subscription;
+
     return {
       success: jsonData.success !== false,
       message: jsonData.message || 'Projects retrieved successfully',
-      data: finalProjects,
-      pagination: jsonData.pagination,
+      data: {
+        projects: finalProjects,
+        pagination: pagination,
+        user_subscription: userSubscription,
+      },
     };
   }
 

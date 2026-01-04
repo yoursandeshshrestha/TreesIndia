@@ -7,6 +7,9 @@ export interface AuthUser {
   user_type: 'admin' | 'user' | 'worker' | 'normal' | 'broker';
   wallet_balance: number;
   is_active: boolean;
+  has_active_subscription?: boolean;
+  subscription?: string; // Can be "active", "expired", "cancelled", etc.
+  subscription_expiry_date?: string | null;
   created_at?: string;
 }
 
@@ -44,5 +47,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  hasActiveSubscription: boolean;
+  subscriptionExpiryDate: string | null;
 }
 
