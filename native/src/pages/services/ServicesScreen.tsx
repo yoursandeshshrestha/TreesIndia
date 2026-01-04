@@ -38,6 +38,7 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
+  const [subscriptionRequired, setSubscriptionRequired] = useState(false);
 
   const [filters, setFilters] = useState<ServiceFilters>(initialFilters || {});
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,7 +73,12 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
         }
       }
     } catch (error) {
-      console.error('Error loading services:', error);
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('Subscription required')) {
+        setSubscriptionRequired(true);
+      } else {
+        console.error('Error loading services:', error);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -119,7 +125,6 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
 
   const handleBookService = (service: Service) => {
     // TODO: Navigate to booking screen or show booking flow
-    console.log('Book service:', service.name);
   };
 
   const formatPrice = (price: number) => {
@@ -131,39 +136,61 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
     return `₹${price}`;
   };
 
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center px-6">
-      <CategoryIcon size={64} color="#D1D5DB" />
-      <Text
-        className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
-        No Services Found
-      </Text>
-      <Text
-        className="text-sm text-[#6B7280] text-center mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
-        {getActiveFilterCount() > 0
-          ? 'Try adjusting your filters to see more results'
-          : 'Check back later for new service listings'}
-      </Text>
-      {getActiveFilterCount() > 0 && (
-        <TouchableOpacity
-          onPress={() => setFilters({})}
-          className="bg-[#00a871] px-6 py-3 rounded-lg"
-          activeOpacity={0.7}
-        >
+  const renderEmptyState = () => {
+    if (subscriptionRequired) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-6xl mb-4">🔒</Text>
           <Text
-            className="text-base font-semibold text-white"
+            className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
             style={{ fontFamily: 'Inter-SemiBold' }}
           >
-            Clear Filters
+            Subscription Required
           </Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+          <Text
+            className="text-sm text-[#6B7280] text-center mb-6"
+            style={{ fontFamily: 'Inter-Regular' }}
+          >
+            Upgrade your subscription to access our complete services directory and discover all available services.
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <CategoryIcon size={64} color="#D1D5DB" />
+        <Text
+          className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
+          style={{ fontFamily: 'Inter-SemiBold' }}
+        >
+          No Services Found
+        </Text>
+        <Text
+          className="text-sm text-[#6B7280] text-center mb-6"
+          style={{ fontFamily: 'Inter-Regular' }}
+        >
+          {getActiveFilterCount() > 0
+            ? 'Try adjusting your filters to see more results'
+            : 'Check back later for new service listings'}
+        </Text>
+        {getActiveFilterCount() > 0 && (
+          <TouchableOpacity
+            onPress={() => setFilters({})}
+            className="bg-[#00a871] px-6 py-3 rounded-lg"
+            activeOpacity={0.7}
+          >
+            <Text
+              className="text-base font-semibold text-white"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Clear Filters
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   const renderFooter = () => {
     if (!loadingMore) return null;

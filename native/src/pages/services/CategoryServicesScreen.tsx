@@ -238,7 +238,6 @@ export default function CategoryServicesScreen({
 
   const handleBookService = (service: Service) => {
     // TODO: Navigate to booking screen or show booking flow
-    console.log('Book service:', service.name);
   };
 
   const renderEmptyState = () => (

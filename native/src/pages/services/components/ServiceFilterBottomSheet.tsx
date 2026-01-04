@@ -90,23 +90,7 @@ export default function ServiceFilterBottomSheet({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onClose();
-      setIsClosing(false);
-    });
+    onClose();
   };
 
   const hasActiveFilters = () => {
