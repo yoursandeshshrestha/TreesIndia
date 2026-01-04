@@ -125,8 +125,6 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	// Generate and send OTP via 2Factor API
 	_, err := ac.otpService.SendOTP(req.Phone, "login")
 	if err != nil {
-		// Log the error but don't expose internal details to client
-		fmt.Printf("Failed to send OTP: %v\n", err)
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to send OTP", "Please try again later"))
 		return
 	}

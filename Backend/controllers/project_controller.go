@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"treesindia/models"
+	"treesindia/repositories"
 	"treesindia/services"
 	"treesindia/views"
 
@@ -18,6 +19,7 @@ import (
 type ProjectController struct {
 	*BaseController
 	projectService *services.ProjectService
+	userRepo       *repositories.UserRepository
 }
 
 // NewProjectController creates a new project controller
@@ -33,10 +35,11 @@ func NewProjectController() *ProjectController {
 	}
 
 	projectService := services.NewProjectService(cloudinaryService)
-	
+
 	return &ProjectController{
 		BaseController:  NewBaseController(),
 		projectService:  projectService,
+		userRepo:        repositories.NewUserRepository(),
 	}
 }
 
@@ -105,29 +108,40 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 // @Router /projects/{id} [get]
 func (pc *ProjectController) GetProject(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	
+
+	// Get user info for subscription status
+	var user models.User
+	err := pc.userRepo.FindByID(&user, userID)
+	if err != nil {
+		logrus.Errorf("User not found with ID: %d, error: %v", userID, err)
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
 	projectIDStr := c.Param("id")
 	projectID, err := strconv.ParseUint(projectIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse( "Invalid project ID", err.Error()))
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid project ID", err.Error()))
 		return
 	}
 
 	project, err := pc.projectService.GetProject(userID, uint(projectID))
 	if err != nil {
-		if err.Error() == "active subscription required to view projects" {
-			c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
-			return
-		}
 		if err.Error() == "project not found" {
 			c.JSON(http.StatusNotFound, views.CreateErrorResponse("Project not found", err.Error()))
 			return
 		}
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse( "Failed to get project", err.Error()))
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to get project", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse( "Project retrieved successfully", project))
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Project retrieved successfully", gin.H{
+		"project": project,
+		"user_subscription": gin.H{
+			"has_active_subscription":  user.HasActiveSubscription,
+			"subscription_expiry_date": user.SubscriptionExpiryDate,
+		},
+	}))
 }
 
 // GetProjectBySlug godoc
@@ -190,6 +204,15 @@ func (pc *ProjectController) GetProjectBySlug(c *gin.Context) {
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
+	// Get user info for subscription status
+	var user models.User
+	err := pc.userRepo.FindByID(&user, userID)
+	if err != nil {
+		logrus.Errorf("User not found with ID: %d, error: %v", userID, err)
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
 	// Parse query parameters
 	limit := pc.getIntQuery(c, "limit", 20)
 	offset := pc.getIntQuery(c, "offset", 0)
@@ -199,14 +222,16 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 		// Use search functionality
 		projects, err := pc.projectService.SearchProjects(userID, searchQuery, limit, offset)
 		if err != nil {
-			if err.Error() == "active subscription required to search projects" {
-				c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
-				return
-			}
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to search projects", err.Error()))
 			return
 		}
-		c.JSON(http.StatusOK, views.CreateSuccessResponse( "Projects retrieved successfully", projects))
+		c.JSON(http.StatusOK, views.CreateSuccessResponse("Projects retrieved successfully", gin.H{
+			"projects": projects,
+			"user_subscription": gin.H{
+				"has_active_subscription":  user.HasActiveSubscription,
+				"subscription_expiry_date": user.SubscriptionExpiryDate,
+			},
+		}))
 		return
 	}
 
@@ -228,15 +253,17 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 
 	projects, err := pc.projectService.GetProjects(userID, filters, limit, offset)
 	if err != nil {
-		if err.Error() == "active subscription required to view projects" {
-			c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
-			return
-		}
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get projects", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse( "Projects retrieved successfully", projects))
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Projects retrieved successfully", gin.H{
+		"projects": projects,
+		"user_subscription": gin.H{
+			"has_active_subscription":  user.HasActiveSubscription,
+			"subscription_expiry_date": user.SubscriptionExpiryDate,
+		},
+	}))
 }
 
 // GetUserProjects godoc
@@ -388,10 +415,19 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 // @Router /projects/search [get]
 func (pc *ProjectController) SearchProjects(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	
+
+	// Get user info for subscription status
+	var user models.User
+	err := pc.userRepo.FindByID(&user, userID)
+	if err != nil {
+		logrus.Errorf("User not found with ID: %d, error: %v", userID, err)
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
 	query := c.Query("q")
 	if query == "" {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse( "Search query required", "q parameter is required"))
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Search query required", "q parameter is required"))
 		return
 	}
 
@@ -400,15 +436,17 @@ func (pc *ProjectController) SearchProjects(c *gin.Context) {
 
 	projects, err := pc.projectService.SearchProjects(userID, query, limit, offset)
 	if err != nil {
-		if err.Error() == "active subscription required to search projects" {
-			c.JSON(http.StatusForbidden, views.CreateErrorResponse("Subscription required", err.Error()))
-			return
-		}
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to search projects", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse( "Projects found successfully", projects))
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Projects found successfully", gin.H{
+		"projects": projects,
+		"user_subscription": gin.H{
+			"has_active_subscription":  user.HasActiveSubscription,
+			"subscription_expiry_date": user.SubscriptionExpiryDate,
+		},
+	}))
 }
 
 // GetProjectStats godoc

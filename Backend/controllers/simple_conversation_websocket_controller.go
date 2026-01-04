@@ -251,9 +251,6 @@ func (c *SimpleConversationWebSocketController) handleUserMonitorWebSocket(conn 
 			// Read message
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					fmt.Printf("WebSocket error: %v\n", err)
-				}
 				return
 			}
 

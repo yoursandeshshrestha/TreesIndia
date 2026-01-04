@@ -14,25 +14,27 @@ import (
 type WorkerController struct {
 	BaseController
 	workerRepo *repositories.WorkerRepository
+	userRepo   *repositories.UserRepository
 }
 
 func NewWorkerController() *WorkerController {
 	return &WorkerController{
 		BaseController: *NewBaseController(),
 		workerRepo:     repositories.NewWorkerRepository(),
+		userRepo:       repositories.NewUserRepository(),
 	}
 }
 
-// GetPublicWorkers gets public worker listings with pagination and filters
-// @Summary Get public workers
-// @Description Get public worker listings with pagination and filters
-// @Tags Public Workers
+// GetWorkers gets worker listings with pagination and filters (requires active subscription)
+// @Summary Get workers
+// @Description Get worker listings with pagination and filters. Users need active subscription (except admin users).
+// @Tags Workers
+// @Security BearerAuth
 // @Produce json
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Items per page" default(12)
 // @Param is_active query bool false "Filter by active status" default(true)
 // @Param is_available query bool false "Filter by availability"
-// @Param worker_type query string false "Filter by worker type (normal, treesindia_worker)"
 // @Param search query string false "Search by worker name, skills, or address"
 // @Param skills query string false "Filter by skills (comma-separated)"
 // @Param min_experience query int false "Minimum experience in years"
@@ -43,8 +45,21 @@ func NewWorkerController() *WorkerController {
 // @Param sortOrder query string false "Sort order (asc, desc)"
 // @Success 200 {object} views.Response{data=[]models.Worker}
 // @Failure 400 {object} views.Response
-// @Router /public/workers [get]
-func (wc *WorkerController) GetPublicWorkers(ctx *gin.Context) {
+// @Failure 401 {object} views.Response "Unauthorized"
+// @Failure 403 {object} views.Response "Subscription required"
+// @Router /workers [get]
+func (wc *WorkerController) GetWorkers(ctx *gin.Context) {
+	userID := ctx.GetUint("user_id")
+
+	// Get user info for subscription status (no longer blocking request)
+	var user models.User
+	err := wc.userRepo.FindByID(&user, userID)
+	if err != nil {
+		logrus.Errorf("User not found with ID: %d, error: %v", userID, err)
+		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
 	// Parse query parameters
 	page := 1
 	if pageStr := ctx.Query("page"); pageStr != "" {
@@ -78,8 +93,17 @@ func (wc *WorkerController) GetPublicWorkers(ctx *gin.Context) {
 	}
 
 	// Parse worker_type filter
+	// Force worker_type to "normal" for non-admin users to hide treesindia_worker type
 	if workerType := ctx.Query("worker_type"); workerType != "" {
 		filters.WorkerType = models.WorkerType(workerType)
+	} else {
+		// Default to "normal" workers only (hide treesindia_worker from regular users)
+		filters.WorkerType = "normal"
+	}
+
+	// Override: Admin users can see all worker types, non-admin users only see "normal" workers
+	if user.UserType != models.UserTypeAdmin {
+		filters.WorkerType = "normal"
 	}
 
 	// Parse search filter
@@ -158,6 +182,10 @@ func (wc *WorkerController) GetPublicWorkers(ctx *gin.Context) {
 	response := map[string]interface{}{
 		"workers":    paginatedWorkers,
 		"pagination": pagination,
+		"user_subscription": map[string]interface{}{
+			"has_active_subscription": user.HasActiveSubscription,
+			"subscription_expiry_date": user.SubscriptionExpiryDate,
+		},
 	}
 
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Workers retrieved successfully", response))
@@ -212,17 +240,31 @@ func (wc *WorkerController) GetWorkerStats(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Worker statistics retrieved successfully", stats))
 }
 
-// GetWorkerByID gets a single worker by ID
+// GetWorkerByID gets a single worker by ID (requires active subscription)
 // @Summary Get worker by ID
-// @Description Get a single worker by their ID
-// @Tags Public Workers
+// @Description Get a single worker by their ID. Users need active subscription (except admin users).
+// @Tags Workers
+// @Security BearerAuth
 // @Produce json
 // @Param id path int true "Worker ID"
 // @Success 200 {object} views.Response{data=models.Worker}
 // @Failure 400 {object} views.Response
+// @Failure 401 {object} views.Response "Unauthorized"
+// @Failure 403 {object} views.Response "Subscription required"
 // @Failure 404 {object} views.Response
-// @Router /public/workers/{id} [get]
+// @Router /workers/{id} [get]
 func (wc *WorkerController) GetWorkerByID(ctx *gin.Context) {
+	userID := ctx.GetUint("user_id")
+
+	// Get user info for subscription status (no longer blocking request)
+	var user models.User
+	err := wc.userRepo.FindByID(&user, userID)
+	if err != nil {
+		logrus.Errorf("User not found with ID: %d, error: %v", userID, err)
+		ctx.JSON(http.StatusUnauthorized, views.CreateErrorResponse("User not found", err.Error()))
+		return
+	}
+
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -238,8 +280,19 @@ func (wc *WorkerController) GetWorkerByID(ctx *gin.Context) {
 		return
 	}
 
+	// Hide treesindia_worker type from non-admin users
+	if user.UserType != models.UserTypeAdmin && worker.WorkerType == "treesindia_worker" {
+		logrus.Warnf("Non-admin user attempted to access treesindia_worker: user_id=%d, worker_id=%d", userID, id)
+		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Worker not found", "worker not found"))
+		return
+	}
+
 	logrus.Infof("Worker retrieved successfully with ID: %d", id)
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Worker retrieved successfully", gin.H{
 		"worker": worker,
+		"user_subscription": gin.H{
+			"has_active_subscription": user.HasActiveSubscription,
+			"subscription_expiry_date": user.SubscriptionExpiryDate,
+		},
 	}))
 }

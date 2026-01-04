@@ -274,12 +274,9 @@ func (nwc *NotificationWebSocketController) handleWebSocketMessage(client servic
 		return
 	}
 
-	logrus.Debugf("Received WebSocket message: event=%s, userID=%d, userType=%s", event, client.UserID, client.UserType)
-
 	switch event {
 	case "join":
 		// Client is joining (already handled in connection)
-		logrus.Debugf("User %d joined notifications", client.UserID)
 
 	case "mark_read":
 		nwc.handleMarkAsRead(client, message)
@@ -321,7 +318,7 @@ func (nwc *NotificationWebSocketController) handleMarkAsRead(client services.Not
 	err := nwc.notificationService.MarkNotificationAsRead(notificationID, client.UserID)
 	if err != nil {
 		logrus.Errorf("Failed to mark notification %d as read for user %d: %v", notificationID, client.UserID, err)
-		
+
 		// Send error response
 		errorMessage := services.NotificationMessage{
 			UserID:   client.UserID,
@@ -332,8 +329,6 @@ func (nwc *NotificationWebSocketController) handleMarkAsRead(client services.Not
 		client.Conn.WriteJSON(errorMessage)
 		return
 	}
-
-	logrus.Debugf("Marked notification %d as read for user %d", notificationID, client.UserID)
 }
 
 // handleMarkAllAsRead handles marking all notifications as read
@@ -341,7 +336,7 @@ func (nwc *NotificationWebSocketController) handleMarkAllAsRead(client services.
 	err := nwc.notificationService.MarkAllNotificationsAsRead(client.UserID)
 	if err != nil {
 		logrus.Errorf("Failed to mark all notifications as read for user %d: %v", client.UserID, err)
-		
+
 		// Send error response
 		errorMessage := services.NotificationMessage{
 			UserID:   client.UserID,
@@ -352,8 +347,6 @@ func (nwc *NotificationWebSocketController) handleMarkAllAsRead(client services.
 		client.Conn.WriteJSON(errorMessage)
 		return
 	}
-
-	logrus.Debugf("Marked all notifications as read for user %d", client.UserID)
 }
 
 // GetUserType returns the user type from context

@@ -22,9 +22,6 @@ func NewWebSocketController(wsService *services.WebSocketService) *WebSocketCont
 
 // HandleWebSocket handles WebSocket connections
 func (wc *WebSocketController) HandleWebSocket(c *gin.Context) {
-	// Log which endpoint was hit
-	fmt.Printf("WebSocket endpoint hit: %s\n", c.Request.URL.Path)
-	
 	// For WebSocket connections, we'll get user_id from query parameters
 	// since WebSocket can't use cookies/headers for authentication
 	userIDStr := c.Query("user_id")

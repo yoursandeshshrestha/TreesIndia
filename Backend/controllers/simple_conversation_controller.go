@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"treesindia/models"
@@ -208,11 +207,6 @@ func (cc *SimpleConversationController) GetConversation(c *gin.Context) {
 
 // SendMessage sends a message in a conversation (supports file uploads)
 func (cc *SimpleConversationController) SendMessage(c *gin.Context) {
-	// CRITICAL DEBUG - This should appear first
-	fmt.Fprintf(c.Writer, "") // Force output
-	fmt.Printf("=== SendMessage CALLED ===\n")
-	os.Stderr.WriteString("=== SendMessage CALLED ===\n")
-	
 	userID := c.GetUint("user_id")
 	conversationID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -224,24 +218,15 @@ func (cc *SimpleConversationController) SendMessage(c *gin.Context) {
 	contentType := c.GetHeader("Content-Type")
 	contentTypeLower := strings.ToLower(contentType)
 	isMultipart := strings.Contains(contentTypeLower, "multipart/form-data")
-	
-	// Debug logging - write to stderr to ensure visibility
-	fmt.Fprintf(os.Stderr, "[DEBUG] SendMessage - Content-Type: %s\n", contentType)
-	fmt.Fprintf(os.Stderr, "[DEBUG] SendMessage - isMultipart: %v\n", isMultipart)
-	fmt.Fprintf(os.Stderr, "[DEBUG] SendMessage - Request Method: %s\n", c.Request.Method)
-	fmt.Fprintf(os.Stderr, "[DEBUG] SendMessage - Request URL: %s\n", c.Request.URL.Path)
-	
+
 	var req models.SendSimpleConversationMessageRequest
 	
 	if isMultipart {
 		// Handle multipart form data
-		fmt.Printf("[DEBUG] SendMessage - Parsing multipart form\n")
 		if err := c.Request.ParseMultipartForm(50 << 20); err != nil { // 50MB max
-			fmt.Printf("[ERROR] SendMessage - ParseMultipartForm failed: %v\n", err)
 			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Failed to parse multipart form: "+err.Error()))
 			return
 		}
-		fmt.Printf("[DEBUG] SendMessage - Multipart form parsed successfully\n")
 		
 		// Get message text from form
 		req.Message = c.PostForm("message")
@@ -282,9 +267,7 @@ func (cc *SimpleConversationController) SendMessage(c *gin.Context) {
 		}
 	} else {
 		// Handle JSON request (text message only)
-		fmt.Printf("[DEBUG] SendMessage - Handling as JSON request\n")
 		if err := c.ShouldBindJSON(&req); err != nil {
-			fmt.Printf("[ERROR] SendMessage - ShouldBindJSON failed: %v\n", err)
 			c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request", "Failed to parse JSON. Error: "+err.Error()))
 			return
 		}
