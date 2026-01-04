@@ -96,26 +96,10 @@ export default function RechargeBottomSheet({
   const handleClose = () => {
     if (!isProcessing && !isLoading && !isClosing) {
       setIsClosing(true);
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 500,
-          duration: 250,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setSelectedAmount(0);
-        setManualAmount('');
-        setShowMinimumError(false);
-        setIsClosing(false);
-        onClose();
-      });
+      setSelectedAmount(0);
+      setManualAmount('');
+      setShowMinimumError(false);
+      onClose();
     }
   };
 
