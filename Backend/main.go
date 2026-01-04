@@ -154,10 +154,16 @@ func main() {
 		log.Fatal("Failed to run migrations:", err)
 	}
 	
-	// Always seed initial data (both development and production)
-	seedManager := seed.NewSeedManager()
-	if err := seedManager.SeedAll(); err != nil {
-		log.Fatal("Failed to seed initial data:", err)
+	// Seed only admin users, admin configurations, and subscription plans (if SKIP_SEED is not set)
+	// These are seeded only if they don't exist (idempotent)
+	if os.Getenv("SKIP_SEED") == "" {
+		logrus.Info("🌱 Auto-seeding admin users, admin configurations, and subscription plans (if they don't exist)...")
+		seedManager := seed.NewSeedManager()
+		if err := seedManager.SeedIndividualComponents("admin_user", "admin_configurations", "subscription_plans"); err != nil {
+			log.Fatal("Failed to seed initial data:", err)
+		}
+	} else {
+		logrus.Info("⏭️  Skipping seeding (SKIP_SEED is set)")
 	}
 
 	// Set Gin mode based on environment
