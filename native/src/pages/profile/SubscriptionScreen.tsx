@@ -170,7 +170,7 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
                 Billing History
               </Text>
               {subscriptionHistory.map((subscription, index) => (
-                <View key={subscription.id}>
+                <View key={`subscription-${subscription.id}-${index}`}>
                   <BillingHistoryCard subscription={subscription} />
                   {index < subscriptionHistory.length - 1 && (
                     <View className="h-4" />
