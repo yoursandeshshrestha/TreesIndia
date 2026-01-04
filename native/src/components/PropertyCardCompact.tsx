@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { type Property } from '../services';
 import LocationIcon from './icons/LocationIcon';
+import NotFoundIcon from './icons/NotFoundIcon';
+import ImageWithSkeleton from './ImageWithSkeleton';
 
 interface PropertyCardCompactProps {
   property: Property;
@@ -62,19 +64,16 @@ export default function PropertyCardCompact({
         }}
       >
         {primaryImage ? (
-          <Image
+          <ImageWithSkeleton
             source={{ uri: primaryImage }}
             className="w-full h-full"
             resizeMode="cover"
-            onError={() => {
-              // Image load error
-            }}
           />
         ) : (
           <View className="w-full h-full bg-[#F3F4F6] items-center justify-center">
-            <Text className="text-6xl mb-2">🏠</Text>
+            <NotFoundIcon size={64} color="#9CA3AF" />
             <Text
-              className="text-sm text-[#9CA3AF]"
+              className="text-sm text-[#9CA3AF] mt-2"
               style={{ fontFamily: 'Inter-Regular' }}
             >
               No Image

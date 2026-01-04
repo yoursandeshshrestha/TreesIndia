@@ -49,6 +49,7 @@ export default function Input({
           borderColor,
           borderWidth: 1,
           justifyContent: 'center',
+          alignSelf: 'stretch',
         }}
       >
         <TextInput
@@ -63,6 +64,7 @@ export default function Input({
               fontSize: 16,
               lineHeight: Platform.OS === 'ios' ? 20 : 22,
               textAlignVertical: 'center',
+              flex: 1,
               // Using system default font instead of Inter to prevent text cutoff
               ...(Platform.OS === 'android' && {
                 includeFontPadding: false,
