@@ -51,9 +51,6 @@ func (r *SimpleConversationRepository) GetUserConversations(userID uint, page, l
 	var conversations []models.SimpleConversation
 	var total int64
 
-	// Debug: Log the query parameters
-	logrus.Infof("GetUserConversations: userID=%d, page=%d, limit=%d", userID, page, limit)
-
 	// Count total
 	if err := r.db.Model(&models.SimpleConversation{}).
 		Where("user_1 = ? OR user_2 = ?", userID, userID).

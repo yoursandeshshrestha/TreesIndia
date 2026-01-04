@@ -21,7 +21,7 @@ func NewWorkerRepository() *WorkerRepository {
 // GetByUserID gets a worker by user ID
 func (wr *WorkerRepository) GetByUserID(userID uint) (*models.Worker, error) {
 	var worker models.Worker
-	err := wr.db.Where("user_id = ?", userID).First(&worker).Error
+	err := wr.db.Preload("User").Where("user_id = ?", userID).First(&worker).Error
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (wr *WorkerRepository) GetByUserID(userID uint) (*models.Worker, error) {
 // GetByID gets a worker by ID
 func (wr *WorkerRepository) GetByID(id uint) (*models.Worker, error) {
 	var worker models.Worker
-	err := wr.db.First(&worker, id).Error
+	err := wr.db.Preload("User").First(&worker, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (wr *WorkerRepository) UpdateAvailability(workerID uint, isAvailable bool) 
 // GetAllWorkers gets all workers with optional filters
 func (wr *WorkerRepository) GetAllWorkers(filters *WorkerFilters) ([]models.Worker, error) {
 	var workers []models.Worker
-	query := wr.db.Model(&models.Worker{})
+	query := wr.db.Model(&models.Worker{}).Preload("User")
 
 	if filters != nil {
 		if filters.IsActive != nil {

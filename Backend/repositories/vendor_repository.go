@@ -3,6 +3,8 @@ package repositories
 import (
 	"treesindia/models"
 	"treesindia/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 // VendorRepository handles vendor-specific database operations
@@ -72,12 +74,17 @@ func (vr *VendorRepository) GetAll(vendors *[]models.Vendor, page, limit int) (i
 // GetActive gets all active vendors with pagination
 func (vr *VendorRepository) GetActive(vendors *[]models.Vendor, page, limit int) (int64, error) {
 	var total int64
-	
+
 	// Count total active records
 	if err := vr.db.Model(&models.Vendor{}).Where("is_active = ?", true).Count(&total).Error; err != nil {
 		return 0, err
 	}
-	
+
+	// Also count total vendors for debugging
+	var totalAll int64
+	vr.db.Model(&models.Vendor{}).Count(&totalAll)
+	logrus.Infof("[DEBUG] GetActive: total active vendors=%d, total all vendors=%d", total, totalAll)
+
 	// Get paginated results
 	offset := (page - 1) * limit
 	err := vr.db.Preload("User").
@@ -86,7 +93,8 @@ func (vr *VendorRepository) GetActive(vendors *[]models.Vendor, page, limit int)
 		Limit(limit).
 		Order("created_at DESC").
 		Find(vendors).Error
-	
+
+	logrus.Infof("[DEBUG] GetActive: fetched %d vendors", len(*vendors))
 	return total, err
 }
 

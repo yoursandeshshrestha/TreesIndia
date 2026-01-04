@@ -223,9 +223,6 @@ func (lr *LedgerRepository) ProcessPayment(amount float64, source models.Payment
 		return err
 	}
 
-	fmt.Printf("Before payment - Cash: %.2f, Bank: %.2f, Amount: %.2f, Source: %s\n", 
-		balance.CashInHand, balance.BankBalance, amount, source)
-
 	// Subtract from the appropriate balance
 	if source == models.PaymentSourceCash {
 		if balance.CashInHand < amount {
@@ -239,8 +236,6 @@ func (lr *LedgerRepository) ProcessPayment(amount float64, source models.Payment
 		balance.BankBalance -= amount
 	}
 
-	fmt.Printf("After payment - Cash: %.2f, Bank: %.2f\n", balance.CashInHand, balance.BankBalance)
-
 	// Update transaction tracking
 	balance.LastTransactionAmount = amount
 	balance.LastTransactionType = "payment"
@@ -250,11 +245,9 @@ func (lr *LedgerRepository) ProcessPayment(amount float64, source models.Payment
 
 	err = lr.UpdateBalance(balance)
 	if err != nil {
-		fmt.Printf("Failed to update balance: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("Balance updated successfully\n")
 	return nil
 }
 
