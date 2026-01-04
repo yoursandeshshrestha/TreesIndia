@@ -46,6 +46,7 @@ function BannerManagementPage() {
 
   const {
     banners: apiBanners,
+    isLoading,
     createBanner,
     updateBanner,
     deleteBanner,
@@ -190,7 +191,8 @@ function BannerManagementPage() {
     }
   });
 
-  if (!apiBanners || apiBanners.length === 0) {
+  // Show loading state only when actually loading
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="animate-spin" />
