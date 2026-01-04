@@ -54,10 +54,14 @@ export function useProjects() {
       );
 
       if (response.data.success) {
-        setProjects(response.data.data || []);
+        // Ensure projects is always an array
+        // The API returns { data: { projects: [...], user_subscription: {...} } }
+        const projectsData = response.data.data?.projects || response.data.data;
+        const projectsArray = Array.isArray(projectsData) ? projectsData : [];
+        setProjects(projectsArray);
         // Calculate total pages based on response
         const totalItems =
-          response.data.pagination?.total || response.data.data?.length || 0;
+          response.data.pagination?.total || projectsArray.length || 0;
         setTotalPages(Math.ceil(totalItems / params.limit));
       } else {
         throw new Error(response.data.message || "Failed to fetch projects");

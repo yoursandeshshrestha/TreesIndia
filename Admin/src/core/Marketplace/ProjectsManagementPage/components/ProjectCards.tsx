@@ -125,7 +125,10 @@ export default function ProjectCards({
     );
   }
 
-  if (!projects || projects.length === 0) {
+  // Ensure projects is always an array
+  const projectsArray = Array.isArray(projects) ? projects : [];
+
+  if (!projectsArray || projectsArray.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-8 text-center">
@@ -146,7 +149,7 @@ export default function ProjectCards({
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {projects.map((project) => (
+        {projectsArray.map((project) => (
           <div
             key={project.ID}
             className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col cursor-pointer"
