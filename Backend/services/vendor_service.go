@@ -240,6 +240,16 @@ func (vs *VendorService) UpdateVendor(vendorID, userID uint, req *models.UpdateV
 		}
 		vendor.ServicesOffered = string(servicesJSON)
 	}
+	if req.ProfilePicture != nil {
+		vendor.ProfilePicture = *req.ProfilePicture
+	}
+	if req.BusinessGallery != nil {
+		galleryJSON, err := json.Marshal(req.BusinessGallery)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal business gallery: %w", err)
+		}
+		vendor.BusinessGallery = string(galleryJSON)
+	}
 	if req.IsActive != nil {
 		vendor.IsActive = *req.IsActive
 	}
@@ -295,11 +305,14 @@ func (vs *VendorService) GetAllVendors(page, limit int) ([]models.Vendor, int64,
 
 // GetActiveVendors gets all active vendors with pagination
 func (vs *VendorService) GetActiveVendors(page, limit int) ([]models.Vendor, int64, error) {
+	logrus.Infof("[DEBUG] GetActiveVendors called with page=%d, limit=%d", page, limit)
 	var vendors []models.Vendor
 	total, err := vs.vendorRepo.GetActive(&vendors, page, limit)
 	if err != nil {
+		logrus.Errorf("[DEBUG] Error getting active vendors: %v", err)
 		return nil, 0, fmt.Errorf("failed to get active vendors: %w", err)
 	}
+	logrus.Infof("[DEBUG] Found %d active vendors (total=%d)", len(vendors), total)
 	return vendors, total, nil
 }
 

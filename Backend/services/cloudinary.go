@@ -11,6 +11,8 @@ import (
 	"treesindia/config"
 
 	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/sirupsen/logrus"
 )
@@ -285,4 +287,113 @@ func (cs *CloudinaryService) GetResourceTypeFromURL(url string) string {
 	}
 	
 	return "image" // default to image if not found
+}
+
+// DeleteAllResources deletes all resources from Cloudinary
+// This uses the Admin API to list and delete all resources
+func (cs *CloudinaryService) DeleteAllResources() error {
+	ctx := context.Background()
+	
+	logrus.Info("🗑️  Starting Cloudinary cleanup - deleting all resources...")
+	
+	// Delete images
+	if err := cs.deleteResourcesByType(ctx, "image"); err != nil {
+		logrus.Warnf("Error deleting images: %v", err)
+	}
+	
+	// Delete videos
+	if err := cs.deleteResourcesByType(ctx, "video"); err != nil {
+		logrus.Warnf("Error deleting videos: %v", err)
+	}
+	
+	// Delete raw files
+	if err := cs.deleteResourcesByType(ctx, "raw"); err != nil {
+		logrus.Warnf("Error deleting raw files: %v", err)
+	}
+	
+	logrus.Info("✅ Cloudinary cleanup completed")
+	return nil
+}
+
+// deleteResourcesByType deletes all resources of a specific type
+func (cs *CloudinaryService) deleteResourcesByType(ctx context.Context, resourceType string) error {
+	const maxResults = 500
+	totalDeleted := 0
+	nextCursor := ""
+	
+	// Convert string to AssetType
+	var assetType api.AssetType
+	switch resourceType {
+	case "image":
+		assetType = api.Image
+	case "video":
+		assetType = api.Video
+	case "raw":
+		assetType = api.AssetType("raw")
+	default:
+		return fmt.Errorf("unsupported resource type: %s", resourceType)
+	}
+	
+	for {
+		// List resources
+		params := admin.AssetsParams{
+			AssetType:  assetType,
+			MaxResults: maxResults,
+		}
+		if nextCursor != "" {
+			params.NextCursor = nextCursor
+		}
+		
+		result, err := cs.cld.Admin.Assets(ctx, params)
+		if err != nil {
+			return fmt.Errorf("failed to list %s resources: %v", resourceType, err)
+		}
+		
+		if len(result.Assets) == 0 {
+			break // No more resources
+		}
+		
+		// Extract public IDs
+		publicIDs := make([]string, 0, len(result.Assets))
+		for _, asset := range result.Assets {
+			publicIDs = append(publicIDs, asset.PublicID)
+		}
+		
+		// Delete resources in batches (max 100 per request)
+		batchSize := 100
+		for i := 0; i < len(publicIDs); i += batchSize {
+			end := i + batchSize
+			if end > len(publicIDs) {
+				end = len(publicIDs)
+			}
+			batch := publicIDs[i:end]
+			
+			deleteResult, err := cs.cld.Admin.DeleteAssets(ctx, admin.DeleteAssetsParams{
+				AssetType: assetType,
+				PublicIDs: api.CldAPIArray(batch),
+			})
+			
+			if err != nil {
+				return fmt.Errorf("failed to delete %s resources: %v", resourceType, err)
+			}
+			
+			deletedCount := len(deleteResult.Deleted)
+			totalDeleted += deletedCount
+			logrus.Infof("Deleted %d %s resources (batch, total: %d)", deletedCount, resourceType, totalDeleted)
+		}
+		
+		// Check if there are more resources
+		if result.NextCursor == "" {
+			break
+		}
+		nextCursor = result.NextCursor
+	}
+	
+	if totalDeleted > 0 {
+		logrus.Infof("✅ Deleted %d %s resources from Cloudinary", totalDeleted, resourceType)
+	} else {
+		logrus.Infof("ℹ️  No %s resources found in Cloudinary", resourceType)
+	}
+	
+	return nil
 }

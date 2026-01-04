@@ -130,18 +130,6 @@ func (ps *ProjectService) CreateProject(userID uint, req *CreateProjectRequest) 
 
 // GetProject retrieves a project by ID
 func (ps *ProjectService) GetProject(userID uint, projectID uint) (*models.Project, error) {
-	// Check if user has active subscription (except for admin users)
-	var user models.User
-	err := ps.userRepo.FindByID(&user, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
-	}
-
-	// Admin users can view any project
-	if user.UserType != models.UserTypeAdmin && !user.HasActiveSubscription {
-		return nil, errors.New("active subscription required to view projects")
-	}
-
 	// Get project
 	project, err := ps.projectRepo.GetByID(projectID)
 	if err != nil {
@@ -156,18 +144,6 @@ func (ps *ProjectService) GetProject(userID uint, projectID uint) (*models.Proje
 
 // GetProjectBySlug retrieves a project by slug
 func (ps *ProjectService) GetProjectBySlug(userID uint, slug string) (*models.Project, error) {
-	// Check if user has active subscription (except for admin users)
-	var user models.User
-	err := ps.userRepo.FindByID(&user, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
-	}
-
-	// Admin users can view any project
-	if user.UserType != models.UserTypeAdmin && !user.HasActiveSubscription {
-		return nil, errors.New("active subscription required to view projects")
-	}
-
 	// Get project
 	project, err := ps.projectRepo.GetBySlug(slug)
 	if err != nil {
@@ -182,18 +158,6 @@ func (ps *ProjectService) GetProjectBySlug(userID uint, slug string) (*models.Pr
 
 // GetProjects retrieves projects with pagination and filters
 func (ps *ProjectService) GetProjects(userID uint, filters map[string]interface{}, limit, offset int) ([]models.Project, error) {
-	// Check if user has active subscription (except for admin users)
-	var user models.User
-	err := ps.userRepo.FindByID(&user, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
-	}
-
-	// Admin users can view any projects
-	if user.UserType != models.UserTypeAdmin && !user.HasActiveSubscription {
-		return nil, errors.New("active subscription required to view projects")
-	}
-
 	// Get projects with filters
 	projects, err := ps.projectRepo.GetProjectsByFilters(filters, limit, offset)
 	if err != nil {
@@ -205,7 +169,7 @@ func (ps *ProjectService) GetProjects(userID uint, filters map[string]interface{
 
 // GetUserProjects retrieves projects created by a specific user
 func (ps *ProjectService) GetUserProjects(userID uint, targetUserID uint, limit, offset int) ([]models.Project, error) {
-	// Check if user has active subscription (except for admin users)
+	// Check permissions
 	var user models.User
 	err := ps.userRepo.FindByID(&user, userID)
 	if err != nil {
@@ -215,9 +179,6 @@ func (ps *ProjectService) GetUserProjects(userID uint, targetUserID uint, limit,
 	// Admin users can view any user's projects
 	// Users can only view their own projects
 	if user.UserType != models.UserTypeAdmin {
-		if !user.HasActiveSubscription {
-			return nil, errors.New("active subscription required to view projects")
-		}
 		if userID != targetUserID {
 			return nil, errors.New("can only view your own projects")
 		}
@@ -340,18 +301,6 @@ func (ps *ProjectService) DeleteProject(userID uint, projectID uint) error {
 
 // SearchProjects searches projects by query
 func (ps *ProjectService) SearchProjects(userID uint, query string, limit, offset int) ([]models.Project, error) {
-	// Check if user has active subscription (except for admin users)
-	var user models.User
-	err := ps.userRepo.FindByID(&user, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
-	}
-
-	// Admin users can search any projects
-	if user.UserType != models.UserTypeAdmin && !user.HasActiveSubscription {
-		return nil, errors.New("active subscription required to search projects")
-	}
-
 	// Search projects
 	projects, err := ps.projectRepo.Search(query, limit, offset)
 	if err != nil {

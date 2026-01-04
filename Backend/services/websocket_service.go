@@ -200,7 +200,6 @@ func (h *Hub) broadcastToRoom(message *WSMessage) {
 		select {
 		case client.Send <- data:
 			successCount++
-			logrus.Debugf("Message sent to client %s in room %d", client.ID, message.RoomID)
 		default:
 			logrus.Warnf("Client %s send buffer full, closing connection", client.ID)
 			close(client.Send)
@@ -236,7 +235,6 @@ func (h *Hub) broadcastFlatToRoom(message *FlatWSMessage) {
 		select {
 		case client.Send <- data:
 			successCount++
-			logrus.Debugf("Flat message sent to client %s in room %d", client.ID, message.RoomID)
 		default:
 			logrus.Warnf("Client %s send buffer full, closing connection", client.ID)
 			close(client.Send)

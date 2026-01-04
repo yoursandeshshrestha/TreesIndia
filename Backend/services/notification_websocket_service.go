@@ -128,10 +128,9 @@ func (nws *NotificationWebSocketService) broadcastToUser(message NotificationMes
 	}
 	
 	if len(connections) == 0 {
-		logrus.Debugf("No connections found for user %d (type: %s)", message.UserID, message.UserType)
 		return
 	}
-	
+
 	// Send message to all connections for this user
 	for _, conn := range connections {
 		err := conn.WriteJSON(message)
@@ -141,8 +140,6 @@ func (nws *NotificationWebSocketService) broadcastToUser(message NotificationMes
 			conn.Close()
 		}
 	}
-	
-	logrus.Debugf("Broadcasted message to user %d (type: %s): %s", message.UserID, message.UserType, message.Event)
 }
 
 // SendNotification sends a new notification to a user
