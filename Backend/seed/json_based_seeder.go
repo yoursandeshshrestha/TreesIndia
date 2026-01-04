@@ -25,7 +25,7 @@ func NewJSONBasedSeeder(sm *SeedManager) *JSONBasedSeeder {
 	}
 }
 
-// SeedCategories seeds all categories from JSON
+// SeedCategories seeds top-level categories from JSON
 func (js *JSONBasedSeeder) SeedCategories() error {
 	logrus.Info("Seeding categories...")
 
@@ -43,25 +43,9 @@ func (js *JSONBasedSeeder) SeedCategories() error {
 		return fmt.Errorf("invalid categories JSON structure")
 	}
 
-	var categories []models.Category
-	for _, catData := range categoriesData {
-		catMap, ok := catData.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		category := models.Category{
-			Name:        catMap["name"].(string),
-			Slug:        catMap["slug"].(string),
-			Description: catMap["description"].(string),
-			IsActive:    catMap["is_active"].(bool),
-		}
-		categories = append(categories, category)
-	}
-
-	// Get existing categories in one query
+	// Get existing categories to avoid duplicates
 	var existingCategories []models.Category
-	if err := js.sm.db.Find(&existingCategories).Error; err != nil {
+	if err := js.sm.db.Where("parent_id IS NULL").Find(&existingCategories).Error; err != nil {
 		logrus.Errorf("Failed to fetch existing categories: %v", err)
 		return err
 	}
@@ -74,10 +58,26 @@ func (js *JSONBasedSeeder) SeedCategories() error {
 
 	// Filter out categories that already exist
 	var categoriesToCreate []models.Category
-	for _, category := range categories {
-		if !existingMap[category.Name] {
-			categoriesToCreate = append(categoriesToCreate, category)
+	for _, catData := range categoriesData {
+		catMap, ok := catData.(map[string]interface{})
+		if !ok {
+			continue
 		}
+
+		name := catMap["name"].(string)
+		if existingMap[name] {
+			logrus.Infof("Category already exists: %s", name)
+			continue
+		}
+
+		category := models.Category{
+			Name:        name,
+			Slug:        catMap["slug"].(string),
+			Description: catMap["description"].(string),
+			ParentID:    nil, // Top-level categories have no parent
+			IsActive:    catMap["is_active"].(bool),
+		}
+		categoriesToCreate = append(categoriesToCreate, category)
 	}
 
 	// Bulk create new categories
@@ -95,7 +95,7 @@ func (js *JSONBasedSeeder) SeedCategories() error {
 	return nil
 }
 
-// SeedSubcategories seeds all subcategories from JSON
+// SeedSubcategories seeds subcategories from JSON
 func (js *JSONBasedSeeder) SeedSubcategories() error {
 	logrus.Info("Seeding subcategories...")
 
@@ -310,6 +310,21 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		basePath = "."
 	}
 
+	// Get existing services FIRST to avoid unnecessary image uploads
+	var existingServices []models.Service
+	if err := js.sm.db.Unscoped().Find(&existingServices).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing services: %v", err)
+		return err
+	}
+
+	logrus.Infof("Found %d existing services in database", len(existingServices))
+
+	// Create a map for quick lookup by slug (which has unique constraint)
+	existingMap := make(map[string]bool)
+	for _, service := range existingServices {
+		existingMap[service.Slug] = true
+	}
+
 	// Structure to hold service data with its service area associations
 	type serviceWithAreas struct {
 		service      models.Service
@@ -320,6 +335,19 @@ func (js *JSONBasedSeeder) SeedServices() error {
 	for _, serviceData := range servicesData {
 		serviceMap, ok := serviceData.(map[string]interface{})
 		if !ok {
+			continue
+		}
+
+		// Get slug early to check if service already exists
+		slug, ok := serviceMap["slug"].(string)
+		if !ok {
+			logrus.Warnf("Service missing slug, skipping")
+			continue
+		}
+
+		// Skip if service already exists - avoid unnecessary image uploads
+		if existingMap[slug] {
+			logrus.Infof("Service already exists, skipping: %s (slug: %s)", serviceMap["name"], slug)
 			continue
 		}
 
@@ -497,37 +525,11 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			service:      service,
 			serviceAreas: serviceAreaCities,
 		})
-	}
-
-	// Get existing services in one query (including soft-deleted ones)
-	var existingServices []models.Service
-	if err := js.sm.db.Unscoped().Find(&existingServices).Error; err != nil {
-		logrus.Errorf("Failed to fetch existing services: %v", err)
-		return err
-	}
-
-	logrus.Infof("Found %d existing services in database", len(existingServices))
-
-	// Create a map for quick lookup by slug (which has unique constraint)
-	existingMap := make(map[string]bool)
-	for _, service := range existingServices {
-		existingMap[service.Slug] = true
-		logrus.Debugf("Existing service slug: %s", service.Slug)
-	}
-
-	// Filter out services that already exist and prepare for creation
-	var servicesToCreate []serviceWithAreas
-	for _, swa := range servicesWithAreas {
-		if !existingMap[swa.service.Slug] {
-			servicesToCreate = append(servicesToCreate, swa)
-			logrus.Infof("Will create service: %s (slug: %s)", swa.service.Name, swa.service.Slug)
-		} else {
-			logrus.Infof("Service already exists, skipping: %s (slug: %s)", swa.service.Name, swa.service.Slug)
-		}
+		logrus.Infof("Will create service: %s (slug: %s)", service.Name, service.Slug)
 	}
 
 	// Create services and their service area associations
-	if len(servicesToCreate) > 0 {
+	if len(servicesWithAreas) > 0 {
 		// Get existing associations to avoid duplicates
 		var existingAssociations []struct {
 			ServiceID     uint `gorm:"column:service_id"`
@@ -544,7 +546,7 @@ func (js *JSONBasedSeeder) SeedServices() error {
 		}
 
 		// Create services one by one to get their IDs for associations
-		for _, swa := range servicesToCreate {
+		for _, swa := range servicesWithAreas {
 			// Create the service
 			if err := js.sm.db.Create(&swa.service).Error; err != nil {
 				logrus.Errorf("Failed to create service %s: %v", swa.service.Name, err)
@@ -569,7 +571,6 @@ func (js *JSONBasedSeeder) SeedServices() error {
 
 					key := fmt.Sprintf("%d-%d", swa.service.ID, areaID)
 					if existingAssocMap[key] {
-						logrus.Debugf("Association already exists: service %d - area %d", swa.service.ID, areaID)
 						continue
 					}
 
@@ -595,7 +596,7 @@ func (js *JSONBasedSeeder) SeedServices() error {
 			}
 		}
 
-		logrus.Infof("Created %d new services with service area mappings", len(servicesToCreate))
+		logrus.Infof("Created %d new services with service area mappings", len(servicesWithAreas))
 	} else {
 		logrus.Info("All services already exist")
 	}
@@ -872,31 +873,19 @@ func (js *JSONBasedSeeder) SeedPromotionBanners() error {
 		return fmt.Errorf("invalid promotion banners JSON structure")
 	}
 
-	var banners []models.PromotionBanner
-	for _, bannerData := range bannersData {
-		bannerMap, ok := bannerData.(map[string]interface{})
-		if !ok {
-			continue
-		}
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, promotion banners will be created without images")
+	}
 
-		// Handle optional fields
-		var image string
-		if imageVal, ok := bannerMap["image"].(string); ok {
-			image = imageVal
-		}
-
-		var link string
-		if linkVal, ok := bannerMap["link"].(string); ok {
-			link = linkVal
-		}
-
-		banner := models.PromotionBanner{
-			Title:    bannerMap["title"].(string),
-			Image:    image,
-			Link:     link,
-			IsActive: bannerMap["is_active"].(bool),
-		}
-		banners = append(banners, banner)
+	// Get the base path (backend directory)
+	basePath, err := os.Getwd()
+	if err != nil {
+		logrus.Warnf("Failed to get working directory: %v", err)
+		basePath = "."
 	}
 
 	// Get existing banners in one query
@@ -912,26 +901,239 @@ func (js *JSONBasedSeeder) SeedPromotionBanners() error {
 		existingMap[banner.Title] = true
 	}
 
-	// Filter out banners that already exist
-	var bannersToCreate []models.PromotionBanner
-	for _, banner := range banners {
-		if !existingMap[banner.Title] {
-			bannersToCreate = append(bannersToCreate, banner)
+	createdCount := 0
+
+	// Process each banner
+	for _, bannerData := range bannersData {
+		bannerMap, ok := bannerData.(map[string]interface{})
+		if !ok {
+			continue
 		}
+
+		title := bannerMap["title"].(string)
+
+		// Skip if already exists
+		if existingMap[title] {
+			logrus.Infof("Promotion banner '%s' already exists, skipping", title)
+			continue
+		}
+
+		// Handle image path and upload
+		var imageURL string
+		if imagePath, ok := bannerMap["image"].(string); ok && imagePath != "" {
+			// Resolve relative path
+			var fullPath string
+			if filepath.IsAbs(imagePath) {
+				fullPath = imagePath
+			} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+				fullPath = filepath.Join(basePath, imagePath)
+				fullPath, err = filepath.Abs(fullPath)
+				if err != nil {
+					logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+					continue
+				}
+			} else {
+				fullPath = filepath.Join(basePath, imagePath)
+			}
+			fullPath = filepath.Clean(fullPath)
+
+			// Check if file exists
+			if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+				logrus.Warnf("Image file not found: %s", fullPath)
+				continue
+			}
+
+			// Upload to Cloudinary if uploader is available
+			if cloudinaryUploader != nil {
+				url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "promotion-banners")
+				if err != nil {
+					logrus.Errorf("Failed to upload image %s: %v", fullPath, err)
+					continue
+				}
+				imageURL = url
+				logrus.Infof("Successfully uploaded image %s to Cloudinary: %s", fullPath, url)
+			} else {
+				logrus.Warnf("Cloudinary uploader not available, skipping image upload for %s", fullPath)
+				continue
+			}
+		}
+
+		// Handle optional fields
+		var link string
+		if linkVal, ok := bannerMap["link"].(string); ok {
+			link = linkVal
+		}
+
+		var isActive bool = true
+		if isActiveVal, ok := bannerMap["is_active"].(bool); ok {
+			isActive = isActiveVal
+		}
+
+		banner := models.PromotionBanner{
+			Title:    title,
+			Image:    imageURL,
+			Link:     link,
+			IsActive: isActive,
+		}
+
+		// Create banner
+		if err := js.sm.db.Create(&banner).Error; err != nil {
+			logrus.Errorf("Failed to create promotion banner %s: %v", title, err)
+			continue
+		}
+
+		logrus.Infof("Created promotion banner: %s (ID: %d)", title, banner.ID)
+		createdCount++
 	}
 
-	// Bulk create new banners
-	if len(bannersToCreate) > 0 {
-		if err := js.sm.db.Create(&bannersToCreate).Error; err != nil {
-			logrus.Errorf("Failed to create promotion banners: %v", err)
-			return err
-		}
-		logrus.Infof("Created %d new promotion banners", len(bannersToCreate))
+	if createdCount > 0 {
+		logrus.Infof("Created %d new promotion banners", createdCount)
 	} else {
-		logrus.Info("All promotion banners already exist")
+		logrus.Info("All promotion banners already exist, skipped seeding")
 	}
 
 	logrus.Info("Promotion banners seeded successfully")
+	return nil
+}
+
+// SeedBannerImages seeds banner images from JSON
+func (js *JSONBasedSeeder) SeedBannerImages() error {
+	logrus.Info("Seeding banner images...")
+
+	// Load banner images from JSON
+	jsonLoader := NewJSONLoader()
+	data, err := jsonLoader.LoadBannerImages()
+	if err != nil {
+		logrus.Errorf("Failed to load banner images JSON: %v", err)
+		return err
+	}
+
+	// Parse banner images from JSON
+	bannersData, ok := data["banner_images"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid banner images JSON structure")
+	}
+
+	// Get Cloudinary uploader from seed manager (if set)
+	var cloudinaryUploader CloudinaryUploader
+	if js.sm.cloudinaryUploader != nil {
+		cloudinaryUploader = js.sm.cloudinaryUploader
+	} else {
+		logrus.Warnf("Cloudinary uploader not set, banner images will be created without images")
+	}
+
+	// Get the base path (backend directory)
+	basePath, err := os.Getwd()
+	if err != nil {
+		logrus.Warnf("Failed to get working directory: %v", err)
+		basePath = "."
+	}
+
+	// Get existing banner images to avoid duplicates
+	var existingBanners []models.BannerImage
+	if err := js.sm.db.Find(&existingBanners).Error; err != nil {
+		logrus.Errorf("Failed to fetch existing banner images: %v", err)
+		return err
+	}
+
+	// Create a map for quick lookup by title
+	existingMap := make(map[string]bool)
+	for _, banner := range existingBanners {
+		existingMap[banner.Title] = true
+	}
+
+	createdCount := 0
+
+	// Process each banner image
+	for _, bannerData := range bannersData {
+		bannerMap, ok := bannerData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		title := bannerMap["title"].(string)
+
+		// Skip if already exists
+		if existingMap[title] {
+			logrus.Infof("Banner image '%s' already exists, skipping", title)
+			continue
+		}
+
+		// Handle image path and upload
+		var imageURL string
+		if imagePath, ok := bannerMap["image"].(string); ok && imagePath != "" {
+			// Resolve relative path
+			var fullPath string
+			if filepath.IsAbs(imagePath) {
+				fullPath = imagePath
+			} else if strings.HasPrefix(imagePath, "../") || strings.HasPrefix(imagePath, "..\\") {
+				fullPath = filepath.Join(basePath, imagePath)
+				fullPath, err = filepath.Abs(fullPath)
+				if err != nil {
+					logrus.Warnf("Failed to resolve absolute path for %s: %v", imagePath, err)
+					continue
+				}
+			} else {
+				fullPath = filepath.Join(basePath, imagePath)
+			}
+			fullPath = filepath.Clean(fullPath)
+
+			// Check if file exists
+			if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+				logrus.Warnf("Image file not found: %s", fullPath)
+				continue
+			}
+
+			// Upload to Cloudinary if uploader is available
+			if cloudinaryUploader != nil {
+				url, err := cloudinaryUploader.UploadImageFromPath(fullPath, "banners")
+				if err != nil {
+					logrus.Errorf("Failed to upload image %s: %v", fullPath, err)
+					continue
+				}
+				imageURL = url
+			} else {
+				logrus.Warnf("Cloudinary uploader not available, skipping image upload for %s", fullPath)
+				continue
+			}
+		}
+
+		// Handle optional fields
+		var link string
+		if linkVal, ok := bannerMap["link"].(string); ok {
+			link = linkVal
+		}
+
+		var sortOrder int
+		if sortOrderVal, ok := bannerMap["sort_order"].(float64); ok {
+			sortOrder = int(sortOrderVal)
+		}
+
+		var isActive bool = true
+		if isActiveVal, ok := bannerMap["is_active"].(bool); ok {
+			isActive = isActiveVal
+		}
+
+		banner := models.BannerImage{
+			Title:     title,
+			Image:     imageURL,
+			Link:      link,
+			SortOrder: sortOrder,
+			IsActive:  isActive,
+		}
+
+		// Create banner image
+		if err := js.sm.db.Create(&banner).Error; err != nil {
+			logrus.Errorf("Failed to create banner image %s: %v", title, err)
+			continue
+		}
+
+		logrus.Infof("Created banner image: %s (ID: %d, Sort Order: %d)", title, banner.ID, sortOrder)
+		createdCount++
+	}
+
+	logrus.Infof("Created %d new banner images", createdCount)
+	logrus.Info("Banner images seeded successfully")
 	return nil
 }
 
@@ -1410,7 +1612,6 @@ func (js *JSONBasedSeeder) SeedSubscriptionPlans() error {
 
 		// Check if this plan already exists
 		if existingMap[name] {
-			logrus.Debugf("Subscription plan already exists: %s", name)
 			continue
 		}
 
@@ -1486,7 +1687,6 @@ func (js *JSONBasedSeeder) SeedSubscriptionPlans() error {
 		if err := js.sm.db.Create(&plan).Error; err != nil {
 			// Check if it's a unique constraint violation
 			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-				logrus.Debugf("Subscription plan already exists (skipping): %s", name)
 				continue
 			}
 			logrus.Errorf("Failed to create subscription plan %s: %v", name, err)
@@ -1562,29 +1762,23 @@ func (js *JSONBasedSeeder) SeedProperties() error {
 		title := propMap["title"].(string)
 		baseSlug := slugHelper.GenerateSlug(title)
 
-		// Ensure unique slug by checking database
-		slug := baseSlug
-		counter := 1
-		for {
-			// Check both in-memory map and database
-			if !existingMap[slug] {
-				var existing models.Property
-				if err := js.sm.db.Where("slug = ?", slug).First(&existing).Error; err != nil {
-					// Slug doesn't exist in database, we can use it
-					break
-				}
-				// Slug exists in database, mark it in map and try next
-				existingMap[slug] = true
-			}
-			// Slug exists, try next
-			slug = fmt.Sprintf("%s-%d", baseSlug, counter)
-			counter++
-			if counter > 1000 {
-				// Safety check to prevent infinite loop
-				logrus.Errorf("Could not generate unique slug for property: %s", title)
-				break
-			}
+		// Check if property with base slug already exists - if so, skip
+		if existingMap[baseSlug] {
+			logrus.Infof("Property with slug '%s' already exists, skipping: %s", baseSlug, title)
+			continue
 		}
+
+		// Double-check in database
+		var existingProperty models.Property
+		if err := js.sm.db.Where("slug = ?", baseSlug).First(&existingProperty).Error; err == nil {
+			// Property exists, skip it
+			existingMap[baseSlug] = true
+			logrus.Infof("Property with slug '%s' already exists in database, skipping: %s", baseSlug, title)
+			continue
+		}
+
+		// Use base slug
+		slug := baseSlug
 		existingMap[slug] = true
 
 		// Create property model
@@ -1726,7 +1920,11 @@ func (js *JSONBasedSeeder) SeedProperties() error {
 		createdCount++
 	}
 
-	logrus.Infof("Created %d new properties", createdCount)
+	if createdCount > 0 {
+		logrus.Infof("Created %d new properties", createdCount)
+	} else {
+		logrus.Info("All properties already exist, skipped seeding")
+	}
 	logrus.Info("Properties seeded successfully")
 	return nil
 }
@@ -1793,29 +1991,23 @@ func (js *JSONBasedSeeder) SeedProjects() error {
 		title := projMap["title"].(string)
 		baseSlug := slugHelper.GenerateSlug(title)
 
-		// Ensure unique slug by checking database
-		slug := baseSlug
-		counter := 1
-		for {
-			// Check both in-memory map and database
-			if !existingMap[slug] {
-				var existing models.Project
-				if err := js.sm.db.Where("slug = ?", slug).First(&existing).Error; err != nil {
-					// Slug doesn't exist in database, we can use it
-					break
-				}
-				// Slug exists in database, mark it in map and try next
-				existingMap[slug] = true
-			}
-			// Slug exists, try next
-			slug = fmt.Sprintf("%s-%d", baseSlug, counter)
-			counter++
-			if counter > 1000 {
-				// Safety check to prevent infinite loop
-				logrus.Errorf("Could not generate unique slug for project: %s", title)
-				break
-			}
+		// Check if project with base slug already exists - if so, skip
+		if existingMap[baseSlug] {
+			logrus.Infof("Project with slug '%s' already exists, skipping: %s", baseSlug, title)
+			continue
 		}
+
+		// Double-check in database
+		var existingProject models.Project
+		if err := js.sm.db.Where("slug = ?", baseSlug).First(&existingProject).Error; err == nil {
+			// Project exists, skip it
+			existingMap[baseSlug] = true
+			logrus.Infof("Project with slug '%s' already exists in database, skipping: %s", baseSlug, title)
+			continue
+		}
+
+		// Use base slug
+		slug := baseSlug
 		existingMap[slug] = true
 
 		// Parse contact info
@@ -1929,7 +2121,11 @@ func (js *JSONBasedSeeder) SeedProjects() error {
 		createdCount++
 	}
 
-	logrus.Infof("Created %d new projects", createdCount)
+	if createdCount > 0 {
+		logrus.Infof("Created %d new projects", createdCount)
+	} else {
+		logrus.Info("All projects already exist, skipped seeding")
+	}
 	logrus.Info("Projects seeded successfully")
 	return nil
 }

@@ -40,41 +40,6 @@ func (jl *JSONLoader) LoadJSONFile(filename string, v interface{}) error {
 	return nil
 }
 
-// LoadCategories loads categories from JSON file
-func (jl *JSONLoader) LoadCategories() (map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := jl.LoadJSONFile("categories.json", &data)
-	return data, err
-}
-
-// LoadSubcategories loads subcategories from JSON file
-func (jl *JSONLoader) LoadSubcategories() (map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := jl.LoadJSONFile("subcategories.json", &data)
-	return data, err
-}
-
-// LoadServices loads services from JSON file
-func (jl *JSONLoader) LoadServices() (map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := jl.LoadJSONFile("services.json", &data)
-	return data, err
-}
-
-// LoadWorkers loads workers from JSON file
-func (jl *JSONLoader) LoadWorkers() (map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := jl.LoadJSONFile("workers.json", &data)
-	return data, err
-}
-
-// LoadPromotionBanners loads promotion banners from JSON file
-func (jl *JSONLoader) LoadPromotionBanners() (map[string]interface{}, error) {
-	var data map[string]interface{}
-	err := jl.LoadJSONFile("promotion_banners.json", &data)
-	return data, err
-}
-
 // LoadAdminConfigs loads admin configurations from JSON file
 func (jl *JSONLoader) LoadAdminConfigs() (map[string]interface{}, error) {
 	var data map[string]interface{}
@@ -110,6 +75,48 @@ func (jl *JSONLoader) LoadSubscriptionPlans() (map[string]interface{}, error) {
 	return data, err
 }
 
+// LoadCategories loads categories from JSON file
+func (jl *JSONLoader) LoadCategories() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("categories.json", &data)
+	return data, err
+}
+
+// LoadSubcategories loads subcategories from JSON file
+func (jl *JSONLoader) LoadSubcategories() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("subcategories.json", &data)
+	return data, err
+}
+
+// LoadServices loads services from JSON file
+func (jl *JSONLoader) LoadServices() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("services.json", &data)
+	return data, err
+}
+
+// LoadWorkers loads workers from JSON file
+func (jl *JSONLoader) LoadWorkers() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("workers.json", &data)
+	return data, err
+}
+
+// LoadPromotionBanners loads promotion banners from JSON file
+func (jl *JSONLoader) LoadPromotionBanners() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("promotion_banners.json", &data)
+	return data, err
+}
+
+// LoadBannerImages loads banner images from JSON file
+func (jl *JSONLoader) LoadBannerImages() (map[string]interface{}, error) {
+	var data map[string]interface{}
+	err := jl.LoadJSONFile("banner_images.json", &data)
+	return data, err
+}
+
 // LoadProperties loads properties from JSON file
 func (jl *JSONLoader) LoadProperties() (map[string]interface{}, error) {
 	var data map[string]interface{}
@@ -130,3 +137,4 @@ func (jl *JSONLoader) LoadVendors() (map[string]interface{}, error) {
 	err := jl.LoadJSONFile("vendors.json", &data)
 	return data, err
 }
+

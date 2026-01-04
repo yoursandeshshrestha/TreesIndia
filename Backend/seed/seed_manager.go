@@ -16,7 +16,7 @@ type CloudinaryUploader interface {
 
 // SeedManager handles all seeding operations
 type SeedManager struct {
-	db              *gorm.DB
+	db                 *gorm.DB
 	cloudinaryUploader CloudinaryUploader
 }
 
@@ -47,14 +47,8 @@ func (sm *SeedManager) SeedAll() error {
 		{"Admin User", jsonSeeder.SeedAdminUser},
 		{"Admin Configurations", jsonSeeder.SeedAdminConfigurations},
 		{"Service Areas", jsonSeeder.SeedServiceAreas},
-		{"Categories", jsonSeeder.SeedCategories},
-		{"Subcategories", jsonSeeder.SeedSubcategories},
-		{"Services", jsonSeeder.SeedServices},
 		{"Service Area Associations", jsonSeeder.SeedServiceAreaAssociations},
 		{"Subscription Plans", jsonSeeder.SeedSubscriptionPlans},
-		{"Workers", jsonSeeder.SeedWorkers},
-		{"Promotion Banners", jsonSeeder.SeedPromotionBanners},
-		{"Properties", jsonSeeder.SeedProperties},
 	}
 
 	// Execute seeders in order
@@ -71,10 +65,6 @@ func (sm *SeedManager) SeedAll() error {
 	return nil
 }
 
-
-
-
-
 // GetDatabase returns the database instance
 func (sm *SeedManager) GetDatabase() *gorm.DB {
 	return sm.db
@@ -89,19 +79,20 @@ func (sm *SeedManager) SeedIndividualComponents(components ...string) error {
 
 	// Create a map of available seeders
 	seeders := map[string]func() error{
-		"admin_user":              jsonSeeder.SeedAdminUser,
-		"admin_configurations":    jsonSeeder.SeedAdminConfigurations,
-		"service_areas":           jsonSeeder.SeedServiceAreas,
-		"categories":              jsonSeeder.SeedCategories,
-		"subcategories":           jsonSeeder.SeedSubcategories,
-		"services":                jsonSeeder.SeedServices,
+		"admin_user":                jsonSeeder.SeedAdminUser,
+		"admin_configurations":      jsonSeeder.SeedAdminConfigurations,
+		"service_areas":             jsonSeeder.SeedServiceAreas,
+		"categories":                jsonSeeder.SeedCategories,
+		"subcategories":             jsonSeeder.SeedSubcategories,
+		"services":                  jsonSeeder.SeedServices,
 		"service_area_associations": jsonSeeder.SeedServiceAreaAssociations,
-		"subscription_plans":      jsonSeeder.SeedSubscriptionPlans,
-		"workers":                 jsonSeeder.SeedWorkers,
-		"promotion_banners":       jsonSeeder.SeedPromotionBanners,
-		"properties":              jsonSeeder.SeedProperties,
-		"projects":                jsonSeeder.SeedProjects,
-		"vendors":                 jsonSeeder.SeedVendors,
+		"subscription_plans":        jsonSeeder.SeedSubscriptionPlans,
+		"workers":                   jsonSeeder.SeedWorkers,
+		"promotion_banners":         jsonSeeder.SeedPromotionBanners,
+		"banner_images":             jsonSeeder.SeedBannerImages,
+		"properties":                jsonSeeder.SeedProperties,
+		"projects":                  jsonSeeder.SeedProjects,
+		"vendors":                   jsonSeeder.SeedVendors,
 	}
 
 	// Execute requested seeders
