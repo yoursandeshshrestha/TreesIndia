@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store/store';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
-import { initializeAuth } from './src/store/slices/authSlice';
+import { initializeAuth, updateSubscriptionStatus } from './src/store/slices/authSlice';
 import { useAppFonts } from './src/utils/fonts';
 import SplashScreen from './src/components/SplashScreen';
 import LoginScreen from './src/pages/auth/LoginScreen';
@@ -25,12 +25,16 @@ import ApplyForWorkerScreen from './src/pages/profile/ApplyForWorkerScreen';
 import ApplyForBrokerScreen from './src/pages/profile/ApplyForBrokerScreen';
 import MyPropertiesScreen from './src/pages/profile/MyPropertiesScreen';
 import AddPropertyScreen from './src/pages/profile/AddPropertyScreen';
+import MyVendorProfileScreen from './src/pages/profile/MyVendorProfileScreen';
+import AddVendorScreen from './src/pages/profile/AddVendorScreen';
 import AddressSelectionScreen from './src/pages/home/components/AddressSelectionScreen';
 import ServiceSearchScreen from './src/pages/home/components/ServiceSearchScreen';
 import PropertiesScreen from './src/pages/properties/PropertiesScreen';
 import ServicesScreen from './src/pages/services/ServicesScreen';
 import CategoryServicesScreen from './src/pages/services/CategoryServicesScreen';
 import ProjectsScreen from './src/pages/projects/ProjectsScreen';
+import WorkersScreen from './src/pages/workers/WorkersScreen';
+import VendorsScreen from './src/pages/vendors/VendorsScreen';
 import './global.css';
 
 // Component to initialize auth state
@@ -55,14 +59,18 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
 // Main app content
 function AppContent() {
+  const dispatch = useAppDispatch();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'addressSelection' | 'serviceSearch' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'categoryServices'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices'>('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
+  const [vendorToEdit, setVendorToEdit] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [otpPhoneNumber, setOtpPhoneNumber] = useState('');
   const [propertiesInitialFilters, setPropertiesInitialFilters] = useState<any>(null);
   const [servicesInitialFilters, setServicesInitialFilters] = useState<any>(null);
   const [projectsInitialFilters, setProjectsInitialFilters] = useState<any>(null);
+  const [workersInitialFilters, setWorkersInitialFilters] = useState<any>(null);
+  const [vendorsInitialFilters, setVendorsInitialFilters] = useState<any>(null);
   const [categoryForServices, setCategoryForServices] = useState<any>(null);
   const [categoryStack, setCategoryStack] = useState<any[]>([]);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -142,7 +150,9 @@ function AppContent() {
         <SubscriptionPlansScreen
           onBack={() => setCurrentScreen('subscription')}
           onPurchaseSuccess={() => {
-            // Refresh subscription data when returning
+            // Refresh subscription status in Redux
+            dispatch(updateSubscriptionStatus());
+            // Navigate back to subscription screen
             setCurrentScreen('subscription');
           }}
         />
@@ -224,6 +234,37 @@ function AppContent() {
       );
     }
 
+    if (currentScreen === 'vendorProfiles') {
+      return (
+        <MyVendorProfileScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('profile');
+          }}
+          onAddVendor={(vendor?: any) => {
+            setVendorToEdit(vendor || null);
+            setCurrentScreen('addVendor');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'addVendor') {
+      return (
+        <AddVendorScreen
+          onBack={() => {
+            setVendorToEdit(null);
+            setCurrentScreen('vendorProfiles');
+          }}
+          onSuccess={() => {
+            setVendorToEdit(null);
+            setCurrentScreen('vendorProfiles');
+          }}
+          vendorToEdit={vendorToEdit}
+        />
+      );
+    }
+
     if (currentScreen === 'addressSelection') {
       return (
         <AddressSelectionScreen
@@ -291,6 +332,35 @@ function AppContent() {
             setProjectsInitialFilters(null);
           }}
           initialFilters={projectsInitialFilters}
+          onNavigateToSubscription={() => setCurrentScreen('subscription')}
+        />
+      );
+    }
+
+    if (currentScreen === 'browseWorkers') {
+      return (
+        <WorkersScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+            setWorkersInitialFilters(null);
+          }}
+          initialFilters={workersInitialFilters}
+          onNavigateToSubscription={() => setCurrentScreen('subscription')}
+        />
+      );
+    }
+
+    if (currentScreen === 'browseVendors') {
+      return (
+        <VendorsScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+            setVendorsInitialFilters(null);
+          }}
+          initialFilters={vendorsInitialFilters}
+          onNavigateToSubscription={() => setCurrentScreen('subscription')}
         />
       );
     }
@@ -340,11 +410,20 @@ function AppContent() {
               setProjectsInitialFilters(filters);
               setCurrentScreen('browseProjects');
             }}
+            onNavigateToWorkers={(filters) => {
+              setWorkersInitialFilters(filters);
+              setCurrentScreen('browseWorkers');
+            }}
+            onNavigateToVendors={(filters) => {
+              setVendorsInitialFilters(filters);
+              setCurrentScreen('browseVendors');
+            }}
             onNavigateToCategoryServices={(category) => {
               setCategoryForServices(category);
               setCategoryStack([]);
               setCurrentScreen('categoryServices');
             }}
+            onNavigateToSubscription={() => setCurrentScreen('subscription')}
             addressRefreshTrigger={Date.now()} // Refresh address when screen is shown
           />
         );
@@ -364,10 +443,14 @@ function AppContent() {
             onNavigateToApplyWorker={() => setCurrentScreen('applyWorker')}
             onNavigateToApplyBroker={() => setCurrentScreen('applyBroker')}
             onNavigateToProperties={() => setCurrentScreen('properties')}
+            onNavigateToVendorProfile={() => {
+              setVendorToEdit(null);
+              setCurrentScreen('vendorProfiles');
+            }}
           />
         );
       default:
-        return <HomeScreen />;
+        return <HomeScreen onNavigateToSubscription={() => setCurrentScreen('subscription')} />;
     }
   };
 
@@ -396,7 +479,7 @@ function AppContent() {
       <View className="flex-1">
         {renderScreen()}
       </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
+      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       )}
     </View>
