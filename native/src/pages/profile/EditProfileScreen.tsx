@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // @ts-ignore - expo-image-picker needs to be installed
 import * as ImagePicker from 'expo-image-picker';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { getCurrentUser } from '../../store/slices/authSlice';
+import { getCurrentUser, updateAvatar } from '../../store/slices/authSlice';
 import { userService, type UserProfile } from '../../services';
 import Button from '../../components/ui/Button';
 import Input from '../../components/common/Input';
@@ -159,7 +159,12 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
           // Update avatar URL from response
           if (response.avatar) {
             setAvatarUrl(response.avatar);
+            // Immediately update Redux state with new avatar
+            dispatch(updateAvatar(response.avatar));
           }
+
+          // Refresh user data in Redux to ensure everything is in sync
+          await dispatch(getCurrentUser()).unwrap();
 
           // Reload profile to get updated avatar
           await loadUserProfile();

@@ -5,7 +5,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
   ActivityIndicator,
   Animated,
@@ -24,6 +23,8 @@ import FloorIcon from '../../../components/icons/FloorIcon';
 import CalendarIcon from '../../../components/icons/CalendarIcon';
 import FurnishingIcon from '../../../components/icons/FurnishingIcon';
 import LocationIcon from '../../../components/icons/LocationIcon';
+import NotFoundIcon from '../../../components/icons/NotFoundIcon';
+import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 
 interface PropertyDetailBottomSheetProps {
   visible: boolean;
@@ -73,24 +74,8 @@ export default function PropertyDetailBottomSheet({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onClose();
-      setIsClosing(false);
-      setCurrentImageIndex(0);
-    });
+    setCurrentImageIndex(0);
+    onClose();
   };
 
   const getDisplayPrice = () => {
@@ -178,41 +163,43 @@ export default function PropertyDetailBottomSheet({
         >
           <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">
             {/* Header */}
-            <View className="px-4 py-4 border-b border-[#E5E7EB] flex-row items-center">
-              <TouchableOpacity
-                onPress={handleClose}
-                className="p-2 -ml-2"
-                activeOpacity={0.7}
-              >
-                <Text className="text-2xl">×</Text>
-              </TouchableOpacity>
-              <View className="flex-1" />
-              {onEdit && (
+            <View className="border-b border-[#E5E7EB]">
+              <View className="px-4 py-4 flex-row items-center">
                 <TouchableOpacity
-                  onPress={() => {
-                    handleClose();
-                    onEdit();
-                  }}
-                  className="p-2 mr-2"
+                  onPress={handleClose}
+                  className="p-2 -ml-2"
                   activeOpacity={0.7}
                 >
-                  <EditIcon size={24} color="#055c3a" />
+                  <Text className="text-2xl">×</Text>
                 </TouchableOpacity>
-              )}
-              {isDeleting ? (
-                <ActivityIndicator size="small" color="#DC2626" />
-              ) : (
-                <TouchableOpacity
-                  onPress={() => {
-                    handleClose();
-                    onDelete();
-                  }}
-                  className="p-2"
-                  activeOpacity={0.7}
-                >
-                  <DeleteIcon size={24} color="#DC2626" />
-                </TouchableOpacity>
-              )}
+                <View className="flex-1" />
+                {onEdit && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleClose();
+                      onEdit();
+                    }}
+                    className="p-2 mr-2"
+                    activeOpacity={0.7}
+                  >
+                    <EditIcon size={24} color="#055c3a" />
+                  </TouchableOpacity>
+                )}
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleClose();
+                      onDelete();
+                    }}
+                    className="p-2"
+                    activeOpacity={0.7}
+                  >
+                    <DeleteIcon size={24} color="#DC2626" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Content */}
@@ -235,7 +222,7 @@ export default function PropertyDetailBottomSheet({
                       }}
                     >
                       {images.map((imageUri, index) => (
-                        <Image
+                        <ImageWithSkeleton
                           key={index}
                           source={{ uri: imageUri }}
                           style={{ width: SCREEN_WIDTH, height: 250 }}
@@ -259,9 +246,9 @@ export default function PropertyDetailBottomSheet({
                   </View>
                 ) : (
                   <View className="h-[250px] bg-[#F3F4F6] rounded-xl items-center justify-center mb-6">
-                    <Text className="text-6xl mb-4">🏠</Text>
+                    <NotFoundIcon size={64} color="#9CA3AF" />
                     <Text
-                      className="text-base text-[#9CA3AF]"
+                      className="text-base text-[#9CA3AF] mt-4"
                       style={{ fontFamily: 'Inter-Regular' }}
                     >
                       No Images Available

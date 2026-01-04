@@ -8,6 +8,7 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps) {
+  
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name
@@ -52,6 +53,7 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
       <View className="w-20 h-20 rounded-full bg-[#00a871] items-center justify-center overflow-hidden">
         {user?.avatar && user.avatar.trim() !== '' ? (
           <Image
+            key={user.avatar}
             source={{ uri: user.avatar }}
             className="w-full h-full"
             resizeMode="cover"

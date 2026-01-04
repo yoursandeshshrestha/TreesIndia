@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StatusBar, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout } from '../../store/slices/authSlice';
+import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
 import ProfileHeader from './components/ProfileHeader';
 import MenuItem from './components/MenuItem';
 import LogoutConfirmationModal from './components/LogoutConfirmationModal';
@@ -10,6 +11,7 @@ import WalletIcon from '../../components/icons/WalletIcon';
 import AddressIcon from '../../components/icons/AddressIcon';
 import PropertyIcon from '../../components/icons/PropertyIcon';
 import WorkerIcon from '../../components/icons/WorkerIcon';
+import VendorIcon from '../../components/icons/VendorIcon';
 import SubscriptionIcon from '../../components/icons/SubscriptionIcon';
 import SettingsIcon from '../../components/icons/SettingsIcon';
 import InfoIcon from '../../components/icons/InfoIcon';
@@ -26,12 +28,14 @@ interface ProfileScreenProps {
   onNavigateToApplyWorker?: () => void;
   onNavigateToApplyBroker?: () => void;
   onNavigateToProperties?: () => void;
+  onNavigateToVendorProfile?: () => void;
 }
 
-export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties }: ProfileScreenProps) {
+export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties, onNavigateToVendorProfile }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+  const { hasActiveSubscription, isAdmin } = useSubscriptionStatus();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -82,18 +86,27 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
       onNavigateToProperties();
       return;
     }
+    if (label === 'My Vendor Profile' && onNavigateToVendorProfile) {
+      onNavigateToVendorProfile();
+      return;
+    }
     // Placeholder for navigation - will be implemented later
     Alert.alert('Coming Soon', `${label} feature will be available soon.`);
   };
 
   const isWorker = user?.user_type === 'worker';
   const isBroker = user?.user_type === 'broker';
+  const canAccessVendorProfile = (hasActiveSubscription || isAdmin) && !isWorker;
 
   return (
     <View className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={{ paddingTop: insets.top, backgroundColor: 'white' }} />
-      <View className="flex-1">
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         {/* Profile Header Section - Airbnb Style */}
         <View className="px-6 pt-8 pb-8">
           <ProfileHeader
@@ -134,6 +147,13 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
                   icon={PropertyIcon}
                   label="My Properties"
                   onPress={() => handleMenuItemPress('My Properties')}
+                />
+              )}
+              {canAccessVendorProfile && (
+                <MenuItem
+                  icon={VendorIcon}
+                  label="My Vendor Profile"
+                  onPress={() => handleMenuItemPress('My Vendor Profile')}
                 />
               )}
               {!isWorker && (
@@ -220,7 +240,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
             {versionText}
           </Text>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Logout Confirmation Modal */}
       <LogoutConfirmationModal

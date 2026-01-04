@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { type Property } from '../../../services';
 import LocationIcon from '../../../components/icons/LocationIcon';
 import BedIcon from '../../../components/icons/BedIcon';
 import BathIcon from '../../../components/icons/BathIcon';
 import SqftIcon from '../../../components/icons/SqftIcon';
+import NotFoundIcon from '../../../components/icons/NotFoundIcon';
+import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 
 interface PropertyCardProps {
   property: Property;
@@ -70,16 +72,16 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
         }}
       >
         {primaryImage ? (
-          <Image
+          <ImageWithSkeleton
             source={{ uri: primaryImage }}
             className="w-full h-full"
             resizeMode="cover"
           />
         ) : (
           <View className="w-full h-full bg-[#F3F4F6] items-center justify-center">
-            <Text className="text-6xl mb-2">🏠</Text>
+            <NotFoundIcon size={64} color="#9CA3AF" />
             <Text
-              className="text-sm text-[#9CA3AF]"
+              className="text-sm text-[#9CA3AF] mt-2"
               style={{ fontFamily: 'Inter-Regular' }}
             >
               No Image
