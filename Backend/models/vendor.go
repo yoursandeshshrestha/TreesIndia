@@ -42,37 +42,68 @@ func (Vendor) TableName() string {
 	return "vendors"
 }
 
+// BusinessAddressData represents the parsed business address
+type BusinessAddressData struct {
+	Street   string `json:"street"`
+	City     string `json:"city"`
+	State    string `json:"state"`
+	Pincode  string `json:"pincode"`
+	Landmark string `json:"landmark"`
+}
+
 // MarshalJSON custom JSON marshaling for Vendor
 func (v *Vendor) MarshalJSON() ([]byte, error) {
-	// Create a temporary struct with the same fields but with proper types for JSONB fields
-	type Alias Vendor
-	aux := &struct {
-		*Alias
-		ServicesOffered []string `json:"services_offered"`
-		BusinessGallery []string `json:"business_gallery"`
-	}{
-		Alias: (*Alias)(v),
-	}
-
 	// Parse ServicesOffered JSON string to array
+	var servicesOffered []string
 	if v.ServicesOffered != "" {
-		if err := json.Unmarshal([]byte(v.ServicesOffered), &aux.ServicesOffered); err != nil {
-			aux.ServicesOffered = []string{}
+		if err := json.Unmarshal([]byte(v.ServicesOffered), &servicesOffered); err != nil {
+			servicesOffered = []string{}
 		}
 	} else {
-		aux.ServicesOffered = []string{}
+		servicesOffered = []string{}
 	}
 
 	// Parse BusinessGallery JSON string to array
+	var businessGallery []string
 	if v.BusinessGallery != "" {
-		if err := json.Unmarshal([]byte(v.BusinessGallery), &aux.BusinessGallery); err != nil {
-			aux.BusinessGallery = []string{}
+		if err := json.Unmarshal([]byte(v.BusinessGallery), &businessGallery); err != nil {
+			businessGallery = []string{}
 		}
 	} else {
-		aux.BusinessGallery = []string{}
+		businessGallery = []string{}
 	}
 
-	return json.Marshal(aux)
+	// Parse BusinessAddress JSON string to object
+	var businessAddress BusinessAddressData
+	if v.BusinessAddress != "" {
+		if err := json.Unmarshal([]byte(v.BusinessAddress), &businessAddress); err != nil {
+			businessAddress = BusinessAddressData{}
+		}
+	}
+
+	// Create the response structure with all fields explicitly defined
+	return json.Marshal(map[string]interface{}{
+		"id":                   v.ID,
+		"created_at":           v.CreatedAt,
+		"updated_at":           v.UpdatedAt,
+		"deleted_at":           v.DeletedAt,
+		"user_id":              v.UserID,
+		"vendor_name":          v.VendorName,
+		"business_description": v.BusinessDescription,
+		"contact_person_name":  v.ContactPersonName,
+		"contact_person_phone": v.ContactPersonPhone,
+		"contact_person_email": v.ContactPersonEmail,
+		"business_address":     businessAddress,
+		"business_type":        v.BusinessType,
+		"years_in_business":    v.YearsInBusiness,
+		"services_offered":     servicesOffered,
+		"profile_picture":      v.ProfilePicture,
+		"business_gallery":     businessGallery,
+		"is_active":            v.IsActive,
+		"is_verified":          false, // TODO: Add is_verified field to Vendor model if needed
+		"rating":               0.0,   // TODO: Add rating field to Vendor model if needed
+		"total_jobs":           0,     // TODO: Add total_jobs field to Vendor model if needed
+	})
 }
 
 // UnmarshalJSON custom JSON unmarshaling for Vendor
@@ -143,5 +174,7 @@ type UpdateVendorRequest struct {
 	BusinessType       *string   `json:"business_type" binding:"omitempty,oneof=individual partnership company llp pvt_ltd public_ltd other"`
 	YearsInBusiness    *int      `json:"years_in_business" binding:"omitempty,min=0,max=100"`
 	ServicesOffered    []string  `json:"services_offered" binding:"omitempty,min=1"`
+	ProfilePicture     *string   `json:"profile_picture"`
+	BusinessGallery    []string  `json:"business_gallery"`
 	IsActive           *bool     `json:"is_active"`
 }
