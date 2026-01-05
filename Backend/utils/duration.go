@@ -160,8 +160,8 @@ func validateUnitValue(value int, unit string) error {
 			return fmt.Errorf("hours cannot exceed 23")
 		}
 	case "days", "day":
-		if value > 30 {
-			return fmt.Errorf("days cannot exceed 30")
+		if value > 365 {
+			return fmt.Errorf("days cannot exceed 365")
 		}
 	case "weeks", "week":
 		if value > 52 {

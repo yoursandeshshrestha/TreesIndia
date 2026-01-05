@@ -4,7 +4,8 @@
   "description": "TREESINDIA Backend API",
   "scripts": {
     "clear:db": "bun run scripts/clear-db.ts",
-    "seed:all": "go run cmd/seed-all/main.go"
+    "seed:all": "go run cmd/seed-all/main.go",
+    "clean:booking": "go run cmd/clean-bookings/main.go"
   },
   "private": true
 }
