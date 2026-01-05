@@ -91,8 +91,17 @@ export const authenticatedFetch = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
+  console.log('[AuthFetch] Making request to:', url);
+  console.log('[AuthFetch] API_BASE_URL:', API_BASE_URL);
+
   let accessToken = await tokenStorage.getAccessToken();
   const refreshToken = await tokenStorage.getRefreshToken();
+
+  console.log('[AuthFetch] Auth tokens:', {
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    accessTokenLength: accessToken?.length || 0,
+  });
 
   // If no access token but we have refresh token, try to refresh first
   if (!accessToken && refreshToken) {
@@ -141,12 +150,19 @@ export const authenticatedFetch = async (
 
   if (accessToken) {
     (headers as Record<string, string>).Authorization = `Bearer ${accessToken}`;
+    console.log('[AuthFetch] Added Authorization header');
+  } else {
+    console.warn('[AuthFetch] No access token available - request will be unauthenticated');
   }
+
+  console.log('[AuthFetch] Request headers:', headers);
 
   const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  console.log('[AuthFetch] Response status:', response.status);
 
   // If we get a 401, try to refresh the token and retry the request
   if (response.status === 401 && (accessToken || refreshToken)) {

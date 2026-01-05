@@ -1,4 +1,4 @@
-import { API_BASE_URL, authenticatedFetch } from '..';
+import { API_BASE_URL, authenticatedFetch } from './base';
 
 export interface SearchHistoryEntry {
   id: number;
