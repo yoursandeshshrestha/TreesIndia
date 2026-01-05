@@ -29,6 +29,7 @@ import MyVendorProfileScreen from './src/pages/profile/MyVendorProfileScreen';
 import AddVendorScreen from './src/pages/profile/AddVendorScreen';
 import AddressSelectionScreen from './src/pages/home/components/AddressSelectionScreen';
 import ServiceSearchScreen from './src/pages/home/components/ServiceSearchScreen';
+import BookingFlowScreen from './src/pages/booking/BookingFlowScreen';
 import PropertiesScreen from './src/pages/properties/PropertiesScreen';
 import ServicesScreen from './src/pages/services/ServicesScreen';
 import CategoryServicesScreen from './src/pages/services/CategoryServicesScreen';
@@ -61,9 +62,10 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const dispatch = useAppDispatch();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices'>('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
   const [vendorToEdit, setVendorToEdit] = useState<any>(null);
+  const [serviceForBooking, setServiceForBooking] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [otpPhoneNumber, setOtpPhoneNumber] = useState('');
   const [propertiesInitialFilters, setPropertiesInitialFilters] = useState<any>(null);
@@ -297,6 +299,24 @@ function AppContent() {
       );
     }
 
+    if (currentScreen === 'bookingFlow' && serviceForBooking) {
+      return (
+        <BookingFlowScreen
+          service={serviceForBooking}
+          onBack={() => {
+            setServiceForBooking(null);
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onComplete={() => {
+            setServiceForBooking(null);
+            setCurrentScreen('home');
+            setActiveTab('booking');
+          }}
+        />
+      );
+    }
+
     if (currentScreen === 'browseProperties') {
       return (
         <PropertiesScreen
@@ -319,6 +339,10 @@ function AppContent() {
             setServicesInitialFilters(null);
           }}
           initialFilters={servicesInitialFilters}
+          onNavigateToBookingFlow={(service) => {
+            setServiceForBooking(service);
+            setCurrentScreen('bookingFlow');
+          }}
         />
       );
     }
@@ -398,6 +422,10 @@ function AppContent() {
           <HomeScreen
             onNavigateToAddressSelection={() => setCurrentScreen('addressSelection')}
             onNavigateToServiceSearch={() => setCurrentScreen('serviceSearch')}
+            onNavigateToBookingFlow={(service) => {
+              setServiceForBooking(service);
+              setCurrentScreen('bookingFlow');
+            }}
             onNavigateToProperties={(filters) => {
               setPropertiesInitialFilters(filters);
               setCurrentScreen('browseProperties');
@@ -479,7 +507,7 @@ function AppContent() {
       <View className="flex-1">
         {renderScreen()}
       </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
+      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       )}
     </View>
