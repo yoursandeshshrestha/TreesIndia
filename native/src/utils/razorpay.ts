@@ -1,14 +1,15 @@
 /**
  * Razorpay Payment Gateway Integration
- * 
+ *
  * Note: This requires react-native-razorpay package and a custom development build
  * Install: npm install react-native-razorpay
- * 
+ *
  * For Expo: You'll need to create a development build (expo prebuild + native build)
  * or use EAS Build for custom native code support
  */
 
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
+import { paymentLogger } from './logger';
 
 // Razorpay types
 export interface RazorpayOptions {
@@ -45,92 +46,183 @@ export interface RazorpayError {
   };
 }
 
+// Detect if we're in Expo Go by checking for __expo module
+const isExpoGo = typeof (global as any).__expo !== 'undefined' &&
+                 !(global as any).__DEV__ === false;
+
+// Function to safely load Razorpay module
+function loadRazorpayModule(): any {
+  if (isExpoGo) {
+    return null;
+  }
+
+  try {
+    // Use a dynamic require wrapped in a function to delay execution
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const RazorpayCheckout = require('react-native-razorpay');
+    return RazorpayCheckout;
+  } catch (error) {
+    console.log('Razorpay module not available:', error);
+    return null;
+  }
+}
+
 class RazorpayService {
   private razorpay: any = null;
   private isInitialized = false;
-  private initPromise: Promise<void> | null = null;
-
-  /**
-   * Initialize Razorpay SDK
-   * This should be called once when the app starts
-   */
-  async initialize(): Promise<void> {
-    if (this.isInitialized) {
-      return;
-    }
-
-    // If initialization is already in progress, wait for it
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    // Initialize and return a promise
-    this.initPromise = new Promise((resolve, reject) => {
-      try {
-        // Dynamically import react-native-razorpay
-        // This allows the app to work even if the package isn't installed
-        const RazorpayCheckout = require('react-native-razorpay');
-        this.razorpay = RazorpayCheckout.default || RazorpayCheckout;
-        this.isInitialized = true;
-        resolve();
-      } catch (error) {
-        this.isInitialized = false;
-        this.initPromise = null;
-        reject(error);
-      }
-    });
-
-    return this.initPromise;
-  }
+  private razorpayModule: any = null;
+  private checkoutTimeout: NodeJS.Timeout | null = null;
+  private readonly CHECKOUT_TIMEOUT_MS = 300000; // 5 minutes timeout
 
   /**
    * Check if Razorpay is available
    */
   isAvailable(): boolean {
-    return this.isInitialized && this.razorpay !== null;
+    return !isExpoGo && this.isInitialized && this.razorpay !== null;
   }
 
   /**
-   * Open Razorpay checkout
+   * Check if we're in Expo Go (Razorpay not available)
+   */
+  isExpoGo(): boolean {
+    return isExpoGo;
+  }
+
+  /**
+   * Initialize Razorpay SDK (public method to match WalletScreen pattern)
+   */
+  async initialize(): Promise<void> {
+    if (this.isInitialized && this.razorpay) {
+      return;
+    }
+
+    if (isExpoGo) {
+      throw new Error('Razorpay is not available in Expo Go.');
+    }
+
+    // Load the module only when needed
+    if (!this.razorpayModule) {
+      this.razorpayModule = loadRazorpayModule();
+    }
+
+    if (!this.razorpayModule) {
+      throw new Error('Failed to load Razorpay module. Please ensure react-native-razorpay is installed.');
+    }
+
+    try {
+      this.razorpay = this.razorpayModule.default || this.razorpayModule;
+
+      if (!this.razorpay || typeof this.razorpay.open !== 'function') {
+        throw new Error('Razorpay module is not properly initialized');
+      }
+
+      this.isInitialized = true;
+    } catch (error) {
+      throw new Error('Failed to initialize Razorpay SDK');
+    }
+  }
+
+  /**
+   * Clear any existing checkout timeout
+   */
+  private clearCheckoutTimeout(): void {
+    if (this.checkoutTimeout) {
+      clearTimeout(this.checkoutTimeout);
+      this.checkoutTimeout = null;
+      paymentLogger.debug('Cleared checkout timeout');
+    }
+  }
+
+  /**
+   * Open Razorpay checkout with timeout protection
    */
   async openCheckout(
     options: RazorpayOptions,
     onSuccess: (response: RazorpayResponse) => void,
     onError: (error: RazorpayError) => void
   ): Promise<void> {
-    // Ensure Razorpay is initialized before opening checkout
-    try {
-      await this.initialize();
-    } catch (error) {
+    paymentLogger.flow('Razorpay checkout', 'start', {
+      amount: options.amount,
+      currency: options.currency,
+      order_id: options.order_id,
+    });
+
+    // Clear any existing timeout
+    this.clearCheckoutTimeout();
+
+    // Check if running in Expo Go
+    if (isExpoGo) {
+      const errorMessage = 'Razorpay payments are only available in development/production builds.';
+      paymentLogger.warn('Razorpay not available in Expo Go');
       Alert.alert(
-        'Payment Gateway Unavailable',
-        'Razorpay SDK is not available. Please ensure react-native-razorpay is installed and you are using a development build.',
+        'Payment Unavailable in Expo Go',
+        'To test payments, please:\n\n1. Use wallet payment, or\n2. Create a development build:\n   npx expo run:ios\n   npx expo run:android',
         [{ text: 'OK' }]
       );
       onError({
         code: 'SDK_NOT_AVAILABLE',
-        description: 'Razorpay SDK is not available',
+        description: errorMessage,
         source: 'sdk',
         step: 'initialization',
-        reason: 'sdk_not_installed',
+        reason: 'expo_go',
       });
       return;
     }
 
-    if (!this.isAvailable()) {
-      Alert.alert(
-        'Payment Gateway Unavailable',
-        'Razorpay SDK is not available. Please ensure react-native-razorpay is installed and you are using a development build.',
-        [{ text: 'OK' }]
-      );
+    // Ensure SDK is initialized
+    try {
+      paymentLogger.debug('Initializing Razorpay SDK');
+      await this.initialize();
+      paymentLogger.debug('Razorpay SDK initialized successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize payment gateway';
+      paymentLogger.error('Failed to initialize Razorpay SDK', error);
+      Alert.alert('Payment Error', errorMessage, [{ text: 'OK' }]);
+      onError({
+        code: 'INIT_FAILED',
+        description: errorMessage,
+        source: 'sdk',
+        step: 'initialization',
+        reason: 'init_error',
+      });
       return;
     }
 
+    let isCompleted = false;
+
+    // Set up timeout to prevent indefinite waiting
+    this.checkoutTimeout = setTimeout(() => {
+      if (!isCompleted) {
+        paymentLogger.error('Razorpay checkout timeout', undefined, {
+          timeout: this.CHECKOUT_TIMEOUT_MS,
+        });
+        isCompleted = true;
+        onError({
+          code: 'CHECKOUT_TIMEOUT',
+          description: 'Payment checkout timed out. Please try again.',
+          source: 'sdk',
+          step: 'payment',
+          reason: 'timeout',
+        });
+      }
+    }, this.CHECKOUT_TIMEOUT_MS);
+
     try {
+      paymentLogger.debug('Opening Razorpay checkout modal');
+
       // Call Razorpay open method
-      // The SDK should return a promise that resolves when payment succeeds
       const response = await this.razorpay.open(options);
-      
+
+      // Clear timeout
+      this.clearCheckoutTimeout();
+
+      if (isCompleted) {
+        paymentLogger.warn('Razorpay response received after timeout');
+        return;
+      }
+
+      isCompleted = true;
+
       // Razorpay returns response in different formats based on platform
       if (response) {
         const razorpayResponse: RazorpayResponse = {
@@ -138,9 +230,16 @@ class RazorpayService {
           razorpay_order_id: response.razorpay_order_id || response.razorpayOrderId || '',
           razorpay_signature: response.razorpay_signature || response.razorpaySignature || '',
         };
+
+        paymentLogger.flow('Razorpay payment', 'success', {
+          payment_id: razorpayResponse.razorpay_payment_id,
+          order_id: razorpayResponse.razorpay_order_id,
+        });
+
         onSuccess(razorpayResponse);
       } else {
         // If response is empty, user likely cancelled
+        paymentLogger.info('Payment cancelled by user');
         onError({
           code: 'PAYMENT_CANCELLED',
           description: 'Payment was cancelled',
@@ -149,16 +248,50 @@ class RazorpayService {
           reason: 'user_cancelled',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Clear timeout
+      this.clearCheckoutTimeout();
+
+      if (isCompleted) {
+        paymentLogger.warn('Razorpay error received after timeout');
+        return;
+      }
+
+      isCompleted = true;
+
       // Handle Razorpay errors
-      const razorpayError: RazorpayError = {
-        code: error.code || error.error?.code || 'UNKNOWN_ERROR',
-        description: error.description || error.error?.description || error.message || 'Payment failed',
-        source: error.source || error.error?.source || 'user',
-        step: error.step || error.error?.step || 'payment',
-        reason: error.reason || error.error?.reason || 'unknown',
-        metadata: error.metadata || error.error?.metadata,
+      const errorObj = error as {
+        code?: string;
+        description?: string;
+        message?: string;
+        source?: string;
+        step?: string;
+        reason?: string;
+        metadata?: Record<string, unknown>;
+        error?: {
+          code?: string;
+          description?: string;
+          source?: string;
+          step?: string;
+          reason?: string;
+          metadata?: Record<string, unknown>;
+        };
       };
+
+      const razorpayError: RazorpayError = {
+        code: errorObj.code || errorObj.error?.code || 'UNKNOWN_ERROR',
+        description: errorObj.description || errorObj.error?.description || errorObj.message || 'Payment failed',
+        source: errorObj.source || errorObj.error?.source || 'user',
+        step: errorObj.step || errorObj.error?.step || 'payment',
+        reason: errorObj.reason || errorObj.error?.reason || 'unknown',
+        metadata: errorObj.metadata || errorObj.error?.metadata,
+      };
+
+      paymentLogger.flow('Razorpay payment', 'error', {
+        code: razorpayError.code,
+        description: razorpayError.description,
+      });
+
       onError(razorpayError);
     }
   }
@@ -170,7 +303,7 @@ class RazorpayService {
   getRazorpayKey(): string {
     // Get environment (dev or prod)
     const EXPO_ENVIRONMENT = process.env.EXPO_ENVIRONMENT || 'dev';
-    
+
     // Select Razorpay key based on environment
     let key = '';
     if (EXPO_ENVIRONMENT === 'prod') {
@@ -179,10 +312,9 @@ class RazorpayService {
       // Default to dev
       key = process.env.EXPO_PUBLIC_DEV_RAZORPAY_APIKEY || '';
     }
-    
+
     return key;
   }
 }
 
 export const razorpayService = new RazorpayService();
-
