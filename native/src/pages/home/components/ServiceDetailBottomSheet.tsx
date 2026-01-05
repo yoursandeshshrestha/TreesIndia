@@ -43,6 +43,11 @@ export default function ServiceDetailBottomSheet({
 
   useEffect(() => {
     if (visible) {
+      // Reset animation values when opening
+      overlayOpacity.setValue(0);
+      translateY.setValue(500);
+      setIsClosing(false);
+      
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 1,
@@ -60,11 +65,32 @@ export default function ServiceDetailBottomSheet({
     }
   }, [visible]);
 
-  const handleClose = () => {
+  const handleClose = (callback?: () => void) => {
     if (isClosing) return;
     setIsClosing(true);
     setCurrentImageIndex(0);
-    onClose();
+    
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 500,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+      setIsClosing(false);
+      // Call callback after modal is fully closed
+      if (callback) {
+        callback();
+      }
+    });
   };
 
   const getDisplayPrice = () => {
@@ -441,8 +467,13 @@ export default function ServiceDetailBottomSheet({
                 <View className="px-6 pt-4 pb-9">
                   <TouchableOpacity
                     onPress={() => {
-                      handleClose();
-                      setTimeout(() => onBook(), 200);
+                      // Close with animation, then call onBook after animation completes
+                      handleClose(() => {
+                        // Small delay to ensure modal is fully unmounted
+                        setTimeout(() => {
+                          onBook();
+                        }, 50);
+                      });
                     }}
                     className="bg-[#00a871] rounded-xl py-4 flex-row items-center justify-center"
                     activeOpacity={0.7}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -22,13 +22,14 @@ import CategoryIcon from '../../components/icons/CategoryIcon';
 interface ServicesScreenProps {
   onBack: () => void;
   initialFilters?: ServiceFilters;
+  onNavigateToBookingFlow?: (service: Service) => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Calculate card width: screen width - padding (24*2) - gap between cards (16) / 2 columns
 const CARD_WIDTH = (SCREEN_WIDTH - 48 - 16) / 2; // 2 columns with padding
 
-export default function ServicesScreen({ onBack, initialFilters }: ServicesScreenProps) {
+export default function ServicesScreen({ onBack, initialFilters, onNavigateToBookingFlow }: ServicesScreenProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,10 +44,14 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
   const [filters, setFilters] = useState<ServiceFilters>(initialFilters || {});
   const [searchQuery, setSearchQuery] = useState('');
 
-  const loadServices = async (page: number = 1, isRefresh: boolean = false) => {
+  const loadServices = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
       if (page === 1) {
-        isRefresh ? setRefreshing(true) : setLoading(true);
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
       } else {
         setLoadingMore(true);
       }
@@ -84,7 +89,7 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
       setRefreshing(false);
       setLoadingMore(false);
     }
-  };
+  }, [filters, searchQuery]);
 
   useEffect(() => {
     const delaySearch = setTimeout(() => {
@@ -92,7 +97,7 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
     }, 500);
 
     return () => clearTimeout(delaySearch);
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, loadServices]);
 
   const handleRefresh = () => {
     setCurrentPage(1);
@@ -124,7 +129,9 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
   };
 
   const handleBookService = (service: Service) => {
-    // TODO: Navigate to booking screen or show booking flow
+    // ServiceDetailBottomSheet handles closing animation, so we can navigate directly
+    // The onBook callback is called after the sheet animation completes
+    onNavigateToBookingFlow?.(service);
   };
 
   const formatPrice = (price: number) => {
@@ -397,7 +404,10 @@ export default function ServicesScreen({ onBack, initialFilters }: ServicesScree
       {selectedService && (
         <ServiceDetailBottomSheet
           visible={showDetailSheet}
-          onClose={() => setShowDetailSheet(false)}
+          onClose={() => {
+            setShowDetailSheet(false);
+            setSelectedService(null);
+          }}
           service={selectedService}
           onBook={() => handleBookService(selectedService)}
         />

@@ -23,6 +23,7 @@ interface AddEditAddressBottomSheetProps {
   address: Address | null;
   onSave: (data: CreateAddressRequest | UpdateAddressRequest) => Promise<void>;
   onClose: () => void;
+  visible?: boolean;
 }
 
 const ADDRESS_LABELS = ['Home', 'Work', 'Other'];
@@ -31,6 +32,7 @@ export default function AddEditAddressBottomSheet({
   address,
   onSave,
   onClose,
+  visible = true,
 }: AddEditAddressBottomSheetProps) {
   const isEditing = !!address;
   const [name, setName] = useState(address?.name || '');
@@ -59,21 +61,32 @@ export default function AddEditAddressBottomSheet({
   }>({});
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+    if (visible) {
+      // Reset states when opening
+      setIsClosing(false);
+      setIsSaving(false);
+
+      // Reset animated values to start position
+      overlayOpacity.setValue(0);
+      translateY.setValue(500);
+
+      // Start animations
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
 
   const handleClose = () => {
     if (isClosing) return;
@@ -246,10 +259,11 @@ export default function AddEditAddressBottomSheet({
 
   return (
     <Modal
-      visible={true}
+      visible={visible}
       transparent
       animationType="none"
       onRequestClose={handleClose}
+      statusBarTranslucent
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -289,11 +303,6 @@ export default function AddEditAddressBottomSheet({
             }}
           >
             <SafeAreaView edges={['bottom']} className="flex-1">
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-              >
                 {/* Header */}
                 <View className="flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-[#E5E7EB]">
                   <Text
@@ -520,11 +529,10 @@ export default function AddEditAddressBottomSheet({
                   />
                 </View>
               </View>
-            </KeyboardAvoidingView>
-          </SafeAreaView>
-        </Animated.View>
-      </View>
-    </KeyboardAvoidingView>
+            </SafeAreaView>
+          </Animated.View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

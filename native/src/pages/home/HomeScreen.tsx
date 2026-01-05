@@ -38,6 +38,7 @@ export interface ProjectFilters {
 interface HomeScreenProps {
   onNavigateToAddressSelection?: () => void;
   onNavigateToServiceSearch?: () => void;
+  onNavigateToBookingFlow?: (service: Service) => void;
   onNavigateToProperties?: (filters?: PropertyFilters) => void;
   onNavigateToServices?: (filters?: ServiceFilters) => void;
   onNavigateToProjects?: (filters?: ProjectFilters) => void;
@@ -48,7 +49,7 @@ interface HomeScreenProps {
   addressRefreshTrigger?: number; // Trigger to refresh address when returning from selection
 }
 
-export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToServiceSearch, onNavigateToProperties, onNavigateToServices, onNavigateToProjects, onNavigateToWorkers, onNavigateToVendors, onNavigateToCategoryServices, onNavigateToSubscription, addressRefreshTrigger }: HomeScreenProps) {
+export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToServiceSearch, onNavigateToBookingFlow, onNavigateToProperties, onNavigateToServices, onNavigateToProjects, onNavigateToWorkers, onNavigateToVendors, onNavigateToCategoryServices, onNavigateToSubscription, addressRefreshTrigger }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [banners, setBanners] = useState<PromotionBanner[]>([]);
@@ -1308,7 +1309,8 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
           }}
           service={selectedService}
           onBook={() => {
-            Alert.alert('Book Service', 'Booking feature will be implemented here.');
+            setShowServiceDetailSheet(false);
+            onNavigateToBookingFlow?.(selectedService);
           }}
         />
       )}
@@ -1389,6 +1391,7 @@ export default function HomeScreen({ onNavigateToAddressSelection, onNavigateToS
         onSubscribe={handleSubscribePress}
         contentType="project"
       />
+
     </View>
   );
 }
