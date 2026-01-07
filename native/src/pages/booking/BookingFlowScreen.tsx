@@ -69,6 +69,7 @@ export default function BookingFlowScreen({
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [showSuccessSheet, setShowSuccessSheet] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [bookingId, setBookingId] = useState<number | null>(null);
 
@@ -441,6 +442,7 @@ export default function BookingFlowScreen({
                 setShowPaymentSheet(false);
                 setShowSuccessSheet(true);
                 setIsSubmitting(false);
+                setIsRedirecting(true);
               });
               isProcessingPaymentRef.current = false;
             } catch (error) {
@@ -640,6 +642,7 @@ export default function BookingFlowScreen({
                 setShowPaymentSheet(false);
                 setShowSuccessSheet(true);
                 setIsSubmitting(false);
+                setIsRedirecting(true);
               });
               isProcessingPaymentRef.current = false;
             } catch (error) {
@@ -1036,15 +1039,15 @@ export default function BookingFlowScreen({
       />
 
       {/* Processing Overlay */}
-      {isSubmitting && (
+      {(isSubmitting || isRedirecting) && (
         <View className="absolute inset-0 bg-black/60 items-center justify-center">
           <View className="bg-white p-8 rounded-2xl items-center">
             <ActivityIndicator size="large" color="#055c3a" />
             <Text className="text-[#111928] mt-4 text-lg font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
-              Processing
+              {isRedirecting ? 'Payment Successful!' : 'Processing'}
             </Text>
             <Text className="text-[#6B7280] mt-2 text-center" style={{ fontFamily: 'Inter-Regular' }}>
-              Please wait...
+              {isRedirecting ? 'Loading your bookings...' : 'Please wait...'}
             </Text>
           </View>
         </View>
