@@ -13,6 +13,7 @@ import BottomNavigation, { TabType } from './src/components/BottomNavigation';
 import HomeScreen from './src/pages/home/HomeScreen';
 import BookingScreen from './src/pages/booking/BookingScreen';
 import ChatScreen from './src/pages/chat/ChatScreen';
+import ChatConversationScreen from './src/pages/chat/ChatConversationScreen';
 import ProfileScreen from './src/pages/profile/ProfileScreen';
 import EditProfileScreen from './src/pages/profile/EditProfileScreen';
 import WalletScreen from './src/pages/wallet/WalletScreen';
@@ -62,7 +63,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const dispatch = useAppDispatch();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices' | 'chatConversation'>('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
   const [vendorToEdit, setVendorToEdit] = useState<any>(null);
   const [serviceForBooking, setServiceForBooking] = useState<any>(null);
@@ -75,6 +76,14 @@ function AppContent() {
   const [vendorsInitialFilters, setVendorsInitialFilters] = useState<any>(null);
   const [categoryForServices, setCategoryForServices] = useState<any>(null);
   const [categoryStack, setCategoryStack] = useState<any[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [chatWorkerInfo, setChatWorkerInfo] = useState<{
+    id: number;
+    name: string;
+    phone?: string;
+    profileImage?: string;
+  } | null>(null);
+  const [chatPreviousTab, setChatPreviousTab] = useState<TabType>('booking');
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const handleSplashFinish = () => {
@@ -416,6 +425,24 @@ function AppContent() {
       );
     }
 
+    if (currentScreen === 'chatConversation' && selectedConversationId && chatWorkerInfo) {
+      return (
+        <ChatConversationScreen
+          conversationId={selectedConversationId}
+          workerId={chatWorkerInfo.id}
+          workerName={chatWorkerInfo.name}
+          workerPhone={chatWorkerInfo.phone}
+          workerProfileImage={chatWorkerInfo.profileImage}
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab(chatPreviousTab);
+            setSelectedConversationId(null);
+            setChatWorkerInfo(null);
+          }}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'home':
         return (
@@ -456,9 +483,27 @@ function AppContent() {
           />
         );
       case 'booking':
-        return <BookingScreen />;
+        return (
+          <BookingScreen
+            onNavigateToChat={(conversationId: number, workerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+              setSelectedConversationId(conversationId);
+              setChatWorkerInfo(workerInfo);
+              setChatPreviousTab('booking');
+              setCurrentScreen('chatConversation');
+            }}
+          />
+        );
       case 'chat':
-        return <ChatScreen />;
+        return (
+          <ChatScreen
+            onNavigateToConversation={(conversationId: number, workerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+              setSelectedConversationId(conversationId);
+              setChatWorkerInfo(workerInfo);
+              setChatPreviousTab('chat');
+              setCurrentScreen('chatConversation');
+            }}
+          />
+        );
       case 'profile':
         return (
           <ProfileScreen
@@ -507,7 +552,7 @@ function AppContent() {
       <View className="flex-1">
         {renderScreen()}
       </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && (
+      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && currentScreen !== 'chatConversation' && (
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       )}
     </View>

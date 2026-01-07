@@ -21,7 +21,20 @@ import QuoteAcceptanceBottomSheet from './components/QuoteAcceptanceBottomSheet'
 
 type TabType = 'ongoing' | 'completed';
 
-export default function BookingScreen() {
+interface BookingScreenProps {
+  onNavigateToChat?: (
+    conversationId: number,
+    workerInfo: {
+      id: number;
+      name: string;
+      phone?: string;
+      profileImage?: string;
+    }
+  ) => void;
+}
+
+export default function BookingScreen(props: BookingScreenProps) {
+  const { onNavigateToChat } = props;
   const dispatch = useAppDispatch();
   const { bookings, isLoading, pagination } = useAppSelector((state) => state.booking);
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -819,6 +832,7 @@ export default function BookingScreen() {
             // Refresh bookings after successful payment
             await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
           }}
+          onNavigateToChat={onNavigateToChat}
         />
       )}
 

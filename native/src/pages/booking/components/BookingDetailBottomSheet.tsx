@@ -17,13 +17,23 @@ import PaymentMethodBottomSheet from './PaymentMethodBottomSheet';
 import SlotSelectionBottomSheet from './SlotSelectionBottomSheet';
 import { walletService, bookingService } from '../../../services';
 import { razorpayService } from '../../../utils/razorpay';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
+import { createOrGetConversation } from '../../../store/slices/chatSlice';
 
 interface BookingDetailBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   booking: Booking | null;
   onPaymentSuccess?: () => void;
+  onNavigateToChat?: (
+    conversationId: number,
+    workerInfo: {
+      id: number;
+      name: string;
+      phone?: string;
+      profileImage?: string;
+    }
+  ) => void;
 }
 
 export default function BookingDetailBottomSheet({
@@ -31,7 +41,9 @@ export default function BookingDetailBottomSheet({
   onClose,
   booking,
   onPaymentSuccess,
+  onNavigateToChat,
 }: BookingDetailBottomSheetProps) {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(500)).current;
@@ -960,8 +972,67 @@ export default function BookingDetailBottomSheet({
                 {workerName && (
                   <Button
                     label="Chat with Worker"
-                    onPress={() => {
-                      // TODO: Navigate to chat screen with worker
+                    onPress={async () => {
+                      try {
+                        // Extract worker information
+                        const workerAssignment = (booking as { worker_assignment?: {
+                          worker_id?: number;
+                          worker?: {
+                            ID?: number;
+                            id?: number;
+                            name?: string;
+                            phone?: string;
+                            profile_image_url?: string;
+                          };
+                        }}).worker_assignment;
+                        const worker = workerAssignment?.worker;
+                        const workerId = worker?.id || worker?.ID;
+
+                        // Validate required data
+                        if (!workerId) {
+                          Alert.alert('Error', 'Worker information not available');
+                          return;
+                        }
+
+                        if (!user?.id) {
+                          Alert.alert('Error', 'User not logged in');
+                          return;
+                        }
+
+                        if (!onNavigateToChat) {
+                          Alert.alert('Error', 'Navigation not available');
+                          return;
+                        }
+
+                        // Create or get conversation
+                        const result = await dispatch(
+                          createOrGetConversation({
+                            userId1: user.id,
+                            userId2: workerId,
+                          })
+                        ).unwrap();
+
+                        // Close bottom sheet first
+                        onClose();
+
+                        // Wait a bit for animation
+                        setTimeout(() => {
+                          onNavigateToChat(result.conversation.id, {
+                            id: workerId,
+                            name: worker?.name || workerName,
+                            phone: worker?.phone,
+                            profileImage: worker?.profile_image_url,
+                          });
+                        }, 300);
+                      } catch (error) {
+                        console.error('[BookingDetail] Error opening chat:', error);
+                        Alert.alert(
+                          'Error',
+                          error instanceof Error
+                            ? error.message
+                            : 'Failed to open chat. Please try again.'
+                        );
+                      }
                     }}
                     variant={canPay ? 'outline' : 'solid'}
                     className="mb-2"

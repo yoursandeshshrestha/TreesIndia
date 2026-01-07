@@ -24,6 +24,7 @@ export { workerService, type Worker, type WorkerListResponse, type WorkerRespons
 export { vendorService, type Vendor, type VendorListResponse, type VendorResponse, type VendorFilters } from './api/vendor.service';
 export { searchHistoryService, type SearchHistoryEntry, type SaveSearchHistoryRequest } from './api/search-history.service';
 export { bookingService } from './api/booking.service';
+export { chatService } from './api/chat.service';
 
 // Legacy API client for backward compatibility
 // TODO: Remove this once all imports are updated
