@@ -42,14 +42,6 @@ export default function QuoteAcceptanceBottomSheet({
 
   useEffect(() => {
     if (visible) {
-      console.log('[QuoteAcceptance] Sheet opened', {
-        hasBooking: !!booking,
-        bookingId: booking?.id || (booking as any)?.ID,
-        bookingStatus: (booking as any)?.status,
-        quoteAmount: (booking as any)?.quote_amount,
-        paymentSegmentsLength: (booking as any)?.payment_segments?.length || 0,
-      });
-
       // Reset state when opening
       setCurrentStep('date');
       setSelectedDate(null);
@@ -108,11 +100,6 @@ export default function QuoteAcceptanceBottomSheet({
   };
 
   const handleSlotSelect = (date: string, slot: any) => {
-    console.log('[QuoteAcceptance] Slot selected', {
-      date,
-      slotTime: slot?.start_time || slot?.time,
-      slotId: slot?.id,
-    });
     setSelectedDate(date);
     setSelectedSlot(slot);
     setShowSlotSheet(false);
@@ -120,21 +107,13 @@ export default function QuoteAcceptanceBottomSheet({
   };
 
   const handlePayment = async (method: 'razorpay' | 'wallet') => {
-    console.log('[QuoteAcceptance] handlePayment called', {
-      method,
-      hasBooking: !!booking,
-      bookingId: booking?.id || booking?.ID,
-    });
-
     if (!booking) {
-      console.log('[QuoteAcceptance] No booking found, returning');
       return;
     }
 
     setIsProcessingPayment(true);
     const bookingId = booking.id || booking.ID;
     if (!bookingId) {
-      console.log('[QuoteAcceptance] Invalid booking ID');
       Alert.alert('Error', 'Invalid booking ID');
       setIsProcessingPayment(false);
       return;
@@ -222,17 +201,8 @@ export default function QuoteAcceptanceBottomSheet({
         );
       } else {
         // Razorpay payment
-        console.log('[QuoteAcceptance] Starting Razorpay payment', {
-          isSegmentedPayment,
-          isSinglePayment,
-          paymentSegmentsLength: paymentSegments.length,
-          selectedDate,
-          hasSelectedSlot: !!selectedSlot,
-        });
-
         if (isSegmentedPayment) {
           // Segmented payment - use segment payment endpoint (no date/time)
-          console.log('[QuoteAcceptance] Using segmented payment flow');
           if (!nextPendingSegment) {
             throw new Error('No pending payment segment found');
           }
@@ -245,13 +215,6 @@ export default function QuoteAcceptanceBottomSheet({
             'razorpay'
           );
 
-          console.log('[QuoteAcceptance] Segment payment response received', {
-            hasResponse: !!segmentResponse,
-            responseType: typeof segmentResponse,
-            responseKeys: Object.keys(segmentResponse || {}),
-            fullResponse: JSON.stringify(segmentResponse),
-          });
-
           // Since handleResponse unwraps the "data" field, segmentResponse is the inner data object
           const paymentOrder = (segmentResponse as any).payment_order;
 
@@ -261,16 +224,6 @@ export default function QuoteAcceptanceBottomSheet({
             });
             throw new Error('Payment order not received');
           }
-
-          console.log('[QuoteAcceptance] Payment order received', {
-            paymentOrder,
-            paymentOrderKeys: Object.keys(paymentOrder || {}),
-            id: paymentOrder.id,
-            amount: paymentOrder.amount,
-            currency: paymentOrder.currency,
-            key_id: paymentOrder.key_id,
-            receipt: paymentOrder.receipt,
-          });
 
           // Close both modals before opening Razorpay to avoid modal stacking issues
           setShowPaymentSheet(false);
@@ -294,7 +247,6 @@ export default function QuoteAcceptanceBottomSheet({
             theme: { color: '#055c3a' },
           };
 
-          console.log('[QuoteAcceptance] Opening Razorpay checkout for segment payment');
           await razorpayService.openCheckout(
             options,
             async (razorpayData) => {
@@ -340,18 +292,10 @@ export default function QuoteAcceptanceBottomSheet({
           );
         } else {
           // Single payment - requires date/time, use quote payment endpoint
-          console.log('[QuoteAcceptance] Using single payment flow');
           const scheduledDate = selectedDate;
           const scheduledTime = selectedSlot?.start_time || selectedSlot?.time;
 
-          console.log('[QuoteAcceptance] Date/time check', {
-            scheduledDate,
-            scheduledTime,
-            selectedSlot,
-          });
-
           if (!scheduledDate || !scheduledTime) {
-            console.log('[QuoteAcceptance] Date/time missing, showing alert');
             Alert.alert(
               'Date & Time Required',
               'Please select a date and time slot before proceeding with payment.'
@@ -359,13 +303,6 @@ export default function QuoteAcceptanceBottomSheet({
             setIsProcessingPayment(false);
             return;
           }
-
-          console.log('[QuoteAcceptance] Creating quote payment', {
-            bookingId,
-            remainingAmount,
-            scheduledDate,
-            scheduledTime,
-          });
 
           const response = await bookingService.createQuotePayment(
             bookingId,
@@ -375,25 +312,12 @@ export default function QuoteAcceptanceBottomSheet({
             undefined
           );
 
-          console.log('[QuoteAcceptance] Quote payment response received', {
-            hasResponse: !!response,
-            hasPaymentOrder: !!response?.payment_order,
-            responseType: typeof response,
-          });
-
           if (!response.payment_order) {
             console.error('[QuoteAcceptance] No payment order in response');
             throw new Error('Payment order not received');
           }
 
           const paymentOrder = response.payment_order;
-
-          console.log('[QuoteAcceptance] Payment order received', {
-            paymentOrder: paymentOrder,
-            paymentOrderKeys: Object.keys(paymentOrder || {}),
-            orderId: paymentOrder.id,
-            amount: paymentOrder.amount,
-          });
 
           // Close both modals before opening Razorpay to avoid modal stacking issues
           setShowPaymentSheet(false);
@@ -417,7 +341,6 @@ export default function QuoteAcceptanceBottomSheet({
             theme: { color: '#055c3a' },
           };
 
-          console.log('[QuoteAcceptance] Opening Razorpay checkout for single payment');
           await razorpayService.openCheckout(
             options,
             async (razorpayData) => {
@@ -882,21 +805,13 @@ export default function QuoteAcceptanceBottomSheet({
                 <Button
                   label={`Pay ₹${amountToPay.toLocaleString('en-IN')}`}
                   onPress={() => {
-                    console.log('[QuoteAcceptance] Pay button clicked', {
-                      isSinglePayment,
-                      selectedDate,
-                      hasSelectedSlot: !!selectedSlot,
-                      isProcessingPayment,
-                    });
                     if (isSinglePayment && !selectedDate) {
-                      console.log('[QuoteAcceptance] Date/time not selected, showing alert');
                       Alert.alert(
                         'Date & Time Required',
                         'Please select a date and time slot before proceeding with payment.'
                       );
                       return;
                     }
-                    console.log('[QuoteAcceptance] Opening payment method sheet');
                     setShowPaymentSheet(true);
                   }}
                   variant="solid"

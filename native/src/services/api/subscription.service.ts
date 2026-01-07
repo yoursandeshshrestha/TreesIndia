@@ -73,7 +73,6 @@ class SubscriptionService {
       } else if (data.data === null) {
         plans = [];
       } else {
-        console.warn('Unexpected subscription plans response format:', data);
         plans = [];
       }
     }
@@ -151,7 +150,6 @@ class SubscriptionService {
         } else if (data.data === null) {
           history = [];
         } else {
-          console.warn('Unexpected subscription history response format:', data);
           history = [];
         }
       }

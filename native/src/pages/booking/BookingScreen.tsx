@@ -45,12 +45,9 @@ export default function BookingScreen() {
   });
 
   const loadBookings = useCallback(async () => {
-    console.log('[BookingScreen] loadBookings called');
     setError(null);
     try {
-      const result = await dispatch(fetchMyBookings({ page: 1, limit: 20 })).unwrap();
-      console.log('[BookingScreen] Bookings loaded successfully:', result);
-      console.log('[BookingScreen] Number of bookings:', result?.data?.length || 0);
+      await dispatch(fetchMyBookings({ page: 1, limit: 20 })).unwrap();
     } catch (error) {
       console.error('[BookingScreen] Failed to load bookings:', error);
       setError('Failed to load bookings. Please try again.');
@@ -58,25 +55,8 @@ export default function BookingScreen() {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log('[BookingScreen] Component mounted');
-    console.log('[BookingScreen] Auth state:', {
-      isAuthenticated,
-      hasUser: !!user,
-      userId: user?.id,
-      userName: user?.name,
-    });
-    console.log('[BookingScreen] Loading bookings...');
     loadBookings();
   }, [isAuthenticated, user, loadBookings]);
-
-  useEffect(() => {
-    console.log('[BookingScreen] Redux state updated:', {
-      bookingsCount: bookings.length,
-      isLoading,
-      pagination,
-      bookings: bookings.slice(0, 2), // First 2 for brevity
-    });
-  }, [bookings, isLoading, pagination]);
 
 
   const onRefresh = async () => {
@@ -168,21 +148,10 @@ export default function BookingScreen() {
 
   const renderBookingCard = (booking: Booking, index: number, total: number) => {
     if (!booking) {
-      console.warn('[BookingScreen] renderBookingCard called with null/undefined booking');
       return null;
     }
 
-    // Log booking object structure to debug
     const bookingData = booking as any;
-    console.log('[BookingScreen] Rendering booking card:', {
-      bookingId: booking.id || booking.ID,
-      bookingType: bookingData.booking_type,
-      status: booking.status,
-      hasWorkerAssignment: !!bookingData.worker_assignment,
-      workerAssignmentType: typeof bookingData.worker_assignment,
-      workerAssignmentValue: bookingData.worker_assignment,
-      allBookingKeys: Object.keys(bookingData),
-    });
 
     // Handle both id and ID fields (API inconsistency)
     const bookingId = booking.id || booking.ID || (booking as any).ID || `booking-${index}`;
@@ -237,35 +206,17 @@ export default function BookingScreen() {
     
     try {
       const workerAssignment = (booking as any).worker_assignment;
-      console.log('[BookingScreen] Worker assignment data:', {
-        bookingId: bookingId,
-        hasWorkerAssignment: !!workerAssignment,
-        workerAssignmentType: typeof workerAssignment,
-        workerAssignment: workerAssignment,
-        workerAssignmentKeys: workerAssignment ? Object.keys(workerAssignment) : null,
-        workerAssignmentStringified: workerAssignment ? JSON.stringify(workerAssignment, null, 2).substring(0, 1000) : null,
-      });
-      
+
       if (workerAssignment && typeof workerAssignment === 'object' && workerAssignment !== null) {
         // Try different possible structures
         const worker = workerAssignment.worker || workerAssignment;
-        console.log('[BookingScreen] Worker data:', {
-          worker: worker,
-          workerType: typeof worker,
-          workerKeys: worker ? Object.keys(worker) : null,
-        });
-        
+
         if (worker && typeof worker === 'object' && worker !== null) {
           workerName = worker.name || worker.contact_info?.name || worker.contact_person_name || worker.Name;
           workerPhone = worker.phone || worker.contact_info?.phone || worker.contact_person_phone || worker.Phone;
-          console.log('[BookingScreen] Extracted worker info:', {
-            workerName,
-            workerPhone,
-          });
         }
       }
     } catch (error) {
-      console.error('[BookingScreen] Error extracting worker assignment:', error);
       // Continue rendering the card even if worker assignment extraction fails
     }
 

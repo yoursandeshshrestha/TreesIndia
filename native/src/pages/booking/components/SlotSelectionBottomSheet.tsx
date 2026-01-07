@@ -126,22 +126,9 @@ export default function SlotSelectionBottomSheet({
   };
 
   const fetchAvailableSlots = async (date: string) => {
-    console.log('[SlotSelectionBottomSheet] fetchAvailableSlots called:', {
-      date,
-      serviceId,
-      duration,
-      durationType: typeof duration,
-      hasDuration: duration !== undefined && duration !== null,
-    });
-    
     setIsLoadingSlots(true);
     try {
-      console.log('[SlotSelectionBottomSheet] Calling bookingService.getAvailableSlots...');
       const slots = await bookingService.getAvailableSlots(serviceId, date, duration);
-      console.log('[SlotSelectionBottomSheet] Slots received:', {
-        count: slots.length,
-        slots: slots.slice(0, 5), // Log first 5 slots
-      });
       setAvailableSlots(slots);
     } catch (error) {
       console.error('[SlotSelectionBottomSheet] Failed to fetch slots:', {

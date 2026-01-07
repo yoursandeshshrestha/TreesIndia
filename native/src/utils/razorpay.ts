@@ -62,7 +62,6 @@ function loadRazorpayModule(): any {
     const RazorpayCheckout = require('react-native-razorpay');
     return RazorpayCheckout;
   } catch (error) {
-    console.log('Razorpay module not available:', error);
     return null;
   }
 }

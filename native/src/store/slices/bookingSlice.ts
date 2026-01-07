@@ -110,24 +110,14 @@ const bookingSlice = createSlice({
     // Fetch my bookings
     builder
       .addCase(fetchMyBookings.pending, (state) => {
-        console.log('[bookingSlice] fetchMyBookings pending');
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchMyBookings.fulfilled, (state, action) => {
-        console.log('[bookingSlice] fetchMyBookings fulfilled - Full payload:', action.payload);
-        console.log('[bookingSlice] Payload structure:', {
-          hasData: !!action.payload.data,
-          hasPagination: !!action.payload.pagination,
-          dataType: typeof action.payload.data,
-          dataIsArray: Array.isArray(action.payload.data),
-          dataLength: action.payload.data?.length,
-        });
         state.isLoading = false;
         state.bookings = action.payload.data;
         state.pagination = action.payload.pagination;
         state.error = null;
-        console.log('[bookingSlice] State updated - bookings count:', state.bookings.length);
       })
       .addCase(fetchMyBookings.rejected, (state, action) => {
         console.error('[bookingSlice] fetchMyBookings rejected:', action.payload);

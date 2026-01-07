@@ -55,7 +55,7 @@ class AuthService {
         method: 'POST',
       });
     } catch (error) {
-      console.warn('Logout request failed:', error);
+      // Logout request failed
     } finally {
       await tokenStorage.clearTokens();
     }

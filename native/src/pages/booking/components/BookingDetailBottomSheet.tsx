@@ -353,17 +353,9 @@ export default function BookingDetailBottomSheet({
   const getSlotDuration = (): string | undefined => {
     const bookingData = booking as any;
     const isInquiry = bookingData.booking_type === 'inquiry' || booking.is_inquiry === true;
-    
-    console.log('[BookingDetailBottomSheet] getSlotDuration called:', {
-      isInquiry,
-      quote_duration: bookingData.quote_duration,
-      serviceDuration: booking.service?.duration,
-      bookingType: bookingData.booking_type,
-    });
-    
+
     if (isInquiry && bookingData.quote_duration) {
       // Use quote_duration if available (e.g., "2h", "3h", etc.)
-      console.log('[BookingDetailBottomSheet] Using quote_duration:', bookingData.quote_duration);
       return bookingData.quote_duration;
     }
     // For fixed price services, use service duration
@@ -371,13 +363,10 @@ export default function BookingDetailBottomSheet({
       const serviceDuration = booking.service.duration;
       // If duration contains "days" or is not in standard format, use default
       if (serviceDuration.includes('days') || serviceDuration.includes('day')) {
-        console.log('[BookingDetailBottomSheet] Service duration contains days, using default 2h');
         return '2h'; // Default duration for inquiry services
       }
-      console.log('[BookingDetailBottomSheet] Using service duration:', serviceDuration);
       return serviceDuration;
     }
-    console.log('[BookingDetailBottomSheet] No duration found, returning undefined (will use service default)');
     return undefined; // Return undefined to let API use service default
   };
 
@@ -499,25 +488,6 @@ export default function BookingDetailBottomSheet({
   // Allow payment for quote_provided, quote_accepted, and partially_paid if there's remaining amount
   const canPay = hasQuote && remainingAmount > 0 && (bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid');
 
-  // Debug logging for payment button visibility
-  console.log('[BookingDetailBottomSheet] Payment button check', {
-    bookingId: booking.id,
-    hasQuote,
-    quoteAmount,
-    paidAmount,
-    remainingAmount,
-    bookingStatus,
-    paymentStatus,
-    paymentStatusStr,
-    isPaymentCompleted,
-    paymentSegmentsCount: paymentSegments.length,
-    isSegmentedPayment,
-    isSinglePayment,
-    paidSegmentsCount: paidSegments.length,
-    canPay,
-    statusMatches: bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid',
-  });
-
   // Handle worker assignment
   let workerName: string | undefined;
   let workerPhone: string | undefined;
@@ -532,7 +502,7 @@ export default function BookingDetailBottomSheet({
       }
     }
   } catch (error) {
-    console.warn('[BookingDetailBottomSheet] Error extracting worker assignment:', error);
+    // Error extracting worker assignment
   }
 
   const statusColor = getStatusColor(booking.status);
@@ -992,7 +962,6 @@ export default function BookingDetailBottomSheet({
                     label="Chat with Worker"
                     onPress={() => {
                       // TODO: Navigate to chat screen with worker
-                      console.log('Chat with worker:', workerName);
                     }}
                     variant={canPay ? 'outline' : 'solid'}
                     className="mb-2"
