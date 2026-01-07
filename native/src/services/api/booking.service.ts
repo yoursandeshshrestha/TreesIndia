@@ -647,6 +647,12 @@ class BookingService {
       requestBody.segment_number = segmentNumber;
     }
 
+    console.log('[BookingService] createQuotePayment request', {
+      bookingId,
+      requestBody,
+      url: `${API_BASE_URL}/bookings/${bookingId}/create-quote-payment`,
+    });
+
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/${bookingId}/create-quote-payment`,
       {
@@ -657,6 +663,8 @@ class BookingService {
         body: JSON.stringify(requestBody),
       }
     );
+
+    console.log('[BookingService] createQuotePayment response status', response.status);
 
     return handleResponse(response);
   }
@@ -723,7 +731,7 @@ class BookingService {
     segmentNumber: number,
     amount: number,
     paymentMethod: 'wallet' | 'razorpay'
-  ): Promise<{ success: boolean; data: any }> {
+  ): Promise<any> {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/${bookingId}/payment-segments/pay`,
       {
@@ -739,7 +747,10 @@ class BookingService {
       }
     );
 
-    return handleResponse<{ success: boolean; data: any }>(response);
+    // handleResponse unwraps the "data" field, so this returns the inner data object directly
+    // For Razorpay: { payment_order: {...}, segment: {...} }
+    // For Wallet: { success: true, payment: {...}, segment: {...} }
+    return handleResponse(response);
   }
 
   /**
