@@ -439,19 +439,15 @@ func (qc *QuoteController) CreateQuotePayment(c *gin.Context) {
 	}
 
 	// Create payment order
-	paymentOrder, err := qc.quoteService.CreateQuotePayment(uint(bookingID), userID.(uint), &req)
+	result, err := qc.quoteService.CreateQuotePayment(uint(bookingID), userID.(uint), &req)
 	if err != nil {
 		logrus.Errorf("QuoteController.CreateQuotePayment service error: %v", err)
 		c.JSON(500, views.CreateErrorResponse("Failed to create payment order", err.Error()))
 		return
 	}
 
-	response := map[string]interface{}{
-		"payment_order": paymentOrder,
-		"message":       "Payment order created successfully",
-	}
-
-	c.JSON(200, views.CreateSuccessResponse("Payment order created successfully", response))
+	// result already contains payment_order and booking, so pass it directly
+	c.JSON(200, views.CreateSuccessResponse("Payment order created successfully", result))
 }
 
 // VerifyQuotePayment verifies payment for quote acceptance
