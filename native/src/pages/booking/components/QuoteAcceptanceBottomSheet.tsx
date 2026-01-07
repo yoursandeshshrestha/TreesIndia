@@ -1,15 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-  Easing,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Animated, Easing, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Booking } from '../../../types/booking';
 import Button from '../../../components/ui/Button';
@@ -37,27 +27,36 @@ export default function QuoteAcceptanceBottomSheet({
   onSuccess,
 }: QuoteAcceptanceBottomSheetProps) {
   const { user } = useAppSelector((state) => state.auth);
-  const [currentStep, setCurrentStep] = useState<Step>('date');
+  const [, setCurrentStep] = useState<Step>('date');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [showSlotSheet, setShowSlotSheet] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+  const [, setIsLoadingWallet] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      console.log('[QuoteAcceptance] Sheet opened', {
+        hasBooking: !!booking,
+        bookingId: booking?.id || (booking as any)?.ID,
+        bookingStatus: (booking as any)?.status,
+        quoteAmount: (booking as any)?.quote_amount,
+        paymentSegmentsLength: (booking as any)?.payment_segments?.length || 0,
+      });
+
       // Reset state when opening
       setCurrentStep('date');
       setSelectedDate(null);
       setSelectedSlot(null);
       setShowPaymentSheet(false);
       setShowSlotSheet(false);
-      
+
       // Fetch wallet balance
       fetchWalletBalance();
       
@@ -109,6 +108,11 @@ export default function QuoteAcceptanceBottomSheet({
   };
 
   const handleSlotSelect = (date: string, slot: any) => {
+    console.log('[QuoteAcceptance] Slot selected', {
+      date,
+      slotTime: slot?.start_time || slot?.time,
+      slotId: slot?.id,
+    });
     setSelectedDate(date);
     setSelectedSlot(slot);
     setShowSlotSheet(false);
@@ -116,11 +120,21 @@ export default function QuoteAcceptanceBottomSheet({
   };
 
   const handlePayment = async (method: 'razorpay' | 'wallet') => {
-    if (!booking) return;
-    
+    console.log('[QuoteAcceptance] handlePayment called', {
+      method,
+      hasBooking: !!booking,
+      bookingId: booking?.id || booking?.ID,
+    });
+
+    if (!booking) {
+      console.log('[QuoteAcceptance] No booking found, returning');
+      return;
+    }
+
     setIsProcessingPayment(true);
     const bookingId = booking.id || booking.ID;
     if (!bookingId) {
+      console.log('[QuoteAcceptance] Invalid booking ID');
       Alert.alert('Error', 'Invalid booking ID');
       setIsProcessingPayment(false);
       return;
@@ -130,10 +144,20 @@ export default function QuoteAcceptanceBottomSheet({
       const bookingData = booking as any;
       const paymentSegments = bookingData.payment_segments || [];
       const isSegmentedPayment = paymentSegments.length > 1;
-      const isSinglePayment = paymentSegments.length === 1;
-      
+      const isSinglePayment = paymentSegments.length <= 1;
+
       // For single payment wallet payments, we need scheduled date and time
       if (method === 'wallet' && isSinglePayment && (!selectedDate || !selectedSlot)) {
+        Alert.alert(
+          'Date & Time Required',
+          'Please select a date and time slot before proceeding with payment.'
+        );
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // For single payment Razorpay, we also need date and time
+      if (method === 'razorpay' && isSinglePayment && (!selectedDate || !selectedSlot)) {
         Alert.alert(
           'Date & Time Required',
           'Please select a date and time slot before proceeding with payment.'
@@ -147,9 +171,9 @@ export default function QuoteAcceptanceBottomSheet({
       const paidAmount = paidSegments.reduce((sum: number, seg: any) => sum + (seg.amount || 0), 0);
       const quoteAmount = bookingData.quote_amount || 0;
       const remainingAmount = quoteAmount - paidAmount;
-      
+
       // For segmented payments, get the next pending segment
-      const nextPendingSegment = isSegmentedPayment 
+      const nextPendingSegment = isSegmentedPayment
         ? paymentSegments.find((seg: any) => seg.status === 'pending')
         : null;
 
@@ -183,6 +207,7 @@ export default function QuoteAcceptanceBottomSheet({
           );
         }
         
+        setIsRedirecting(true);
         Alert.alert(
           'Payment Successful',
           'Your payment has been processed successfully.',
@@ -197,26 +222,63 @@ export default function QuoteAcceptanceBottomSheet({
         );
       } else {
         // Razorpay payment
+        console.log('[QuoteAcceptance] Starting Razorpay payment', {
+          isSegmentedPayment,
+          isSinglePayment,
+          paymentSegmentsLength: paymentSegments.length,
+          selectedDate,
+          hasSelectedSlot: !!selectedSlot,
+        });
+
         if (isSegmentedPayment) {
           // Segmented payment - use segment payment endpoint (no date/time)
+          console.log('[QuoteAcceptance] Using segmented payment flow');
           if (!nextPendingSegment) {
             throw new Error('No pending payment segment found');
           }
-          
-          // Create segment payment order
+
+          // Create segment payment order (returns inner "data" object from API)
           const segmentResponse = await bookingService.paySegment(
             bookingId,
             nextPendingSegment.segment_number || 1,
             nextPendingSegment.amount,
             'razorpay'
           );
-          
-          if (!segmentResponse.data?.payment_order) {
+
+          console.log('[QuoteAcceptance] Segment payment response received', {
+            hasResponse: !!segmentResponse,
+            responseType: typeof segmentResponse,
+            responseKeys: Object.keys(segmentResponse || {}),
+            fullResponse: JSON.stringify(segmentResponse),
+          });
+
+          // Since handleResponse unwraps the "data" field, segmentResponse is the inner data object
+          const paymentOrder = (segmentResponse as any).payment_order;
+
+          if (!paymentOrder) {
+            console.error('[QuoteAcceptance] No payment order in response', {
+              segmentResponse,
+            });
             throw new Error('Payment order not received');
           }
-          
-          const paymentOrder = segmentResponse.data.payment_order;
-          
+
+          console.log('[QuoteAcceptance] Payment order received', {
+            paymentOrder,
+            paymentOrderKeys: Object.keys(paymentOrder || {}),
+            id: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+            key_id: paymentOrder.key_id,
+            receipt: paymentOrder.receipt,
+          });
+
+          // Close both modals before opening Razorpay to avoid modal stacking issues
+          setShowPaymentSheet(false);
+          onClose();
+
+          // Wait for modals to close before opening Razorpay
+          await new Promise(resolve => setTimeout(resolve, 300));
+
           // Open Razorpay checkout
           const options = {
             key: paymentOrder.key_id,
@@ -231,7 +293,8 @@ export default function QuoteAcceptanceBottomSheet({
             },
             theme: { color: '#055c3a' },
           };
-          
+
+          console.log('[QuoteAcceptance] Opening Razorpay checkout for segment payment');
           await razorpayService.openCheckout(
             options,
             async (razorpayData) => {
@@ -243,7 +306,8 @@ export default function QuoteAcceptanceBottomSheet({
                   razorpayData.razorpay_payment_id,
                   razorpayData.razorpay_signature
                 );
-                
+
+                setIsRedirecting(true);
                 Alert.alert(
                   'Payment Successful',
                   'Your payment has been processed successfully.',
@@ -276,10 +340,18 @@ export default function QuoteAcceptanceBottomSheet({
           );
         } else {
           // Single payment - requires date/time, use quote payment endpoint
+          console.log('[QuoteAcceptance] Using single payment flow');
           const scheduledDate = selectedDate;
           const scheduledTime = selectedSlot?.start_time || selectedSlot?.time;
-          
+
+          console.log('[QuoteAcceptance] Date/time check', {
+            scheduledDate,
+            scheduledTime,
+            selectedSlot,
+          });
+
           if (!scheduledDate || !scheduledTime) {
+            console.log('[QuoteAcceptance] Date/time missing, showing alert');
             Alert.alert(
               'Date & Time Required',
               'Please select a date and time slot before proceeding with payment.'
@@ -288,6 +360,13 @@ export default function QuoteAcceptanceBottomSheet({
             return;
           }
 
+          console.log('[QuoteAcceptance] Creating quote payment', {
+            bookingId,
+            remainingAmount,
+            scheduledDate,
+            scheduledTime,
+          });
+
           const response = await bookingService.createQuotePayment(
             bookingId,
             remainingAmount,
@@ -295,13 +374,34 @@ export default function QuoteAcceptanceBottomSheet({
             scheduledTime,
             undefined
           );
-          
+
+          console.log('[QuoteAcceptance] Quote payment response received', {
+            hasResponse: !!response,
+            hasPaymentOrder: !!response?.payment_order,
+            responseType: typeof response,
+          });
+
           if (!response.payment_order) {
+            console.error('[QuoteAcceptance] No payment order in response');
             throw new Error('Payment order not received');
           }
-          
+
           const paymentOrder = response.payment_order;
-          
+
+          console.log('[QuoteAcceptance] Payment order received', {
+            paymentOrder: paymentOrder,
+            paymentOrderKeys: Object.keys(paymentOrder || {}),
+            orderId: paymentOrder.id,
+            amount: paymentOrder.amount,
+          });
+
+          // Close both modals before opening Razorpay to avoid modal stacking issues
+          setShowPaymentSheet(false);
+          onClose();
+
+          // Wait for modals to close before opening Razorpay
+          await new Promise(resolve => setTimeout(resolve, 300));
+
           // Open Razorpay checkout
           const options = {
             key: paymentOrder.key_id,
@@ -316,14 +416,16 @@ export default function QuoteAcceptanceBottomSheet({
             },
             theme: { color: '#055c3a' },
           };
-          
+
+          console.log('[QuoteAcceptance] Opening Razorpay checkout for single payment');
           await razorpayService.openCheckout(
             options,
             async (razorpayData) => {
               try {
                 // Verify payment
                 await bookingService.verifyQuotePayment(bookingId, razorpayData);
-                
+
+                setIsRedirecting(true);
                 Alert.alert(
                   'Payment Successful',
                   'Your payment has been processed successfully.',
@@ -365,29 +467,27 @@ export default function QuoteAcceptanceBottomSheet({
       );
     } finally {
       setIsProcessingPayment(false);
-      setShowPaymentSheet(false);
     }
   };
 
   if (!booking) return null;
 
   const bookingData = booking as any;
-  const isInquiry = bookingData.booking_type === 'inquiry' || booking.is_inquiry === true;
   const quoteAmount = bookingData.quote_amount || 0;
   const paymentSegments = bookingData.payment_segments || [];
   const isSegmentedPayment = paymentSegments.length > 1;
-  const isSinglePayment = paymentSegments.length === 1;
-  
+  const isSinglePayment = paymentSegments.length <= 1;
+
   const paidSegments = paymentSegments.filter((seg: any) => seg.status === 'paid');
   const paidAmount = paidSegments.reduce((sum: number, seg: any) => sum + (seg.amount || 0), 0);
   const remainingAmount = quoteAmount - paidAmount;
-  
+
   // For segmented payments, get the next pending segment amount
-  const nextPendingSegment = isSegmentedPayment 
+  const nextPendingSegment = isSegmentedPayment
     ? paymentSegments.find((seg: any) => seg.status === 'pending')
     : null;
-  const amountToPay = isSegmentedPayment && nextPendingSegment 
-    ? nextPendingSegment.amount 
+  const amountToPay = isSegmentedPayment && nextPendingSegment
+    ? nextPendingSegment.amount
     : remainingAmount;
   
   const canPay = remainingAmount > 0;
@@ -479,29 +579,40 @@ export default function QuoteAcceptanceBottomSheet({
         <Animated.View
           style={{
             transform: [{ translateY }],
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
           }}
           className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[70%]"
         >
-          <SafeAreaView edges={['bottom']} className="flex-1">
-            {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-              <Text
-                className="text-lg font-semibold text-[#111928]"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
-                Accept Quote
-              </Text>
-              <TouchableOpacity
-                onPress={handleClose}
-                className="p-2 -mr-2"
-                activeOpacity={0.7}
-              >
-                <Text className="text-2xl text-[#6B7280]">×</Text>
-              </TouchableOpacity>
-            </View>
+          {/* Header - Fixed */}
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+            <Text
+              className="text-lg font-semibold text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Accept Quote
+            </Text>
+            <TouchableOpacity
+              onPress={handleClose}
+              className="p-2 -mr-2"
+              activeOpacity={0.7}
+            >
+              <Text className="text-2xl text-[#6B7280]">×</Text>
+            </TouchableOpacity>
+          </View>
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-              <View className="px-6 py-4 pb-8">
+          {/* Content - Scrollable */}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 24,
+              paddingTop: 16,
+              paddingBottom: 16
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+              <View>
                 {/* Contact Details - Read Only */}
                 <View className="mb-4 pb-4 -mx-6 px-6 border-b border-[#E5E7EB]">
                   <View className="flex-row items-start gap-3">
@@ -753,39 +864,48 @@ export default function QuoteAcceptanceBottomSheet({
                     )}
                   </View>
                 )}
-
-                {/* Payment Button */}
-                {canPay && (
-                  <View className="mt-4 pb-6">
-                    {isSinglePayment && !selectedDate && (
-                      <Text
-                        className="text-xs text-[#B3261E] mb-2 text-center"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        Please select date and time before proceeding
-                      </Text>
-                    )}
-                    <Button
-                      label={`Pay ₹${amountToPay.toLocaleString('en-IN')}`}
-                      onPress={() => {
-                        if (isSinglePayment && !selectedDate) {
-                          Alert.alert(
-                            'Date & Time Required',
-                            'Please select a date and time slot before proceeding with payment.'
-                          );
-                          return;
-                        }
-                        setShowPaymentSheet(true);
-                      }}
-                      variant="solid"
-                      disabled={isSinglePayment && !selectedDate}
-                      isLoading={isProcessingPayment}
-                    />
-                  </View>
-                )}
               </View>
-            </ScrollView>
-          </SafeAreaView>
+          </ScrollView>
+
+          {/* Action Buttons - Fixed at bottom */}
+          {canPay && (
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
+              <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
+                {isSinglePayment && !selectedDate && (
+                  <Text
+                    className="text-xs text-[#B3261E] mb-2 text-center"
+                    style={{ fontFamily: 'Inter-Regular' }}
+                  >
+                    Please select date and time before proceeding
+                  </Text>
+                )}
+                <Button
+                  label={`Pay ₹${amountToPay.toLocaleString('en-IN')}`}
+                  onPress={() => {
+                    console.log('[QuoteAcceptance] Pay button clicked', {
+                      isSinglePayment,
+                      selectedDate,
+                      hasSelectedSlot: !!selectedSlot,
+                      isProcessingPayment,
+                    });
+                    if (isSinglePayment && !selectedDate) {
+                      console.log('[QuoteAcceptance] Date/time not selected, showing alert');
+                      Alert.alert(
+                        'Date & Time Required',
+                        'Please select a date and time slot before proceeding with payment.'
+                      );
+                      return;
+                    }
+                    console.log('[QuoteAcceptance] Opening payment method sheet');
+                    setShowPaymentSheet(true);
+                  }}
+                  variant="solid"
+                  disabled={isSinglePayment && !selectedDate}
+                  isLoading={isProcessingPayment}
+                />
+              </View>
+            </SafeAreaView>
+          )}
         </Animated.View>
       </View>
 
@@ -810,6 +930,45 @@ export default function QuoteAcceptanceBottomSheet({
         amount={amountToPay}
         walletBalance={walletBalance}
       />
+
+      {/* Redirecting Overlay */}
+      {isRedirecting && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 32,
+              borderRadius: 16,
+              alignItems: 'center',
+            }}
+          >
+            <ActivityIndicator size="large" color="#055c3a" />
+            <Text
+              className="text-[#111928] mt-4 text-lg font-semibold"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Payment Successful!
+            </Text>
+            <Text
+              className="text-[#6B7280] mt-2 text-center"
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              Loading your bookings...
+            </Text>
+          </View>
+        </View>
+      )}
     </Modal>
   );
 }
