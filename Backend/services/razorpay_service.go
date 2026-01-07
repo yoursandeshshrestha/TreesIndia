@@ -89,14 +89,22 @@ func (rs *RazorpayService) CreateOrder(amount float64, receipt string, notes str
 	if err := json.Unmarshal(body, &orderResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
-	
-	return map[string]interface{}{
+
+	// Log the Razorpay API response for debugging
+	fmt.Printf("[RazorpayService] CreateOrder - Razorpay API response: %+v\n", orderResponse)
+
+	result := map[string]interface{}{
 		"id":       orderResponse["id"].(string),
 		"amount":   float64(amountInPaise),
 		"currency": "INR",
 		"receipt":  receipt,
 		"key_id":   rs.keyID,
-	}, nil
+	}
+
+	// Log what we're returning
+	fmt.Printf("[RazorpayService] CreateOrder - Returning payment order: %+v\n", result)
+
+	return result, nil
 }
 
 // VerifyPayment verifies Razorpay payment signature

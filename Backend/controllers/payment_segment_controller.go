@@ -121,6 +121,9 @@ func (psc *PaymentSegmentController) PaySegment(c *gin.Context) {
 		return
 	}
 
+	// Log what we're returning to the client
+	logrus.Infof("[PaymentSegmentController] PaySegment - Returning to client: result=%+v", result)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    result,

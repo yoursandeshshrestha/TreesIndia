@@ -996,10 +996,15 @@ func (qs *QuoteService) CreateSegmentPayment(bookingID uint, userID uint, req *m
 			return nil, fmt.Errorf("failed to create payment order: %v", err)
 		}
 
-		return map[string]interface{}{
+		result := map[string]interface{}{
 			"payment_order": paymentOrder,
 			"segment":       segment,
-		}, nil
+		}
+
+		// Log what we're returning from CreateSegmentPayment
+		logrus.Infof("[QuoteService] CreateSegmentPayment - Returning result: payment_order=%+v, segment_id=%d", paymentOrder, segment.ID)
+
+		return result, nil
 	}
 }
 
