@@ -23,12 +23,14 @@ interface BookingDetailBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   booking: Booking | null;
+  onPaymentSuccess?: () => void;
 }
 
 export default function BookingDetailBottomSheet({
   visible,
   onClose,
   booking,
+  onPaymentSuccess,
 }: BookingDetailBottomSheetProps) {
   const { user } = useAppSelector((state) => state.auth);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -147,16 +149,14 @@ export default function BookingDetailBottomSheet({
             setIsProcessingPayment(false);
             return;
           }
-          
-          // For now, pay the first pending segment amount
+
+          // Pay the next pending segment using the segment payment API
           const nextSegment = pendingSegments[0];
-          // Note: Segmented wallet payment might need different API endpoint
-          // For now, using the same endpoint with segment amount
-          await bookingService.processQuoteWalletPayment(
+          await bookingService.paySegment(
             bookingId,
+            nextSegment.segment_number || 1,
             nextSegment.amount,
-            new Date().toISOString().split('T')[0], // Use today as placeholder
-            '09:00' // Use default time as placeholder
+            'wallet'
           );
         }
         
@@ -175,40 +175,66 @@ export default function BookingDetailBottomSheet({
         ]);
       } else {
         // Razorpay payment
-        const scheduledDate = isSinglePayment 
-          ? (selectedDate || (displayDate ? new Date(displayDate).toISOString().split('T')[0] : undefined))
-          : undefined;
-        const scheduledTime = isSinglePayment
-          ? (selectedSlot?.start_time || (displayTime ? displayTime.substring(0, 5) : undefined))
-          : undefined;
-        
-        if (isSinglePayment && (!scheduledDate || !scheduledTime)) {
-          Alert.alert(
-            'Scheduling Required',
-            'Please select date and time before making payment.',
-            [{ text: 'OK', onPress: () => {
-              setShowPaymentSheet(false);
-              setShowSlotSheet(true);
-            }}]
+        let paymentOrder;
+
+        if (isSegmentedPayment) {
+          // For segmented payments, use paySegment API
+          const pendingSegments = paymentSegments.filter((seg: any) => seg.status === 'pending');
+          if (pendingSegments.length === 0) {
+            Alert.alert('No Pending Segments', 'All payment segments have been paid.');
+            setIsProcessingPayment(false);
+            return;
+          }
+
+          const nextSegment = pendingSegments[0];
+          const segmentResponse = await bookingService.paySegment(
+            bookingId,
+            nextSegment.segment_number || 1,
+            nextSegment.amount,
+            'razorpay'
           );
-          setIsProcessingPayment(false);
-          return;
+
+          paymentOrder = (segmentResponse as any).payment_order;
+        } else {
+          // For single payments, use createQuotePayment API
+          const scheduledDate = selectedDate || (displayDate ? new Date(displayDate).toISOString().split('T')[0] : undefined);
+          const scheduledTime = selectedSlot?.start_time || (displayTime ? displayTime.substring(0, 5) : undefined);
+
+          if (!scheduledDate || !scheduledTime) {
+            Alert.alert(
+              'Scheduling Required',
+              'Please select date and time before making payment.',
+              [{ text: 'OK', onPress: () => {
+                setShowPaymentSheet(false);
+                setShowSlotSheet(true);
+              }}]
+            );
+            setIsProcessingPayment(false);
+            return;
+          }
+
+          const response = await bookingService.createQuotePayment(
+            bookingId,
+            remainingAmount,
+            scheduledDate,
+            scheduledTime,
+            undefined
+          );
+
+          paymentOrder = response.payment_order;
         }
-        
-        const response = await bookingService.createQuotePayment(
-          bookingId,
-          remainingAmount,
-          scheduledDate,
-          scheduledTime,
-          isSegmentedPayment ? (paymentSegments.find((seg: any) => seg.status === 'pending')?.segment_number) : undefined
-        );
-        
-        if (!response.payment_order) {
+
+        if (!paymentOrder) {
           throw new Error('Payment order not received');
         }
-        
-        const paymentOrder = response.payment_order;
-        
+
+        // Close both modals before opening Razorpay to avoid modal stacking issues
+        setShowPaymentSheet(false);
+        onClose();
+
+        // Wait for modals to close before opening Razorpay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
         // Open Razorpay checkout
         const options = {
           key: paymentOrder.key_id,
@@ -223,21 +249,31 @@ export default function BookingDetailBottomSheet({
           },
           theme: { color: '#055c3a' },
         };
-        
+
         // Open Razorpay checkout
         await razorpayService.openCheckout(
           options,
           async (razorpayData) => {
             try {
-              // Verify payment
-              await bookingService.verifyQuotePayment(bookingId, razorpayData);
-              
+              // Verify payment using the appropriate API
+              if (isSegmentedPayment) {
+                await bookingService.verifySegmentPayment(
+                  bookingId,
+                  razorpayData.razorpay_order_id,
+                  razorpayData.razorpay_payment_id,
+                  razorpayData.razorpay_signature
+                );
+              } else {
+                await bookingService.verifyQuotePayment(bookingId, razorpayData);
+              }
+
               Alert.alert('Success', 'Payment verified successfully!', [
                 {
                   text: 'OK',
                   onPress: () => {
-                    setShowPaymentSheet(false);
-                    onClose();
+                    // Sheets are already closed before opening Razorpay
+                    // Just call the success callback to refresh bookings
+                    onPaymentSuccess?.();
                   },
                 },
               ]);
@@ -378,6 +414,8 @@ export default function BookingDetailBottomSheet({
         return '#3B82F6';
       case 'quote_accepted':
         return '#10B981';
+      case 'partially_paid':
+        return '#F59E0B'; // Amber/Orange for partial payment
       case 'completed':
         return '#10B981';
       case 'cancelled':
@@ -401,6 +439,8 @@ export default function BookingDetailBottomSheet({
         return 'Quote Provided';
       case 'quote_accepted':
         return 'Quote Accepted';
+      case 'partially_paid':
+        return 'Partially Paid';
       case 'completed':
         return 'Completed';
       case 'cancelled':
@@ -437,23 +477,46 @@ export default function BookingDetailBottomSheet({
   const paidAmount = paidSegments.reduce((sum: number, seg: any) => sum + (seg.amount || 0), 0);
   
   // Check if payment is fully completed
-  // Payment is complete if: 
-  // 1. payment_status is 'completed' or 'paid' (check as string since backend may use 'completed')
-  // 2. booking status is 'confirmed' or 'assigned' (indicates payment was completed)
-  // 3. all segments are paid
-  // 4. paidAmount >= quoteAmount
   const bookingStatus = (bookingData as any).status || booking.status;
   const paymentStatusStr = String(paymentStatus || '');
-  const isPaymentCompleted = paymentStatusStr === 'completed' || 
-                             paymentStatusStr === 'paid' ||
-                             (bookingStatus === 'confirmed' || bookingStatus === 'assigned') ||
-                             (paymentSegments.length > 0 && paymentSegments.every((seg: any) => seg.status === 'paid')) ||
-                             (hasQuote && paidAmount >= quoteAmount);
+
+  // For segmented payments, ONLY check if all segments are paid (ignore payment_status)
+  // For non-segmented payments, check payment_status, booking status, or paid amount
+  let isPaymentCompleted: boolean;
+  if (isSegmentedPayment) {
+    // For segmented payments, payment is only complete when ALL segments are paid
+    isPaymentCompleted = paymentSegments.every((seg: any) => seg.status === 'paid');
+  } else {
+    // For non-segmented payments, use traditional checks
+    isPaymentCompleted = paymentStatusStr === 'completed' ||
+                         paymentStatusStr === 'paid' ||
+                         (bookingStatus === 'confirmed' || bookingStatus === 'assigned') ||
+                         (hasQuote && paidAmount >= quoteAmount);
+  }
   
   // Calculate remaining amount - if payment is completed, remaining should be 0
   const remainingAmount = (hasQuote && !isPaymentCompleted) ? Math.max(0, quoteAmount - paidAmount) : 0;
-  // Allow payment for both quote_provided and quote_accepted if there's remaining amount
-  const canPay = hasQuote && remainingAmount > 0 && (bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted');
+  // Allow payment for quote_provided, quote_accepted, and partially_paid if there's remaining amount
+  const canPay = hasQuote && remainingAmount > 0 && (bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid');
+
+  // Debug logging for payment button visibility
+  console.log('[BookingDetailBottomSheet] Payment button check', {
+    bookingId: booking.id,
+    hasQuote,
+    quoteAmount,
+    paidAmount,
+    remainingAmount,
+    bookingStatus,
+    paymentStatus,
+    paymentStatusStr,
+    isPaymentCompleted,
+    paymentSegmentsCount: paymentSegments.length,
+    isSegmentedPayment,
+    isSinglePayment,
+    paidSegmentsCount: paidSegments.length,
+    canPay,
+    statusMatches: bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid',
+  });
 
   // Handle worker assignment
   let workerName: string | undefined;
@@ -507,35 +570,37 @@ export default function BookingDetailBottomSheet({
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             transform: [{ translateY }],
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
-            {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-              <Text
-                className="text-lg font-bold text-[#111928]"
-                style={{ fontFamily: 'Inter-Bold' }}
-              >
-                Booking Details
-              </Text>
-              <TouchableOpacity onPress={handleClose} className="p-2 -mr-2">
-                <Text className="text-2xl text-[#6B7280]">×</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Content - Scrollable */}
-            <ScrollView 
-              style={{ flex: 1 }}
-              contentContainerStyle={{ 
-                paddingBottom: 24, 
-                paddingHorizontal: 24, 
-                paddingTop: 16 
-              }}
-              showsVerticalScrollIndicator={true} 
-              nestedScrollEnabled={true}
-              bounces={true}
-              keyboardShouldPersistTaps="handled"
+          {/* Header - Fixed */}
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+            <Text
+              className="text-lg font-bold text-[#111928]"
+              style={{ fontFamily: 'Inter-Bold' }}
             >
+              Booking Details
+            </Text>
+            <TouchableOpacity onPress={handleClose} className="p-2 -mr-2">
+              <Text className="text-2xl text-[#6B7280]">×</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content - Scrollable */}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 24,
+              paddingTop: 16,
+              paddingBottom: 16
+            }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            bounces={true}
+            keyboardShouldPersistTaps="handled"
+          >
                 {/* Service Name and Status */}
                 <View className="flex-row items-start justify-between mb-4">
                   <View className="flex-1 mr-3">
@@ -908,29 +973,34 @@ export default function BookingDetailBottomSheet({
                     </Text>
                   </View>
                 )}
-                {/* Action Buttons */}
-                <View className="pt-4 pb-8 border-t border-[#E5E7EB] mt-4">
-                  {canPay && (
-                    <Button
-                      label={`Pay ₹${remainingAmount.toLocaleString('en-IN')}`}
-                      onPress={handlePayButtonPress}
-                      variant="solid"
-                      className="mb-3"
-                    />
-                  )}
-                  {workerName && (
-                    <Button
-                      label="Chat with Worker"
-                      onPress={() => {
-                        // TODO: Navigate to chat screen with worker
-                        console.log('Chat with worker:', workerName);
-                      }}
-                      variant={canPay ? 'outline' : 'solid'}
-                    />
-                  )}
-                </View>
-              </ScrollView>
-          </SafeAreaView>
+          </ScrollView>
+
+          {/* Action Buttons - Fixed at bottom */}
+          {(canPay || workerName) && (
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
+              <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
+                {canPay && (
+                  <Button
+                    label={`Pay ₹${remainingAmount.toLocaleString('en-IN')}`}
+                    onPress={handlePayButtonPress}
+                    variant="solid"
+                    className={workerName ? "mb-3" : ""}
+                  />
+                )}
+                {workerName && (
+                  <Button
+                    label="Chat with Worker"
+                    onPress={() => {
+                      // TODO: Navigate to chat screen with worker
+                      console.log('Chat with worker:', workerName);
+                    }}
+                    variant={canPay ? 'outline' : 'solid'}
+                    className="mb-2"
+                  />
+                )}
+              </View>
+            </SafeAreaView>
+          )}
         </Animated.View>
       </View>
 
