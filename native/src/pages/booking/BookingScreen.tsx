@@ -38,7 +38,7 @@ export default function BookingScreen() {
   // Filter bookings based on active tab
   const filteredBookings = bookings.filter((booking) => {
     if (activeTab === 'ongoing') {
-      return ['pending', 'confirmed', 'in_progress', 'assigned', 'quote_provided', 'quote_accepted'].includes(booking.status);
+      return ['pending', 'confirmed', 'in_progress', 'assigned', 'quote_provided', 'quote_accepted', 'partially_paid'].includes(booking.status);
     } else {
       return ['completed', 'cancelled'].includes(booking.status);
     }
@@ -99,6 +99,8 @@ export default function BookingScreen() {
         return '#3B82F6';
       case 'quote_accepted':
         return '#10B981';
+      case 'partially_paid':
+        return '#F59E0B'; // Amber/Orange for partial payment
       case 'completed':
         return '#10B981';
       case 'cancelled':
@@ -122,6 +124,8 @@ export default function BookingScreen() {
         return 'Quote Provided';
       case 'quote_accepted':
         return 'Quote Accepted';
+      case 'partially_paid':
+        return 'Partially Paid';
       case 'completed':
         return 'Completed';
       case 'cancelled':
@@ -266,8 +270,9 @@ export default function BookingScreen() {
     }
 
     // For quote_accepted bookings, open quote acceptance sheet (for payment/scheduling)
-    // For quote_provided bookings, open detail sheet (user can accept/reject from there)
-    const isQuoteAccepted = (booking as any).status === 'quote_accepted' && hasQuote;
+    // For quote_provided and partially_paid bookings, open detail sheet
+    const bookingStatusForSheet = (booking as any).status;
+    const isQuoteAccepted = bookingStatusForSheet === 'quote_accepted' && hasQuote;
     const shouldOpenQuoteSheet = isQuoteAccepted;
 
     return (
@@ -407,12 +412,24 @@ export default function BookingScreen() {
                     )}
                   </View>
                   {remainingAmount > 0 && (
-                    <Text
-                      className="text-xs text-[#6B7280] mb-2"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Remaining: ₹{remainingAmount.toLocaleString('en-IN')}
-                    </Text>
+                    <View className="flex-row items-center gap-2 mb-2">
+                      <Text
+                        className="text-xs text-[#6B7280]"
+                        style={{ fontFamily: 'Inter-Regular' }}
+                      >
+                        Remaining: ₹{remainingAmount.toLocaleString('en-IN')}
+                      </Text>
+                      {bookingStatusForSheet === 'partially_paid' && (
+                        <View className="px-2 py-0.5 rounded bg-[#FEF3C7]">
+                          <Text
+                            className="text-xs font-semibold"
+                            style={{ fontFamily: 'Inter-SemiBold', color: '#92400E' }}
+                          >
+                            Tap to Pay
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   )}
                   {quoteProvidedAt && (
                     <Text
@@ -831,6 +848,13 @@ export default function BookingScreen() {
       {/* Content */}
       {renderContent()}
 
+      {/* Global loading overlay while bookings are refreshing (e.g. after payment) */}
+      {isLoading && bookings.length > 0 && (
+        <View className="absolute inset-0 bg-black/10 items-center justify-center">
+          <ActivityIndicator size="large" color="#055c3a" />
+        </View>
+      )}
+
       {/* Booking Detail Bottom Sheet - Only show if quote acceptance sheet is not open */}
       {!showQuoteAcceptanceSheet && (
         <BookingDetailBottomSheet
@@ -840,6 +864,10 @@ export default function BookingScreen() {
             setSelectedBooking(null);
           }}
           booking={selectedBooking}
+          onPaymentSuccess={async () => {
+            // Refresh bookings after successful payment
+            await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
+          }}
         />
       )}
 
