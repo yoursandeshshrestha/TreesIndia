@@ -10,8 +10,8 @@ interface ConversationListItemProps {
 }
 
 /**
- * ConversationListItem component displays a preview of a conversation
- * Shows: worker name, last message, timestamp, and unread badge
+ * ConversationListItem component - WhatsApp style
+ * Shows: profile picture, name, last message, timestamp, and unread badge
  */
 export const ConversationListItem: React.FC<ConversationListItemProps> = ({
   conversation,
@@ -21,7 +21,6 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
 }) => {
   /**
    * Get the other user in the conversation (not the current user)
-   * Backend uses snake_case (user_1_data, user_2_data)
    */
   const getOtherUser = () => {
     if (conversation.user_1 === currentUserId) {
@@ -34,12 +33,13 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
   const otherUser = getOtherUser();
   const displayName = otherUser?.name || 'Unknown User';
   const avatarUrl = otherUser?.profile_image_url || otherUser?.avatar;
-  const lastMessage = conversation.last_message_text || 'No messages yet';
+  const lastMessage = conversation.last_message_text || 'Tap to start chatting';
   const lastMessageTime = conversation.last_message_created_at;
   const hasUnread = unreadCount > 0;
+  const isSentByMe = conversation.last_message_sender_id === currentUserId;
 
   /**
-   * Format timestamp to show relative time
+   * Format timestamp WhatsApp style
    */
   const formatTimestamp = (dateString?: string): string => {
     if (!dateString) return '';
@@ -47,27 +47,34 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
     try {
       const date = new Date(dateString);
       const now = new Date();
-      const diff = now.getTime() - date.getTime();
-      const diffMinutes = Math.floor(diff / (1000 * 60));
-      const diffHours = Math.floor(diff / (1000 * 60 * 60));
-      const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const diffTime = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffMinutes < 1) {
-        return 'Just now';
-      } else if (diffMinutes < 60) {
-        return `${diffMinutes}m ago`;
-      } else if (diffHours < 24) {
-        return `${diffHours}h ago`;
-      } else if (diffDays === 1) {
-        return 'Yesterday';
-      } else if (diffDays < 7) {
-        return `${diffDays}d ago`;
-      } else {
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
+      // Today: show time (HH:MM)
+      if (diffDays === 0) {
+        return date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
         });
       }
+
+      // Yesterday
+      if (diffDays === 1) {
+        return 'Yesterday';
+      }
+
+      // This week: show day name
+      if (diffDays < 7) {
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+      }
+
+      // Older: show date
+      return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      });
     } catch {
       return '';
     }
@@ -76,47 +83,55 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-white border-b border-[#E5E7EB] px-4 py-4"
-      activeOpacity={0.7}
+      className="bg-white px-6 py-3"
+      activeOpacity={0.95}
+      style={{
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+      }}
     >
-      <View className="flex-row items-center">
-        {/* Profile Picture */}
-        {avatarUrl ? (
-          <Image
-            source={{ uri: avatarUrl }}
-            className="w-12 h-12 rounded-full mr-3"
-            style={{ backgroundColor: '#F0FDF4' }}
-          />
-        ) : (
-          <View className="w-12 h-12 rounded-full bg-[#F0FDF4] items-center justify-center mr-3">
-            <Text
-              className="text-[#055c3a] text-lg"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
-              {displayName.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
+      <View className="flex-row items-start">
+        {/* Profile Picture - WhatsApp style */}
+        <View className="mr-3">
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              className="w-[52px] h-[52px] rounded-full"
+              style={{ backgroundColor: '#DDD' }}
+            />
+          ) : (
+            <View className="w-[52px] h-[52px] rounded-full bg-[#DDD] items-center justify-center">
+              <Text
+                className="text-[#666] text-xl"
+                style={{ fontFamily: 'Inter-SemiBold' }}
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
 
-        {/* Conversation Info */}
+        {/* Content - Name, Message, Time, Badge */}
         <View className="flex-1">
-          {/* Name and Timestamp */}
+          {/* Top Row: Name and Timestamp */}
           <View className="flex-row items-center justify-between mb-1">
+            {/* Name */}
             <Text
-              className="text-[#111928] text-base flex-1"
-              style={{ fontFamily: 'Inter-SemiBold' }}
+              className="text-[17px] text-[#000] flex-1"
+              style={{
+                fontFamily: hasUnread ? 'Inter-SemiBold' : 'Inter-Medium',
+              }}
               numberOfLines={1}
             >
               {displayName}
             </Text>
 
+            {/* Timestamp */}
             {lastMessageTime && (
               <Text
-                className={`text-xs ml-2 ${
-                  hasUnread ? 'text-[#00a871]' : 'text-[#9CA3AF]'
-                }`}
+                className={`text-[13px] ml-2 ${hasUnread ? 'text-[#25D366]' : 'text-[#667781]'}`}
                 style={{
-                  fontFamily: hasUnread ? 'Inter-SemiBold' : 'Inter-Regular',
+                  fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
                 }}
               >
                 {formatTimestamp(lastMessageTime)}
@@ -124,28 +139,44 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
             )}
           </View>
 
-          {/* Last Message and Unread Badge */}
-          <View className="flex-row items-center">
-            <Text
-              className={`flex-1 text-sm ${
-                hasUnread ? 'text-[#4B5563]' : 'text-[#9CA3AF]'
-              }`}
-              style={{
-                fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
-              }}
-              numberOfLines={1}
-            >
-              {lastMessage}
-            </Text>
-
-            {/* Unread Badge */}
-            {hasUnread && (
-              <View className="w-6 h-6 rounded-full bg-[#00a871] items-center justify-center ml-2">
+          {/* Bottom Row: Message and Badge */}
+          <View className="flex-row items-center justify-between">
+            {/* Last Message */}
+            <View className="flex-row items-center flex-1">
+              {/* Show "You: " prefix if sent by current user */}
+              {isSentByMe && lastMessage !== 'Tap to start chatting' && (
                 <Text
-                  className="text-white text-xs"
-                  style={{ fontFamily: 'Inter-Bold' }}
+                  className="text-[15px] text-[#667781]"
+                  style={{
+                    fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
+                  }}
                 >
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  You:{' '}
+                </Text>
+              )}
+
+              <Text
+                className={`text-[15px] flex-1 ${hasUnread ? 'text-[#111]' : 'text-[#667781]'}`}
+                style={{
+                  fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
+                }}
+                numberOfLines={1}
+              >
+                {lastMessage}
+              </Text>
+            </View>
+
+            {/* Unread Badge - WhatsApp green */}
+            {hasUnread && (
+              <View className="bg-[#25D366] rounded-full min-w-[20px] h-[20px] items-center justify-center px-1.5 ml-2">
+                <Text
+                  className="text-white text-[12px]"
+                  style={{
+                    fontFamily: 'Inter-Bold',
+                    lineHeight: 14,
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>
               </View>
             )}

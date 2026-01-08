@@ -20,6 +20,7 @@ const initialState: ChatState = {
   isSendingMessage: false,
   error: null,
   unreadCounts: {},
+  totalUnreadCount: 0,
   typingUsers: {},
 };
 
@@ -195,6 +196,23 @@ export const fetchUnreadCount = createAsyncThunk(
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch unread count';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+/**
+ * Fetch total unread count across all conversations
+ */
+export const fetchTotalUnreadCount = createAsyncThunk(
+  'chat/fetchTotalUnreadCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const count = await chatService.getTotalUnreadCount();
+      return count;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch total unread count';
       return rejectWithValue(errorMessage);
     }
   }
@@ -402,6 +420,7 @@ const chatSlice = createSlice({
         messages: {},
       };
       state.unreadCounts = {};
+      state.totalUnreadCount = 0;
       state.typingUsers = {};
     },
 
@@ -422,6 +441,39 @@ const chatSlice = createSlice({
         }
       }
     },
+
+    /**
+     * Update total unread count (typically from WebSocket or API refresh)
+     */
+    updateTotalUnreadCount: (state, action: PayloadAction<number>) => {
+      state.totalUnreadCount = action.payload;
+    },
+
+    /**
+     * Increment total unread count (when new message arrives)
+     */
+    incrementTotalUnreadCount: (state) => {
+      state.totalUnreadCount += 1;
+    },
+
+    /**
+     * Decrement total unread count (when message is read)
+     */
+    decrementTotalUnreadCount: (state, action: PayloadAction<number>) => {
+      const decrementBy = action.payload || 1;
+      state.totalUnreadCount = Math.max(0, state.totalUnreadCount - decrementBy);
+    },
+
+    /**
+     * Update unread count for a specific conversation
+     */
+    updateConversationUnreadCount: (
+      state,
+      action: PayloadAction<{ conversationId: number; count: number }>
+    ) => {
+      const { conversationId, count } = action.payload;
+      state.unreadCounts[conversationId] = count;
+    },
   },
   extraReducers: (builder) => {
     // Fetch conversations
@@ -435,6 +487,13 @@ const chatSlice = createSlice({
         state.conversations = action.payload.data;
         state.pagination.conversations = action.payload.pagination || null;
         state.error = null;
+
+        // Extract and store unread counts from conversations
+        action.payload.data.forEach((conversation) => {
+          if (conversation.unread_count !== undefined) {
+            state.unreadCounts[conversation.id] = conversation.unread_count;
+          }
+        });
       })
       .addCase(fetchConversations.rejected, (state, action) => {
         state.isLoading = false;
@@ -608,6 +667,9 @@ const chatSlice = createSlice({
       .addCase(markConversationAsRead.fulfilled, (state, action) => {
         const { conversationId } = action.payload;
 
+        // Get current unread count for this conversation before resetting
+        const conversationUnreadCount = state.unreadCounts[conversationId] || 0;
+
         // Mark all messages as read
         if (state.messages[conversationId]) {
           state.messages[conversationId].forEach((message) => {
@@ -618,7 +680,10 @@ const chatSlice = createSlice({
           });
         }
 
-        // Reset unread count
+        // Decrement total unread count by the conversation's unread count
+        state.totalUnreadCount = Math.max(0, state.totalUnreadCount - conversationUnreadCount);
+
+        // Reset unread count for this conversation
         state.unreadCounts[conversationId] = 0;
       })
       .addCase(markConversationAsRead.rejected, (state, action) => {
@@ -634,6 +699,15 @@ const chatSlice = createSlice({
       .addCase(fetchUnreadCount.rejected, (state, action) => {
         console.error('[chatSlice] fetchUnreadCount failed:', action.payload);
       });
+
+    // Fetch total unread count
+    builder
+      .addCase(fetchTotalUnreadCount.fulfilled, (state, action) => {
+        state.totalUnreadCount = action.payload;
+      })
+      .addCase(fetchTotalUnreadCount.rejected, (state, action) => {
+        console.error('[chatSlice] fetchTotalUnreadCount failed:', action.payload);
+      });
   },
 });
 
@@ -648,6 +722,10 @@ export const {
   clearMessages,
   clearAllChatData,
   updateMessageReadStatus,
+  updateTotalUnreadCount,
+  incrementTotalUnreadCount,
+  decrementTotalUnreadCount,
+  updateConversationUnreadCount,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,16 @@ import {
   StatusBar,
   RefreshControl,
   ActivityIndicator,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchConversations } from '../../store/slices/chatSlice';
+import { fetchConversations, fetchTotalUnreadCount } from '../../store/slices/chatSlice';
 import { ConversationListItem } from '../../components/chat/ConversationListItem';
 import { SimpleConversation } from '../../types/chat';
 import ChatIcon from '../../components/icons/ChatIcon';
+import SearchIcon from '../../components/icons/SearchIcon';
 
 interface ChatScreenProps {
   onNavigateToConversation?: (
@@ -34,6 +37,7 @@ export default function ChatScreen(props: ChatScreenProps) {
   const { onNavigateToConversation } = props;
   const dispatch = useAppDispatch();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Get current user
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -46,11 +50,40 @@ export default function ChatScreen(props: ChatScreenProps) {
 
 
   /**
-   * Load conversations on mount
+   * Filter conversations based on search query
+   */
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return conversations;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return conversations.filter((conversation) => {
+      // Get other user data
+      const isUser1 = conversation.user_1 === currentUserId;
+      const otherUser = isUser1
+        ? (conversation.user_2_data || conversation.User2Data)
+        : (conversation.user_1_data || conversation.User1Data);
+
+      // Check if name matches
+      const name = otherUser?.name?.toLowerCase() || '';
+      const nameMatches = name.includes(query);
+
+      // Check if last message matches
+      const lastMessage = conversation.last_message_text?.toLowerCase() || '';
+      const messageMatches = lastMessage.includes(query);
+
+      return nameMatches || messageMatches;
+    });
+  }, [conversations, searchQuery, currentUserId]);
+
+  /**
+   * Load conversations and unread count on mount
    */
   useEffect(() => {
     if (currentUserId) {
       dispatch(fetchConversations({ page: 1, limit: 20 }));
+      dispatch(fetchTotalUnreadCount());
     }
   }, [dispatch, currentUserId]);
 
@@ -61,6 +94,7 @@ export default function ChatScreen(props: ChatScreenProps) {
     setRefreshing(true);
     try {
       await dispatch(fetchConversations({ page: 1, limit: 20 })).unwrap();
+      await dispatch(fetchTotalUnreadCount()).unwrap();
     } catch (error) {
       console.error('[ChatScreen] Refresh error:', error);
     } finally {
@@ -163,18 +197,42 @@ export default function ChatScreen(props: ChatScreenProps) {
       <StatusBar barStyle="dark-content" backgroundColor="white" />
 
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="px-6 py-4 border-b border-[#E5E7EB]">
         <Text
-          className="text-xl font-semibold text-[#111928] flex-1"
+          className="text-xl font-semibold text-[#111928] mb-3"
           style={{ fontFamily: 'Inter-SemiBold' }}
         >
           Messages
         </Text>
+
+        {/* Search Bar */}
+        <View className="flex-row items-center bg-[#F3F4F6] rounded-lg px-3 py-2.5">
+          <SearchIcon size={18} color="#9CA3AF" />
+          <TextInput
+            className="flex-1 ml-2 text-[15px] text-[#111928]"
+            style={{ fontFamily: 'Inter-Regular' }}
+            placeholder="Search conversations..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              className="ml-2"
+              activeOpacity={0.7}
+            >
+              <Text className="text-[#9CA3AF] text-lg">✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Conversations List */}
       <FlatList
-        data={conversations}
+        data={filteredConversations}
         renderItem={renderConversation}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={renderEmpty}
@@ -186,10 +244,9 @@ export default function ChatScreen(props: ChatScreenProps) {
             tintColor="#055c3a"
           />
         }
-        contentContainerStyle={
-          conversations.length === 0 ? { flex: 1 } : { paddingHorizontal: 16, paddingVertical: 8 }
-        }
+        contentContainerStyle={filteredConversations.length === 0 ? { flex: 1 } : undefined}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       />
     </SafeAreaView>
   );

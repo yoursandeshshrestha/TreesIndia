@@ -11,6 +11,7 @@ export type TabType = 'home' | 'booking' | 'chat' | 'profile';
 interface BottomNavigationProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  chatUnreadCount?: number;
 }
 
 interface TabItem {
@@ -29,6 +30,7 @@ const tabs: TabItem[] = [
 export default function BottomNavigation({
   activeTab,
   onTabChange,
+  chatUnreadCount = 0,
 }: BottomNavigationProps) {
   return (
     <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
@@ -37,6 +39,8 @@ export default function BottomNavigation({
           const isActive = activeTab === tab.id;
           const IconComponent = tab.icon;
           const iconColor = isActive ? '#00a871' : '#6B7280';
+          const showBadge = tab.id === 'chat' && chatUnreadCount > 0;
+
           return (
             <TouchableOpacity
               key={tab.id}
@@ -44,8 +48,22 @@ export default function BottomNavigation({
               className="flex-1 items-center justify-center py-2"
               activeOpacity={0.7}
             >
-              <View className="mb-1">
+              <View className="mb-1 relative">
                 <IconComponent size={20} color={iconColor} />
+                {showBadge && (
+                  <View className="absolute -top-1 -right-2 bg-red-500 rounded-full min-w-[16px] h-4 items-center justify-center px-1">
+                    <Text
+                      className="text-white text-[10px] font-bold"
+                      style={{
+                        fontFamily: 'Inter-Bold',
+                        lineHeight: 12,
+                        ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                      }}
+                    >
+                      {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                    </Text>
+                  </View>
+                )}
               </View>
               <Text
                 className={`text-xs ${

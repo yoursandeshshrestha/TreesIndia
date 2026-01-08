@@ -5,6 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store/store';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
 import { initializeAuth, updateSubscriptionStatus } from './src/store/slices/authSlice';
+import { fetchTotalUnreadCount, updateTotalUnreadCount, updateConversationUnreadCount } from './src/store/slices/chatSlice';
+import { conversationMonitorWebSocket } from './src/services/websocket/conversationMonitor.websocket';
 import { useAppFonts } from './src/utils/fonts';
 import SplashScreen from './src/components/SplashScreen';
 import LoginScreen from './src/pages/auth/LoginScreen';
@@ -85,6 +87,7 @@ function AppContent() {
   } | null>(null);
   const [chatPreviousTab, setChatPreviousTab] = useState<TabType>('booking');
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { totalUnreadCount } = useAppSelector((state) => state.chat);
 
   const handleSplashFinish = () => {
     setShowSplash(false);
@@ -99,6 +102,58 @@ function AppContent() {
     setCurrentScreen('login');
     setOtpPhoneNumber('');
   };
+
+  // Connect to global conversation monitor WebSocket for real-time unread count updates
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    console.log('[App] Setting up conversation monitor WebSocket');
+
+    // Initial fetch
+    dispatch(fetchTotalUnreadCount());
+
+    // Connect to monitor WebSocket
+    conversationMonitorWebSocket.connect();
+
+    // Listen for total unread count updates from server
+    const handleTotalUnreadCount = (message: { event: string; data?: { total_unread_count?: number } }) => {
+      if (message.data?.total_unread_count !== undefined) {
+        dispatch(updateTotalUnreadCount(message.data.total_unread_count));
+      }
+    };
+
+    // Listen for individual conversation unread count updates
+    const handleConversationUnreadCount = (message: { event: string; data?: { conversation_id?: number; unread_count?: number } }) => {
+      if (message.data?.conversation_id && message.data?.unread_count !== undefined) {
+        dispatch(updateConversationUnreadCount({
+          conversationId: message.data.conversation_id,
+          count: message.data.unread_count,
+        }));
+      }
+    };
+
+    // Listen for new messages (trigger refresh as fallback)
+    const handleNewMessage = () => {
+      dispatch(fetchTotalUnreadCount());
+    };
+
+    conversationMonitorWebSocket.on('total_unread_count', handleTotalUnreadCount);
+    conversationMonitorWebSocket.on('conversation_unread_count', handleConversationUnreadCount);
+    conversationMonitorWebSocket.on('new_conversation_message', handleNewMessage);
+    conversationMonitorWebSocket.on('conversation_message', handleNewMessage);
+
+    // Cleanup
+    return () => {
+      console.log('[App] Cleaning up conversation monitor WebSocket');
+      conversationMonitorWebSocket.off('total_unread_count', handleTotalUnreadCount);
+      conversationMonitorWebSocket.off('conversation_unread_count', handleConversationUnreadCount);
+      conversationMonitorWebSocket.off('new_conversation_message', handleNewMessage);
+      conversationMonitorWebSocket.off('conversation_message', handleNewMessage);
+      conversationMonitorWebSocket.disconnect();
+    };
+  }, [isAuthenticated, dispatch]);
 
   // Update screen based on auth state (only if not in OTP flow)
   React.useEffect(() => {
@@ -552,8 +607,12 @@ function AppContent() {
       <View className="flex-1">
         {renderScreen()}
       </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && currentScreen !== 'chatConversation' && (
-        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && currentScreen !== 'chatConversation' && currentScreen !== 'browseProjects' && currentScreen !== 'browseWorkers' && currentScreen !== 'browseVendors' && (
+        <BottomNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          chatUnreadCount={totalUnreadCount}
+        />
       )}
     </View>
   );

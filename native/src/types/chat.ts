@@ -21,6 +21,7 @@ export interface SimpleConversation {
   last_message_sender_id?: number;
   created_at: string;
   updated_at: string;
+  unread_count?: number; // Number of unread messages in this conversation
   // Optional user data populated by backend (backend uses snake_case)
   user_1_data?: ChatUser;
   user_2_data?: ChatUser;
@@ -77,6 +78,7 @@ export interface ChatState {
   isSendingMessage: boolean;
   error: string | null;
   unreadCounts: Record<number, number>; // conversationId -> unread count
+  totalUnreadCount: number; // Total unread count across all conversations
   typingUsers: Record<number, number[]>; // conversationId -> typing user IDs
 }
 
