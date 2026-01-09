@@ -58,48 +58,50 @@ export default function CategoryGrid({
             const isImageUrl = iconUrl && iconUrl.trim() !== '' && (iconUrl.startsWith('http://') || iconUrl.startsWith('https://'));
 
             return (
-              <TouchableOpacity
-                key={fixedCategory.slug}
-                activeOpacity={0.7}
-                onPress={() => {
-                  if (categoryEntity) {
-                    onCategoryPress(categoryEntity);
-                  } else {
-                    onCategoryPress({
-                      id: index + 1,
-                      name: fixedCategory.title,
-                      slug: fixedCategory.slug,
-                      is_active: true,
-                    });
-                  }
-                }}
-                className="flex-1"
-              >
-                <View className="bg-[#F5F5F5] rounded-lg" style={{ height: 120 }}>
-                  {/* Icon container - fixed height */}
-                  <View className="items-center justify-center" style={{ height: 80 }}>
-                    {isImageUrl ? (
-                      <ImageWithSkeleton
-                        source={{ uri: iconUrl }}
-                        style={{ width: 40, height: 40 }}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <NotFoundIcon size={40} color="#9CA3AF" />
-                    )}
+              <View key={fixedCategory.slug} className="flex-1">
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (categoryEntity) {
+                      onCategoryPress(categoryEntity);
+                    } else {
+                      onCategoryPress({
+                        id: index + 1,
+                        name: fixedCategory.title,
+                        slug: fixedCategory.slug,
+                        is_active: true,
+                      });
+                    }
+                  }}
+                  className="flex-1"
+                  style={{ width: '100%', height: 120 }}
+                >
+                  <View className="bg-[#F5F5F5] rounded-lg flex-1">
+                    {/* Icon container - fixed height */}
+                    <View className="items-center justify-center" style={{ height: 80 }}>
+                      {isImageUrl ? (
+                        <ImageWithSkeleton
+                          source={{ uri: iconUrl }}
+                          style={{ width: 40, height: 40 }}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <NotFoundIcon size={40} color="#9CA3AF" />
+                      )}
+                    </View>
+                    {/* Title - fixed position */}
+                    <View className="px-2 flex-1 justify-start">
+                      <Text
+                        className="text-sm font-medium text-[#111928] text-center"
+                        style={{ fontFamily: 'Inter-Medium' }}
+                        numberOfLines={2}
+                      >
+                        {categoryEntity?.name || fixedCategory.title}
+                      </Text>
+                    </View>
                   </View>
-                  {/* Title - fixed position */}
-                  <View className="px-2" style={{ height: 40, justifyContent: 'flex-start' }}>
-                    <Text
-                      className="text-sm font-medium text-[#111928] text-center"
-                      style={{ fontFamily: 'Inter-Medium' }}
-                      numberOfLines={2}
-                    >
-                      {categoryEntity?.name || fixedCategory.title}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             );
           })}
         </View>
