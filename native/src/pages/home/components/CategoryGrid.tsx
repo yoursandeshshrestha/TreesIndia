@@ -34,8 +34,7 @@ export default function CategoryGrid({
   return (
     <View className="px-6 pt-4 pb-4">
       <Text
-        className="text-xl font-bold text-[#111928] mb-4"
-        style={{ fontFamily: 'Inter-Bold' }}
+        className="text-xl font-bold text-[#111928] mb-4 "
       >
         What are you looking for?
       </Text>
