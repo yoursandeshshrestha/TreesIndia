@@ -10,6 +10,7 @@ import SlotSelectionBottomSheet from './SlotSelectionBottomSheet';
 import { razorpayService } from '../../../utils/razorpay';
 import PhoneIcon from '../../../components/icons/PhoneIcon';
 import LocationIcon from '../../../components/icons/LocationIcon';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface QuoteAcceptanceBottomSheetProps {
   visible: boolean;
@@ -498,6 +499,32 @@ export default function QuoteAcceptanceBottomSheet({
           />
         </Animated.View>
 
+        {/* Floating Close Button */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: '70%',
+            right: 16,
+            transform: [{ translateY }],
+            zIndex: 30,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleClose}
+            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            style={{
+              marginTop: -56,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* Bottom Sheet */}
         <Animated.View
           style={{
@@ -516,13 +543,6 @@ export default function QuoteAcceptanceBottomSheet({
             >
               Accept Quote
             </Text>
-            <TouchableOpacity
-              onPress={handleClose}
-              className="p-2 -mr-2"
-              activeOpacity={0.7}
-            >
-              <Text className="text-2xl text-[#6B7280]">×</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Content - Scrollable */}

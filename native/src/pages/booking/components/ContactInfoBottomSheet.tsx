@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ContactInfoData } from '../../../types/booking';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/common/Input';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -156,18 +157,35 @@ export default function ContactInfoBottomSheet({
             style={{ maxHeight: maxSheetHeight }}
             className="bg-white rounded-t-3xl"
           >
+            {/* Floating Close Button */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -56,
+                right: 16,
+                zIndex: 30,
+              }}
+            >
+              <TouchableOpacity
+                onPress={handleClose}
+                className="w-12 h-12 bg-white rounded-full items-center justify-center"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 4,
+                }}
+              >
+                <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
+
             {/* Header */}
             <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
               <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
                 Contact Information
               </Text>
-              <TouchableOpacity
-                onPress={handleClose}
-                className="w-8 h-8 items-center justify-center"
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text className="text-2xl text-[#6B7280]">×</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Content */}

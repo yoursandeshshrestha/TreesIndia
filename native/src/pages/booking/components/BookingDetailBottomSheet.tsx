@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Booking, TimeSlot } from '../../../types/booking';
 import CalendarIcon from '../../../components/icons/CalendarIcon';
 import Button from '../../../components/ui/Button';
+import CancelIcon from '../../../components/icons/CancelIcon';
 import PaymentMethodBottomSheet from './PaymentMethodBottomSheet';
 import SlotSelectionBottomSheet from './SlotSelectionBottomSheet';
 import { walletService, bookingService } from '../../../services';
@@ -542,6 +543,32 @@ export default function BookingDetailBottomSheet({
           <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
         </Animated.View>
 
+        {/* Floating Close Button */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: '70%',
+            right: 16,
+            transform: [{ translateY }],
+            zIndex: 30,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleClose}
+            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            style={{
+              marginTop: -56,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* Bottom Sheet */}
         <Animated.View
           style={{
@@ -567,9 +594,6 @@ export default function BookingDetailBottomSheet({
             >
               Booking Details
             </Text>
-            <TouchableOpacity onPress={handleClose} className="p-2 -mr-2">
-              <Text className="text-2xl text-[#6B7280]">×</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Content - Scrollable */}

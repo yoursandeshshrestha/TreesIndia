@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WorkerAssignment } from '../../../services';
 import Button from '../../../components/ui/Button';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface WorkerAssignmentBottomSheetProps {
   visible: boolean;
@@ -222,6 +223,32 @@ export default function WorkerAssignmentBottomSheet({
           <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
         </Animated.View>
 
+        {/* Floating Close Button */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: '70%',
+            right: 16,
+            transform: [{ translateY }],
+            zIndex: 30,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleClose}
+            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            style={{
+              marginTop: -56,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* Bottom Sheet */}
         <Animated.View
           style={{
@@ -253,13 +280,6 @@ export default function WorkerAssignmentBottomSheet({
                     {isCompleted ? 'Completed Assignment' : 'Assignment Details'}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  className="ml-4 p-2 -mr-2"
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close" size={24} color="#111928" />
-                </TouchableOpacity>
               </View>
 
               {/* Content */}
