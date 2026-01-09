@@ -1,15 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  ScrollView,
-  Animated,
-  Easing,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Category, categoryService } from '../../../services';
 import CategoryIcon from '../../../components/icons/CategoryIcon';
@@ -30,31 +27,39 @@ export default function CategoryBottomSheet({
 }: CategoryBottomSheetProps) {
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const snapPoints = useMemo(() => ['60%'], []);
 
   useEffect(() => {
-    if (visible && category) {
-      loadSubcategories();
-
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+    if (visible) {
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+      if (category) {
+        loadSubcategories();
+      }
     }
   }, [visible, category]);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      setSubcategories([]);
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const loadSubcategories = async () => {
     if (!category) return;
@@ -124,17 +129,12 @@ export default function CategoryBottomSheet({
     }
   };
 
-  const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    setSubcategories([]);
-    onClose();
-  };
 
   const handleSelectSubcategory = (subcategory: Category) => {
     if (onSelectSubcategory) {
       onSelectSubcategory(subcategory);
-      handleClose();
+      setSubcategories([]);
+      bottomSheetRef.current?.dismiss();
     }
   };
 
@@ -152,56 +152,26 @@ export default function CategoryBottomSheet({
     return { hasIcon: false };
   };
 
-  if (!visible || !category) return null;
+  if (!category) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
-
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            minHeight: '50%',
-            maxHeight: '70%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']} className="flex-1">
-            {/* Drag Handle */}
-            <View className="items-center pt-3 pb-2">
-              <View className="w-12 h-1 bg-[#D1D5DB] rounded-full" />
-            </View>
-
             {/* Header */}
-            <View className="px-6 py-4">
+            <View className="px-6 py-6 border-b border-[#E5E7EB]">
               <Text
                 className="text-lg font-semibold text-[#111928] text-center"
                 style={{ fontFamily: 'Inter-SemiBold' }}
@@ -210,8 +180,7 @@ export default function CategoryBottomSheet({
               </Text>
             </View>
 
-            <ScrollView
-              className="flex-1"
+            <BottomSheetScrollView
               contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
               showsVerticalScrollIndicator={false}
             >
@@ -272,10 +241,8 @@ export default function CategoryBottomSheet({
                   </Text>
                 </View>
               )}
-            </ScrollView>
-          </SafeAreaView>
-        </Animated.View>
+            </BottomSheetScrollView>
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

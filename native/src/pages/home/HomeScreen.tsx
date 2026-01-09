@@ -205,6 +205,7 @@ export default function HomeScreen({
           services={homeData.popularServices}
           isLoading={homeData.isLoadingServices}
           onServicePress={handleServicePress}
+          onSeeAll={() => onNavigateToServices?.()}
         />
 
         {/* Properties */}
