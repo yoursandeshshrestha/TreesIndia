@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { requestOTP, clearError } from '../../store/slices/authSlice';
@@ -18,20 +18,16 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
   const [isPhoneValid, setIsPhoneValid] = useState(false);
 
   useEffect(() => {
-    // Clear error when component mounts
     dispatch(clearError());
   }, [dispatch]);
 
   const handlePhoneChange = (text: string) => {
-    // Only allow numeric input
     const numericText = text.replace(/\D/g, '');
     setPhoneNumber(numericText);
-    
-    // Validate phone number
+
     const isValid = isValidMobile(numericText);
     setIsPhoneValid(isValid);
-    
-    // Clear error when user starts typing
+
     if (numericText.length > 0) {
       dispatch(clearError());
     }
@@ -47,7 +43,6 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
       const result = await dispatch(requestOTP(phoneNumberWithCode));
 
       if (requestOTP.fulfilled.match(result)) {
-        // OTP sent successfully, navigate to OTP screen
         if (onOTPSent) {
           onOTPSent(phoneNumberWithCode);
         }
@@ -60,7 +55,7 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
   const isButtonDisabled = !isPhoneValid || isLoading;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]">
+    <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -68,128 +63,110 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 px-6 pt-16">
+          <View className="flex-1 px-6">
+            {/* Logo */}
+            <View className="items-center pt-16 pb-12">
+              <Image
+                source={require('../../../assets/logo/logo.png')}
+                className="w-16 h-16"
+                resizeMode="contain"
+              />
+            </View>
+
             {/* Title */}
             <Text
-              className="text-2xl font-bold text-[#111928] mb-1"
+              className="text-2xl font-bold text-[#1C1C1C] mb-2"
               style={{
-                fontFamily: 'Inter-Bold',
                 lineHeight: 32,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
               }}
             >
-              Enter your phone number
+              Login
             </Text>
 
             {/* Subtitle */}
             <Text
-              className="text-sm text-[#4B5563] mb-6"
+              className="text-base text-[#6B7280] mb-8"
               style={{
-                fontFamily: 'Inter-Regular',
-                lineHeight: 20,
+                lineHeight: 24,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
               }}
             >
-              we will send you a text with a verification code.
-            </Text>
-
-            {/* Phone Number Label */}
-            <Text
-              className="text-sm font-medium text-[#111928] mb-2"
-              style={{
-                fontFamily: 'Inter-Medium',
-                lineHeight: 18,
-                ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
-              Phone Number
+              Enter your phone number to continue
             </Text>
 
             {/* Phone Number Input */}
-            <View className="flex-row items-stretch mb-2">
-              {/* Country Code Box */}
-              <View
-                className="px-4 border border-[#E5E7EB] rounded-lg justify-center items-center"
-                style={{ minHeight: 48 }}
+            <View className="mb-6">
+              <Text
+                className="text-sm text-[#1C1C1C] mb-2"
+                style={{
+                  lineHeight: 20,
+                  ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                }}
               >
-                <Text
-                  className="text-sm font-medium text-[#111928]"
+                Phone Number
+              </Text>
+
+              <View
+                className={`flex-row items-center bg-white border rounded-lg ${
+                  error ? 'border-[#DC2626]' : 'border-[#D1D5DB]'
+                }`}
+                style={{ height: 52 }}
+              >
+                {/* Country Code */}
+                <View className="h-full justify-center px-4 border-r border-[#D1D5DB]">
+                  <Text
+                    className="text-base text-[#1C1C1C]"
+                    style={{
+                      ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                    }}
+                  >
+                    +91
+                  </Text>
+                </View>
+
+                {/* Phone Input */}
+                <TextInput
+                  className="flex-1 text-base text-[#1C1C1C]"
+                  placeholder="10 digit mobile number"
+                  placeholderTextColor="#9CA3AF"
+                  value={phoneNumber}
+                  onChangeText={handlePhoneChange}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  editable={!isLoading}
                   style={{
-                    fontFamily: 'Inter-Medium',
+                    paddingHorizontal: 16,
+                    height: 52,
+                    fontSize: 16,
+                    paddingTop: Platform.OS === 'ios' ? 14 : 0,
+                    paddingBottom: Platform.OS === 'ios' ? 14 : 0,
+                    ...(Platform.OS === 'android' && {
+                      includeFontPadding: false,
+                      textAlignVertical: 'center',
+                    }),
+                  }}
+                />
+              </View>
+
+              {/* Error Message */}
+              {error && (
+                <Text
+                  className="text-sm text-[#DC2626] mt-2"
+                  style={{
                     lineHeight: 20,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
                   }}
                 >
-                  +91
+                  {error}
                 </Text>
-              </View>
-
-              <View className="flex-1 ml-2">
-                <View
-                  className={`border rounded-lg ${
-                    error ? 'border-[#B3261E]' : 'border-[#E5E7EB]'
-                  }`}
-                  style={{
-                    minHeight: 48,
-                    justifyContent: 'center',
-                  }}
-                >
-                  <TextInput
-                    className="text-base text-[#111928]"
-                    placeholder="Enter your phone number"
-                    placeholderTextColor="#9CA3AF"
-                    value={phoneNumber}
-                    onChangeText={handlePhoneChange}
-                    keyboardType="number-pad"
-                    maxLength={10}
-                    editable={!isLoading}
-                    style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: Platform.OS === 'ios' ? 14 : 12,
-                      margin: 0,
-                      fontSize: 16,
-                      lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                      textAlignVertical: 'center',
-                      fontFamily: 'Inter-Regular',
-                      ...(Platform.OS === 'android' && {
-                        includeFontPadding: false,
-                        textAlignVertical: 'center',
-                      }),
-                    }}
-                  />
-                </View>
-              </View>
+              )}
             </View>
-
-            {/* Error Message */}
-            {error && (
-              <Text
-                className="text-sm text-[#B3261E] mb-4"
-                style={{
-                  fontFamily: 'Inter-Regular',
-                  lineHeight: 18,
-                  ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                }}
-              >
-                {error}
-              </Text>
-            )}
 
             {/* Spacer */}
             <View className="flex-1" />
-
-            {/* Terms and Conditions */}
-            <Text
-              className="text-xs text-[#6B7280] text-center px-4 mb-2"
-              style={{
-                fontFamily: 'Inter-Regular',
-                lineHeight: 16,
-                ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
-              By continuing, you agree to our Terms of Service and Privacy Policy
-            </Text>
 
             {/* Send OTP Button */}
             <View className="mb-6">
@@ -200,6 +177,17 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
                 disabled={isButtonDisabled}
               />
             </View>
+
+            {/* Terms */}
+            <Text
+              className="text-xs text-[#9CA3AF] text-center mb-8"
+              style={{
+                lineHeight: 18,
+                ...(Platform.OS === 'android' && { includeFontPadding: false }),
+              }}
+            >
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -56,7 +56,7 @@ export default function OtpVerificationScreen({
 
   const handleOtpChange = (text: string, index: number) => {
     const numericText = text.replace(/\D/g, '');
-    
+
     if (numericText.length > 1) {
       // Handle paste - fill all inputs from current index
       const pastedOtp = numericText.substring(0, 6).split('');
@@ -69,7 +69,7 @@ export default function OtpVerificationScreen({
       setOtpInputs(newInputs);
       const newOtp = newInputs.join('');
       setOtp(newOtp);
-      
+
       // Focus the next empty input after pasted content, or last input if all filled
       const nextEmptyIndex = newInputs.findIndex((val, idx) => idx >= index && val === '');
       const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pastedOtp.length - 1, 5);
@@ -104,7 +104,7 @@ export default function OtpVerificationScreen({
     }
   };
 
-  const handleKeyPress = (e: any, index: number) => {
+  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
     // Handle backspace
     if (e.nativeEvent.key === 'Backspace') {
       if (otpInputs[index]) {
@@ -139,19 +139,18 @@ export default function OtpVerificationScreen({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 px-8 pt-20">
+          <View className="flex-1 px-6 pt-8">
             {/* Back Button */}
             {onBack && (
               <TouchableOpacity
                 onPress={onBack}
-                className="mb-6"
+                className="mb-8"
                 activeOpacity={0.7}
               >
                 <Text
-                  className="text-base text-[#111827]"
+                  className="text-base text-[#1C1C1C]"
                   style={{
-                    fontFamily: 'Inter-Medium',
-                    lineHeight: 22,
+                    lineHeight: 24,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
                   }}
                 >
@@ -162,87 +161,95 @@ export default function OtpVerificationScreen({
 
             {/* Title */}
             <Text
-              className="text-3xl font-semibold text-[#111827] mb-3"
+              className="text-2xl font-bold text-[#1C1C1C] mb-2"
               style={{
-                fontFamily: 'Inter-SemiBold',
-                letterSpacing: -0.5,
-                lineHeight: 40,
+                lineHeight: 32,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
               }}
             >
-              Verify your number
+              Verify OTP
             </Text>
 
             {/* Subtitle */}
             <Text
-              className="text-base text-[#6B7280] mb-12"
-              style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
+              className="text-base text-[#6B7280] mb-8"
+              style={{
+                lineHeight: 24,
+                ...(Platform.OS === 'android' && { includeFontPadding: false }),
+              }}
             >
-              Enter the 6-digit code sent to{'\n'}
-              <Text style={{ fontFamily: 'Inter-Medium', color: '#111827' }}>
-                {formatPhoneNumber(phoneNumber)}
-              </Text>
+              Enter the code sent to {formatPhoneNumber(phoneNumber)}
             </Text>
 
             {/* OTP Input Fields */}
-            <View className="flex-row justify-between mb-8">
+            <View className="flex-row justify-between mb-4 px-2">
               {otpInputs.map((value, index) => (
-                <View
+                <TextInput
                   key={index}
-                  style={{
-                    width: 50,
-                    height: 64,
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                  ref={(ref) => {
+                    inputRefs.current[index] = ref;
                   }}
-                >
-                  <TextInput
-                    ref={(ref) => {
-                      inputRefs.current[index] = ref;
-                    }}
-                    value={value}
-                    onChangeText={(text) => handleOtpChange(text, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    editable={!isLoading}
-                    selectTextOnFocus
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      textAlign: 'center',
-                      fontSize: 32,
-                      fontFamily: 'Inter-Regular',
-                      color: '#111827',
-                      borderBottomWidth: 1,
-                      borderBottomColor: '#E5E7EB',
-                      paddingVertical: 0,
-                      paddingTop: Platform.OS === 'ios' ? 16 : 12,
-                      ...(Platform.OS === 'android' && {
-                        includeFontPadding: false,
-                        textAlignVertical: 'center',
-                      }),
-                    }}
-                  />
-                </View>
+                  value={value}
+                  onChangeText={(text) => handleOtpChange(text, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  editable={!isLoading}
+                  selectTextOnFocus
+                  className={`text-center border border-[#E5E7EB] rounded-md ${
+                    value ? 'bg-[#F3F4F6]' : 'bg-white'
+                  }`}
+                  style={{
+                    width: 48,
+                    height: 56,
+                    fontSize: 24,
+                    color: '#1C1C1C',
+                    paddingVertical: 0,
+                    ...(Platform.OS === 'android' && {
+                      includeFontPadding: false,
+                      textAlignVertical: 'center',
+                    }),
+                  }}
+                />
               ))}
             </View>
 
             {/* Error Message */}
             {error && (
-              <View className="mb-6">
+              <Text
+                className="text-sm text-[#DC2626] mb-4"
+                style={{
+                  lineHeight: 20,
+                  ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                }}
+              >
+                {error}
+              </Text>
+            )}
+
+            {/* Resend Code */}
+            <View className="flex-row items-center mb-8">
+              <Text
+                className="text-sm text-[#6B7280] mr-1"
+                style={{
+                  lineHeight: 20,
+                  ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                }}
+              >
+                Didn't receive?
+              </Text>
+              <TouchableOpacity activeOpacity={0.7}>
                 <Text
-                  className="text-sm text-[#DC2626] text-center"
+                  className="text-sm text-[#055c3a]"
                   style={{
-                    fontFamily: 'Inter-Regular',
-                    lineHeight: 18,
+                    lineHeight: 20,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
                   }}
                 >
-                  {error}
+                  Resend OTP
                 </Text>
-              </View>
-            )}
+              </TouchableOpacity>
+            </View>
 
             {/* Spacer */}
             <View className="flex-1" />
@@ -262,4 +269,3 @@ export default function OtpVerificationScreen({
     </SafeAreaView>
   );
 }
-

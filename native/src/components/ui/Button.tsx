@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, View, Platform } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 
 interface ButtonProps {
   label: string;
@@ -64,7 +64,6 @@ export default function Button({
             color: textColor,
             fontSize: 16,
             lineHeight: 22,
-            fontFamily: 'Inter-Medium',
             textAlignVertical: 'center',
             ...(Platform.OS === 'android' && { includeFontPadding: false }),
           }}
@@ -75,5 +74,3 @@ export default function Button({
     </TouchableOpacity>
   );
 }
-
-
