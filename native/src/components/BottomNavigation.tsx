@@ -31,7 +31,7 @@ export default function BottomNavigation({
   const isWorker = userType === 'worker';
 
   const tabs: TabItem[] = [
-    { id: 'home', label: 'Home', icon: HomeIcon },
+    ...(!isWorker ? [{ id: 'home' as TabType, label: 'Home', icon: HomeIcon }] : []),
     isWorker
       ? { id: 'work', label: 'Work', icon: WorkIcon }
       : { id: 'booking', label: 'Booking', icon: BookingIcon },

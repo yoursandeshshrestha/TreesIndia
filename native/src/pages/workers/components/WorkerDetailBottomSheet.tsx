@@ -1,16 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  ScrollView,
   Dimensions,
   Linking,
   Alert,
-  Animated,
-  Easing,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Worker } from '../../../services';
 import WorkerIcon from '../../../components/icons/WorkerIcon';
@@ -40,34 +37,35 @@ export default function WorkerDetailBottomSheet({
   worker,
   onContact,
 }: WorkerDetailBottomSheetProps) {
-  const [isClosing, setIsClosing] = useState(false);
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const snapPoints = useMemo(() => ['75%'], []);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
 
-  const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onClose();
-  };
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const getExperienceText = () => {
     const years = worker.experience_years;
@@ -104,68 +102,35 @@ export default function WorkerDetailBottomSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
-
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '90%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']} className="flex-1">
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
-              <View className="px-4 py-4 flex-row items-center justify-between">
-                <TouchableOpacity
-                  onPress={handleClose}
-                  className="p-2 -ml-2"
-                  activeOpacity={0.7}
-                  disabled={isClosing}
-                >
-                  <Text className="text-2xl">×</Text>
-                </TouchableOpacity>
+              <View className="px-6 py-4">
                 <Text
-                  className="text-lg font-semibold text-[#111928]"
+                  className="text-lg font-semibold text-[#111928] text-center"
                   style={{ fontFamily: 'Inter-SemiBold' }}
                 >
                   Worker Details
                 </Text>
-                <View className="w-10" />
               </View>
             </View>
 
             {/* Content */}
-            <ScrollView
-              className="flex-1"
+            <BottomSheetScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 24 }}
             >
@@ -414,28 +379,28 @@ export default function WorkerDetailBottomSheet({
                   </View>
                 </View>
               </View>
-            </ScrollView>
+            </BottomSheetScrollView>
 
             {/* Contact Button */}
-            <View className="px-6 pb-4 pt-2 border-t border-[#E5E7EB] bg-white">
-              <TouchableOpacity
-                onPress={handleCall}
-                className="bg-[#055c3a] rounded-lg py-3.5 items-center flex-row justify-center"
-                activeOpacity={0.7}
-                style={{ gap: 8 }}
-              >
-                <PhoneIcon size={20} color="#FFFFFF" />
-                <Text
-                  className="text-white text-base font-semibold"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
+            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+              <View className="px-6 py-4">
+                <TouchableOpacity
+                  onPress={handleCall}
+                  className="bg-[#055c3a] rounded-lg py-3.5 items-center flex-row justify-center"
+                  activeOpacity={0.7}
+                  style={{ gap: 8 }}
                 >
-                  Contact Worker
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </Animated.View>
+                  <PhoneIcon size={20} color="#FFFFFF" />
+                  <Text
+                    className="text-white text-base font-semibold"
+                    style={{ fontFamily: 'Inter-SemiBold' }}
+                  >
+                    Contact Worker
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

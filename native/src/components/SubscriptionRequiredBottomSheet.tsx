@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Animated, Easing, Image } from 'react-native';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SubscriptionRequiredBottomSheetProps {
   visible: boolean;
@@ -14,35 +16,35 @@ export default function SubscriptionRequiredBottomSheet({
   onSubscribe,
   contentType = 'vendor',
 }: SubscriptionRequiredBottomSheetProps) {
-  const [isClosing, setIsClosing] = useState(false);
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const snapPoints = useMemo(() => ['75%'], []);
 
   useEffect(() => {
     if (visible) {
-      setIsClosing(false);
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
 
-  const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onClose();
-  };
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const getMessage = () => {
     const messages = {
@@ -54,63 +56,47 @@ export default function SubscriptionRequiredBottomSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
-      <View style={styles.modalContainer}>
-        {/* Animated Overlay */}
-        <Animated.View
-          style={[
-            styles.overlay,
-            {
-              opacity: overlayOpacity,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
+    >
+      <BottomSheetScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Subscription Required</Text>
+        </View>
 
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              transform: [{ translateY }],
-            },
-          ]}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Subscription Required</Text>
-            <TouchableOpacity onPress={handleClose}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.iconContainer}>
+          <Image source={require('../../assets/subscription.png')} style={styles.iconImage} resizeMode="contain" />
+        </View>
 
-          <View style={styles.iconContainer}>
-            <Image source={require('../../assets/subscription.png')} style={styles.iconImage} resizeMode="contain" />
-          </View>
+        <Text style={styles.message}>{getMessage()}</Text>
 
-          <Text style={styles.message}>{getMessage()}</Text>
+        <View style={styles.benefits}>
+          <BenefitItem text="Access to all vendor profiles" />
+          <BenefitItem text="Connect with verified workers" />
+          <BenefitItem text="Explore active projects" />
+          <BenefitItem text="Priority customer support" />
+        </View>
 
-          <View style={styles.benefits}>
-            <BenefitItem text="Access to all vendor profiles" />
-            <BenefitItem text="Connect with verified workers" />
-            <BenefitItem text="Explore active projects" />
-            <BenefitItem text="Priority customer support" />
-          </View>
+        <TouchableOpacity style={styles.subscribeButton} onPress={onSubscribe}>
+          <Text style={styles.subscribeButtonText}>View Subscription Plans</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.subscribeButton} onPress={onSubscribe}>
-            <Text style={styles.subscribeButtonText}>View Subscription Plans</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleClose} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>Maybe Later</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </Modal>
+        <TouchableOpacity onPress={() => bottomSheetRef.current?.dismiss()} style={styles.cancelButton}>
+          <Text style={styles.cancelText}>Maybe Later</Text>
+        </TouchableOpacity>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
   );
 }
 
@@ -141,11 +127,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: 40,
-    maxHeight: '90%',
+    maxHeight: '75%',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
