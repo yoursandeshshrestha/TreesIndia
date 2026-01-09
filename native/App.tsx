@@ -14,6 +14,7 @@ import OtpVerificationScreen from './src/pages/auth/OtpVerificationScreen';
 import BottomNavigation, { TabType } from './src/components/BottomNavigation';
 import HomeScreen from './src/pages/home/HomeScreen';
 import BookingScreen from './src/pages/booking/BookingScreen';
+import WorkScreen from './src/pages/work/WorkScreen';
 import ChatScreen from './src/pages/chat/ChatScreen';
 import ChatConversationScreen from './src/pages/chat/ChatConversationScreen';
 import ProfileScreen from './src/pages/profile/ProfileScreen';
@@ -86,7 +87,7 @@ function AppContent() {
     profileImage?: string;
   } | null>(null);
   const [chatPreviousTab, setChatPreviousTab] = useState<TabType>('booking');
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { totalUnreadCount } = useAppSelector((state) => state.chat);
 
   const handleSplashFinish = () => {
@@ -108,8 +109,6 @@ function AppContent() {
     if (!isAuthenticated) {
       return;
     }
-
-    console.log('[App] Setting up conversation monitor WebSocket');
 
     // Initial fetch
     dispatch(fetchTotalUnreadCount());
@@ -146,7 +145,6 @@ function AppContent() {
 
     // Cleanup
     return () => {
-      console.log('[App] Cleaning up conversation monitor WebSocket');
       conversationMonitorWebSocket.off('total_unread_count', handleTotalUnreadCount);
       conversationMonitorWebSocket.off('conversation_unread_count', handleConversationUnreadCount);
       conversationMonitorWebSocket.off('new_conversation_message', handleNewMessage);
@@ -548,6 +546,17 @@ function AppContent() {
             }}
           />
         );
+      case 'work':
+        return (
+          <WorkScreen
+            onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+              setSelectedConversationId(conversationId);
+              setChatWorkerInfo(customerInfo);
+              setChatPreviousTab('work');
+              setCurrentScreen('chatConversation');
+            }}
+          />
+        );
       case 'chat':
         return (
           <ChatScreen
@@ -612,6 +621,7 @@ function AppContent() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           chatUnreadCount={totalUnreadCount}
+          userType={user?.user_type}
         />
       )}
     </View>

@@ -3,15 +3,17 @@ import { View, TouchableOpacity, Text, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeIcon from './icons/HomeIcon';
 import BookingIcon from './icons/BookingIcon';
+import WorkIcon from './icons/WorkIcon';
 import ChatIcon from './icons/ChatIcon';
 import ProfileIcon from './icons/ProfileIcon';
 
-export type TabType = 'home' | 'booking' | 'chat' | 'profile';
+export type TabType = 'home' | 'booking' | 'work' | 'chat' | 'profile';
 
 interface BottomNavigationProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   chatUnreadCount?: number;
+  userType?: 'admin' | 'user' | 'worker' | 'normal' | 'broker';
 }
 
 interface TabItem {
@@ -20,18 +22,23 @@ interface TabItem {
   icon: React.ComponentType<{ size?: number; color?: string }>;
 }
 
-const tabs: TabItem[] = [
-  { id: 'home', label: 'Home', icon: HomeIcon },
-  { id: 'booking', label: 'Booking', icon: BookingIcon },
-  { id: 'chat', label: 'Chat', icon: ChatIcon },
-  { id: 'profile', label: 'Profile', icon: ProfileIcon },
-];
-
 export default function BottomNavigation({
   activeTab,
   onTabChange,
   chatUnreadCount = 0,
+  userType = 'normal',
 }: BottomNavigationProps) {
+  const isWorker = userType === 'worker';
+
+  const tabs: TabItem[] = [
+    { id: 'home', label: 'Home', icon: HomeIcon },
+    isWorker
+      ? { id: 'work', label: 'Work', icon: WorkIcon }
+      : { id: 'booking', label: 'Booking', icon: BookingIcon },
+    { id: 'chat', label: 'Chat', icon: ChatIcon },
+    { id: 'profile', label: 'Profile', icon: ProfileIcon },
+  ];
+
   return (
     <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
       <View className="flex-row items-center justify-around py-2">
