@@ -8,7 +8,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Property } from '../../../services';
 import DeleteIcon from '../../../components/icons/DeleteIcon';
 import EditIcon from '../../../components/icons/EditIcon';
@@ -46,7 +45,7 @@ export default function PropertyDetailBottomSheet({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const snapPoints = useMemo(() => ['75%'], []);
+  const snapPoints = useMemo(() => ['80%'], []);
 
   useEffect(() => {
     if (visible) {
@@ -54,6 +53,7 @@ export default function PropertyDetailBottomSheet({
         bottomSheetRef.current?.present();
       });
     } else {
+      bottomSheetRef.current?.dismiss();
       setCurrentImageIndex(0);
     }
   }, [visible]);
@@ -138,24 +138,17 @@ export default function PropertyDetailBottomSheet({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       enablePanDownToClose
+      enableDynamicSizing={false}
       backgroundStyle={{
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
       }}
     >
-      <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">
+      <View className="flex-1">
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
-              <View className="px-4 py-4 flex-row items-center">
-                <TouchableOpacity
-                  onPress={handleClose}
-                  className="p-2 -ml-2"
-                  activeOpacity={0.7}
-                >
-                  <Text className="text-2xl">×</Text>
-                </TouchableOpacity>
-                <View className="flex-1" />
+              <View className="px-4 py-4 flex-row items-center justify-end">
                 {onEdit && (
                   <TouchableOpacity
                     onPress={() => {
@@ -467,7 +460,7 @@ export default function PropertyDetailBottomSheet({
                 </View>
               </View>
             </BottomSheetScrollView>
-          </SafeAreaView>
+      </View>
     </BottomSheetModal>
   );
 }

@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Vendor } from '../../../services/api/vendor.service';
 import DeleteIcon from '../../../components/icons/DeleteIcon';
 import EditIcon from '../../../components/icons/EditIcon';
@@ -44,13 +43,16 @@ export default function VendorDetailBottomSheet({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const snapPoints = useMemo(() => ['75%'], []);
+  const snapPoints = useMemo(() => ['80%'], []);
 
   useEffect(() => {
     if (visible) {
       requestAnimationFrame(() => {
         bottomSheetRef.current?.present();
       });
+    } else {
+      bottomSheetRef.current?.dismiss();
+      setCurrentImageIndex(0);
     }
   }, [visible]);
 
@@ -119,13 +121,7 @@ export default function VendorDetailBottomSheet({
       <View className="flex-1">
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
-              <View className="px-6 py-4 flex-row items-center justify-between">
-                <Text
-                  className="text-lg font-semibold text-[#111928] flex-1 text-center"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
-                  Vendor Details
-                </Text>
+              <View className="px-4 py-4 flex-row items-center justify-end">
                 {onEdit && (
                   <TouchableOpacity
                     onPress={() => {
