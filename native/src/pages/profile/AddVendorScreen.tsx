@@ -7,19 +7,20 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Keyboard,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import { vendorService, type Vendor, BUSINESS_TYPES } from '../../services/api/vendor.service';
+import { type Address, type CreateAddressRequest } from '../../services';
 import Button from '../../components/ui/Button';
 import Input from '../../components/common/Input';
 import BackIcon from '../../components/icons/BackIcon';
 import AddressIcon from '../../components/icons/AddressIcon';
 import VendorIcon from '../../components/icons/VendorIcon';
+import AddEditAddressBottomSheet from './components/AddEditAddressBottomSheet';
+import EditIcon from '../../components/icons/EditIcon';
 
 interface AddVendorScreenProps {
   onBack: () => void;
@@ -49,14 +50,35 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
   const [contactPersonEmail, setContactPersonEmail] = useState(vendorToEdit?.contact_person_email || '');
   const [yearsInBusiness, setYearsInBusiness] = useState(vendorToEdit?.years_in_business?.toString() || '');
 
-  // Step 2: Business Address
-  const [street, setStreet] = useState(vendorToEdit?.business_address?.street || '');
-  const [city, setCity] = useState(vendorToEdit?.business_address?.city || '');
-  const [state, setState] = useState(vendorToEdit?.business_address?.state || '');
-  const [pincode, setPincode] = useState(vendorToEdit?.business_address?.pincode || '');
-  const [landmark, setLandmark] = useState(vendorToEdit?.business_address?.landmark || '');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [locationKey, setLocationKey] = useState(0); // Key to force re-render of address fields
+  // Step 2: Business Address - Initialize with existing vendor address if editing
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(() => {
+    if (vendorToEdit && vendorToEdit.business_address) {
+      const addr = vendorToEdit.business_address;
+      return {
+        id: Date.now(),
+        name: 'Business Address',
+        address: addr.street || '',
+        city: addr.city || '',
+        state: addr.state || '',
+        postal_code: addr.pincode || '',
+        postalCode: addr.pincode || '',
+        country: 'India',
+        house_number: '',
+        houseNumber: '',
+        landmark: addr.landmark || '',
+        latitude: 0,
+        longitude: 0,
+        is_default: false,
+        isDefault: false,
+        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as Address;
+    }
+    return null;
+  });
+  const [showAddressSheet, setShowAddressSheet] = useState(false);
 
   // Step 3: Services/Products Offered
   const [servicesOffered, setServicesOffered] = useState<string[]>(vendorToEdit?.services_offered || []);
@@ -103,78 +125,31 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
   }, []);
 
 
-  const handleUseCurrentLocation = async () => {
-    setIsLoadingLocation(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Denied',
-          'Location permission is required to use this feature. Please enable it in your device settings.',
-          [{ text: 'OK' }]
-        );
-        setIsLoadingLocation(false);
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const { latitude, longitude } = location.coords;
-      const geocode = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-
-      if (geocode && geocode.length > 0) {
-        const addressData = geocode[0];
-
-        // Build street address - prioritize specific fields over general ones
-        const streetParts: string[] = [];
-
-        // Add street number first if available
-        if (addressData.streetNumber) {
-          streetParts.push(addressData.streetNumber);
-        }
-
-        // Prefer 'street' field over 'name' to avoid duplicates
-        if (addressData.street) {
-          streetParts.push(addressData.street);
-        } else if (addressData.name && addressData.name !== addressData.city) {
-          // Only use 'name' if 'street' is not available and it's not the same as city
-          streetParts.push(addressData.name);
-        }
-
-        // Update all fields at once to ensure proper state updates
-        const newStreet = streetParts.length > 0 ? streetParts.join(' ') : '';
-        const newCity = addressData.city || '';
-        const newState = addressData.region || '';
-        const newPincode = addressData.postalCode || '';
-
-        // Batch state updates - force re-render by updating key
-        setStreet(newStreet);
-        setCity(newCity);
-        setState(newState);
-        setPincode(newPincode);
-        setLocationKey(prev => prev + 1); // Force re-render of address fields
-
-        // Show success message
-        if (newCity || newState) {
-          Alert.alert('Success', 'Location retrieved successfully!', [{ text: 'OK' }]);
-        } else {
-          Alert.alert('Info', 'Location retrieved but some address details are missing. Please fill in manually.', [{ text: 'OK' }]);
-        }
-      } else {
-        Alert.alert('Info', 'Could not retrieve address details. Please enter manually.', [{ text: 'OK' }]);
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get location';
-      Alert.alert('Error', errorMessage + '. Please enter address manually.', [{ text: 'OK' }]);
-    } finally {
-      setIsLoadingLocation(false);
-    }
+  const handleAddressSave = async (addressData: CreateAddressRequest) => {
+    // Convert CreateAddressRequest to Address format
+    const address: Address = {
+      id: Date.now(),
+      name: addressData.name,
+      address: addressData.address,
+      city: addressData.city,
+      state: addressData.state,
+      postal_code: addressData.postal_code,
+      postalCode: addressData.postal_code,
+      country: addressData.country || 'India',
+      house_number: addressData.house_number,
+      houseNumber: addressData.house_number,
+      landmark: addressData.landmark,
+      latitude: addressData.latitude || 0,
+      longitude: addressData.longitude || 0,
+      is_default: false,
+      isDefault: false,
+      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as Address;
+    setSelectedAddress(address);
+    setShowAddressSheet(false);
   };
 
   const pickProfilePicture = async () => {
@@ -291,10 +266,7 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         break;
 
       case 'address':
-        if (!street.trim()) newErrors.street = 'Street is required';
-        if (!city.trim()) newErrors.city = 'City is required';
-        if (!state.trim()) newErrors.state = 'State is required';
-        if (!pincode.trim()) newErrors.pincode = 'Pincode is required';
+        if (!selectedAddress) newErrors.address = 'Business address is required';
         break;
 
       case 'services':
@@ -356,14 +328,16 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
       formData.append('business_type', businessType);
 
       // Business address (as JSON string)
-      const address = {
-        street: street,
-        city: city,
-        state: state,
-        pincode: pincode,
-        landmark: landmark,
-      };
-      formData.append('business_address', JSON.stringify(address));
+      if (selectedAddress) {
+        const address = {
+          street: selectedAddress.address,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.postal_code,
+          landmark: selectedAddress.landmark,
+        };
+        formData.append('business_address', JSON.stringify(address));
+      }
 
       // Services offered (as JSON array string)
       formData.append('services_offered', JSON.stringify(servicesOffered));
@@ -610,84 +584,59 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         Business Address
       </Text>
       <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
-        Provide the address of your business
+        Select address for your business
       </Text>
 
-      <TouchableOpacity
-        onPress={handleUseCurrentLocation}
-        disabled={isLoadingLocation}
-        className="flex-row items-center justify-center border border-[#055c3a] rounded-lg py-3 mb-6"
-        activeOpacity={0.7}
-      >
-        {isLoadingLocation ? (
-          <>
-            <ActivityIndicator size="small" color="#055c3a" />
-            <Text className="text-sm font-medium text-[#055c3a] ml-2" style={{ fontFamily: 'Inter-Medium' }}>
-              Getting location...
-            </Text>
-          </>
-        ) : (
-          <>
-            <AddressIcon size={20} color="#055c3a" />
-            <Text className="text-sm font-medium text-[#055c3a] ml-2" style={{ fontFamily: 'Inter-Medium' }}>
-              Use Current Location
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
+      {selectedAddress ? (
+        <View className="mb-4">
+          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <View className="flex-row justify-between items-start mb-2">
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-[#111928] mb-1" style={{ fontFamily: 'Inter-SemiBold' }}>
+                  {selectedAddress.name}
+                </Text>
+                <Text className="text-sm text-[#374151] mb-1">
+                  {selectedAddress.house_number && `${selectedAddress.house_number}, `}
+                  {selectedAddress.address}
+                </Text>
+                <Text className="text-sm text-[#374151]">
+                  {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+                </Text>
+                {selectedAddress.landmark && (
+                  <Text className="text-xs text-[#6B7280] mt-1">
+                    Landmark: {selectedAddress.landmark}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowAddressSheet(true)}
+                className="ml-2 p-2"
+                activeOpacity={0.7}
+              >
+                <EditIcon size={20} color="#055c3a" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => setShowAddressSheet(true)}
+          className="flex-row items-center justify-center border-2 border-dashed border-[#D1D5DB] rounded-xl py-6 mb-4"
+          activeOpacity={0.7}
+        >
+          <AddressIcon size={24} color="#6B7280" />
+          <Text
+            className="text-base font-medium text-[#6B7280] ml-2"
+            style={{ fontFamily: 'Inter-Medium' }}
+          >
+            Add Business Address
+          </Text>
+        </TouchableOpacity>
+      )}
 
-      <View className="mb-4">
-        <Input 
-          key={`street-${locationKey}`}
-          label="Street" 
-          value={street} 
-          onChangeText={setStreet} 
-          placeholder="Enter street" 
-          error={errors.street} 
-          required 
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input 
-          key={`city-${locationKey}`}
-          label="City" 
-          value={city} 
-          onChangeText={setCity} 
-          placeholder="Enter city" 
-          error={errors.city} 
-          required 
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input 
-          key={`state-${locationKey}`}
-          label="State" 
-          value={state} 
-          onChangeText={setState} 
-          placeholder="Enter state" 
-          error={errors.state} 
-          required 
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input
-          key={`pincode-${locationKey}`}
-          label="Pincode"
-          value={pincode}
-          onChangeText={setPincode}
-          placeholder="Enter pincode"
-          keyboardType="number-pad"
-          error={errors.pincode}
-          required
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input label="Landmark (Optional)" value={landmark} onChangeText={setLandmark} placeholder="Enter landmark" />
-      </View>
+      {errors.address && (
+        <Text className="text-xs text-[#DC2626] mt-1 mb-4">{errors.address}</Text>
+      )}
     </View>
   );
 
@@ -868,13 +817,23 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         <Text className="text-base font-semibold text-[#111928] mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
           Business Address
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">
-          {street}, {city}
-        </Text>
-        <Text className="text-sm text-[#374151]">
-          {state} {pincode}
-        </Text>
-        {landmark && <Text className="text-sm text-[#374151]">Landmark: {landmark}</Text>}
+        {selectedAddress ? (
+          <>
+            <Text className="text-sm text-[#374151] font-semibold mb-1">{selectedAddress.name}</Text>
+            <Text className="text-sm text-[#374151] mb-1">
+              {selectedAddress.house_number && `${selectedAddress.house_number}, `}
+              {selectedAddress.address}
+            </Text>
+            <Text className="text-sm text-[#374151]">
+              {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+            </Text>
+            {selectedAddress.landmark && (
+              <Text className="text-xs text-[#6B7280] mt-1">Landmark: {selectedAddress.landmark}</Text>
+            )}
+          </>
+        ) : (
+          <Text className="text-sm text-[#6B7280]">No address selected</Text>
+        )}
       </View>
 
       {/* Services Card */}
@@ -974,6 +933,18 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Address Bottom Sheet */}
+      {showAddressSheet && (
+        <AddEditAddressBottomSheet
+          address={selectedAddress}
+          onSave={handleAddressSave}
+          onClose={() => setShowAddressSheet(false)}
+          visible={showAddressSheet}
+          requireLabel={false}
+          showOptionalFields={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

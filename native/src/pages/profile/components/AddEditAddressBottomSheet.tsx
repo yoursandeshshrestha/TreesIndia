@@ -23,6 +23,12 @@ interface AddEditAddressBottomSheetProps {
   onSave: (data: CreateAddressRequest | UpdateAddressRequest) => Promise<void>;
   onClose: () => void;
   visible?: boolean;
+  requiredFields?: {
+    houseNumber?: boolean;
+    landmark?: boolean;
+  };
+  requireLabel?: boolean; // Whether to show and require address label (Home/Work/Other)
+  showOptionalFields?: boolean; // Whether to show optional fields (house number, landmark)
 }
 
 const ADDRESS_LABELS = ['Home', 'Work', 'Other'];
@@ -32,6 +38,9 @@ export default function AddEditAddressBottomSheet({
   onSave,
   onClose,
   visible = true,
+  requiredFields = {},
+  requireLabel = false,
+  showOptionalFields = true,
 }: AddEditAddressBottomSheetProps) {
   const isEditing = !!address;
   const [name, setName] = useState(address?.name || '');
@@ -62,6 +71,7 @@ export default function AddEditAddressBottomSheet({
     state?: string;
     pincode?: string;
     houseNumber?: string;
+    landmark?: string;
   }>({});
 
   useEffect(() => {
@@ -174,11 +184,13 @@ export default function AddEditAddressBottomSheet({
     const newErrors: typeof errors = {};
     let firstErrorRef: React.RefObject<View | null> | null = null;
 
-    if (!name.trim()) {
+    // Only validate label if it's required
+    if (requireLabel && !name.trim()) {
       newErrors.name = 'Address label is required';
     }
 
-    if (!houseNumber.trim()) {
+    // Validate house number if required
+    if (requiredFields.houseNumber && !houseNumber.trim()) {
       newErrors.houseNumber = 'House/Flat number is required';
       if (!firstErrorRef) firstErrorRef = houseNumberRef;
     }
@@ -201,6 +213,11 @@ export default function AddEditAddressBottomSheet({
     if (!state.trim()) {
       newErrors.state = 'State is required';
       if (!firstErrorRef) firstErrorRef = stateRef;
+    }
+
+    // Validate landmark if required
+    if (requiredFields.landmark && !landmark.trim()) {
+      newErrors.landmark = 'Landmark is required';
     }
 
     setErrors(newErrors);
@@ -230,7 +247,7 @@ export default function AddEditAddressBottomSheet({
     try {
       const addressData = {
         ...(isEditing && { id: address.id }),
-        name: name.trim(),
+        name: name.trim() || 'Address', // Default to 'Address' if no label provided
         address: addressText.trim(),
         city: city.trim(),
         state: state.trim(),
@@ -350,64 +367,68 @@ export default function AddEditAddressBottomSheet({
 
                 {/* Form Section */}
                 <View className="px-5">
-                    {/* Address Label Section */}
-                    <View className="mb-5">
-                      <Text className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
-                        Save as
-                      </Text>
-                      <View className="flex-row gap-3">
-                        {ADDRESS_LABELS.map((label) => (
-                          <TouchableOpacity
-                            key={label}
-                            onPress={() => handleLabelSelect(label)}
-                            className={`flex-1 py-3 px-4 rounded-xl border-2 ${
-                              name === label
-                                ? 'bg-[#00a871] border-[#00a871]'
-                                : 'bg-white border-[#E5E7EB]'
-                            }`}
-                            activeOpacity={0.7}
-                            style={{
-                              shadowColor: name === label ? '#00a871' : 'transparent',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.15,
-                              shadowRadius: 4,
-                              elevation: name === label ? 3 : 0,
-                            }}
-                          >
-                            <Text
-                              className={`text-sm font-semibold text-center ${
-                                name === label ? 'text-white' : 'text-[#374151]'
-                              }`}
-                              style={{ fontFamily: 'Inter-SemiBold' }}
-                            >
-                              {label}
+                    {/* Address Label Section - Only show if requireLabel is true */}
+                    {requireLabel && (
+                      <>
+                        <View className="mb-5">
+                          <Text className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
+                            Save as
+                          </Text>
+                          <View className="flex-row gap-3">
+                            {ADDRESS_LABELS.map((label) => (
+                              <TouchableOpacity
+                                key={label}
+                                onPress={() => handleLabelSelect(label)}
+                                className={`flex-1 py-3 px-4 rounded-xl border-2 ${
+                                  name === label
+                                    ? 'bg-[#00a871] border-[#00a871]'
+                                    : 'bg-white border-[#E5E7EB]'
+                                }`}
+                                activeOpacity={0.7}
+                                style={{
+                                  shadowColor: name === label ? '#00a871' : 'transparent',
+                                  shadowOffset: { width: 0, height: 2 },
+                                  shadowOpacity: 0.15,
+                                  shadowRadius: 4,
+                                  elevation: name === label ? 3 : 0,
+                                }}
+                              >
+                                <Text
+                                  className={`text-sm font-semibold text-center ${
+                                    name === label ? 'text-white' : 'text-[#374151]'
+                                  }`}
+                                  style={{ fontFamily: 'Inter-SemiBold' }}
+                                >
+                                  {label}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                          {errors.name && (
+                            <Text className="text-xs text-[#EF4444] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
+                              {errors.name}
                             </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                      {errors.name && (
-                        <Text className="text-xs text-[#EF4444] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
-                          {errors.name}
-                        </Text>
-                      )}
-                    </View>
+                          )}
+                        </View>
 
-                    {/* Custom label input when "Other" is selected */}
-                    {name === 'Other' && (
-                      <View className="mb-5">
-                        <Input
-                          label="Custom Label"
-                          value={name}
-                          onChangeText={(text) => {
-                            setName(text);
-                            if (errors.name) {
-                              setErrors({ ...errors, name: undefined });
-                            }
-                          }}
-                          placeholder="e.g., Office, Friend's Place"
-                          error={errors.name}
-                        />
-                      </View>
+                        {/* Custom label input when "Other" is selected */}
+                        {name === 'Other' && (
+                          <View className="mb-5">
+                            <Input
+                              label="Custom Label"
+                              value={name}
+                              onChangeText={(text) => {
+                                setName(text);
+                                if (errors.name) {
+                                  setErrors({ ...errors, name: undefined });
+                                }
+                              }}
+                              placeholder="e.g., Office, Friend's Place"
+                              error={errors.name}
+                            />
+                          </View>
+                        )}
+                      </>
                     )}
 
                     {/* Address Details Section */}
@@ -416,32 +437,41 @@ export default function AddEditAddressBottomSheet({
                         Address Details
                       </Text>
 
-                      {/* House/Flat Number and Landmark */}
-                      <View className="flex-row mb-4 gap-3">
-                        <View className="flex-1" ref={houseNumberRef}>
-                          <Input
-                            label="House/Flat No."
-                            value={houseNumber}
-                            onChangeText={(text) => {
-                              setHouseNumber(text);
-                              if (errors.houseNumber) {
-                                setErrors({ ...errors, houseNumber: undefined });
-                              }
-                            }}
-                            placeholder="e.g., 123"
-                            error={errors.houseNumber}
-                            required
-                          />
+                      {/* House/Flat Number and Landmark - Only show if showOptionalFields is true */}
+                      {showOptionalFields && (
+                        <View className="flex-row mb-4 gap-3">
+                          <View className="flex-1" ref={houseNumberRef}>
+                            <Input
+                              label={requiredFields.houseNumber ? "House/Flat No." : "House/Flat No. (Optional)"}
+                              value={houseNumber}
+                              onChangeText={(text) => {
+                                setHouseNumber(text);
+                                if (errors.houseNumber) {
+                                  setErrors({ ...errors, houseNumber: undefined });
+                                }
+                              }}
+                              placeholder="e.g., 123"
+                              error={errors.houseNumber}
+                              required={requiredFields.houseNumber}
+                            />
+                          </View>
+                          <View className="flex-1">
+                            <Input
+                              label={requiredFields.landmark ? "Landmark" : "Landmark (Optional)"}
+                              value={landmark}
+                              onChangeText={(text) => {
+                                setLandmark(text);
+                                if (errors.landmark) {
+                                  setErrors({ ...errors, landmark: undefined });
+                                }
+                              }}
+                              placeholder="Optional"
+                              error={errors.landmark}
+                              required={requiredFields.landmark}
+                            />
+                          </View>
                         </View>
-                        <View className="flex-1">
-                          <Input
-                            label="Landmark"
-                            value={landmark}
-                            onChangeText={setLandmark}
-                            placeholder="Optional"
-                          />
-                        </View>
-                      </View>
+                      )}
 
                       {/* Street Address */}
                       <View className="mb-4" ref={addressRef}>

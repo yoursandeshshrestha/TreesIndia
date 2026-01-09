@@ -7,19 +7,19 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Keyboard,
   Image,
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
-import { propertyService, type Property } from '../../services';
+import { propertyService, type Property, type Address, type CreateAddressRequest } from '../../services';
 import Button from '../../components/ui/Button';
 import Input from '../../components/common/Input';
 import BackIcon from '../../components/icons/BackIcon';
 import AddressIcon from '../../components/icons/AddressIcon';
+import AddEditAddressBottomSheet from './components/AddEditAddressBottomSheet';
+import EditIcon from '../../components/icons/EditIcon';
 
 interface AddPropertyScreenProps {
   onBack: () => void;
@@ -50,12 +50,34 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
     (propertyToEdit?.listing_type as 'sale' | 'rent') || 'sale'
   );
 
-  // Step 2: Location Details
-  const [state, setState] = useState(propertyToEdit?.state || '');
-  const [city, setCity] = useState(propertyToEdit?.city || '');
-  const [address, setAddress] = useState(propertyToEdit?.address || '');
-  const [pincode, setPincode] = useState(propertyToEdit?.pincode || '');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  // Step 2: Location Details - Initialize with existing property address if editing
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(() => {
+    if (propertyToEdit && propertyToEdit.city && propertyToEdit.state) {
+      return {
+        id: Date.now(),
+        name: 'Property Address',
+        address: propertyToEdit.address || '',
+        city: propertyToEdit.city,
+        state: propertyToEdit.state,
+        postal_code: propertyToEdit.pincode || '',
+        postalCode: propertyToEdit.pincode || '',
+        country: 'India',
+        house_number: '',
+        houseNumber: '',
+        landmark: '',
+        latitude: 0,
+        longitude: 0,
+        is_default: false,
+        isDefault: false,
+        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as Address;
+    }
+    return null;
+  });
+  const [showAddressSheet, setShowAddressSheet] = useState(false);
 
   // Step 3: Property Profile (all optional)
   const [bedrooms, setBedrooms] = useState(propertyToEdit?.bedrooms?.toString() || '');
@@ -122,51 +144,31 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
     };
   }, []);
 
-  const handleUseCurrentLocation = async () => {
-    setIsLoadingLocation(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Denied',
-          'Location permission is required to use this feature. Please enable it in your device settings.',
-          [{ text: 'OK' }]
-        );
-        setIsLoadingLocation(false);
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const { latitude, longitude } = location.coords;
-      const geocode = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-
-      if (geocode && geocode.length > 0) {
-        const addressData = geocode[0];
-        
-        if (addressData.city) setCity(addressData.city);
-        if (addressData.region) setState(addressData.region);
-        if (addressData.postalCode) setPincode(addressData.postalCode);
-        
-        const streetParts: string[] = [];
-        if (addressData.streetNumber) streetParts.push(addressData.streetNumber);
-        if (addressData.street) streetParts.push(addressData.street);
-        if (addressData.district) streetParts.push(addressData.district);
-        if (streetParts.length > 0) {
-          setAddress(streetParts.join(', '));
-        }
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to get location.');
-    } finally {
-      setIsLoadingLocation(false);
-    }
+  const handleAddressSave = async (addressData: CreateAddressRequest) => {
+    // Convert CreateAddressRequest to Address format
+    const address: Address = {
+      id: Date.now(),
+      name: addressData.name,
+      address: addressData.address,
+      city: addressData.city,
+      state: addressData.state,
+      postal_code: addressData.postal_code,
+      postalCode: addressData.postal_code,
+      country: addressData.country || 'India',
+      house_number: addressData.house_number,
+      houseNumber: addressData.house_number,
+      landmark: addressData.landmark,
+      latitude: addressData.latitude || 0,
+      longitude: addressData.longitude || 0,
+      is_default: false,
+      isDefault: false,
+      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as Address;
+    setSelectedAddress(address);
+    setShowAddressSheet(false);
   };
 
   const pickImage = async () => {
@@ -207,8 +209,7 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         break;
 
       case 'location':
-        if (!state.trim()) newErrors.state = 'State is required';
-        if (!city.trim()) newErrors.city = 'City is required';
+        if (!selectedAddress) newErrors.location = 'Property address is required';
         break;
 
       case 'profile':
@@ -274,12 +275,17 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
       formData.append('description', description);
       formData.append('property_type', propertyType);
       formData.append('listing_type', listingType);
-      formData.append('state', state);
-      formData.append('city', city);
       formData.append('price_negotiable', priceNegotiable.toString());
 
-      if (address.trim()) formData.append('address', address);
-      if (pincode.trim()) formData.append('pincode', pincode);
+      // Address fields from selectedAddress
+      if (selectedAddress) {
+        formData.append('state', selectedAddress.state);
+        formData.append('city', selectedAddress.city);
+        formData.append('address', selectedAddress.address);
+        if (selectedAddress.postal_code) {
+          formData.append('pincode', selectedAddress.postal_code);
+        }
+      }
       if (bedrooms.trim()) formData.append('bedrooms', bedrooms);
       if (bathrooms.trim()) formData.append('bathrooms', bathrooms);
       if (area.trim()) formData.append('area', area);
@@ -565,80 +571,59 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         className="text-sm text-[#6B7280] mb-6"
         style={{ fontFamily: 'Inter-Regular' }}
       >
-        Provide the location of your property
+        Select address for your property
       </Text>
 
-      <TouchableOpacity
-        onPress={handleUseCurrentLocation}
-        disabled={isLoadingLocation}
-        className="flex-row items-center justify-center border border-[#055c3a] rounded-lg py-3 mb-6"
-        activeOpacity={0.7}
-      >
-        {isLoadingLocation ? (
-          <>
-            <ActivityIndicator size="small" color="#055c3a" />
-            <Text
-              className="text-sm font-medium text-[#055c3a] ml-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
-              Getting location...
-            </Text>
-          </>
-        ) : (
-          <>
-            <AddressIcon size={20} color="#055c3a" />
-            <Text
-              className="text-sm font-medium text-[#055c3a] ml-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
-              Use Current Location
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
+      {selectedAddress ? (
+        <View className="mb-4">
+          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <View className="flex-row justify-between items-start mb-2">
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-[#111928] mb-1" style={{ fontFamily: 'Inter-SemiBold' }}>
+                  {selectedAddress.name}
+                </Text>
+                <Text className="text-sm text-[#374151] mb-1">
+                  {selectedAddress.house_number && `${selectedAddress.house_number}, `}
+                  {selectedAddress.address}
+                </Text>
+                <Text className="text-sm text-[#374151]">
+                  {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+                </Text>
+                {selectedAddress.landmark && (
+                  <Text className="text-xs text-[#6B7280] mt-1">
+                    Landmark: {selectedAddress.landmark}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowAddressSheet(true)}
+                className="ml-2 p-2"
+                activeOpacity={0.7}
+              >
+                <EditIcon size={20} color="#055c3a" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => setShowAddressSheet(true)}
+          className="flex-row items-center justify-center border-2 border-dashed border-[#D1D5DB] rounded-xl py-6 mb-4"
+          activeOpacity={0.7}
+        >
+          <AddressIcon size={24} color="#6B7280" />
+          <Text
+            className="text-base font-medium text-[#6B7280] ml-2"
+            style={{ fontFamily: 'Inter-Medium' }}
+          >
+            Add Property Address
+          </Text>
+        </TouchableOpacity>
+      )}
 
-      <View className="mb-4">
-        <Input
-          label="State"
-          value={state}
-          onChangeText={setState}
-          placeholder="Enter state"
-          error={errors.state}
-          required
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input
-          label="City"
-          value={city}
-          onChangeText={setCity}
-          placeholder="Enter city"
-          error={errors.city}
-          required
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input
-          label="Address (Optional)"
-          value={address}
-          onChangeText={setAddress}
-          placeholder="Enter full address"
-          multiline
-          numberOfLines={2}
-        />
-      </View>
-
-      <View className="mb-4">
-        <Input
-          label="Pincode (Optional)"
-          value={pincode}
-          onChangeText={setPincode}
-          placeholder="Enter pincode"
-          keyboardType="number-pad"
-        />
-      </View>
+      {errors.location && (
+        <Text className="text-xs text-[#DC2626] mt-1 mb-4">{errors.location}</Text>
+      )}
     </View>
   );
 
@@ -915,9 +900,23 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         >
           Location
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">{city}, {state}</Text>
-        {address && <Text className="text-sm text-[#374151] mb-1">{address}</Text>}
-        {pincode && <Text className="text-sm text-[#374151]">Pincode: {pincode}</Text>}
+        {selectedAddress ? (
+          <>
+            <Text className="text-sm text-[#374151] font-semibold mb-1">{selectedAddress.name}</Text>
+            <Text className="text-sm text-[#374151] mb-1">
+              {selectedAddress.house_number && `${selectedAddress.house_number}, `}
+              {selectedAddress.address}
+            </Text>
+            <Text className="text-sm text-[#374151]">
+              {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+            </Text>
+            {selectedAddress.landmark && (
+              <Text className="text-xs text-[#6B7280] mt-1">Landmark: {selectedAddress.landmark}</Text>
+            )}
+          </>
+        ) : (
+          <Text className="text-sm text-[#6B7280]">No address selected</Text>
+        )}
       </View>
 
       <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
@@ -1030,6 +1029,18 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Address Bottom Sheet */}
+      {showAddressSheet && (
+        <AddEditAddressBottomSheet
+          address={selectedAddress}
+          onSave={handleAddressSave}
+          onClose={() => setShowAddressSheet(false)}
+          visible={showAddressSheet}
+          requireLabel={false}
+          showOptionalFields={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

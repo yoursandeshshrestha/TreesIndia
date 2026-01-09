@@ -242,6 +242,7 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
             setShowAddSheet(false);
             setEditingAddress(null);
           }}
+          requireLabel={true}
         />
       )}
 

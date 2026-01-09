@@ -447,6 +447,7 @@ export default function AddressSelectionBottomSheet({
           bookingLogger.info('Closing add address modal without saving');
           setShowAddAddressSheet(false);
         }}
+        requireLabel={true}
       />
     </>
   );
