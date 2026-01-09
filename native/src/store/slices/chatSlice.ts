@@ -411,7 +411,6 @@ const chatSlice = createSlice({
      * Clear all chat data
      */
     clearAllChatData: (state) => {
-      console.log('[chatSlice] clearAllChatData called - Clearing all chat data');
       state.conversations = [];
       state.messages = {};
       state.activeConversationId = null;
