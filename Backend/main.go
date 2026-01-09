@@ -205,22 +205,16 @@ func main() {
 		log.Fatal("Failed to initialize FCM service:", err)
 	}
 
-	// Initialize location tracking service first (without WebSocket service initially)
-	locationTrackingService := services.NewLocationTrackingService(nil)
-	
-	// Initialize WebSocket service with location tracking service
-	wsService := services.NewWebSocketService(locationTrackingService)
+	// Initialize WebSocket service
+	wsService := services.NewWebSocketService()
 	wsController := controllers.NewWebSocketController(wsService)
 
 	// Initialize Simple Conversation WebSocket service
 	simpleConversationWsService := services.NewSimpleConversationWebSocketService()
 
-	// Update location tracking service with WebSocket service
-	locationTrackingService.SetWebSocketService(wsService)
-
 	// Initialize services with WebSocket service
 	chatService := services.NewChatService(wsService)
-	workerAssignmentService := services.NewWorkerAssignmentService(chatService, locationTrackingService)
+	workerAssignmentService := services.NewWorkerAssignmentService(chatService)
 
 	// Initialize Simple Conversation services
 	simpleConversationRepo := repositories.NewSimpleConversationRepository(db)
@@ -274,9 +268,6 @@ func main() {
 	bookingGroup := r.Group("/api/v1")
 	bookingGroup.Use(bookingMiddleware.BookingSystem())
 	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService)
-
-	// Setup location tracking routes
-	routes.SetupLocationTrackingRoutes(r.Group("/api/v1"), locationTrackingService)
 
 	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)

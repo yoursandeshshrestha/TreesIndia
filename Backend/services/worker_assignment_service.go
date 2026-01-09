@@ -17,11 +17,10 @@ type WorkerAssignmentService struct {
 	serviceRepo          *repositories.ServiceRepository
 	notificationService  *NotificationService
 	chatService          *ChatService
-	locationTrackingService *LocationTrackingService
 	callMaskingService   *CallMaskingService
 }
 
-func NewWorkerAssignmentService(chatService *ChatService, locationTrackingService *LocationTrackingService) *WorkerAssignmentService {
+func NewWorkerAssignmentService(chatService *ChatService) *WorkerAssignmentService {
 	return &WorkerAssignmentService{
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
 		bookingRepo:          repositories.NewBookingRepository(),
@@ -30,7 +29,6 @@ func NewWorkerAssignmentService(chatService *ChatService, locationTrackingServic
 		serviceRepo:          repositories.NewServiceRepository(),
 		notificationService:  NewNotificationService(),
 		chatService:          chatService,
-		locationTrackingService: locationTrackingService,
 		callMaskingService:   NewCallMaskingService(),
 	}
 }
@@ -340,15 +338,6 @@ func (was *WorkerAssignmentService) StartAssignment(assignmentID uint, workerID 
 		return nil, errors.New("failed to update booking status")
 	}
 
-	// Start location tracking when assignment starts
-	if was.locationTrackingService != nil {
-		_, err = was.locationTrackingService.StartTracking(workerID, assignmentID)
-		if err != nil {
-			logrus.Errorf("Failed to start location tracking for assignment %d: %v", assignmentID, err)
-			// Don't fail the assignment start if location tracking fails
-		}
-	}
-
 	// Send in-app notification to user about work started
 	go func() {
 		// Get worker and service details for notification
@@ -460,15 +449,6 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 	}
 	if len(photos) > 0 {
 		logrus.Infof("Photos uploaded for assignment %d: %v", assignmentID, photos)
-	}
-
-	// Stop location tracking when assignment completes
-	if was.locationTrackingService != nil {
-		err = was.locationTrackingService.StopTracking(workerID, assignmentID)
-		if err != nil {
-			logrus.Errorf("Failed to stop location tracking for assignment %d: %v", assignmentID, err)
-			// Don't fail the assignment completion if location tracking fails
-		}
 	}
 
 	// Send in-app notification to user about work completed
