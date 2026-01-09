@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  ScrollView,
   Dimensions,
   ActivityIndicator,
-  Animated,
-  Easing,
+  ScrollView,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Property } from '../../../services';
 import DeleteIcon from '../../../components/icons/DeleteIcon';
@@ -46,36 +44,42 @@ export default function PropertyDetailBottomSheet({
   isDeleting = false,
 }: PropertyDetailBottomSheetProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isClosing, setIsClosing] = useState(false);
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const snapPoints = useMemo(() => ['75%'], []);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     } else {
       setCurrentImageIndex(0);
     }
   }, [visible]);
 
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      setCurrentImageIndex(0);
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
+
   const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
     setCurrentImageIndex(0);
-    onClose();
+    bottomSheetRef.current?.dismiss();
   };
 
   const getDisplayPrice = () => {
@@ -124,44 +128,23 @@ export default function PropertyDetailBottomSheet({
 
   const images = property.images && property.images.length > 0 ? property.images : [];
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
+  if (!visible) return null;
 
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '90%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
+    >
+      <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
               <View className="px-4 py-4 flex-row items-center">
@@ -203,7 +186,7 @@ export default function PropertyDetailBottomSheet({
             </View>
 
             {/* Content */}
-            <ScrollView
+            <BottomSheetScrollView
               className="flex-1"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 24 }}
@@ -483,11 +466,9 @@ export default function PropertyDetailBottomSheet({
                   </View>
                 </View>
               </View>
-            </ScrollView>
+            </BottomSheetScrollView>
           </SafeAreaView>
-        </Animated.View>
-      </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
 

@@ -8,7 +8,7 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps) {
-  
+
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name
@@ -20,24 +20,19 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
   };
 
   const getUserTypeBadge = (userType: string) => {
-    if (userType !== 'worker' && userType !== 'broker') {
+    // Only show badge for broker (worker badge is now in dedicated section)
+    if (userType !== 'broker') {
       return null;
     }
 
-    const isWorker = userType === 'worker';
-    const backgroundColor = isWorker ? '#E3F2FD' : '#D1FAE5';
-    const textColor = isWorker ? '#1565C0' : '#055c3a';
-
     return (
-      <View
-        className="px-3 py-1 rounded-xl"
-        style={{ backgroundColor }}
-      >
+      <View className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg shadow-sm" style={{ backgroundColor: '#047857' }}>
+        <View className="w-2 h-2 rounded-full bg-white" />
         <Text
-          className="text-[10px] font-semibold tracking-wide"
-          style={{ color: textColor, fontFamily: 'Inter-SemiBold' }}
+          className="text-xs font-bold tracking-wide text-white"
+          style={{ fontFamily: 'Inter-Bold' }}
         >
-          {userType.toUpperCase()}
+          BROKER
         </Text>
       </View>
     );
@@ -79,24 +74,26 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
       </View>
 
       <View className="ml-5 flex-1">
-        {user?.name && (
-          <Text
-            className="text-2xl font-semibold text-[#111928] mb-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
-            {user.name}
-          </Text>
-        )}
+        <View className="flex-row items-center gap-3 mb-1">
+          {user?.name && (
+            <Text
+              className="text-2xl font-semibold text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              {user.name}
+            </Text>
+          )}
+        </View>
         {user?.phone && (
           <Text
-            className="text-base text-[#6B7280]"
+            className="text-base text-[#6B7280] mb-2"
             style={{ fontFamily: 'Inter-Regular' }}
           >
             {user.phone}
           </Text>
         )}
         {user?.user_type && getUserTypeBadge(user.user_type) && (
-          <View className="mt-3">{getUserTypeBadge(user.user_type)}</View>
+          <View className="mt-1">{getUserTypeBadge(user.user_type)}</View>
         )}
       </View>
     </TouchableOpacity>

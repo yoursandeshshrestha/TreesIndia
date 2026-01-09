@@ -16,6 +16,8 @@ import SubscriptionIcon from '../../components/icons/SubscriptionIcon';
 import SettingsIcon from '../../components/icons/SettingsIcon';
 import InfoIcon from '../../components/icons/InfoIcon';
 import LogoutIcon from '../../components/icons/LogoutIcon';
+import PawLeftIcon from '../../components/icons/PawLeftIcon';
+import PawRightIcon from '../../components/icons/PawRightIcon';
 // import Constants from 'expo-constants';
 
 interface ProfileScreenProps {
@@ -108,7 +110,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
         contentContainerStyle={{ flexGrow: 1 }}
       >
         {/* Profile Header Section - Airbnb Style */}
-        <View className="px-6 pt-8 pb-8">
+        <View className="px-6 pt-8 pb-6">
           <ProfileHeader
             user={user}
             onEditPress={() => {
@@ -120,6 +122,24 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
             }}
           />
         </View>
+
+        {/* Worker Verification Badge Section */}
+        {isWorker && (
+          <View className="px-6 pb-8">
+            <View className="border border-[#E5E7EB] rounded-xl py-4 px-6 flex-row items-center justify-center bg-white">
+              <PawLeftIcon size={24} color="#00a871" />
+              <View className="mx-4 flex-1 items-center">
+                <Text
+                  className="text-base font-bold text-[#00a871] tracking-wider"
+                  style={{ fontFamily: 'Inter-Bold' }}
+                >
+                  VERIFIED WORKER
+                </Text>
+              </View>
+              <PawRightIcon size={24} color="#00a871" />
+            </View>
+          </View>
+        )}
 
         {/* Menu Items Section - Clean Airbnb Style */}
         <View className="px-6">

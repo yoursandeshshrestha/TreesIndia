@@ -7,15 +7,16 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  Alert,
   Animated,
   Easing,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Address, type CreateAddressRequest, type UpdateAddressRequest } from '../../../services';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/common/Input';
 import MapLocationPicker from '../../../components/MapLocationPicker';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface AddEditAddressBottomSheetProps {
   address: Address | null;
@@ -44,8 +45,14 @@ export default function AddEditAddressBottomSheet({
   const [fetchedLongitude, setFetchedLongitude] = useState<number | undefined>(address?.longitude);
   const [isSaving, setIsSaving] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(500)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const houseNumberRef = useRef<View>(null);
+  const addressRef = useRef<View>(null);
+  const cityRef = useRef<View>(null);
+  const stateRef = useRef<View>(null);
 
   // Validation errors
   const [errors, setErrors] = useState<{
@@ -84,6 +91,29 @@ export default function AddEditAddressBottomSheet({
       ]).start();
     }
   }, [visible]);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  // Calculate max height based on keyboard state
+  const maxSheetHeight = '70%';
 
   const handleClose = () => {
     if (isClosing) return;
@@ -142,32 +172,52 @@ export default function AddEditAddressBottomSheet({
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
+    let firstErrorRef: React.RefObject<View | null> | null = null;
 
     if (!name.trim()) {
       newErrors.name = 'Address label is required';
     }
 
+    if (!houseNumber.trim()) {
+      newErrors.houseNumber = 'House/Flat number is required';
+      if (!firstErrorRef) firstErrorRef = houseNumberRef;
+    }
+
     if (!addressText.trim()) {
       newErrors.address = 'Street address is required';
+      if (!firstErrorRef) firstErrorRef = addressRef;
     }
 
     if (!city.trim()) {
       newErrors.city = 'City is required';
-    }
-
-    if (!state.trim()) {
-      newErrors.state = 'State is required';
+      if (!firstErrorRef) firstErrorRef = cityRef;
     }
 
     if (!pincode.trim()) {
       newErrors.pincode = 'Pincode is required';
+      if (!firstErrorRef) firstErrorRef = cityRef;
     }
 
-    if (!houseNumber.trim()) {
-      newErrors.houseNumber = 'House/Flat number is required';
+    if (!state.trim()) {
+      newErrors.state = 'State is required';
+      if (!firstErrorRef) firstErrorRef = stateRef;
     }
 
     setErrors(newErrors);
+
+    // Scroll to first error field
+    if (firstErrorRef && firstErrorRef.current) {
+      setTimeout(() => {
+        firstErrorRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (_x, y) => {
+            scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
+          },
+          () => {}
+        );
+      }, 100);
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -234,50 +284,72 @@ export default function AddEditAddressBottomSheet({
             />
           </Animated.View>
 
+          {/* Floating Close Button - At top of bottom sheet */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              bottom: '70%',
+              right: 16,
+              transform: [{ translateY }],
+              zIndex: 30,
+            }}
+          >
+            <TouchableOpacity
+              onPress={handleClose}
+              className="w-12 h-12 bg-white rounded-full items-center justify-center"
+              style={{
+                marginTop: -56,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 4,
+              }}
+            >
+              <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+            </TouchableOpacity>
+          </Animated.View>
+
           <Animated.View
             style={{
               position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,
-              maxHeight: '82%',
+              maxHeight: maxSheetHeight,
               backgroundColor: 'white',
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
               transform: [{ translateY }],
               shadowColor: '#000',
               shadowOffset: { width: 0, height: -4 },
               shadowOpacity: 0.1,
               shadowRadius: 12,
               elevation: 20,
+              overflow: 'hidden',
             }}
           >
-            <SafeAreaView edges={['bottom']} className="flex-1" style={{ backgroundColor: 'white' }}>
-              {/* Drag Handle */}
-              <View className="items-center pt-3 pb-2">
-                <View className="w-10 h-1 bg-gray-300 rounded-full" />
-              </View>
+            <View className="flex-1 bg-white">
+              <ScrollView
+                ref={scrollViewRef}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Map Section */}
+                <View style={{ height: 380, overflow: 'hidden', borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+                  <MapLocationPicker
+                    initialLocation={fetchedLatitude && fetchedLongitude ? {
+                      latitude: fetchedLatitude,
+                      longitude: fetchedLongitude,
+                    } : undefined}
+                    onLocationSelected={handleMapLocationSelected}
+                    embedded={true}
+                  />
+                </View>
 
-              <View className="flex-1">
-                <ScrollView
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  {/* Map Section */}
-                  <View style={{ height: 380 }}>
-                    <MapLocationPicker
-                      initialLocation={fetchedLatitude && fetchedLongitude ? {
-                        latitude: fetchedLatitude,
-                        longitude: fetchedLongitude,
-                      } : undefined}
-                      onLocationSelected={handleMapLocationSelected}
-                      embedded={true}
-                    />
-                  </View>
-
-                  {/* Form Section */}
-                  <View className="px-5">
+                {/* Form Section */}
+                <View className="px-5">
                     {/* Address Label Section */}
                     <View className="mb-5">
                       <Text className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
@@ -346,7 +418,7 @@ export default function AddEditAddressBottomSheet({
 
                       {/* House/Flat Number and Landmark */}
                       <View className="flex-row mb-4 gap-3">
-                        <View className="flex-1">
+                        <View className="flex-1" ref={houseNumberRef}>
                           <Input
                             label="House/Flat No."
                             value={houseNumber}
@@ -372,7 +444,7 @@ export default function AddEditAddressBottomSheet({
                       </View>
 
                       {/* Street Address */}
-                      <View className="mb-4">
+                      <View className="mb-4" ref={addressRef}>
                         <Input
                           label="Street Address"
                           value={addressText}
@@ -392,7 +464,7 @@ export default function AddEditAddressBottomSheet({
 
                       {/* City and Pincode */}
                       <View className="flex-row mb-4 gap-3">
-                        <View className="flex-[1.5]">
+                        <View className="flex-[1.5]" ref={cityRef}>
                           <Input
                             label="City"
                             value={city}
@@ -428,7 +500,7 @@ export default function AddEditAddressBottomSheet({
                       </View>
 
                       {/* State */}
-                      <View className="mb-4">
+                      <View className="mb-4" ref={stateRef}>
                         <Input
                           label="State"
                           value={state}
@@ -445,14 +517,13 @@ export default function AddEditAddressBottomSheet({
                       </View>
                     </View>
                   </View>
-                </ScrollView>
+              </ScrollView>
 
-                {/* Save Button - Sticky at bottom */}
+              {/* Save Button - Sticky at bottom */}
+              <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
                 <View
-                  className="bg-white"
+                  className={`bg-white pt-4 ${keyboardHeight > 0 ? 'pb-4' : 'pb-10'}`}
                   style={{
-                    paddingTop: 16,
-                    paddingBottom: 16,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: -2 },
                     shadowOpacity: 0.05,
@@ -469,8 +540,8 @@ export default function AddEditAddressBottomSheet({
                     />
                   </View>
                 </View>
-              </View>
-            </SafeAreaView>
+              </SafeAreaView>
+            </View>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>

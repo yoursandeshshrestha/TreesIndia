@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   ScrollView,
   Dimensions,
   ActivityIndicator,
-  Animated,
-  Easing,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Vendor } from '../../../services/api/vendor.service';
 import DeleteIcon from '../../../components/icons/DeleteIcon';
@@ -44,37 +42,36 @@ export default function VendorDetailBottomSheet({
   isDeleting = false,
 }: VendorDetailBottomSheetProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isClosing, setIsClosing] = useState(false);
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const snapPoints = useMemo(() => ['75%'], []);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      setCurrentImageIndex(0);
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
 
-  const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    setCurrentImageIndex(0);
-    onClose();
-  };
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      setCurrentImageIndex(0);
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const getBusinessTypeLabel = () => {
     const typeMap: Record<string, string> = {
@@ -105,58 +102,34 @@ export default function VendorDetailBottomSheet({
   const images = vendor.business_gallery && vendor.business_gallery.length > 0 ? vendor.business_gallery : [];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
-
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '90%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl flex-1">
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
-              <View className="px-4 py-4 flex-row items-center">
-                <TouchableOpacity
-                  onPress={handleClose}
-                  className="p-2 -ml-2"
-                  activeOpacity={0.7}
+              <View className="px-6 py-4 flex-row items-center justify-between">
+                <Text
+                  className="text-lg font-semibold text-[#111928] flex-1 text-center"
+                  style={{ fontFamily: 'Inter-SemiBold' }}
                 >
-                  <Text className="text-2xl">×</Text>
-                </TouchableOpacity>
-                <View className="flex-1" />
+                  Vendor Details
+                </Text>
                 {onEdit && (
                   <TouchableOpacity
                     onPress={() => {
-                      handleClose();
+                      bottomSheetRef.current?.dismiss();
                       onEdit();
                     }}
                     className="p-2 mr-2"
@@ -170,7 +143,7 @@ export default function VendorDetailBottomSheet({
                 ) : (
                   <TouchableOpacity
                     onPress={() => {
-                      handleClose();
+                      bottomSheetRef.current?.dismiss();
                       onDelete();
                     }}
                     className="p-2"
@@ -183,8 +156,7 @@ export default function VendorDetailBottomSheet({
             </View>
 
             {/* Content */}
-            <ScrollView
-              className="flex-1"
+            <BottomSheetScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 24 }}
             >
@@ -441,10 +413,8 @@ export default function VendorDetailBottomSheet({
                   </View>
                 </View>
               </View>
-            </ScrollView>
-          </SafeAreaView>
-        </Animated.View>
+            </BottomSheetScrollView>
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
