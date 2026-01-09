@@ -503,10 +503,12 @@ export default function BookingDetailBottomSheet({
   // Handle worker assignment
   let workerName: string | undefined;
   let workerPhone: string | undefined;
-  
+  let workerAssignmentStatus: string | undefined;
+
   try {
     const workerAssignment = bookingData.worker_assignment;
     if (workerAssignment && typeof workerAssignment === 'object' && workerAssignment !== null) {
+      workerAssignmentStatus = workerAssignment.status;
       const worker = workerAssignment.worker || workerAssignment;
       if (worker && typeof worker === 'object' && worker !== null) {
         workerName = worker.name || worker.contact_info?.name || worker.contact_person_name || worker.Name;
@@ -970,73 +972,75 @@ export default function BookingDetailBottomSheet({
                   />
                 )}
                 {workerName && (
-                  <Button
-                    label="Chat with Worker"
-                    onPress={async () => {
-                      try {
-                        // Extract worker information
-                        const workerAssignment = (booking as { worker_assignment?: {
-                          worker_id?: number;
-                          worker?: {
-                            ID?: number;
-                            id?: number;
-                            name?: string;
-                            phone?: string;
-                            profile_image_url?: string;
-                          };
-                        }}).worker_assignment;
-                        const worker = workerAssignment?.worker;
-                        const workerId = worker?.id || worker?.ID;
+                  <>
+                    <Button
+                      label="Chat with Worker"
+                      onPress={async () => {
+                        try {
+                          // Extract worker information
+                          const workerAssignment = (booking as { worker_assignment?: {
+                            worker_id?: number;
+                            worker?: {
+                              ID?: number;
+                              id?: number;
+                              name?: string;
+                              phone?: string;
+                              profile_image_url?: string;
+                            };
+                          }}).worker_assignment;
+                          const worker = workerAssignment?.worker;
+                          const workerId = worker?.id || worker?.ID;
 
-                        // Validate required data
-                        if (!workerId) {
-                          Alert.alert('Error', 'Worker information not available');
-                          return;
+                          // Validate required data
+                          if (!workerId) {
+                            Alert.alert('Error', 'Worker information not available');
+                            return;
+                          }
+
+                          if (!user?.id) {
+                            Alert.alert('Error', 'User not logged in');
+                            return;
+                          }
+
+                          if (!onNavigateToChat) {
+                            Alert.alert('Error', 'Navigation not available');
+                            return;
+                          }
+
+                          // Create or get conversation
+                          const result = await dispatch(
+                            createOrGetConversation({
+                              userId1: user.id,
+                              userId2: workerId,
+                            })
+                          ).unwrap();
+
+                          // Close bottom sheet first
+                          onClose();
+
+                          // Wait a bit for animation
+                          setTimeout(() => {
+                            onNavigateToChat(result.conversation.id, {
+                              id: workerId,
+                              name: worker?.name || workerName,
+                              phone: worker?.phone,
+                              profileImage: worker?.profile_image_url,
+                            });
+                          }, 300);
+                        } catch (error) {
+                          console.error('[BookingDetail] Error opening chat:', error);
+                          Alert.alert(
+                            'Error',
+                            error instanceof Error
+                              ? error.message
+                              : 'Failed to open chat. Please try again.'
+                          );
                         }
-
-                        if (!user?.id) {
-                          Alert.alert('Error', 'User not logged in');
-                          return;
-                        }
-
-                        if (!onNavigateToChat) {
-                          Alert.alert('Error', 'Navigation not available');
-                          return;
-                        }
-
-                        // Create or get conversation
-                        const result = await dispatch(
-                          createOrGetConversation({
-                            userId1: user.id,
-                            userId2: workerId,
-                          })
-                        ).unwrap();
-
-                        // Close bottom sheet first
-                        onClose();
-
-                        // Wait a bit for animation
-                        setTimeout(() => {
-                          onNavigateToChat(result.conversation.id, {
-                            id: workerId,
-                            name: worker?.name || workerName,
-                            phone: worker?.phone,
-                            profileImage: worker?.profile_image_url,
-                          });
-                        }, 300);
-                      } catch (error) {
-                        console.error('[BookingDetail] Error opening chat:', error);
-                        Alert.alert(
-                          'Error',
-                          error instanceof Error
-                            ? error.message
-                            : 'Failed to open chat. Please try again.'
-                        );
-                      }
-                    }}
-                    variant={canPay ? 'outline' : 'solid'}
-                    className="mb-2"
-                  />
+                      }}
+                      variant={canPay ? 'outline' : 'solid'}
+                      className="mb-2"
+                    />
+                  </>
                 )}
               </View>
             </SafeAreaView>
@@ -1065,6 +1069,7 @@ export default function BookingDetailBottomSheet({
         amount={remainingAmount}
         walletBalance={walletBalance}
       />
+
     </Modal>
   );
 }

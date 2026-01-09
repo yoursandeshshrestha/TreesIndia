@@ -25,7 +25,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.treeindia.myexpoapp",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you add addresses quickly."
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you add addresses quickly.",
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps"
+        ]
       },
       "config": {
         "googleMapsApiKey": "AIzaSyDztQVnDQQpPUX9hNT-U-eOrfDfuxgPiXI"
