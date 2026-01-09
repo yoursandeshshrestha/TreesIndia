@@ -1,19 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
   Platform,
-  Animated,
-  Easing,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Dimensions,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ContactInfoData } from '../../../types/booking';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/common/Input';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface ContactInfoBottomSheetProps {
   visible: boolean;
@@ -32,36 +34,13 @@ export default function ContactInfoBottomSheet({
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [specialInstructions, setSpecialInstructions] = useState(initialData?.specialInstructions || '');
-  const [isClosing, setIsClosing] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const [errors, setErrors] = useState<{
     contactPerson?: string;
     phone?: string;
     description?: string;
   }>({});
-
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
-
-  useEffect(() => {
-    if (visible) {
-      setIsClosing(false); // Reset isClosing when opening
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible]);
 
   useEffect(() => {
     if (initialData) {
@@ -71,6 +50,26 @@ export default function ContactInfoBottomSheet({
       setSpecialInstructions(initialData.specialInstructions || '');
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: {
@@ -106,8 +105,6 @@ export default function ContactInfoBottomSheet({
   };
 
   const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
     onClose();
   };
 
@@ -133,141 +130,119 @@ export default function ContactInfoBottomSheet({
     }
   };
 
+  const maxSheetHeight = keyboardHeight > 0
+    ? SCREEN_HEIGHT - keyboardHeight - 150
+    : SCREEN_HEIGHT * 0.75;
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
       onRequestClose={handleClose}
-      statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 4}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
       >
-        <View className="flex-1">
-          {/* Overlay */}
-          <Animated.View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              opacity: overlayOpacity,
-            }}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleClose}
+          className="flex-1 bg-black/50 justify-end"
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={{ maxHeight: maxSheetHeight }}
+            className="bg-white rounded-t-3xl"
           >
-            <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
-          </Animated.View>
-
-          {/* Bottom Sheet */}
-          <Animated.View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              maxHeight: '85%',
-              backgroundColor: 'white',
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              transform: [{ translateY }],
-            }}
-          >
-            <SafeAreaView edges={['bottom']} className="flex-1">
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+              <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
+                Contact Information
+              </Text>
+              <TouchableOpacity
+                onPress={handleClose}
+                className="w-8 h-8 items-center justify-center"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                {/* Header */}
-                <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-                  <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
-                    Contact Information
-                  </Text>
-                  <TouchableOpacity onPress={handleClose}>
-                    <Text className="text-2xl text-[#6B7280]">×</Text>
-                  </TouchableOpacity>
+                <Text className="text-2xl text-[#6B7280]">×</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="px-6 pt-4">
+                <View className="mb-4">
+                  <Input
+                    label="Contact Person"
+                    required
+                    placeholder="Enter full name"
+                    value={contactPerson}
+                    onChangeText={(text) => {
+                      setContactPerson(text);
+                      clearError('contactPerson');
+                    }}
+                    error={errors.contactPerson}
+                  />
                 </View>
 
-                <View className="flex-1">
-                  {/* Content */}
-                  <ScrollView
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                  >
-                    <View className="px-6 pt-4">
-                      <View className="mb-4">
-                        <Input
-                          label="Contact Person"
-                          required
-                          placeholder="Enter full name"
-                          value={contactPerson}
-                          onChangeText={(text) => {
-                            setContactPerson(text);
-                            clearError('contactPerson');
-                          }}
-                          error={errors.contactPerson}
-                        />
-                      </View>
-
-                      <View className="mb-4">
-                        <Input
-                          label="Phone Number"
-                          required
-                          placeholder="Enter phone number (10 digits or +91...)"
-                          value={phone}
-                          onChangeText={(text) => {
-                            setPhone(text);
-                            clearError('phone');
-                          }}
-                          keyboardType="phone-pad"
-                          maxLength={15}
-                          error={errors.phone}
-                        />
-                      </View>
-
-                      <View className="mb-4">
-                        <Input
-                          label="Description"
-                          required
-                          placeholder="Describe your requirements"
-                          value={description}
-                          onChangeText={(text) => {
-                            setDescription(text);
-                            clearError('description');
-                          }}
-                          multiline
-                          numberOfLines={4}
-                          error={errors.description}
-                        />
-                      </View>
-
-                      <View className="mb-4">
-                        <Input
-                          label="Special Instructions"
-                          placeholder="Any additional notes (optional)"
-                          value={specialInstructions}
-                          onChangeText={setSpecialInstructions}
-                          multiline
-                          numberOfLines={3}
-                        />
-                      </View>
-                    </View>
-                  </ScrollView>
-
-                  {/* Footer - Fixed at bottom */}
-                  <View className="px-6 pb-8 bg-white border-t border-[#E5E7EB]" style={{ paddingTop: 12 }}>
-                    <Button label="Save" onPress={handleSave} />
-                  </View>
+                <View className="mb-4">
+                  <Input
+                    label="Phone Number"
+                    required
+                    placeholder="Enter phone number (10 digits or +91...)"
+                    value={phone}
+                    onChangeText={(text) => {
+                      setPhone(text);
+                      clearError('phone');
+                    }}
+                    keyboardType="phone-pad"
+                    maxLength={15}
+                    error={errors.phone}
+                  />
                 </View>
-              </KeyboardAvoidingView>
+
+                <View className="mb-4">
+                  <Input
+                    label="Description"
+                    required
+                    placeholder="Describe your requirements"
+                    value={description}
+                    onChangeText={(text) => {
+                      setDescription(text);
+                      clearError('description');
+                    }}
+                    multiline
+                    numberOfLines={4}
+                    error={errors.description}
+                  />
+                </View>
+
+                <View className="mb-4">
+                  <Input
+                    label="Special Instructions"
+                    placeholder="Any additional notes (optional)"
+                    value={specialInstructions}
+                    onChangeText={setSpecialInstructions}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Footer - Fixed at bottom */}
+            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+              <View className={`px-6 pt-4 ${keyboardHeight > 0 ? 'pb-4' : 'pb-16'}`}>
+                <Button label="Save" onPress={handleSave} />
+              </View>
             </SafeAreaView>
-          </Animated.View>
-        </View>
+            </TouchableOpacity>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </Modal>
   );

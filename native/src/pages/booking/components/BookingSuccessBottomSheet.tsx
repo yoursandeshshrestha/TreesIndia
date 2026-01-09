@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   Animated,
   Easing,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../../components/ui/Button';
 import CheckmarkIcon from '../../../components/icons/CheckmarkIcon';
@@ -23,26 +23,15 @@ export default function BookingSuccessBottomSheet({
   bookingType,
   onViewBookings,
 }: BookingSuccessBottomSheetProps) {
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['60%'], []);
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
 
       // Animate checkmark
       setTimeout(() => {
@@ -66,41 +55,37 @@ export default function BookingSuccessBottomSheet({
     }
   }, [visible]);
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-    >
-      <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <View className="flex-1" />
-        </Animated.View>
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']}>
-            {/* Content */}
-            <View className="px-6 py-8">
+  if (!visible) return null;
+
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
+      enablePanDownToClose={false}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
+    >
+      <SafeAreaView edges={['bottom']} className="flex-1">
+        {/* Content */}
+        <View className="px-6 py-8">
               {/* Success Icon */}
               <Animated.View
                 className="items-center mb-6"
@@ -151,8 +136,6 @@ export default function BookingSuccessBottomSheet({
               </Text>
             </View>
           </SafeAreaView>
-        </Animated.View>
-      </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

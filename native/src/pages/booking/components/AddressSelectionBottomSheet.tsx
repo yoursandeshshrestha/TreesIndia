@@ -1,15 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
-  Animated,
-  Easing,
   Alert,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addressService, bookingService, type Address } from '../../../services';
 import AddEditAddressBottomSheet from '../../profile/components/AddEditAddressBottomSheet';
@@ -43,8 +40,8 @@ export default function AddressSelectionBottomSheet({
   const [checkingAddressId, setCheckingAddressId] = useState<number | null>(null);
   const [isServiceAvailable, setIsServiceAvailable] = useState<boolean | null>(null);
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['60%'], []);
 
   useEffect(() => {
     if (visible) {
@@ -58,26 +55,33 @@ export default function AddressSelectionBottomSheet({
       bookingLogger.debug('Address selection modal opened');
       fetchAddresses();
 
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
 
   useEffect(() => {
     setSelectedId(selectedAddressId);
   }, [selectedAddressId]);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const fetchAddresses = async () => {
     bookingLogger.debug('Fetching user addresses');
@@ -102,9 +106,7 @@ export default function AddressSelectionBottomSheet({
   };
 
   const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onClose();
+    bottomSheetRef.current?.dismiss();
   };
 
   // Extract pincode from address (matching web implementation)
@@ -311,54 +313,34 @@ export default function AddressSelectionBottomSheet({
     }
   };
 
+  if (!visible) return null;
+
   return (
     <>
-      <Modal
-        visible={visible && !showAddAddressSheet}
-        transparent
-        animationType="none"
-        onRequestClose={handleClose}
-        statusBarTranslucent
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enableDynamicSizing={false}
+        onChange={handleSheetChanges}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose
+        backgroundStyle={{
+          backgroundColor: 'white',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
       >
         <View className="flex-1">
-          {/* Overlay */}
-          <Animated.View
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              opacity: overlayOpacity,
-            }}
-          >
-            <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
-          </Animated.View>
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+            <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
+              Select Address
+            </Text>
+          </View>
 
-          {/* Bottom Sheet */}
-          <Animated.View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              maxHeight: '80%',
-              backgroundColor: 'white',
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              transform: [{ translateY }],
-            }}
-          >
-            <SafeAreaView edges={['bottom']}>
-              {/* Header */}
-              <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-                <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
-                  Select Address
-                </Text>
-                <TouchableOpacity onPress={handleClose}>
-                  <Text className="text-2xl text-[#6B7280]">×</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Content */}
-              <ScrollView className="px-6 py-4" style={{ maxHeight: 400 }}>
+          {/* Content */}
+          <BottomSheetScrollView className="px-6 py-4" style={{ maxHeight: 400 }}>
                 {isLoading ? (
                   <View className="py-8 items-center">
                     <ActivityIndicator size="large" color="#055c3a" />
@@ -429,32 +411,32 @@ export default function AddressSelectionBottomSheet({
                     </TouchableOpacity>
                   ))
                 )}
-              </ScrollView>
+              </BottomSheetScrollView>
 
               {/* Footer */}
-              <View className="px-6 pb-6 pt-4 border-t border-[#E5E7EB] gap-3">
-                <TouchableOpacity
-                  className="py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] items-center"
-                  onPress={() => {
-                    bookingLogger.info('Opening add address modal');
-                    setShowAddAddressSheet(true);
-                  }}
-                >
-                  <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
-                    + Add New Address
-                  </Text>
-                </TouchableOpacity>
-                <Button
-                  label="Confirm"
-                  onPress={handleConfirm}
-                  disabled={!selectedId || isLoading || isCheckingAvailability}
-                  isLoading={isCheckingAvailability}
-                />
-              </View>
-            </SafeAreaView>
-          </Animated.View>
-        </View>
-      </Modal>
+              <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+                <View className="px-6 pt-4 pb-4 gap-3">
+                  <TouchableOpacity
+                    className="py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] items-center"
+                    onPress={() => {
+                      bookingLogger.info('Opening add address modal');
+                      setShowAddAddressSheet(true);
+                    }}
+                  >
+                    <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                      + Add New Address
+                    </Text>
+                  </TouchableOpacity>
+                  <Button
+                    label="Confirm"
+                    onPress={handleConfirm}
+                    disabled={!selectedId || isLoading || isCheckingAvailability}
+                    isLoading={isCheckingAvailability}
+                  />
+                </View>
+              </SafeAreaView>
+            </View>
+      </BottomSheetModal>
 
       {/* Add Address Bottom Sheet */}
       <AddEditAddressBottomSheet

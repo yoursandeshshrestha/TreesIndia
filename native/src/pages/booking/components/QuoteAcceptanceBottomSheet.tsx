@@ -51,7 +51,7 @@ export default function QuoteAcceptanceBottomSheet({
 
       // Fetch wallet balance
       fetchWalletBalance();
-      
+
       // Animate in
       Animated.parallel([
         Animated.timing(overlayOpacity, {

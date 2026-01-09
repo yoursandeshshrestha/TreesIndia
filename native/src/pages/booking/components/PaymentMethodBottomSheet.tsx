@@ -1,14 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
-  Animated,
-  Easing,
   Image,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WalletIcon from '../../../components/icons/WalletIcon';
 
@@ -33,30 +31,17 @@ export default function PaymentMethodBottomSheet({
     initialMethod || null
   );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
-
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['60%'], []);
   const isWalletDisabled = walletBalance < amount;
 
   useEffect(() => {
     if (visible) {
       setSelectedMethod(null);
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
 
@@ -64,26 +49,26 @@ export default function PaymentMethodBottomSheet({
     setSelectedMethod(initialMethod || null);
   }, [initialMethod]);
 
-  const handleClose = () => {
-    if (isClosing || isProcessing) return;
-    setIsClosing(true);
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 500,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
       onClose();
-      setIsClosing(false);
-    });
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
+
+  const handleClose = () => {
+    bottomSheetRef.current?.dismiss();
   };
 
   const handleSelectMethod = async (method: 'razorpay' | 'wallet') => {
@@ -101,60 +86,35 @@ export default function PaymentMethodBottomSheet({
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose={!isProcessing}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} disabled={isProcessing} />
-        </Animated.View>
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-[#E5E7EB]">
+          <Text
+            className="text-xl font-semibold text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}
+          >
+            Select Payment Method
+          </Text>
+        </View>
 
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '90%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']}>
-            {/* Header */}
-            <View className="flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-[#E5E7EB]">
-              <Text
-                className="text-xl font-semibold text-[#111928]"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
-                Select Payment Method
-              </Text>
-              <TouchableOpacity
-                onPress={handleClose}
-                className="p-2"
-                activeOpacity={0.7}
-                disabled={isProcessing}
-              >
-                <Text className="text-2xl text-[#4B5563]">×</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="px-6 pt-6 pb-12">
+        <View className="px-6 pt-6 pb-12">
               {/* Amount */}
               <View className="mb-6">
                 <Text
@@ -246,32 +206,30 @@ export default function PaymentMethodBottomSheet({
               </TouchableOpacity>
             </View>
 
-            {/* Processing Overlay */}
-            {isProcessing && (
-              <View
-                className="absolute inset-0 bg-black/20 items-center justify-center"
-                style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+        {/* Processing Overlay */}
+        {isProcessing && (
+          <View
+            className="absolute inset-0 bg-black/20 items-center justify-center"
+            style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+          >
+            <View className="bg-white p-8 rounded-2xl items-center">
+              <ActivityIndicator size="large" color="#055c3a" />
+              <Text
+                className="text-[#111928] mt-4 text-lg font-semibold"
+                style={{ fontFamily: 'Inter-SemiBold' }}
               >
-                <View className="bg-white p-8 rounded-2xl items-center">
-                  <ActivityIndicator size="large" color="#055c3a" />
-                  <Text
-                    className="text-[#111928] mt-4 text-lg font-semibold"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                    Processing
-                  </Text>
-                  <Text
-                    className="text-[#6B7280] mt-2 text-center"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    Please wait...
-                  </Text>
-                </View>
-              </View>
-            )}
-          </SafeAreaView>
-        </Animated.View>
+                Processing
+              </Text>
+              <Text
+                className="text-[#6B7280] mt-2 text-center"
+                style={{ fontFamily: 'Inter-Regular' }}
+              >
+                Please wait...
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

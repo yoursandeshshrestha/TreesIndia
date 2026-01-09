@@ -1,15 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Animated,
-  Easing,
   Alert,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { bookingService } from '../../../services';
 import { TimeSlot, BookingConfig } from '../../../types/booking';
@@ -45,32 +43,38 @@ export default function SlotSelectionBottomSheet({
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [currentSlot, setCurrentSlot] = useState<TimeSlot | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [bookingConfig, setBookingConfig] = useState<BookingConfig | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const snapPoints = useMemo(() => ['75%'], []);
 
   useEffect(() => {
     if (visible) {
       fetchBookingConfig();
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible]);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const fetchBookingConfig = async () => {
     setIsLoadingConfig(true);
@@ -147,9 +151,7 @@ export default function SlotSelectionBottomSheet({
   };
 
   const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onClose();
+    bottomSheetRef.current?.dismiss();
   };
 
   const handleSelectSlot = (slot: TimeSlot) => {
@@ -190,49 +192,29 @@ export default function SlotSelectionBottomSheet({
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        {/* Overlay */}
-        <Animated.View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
-        </Animated.View>
-
-        {/* Bottom Sheet */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '85%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']}>
             {/* Header */}
             <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
               <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
                 Select Date & Time
               </Text>
-              <TouchableOpacity onPress={handleClose}>
-                <Text className="text-2xl text-[#6B7280]">×</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Date Picker */}
@@ -282,7 +264,7 @@ export default function SlotSelectionBottomSheet({
             </View>
 
             {/* Time Slots */}
-            <ScrollView className="px-6 py-4" style={{ maxHeight: 350 }}>
+            <BottomSheetScrollView className="px-6 py-4" style={{ maxHeight: 350 }}>
               <Text className="text-sm text-[#6B7280] mb-3" style={{ fontFamily: 'Inter-Medium' }}>
                 Available Time Slots
               </Text>
@@ -344,19 +326,19 @@ export default function SlotSelectionBottomSheet({
                   ))}
                 </View>
               )}
-            </ScrollView>
+            </BottomSheetScrollView>
 
             {/* Footer */}
-            <View className="px-6 pb-6 pt-4 border-t border-[#E5E7EB]">
-              <Button
-                label="Confirm Slot"
-                onPress={handleConfirm}
-                disabled={!currentSlot || isLoadingSlots}
-              />
-            </View>
-          </SafeAreaView>
-        </Animated.View>
-      </View>
-    </Modal>
+            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+              <View className="px-6 pt-4 pb-4">
+                <Button
+                  label="Confirm Slot"
+                  onPress={handleConfirm}
+                  disabled={!currentSlot || isLoadingSlots}
+                />
+              </View>
+            </SafeAreaView>
+          </View>
+    </BottomSheetModal>
   );
 }
