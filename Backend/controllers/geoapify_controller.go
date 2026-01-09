@@ -10,16 +10,17 @@ import (
 )
 
 // GeoapifyController handles Geoapify API HTTP requests
+// Note: Now uses Google Maps API instead of Geoapify
 type GeoapifyController struct {
 	*BaseController
-	geoapifyService *services.GeoapifyService
+	geoapifyService *services.GoogleMapsService
 }
 
 // NewGeoapifyController creates a new Geoapify controller
 func NewGeoapifyController() *GeoapifyController {
 	return &GeoapifyController{
 		BaseController:  NewBaseController(),
-		geoapifyService: services.NewGeoapifyService(),
+		geoapifyService: services.NewGoogleMapsService(),
 	}
 }
 

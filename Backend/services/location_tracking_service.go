@@ -18,7 +18,7 @@ type LocationTrackingService struct {
 	workerAssignmentRepo *repositories.WorkerAssignmentRepository
 	bookingRepo *repositories.BookingRepository
 	wsService *WebSocketService
-	geoapifyService *GeoapifyService
+	geoapifyService *GoogleMapsService
 }
 
 func NewLocationTrackingService(wsService *WebSocketService) *LocationTrackingService {
@@ -27,7 +27,7 @@ func NewLocationTrackingService(wsService *WebSocketService) *LocationTrackingSe
 		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
 		bookingRepo: repositories.NewBookingRepository(),
 		wsService: wsService,
-		geoapifyService: NewGeoapifyService(),
+		geoapifyService: NewGoogleMapsService(),
 	}
 }
 
@@ -440,16 +440,16 @@ func (lts *LocationTrackingService) GetCustomerLocation(assignmentID uint, worke
 	return response, nil
 }
 
-// getCustomerLocationFromAddress converts address to coordinates using Geoapify service
+// getCustomerLocationFromAddress converts address to coordinates using Google Maps service
 func (lts *LocationTrackingService) getCustomerLocationFromAddress(address string) (*models.LocationCoordinates, error) {
-	// Use Geoapify service to geocode the address
+	// Use Google Maps service to geocode the address
 	req := &GeocodeRequest{
 		Address: address,
 	}
-	
+
 	response, err := lts.geoapifyService.GeocodeAddress(req)
 	if err != nil {
-		logrus.Warnf("Failed to geocode address '%s' using Geoapify: %v", address, err)
+		logrus.Warnf("Failed to geocode address '%s' using Google Maps: %v", address, err)
 		return nil, fmt.Errorf("geocoding failed: %w", err)
 	}
 	
