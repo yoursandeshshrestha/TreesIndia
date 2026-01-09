@@ -26,6 +26,9 @@
       "bundleIdentifier": "com.treeindia.myexpoapp",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you add addresses quickly."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyDztQVnDQQpPUX9hNT-U-eOrfDfuxgPiXI"
       }
     },
     "android": {
@@ -37,7 +40,12 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDztQVnDQQpPUX9hNT-U-eOrfDfuxgPiXI"
+        }
+      }
     }
   }
 }
