@@ -97,6 +97,43 @@ type GoogleAddressComponent struct {
 	Types     []string `json:"types"`
 }
 
+// GoogleDirectionsResponse represents Google Directions API response
+type GoogleDirectionsResponse struct {
+	Routes []GoogleRoute `json:"routes"`
+	Status string        `json:"status"`
+}
+
+// GoogleRoute represents a route in the Directions API response
+type GoogleRoute struct {
+	Legs []GoogleLeg `json:"legs"`
+	OverviewPolyline struct {
+		Points string `json:"points"`
+	} `json:"overview_polyline"`
+}
+
+// GoogleLeg represents a leg of the journey
+type GoogleLeg struct {
+	Distance struct {
+		Text  string `json:"text"`
+		Value int    `json:"value"` // meters
+	} `json:"distance"`
+	Duration struct {
+		Text  string `json:"text"`
+		Value int    `json:"value"` // seconds
+	} `json:"duration"`
+	StartLocation GoogleLocation `json:"start_location"`
+	EndLocation   GoogleLocation `json:"end_location"`
+}
+
+// DirectionsResult represents the result from GetDirections
+type DirectionsResult struct {
+	Distance      int    `json:"distance"`        // Total distance in meters
+	Duration      int    `json:"duration"`        // Total duration in seconds
+	Polyline      string `json:"polyline"`        // Encoded polyline
+	StartLocation LatLng `json:"start_location"`  // Start coordinates
+	EndLocation   LatLng `json:"end_location"`    // End coordinates
+}
+
 // NewGoogleMapsService creates a new Google Maps service
 func NewGoogleMapsService() *GoogleMapsService {
 	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
@@ -498,6 +535,81 @@ func (gms *GoogleMapsService) ExtractAddressComponents(result *GeocodingResult) 
 	}
 
 	return components
+}
+
+// GetDirections gets directions between two points using Google Directions API
+func (gms *GoogleMapsService) GetDirections(origin, destination string) (*DirectionsResult, error) {
+	baseURL := "https://maps.googleapis.com/maps/api/directions/json"
+
+	params := url.Values{}
+	params.Add("key", gms.apiKey)
+	params.Add("origin", origin)
+	params.Add("destination", destination)
+	params.Add("mode", "driving")
+	params.Add("language", "en")
+
+	requestURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+	logrus.Debugf("[GetDirections] Request URL: %s", requestURL)
+
+	resp, err := gms.client.Get(requestURL)
+	if err != nil {
+		logrus.Errorf("[GetDirections] Failed to make request: %v", err)
+		return nil, fmt.Errorf("failed to make directions request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var googleResult GoogleDirectionsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&googleResult); err != nil {
+		logrus.Errorf("[GetDirections] Failed to decode response: %v", err)
+		return nil, fmt.Errorf("failed to decode directions response: %w", err)
+	}
+
+	logrus.Debugf("[GetDirections] Google API Status: %s", googleResult.Status)
+
+	// Handle Google API errors
+	if googleResult.Status != "OK" && googleResult.Status != "ZERO_RESULTS" {
+		logrus.Errorf("[GetDirections] Google API error status: %s", googleResult.Status)
+		return nil, gms.handleAPIError(googleResult.Status)
+	}
+
+	if len(googleResult.Routes) == 0 {
+		logrus.Warn("[GetDirections] No routes found in response")
+		return nil, fmt.Errorf("no routes found")
+	}
+
+	// Get the first route
+	route := googleResult.Routes[0]
+
+	// Calculate total distance and duration
+	var totalDistance, totalDuration int
+	for _, leg := range route.Legs {
+		totalDistance += leg.Distance.Value
+		totalDuration += leg.Duration.Value
+	}
+
+	// Build result
+	result := &DirectionsResult{
+		Distance: totalDistance,
+		Duration: totalDuration,
+		Polyline: route.OverviewPolyline.Points,
+	}
+
+	// Add start and end locations if legs exist
+	if len(route.Legs) > 0 {
+		firstLeg := route.Legs[0]
+		lastLeg := route.Legs[len(route.Legs)-1]
+
+		result.StartLocation = LatLng{
+			Lat: firstLeg.StartLocation.Lat,
+			Lng: firstLeg.StartLocation.Lng,
+		}
+		result.EndLocation = LatLng{
+			Lat: lastLeg.EndLocation.Lat,
+			Lng: lastLeg.EndLocation.Lng,
+		}
+	}
+
+	return result, nil
 }
 
 // handleAPIError handles Google API error codes

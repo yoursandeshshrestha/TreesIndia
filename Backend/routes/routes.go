@@ -40,6 +40,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupServiceAreaRoutes(v1)
 		SetupLocationRoutes(v1)
 		SetupGeoapifyRoutes(v1)
+		SetupGoogleMapsRoutes(v1)
 		SetupRoleApplicationRoutes(v1)
 		SetupUserRoutes(v1)
 		SetupPropertyRoutes(v1)
