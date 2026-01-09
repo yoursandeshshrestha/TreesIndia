@@ -10,6 +10,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -21,6 +22,7 @@ import { locationSearchService, LocationPrediction } from '../../../services/api
 import { userLocationService, CreateLocationRequest } from '../../../services/api/user-location.service';
 import { addressService, type Address } from '../../../services';
 import { searchHistoryService, SearchHistoryEntry } from '../../../services/api/search-history.service';
+import MapLocationPicker from '../../../components/MapLocationPicker';
 
 interface AddressSelectionScreenProps {
   onBack: () => void;
@@ -56,6 +58,7 @@ export default function AddressSelectionScreen({
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
 
   // Load recent searches and saved addresses on mount
@@ -298,6 +301,39 @@ export default function AddressSelectionScreen({
       await saveLocation(locationData);
     } catch (error: any) {
       console.error('Select location error:', error);
+      Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
+    }
+  };
+
+  const handleMapLocationSelected = async (locationData: any) => {
+    try {
+      // Close map picker
+      setShowMapPicker(false);
+
+      // Validate required fields
+      if (!locationData.city?.trim() || !locationData.state?.trim()) {
+        Alert.alert('Error', 'City and state information is required. Please try a different location.');
+        return;
+      }
+
+      if (!locationData.country?.trim()) {
+        Alert.alert('Error', 'Country information is required. Please try a different location.');
+        return;
+      }
+
+      const createLocationData: CreateLocationRequest = {
+        city: locationData.city.trim(),
+        state: locationData.state.trim(),
+        country: locationData.country.trim(),
+        address: locationData.address?.trim() || undefined,
+        postal_code: locationData.postcode?.trim() || undefined,
+        latitude: locationData.latitude || 0,
+        longitude: locationData.longitude || 0,
+      };
+
+      await saveLocation(createLocationData);
+    } catch (error: any) {
+      console.error('Map location selection error:', error);
       Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
     }
   };
@@ -623,12 +659,13 @@ export default function AddressSelectionScreen({
         </View>
       </View>
 
-      {/* Use Current Location Button - Fixed below header */}
+      {/* Location Actions - Fixed below header */}
       <View className="px-6 py-4 border-b border-[#E5E7EB]">
+        {/* Use Current Location Button */}
         <TouchableOpacity
           onPress={handleUseCurrentLocation}
           disabled={isLoadingLocation}
-          className="flex-row items-center"
+          className="flex-row items-center mb-3"
           activeOpacity={0.7}
         >
           {isLoadingLocation ? (
@@ -653,6 +690,21 @@ export default function AddressSelectionScreen({
             </>
           )}
         </TouchableOpacity>
+
+        {/* Select on Map Button */}
+        <TouchableOpacity
+          onPress={() => setShowMapPicker(true)}
+          className="flex-row items-center"
+          activeOpacity={0.7}
+        >
+          <LocationIcon size={20} color="#00a871" />
+          <Text
+            className="text-base font-medium text-[#00a871] ml-3"
+            style={{ fontFamily: 'Inter-Medium' }}
+          >
+            Select on map
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Results - Scrollable content area */}
@@ -670,6 +722,22 @@ export default function AddressSelectionScreen({
           {renderContent()}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Map Location Picker Modal */}
+      <Modal
+        visible={showMapPicker}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <MapLocationPicker
+          initialLocation={currentLocation ? {
+            latitude: currentLocation.lat,
+            longitude: currentLocation.lng,
+          } : undefined}
+          onLocationSelected={handleMapLocationSelected}
+          onClose={() => setShowMapPicker(false)}
+        />
+      </Modal>
     </View>
   );
 }
