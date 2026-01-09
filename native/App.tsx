@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { store } from './src/store/store';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
 import { initializeAuth, updateSubscriptionStatus } from './src/store/slices/authSlice';
@@ -162,6 +164,17 @@ function AppContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  // Set default tab based on user type
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.user_type === 'worker' && activeTab === 'home') {
+        setActiveTab('work');
+      } else if (user.user_type !== 'worker' && activeTab === 'work') {
+        setActiveTab('home');
+      }
+    }
+  }, [isAuthenticated, user, activeTab]);
 
   const renderScreen = () => {
     if (currentScreen === 'editProfile') {
@@ -498,6 +511,19 @@ function AppContent() {
 
     switch (activeTab) {
       case 'home':
+        // Workers don't have access to home screen
+        if (user?.user_type === 'worker') {
+          return (
+            <WorkScreen
+              onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+                setSelectedConversationId(conversationId);
+                setChatWorkerInfo(customerInfo);
+                setChatPreviousTab('work');
+                setCurrentScreen('chatConversation');
+              }}
+            />
+          );
+        }
         return (
           <HomeScreen
             onNavigateToAddressSelection={() => setCurrentScreen('addressSelection')}
@@ -587,6 +613,19 @@ function AppContent() {
           />
         );
       default:
+        // Workers default to work screen, others default to home screen
+        if (user?.user_type === 'worker') {
+          return (
+            <WorkScreen
+              onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+                setSelectedConversationId(conversationId);
+                setChatWorkerInfo(customerInfo);
+                setChatPreviousTab('work');
+                setCurrentScreen('chatConversation');
+              }}
+            />
+          );
+        }
         return <HomeScreen onNavigateToSubscription={() => setCurrentScreen('subscription')} />;
     }
   };
@@ -631,12 +670,16 @@ function AppContent() {
 // Root component with Redux Provider and SafeAreaProvider
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <Provider store={store}>
-        <AuthInitializer>
-          <AppContent />
-        </AuthInitializer>
-      </Provider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Provider store={store}>
+          <BottomSheetModalProvider>
+            <AuthInitializer>
+              <AppContent />
+            </AuthInitializer>
+          </BottomSheetModalProvider>
+        </Provider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
