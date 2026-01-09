@@ -1,13 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  ScrollView,
-  Animated,
-  Easing,
 } from 'react-native';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../../components/ui/Button';
 
@@ -79,10 +76,9 @@ export default function FilterBottomSheet({
   const [bathrooms, setBathrooms] = useState<number | undefined>(initialFilters.bathrooms);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(initialFilters.max_price);
   const [furnishingStatus, setFurnishingStatus] = useState<string | undefined>(initialFilters.furnishing_status);
-  const [isClosing, setIsClosing] = useState(false);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
+  const snapPoints = useMemo(() => ['60%'], []);
 
   useEffect(() => {
     if (visible) {
@@ -94,28 +90,29 @@ export default function FilterBottomSheet({
       setMaxPrice(initialFilters.max_price);
       setFurnishingStatus(initialFilters.furnishing_status);
 
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
     }
   }, [visible, initialFilters]);
 
-  const handleClose = () => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onClose();
-  };
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   const hasActiveFilters = () => {
     return !!(
@@ -153,53 +150,28 @@ export default function FilterBottomSheet({
 
   const priceRanges = listingType === 'rent' ? PRICE_RANGES_RENT : PRICE_RANGES_SALE;
 
+  const handleClose = () => {
+    bottomSheetRef.current?.dismiss();
+  };
+
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
     >
       <View className="flex-1">
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
-
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '90%',
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']} className="flex-1">
-            {/* Drag Handle */}
-            <View className="items-center pt-3 pb-2">
-              <View className="w-12 h-1 bg-[#D1D5DB] rounded-full" />
-            </View>
-
             {/* Header */}
             <View className="border-b border-[#E5E7EB]">
               <View className="px-4 py-3 flex-row items-center justify-between">
@@ -209,36 +181,24 @@ export default function FilterBottomSheet({
                 >
                   Filters
                 </Text>
-                <View className="flex-row items-center gap-3">
-                  {hasActiveFilters() && (
-                    <TouchableOpacity
-                      onPress={handleClearAll}
-                      className="py-1.5 px-3 bg-[#F3F4F6] rounded-lg"
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        className="text-sm font-semibold text-[#00a871]"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
-                        Clear All
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                {hasActiveFilters() && (
                   <TouchableOpacity
-                    onPress={handleClose}
-                    className="p-1.5 -mr-2"
+                    onPress={handleClearAll}
+                    className="py-1.5 px-3 bg-[#F3F4F6] rounded-lg"
                     activeOpacity={0.7}
-                    disabled={isClosing}
                   >
-                    <Text className="text-2xl text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
-                      ×
+                    <Text
+                      className="text-sm font-semibold text-[#00a871]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}
+                    >
+                      Clear All
                     </Text>
                   </TouchableOpacity>
-                </View>
+                )}
               </View>
             </View>
 
-            <ScrollView
+            <BottomSheetScrollView
               className="flex-1"
               contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
               showsVerticalScrollIndicator={false}
@@ -455,28 +415,27 @@ export default function FilterBottomSheet({
                   ))}
                 </View>
               </View>
-            </ScrollView>
+            </BottomSheetScrollView>
 
             {/* Footer with Apply Button */}
-            <View
-              className="px-6 pt-5 bg-white border-t border-[#E5E7EB]"
-              style={{
-                paddingBottom: 48,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 8,
-              }}
-            >
-              <Button
-                label="Apply Filters"
-                onPress={handleApply}
-              />
-            </View>
-          </SafeAreaView>
-        </Animated.View>
+            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+              <View
+                className="px-6 pt-5"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: -2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 8,
+                }}
+              >
+                <Button
+                  label="Apply Filters"
+                  onPress={handleApply}
+                />
+              </View>
+            </SafeAreaView>
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
