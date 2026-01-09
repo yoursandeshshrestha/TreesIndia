@@ -155,11 +155,13 @@ function AppContent() {
     };
   }, [isAuthenticated, dispatch]);
 
-  // Update screen based on auth state (only if not in OTP flow)
+  // Update screen based on auth state (only when auth status changes, not on every navigation)
   React.useEffect(() => {
-    if (isAuthenticated && currentScreen !== 'home') {
+    if (isAuthenticated && currentScreen === 'otp') {
+      // Navigate to home after successful OTP verification
       setCurrentScreen('home');
     } else if (!isAuthenticated && currentScreen === 'home' && !otpPhoneNumber) {
+      // When not authenticated and on home screen (but not in OTP flow), go to login
       setCurrentScreen('login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
