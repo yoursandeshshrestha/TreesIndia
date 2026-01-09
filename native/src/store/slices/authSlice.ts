@@ -71,7 +71,9 @@ export const verifyOTP = createAsyncThunk(
   ) => {
     try {
       const response = await apiClient.verifyOTP(phone, otp);
-      return response as AuthResponse;
+      // Fetch complete user profile after OTP verification
+      const user = await apiClient.getCurrentUser();
+      return { ...response, user } as AuthResponse;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to verify OTP';

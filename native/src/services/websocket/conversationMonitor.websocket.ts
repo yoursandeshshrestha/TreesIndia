@@ -72,12 +72,10 @@ class ConversationMonitorWebSocketService {
   async connect(): Promise<void> {
     // If already connected or connecting, don't reconnect
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('[ConversationMonitor] Already connected');
       return;
     }
 
     if (this.isConnecting) {
-      console.log('[ConversationMonitor] Connection already in progress');
       return;
     }
 
@@ -94,14 +92,12 @@ class ConversationMonitorWebSocketService {
       // Get auth token
       this.token = await tokenStorage.getAccessToken();
       if (!this.token) {
-        console.error('[ConversationMonitor] No auth token available');
         this.isConnecting = false;
         return;
       }
 
       await this.establishConnection();
     } catch (error) {
-      console.error('[ConversationMonitor] Error connecting:', error);
       this.isConnecting = false;
       this.handleReconnect();
     }
@@ -112,15 +108,12 @@ class ConversationMonitorWebSocketService {
    */
   private async establishConnection(): Promise<void> {
     if (!this.token) {
-      console.error('[ConversationMonitor] Missing token');
       this.isConnecting = false;
       return;
     }
 
     try {
       const wsUrl = `${getWebSocketUrl()}/ws/conversations/monitor?token=${this.token}`;
-      console.log('[ConversationMonitor] Connecting to:', wsUrl.replace(this.token, '***'));
-
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = this.handleOpen.bind(this);
@@ -128,7 +121,6 @@ class ConversationMonitorWebSocketService {
       this.ws.onerror = this.handleError.bind(this);
       this.ws.onclose = this.handleClose.bind(this);
     } catch (error) {
-      console.error('[ConversationMonitor] Error establishing connection:', error);
       this.isConnecting = false;
       this.handleReconnect();
     }
@@ -138,7 +130,6 @@ class ConversationMonitorWebSocketService {
    * Handle WebSocket open event
    */
   private handleOpen(): void {
-    console.log('[ConversationMonitor] Connected successfully');
     this.isConnecting = false;
     this.reconnectAttempts = 0;
 
@@ -163,8 +154,6 @@ class ConversationMonitorWebSocketService {
       const message: ConversationMonitorMessage = JSON.parse(event.data);
       const messageType = message.event;
 
-      console.log('[ConversationMonitor] Received message:', messageType, message.data);
-
       // Handle pong response
       if (messageType === 'pong') {
         return;
@@ -180,8 +169,7 @@ class ConversationMonitorWebSocketService {
         }
       }
     } catch (error) {
-      console.error('[ConversationMonitor] Error parsing message:', error);
-      console.error('[ConversationMonitor] Raw data was:', event.data);
+      // Silent error handling
     }
   }
 
@@ -189,7 +177,6 @@ class ConversationMonitorWebSocketService {
    * Handle WebSocket error
    */
   private handleError(error: Event): void {
-    console.error('[ConversationMonitor] WebSocket error:', error);
     this.isConnecting = false;
 
     this.emit('error', {
@@ -202,7 +189,6 @@ class ConversationMonitorWebSocketService {
    * Handle WebSocket close event
    */
   private handleClose(event: CloseEvent): void {
-    console.log('[ConversationMonitor] Connection closed:', event.code, event.reason);
     this.stopPingInterval();
     this.isConnecting = false;
 
@@ -222,14 +208,11 @@ class ConversationMonitorWebSocketService {
     }
 
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('[ConversationMonitor] Max reconnection attempts reached');
       return;
     }
 
     this.reconnectAttempts++;
     const delay = 1000 * Math.pow(2, this.reconnectAttempts - 1);
-
-    console.log(`[ConversationMonitor] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
     this.reconnectTimeout = setTimeout(() => {
       this.connect();
@@ -247,7 +230,7 @@ class ConversationMonitorWebSocketService {
         try {
           this.send({ event: 'ping' });
         } catch (error) {
-          console.error('[ConversationMonitor] Error sending ping:', error);
+          // Silent error handling
         }
       }
     }, 30000); // Ping every 30 seconds
@@ -268,7 +251,6 @@ class ConversationMonitorWebSocketService {
    */
   private send(data: Record<string, unknown>): boolean {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error('[ConversationMonitor] WebSocket is not connected');
       return false;
     }
 
@@ -276,7 +258,6 @@ class ConversationMonitorWebSocketService {
       this.ws.send(JSON.stringify(data));
       return true;
     } catch (error) {
-      console.error('[ConversationMonitor] Error sending message:', error);
       return false;
     }
   }
@@ -285,7 +266,6 @@ class ConversationMonitorWebSocketService {
    * Disconnect WebSocket
    */
   disconnect(): void {
-    console.log('[ConversationMonitor] Disconnecting...');
     this.isManualDisconnect = true;
     this.isConnecting = false;
     this.stopPingInterval();
@@ -299,7 +279,7 @@ class ConversationMonitorWebSocketService {
       try {
         this.ws.close(1000, 'Manual disconnect');
       } catch (error) {
-        console.error('[ConversationMonitor] Error closing WebSocket:', error);
+        // Silent error handling
       }
       this.ws = null;
     }
@@ -343,7 +323,7 @@ class ConversationMonitorWebSocketService {
       try {
         callback(data);
       } catch (error) {
-        console.error(`[ConversationMonitor] Error in event listener for ${event}:`, error);
+        // Silent error handling
       }
     });
   }

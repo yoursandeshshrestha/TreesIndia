@@ -387,11 +387,8 @@ class ChatService {
 
       const result = await handleResponse<{ total_unread_count?: number; total_unread?: number; total?: number }>(response);
 
-      console.log('[ChatService] Total unread count response:', result);
-
       // Backend returns { total_unread_count: number }
       const count = result.total_unread_count || result.total_unread || result.total || 0;
-      console.log('[ChatService] Parsed unread count:', count);
 
       return count;
     } catch (error) {

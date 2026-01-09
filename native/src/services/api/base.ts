@@ -42,7 +42,12 @@ export const handleResponse = async <T>(response: Response): Promise<T> => {
 
     try {
       const errorData = await response.json();
-      errorMessage = errorData.message || errorData.error || errorMessage;
+      // Combine message and error for more detailed error info
+      if (errorData.error && errorData.message && errorData.error !== errorData.message) {
+        errorMessage = `${errorData.message}: ${errorData.error}`;
+      } else {
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      }
       errorCode = errorData.code;
     } catch {
       errorMessage = response.statusText || errorMessage;
