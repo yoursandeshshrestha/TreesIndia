@@ -7,8 +7,10 @@ import {
 } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TouchableOpacity } from 'react-native';
 import Button from '../../../components/ui/Button';
 import CheckmarkIcon from '../../../components/icons/CheckmarkIcon';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface BookingSuccessBottomSheetProps {
   visible: boolean;
@@ -84,6 +86,30 @@ export default function BookingSuccessBottomSheet({
       }}
     >
       <SafeAreaView edges={['bottom']} className="flex-1">
+        {/* Floating Close Button */}
+        <View
+          style={{
+            position: 'absolute',
+            top: -56,
+            right: 16,
+            zIndex: 30,
+          }}
+        >
+          <TouchableOpacity
+            onPress={onViewBookings}
+            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+
         {/* Content */}
         <View className="px-6 py-8">
               {/* Success Icon */}
