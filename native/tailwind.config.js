@@ -10,10 +10,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter-Regular', 'System'],
-        medium: ['Inter-Medium', 'System'],
-        semibold: ['Inter-SemiBold', 'System'],
-        bold: ['Inter-Bold', 'System'],
+        sans: ['OpenSans-Regular'],
+        medium: ['OpenSans-Medium'],
+        semibold: ['OpenSans-SemiBold'],
+        bold: ['OpenSans-Bold'],
       },
     },
   },

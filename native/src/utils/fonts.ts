@@ -1,12 +1,17 @@
 import { useFonts } from 'expo-font';
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import {
+  OpenSans_400Regular,
+  OpenSans_500Medium,
+  OpenSans_600SemiBold,
+  OpenSans_700Bold
+} from '@expo-google-fonts/open-sans';
 
 export function useAppFonts() {
   const [fontsLoaded, error] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
+    'OpenSans-Regular': OpenSans_400Regular,
+    'OpenSans-Medium': OpenSans_500Medium,
+    'OpenSans-SemiBold': OpenSans_600SemiBold,
+    'OpenSans-Bold': OpenSans_700Bold,
   });
 
   if (error) {

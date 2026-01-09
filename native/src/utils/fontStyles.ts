@@ -1,10 +1,10 @@
 import { TextStyle } from 'react-native';
 
 export const fontStyles = {
-  regular: { fontFamily: 'Inter-Regular' } as TextStyle,
-  medium: { fontFamily: 'Inter-Medium' } as TextStyle,
-  semibold: { fontFamily: 'Inter-SemiBold' } as TextStyle,
-  bold: { fontFamily: 'Inter-Bold' } as TextStyle,
+  regular: { fontFamily: 'OpenSans-Regular' } as TextStyle,
+  medium: { fontFamily: 'OpenSans-Medium' } as TextStyle,
+  semibold: { fontFamily: 'OpenSans-SemiBold' } as TextStyle,
+  bold: { fontFamily: 'OpenSans-Bold' } as TextStyle,
 };
 
 
