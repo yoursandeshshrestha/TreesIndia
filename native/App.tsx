@@ -160,6 +160,12 @@ function AppContent() {
     if (isAuthenticated && currentScreen === 'otp') {
       // Navigate to home after successful OTP verification
       setCurrentScreen('home');
+      // Reset to home tab (or work tab for workers)
+      if (user?.user_type === 'worker') {
+        setActiveTab('work');
+      } else {
+        setActiveTab('home');
+      }
     } else if (!isAuthenticated && currentScreen === 'home' && !otpPhoneNumber) {
       // When not authenticated and on home screen (but not in OTP flow), go to login
       setCurrentScreen('login');
