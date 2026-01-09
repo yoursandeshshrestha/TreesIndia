@@ -29,6 +29,7 @@ export default function DeleteConfirmationBottomSheet({
 
   useEffect(() => {
     if (visible) {
+      setIsClosing(false);
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 1,
