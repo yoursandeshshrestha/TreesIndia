@@ -279,6 +279,16 @@ func (pr *PaymentRepository) GetTotalAmountByUserIDAndType(userID uint, paymentT
 	return totalAmount, err
 }
 
+// GetTotalAmountByUserIDTypeAndStatus gets total amount for a user by type and status
+func (pr *PaymentRepository) GetTotalAmountByUserIDTypeAndStatus(userID uint, paymentType models.PaymentType, status models.PaymentStatus) (float64, error) {
+	var totalAmount float64
+	err := pr.db.Model(&models.Payment{}).
+		Where("user_id = ? AND type = ? AND status = ?", userID, paymentType, status).
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&totalAmount).Error
+	return totalAmount, err
+}
+
 // GetAbandonedWalletPayments gets pending wallet payments that are older than the cutoff time
 func (pr *PaymentRepository) GetAbandonedWalletPayments(cutoffTime time.Time) ([]*models.Payment, error) {
 	var payments []*models.Payment

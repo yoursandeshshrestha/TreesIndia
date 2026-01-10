@@ -12,14 +12,16 @@ import (
 type PaymentType string
 
 const (
-	PaymentTypeBooking     PaymentType = "booking"
-	PaymentTypeSubscription PaymentType = "subscription"
-	PaymentTypeWalletRecharge PaymentType = "wallet_recharge"
-	PaymentTypeWalletDebit PaymentType = "wallet_debit"
-	PaymentTypeRefund      PaymentType = "refund"
-	PaymentTypeSegmentPay  PaymentType = "segment_pay"
-	PaymentTypeQuote       PaymentType = "quote"
-	PaymentTypeManual      PaymentType = "manual"
+	PaymentTypeBooking           PaymentType = "booking"
+	PaymentTypeSubscription      PaymentType = "subscription"
+	PaymentTypeWalletRecharge    PaymentType = "wallet_recharge"
+	PaymentTypeWalletDebit       PaymentType = "wallet_debit"
+	PaymentTypeRefund            PaymentType = "refund"
+	PaymentTypeSegmentPay        PaymentType = "segment_pay"
+	PaymentTypeQuote             PaymentType = "quote"
+	PaymentTypeManual            PaymentType = "manual"
+	PaymentTypeWorkerEarnings    PaymentType = "worker_earnings"
+	PaymentTypeWorkerWithdrawal  PaymentType = "worker_withdrawal"
 )
 
 

@@ -264,14 +264,73 @@ func (s *UnifiedWalletService) DeductFromWalletForBooking(userID uint, amount fl
 	return payment, nil
 }
 
+// CreditWorkerEarnings credits worker earnings to their wallet
+func (s *UnifiedWalletService) CreditWorkerEarnings(workerUserID uint, amount float64, assignmentID uint, bookingReference string) (*models.Payment, error) {
+	// Get user
+	var user models.User
+	if err := s.userRepo.FindByID(&user, workerUserID); err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Check wallet limit
+	maxWalletBalance := s.adminConfigService.GetMaxWalletBalance()
+	newBalance := user.WalletBalance + amount
+	if maxWalletBalance > 0 && newBalance > maxWalletBalance {
+		logrus.Warnf("Worker %d earnings (₹%.2f) would exceed max wallet balance (₹%.2f). Current: ₹%.2f",
+			workerUserID, amount, maxWalletBalance, user.WalletBalance)
+		// Note: We still process the earnings but log a warning
+	}
+
+	// Create payment record for worker earnings
+	paymentReq := &models.CreatePaymentRequest{
+		UserID:            workerUserID,
+		Amount:            amount,
+		Currency:          "INR",
+		Type:              models.PaymentTypeWorkerEarnings,
+		Method:            "wallet",
+		RelatedEntityType: "worker_assignment",
+		RelatedEntityID:   assignmentID,
+		Description:       fmt.Sprintf("Worker earnings for assignment %s", bookingReference),
+		Notes:             "Worker assignment completion earnings",
+	}
+
+	// Create payment record
+	payment, err := s.paymentService.CreatePayment(paymentReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment record: %w", err)
+	}
+
+	// Update user wallet balance
+	balanceBefore := user.WalletBalance
+	user.WalletBalance = newBalance
+	if err := s.userRepo.Update(&user); err != nil {
+		return nil, fmt.Errorf("failed to update worker wallet: %w", err)
+	}
+
+	// Update payment status to completed immediately
+	now := time.Now()
+	payment.Status = models.PaymentStatusCompleted
+	payment.CompletedAt = &now
+	payment.BalanceAfter = &newBalance
+	if err := s.paymentService.UpdatePayment(payment); err != nil {
+		return nil, fmt.Errorf("failed to update payment: %w", err)
+	}
+
+	logrus.Infof("Worker earnings credited: user %d, assignment %d, amount: ₹%.2f, balance: ₹%.2f -> ₹%.2f",
+		workerUserID, assignmentID, amount, balanceBefore, newBalance)
+
+	return payment, nil
+}
+
 // GetUserWalletTransactions gets wallet transactions for a user
 func (s *UnifiedWalletService) GetUserWalletTransactions(userID uint, page, limit int) ([]models.Payment, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	// Get wallet-related payments
 	payments, err := s.paymentService.GetPaymentsByUserAndType(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	}, limit, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get wallet transactions: %w", err)
@@ -281,6 +340,7 @@ func (s *UnifiedWalletService) GetUserWalletTransactions(userID uint, page, limi
 	total, err := s.paymentService.GetPaymentCountByUserAndType(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	})
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get transaction count: %w", err)
@@ -300,6 +360,7 @@ func (s *UnifiedWalletService) GetUserWalletSummary(userID uint) (map[string]int
 	recentTransactions, err := s.paymentService.GetRecentPaymentsByUserAndType(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	}, 5)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent transactions: %w", err)
@@ -317,10 +378,17 @@ func (s *UnifiedWalletService) GetUserWalletSummary(userID uint) (map[string]int
 		return nil, fmt.Errorf("failed to get total spent: %w", err)
 	}
 
+	// Get total worker earnings
+	totalEarnings, err := s.paymentService.GetTotalAmountByUserAndType(userID, models.PaymentTypeWorkerEarnings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total earnings: %w", err)
+	}
+
 	// Get transaction count
 	totalTransactions, err := s.paymentService.GetPaymentCountByUserAndType(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction count: %w", err)
@@ -330,6 +398,7 @@ func (s *UnifiedWalletService) GetUserWalletSummary(userID uint) (map[string]int
 		"current_balance":      user.WalletBalance,
 		"total_recharge":       totalRecharge,
 		"total_spent":          totalSpent,
+		"total_earnings":       totalEarnings,
 		"total_transactions":   totalTransactions,
 		"recent_transactions":  recentTransactions,
 	}
@@ -458,11 +527,12 @@ func (s *UnifiedWalletService) GetUserWalletTransactionsByType(userID uint, paym
 // GetUserCompletedWalletTransactions gets completed wallet transactions for a user
 func (s *UnifiedWalletService) GetUserCompletedWalletTransactions(userID uint, page, limit int) ([]models.Payment, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	// Get completed wallet-related payments
 	payments, err := s.paymentService.GetPaymentsByUserAndTypeAndStatus(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	}, models.PaymentStatusCompleted, limit, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get completed wallet transactions: %w", err)
@@ -472,6 +542,7 @@ func (s *UnifiedWalletService) GetUserCompletedWalletTransactions(userID uint, p
 	total, err := s.paymentService.GetPaymentCountByUserAndTypeAndStatus(userID, []models.PaymentType{
 		models.PaymentTypeWalletRecharge,
 		models.PaymentTypeWalletDebit,
+		models.PaymentTypeWorkerEarnings,
 	}, models.PaymentStatusCompleted)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get completed transaction count: %w", err)

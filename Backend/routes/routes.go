@@ -56,6 +56,8 @@ func SetupRoutes(r *gin.Engine) {
 		SetupHomepageCategoryIconRoutes(v1)
 		SetupVendorRoutes(v1)
 		SetupWorkerRoutes(v1)
+		SetupWorkerEarningsRoutes(v1)
+		SetupWorkerWithdrawalRoutes(v1)
 		SetupChatbotRoutes(v1)
 		
 		// Booking routes with booking system middleware

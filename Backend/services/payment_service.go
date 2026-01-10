@@ -360,6 +360,11 @@ func (ps *PaymentService) GetPaymentCountByUserAndTypeAndStatus(userID uint, pay
 	return ps.paymentRepo.GetCountByUserIDAndTypesAndStatus(userID, paymentTypes, status)
 }
 
+// GetTotalAmountByUserAndTypeAndStatus gets total amount for a user by type and status
+func (ps *PaymentService) GetTotalAmountByUserAndTypeAndStatus(userID uint, paymentType models.PaymentType, status models.PaymentStatus) (float64, error) {
+	return ps.paymentRepo.GetTotalAmountByUserIDTypeAndStatus(userID, paymentType, status)
+}
+
 // generatePaymentReference generates a unique payment reference
 func (ps *PaymentService) generatePaymentReference() string {
 	timestamp := time.Now().Format("20060102")

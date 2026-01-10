@@ -18,6 +18,7 @@ type WorkerAssignmentService struct {
 	notificationService  *NotificationService
 	chatService          *ChatService
 	callMaskingService   *CallMaskingService
+	walletService        *UnifiedWalletService
 }
 
 func NewWorkerAssignmentService(chatService *ChatService) *WorkerAssignmentService {
@@ -30,6 +31,7 @@ func NewWorkerAssignmentService(chatService *ChatService) *WorkerAssignmentServi
 		notificationService:  NewNotificationService(),
 		chatService:          chatService,
 		callMaskingService:   NewCallMaskingService(),
+		walletService:        NewUnifiedWalletService(),
 	}
 }
 
@@ -417,14 +419,19 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 	} else {
 		// Calculate earnings from booking
 		earnings := 0.0
-		
+
 		// Get earnings from quote amount (for inquiry bookings) or service price (for regular bookings)
 		if booking.QuoteAmount != nil {
 			earnings = *booking.QuoteAmount
-		} else if booking.Service.Price != nil {
+			logrus.Infof("Assignment %d earnings from quote_amount: ₹%.2f", assignmentID, earnings)
+		} else if booking.Service.ID != 0 && booking.Service.Price != nil {
 			earnings = *booking.Service.Price
+			logrus.Infof("Assignment %d earnings from service price: ₹%.2f", assignmentID, earnings)
+		} else {
+			logrus.Warnf("Assignment %d: No earnings found. QuoteAmount: %v, Service.ID: %d, Service.Price: %v",
+				assignmentID, booking.QuoteAmount, booking.Service.ID, booking.Service.Price)
 		}
-		
+
 		// Update worker statistics
 		err = was.workerRepo.IncrementCompletedJob(worker.ID, earnings)
 		if err != nil {
@@ -432,6 +439,19 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 			// Don't fail the completion if worker update fails
 		} else {
 			logrus.Infof("Updated worker statistics for assignment %d: worker_id=%d, earnings=%.2f", assignmentID, worker.ID, earnings)
+
+			// Credit earnings to worker's wallet
+			if earnings > 0 {
+				_, err = was.walletService.CreditWorkerEarnings(assignment.WorkerID, earnings, assignmentID, booking.BookingReference)
+				if err != nil {
+					logrus.Errorf("Failed to credit worker earnings to wallet for assignment %d: %v", assignmentID, err)
+					// Don't fail the completion if wallet credit fails, but log the error
+				} else {
+					logrus.Infof("Credited worker earnings to wallet for assignment %d: worker_id=%d, amount=%.2f", assignmentID, assignment.WorkerID, earnings)
+				}
+			} else {
+				logrus.Warnf("Skipping wallet credit for assignment %d: earnings is 0", assignmentID)
+			}
 		}
 	}
 
