@@ -11,6 +11,9 @@ import { fetchTotalUnreadCount, updateTotalUnreadCount, updateConversationUnread
 import { conversationMonitorWebSocket } from './src/services/websocket/conversationMonitor.websocket';
 import { useAppFonts } from './src/utils/fonts';
 import SplashScreen from './src/components/SplashScreen';
+import { notificationService } from './src/services/notification.service';
+import { fcmService } from './src/services/api/fcm.service';
+import type { PushNotification, NotificationResponse } from './src/types/notification';
 import LoginScreen from './src/pages/auth/LoginScreen';
 import OtpVerificationScreen from './src/pages/auth/OtpVerificationScreen';
 import BottomNavigation, { TabType } from './src/components/BottomNavigation';
@@ -52,9 +55,24 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    dispatch(initializeAuth()).finally(() => {
+    // Add timeout to prevent infinite hang
+    const timeout = setTimeout(() => {
+      console.log('Auth initialization timeout - proceeding anyway');
       setIsInitializing(false);
-    });
+    }, 5000); // 5 second timeout
+
+    dispatch(initializeAuth())
+      .finally(() => {
+        clearTimeout(timeout);
+        setIsInitializing(false);
+      })
+      .catch((error) => {
+        console.error('Auth initialization error:', error);
+        clearTimeout(timeout);
+        setIsInitializing(false);
+      });
+
+    return () => clearTimeout(timeout);
   }, [dispatch]);
 
   // Only show splash screen during initial app load, not for subsequent loading states
@@ -155,6 +173,73 @@ function AppContent() {
       conversationMonitorWebSocket.disconnect();
     };
   }, [isAuthenticated, dispatch]);
+
+  // Setup FCM notifications
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    // Initialize notifications
+    const setupNotifications = async () => {
+      try {
+        // Get the FCM token
+        const token = await notificationService.getDevicePushToken();
+
+        if (token) {
+          // Register token with backend
+          await fcmService.registerToken(token);
+        }
+
+        // Register notification handlers
+        const handleNotificationReceived = (notification: PushNotification) => {
+          // Handle notification received while app is in foreground
+          console.log('Notification received in foreground:', notification);
+        };
+
+        const handleNotificationResponse = (response: NotificationResponse) => {
+          // Handle notification tap
+          console.log('Notification tapped:', response);
+
+          const data = response.notification.data;
+
+          // Navigate based on notification type
+          if (data?.type === 'chat' && data?.conversationId) {
+            // Navigate to chat conversation
+            const conversationId = parseInt(data.conversationId, 10);
+            if (!isNaN(conversationId)) {
+              setSelectedConversationId(conversationId);
+              setCurrentScreen('chatConversation');
+            }
+          } else if (data?.type === 'booking' && data?.bookingId) {
+            // Navigate to booking tab
+            setActiveTab('booking');
+            setCurrentScreen('home');
+          } else if (data?.type === 'work' && data?.assignmentId) {
+            // Navigate to work tab (for workers)
+            if (user?.user_type === 'worker') {
+              setActiveTab('work');
+              setCurrentScreen('home');
+            }
+          }
+        };
+
+        notificationService.registerNotificationListeners(
+          handleNotificationReceived,
+          handleNotificationResponse
+        );
+      } catch (error) {
+        console.error('Error setting up notifications:', error);
+      }
+    };
+
+    setupNotifications();
+
+    // Cleanup
+    return () => {
+      notificationService.removeNotificationListeners();
+    };
+  }, [isAuthenticated, user]);
 
   // Update screen based on auth state (only when auth status changes, not on every navigation)
   React.useEffect(() => {
