@@ -17,6 +17,7 @@ import {
   MessageCircle,
   BookOpen,
   Bell,
+  Wallet,
 } from "lucide-react";
 import type { AdminRole } from "@/services/api/auth";
 
@@ -350,6 +351,15 @@ export const sidebarItems: SidebarItem[] = [
     "Ledger Management",
     "/dashboard/ledger",
     <BookOpen size={16} />,
+    ["super_admin", "finance_manager"]
+  ),
+
+  // Worker Withdrawals
+  createMenuItem(
+    "worker-withdrawals",
+    "Worker Withdrawals",
+    "/dashboard/worker-withdrawals",
+    <Wallet size={16} />,
     ["super_admin", "finance_manager"]
   ),
 
