@@ -91,8 +91,15 @@ export const useProfile = () => {
     staleTime: 10 * 60 * 1000, // 10 minutes
     select: (data) => data.data, // Extract the data from the response
     enabled: isAuthenticated(), // Only run when user is authenticated
-    retry: 3, // Retry failed requests
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    retry: (failureCount, error: unknown) => {
+      // Don't retry on auth errors (401, 403) or after 1 retry
+      const apiError = error as { status?: number };
+      if (apiError?.status === 401 || apiError?.status === 403) {
+        return false; // Stop retrying on auth errors
+      }
+      return failureCount < 1; // Only retry once for other errors
+    },
+    retryDelay: 1000, // Short retry delay (1 second)
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnMount: true, // Always refetch when component mounts
   });

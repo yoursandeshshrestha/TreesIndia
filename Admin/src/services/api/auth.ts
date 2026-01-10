@@ -91,7 +91,11 @@ const cookieUtils = {
 
   deleteCookie: (name: string) => {
     if (typeof document === "undefined") return;
+    // Delete cookie with all possible attribute combinations to ensure removal
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+    document.cookie = `${name}=;max-age=0;path=/;SameSite=Lax`;
+    document.cookie = `${name}=;max-age=0;path=/;`;
   },
 };
 
@@ -205,9 +209,20 @@ export const authUtils = {
 
   // Clear all auth data
   clearAuth: (): void => {
+    // Delete all auth cookies
     cookieUtils.deleteCookie(COOKIE_NAMES.accessToken);
     cookieUtils.deleteCookie(COOKIE_NAMES.refreshToken);
     cookieUtils.deleteCookie(COOKIE_NAMES.user);
+
+    // Clear localStorage and sessionStorage as backup
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("treesindia_auth");
+        sessionStorage.removeItem("treesindia_auth");
+      } catch (error) {
+        console.error("Error clearing storage:", error);
+      }
+    }
   },
 };
 
@@ -329,5 +344,6 @@ export const useAuth = () => {
     },
     enabled: authUtils.isAuthenticated(),
     staleTime: Infinity, // Auth state doesn't change frequently
+    retry: false, // Don't retry auth checks - fail immediately
   });
 };

@@ -19,6 +19,25 @@ const SignInPage = () => {
   const requestOTPMutation = useRequestOTP();
   const verifyOTPMutation = useVerifyOTP();
 
+  // Clear any stale auth cookies when sign-in page loads
+  useEffect(() => {
+    // Clear cookies to prevent redirect loops with invalid tokens
+    const cookieNames = [
+      "treesindia_access_token",
+      "treesindia_refresh_token",
+      "treesindia_user",
+    ];
+
+    cookieNames.forEach((name) => {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+      document.cookie = `${name}=;max-age=0;path=/;SameSite=Lax`;
+      document.cookie = `${name}=;max-age=0;path=/;`;
+    });
+
+    console.log("Sign-in page: Cleared any stale auth cookies");
+  }, []);
+
   // Auto-focus OTP input when step changes to "otp"
   useEffect(() => {
     if (step === "otp" && otpInputRef.current) {

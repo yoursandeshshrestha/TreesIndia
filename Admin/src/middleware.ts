@@ -27,13 +27,9 @@ export async function middleware(req: NextRequest) {
 
   // Handle root route
   if (pathname === "/") {
-    if (accessToken) {
-      // User is authenticated, redirect to dashboard
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    } else {
-      // User is not authenticated, redirect to sign-in
-      return NextResponse.redirect(new URL("/auth/sign-in", req.url));
-    }
+    // Always redirect to dashboard - AuthGuard will handle auth validation
+    // This prevents loops when tokens are present but invalid
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   // Handle protected routes
@@ -67,7 +63,7 @@ export async function middleware(req: NextRequest) {
           // Create response with new tokens
           const response = NextResponse.next();
           response.cookies.set("treesindia_access_token", newAccessToken, {
-            httpOnly: true,
+            httpOnly: false, // Allow JavaScript to delete cookies
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 60 * 60, // 1 hour (matches backend token expiration)
@@ -75,7 +71,7 @@ export async function middleware(req: NextRequest) {
 
           // Update refresh token as well
           response.cookies.set("treesindia_refresh_token", newRefreshToken, {
-            httpOnly: true,
+            httpOnly: false, // Allow JavaScript to delete cookies
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 60 * 60 * 24 * 30, // 30 days (matches backend refresh token expiration)
@@ -138,11 +134,9 @@ export async function middleware(req: NextRequest) {
 
   // Handle public routes (sign-in, sign-up)
   if (isPublicRoute) {
-    if (accessToken) {
-      // User is already authenticated, redirect to dashboard
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-    // User is not authenticated, allow access to sign-in/sign-up
+    // Always allow access to auth pages - don't redirect even if token exists
+    // This prevents infinite loops when tokens are invalid/expired
+    // The AuthGuard on protected pages will handle actual auth validation
     return NextResponse.next();
   }
 

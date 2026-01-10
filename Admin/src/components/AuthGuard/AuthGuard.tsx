@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useCurrentUser, type AdminRole } from "@/services/api/auth";
 import { authUtils } from "@/services/api/auth";
@@ -27,6 +27,9 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const hasRedirected = useRef(false);
+  const authFailureCount = useRef(0);
+  const MAX_AUTH_FAILURES = 2;
 
   const {
     isLoading: authLoading,
@@ -37,24 +40,44 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
     error: userError,
   } = useCurrentUser();
 
+  // Helper to handle logout and redirect
+  const handleAuthFailure = (reason: string, immediate: boolean = false) => {
+    if (hasRedirected.current) return;
+
+    console.error(`Auth failure: ${reason}`);
+    authFailureCount.current++;
+
+    // Immediate logout for critical failures
+    if (immediate || authFailureCount.current >= MAX_AUTH_FAILURES) {
+      console.error(`Forcing logout (${immediate ? 'immediate' : 'max failures reached'})`);
+      hasRedirected.current = true;
+      authUtils.clearAuth();
+      autoSignOut();
+    }
+  };
+
   useEffect(() => {
     const checkAccess = async () => {
+      // Prevent further checks if already redirected
+      if (hasRedirected.current) return;
+
       try {
-        // Check if user is authenticated
+        // Check if user is authenticated - immediate logout if not
         if (!authUtils.isAuthenticated()) {
-          router.push("/auth/sign-in");
+          console.warn("No authentication token found - logging out immediately");
+          handleAuthFailure("Not authenticated", true); // Immediate logout
           return;
         }
 
-        // If auth is loading, wait
+        // If auth is loading, wait (but not indefinitely)
         if (authLoading || userLoading) {
           return;
         }
 
-        // Check for auth errors
+        // Check for auth errors - immediate redirect
         if (authError || userError) {
-          authUtils.clearAuth();
-          router.push("/auth/sign-in");
+          console.error("Auth error detected:", authError || userError);
+          handleAuthFailure("Auth or user error", true); // Immediate logout
           return;
         }
 
@@ -68,8 +91,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
             | null;
 
           if (!user || user.role !== "admin") {
-            autoSignOut();
-            router.push("/auth/sign-in");
+            console.warn("User is not admin - logging out immediately");
+            handleAuthFailure("Not an admin user", true); // Immediate logout
             return;
           }
 
@@ -85,25 +108,24 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
             );
 
             if (!hasSuperAdmin && !hasRequiredRole) {
-              autoSignOut();
-              router.push("/auth/sign-in");
+              console.warn("User missing required roles - logging out immediately");
+              handleAuthFailure("Missing required roles", true); // Immediate logout
               return;
             }
           } else if (rolesFromUser.length === 0) {
             // requireAdmin=true but user has no admin roles
-            autoSignOut();
-            router.push("/auth/sign-in");
+            console.warn("User has no admin roles - logging out immediately");
+            handleAuthFailure("No admin roles", true); // Immediate logout
             return;
           }
         }
 
+        // If we got here, user has access
         setHasAccess(true);
+        setIsChecking(false);
       } catch (error) {
         console.error("AuthGuard error:", error);
-        authUtils.clearAuth();
-        router.push("/auth/sign-in");
-      } finally {
-        setIsChecking(false);
+        handleAuthFailure("Exception in auth check", true); // Immediate logout
       }
     };
 
@@ -118,8 +140,20 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
     userError,
   ]);
 
+  // Timeout to prevent infinite loading - force logout after 5 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if ((authLoading || userLoading) && !hasAccess && !hasRedirected.current) {
+        console.error("AuthGuard timeout - forcing logout after 5 seconds of loading");
+        handleAuthFailure("Timeout", true); // Immediate logout on timeout
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [authLoading, userLoading, hasAccess]);
+
   // Show loading state
-  if (isChecking || authLoading || userLoading) {
+  if ((isChecking || authLoading || userLoading) && !hasRedirected.current) {
     return (
       fallback || (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -137,7 +171,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   }
 
   // Show children if access is granted
-  if (hasAccess) {
+  if (hasAccess && !hasRedirected.current) {
     return <>{children}</>;
   }
 
@@ -149,7 +183,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
         </div>
         <h2 className="mt-6 text-center text-xl font-semibold text-gray-900">
-          Redirecting...
+          Redirecting to login...
         </h2>
       </div>
     </div>

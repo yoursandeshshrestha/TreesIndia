@@ -57,6 +57,48 @@ export class ApiError extends Error {
   }
 }
 
+// Track authentication failure attempts
+let authFailureCount = 0;
+const MAX_AUTH_FAILURES = 2;
+const AUTH_FAILURE_RESET_TIMEOUT = 5000; // Reset counter after 5 seconds of no failures
+let authFailureResetTimer: NodeJS.Timeout | null = null;
+
+// Helper to reset auth failure counter
+const resetAuthFailureCount = () => {
+  authFailureCount = 0;
+  if (authFailureResetTimer) {
+    clearTimeout(authFailureResetTimer);
+    authFailureResetTimer = null;
+  }
+};
+
+// Helper to increment auth failure counter
+const incrementAuthFailureCount = () => {
+  authFailureCount++;
+
+  // Reset timer on each failure
+  if (authFailureResetTimer) {
+    clearTimeout(authFailureResetTimer);
+  }
+
+  // Auto-reset counter after timeout
+  authFailureResetTimer = setTimeout(() => {
+    resetAuthFailureCount();
+  }, AUTH_FAILURE_RESET_TIMEOUT);
+
+  console.warn(`Auth failure ${authFailureCount}/${MAX_AUTH_FAILURES}`);
+
+  // If max failures reached, force logout
+  if (authFailureCount >= MAX_AUTH_FAILURES) {
+    console.error("Max auth failures reached, forcing logout");
+    resetAuthFailureCount();
+    autoSignOut();
+    return true; // Indicate that we've logged out
+  }
+
+  return false; // Continue normal flow
+};
+
 // Create axios instance
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
@@ -93,6 +135,10 @@ const createApiClient = (): AxiosInstance => {
   // Response interceptor
   client.interceptors.response.use(
     (response: AxiosResponse) => {
+      // Reset auth failure counter on successful response
+      if (authFailureCount > 0) {
+        resetAuthFailureCount();
+      }
       return response;
     },
     async (error) => {
@@ -109,9 +155,18 @@ const createApiClient = (): AxiosInstance => {
 
         // Handle specific error cases
         if (status === 401) {
+          // Check if we've already hit max failures
+          if (authFailureCount >= MAX_AUTH_FAILURES) {
+            console.error("Already logged out due to max auth failures");
+            return Promise.reject(apiError);
+          }
+
           // Unauthorized - try to refresh token first
           const refreshToken = getCookie("treesindia_refresh_token");
-          if (refreshToken) {
+          if (refreshToken && !error.config._isRetry) {
+            // Mark this request as a retry to prevent infinite loops
+            error.config._isRetry = true;
+
             // Try to refresh token
             try {
               const refreshResponse = await fetch(
@@ -138,22 +193,42 @@ const createApiClient = (): AxiosInstance => {
                   60 * 60 * 24 * 30
                 }`; // 30 days
 
+                // Reset failure count on successful refresh
+                resetAuthFailureCount();
+
                 // Retry the original request with new token
                 const originalRequest = error.config;
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                 return apiClient(originalRequest);
+              } else {
+                // Refresh failed, increment failure count
+                const shouldLogout = incrementAuthFailureCount();
+                if (!shouldLogout) {
+                  // If not logged out yet, reject the error
+                  console.error("Token refresh failed");
+                }
               }
             } catch (refreshError) {
-              console.error("Token refresh failed:", refreshError);
+              console.error("Token refresh error:", refreshError);
+              // Increment failure count on refresh error
+              incrementAuthFailureCount();
+            }
+          } else {
+            // No refresh token or already retried, increment failure count
+            const shouldLogout = incrementAuthFailureCount();
+            if (!shouldLogout) {
+              console.error("No refresh token available or retry failed");
             }
           }
-          // If refresh fails or no refresh token, logout
-          autoSignOut();
         }
 
         if (status === 403) {
           // Forbidden - user doesn't have admin privileges
-          autoSignOut();
+          console.error("Forbidden: User doesn't have admin privileges");
+          incrementAuthFailureCount();
+          if (authFailureCount >= MAX_AUTH_FAILURES) {
+            autoSignOut();
+          }
         }
 
         console.error("API Error:", apiError);

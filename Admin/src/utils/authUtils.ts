@@ -79,26 +79,44 @@ export const getCurrentUser = () => {
  * Comprehensive logout function that clears all state
  */
 export const performLogout = (): void => {
+  console.log("=== PERFORMING LOGOUT ===");
+
   // Clear all auth data using the API auth utils
   apiAuthUtils.clearAuth();
 
-  // Additional cookie cleanup for extra security
-  document.cookie =
-    "treesindia_access_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
-  document.cookie =
-    "treesindia_refresh_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
-  document.cookie =
-    "treesindia_user=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
+  // Additional cookie cleanup for extra security - try multiple attribute combinations
+  const cookieNames = [
+    "treesindia_access_token",
+    "treesindia_refresh_token",
+    "treesindia_user",
+  ];
+
+  cookieNames.forEach((name) => {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+    document.cookie = `${name}=;max-age=0;path=/;SameSite=Lax`;
+    document.cookie = `${name}=;max-age=0;path=/;`;
+  });
 
   // Clear any localStorage or sessionStorage if used
   if (typeof window !== "undefined") {
-    localStorage.removeItem("treesindia_auth");
-    sessionStorage.removeItem("treesindia_auth");
+    try {
+      localStorage.removeItem("treesindia_auth");
+      sessionStorage.removeItem("treesindia_auth");
 
-    // Clear any other potential auth-related storage
-    localStorage.clear();
-    sessionStorage.clear();
+      // Clear any other potential auth-related storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      console.log("✓ Storage cleared");
+    } catch (error) {
+      console.error("Error clearing storage:", error);
+    }
   }
+
+  // Verify cookies are cleared
+  console.log("Cookies after cleanup:", document.cookie);
+  console.log("Redirecting to /auth/sign-in...");
 
   // Force a page reload to ensure all state is cleared
   if (typeof window !== "undefined") {
