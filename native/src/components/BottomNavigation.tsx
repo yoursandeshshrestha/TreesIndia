@@ -4,10 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeIcon from './icons/HomeIcon';
 import BookingIcon from './icons/BookingIcon';
 import WorkIcon from './icons/WorkIcon';
+import EarningsIcon from './icons/EarningsIcon';
 import ChatIcon from './icons/ChatIcon';
 import ProfileIcon from './icons/ProfileIcon';
 
-export type TabType = 'home' | 'booking' | 'work' | 'chat' | 'profile';
+export type TabType =
+  | 'home'
+  | 'booking'
+  | 'work'
+  | 'earnings'
+  | 'chat'
+  | 'profile';
 
 interface BottomNavigationProps {
   activeTab: TabType;
@@ -31,10 +38,15 @@ export default function BottomNavigation({
   const isWorker = userType === 'worker';
 
   const tabs: TabItem[] = [
-    ...(!isWorker ? [{ id: 'home' as TabType, label: 'Home', icon: HomeIcon }] : []),
+    ...(!isWorker
+      ? [{ id: 'home' as TabType, label: 'Home', icon: HomeIcon }]
+      : []),
     isWorker
       ? { id: 'work', label: 'Work', icon: WorkIcon }
       : { id: 'booking', label: 'Booking', icon: BookingIcon },
+    ...(isWorker
+      ? [{ id: 'earnings' as TabType, label: 'Earnings', icon: EarningsIcon }]
+      : []),
     { id: 'chat', label: 'Chat', icon: ChatIcon },
     { id: 'profile', label: 'Profile', icon: ProfileIcon },
   ];

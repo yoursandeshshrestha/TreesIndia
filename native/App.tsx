@@ -17,6 +17,7 @@ import BottomNavigation, { TabType } from './src/components/BottomNavigation';
 import HomeScreen from './src/pages/home/HomeScreen';
 import BookingScreen from './src/pages/booking/BookingScreen';
 import WorkScreen from './src/pages/work/WorkScreen';
+import EarningsScreen from './src/pages/earnings/EarningsScreen';
 import ChatScreen from './src/pages/chat/ChatScreen';
 import ChatConversationScreen from './src/pages/chat/ChatConversationScreen';
 import ProfileScreen from './src/pages/profile/ProfileScreen';
@@ -591,6 +592,8 @@ function AppContent() {
             }}
           />
         );
+      case 'earnings':
+        return <EarningsScreen />;
       case 'chat':
         return (
           <ChatScreen

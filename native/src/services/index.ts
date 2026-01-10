@@ -26,6 +26,8 @@ export { searchHistoryService, type SearchHistoryEntry, type SaveSearchHistoryRe
 export { bookingService } from './api/booking.service';
 export { chatService } from './api/chat.service';
 export { workerAssignmentService, type WorkerAssignment, type WorkerAssignmentListResponse, type AcceptAssignmentRequest, type RejectAssignmentRequest } from './api/worker-assignment.service';
+export { workerEarningsService, type WorkerEarningsDashboard, type EarningsSummary, type RecentAssignment, type PeriodFilter, type WithdrawalSummary } from './api/worker-earnings.service';
+export { workerWithdrawalService, type WorkerWithdrawalRequest, type WorkerWithdrawalResponse } from './api/worker-withdrawal.service';
 
 // Legacy API client for backward compatibility
 // TODO: Remove this once all imports are updated
