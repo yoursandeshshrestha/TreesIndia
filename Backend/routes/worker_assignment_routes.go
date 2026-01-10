@@ -6,11 +6,21 @@ import (
 	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // SetupWorkerAssignmentRoutes sets up worker assignment-related routes
-func SetupWorkerAssignmentRoutes(router *gin.RouterGroup, workerAssignmentService *services.WorkerAssignmentService) {
-	workerAssignmentController := controllers.NewWorkerAssignmentController(workerAssignmentService)
+func SetupWorkerAssignmentRoutes(
+	router *gin.RouterGroup,
+	workerAssignmentService *services.WorkerAssignmentService,
+	enhancedNotificationService *services.EnhancedNotificationService,
+	db *gorm.DB,
+) {
+	workerAssignmentController := controllers.NewWorkerAssignmentController(
+		workerAssignmentService,
+		enhancedNotificationService,
+		db,
+	)
 
 	// Worker assignment routes (authenticated workers only)
 	workerAssignments := router.Group("/worker/assignments")

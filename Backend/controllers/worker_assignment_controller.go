@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -9,16 +10,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type WorkerAssignmentController struct {
 	BaseController
-	workerAssignmentService *services.WorkerAssignmentService
+	workerAssignmentService     *services.WorkerAssignmentService
+	enhancedNotificationService *services.EnhancedNotificationService
+	db                          *gorm.DB
 }
 
-func NewWorkerAssignmentController(workerAssignmentService *services.WorkerAssignmentService) *WorkerAssignmentController {
+func NewWorkerAssignmentController(
+	workerAssignmentService *services.WorkerAssignmentService,
+	enhancedNotificationService *services.EnhancedNotificationService,
+	db *gorm.DB,
+) *WorkerAssignmentController {
 	return &WorkerAssignmentController{
-		workerAssignmentService: workerAssignmentService,
+		workerAssignmentService:     workerAssignmentService,
+		enhancedNotificationService: enhancedNotificationService,
+		db:                          db,
 	}
 }
 
@@ -143,6 +153,9 @@ func (wac *WorkerAssignmentController) AcceptAssignment(c *gin.Context) {
 		return
 	}
 
+	// Send notification to customer
+	wac.sendAssignmentNotification(assignment, "accepted")
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment accepted successfully", assignment))
 }
 
@@ -184,6 +197,9 @@ func (wac *WorkerAssignmentController) RejectAssignment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to reject assignment", err.Error()))
 		return
 	}
+
+	// Send notification to customer
+	wac.sendAssignmentNotification(assignment, "rejected")
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment rejected successfully", assignment))
 }
@@ -227,6 +243,9 @@ func (wac *WorkerAssignmentController) StartAssignment(c *gin.Context) {
 		return
 	}
 
+	// Send notification to customer
+	wac.sendAssignmentNotification(assignment, "started")
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment started successfully", assignment))
 }
 
@@ -269,7 +288,88 @@ func (wac *WorkerAssignmentController) CompleteAssignment(c *gin.Context) {
 		return
 	}
 
+	// Send notification to customer
+	wac.sendAssignmentNotification(assignment, "completed")
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment completed successfully", assignment))
 }
 
+// sendAssignmentNotification sends notification about assignment status changes
+func (wac *WorkerAssignmentController) sendAssignmentNotification(assignment *models.WorkerAssignment, notificationType string) {
+	// This runs in a goroutine, so it doesn't block the response
+	go func() {
+		// Skip if notification service is not available
+		if wac.enhancedNotificationService == nil {
+			logrus.Warn("Notification service not available, skipping notification")
+			return
+		}
 
+		var title, body string
+		var recipientUserID uint
+		var notifType models.NotificationType
+
+		// Get booking to access customer information
+		var booking models.Booking
+		if err := wac.db.First(&booking, assignment.BookingID).Error; err != nil {
+			logrus.Errorf("Failed to load booking for notification: %v", err)
+			return
+		}
+
+		// Get worker information
+		var worker models.User
+		if err := wac.db.First(&worker, assignment.WorkerID).Error; err != nil {
+			logrus.Errorf("Failed to load worker for notification: %v", err)
+			return
+		}
+
+		switch notificationType {
+		case "accepted":
+			title = "Worker Accepted!"
+			body = fmt.Sprintf("%s has accepted your booking", worker.Name)
+			recipientUserID = booking.UserID
+			notifType = models.NotificationTypeBooking
+
+		case "rejected":
+			title = "Worker Rejected"
+			body = fmt.Sprintf("%s has rejected your booking. We'll assign another worker soon.", worker.Name)
+			recipientUserID = booking.UserID
+			notifType = models.NotificationTypeBooking
+
+		case "started":
+			title = "Work Started!"
+			body = fmt.Sprintf("%s has started working on your booking", worker.Name)
+			recipientUserID = booking.UserID
+			notifType = models.NotificationTypeBooking
+
+		case "completed":
+			title = "Work Completed!"
+			body = fmt.Sprintf("%s has completed your booking", worker.Name)
+			recipientUserID = booking.UserID
+			notifType = models.NotificationTypeBooking
+
+		default:
+			return
+		}
+
+		notificationReq := &services.NotificationRequest{
+			UserID:   recipientUserID,
+			Type:     notifType,
+			Title:    title,
+			Body:     body,
+			Data: map[string]string{
+				"type":         "booking",
+				"bookingId":    fmt.Sprintf("%d", assignment.BookingID),
+				"assignmentId": fmt.Sprintf("%d", assignment.ID),
+				"workerId":     fmt.Sprintf("%d", assignment.WorkerID),
+			},
+			Priority: "high",
+		}
+
+		_, err := wac.enhancedNotificationService.SendNotification(notificationReq)
+		if err != nil {
+			logrus.Errorf("Failed to send %s notification for assignment %d: %v", notificationType, assignment.ID, err)
+		} else {
+			logrus.Infof("Sent %s notification for assignment %d to user %d", notificationType, assignment.ID, recipientUserID)
+		}
+	}()
+}

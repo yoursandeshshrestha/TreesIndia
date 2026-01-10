@@ -267,7 +267,7 @@ func main() {
 	bookingMiddleware := middleware.NewDynamicConfigMiddleware()
 	bookingGroup := r.Group("/api/v1")
 	bookingGroup.Use(bookingMiddleware.BookingSystem())
-	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService)
+	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService, enhancedNotificationService, db)
 
 	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
