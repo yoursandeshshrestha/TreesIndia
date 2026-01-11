@@ -8,7 +8,6 @@ import {
   Phone,
   Loader2,
   User,
-  Navigation,
   CreditCard,
   MessageCircle,
   FileText,
@@ -17,7 +16,6 @@ import type { Booking as ApiBooking } from "@/lib/bookingApi";
 import type { Booking as TypeBooking } from "@/types/booking";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import type { PaymentProgress, PaymentSegmentInfo } from "@/types/booking";
-import { LocationTrackingModal } from "../LocationTrackingModal/LocationTrackingModal";
 import { PaymentSegmentsModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import { useAppDispatch } from "@/store/hooks";
 import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
@@ -47,7 +45,6 @@ export function MainBookingCard({
   isAcceptingQuote = false,
   isPaying = false,
 }: MainBookingCardProps) {
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isSegmentsModalOpen, setIsSegmentsModalOpen] = useState(false);
 
   // Redux and auth hooks
@@ -719,19 +716,6 @@ export function MainBookingCard({
                 </div>
               )}
 
-              {/* Location Tracking Button - Show for in_progress bookings */}
-              {booking.worker_assignment?.status === "in_progress" && (
-                <button
-                  onClick={() => setIsLocationModalOpen(true)}
-                  className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Navigation className="w-4 h-4" />
-                    Track Worker Location
-                  </div>
-                </button>
-              )}
-
               {/* Communication Icons - Bottom of Right Side */}
               {booking.worker_assignment?.worker &&
                 ["accepted", "in_progress"].includes(
@@ -786,17 +770,6 @@ export function MainBookingCard({
           )}
         </div>
       </div>
-
-      {/* Location Tracking Modal */}
-      {booking.worker_assignment?.status === "in_progress" &&
-        booking.worker_assignment?.worker_id && (
-          <LocationTrackingModal
-            isOpen={isLocationModalOpen}
-            onClose={() => setIsLocationModalOpen(false)}
-            assignment={booking.worker_assignment as WorkerAssignment}
-            booking={booking?.ID ? { ...booking, ID: booking.ID } : undefined}
-          />
-        )}
 
       {/* Payment Segments Modal */}
       <PaymentSegmentsModal

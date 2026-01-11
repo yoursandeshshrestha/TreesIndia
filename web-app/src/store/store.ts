@@ -12,7 +12,6 @@ import quoteAcceptanceReducer from "./slices/quoteAcceptanceSlice";
 import workerApplicationReducer from "./slices/workerApplicationSlice";
 import brokerApplicationReducer from "./slices/brokerApplicationSlice";
 import workerAssignmentReducer from "./slices/workerAssignmentSlice";
-import locationTrackingReducer from "./slices/locationTrackingSlice";
 import searchReducer from "./slices/searchSlice";
 import searchModalReducer from "./slices/searchModalSlice";
 import serviceDetailModalReducer from "./slices/serviceDetailModalSlice";
@@ -34,7 +33,6 @@ export const store = configureStore({
     workerApplication: workerApplicationReducer,
     brokerApplication: brokerApplicationReducer,
     workerAssignment: workerAssignmentReducer,
-    locationTracking: locationTrackingReducer,
     search: searchReducer,
     searchModal: searchModalReducer,
     serviceDetailModal: serviceDetailModalReducer,

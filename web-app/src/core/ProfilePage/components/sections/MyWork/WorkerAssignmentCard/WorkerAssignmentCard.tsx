@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { MapPin, User, MessageCircle, Play, Square, Phone } from "lucide-react";
+import React from "react";
+import { MapPin, User, MessageCircle, Phone } from "lucide-react";
 import type { WorkerAssignment } from "@/lib/workerAssignmentApi";
 import { toast } from "sonner";
-import { locationTrackingWebSocket } from "@/services/websocketService";
 import { useAppDispatch } from "@/store/hooks";
 import { openChatModalWithUser } from "@/store/slices/chatModalSlice";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,57 +33,6 @@ export function WorkerAssignmentCard({
 }: WorkerAssignmentCardProps) {
   const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
-  const [isTracking, setIsTracking] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  // Start location tracking
-  const startTracking = async () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by this browser");
-      return;
-    }
-
-    setIsConnecting(true);
-
-    // Set a timeout to prevent getting stuck in connecting state
-    const connectionTimeout = setTimeout(() => {
-      if (isConnecting) {
-        setIsConnecting(false);
-        toast.error("Connection timeout. Please try again.");
-      }
-    }, 10000); // 10 second timeout
-
-    // Connect to WebSocket with proper callback handling
-    locationTrackingWebSocket.connect(
-      assignment.worker_id,
-      assignment.booking_id,
-      "worker",
-      {
-        onConnected: () => {
-          clearTimeout(connectionTimeout);
-          setIsConnecting(false);
-          setIsTracking(true);
-          toast.success("Connected to location tracking");
-
-          // Start location tracking after successful connection
-          locationTrackingWebSocket.startLocationTracking(assignment.ID);
-        },
-        onError: (error) => {
-          clearTimeout(connectionTimeout);
-          setIsConnecting(false);
-          toast.error(`Connection failed: ${error}`);
-        },
-      }
-    );
-  };
-
-  // Stop location tracking
-  const stopTracking = () => {
-    locationTrackingWebSocket.stopLocationTracking();
-    locationTrackingWebSocket.disconnect();
-    setIsTracking(false);
-    toast.success("Location tracking stopped");
-  };
 
   // Helper function to parse address JSON
   const parseAddress = (addressString: string) => {
@@ -352,30 +300,6 @@ export function WorkerAssignmentCard({
               <button className="w-full px-3 py-2 text-sm font-medium text-gray-600 bg-gray-200 rounded-lg cursor-default">
                 View Details
               </button>
-            )}
-
-            {/* Location Tracking Buttons - Show for in_progress assignments */}
-            {assignment.status === "in_progress" && (
-              <div className="mt-3 space-y-2">
-                {!isTracking ? (
-                  <button
-                    onClick={startTracking}
-                    disabled={isConnecting}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Play className="w-4 h-4" />
-                    {isConnecting ? "Connecting..." : "Start Tracking"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopTracking}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <Square className="w-4 h-4" />
-                    Stop Tracking
-                  </button>
-                )}
-              </div>
             )}
           </div>
 
