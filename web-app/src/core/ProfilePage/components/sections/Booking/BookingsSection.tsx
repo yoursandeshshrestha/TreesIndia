@@ -11,7 +11,7 @@ import { QuoteAcceptanceModal } from "@/core/ProfilePage/components/sections/Boo
 import { NextSegmentPaymentModal } from "@/core/ProfilePage/components/sections/Booking/components/PaymentSegment";
 import type { Booking } from "@/lib/bookingApi";
 
-type BookingTab = "all" | "upcoming" | "completed" | "cancelled";
+type BookingTab = "all" | "completed";
 
 export function BookingsSection() {
   const [activeTab, setActiveTab] = useState<BookingTab>("all");
@@ -38,15 +38,12 @@ export function BookingsSection() {
     const baseFilters: Record<string, string> = {};
 
     switch (tab) {
-      case "upcoming":
-        baseFilters.status =
-          "confirmed,scheduled,assigned,in_progress,pending,quote_provided";
-        break;
       case "completed":
         baseFilters.status = "completed";
         break;
-      case "cancelled":
-        baseFilters.status = "cancelled,rejected";
+      case "all":
+      default:
+        // No status filter for "all" - show all bookings
         break;
     }
 
@@ -179,9 +176,7 @@ export function BookingsSection() {
 
   const tabs: { id: BookingTab; label: string; count?: number }[] = [
     { id: "all", label: "All Bookings" },
-    { id: "upcoming", label: "Upcoming" },
     { id: "completed", label: "Completed" },
-    { id: "cancelled", label: "Cancelled" },
   ];
 
   if (bookingsError) {

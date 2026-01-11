@@ -8,7 +8,6 @@ import {
   Wallet,
   Calendar,
   User as UserIcon,
-  Briefcase,
   MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,25 +86,17 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                 </div>
               </div>
 
-              {/* 2. My Bookings/My Work Button */}
+              {/* 2. My Bookings Button */}
               <button
                 onClick={() => {
-                  router.push(
-                    user.user_type === "worker"
-                      ? "/profile/my-work"
-                      : "/profile/my-bookings"
-                  );
+                  router.push("/profile/my-bookings");
                   onMenuClose?.();
                 }}
                 className="w-full flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
               >
-                {user.user_type === "worker" ? (
-                  <Briefcase className="w-5 h-5 text-gray-600" />
-                ) : (
-                  <Calendar className="w-5 h-5 text-gray-600" />
-                )}
+                <Calendar className="w-5 h-5 text-gray-600" />
                 <span className="text-base font-medium text-gray-900">
-                  {user.user_type === "worker" ? "My Work" : "My Bookings"}
+                  My Bookings
                 </span>
               </button>
 
@@ -172,25 +163,13 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           ) : (
             /* Desktop Layout */
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* My Bookings/My Work Button - Desktop only */}
+              {/* My Bookings Button - Desktop only */}
               <button
-                onClick={() =>
-                  router.push(
-                    user.user_type === "worker"
-                      ? "/profile/my-work"
-                      : "/profile/my-bookings"
-                  )
-                }
+                onClick={() => router.push("/profile/my-bookings")}
                 className="hidden lg:flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                {user.user_type === "worker" ? (
-                  <Briefcase className="w-4 h-4" />
-                ) : (
-                  <Calendar className="w-4 h-4" />
-                )}
-                <span className="text-sm font-medium">
-                  {user.user_type === "worker" ? "My Work" : "My Bookings"}
-                </span>
+                <Calendar className="w-4 h-4" />
+                <span className="text-sm font-medium">My Bookings</span>
               </button>
 
               {/* Notifications - Desktop */}

@@ -56,7 +56,9 @@ export function MainBookingCard({
 
   // Calculate payment progress from segments
   const calculatePaymentProgress = (
-    segments: PaymentSegmentInfo[]
+    segments: PaymentSegmentInfo[],
+    paymentStatus?: string,
+    paymentAmount?: number
   ): PaymentProgress | null => {
     if (!segments || segments.length === 0) return null;
 
@@ -64,9 +66,23 @@ export function MainBookingCard({
       (sum, segment) => sum + segment.amount,
       0
     );
+
+    // For single segments, check main payment status ONLY if payment amount matches segment amount
+    // This prevents inquiry fee payments from being mistaken for segment payments
+    const isSingleSegment = segments.length === 1;
+    const isPaymentCompleted = paymentStatus === "completed";
+    const paymentMatchesSegment = isSingleSegment && paymentAmount === segments[0].amount;
+
     const paidSegments = segments.filter(
-      (segment) => segment.status === "paid"
+      (segment) => {
+        // If single segment, payment is completed, AND amounts match, consider it paid
+        if (isSingleSegment && isPaymentCompleted && paymentMatchesSegment) {
+          return true;
+        }
+        return segment.status === "paid";
+      }
     );
+
     const paidAmount = paidSegments.reduce(
       (sum, segment) => sum + segment.amount,
       0
@@ -87,7 +103,11 @@ export function MainBookingCard({
     };
   };
 
-  const paymentProgress = calculatePaymentProgress(paymentSegments);
+  const paymentProgress = calculatePaymentProgress(
+    paymentSegments,
+    booking.payment?.status,
+    booking.payment?.amount
+  );
 
   // Check if this booking has payment segments
   const hasPaymentSegments = paymentSegments.length > 0;
@@ -622,9 +642,10 @@ export function MainBookingCard({
                   </>
                 )}
 
-              {/* Pay Now Button - Show for single segment or no segments */}
+              {/* Pay Now Button - Show for single segment or no segments if there are pending payments */}
               {booking.status === "quote_accepted" &&
                 (isSingleSegment || !hasPaymentSegments) &&
+                hasPendingSegments &&
                 onPayNow && (
                   <button
                     onClick={() => onPayNow(booking)}

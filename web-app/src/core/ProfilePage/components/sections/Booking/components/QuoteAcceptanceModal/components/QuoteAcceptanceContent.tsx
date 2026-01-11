@@ -42,9 +42,9 @@ export function QuoteAcceptanceContent() {
   if (!booking) return null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row h-full">
       {/* Left Side - Main Content */}
-      <div className="w-1/3 overflow-y-auto border-r border-gray-200">
+      <div className="w-full lg:w-2/5 overflow-y-auto lg:border-r border-gray-200">
         <BookingDetailsCard
           booking={booking}
           selectedDate={selectedDate}
@@ -65,7 +65,7 @@ export function QuoteAcceptanceContent() {
       </div>
 
       {/* Right Side - Summary or Date/Time Selection */}
-      <div className="w-2/3 overflow-y-auto">
+      <div className="w-full lg:w-3/5 overflow-y-auto">
         {hasMultipleSegments ? (
           // For multiple segments, skip date/time selection and go directly to payment
           <PaymentSection

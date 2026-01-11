@@ -8,12 +8,16 @@ interface PaymentProgressProps {
   progress: PaymentProgressType;
   showSegments?: boolean;
   className?: string;
+  paymentStatus?: string; // Main payment status for single-segment handling
+  paymentAmount?: number; // Main payment amount to verify it matches segment amount
 }
 
 export default function PaymentProgress({
   progress,
   showSegments = true,
   className = "",
+  paymentStatus,
+  paymentAmount,
 }: PaymentProgressProps) {
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString()}`;
@@ -103,36 +107,46 @@ export default function PaymentProgress({
             Payment Segments
           </h4>
           <div className="space-y-2">
-            {progress.segments.map((segment) => (
-              <div key={segment.id} className="py-2 px-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-600">
-                      Segment #{segment.segment_number}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        segment.status === "paid"
-                          ? "bg-green-100 text-green-800"
-                          : segment.status === "overdue"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {segment.status}
+            {progress.segments.map((segment) => {
+              // For single segments, override status if main payment is completed AND amounts match
+              // This prevents inquiry fee payments from being mistaken for segment payments
+              const isSingleSegment = progress.segments.length === 1;
+              const paymentMatchesSegment = paymentAmount === segment.amount;
+              const effectiveStatus = isSingleSegment && paymentStatus === "completed" && paymentMatchesSegment
+                ? "paid"
+                : segment.status;
+
+              return (
+                <div key={segment.id} className="py-2 px-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-medium text-gray-600">
+                        Segment #{segment.segment_number}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          effectiveStatus === "paid"
+                            ? "bg-green-100 text-green-800"
+                            : effectiveStatus === "overdue"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {effectiveStatus.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(segment.amount)}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {formatCurrency(segment.amount)}
-                  </span>
+                  {segment.notes && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      <span className="font-medium">Notes:</span> {segment.notes}
+                    </div>
+                  )}
                 </div>
-                {segment.notes && (
-                  <div className="text-xs text-blue-600 mt-1">
-                    <span className="font-medium">Notes:</span> {segment.notes}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

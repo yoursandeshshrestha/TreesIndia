@@ -63,16 +63,34 @@ export default function NextSegmentPaymentModal({
   const paymentSegments = booking?.payment_segments || [];
 
   // Calculate payment progress from segments
-  const calculatePaymentProgress = (segments: PaymentSegmentInfo[]) => {
+  const calculatePaymentProgress = (
+    segments: PaymentSegmentInfo[],
+    paymentStatus?: string,
+    paymentAmount?: number
+  ) => {
     if (!segments || segments.length === 0) return null;
 
     const totalAmount = segments.reduce(
       (sum, segment) => sum + segment.amount,
       0
     );
+
+    // For single segments, check main payment status ONLY if payment amount matches segment amount
+    // This prevents inquiry fee payments from being mistaken for segment payments
+    const isSingleSegment = segments.length === 1;
+    const isPaymentCompleted = paymentStatus === "completed";
+    const paymentMatchesSegment = isSingleSegment && paymentAmount === segments[0].amount;
+
     const paidSegments = segments.filter(
-      (segment) => segment.status === "paid"
+      (segment) => {
+        // If single segment, payment is completed, AND amounts match, consider it paid
+        if (isSingleSegment && isPaymentCompleted && paymentMatchesSegment) {
+          return true;
+        }
+        return segment.status === "paid";
+      }
     );
+
     const paidAmount = paidSegments.reduce(
       (sum, segment) => sum + segment.amount,
       0
@@ -93,7 +111,11 @@ export default function NextSegmentPaymentModal({
     };
   };
 
-  const paymentProgress = calculatePaymentProgress(paymentSegments);
+  const paymentProgress = calculatePaymentProgress(
+    paymentSegments,
+    booking?.payment?.status,
+    booking?.payment?.amount
+  );
 
   // Get the next pending segment (sorted by segment number)
   const nextSegment = paymentSegments

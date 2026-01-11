@@ -1,127 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bell, User, ChevronRight, ArrowLeft } from "lucide-react";
-import { NotificationSettingsSection } from "./NotificationSettingsSection";
 import { toast } from "sonner";
 import { requestDeleteOTP, deleteAccount } from "@/lib/profileApi";
 
-type SettingsTab = "notifications" | "account";
-
 export function SettingsSection() {
-  const [activeTab, setActiveTab] = useState<SettingsTab | null>(null);
-
-  const settingsTabs = [
-    {
-      id: "notifications" as SettingsTab,
-      title: "Notifications",
-      description: "Manage your notification preferences",
-      icon: <Bell className="w-5 h-5" />,
-    },
-    {
-      id: "account" as SettingsTab,
-      title: "Account",
-      description: "Manage your account settings",
-      icon: <User className="w-5 h-5" />,
-    },
-  ];
-
-  const renderActiveSection = () => {
-    switch (activeTab) {
-      case "notifications":
-        return <NotificationSettingsSection />;
-      case "account":
-        return <AccountSection />;
-      default:
-        return null;
-    }
-  };
-
-  const getSectionTitle = () => {
-    const tab = settingsTabs.find((t) => t.id === activeTab);
-    return tab ? tab.title : "";
-  };
-
-  // If we're inside a section, show the section content with back button
-  if (activeTab) {
-    return (
-      <div className="space-y-6">
-        {/* Back Button and Section Header */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setActiveTab(null)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Settings</span>
-          </button>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            {getSectionTitle()}
-          </h2>
-          <p className="text-gray-600 mt-1">
-            {activeTab === "notifications" &&
-              "Manage your notification preferences"}
-            {activeTab === "account" && "Manage your account settings"}
-          </p>
-        </div>
-
-        {/* Section Content */}
-        {renderActiveSection()}
-      </div>
-    );
-  }
-
-  // Main settings menu
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900">Settings</h2>
-        <p className="text-gray-600 mt-1">
-          Manage your account preferences and privacy
-        </p>
-      </div>
-
-      {/* Settings Navigation */}
-      <div className="bg-white border border-gray-200 rounded-lg">
-        {settingsTabs.map((tab, index) => (
-          <div key={tab.id}>
-            <button
-              onClick={() => setActiveTab(tab.id)}
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="text-gray-600">{tab.icon}</div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-base text-gray-900">
-                    {tab.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">{tab.description}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-            {index < settingsTabs.length - 1 && (
-              <div className="border-b border-gray-200" />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Account Section Component
-function AccountSection() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [isRequestingOTP, setIsRequestingOTP] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [otpError, setOtpError] = useState("");
+
+  const policyItems = [
+    "You'll no longer be able to access your saved professionals",
+    "Your customer rating will be reset",
+    "All your memberships will be cancelled",
+    "You'll not be able to claim under any active warranty or insurance",
+    "The changes are irreversible",
+  ];
 
   const handleRequestOTP = async () => {
     setIsRequestingOTP(true);
@@ -169,90 +66,110 @@ function AccountSection() {
     if (otpError) setOtpError("");
   };
 
+  const handleOpenTerms = () => {
+    window.open("https://treesindiaservices.com/terms-and-conditions", "_blank");
+  };
+
+  const handleOpenPrivacy = () => {
+    window.open("https://treesindiaservices.com/privacy-policy", "_blank");
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-semibold text-[#111928]">Settings</h2>
+        <p className="text-base text-[#6B7280] mt-1">
+          Manage your account preferences and privacy
+        </p>
+      </div>
+
       {/* Account Deletion Policy */}
-      <div className="bg-white border border-gray-200 rounded-lg">
-        <div className="p-4 border-b border-gray-200">
-          <h4 className="font-semibold text-base text-gray-900">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="px-4 py-4 border-b border-[#E5E7EB]">
+          <h4 className="text-base font-semibold text-[#111928]">
             Account Deletion Policy
           </h4>
         </div>
-        <div className="p-4">
-          <ul className="space-y-2 text-sm text-gray-700">
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">•</span>
-              <span>
-                You&apos;ll no longer be able to access your saved professionals
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">•</span>
-              <span>Your customer rating will be reset</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">•</span>
-              <span>All your memberships will be cancelled</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">•</span>
-              <span>
-                You&apos;ll not be able to claim under any active warranty or
-                insurance
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">•</span>
-              <span>The changes are irreversible</span>
-            </li>
-          </ul>
+        <div className="px-4 py-4">
+          {policyItems.map((item, index) => (
+            <div key={index} className="flex items-start mb-2">
+              <div className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3" />
+              <p className="flex-1 text-sm text-[#374151] leading-5">
+                {item}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Delete Account Action */}
-      <div className="bg-white border border-gray-200 rounded-lg">
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-base text-gray-900">
-                Delete Account
-              </h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Permanently delete your account and all associated data
-              </p>
-            </div>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Delete Account
-            </button>
-          </div>
+      {/* Delete Account Section */}
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
+        <div className="mb-4">
+          <h4 className="text-base font-semibold text-[#111928] mb-1">
+            Delete Account
+          </h4>
+          <p className="text-sm text-[#6B7280]">
+            Permanently delete your account and all associated data
+          </p>
+        </div>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="bg-[#DC2626] rounded-lg py-2.5 px-4 text-sm font-semibold text-white hover:bg-[#B91C1C] transition-colors"
+        >
+          Delete Account
+        </button>
+      </div>
+
+      {/* Legal Information */}
+      <div className="bg-white border border-[#E5E7EB] rounded-xl">
+        <div className="px-4 py-4 border-b border-[#E5E7EB]">
+          <h4 className="text-base font-semibold text-[#111928]">
+            Legal Information
+          </h4>
+        </div>
+        <div className="px-4 py-4 space-y-3">
+          <button
+            onClick={handleOpenTerms}
+            className="w-full bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] p-4 text-left hover:bg-gray-50 transition-colors"
+          >
+            <p className="text-sm font-semibold text-[#111928]">
+              Terms and Conditions
+            </p>
+          </button>
+          <button
+            onClick={handleOpenPrivacy}
+            className="w-full bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] p-4 text-left hover:bg-gray-50 transition-colors"
+          >
+            <p className="text-sm font-semibold text-[#111928]">
+              Privacy Policy
+            </p>
+          </button>
         </div>
       </div>
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-[#111928] mb-4">
               Delete Account
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-[#6B7280] mb-6">
               Are you sure you want to delete your account? This action cannot
               be undone and will permanently remove all your data.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-[#E5E7EB] text-[#374151] rounded-lg hover:bg-[#F9FAFB] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRequestOTP}
                 disabled={isRequestingOTP}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
               >
                 {isRequestingOTP ? "Sending OTP..." : "Continue"}
               </button>
@@ -264,11 +181,11 @@ function AccountSection() {
       {/* OTP Verification Modal */}
       {showOTPModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-[#111928] mb-4">
               Verify OTP
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-[#6B7280] mb-4">
               Enter the 6-digit OTP sent to your phone number to confirm account
               deletion.
             </p>
@@ -279,11 +196,11 @@ function AccountSection() {
                 value={otp}
                 onChange={handleOtpChange}
                 placeholder="Enter 6-digit OTP"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#DC2626] focus:border-transparent"
                 maxLength={6}
               />
               {otpError && (
-                <p className="text-red-600 text-sm mt-1">{otpError}</p>
+                <p className="text-[#DC2626] text-sm mt-1">{otpError}</p>
               )}
             </div>
 
@@ -294,14 +211,14 @@ function AccountSection() {
                   setOtp("");
                   setOtpError("");
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-[#E5E7EB] text-[#374151] rounded-lg hover:bg-[#F9FAFB] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={isDeleting || otp.length !== 6}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
               >
                 {isDeleting ? "Deleting..." : "Delete Account"}
               </button>

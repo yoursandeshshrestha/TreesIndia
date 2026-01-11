@@ -14,9 +14,19 @@ export function usePaymentSegments() {
       bookingId: number;
       paymentData: CreateSegmentPaymentRequest;
     }) => paySegment(bookingId, paymentData),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate bookings to refresh payment progress
-      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["userBookings"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["booking"],
+        refetchType: "all"
+      });
+      // Force refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ["userBookings"] });
+      await queryClient.refetchQueries({ queryKey: ["booking"] });
     },
     onError: (error) => {
       console.error("Error paying segment:", error);
@@ -27,9 +37,18 @@ export function usePaymentSegments() {
     paymentProgress: null as PaymentProgress | null, // Payment progress not available in new API response format
     isLoadingSegments: false, // No loading since data comes from cache
     segmentsError: null,
-    refetchSegments: () => {
+    refetchSegments: async () => {
       // Invalidate and refetch user bookings to get fresh payment progress
-      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["userBookings"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["booking"],
+        refetchType: "all"
+      });
+      await queryClient.refetchQueries({ queryKey: ["userBookings"] });
+      await queryClient.refetchQueries({ queryKey: ["booking"] });
     },
     paySegment: paySegmentMutation.mutateAsync,
     isPayingSegment: paySegmentMutation.isPending,

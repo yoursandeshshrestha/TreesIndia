@@ -118,6 +118,8 @@ export default function PaymentSegmentsPage({
         <PaymentProgressComponent
           progress={paymentProgress}
           showSegments={false}
+          paymentStatus={booking.payment?.status}
+          paymentAmount={booking.payment?.amount}
         />
       </div>
 

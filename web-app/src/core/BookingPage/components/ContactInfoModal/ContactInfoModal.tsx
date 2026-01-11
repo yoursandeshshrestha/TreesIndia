@@ -131,7 +131,7 @@ export default function ContactInfoModal({
             </motion.button>
 
             <motion.div
-              className="bg-white rounded-2xl min-w-[300px] max-w-none w-full max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl min-w-[400px] sm:min-w-[500px] max-w-2xl w-full max-h-[90vh] overflow-hidden"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}

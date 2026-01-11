@@ -222,14 +222,14 @@ export function useQuoteAcceptanceRedux(
   );
 
   const handleProceedToPayment = useCallback(async () => {
-    // Check if this is multiple segments (no date/time selection required)
+    // Check if booking has payment segments (matching native app logic)
     const paymentSegments = booking?.payment_segments || [];
-    const hasMultipleSegments = paymentSegments.length > 1;
+    const hasPaymentSegments = paymentSegments.length > 0;
 
     if (
       !booking ||
       !selectedPaymentMethod ||
-      (!hasMultipleSegments && (!selectedDate || !selectedTimeSlot))
+      (!hasPaymentSegments && (!selectedDate || !selectedTimeSlot))
     ) {
       handleSetError("Please complete all selections before proceeding");
       return;
@@ -244,7 +244,7 @@ export function useQuoteAcceptanceRedux(
       }
 
       if (selectedPaymentMethod === "wallet") {
-        if (hasMultipleSegments) {
+        if (hasPaymentSegments) {
           await paySegment({
             bookingId,
             paymentData: {
@@ -276,7 +276,7 @@ export function useQuoteAcceptanceRedux(
           onClose?.();
         }, 2000);
       } else {
-        if (hasMultipleSegments) {
+        if (hasPaymentSegments) {
           await paySegment({
             bookingId,
             paymentData: {
