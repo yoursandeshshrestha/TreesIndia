@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"strings"
 	"treesindia/database"
 	"treesindia/models"
 
@@ -106,8 +107,22 @@ func (war *WorkerAssignmentRepository) GetWorkerAssignments(workerID uint, filte
 
 	// Apply filters
 	if filters.Status != "" {
-		countQuery = countQuery.Where("status = ?", filters.Status)
-		query = query.Where("status = ?", filters.Status)
+		// Handle comma-separated statuses (e.g., "assigned,accepted,in_progress")
+		statuses := strings.Split(filters.Status, ",")
+		// Trim whitespace from each status
+		for i := range statuses {
+			statuses[i] = strings.TrimSpace(statuses[i])
+		}
+
+		if len(statuses) == 1 {
+			// Single status: use exact match
+			countQuery = countQuery.Where("status = ?", statuses[0])
+			query = query.Where("status = ?", statuses[0])
+		} else {
+			// Multiple statuses: use IN clause
+			countQuery = countQuery.Where("status IN ?", statuses)
+			query = query.Where("status IN ?", statuses)
+		}
 	}
 	if filters.Date != "" {
 		// Use raw SQL subquery to avoid conflicts with preloads

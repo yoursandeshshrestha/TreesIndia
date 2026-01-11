@@ -237,12 +237,38 @@ func (ps *PaymentService) handleSegmentPaymentCompletion(booking *models.Booking
 
 // handleRegularBookingPaymentCompletion handles regular booking payment completion
 func (ps *PaymentService) handleRegularBookingPaymentCompletion(booking *models.Booking, payment *models.Payment) error {
-	// For regular bookings, just confirm the booking
+	// Check if booking has payment segments
+	paymentSegmentRepo := repositories.NewPaymentSegmentRepository()
+	segments, err := paymentSegmentRepo.GetByBookingID(booking.ID)
+	if err != nil {
+		logrus.Warnf("Failed to get payment segments for booking %d: %v", booking.ID, err)
+	}
+
+	// If booking has payment segments, mark them all as paid
+	if len(segments) > 0 {
+		now := time.Now()
+		for i := range segments {
+			// Only update pending segments
+			if segments[i].Status == models.PaymentSegmentStatusPending {
+				segments[i].Status = models.PaymentSegmentStatusPaid
+				segments[i].PaymentID = &payment.ID
+				segments[i].PaidAt = &now
+
+				err = paymentSegmentRepo.Update(&segments[i])
+				if err != nil {
+					logrus.Errorf("Failed to update segment %d status: %v", segments[i].ID, err)
+					// Continue with other segments even if one fails
+				}
+			}
+		}
+	}
+
+	// Confirm the booking
 	booking.Status = models.BookingStatusConfirmed
 	booking.PaymentStatus = "completed"
 
 	bookingRepo := repositories.NewBookingRepository()
-	err := bookingRepo.Update(booking)
+	err = bookingRepo.Update(booking)
 	if err != nil {
 		return fmt.Errorf("failed to update booking status: %v", err)
 	}
