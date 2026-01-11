@@ -2,6 +2,7 @@ import { API_BASE_URL, authenticatedFetch, handleResponse } from './base';
 import { Platform } from 'react-native';
 
 interface FCMTokenRegistrationRequest {
+  user_id?: number;
   token: string;
   platform: 'android' | 'ios';
   device_info?: {
@@ -24,6 +25,7 @@ export const fcmService = {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
 
     const requestBody: FCMTokenRegistrationRequest = {
+      user_id: 0, // Will be overridden by backend from auth token
       token,
       platform,
       device_info: deviceInfo,
