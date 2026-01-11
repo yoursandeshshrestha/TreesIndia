@@ -14,7 +14,6 @@ import {
   MapPin,
   Info,
   LogOut,
-  Briefcase,
   Home,
   Building2,
 } from "lucide-react";
@@ -76,21 +75,13 @@ export function ProfileSidebar({ onCloseMobileSidebar }: ProfileSidebarProps) {
       });
     }
 
-    // Add work/bookings item based on user type
-    const workOrBookingsItem =
-      user?.user_type === "worker"
-        ? {
-            id: "work",
-            label: "My Work",
-            icon: <Briefcase className="w-5 h-5" />,
-            path: "/profile/my-work",
-          }
-        : {
-            id: "bookings",
-            label: "My Bookings",
-            icon: <Calendar className="w-5 h-5" />,
-            path: "/profile/my-bookings",
-          };
+    // Add bookings item for all customers
+    const bookingsItem = {
+      id: "bookings",
+      label: "My Bookings",
+      icon: <Calendar className="w-5 h-5" />,
+      path: "/profile/my-bookings",
+    };
 
     const remainingItems = [
       {
@@ -113,7 +104,7 @@ export function ProfileSidebar({ onCloseMobileSidebar }: ProfileSidebarProps) {
       },
     ];
 
-    return [...baseItems, workOrBookingsItem, ...remainingItems];
+    return [...baseItems, bookingsItem, ...remainingItems];
   };
 
   const profileSidebarItems = getProfileSidebarItems();

@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { ProfileOverview } from "./sections/ProfileOverview/ProfileOverview";
 import { WalletSection } from "./sections/Wallet/WalletSection";
 import { BookingsSection } from "./sections/Booking/BookingsSection";
-import { MyWorkSection } from "./sections/MyWork/MyWorkSection";
 import { MyVendorsSection } from "./sections/MyVendors/MyVendorsSection";
 import { SubscriptionSection } from "./sections/Subscription/SubscriptionSection";
 import { SettingsSection } from "./sections/Settings/SettingsSection";
@@ -22,8 +21,6 @@ export function ProfileMainContent() {
         return <WalletSection />;
       case "/profile/my-bookings":
         return <BookingsSection />;
-      case "/profile/my-work":
-        return <MyWorkSection />;
       case "/profile/my-vendors":
         return <MyVendorsSection />;
       case "/profile/subscription":
