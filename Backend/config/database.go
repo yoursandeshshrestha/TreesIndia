@@ -22,5 +22,3 @@ func SeedInitialData(db *gorm.DB) error {
 	seedManager := seed.NewSeedManager()
 	return seedManager.SeedAll()
 }
-
-

@@ -31,7 +31,6 @@ func (sws *SubscriptionWarningService) CheckAndSendExpiryWarnings() error {
 	for _, subscription := range subscriptions7Days {
 		// Check if we already sent a warning for this user
 		if !sws.hasWarningBeenSent(subscription.UserID, 7) {
-					sws.notificationService.SendSubscriptionExpiryWarning(&subscription.User, 7)
 		sws.markWarningAsSent(subscription.UserID, 7)
 		}
 	}
@@ -45,7 +44,6 @@ func (sws *SubscriptionWarningService) CheckAndSendExpiryWarnings() error {
 
 	for _, subscription := range subscriptions1Day {
 		if !sws.hasWarningBeenSent(subscription.UserID, 1) {
-			sws.notificationService.SendSubscriptionExpiryWarning(&subscription.User, 1)
 			sws.markWarningAsSent(subscription.UserID, 1)
 		}
 	}

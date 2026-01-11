@@ -144,12 +144,24 @@ func (ss *SearchService) SearchServices(query string, page, limit int) (*models.
 	}
 
 	// Add filter applied info
+	filterParts := []string{}
 	if filters.PriceMax != nil {
-		metadata.FilterApplied = fmt.Sprintf("price <= %.0f", *filters.PriceMax)
-	} else if filters.PriceMin != nil {
-		metadata.FilterApplied = fmt.Sprintf("price >= %.0f", *filters.PriceMin)
-	} else if filters.PriceType != nil {
-		metadata.FilterApplied = fmt.Sprintf("price_type = %s", *filters.PriceType)
+		filterParts = append(filterParts, fmt.Sprintf("price <= %.0f", *filters.PriceMax))
+	}
+	if filters.PriceMin != nil {
+		filterParts = append(filterParts, fmt.Sprintf("price >= %.0f", *filters.PriceMin))
+	}
+	if filters.PriceType != nil {
+		filterParts = append(filterParts, fmt.Sprintf("price_type = %s", *filters.PriceType))
+	}
+	if filters.City != nil {
+		filterParts = append(filterParts, fmt.Sprintf("city = %s", *filters.City))
+	}
+	if filters.State != nil {
+		filterParts = append(filterParts, fmt.Sprintf("state = %s", *filters.State))
+	}
+	if len(filterParts) > 0 {
+		metadata.FilterApplied = strings.Join(filterParts, ", ")
 	}
 
 	response := &models.SearchResponse{
@@ -326,30 +338,115 @@ func (ss *SearchService) parseServiceTypeFilters(query string, filters *models.S
 func (ss *SearchService) parseKeywordFilters(query string, filters *models.SearchFilters) {
 	// Remove price and service type keywords to get clean keywords
 	cleanQuery := query
-	
+
 	// Remove price-related words
 	priceWords := []string{"under", "below", "above", "over", "cheap", "budget", "expensive", "premium", "less than", "more than"}
 	for _, word := range priceWords {
 		cleanQuery = strings.ReplaceAll(cleanQuery, word, "")
 	}
-	
+
 	// Remove service type words
 	serviceTypeWords := []string{"fixed", "inquiry", "quote", "instant"}
 	for _, word := range serviceTypeWords {
 		cleanQuery = strings.ReplaceAll(cleanQuery, word, "")
 	}
-	
+
+	// Parse location (city/state) from query
+	ss.parseLocationFilters(cleanQuery, filters)
+
+	// Remove location words from clean query
+	if filters.City != nil {
+		cleanQuery = strings.ReplaceAll(cleanQuery, *filters.City, "")
+	}
+	if filters.State != nil {
+		cleanQuery = strings.ReplaceAll(cleanQuery, *filters.State, "")
+	}
+
 	// Extract remaining keywords
 	keywords := strings.Fields(cleanQuery)
 	filters.Keywords = keywords
 }
 
+// parseLocationFilters extracts city/state from query
+func (ss *SearchService) parseLocationFilters(query string, filters *models.SearchFilters) {
+	query = strings.ToLower(query)
+
+	// List of popular Indian cities (can be expanded)
+	cities := []string{
+		"mumbai", "delhi", "bangalore", "bengaluru", "hyderabad", "ahmedabad", "chennai", "kolkata",
+		"pune", "jaipur", "surat", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal",
+		"visakhapatnam", "pimpri-chinchwad", "patna", "vadodara", "ghaziabad", "ludhiana", "agra",
+		"nashik", "faridabad", "meerut", "rajkot", "kalyan-dombivali", "vasai-virar", "varanasi",
+		"srinagar", "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "prayagraj",
+		"ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", "vijayawada", "jodhpur",
+		"madurai", "raipur", "kota", "chandigarh", "guwahati", "solapur", "hubli-dharwad",
+		"bareilly", "moradabad", "mysore", "mysuru", "gurgaon", "gurugram", "aligarh", "jalandhar",
+		"tiruchirappalli", "bhubaneswar", "salem", "warangal", "guntur", "bhiwandi", "saharanpur",
+		"gorakhpur", "bikaner", "amravati", "noida", "jamshedpur", "bhilai", "cuttack", "firozabad",
+		"kochi", "ernakulam", "nellore", "bhavnagar", "dehradun", "durgapur", "asansol", "rourkela",
+		"nanded", "kolhapur", "ajmer", "akola", "gulbarga", "kalaburagi", "jamnagar", "ujjain",
+		"loni", "siliguri", "jhansi", "ulhasnagar", "jammu", "sangli-miraj-kupwad", "mangalore",
+		"erode", "belgaum", "belagavi", "ambattur", "tirunelveli", "malegaon", "gaya", "jalgaon",
+		"udaipur", "maheshtala", "tiruppur", "davanagere", "kozhikode", "calicut", "akola", "kurnool",
+	}
+
+	// Indian states (can be expanded)
+	states := []string{
+		"andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh", "goa", "gujarat",
+		"haryana", "himachal pradesh", "jharkhand", "karnataka", "kerala", "madhya pradesh",
+		"maharashtra", "manipur", "meghalaya", "mizoram", "nagaland", "odisha", "punjab",
+		"rajasthan", "sikkim", "tamil nadu", "telangana", "tripura", "uttar pradesh", "uttarakhand",
+		"west bengal", "andaman and nicobar", "chandigarh", "dadra and nagar haveli", "daman and diu",
+		"delhi", "jammu and kashmir", "ladakh", "lakshadweep", "puducherry",
+	}
+
+	// Check for city matches
+	for _, city := range cities {
+		if strings.Contains(query, city) {
+			filters.City = &city
+			break
+		}
+	}
+
+	// Check for state matches
+	for _, state := range states {
+		if strings.Contains(query, state) {
+			filters.State = &state
+			break
+		}
+	}
+}
+
+// applyLocationFilter adds location filtering to a query if city/state is provided
+func (ss *SearchService) applyLocationFilter(query *gorm.DB, filters models.SearchFilters) *gorm.DB {
+	if filters.City != nil || filters.State != nil {
+		// Build subquery to find service IDs matching the location
+		subQuery := ss.db.Table("services").
+			Select("DISTINCT services.id").
+			Joins("JOIN service_service_areas ON services.id = service_service_areas.service_id").
+			Joins("JOIN service_areas ON service_service_areas.service_area_id = service_areas.id").
+			Where("service_areas.is_active = ?", true)
+
+		if filters.City != nil {
+			subQuery = subQuery.Where("LOWER(service_areas.city) LIKE ?", "%"+strings.ToLower(*filters.City)+"%")
+		}
+		if filters.State != nil {
+			subQuery = subQuery.Where("LOWER(service_areas.state) LIKE ?", "%"+strings.ToLower(*filters.State)+"%")
+		}
+
+		// Apply subquery to main query
+		query = query.Where("services.id IN (?)", subQuery)
+	}
+	return query
+}
+
 // searchByPrice searches services by price filter
 func (ss *SearchService) searchByPrice(filters models.SearchFilters, page, limit int) ([]models.SearchResult, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	query := ss.db.Model(&models.Service{}).
 		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+		Preload("ServiceAreas").
 		Where("services.is_active = ?", true)
 
 	// Apply price filters
@@ -359,6 +456,9 @@ func (ss *SearchService) searchByPrice(filters models.SearchFilters, page, limit
 	if filters.PriceMin != nil {
 		query = query.Where("services.price >= ?", *filters.PriceMin)
 	}
+
+	// Apply location filter
+	query = ss.applyLocationFilter(query, filters)
 
 	// Get total count
 	var total int64
@@ -383,15 +483,19 @@ func (ss *SearchService) searchByPrice(filters models.SearchFilters, page, limit
 // searchByServiceType searches services by service type
 func (ss *SearchService) searchByServiceType(filters models.SearchFilters, page, limit int) ([]models.SearchResult, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	query := ss.db.Model(&models.Service{}).
 		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+		Preload("ServiceAreas").
 		Where("services.is_active = ?", true)
 
 	// Apply service type filter
 	if filters.PriceType != nil {
 		query = query.Where("services.price_type = ?", *filters.PriceType)
 	}
+
+	// Apply location filter
+	query = ss.applyLocationFilter(query, filters)
 
 	// Get total count
 	var total int64
@@ -416,9 +520,10 @@ func (ss *SearchService) searchByServiceType(filters models.SearchFilters, page,
 // searchByKeywords searches services by keywords
 func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, limit int) ([]models.SearchResult, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	query := ss.db.Model(&models.Service{}).
 		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+		Preload("ServiceAreas").
 		Where("services.is_active = ?", true)
 
 	// Apply keyword filters
@@ -426,24 +531,27 @@ func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, li
 		// Add joins once outside the loop to avoid duplicate table references
 		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
 			Joins("LEFT JOIN categories parent_cat ON categories.parent_id = parent_cat.id")
-		
+
 		// Build OR conditions for all keywords
 		var keywordConditions []string
 		var keywordArgs []interface{}
-		
+
 		for _, keyword := range filters.Keywords {
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
-				keywordConditions = append(keywordConditions, 
+				keywordConditions = append(keywordConditions,
 					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR parent_cat.name ILIKE ?)")
 				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
 		}
-		
+
 		if len(keywordConditions) > 0 {
 			query = query.Where(strings.Join(keywordConditions, " OR "), keywordArgs...)
 		}
 	}
+
+	// Apply location filter
+	query = ss.applyLocationFilter(query, filters)
 
 	// Get total count
 	var total int64
@@ -468,9 +576,10 @@ func (ss *SearchService) searchByKeywords(filters models.SearchFilters, page, li
 // searchCombined searches services with combined filters
 func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limit int) ([]models.SearchResult, int64, error) {
 	offset := (page - 1) * limit
-	
+
 	query := ss.db.Model(&models.Service{}).
 		Preload("Category").Preload("Category.Parent").Preload("Category.Parent.Parent").
+		Preload("ServiceAreas").
 		Where("services.is_active = ?", true)
 
 	// Apply price filters
@@ -491,24 +600,27 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 		// Add joins once outside the loop to avoid duplicate table references
 		query = query.Joins("LEFT JOIN categories ON services.category_id = categories.id").
 			Joins("LEFT JOIN categories parent_cat ON categories.parent_id = parent_cat.id")
-		
+
 		// Build OR conditions for all keywords
 		var keywordConditions []string
 		var keywordArgs []interface{}
-		
+
 		for _, keyword := range filters.Keywords {
 			keyword = strings.TrimSpace(keyword)
 			if keyword != "" {
-				keywordConditions = append(keywordConditions, 
+				keywordConditions = append(keywordConditions,
 					"(services.name ILIKE ? OR services.description ILIKE ? OR categories.name ILIKE ? OR parent_cat.name ILIKE ?)")
 				keywordArgs = append(keywordArgs, "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 			}
 		}
-		
+
 		if len(keywordConditions) > 0 {
 			query = query.Where(strings.Join(keywordConditions, " OR "), keywordArgs...)
 		}
 	}
+
+	// Apply location filter
+	query = ss.applyLocationFilter(query, filters)
 
 	// Get total count
 	var total int64
@@ -533,8 +645,16 @@ func (ss *SearchService) searchCombined(filters models.SearchFilters, page, limi
 // convertToSearchResults converts services to search results
 func (ss *SearchService) convertToSearchResults(services []models.Service, matchReason string) []models.SearchResult {
 	results := make([]models.SearchResult, len(services))
-	
+
 	for i, service := range services {
+		// Extract service area city names
+		serviceAreas := make([]string, 0, len(service.ServiceAreas))
+		for _, area := range service.ServiceAreas {
+			if area.City != "" {
+				serviceAreas = append(serviceAreas, area.City)
+			}
+		}
+
 		results[i] = models.SearchResult{
 			ID:            service.ID,
 			Name:          service.Name,
@@ -549,7 +669,7 @@ func (ss *SearchService) convertToSearchResults(services []models.Service, match
 			Rating:        4.5, // Mock rating - in real implementation, calculate from reviews
 			TotalBookings: 50,  // Mock booking count - in real implementation, get from bookings table
 			Images:        service.Images,
-			ServiceAreas:  []string{"Mumbai", "Delhi"}, // Mock service areas
+			ServiceAreas:  serviceAreas,
 			MatchScore:    1.0,
 			MatchReason:   matchReason,
 			CreatedAt:     service.CreatedAt,
@@ -568,10 +688,18 @@ func (ss *SearchService) convertToSearchResults(services []models.Service, match
 // convertToSearchResultsWithRelevance converts services to search results with relevance scoring
 func (ss *SearchService) convertToSearchResultsWithRelevance(services []models.Service, keywords []string) []models.SearchResult {
 	results := make([]models.SearchResult, len(services))
-	
+
 	for i, service := range services {
 		// Calculate relevance score
 		score := ss.calculateRelevanceScore(service, keywords)
+
+		// Extract service area city names
+		serviceAreas := make([]string, 0, len(service.ServiceAreas))
+		for _, area := range service.ServiceAreas {
+			if area.City != "" {
+				serviceAreas = append(serviceAreas, area.City)
+			}
+		}
 
 		results[i] = models.SearchResult{
 			ID:            service.ID,
@@ -587,7 +715,7 @@ func (ss *SearchService) convertToSearchResultsWithRelevance(services []models.S
 			Rating:        4.5, // Mock rating
 			TotalBookings: 50,  // Mock booking count
 			Images:        service.Images,
-			ServiceAreas:  []string{"Mumbai", "Delhi"}, // Mock service areas
+			ServiceAreas:  serviceAreas,
 			MatchScore:    score,
 			MatchReason:   "keyword_match",
 			CreatedAt:     service.CreatedAt,

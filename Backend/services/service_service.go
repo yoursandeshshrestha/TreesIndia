@@ -234,10 +234,8 @@ func (ss *ServiceService) CreateService(req *models.CreateServiceRequest, imageF
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				logrus.Errorf("ServiceService.CreateService NotifyServiceAdded panic: %v", r)
 			}
 		}()
-		NotifyServiceAdded(service)
 	}()
 
 	return service, nil

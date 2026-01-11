@@ -69,7 +69,6 @@ func (uss *UserSubscriptionService) CheckAndUpdateSubscriptionStatus(userID uint
 			uss.subscriptionCache.Invalidate(userID)
 			
 			// Send expiry notification
-			go uss.notificationService.SendSubscriptionExpiredNotification(user)
 		}
 	}
 	
@@ -256,7 +255,6 @@ func (uss *UserSubscriptionService) CompleteSubscriptionPurchase(userID uint, pa
 	uss.subscriptionCache.Invalidate(userID)
 	
 	// Send confirmation notification
-	go uss.notificationService.SendSubscriptionConfirmationNotification(user, subscription)
 	
 	return subscription, nil
 }
@@ -363,7 +361,6 @@ func (uss *UserSubscriptionService) PurchaseSubscription(userID uint, planID uin
 	uss.subscriptionCache.Invalidate(userID)
 	
 	// Send confirmation notification
-	go uss.notificationService.SendSubscriptionConfirmationNotification(user, subscription)
 	
 	return subscription, nil
 }
@@ -436,7 +433,6 @@ func (uss *UserSubscriptionService) ExtendSubscription(userID uint, days int) er
 	uss.subscriptionCache.Invalidate(userID)
 	
 	// Send extension notification
-	go uss.notificationService.SendSubscriptionExtendedNotification(user, days)
 	
 	return nil
 }

@@ -33,7 +33,7 @@ func TestEmail(ctx *gin.Context) {
 	}
 
 	emailService := services.NewEmailService()
-	
+
 	subject := "Test Email - TREESINDIA"
 	body := `
 		<html>
@@ -55,7 +55,7 @@ func TestEmail(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Test email sent successfully", gin.H{
-		"email": email,
+		"email":   email,
 		"message": "Test email sent successfully",
 	}))
 }

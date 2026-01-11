@@ -115,8 +115,6 @@ func (c *AdminConfigController) UpdateConfig(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Configuration updated successfully", config))
 }
 
-
-
 // GetConfigMap retrieves all configurations as a key-value map
 // @Summary Get configuration map
 // @Description Retrieve all configurations as a key-value map

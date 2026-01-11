@@ -40,7 +40,7 @@ func NewLocationController() *LocationController {
 // @Router /locations [post]
 func (lc *LocationController) CreateLocation(c *gin.Context) {
 	var req models.CreateLocationRequest
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
@@ -125,8 +125,6 @@ func (lc *LocationController) GetLocationByUserID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Location retrieved successfully", location))
 }
-
-
 
 // UpdateLocation godoc
 // @Summary Update location
@@ -255,13 +253,13 @@ func (lc *LocationController) UpdateUserLocation(c *gin.Context) {
 			Latitude:   req.Latitude,
 			Longitude:  req.Longitude,
 		}
-		
+
 		location, err := lc.locationService.CreateLocation(userID, &createReq)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create location", err.Error()))
 			return
 		}
-		
+
 		c.JSON(http.StatusCreated, views.CreateSuccessResponse("Location created successfully", location))
 		return
 	}

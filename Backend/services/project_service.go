@@ -123,7 +123,6 @@ func (ps *ProjectService) CreateProject(userID uint, req *CreateProjectRequest) 
 	project.User = &user
 
 	// Send notification to admins about new project
-	go NotifyProjectCreated(project, &user)
 
 	return project, nil
 }

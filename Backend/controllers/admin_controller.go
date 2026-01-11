@@ -30,23 +30,23 @@ func NewAdminController() *AdminController {
 
 // AdminSeed represents admin user seed data
 type AdminSeed struct {
-	Email     string `json:"email" binding:"required,email"`
-	Name      string `json:"name" binding:"required"`
-	Role      string `json:"role" binding:"required,oneof=super_admin admin moderator"`
-	IsActive  bool   `json:"is_active"`
+	Email    string `json:"email" binding:"required,email"`
+	Name     string `json:"name" binding:"required"`
+	Role     string `json:"role" binding:"required,oneof=super_admin admin moderator"`
+	IsActive bool   `json:"is_active"`
 }
 
 // AdminCreateUserRequest represents the request for creating a user from admin panel
 type AdminCreateUserRequest struct {
-	Name                  string                    `json:"name" binding:"required,min=2,max=100"`
-	Email                 *string                   `json:"email" binding:"omitempty,email"`
-	Phone                 string                    `json:"phone" binding:"required"`
-	UserType              string                    `json:"user_type" binding:"required,oneof=normal worker broker admin"`
-	Gender                string                    `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
-	IsActive              bool                      `json:"is_active"`
-	WalletBalance         float64                   `json:"wallet_balance"`
-	HasActiveSubscription bool                      `json:"has_active_subscription"`
-	AdminRoles            []string                  `json:"admin_roles"` // only used when user_type=admin, slice of role codes
+	Name                  string   `json:"name" binding:"required,min=2,max=100"`
+	Email                 *string  `json:"email" binding:"omitempty,email"`
+	Phone                 string   `json:"phone" binding:"required"`
+	UserType              string   `json:"user_type" binding:"required,oneof=normal worker broker admin"`
+	Gender                string   `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
+	IsActive              bool     `json:"is_active"`
+	WalletBalance         float64  `json:"wallet_balance"`
+	HasActiveSubscription bool     `json:"has_active_subscription"`
+	AdminRoles            []string `json:"admin_roles"` // only used when user_type=admin, slice of role codes
 }
 
 // CreateUser godoc
@@ -90,13 +90,13 @@ func (ac *AdminController) CreateUser(c *gin.Context) {
 
 	// Create user
 	user := models.User{
-		Name:                 req.Name,
-		Email:                req.Email,
-		Phone:                req.Phone,
-		UserType:             models.UserType(req.UserType),
-		Gender:               req.Gender,
-		IsActive:             req.IsActive,
-		WalletBalance:        req.WalletBalance,
+		Name:                  req.Name,
+		Email:                 req.Email,
+		Phone:                 req.Phone,
+		UserType:              models.UserType(req.UserType),
+		Gender:                req.Gender,
+		IsActive:              req.IsActive,
+		WalletBalance:         req.WalletBalance,
 		HasActiveSubscription: req.HasActiveSubscription,
 	}
 
@@ -141,7 +141,7 @@ func (ac *AdminController) SeedAdminUsers(c *gin.Context) {
 	// Check if admin user already exists
 	var adminCount int64
 	ac.db.Model(&models.User{}).Where("phone = ?", "+918597831351").Count(&adminCount)
-	
+
 	if adminCount > 0 {
 		c.JSON(http.StatusConflict, views.CreateErrorResponse("Admin user already exists", "Admin user has already been seeded"))
 		return
@@ -150,11 +150,11 @@ func (ac *AdminController) SeedAdminUsers(c *gin.Context) {
 	// Create admin user
 	adminEmail := "admin@treesindia.com"
 	adminUser := models.User{
-		Name:        "Admin",
-		Email:       &adminEmail,
-		Phone:       "+918597831351",
-		UserType:    models.UserTypeAdmin,
-		IsActive:    true,
+		Name:     "Admin",
+		Email:    &adminEmail,
+		Phone:    "+918597831351",
+		UserType: models.UserTypeAdmin,
+		IsActive: true,
 	}
 
 	if err := ac.db.Create(&adminUser).Error; err != nil {
@@ -173,10 +173,6 @@ func (ac *AdminController) SeedAdminUsers(c *gin.Context) {
 	}))
 }
 
-
-
-
-
 // GetAllUsers godoc
 // @Summary Get all users
 // @Description Get all users with pagination and advanced filtering support
@@ -186,7 +182,7 @@ func (ac *AdminController) SeedAdminUsers(c *gin.Context) {
 // @Security BearerAuth
 // @Param page query int false "Page number (default: 1)"
 // @Param limit query int false "Items per page (default: 10, max: 100)"
-	// @Param user_type query string false "Filter by user type (normal, worker, broker, admin)"
+// @Param user_type query string false "Filter by user type (normal, worker, broker, admin)"
 // @Param is_active query string false "Filter by active status (true, false)"
 // @Param role_application_status query string false "Filter by role application status (none, pending, approved, rejected)"
 // @Param has_active_subscription query string false "Filter by subscription status (true, false)"
@@ -224,18 +220,18 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 	// Build query with filters
 	query := ac.db.Model(&models.User{})
 	hasWorkerJoin := false
-	
+
 	// Apply filters
 	if userType := c.Query("user_type"); userType != "" {
 		query = query.Where("users.user_type = ?", userType)
-		
+
 		// If querying for workers and availability parameters are present (for booking assignment),
 		// filter to only show Trees India workers
 		if userType == "worker" {
 			scheduledTime := c.Query("scheduled_time")
 			serviceDuration := c.Query("service_duration")
 			serviceID := c.Query("service_id")
-			
+
 			// If any availability parameter is present, filter for Trees India workers only
 			if scheduledTime != "" || serviceDuration != "" || serviceID != "" {
 				query = query.Joins("JOIN workers ON users.id = workers.user_id").
@@ -244,7 +240,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			}
 		}
 	}
-	
+
 	if isActive := c.Query("is_active"); isActive != "" {
 		if isActive == "true" {
 			// Qualify column name to avoid ambiguity when workers table is joined
@@ -261,7 +257,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			}
 		}
 	}
-	
+
 	if roleStatus := c.Query("role_application_status"); roleStatus != "" {
 		// Qualify column name to avoid ambiguity when workers table is joined
 		if hasWorkerJoin {
@@ -270,7 +266,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			query = query.Where("role_application_status = ?", roleStatus)
 		}
 	}
-	
+
 	if hasSubscription := c.Query("has_active_subscription"); hasSubscription != "" {
 		// Qualify column name to avoid ambiguity when workers table is joined
 		if hasSubscription == "true" {
@@ -287,7 +283,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			}
 		}
 	}
-	
+
 	if search := c.Query("search"); search != "" {
 		searchTerm := "%" + search + "%"
 		// Qualify column names to avoid ambiguity when workers table is joined
@@ -297,7 +293,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm)
 		}
 	}
-	
+
 	if dateFrom := c.Query("date_from"); dateFrom != "" {
 		if hasWorkerJoin {
 			query = query.Where("users.created_at >= ?", dateFrom)
@@ -305,7 +301,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			query = query.Where("created_at >= ?", dateFrom)
 		}
 	}
-	
+
 	if dateTo := c.Query("date_to"); dateTo != "" {
 		if hasWorkerJoin {
 			query = query.Where("users.created_at <= ?", dateTo)
@@ -346,13 +342,13 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
 			return
 		}
-		
+
 		// Extract user IDs
 		userIDs := make([]uint, len(userData))
 		for i, ud := range userData {
 			userIDs[i] = ud.ID
 		}
-		
+
 		// Then fetch full user data for those IDs, maintaining the order
 		if len(userIDs) > 0 {
 			if err := ac.db.Where("id IN ?", userIDs).
@@ -361,7 +357,7 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to fetch users", err.Error()))
 				return
 			}
-			
+
 			// Reorder users to match the subquery order (by created_at DESC)
 			orderedUsers := make([]models.User, 0, len(userIDs))
 			for _, ud := range userData {
@@ -475,16 +471,16 @@ func (ac *AdminController) SearchUsers(c *gin.Context) {
 
 // AdminUpdateUserRequest represents the request for admin updating user
 type AdminUpdateUserRequest struct {
-	Name                   string     `json:"name" binding:"required,min=2,max=100"`
-	Email                  *string    `json:"email" binding:"omitempty,email"`
-	Phone                  string     `json:"phone" binding:"required"`
-	UserType               string     `json:"user_type" binding:"required,oneof=normal worker broker admin"`
-	Gender                 string     `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
-	IsActive               bool       `json:"is_active"`
-	RoleApplicationStatus  string     `json:"role_application_status" binding:"omitempty,oneof=none pending approved rejected"`
-	WalletBalance          float64    `json:"wallet_balance"`
+	Name                  string  `json:"name" binding:"required,min=2,max=100"`
+	Email                 *string `json:"email" binding:"omitempty,email"`
+	Phone                 string  `json:"phone" binding:"required"`
+	UserType              string  `json:"user_type" binding:"required,oneof=normal worker broker admin"`
+	Gender                string  `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
+	IsActive              bool    `json:"is_active"`
+	RoleApplicationStatus string  `json:"role_application_status" binding:"omitempty,oneof=none pending approved rejected"`
+	WalletBalance         float64 `json:"wallet_balance"`
 
-	HasActiveSubscription  bool       `json:"has_active_subscription"`
+	HasActiveSubscription bool `json:"has_active_subscription"`
 }
 
 // UpdateUserByID godoc
@@ -569,7 +565,7 @@ func (ac *AdminController) safeDelete(tx *gorm.DB, model interface{}, condition 
 	// Generate a unique savepoint name using a simple counter or timestamp
 	// Using a simple approach: create savepoint, attempt delete, handle errors
 	savepointName := fmt.Sprintf("sp_%d", time.Now().UnixNano())
-	
+
 	// Create a savepoint before attempting the delete
 	if err := tx.Exec("SAVEPOINT " + savepointName).Error; err != nil {
 		return err
@@ -586,10 +582,10 @@ func (ac *AdminController) safeDelete(tx *gorm.DB, model interface{}, condition 
 	if result.Error != nil {
 		errMsg := result.Error.Error()
 		// If table doesn't exist or transaction is aborted, rollback to savepoint and continue
-		if strings.Contains(errMsg, "does not exist") || 
-		   strings.Contains(errMsg, "SQLSTATE 42P01") ||
-		   strings.Contains(errMsg, "transaction is aborted") ||
-		   strings.Contains(errMsg, "SQLSTATE 25P02") {
+		if strings.Contains(errMsg, "does not exist") ||
+			strings.Contains(errMsg, "SQLSTATE 42P01") ||
+			strings.Contains(errMsg, "transaction is aborted") ||
+			strings.Contains(errMsg, "SQLSTATE 25P02") {
 			// Rollback to savepoint to recover from the error
 			tx.Exec("ROLLBACK TO SAVEPOINT " + savepointName)
 			// Release the savepoint
@@ -956,7 +952,7 @@ func (ac *AdminController) ToggleUserActivation(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User activation status updated successfully", gin.H{
-		"user": user,
+		"user":    user,
 		"message": "User has been " + status,
 	}))
 }

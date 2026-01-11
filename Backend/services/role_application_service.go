@@ -15,21 +15,20 @@ type RoleApplicationService struct {
 	applicationRepo     *repositories.RoleApplicationRepository
 	userRepo            *repositories.UserRepository
 	subscriptionRepo    *repositories.UserSubscriptionRepository
-	notificationService *InAppNotificationService
+	
 	db                  *gorm.DB
 }
 
 func NewRoleApplicationService(
 	applicationRepo *repositories.RoleApplicationRepository,
 	userRepo *repositories.UserRepository,
-	notificationService *InAppNotificationService,
+	notificationService interface{},
 ) *RoleApplicationService {
 	return &RoleApplicationService{
-		applicationRepo:     applicationRepo,
-		userRepo:            userRepo,
-		subscriptionRepo:    repositories.NewUserSubscriptionRepository(),
-		notificationService: notificationService,
-		db:                  database.GetDB(),
+		applicationRepo:  applicationRepo,
+		userRepo:         userRepo,
+		subscriptionRepo: repositories.NewUserSubscriptionRepository(),
+		db:               database.GetDB(),
 	}
 }
 
@@ -249,7 +248,6 @@ func (s *RoleApplicationService) SubmitWorkerApplication(userID uint, workerData
 	// Send notification to admins about new worker application
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err == nil {
-		go NotifyWorkerApplication(&user, application)
 	}
 
 	return application, nil
@@ -452,7 +450,6 @@ func (s *RoleApplicationService) SubmitBrokerApplication(userID uint, brokerData
 	// Send notification to admins about new broker application
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err == nil {
-		go NotifyBrokerApplication(&user, application)
 	}
 
 	return application, nil
@@ -589,9 +586,6 @@ func (s *RoleApplicationService) UpdateApplication(id uint, adminID uint, status
 	}
 
 	// Send in-app notification to user about application status
-	if s.notificationService != nil {
-		go s.sendApplicationStatusNotification(application, status)
-	}
 
 	return application, nil
 }
@@ -731,53 +725,3 @@ func (s *RoleApplicationService) GetEnhancedApplicationsByStatus(status models.A
 	return enhancedApplications, nil
 }
 
-// sendApplicationStatusNotification sends in-app notification to user about application status
-func (s *RoleApplicationService) sendApplicationStatusNotification(application *models.RoleApplication, status models.ApplicationStatus) {
-	var notificationType models.InAppNotificationType
-	var title, message string
-
-	if status == models.ApplicationStatusApproved {
-		if application.RequestedRole == "worker" {
-			notificationType = models.InAppNotificationTypeApplicationAccepted
-			title = "Worker Application Approved!"
-			message = "Congratulations! Your worker application has been approved."
-		} else if application.RequestedRole == "broker" {
-			notificationType = models.InAppNotificationTypeBrokerApplicationStatus
-			title = "Broker Application Approved!"
-			message = "Congratulations! Your broker application has been approved. You can now list properties and manage real estate transactions."
-		}
-	} else if status == models.ApplicationStatusRejected {
-		if application.RequestedRole == "worker" {
-			notificationType = models.InAppNotificationTypeApplicationRejected
-			title = "Worker Application Update"
-			message = "Your worker application has been reviewed but unfortunately was not approved at this time. You can reapply after addressing any concerns."
-		} else if application.RequestedRole == "broker" {
-			notificationType = models.InAppNotificationTypeBrokerApplicationStatus
-			title = "Broker Application Update"
-			message = "Your broker application has been reviewed but unfortunately was not approved at this time. You can reapply after addressing any concerns."
-		}
-	}
-
-	if notificationType != "" {
-		data := map[string]interface{}{
-			"application_id": application.ID,
-			"requested_role": application.RequestedRole,
-			"status":         string(status),
-			"reviewed_at":    application.ReviewedAt,
-		}
-
-		err := s.notificationService.CreateNotificationForUser(
-			application.UserID,
-			notificationType,
-			title,
-			message,
-			data,
-		)
-
-		if err != nil {
-			logrus.Errorf("Failed to send application status notification to user %d: %v", application.UserID, err)
-		} else {
-			logrus.Infof("Sent application status notification to user %d for application %d", application.UserID, application.ID)
-		}
-	}
-}

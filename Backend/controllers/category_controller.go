@@ -16,7 +16,7 @@ import (
 
 type CategoryController struct {
 	*BaseController
-	categoryService *services.CategoryService
+	categoryService  *services.CategoryService
 	validationHelper *utils.ValidationHelper
 }
 
@@ -30,7 +30,7 @@ func NewCategoryController() *CategoryController {
 			validationHelper: utils.NewValidationHelper(),
 		}
 	}
-	
+
 	return &CategoryController{
 		BaseController:   NewBaseController(),
 		categoryService:  categoryService,
@@ -232,5 +232,3 @@ func (cc *CategoryController) ToggleStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Category "+statusText+" successfully", category))
 }
-
-

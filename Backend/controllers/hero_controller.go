@@ -29,7 +29,7 @@ func (c *HeroController) GetHeroConfig(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get hero config", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero config retrieved successfully", config))
 }
 
@@ -41,26 +41,26 @@ func (c *HeroController) UpdateHeroConfig(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get hero config", err.Error()))
 		return
 	}
-	
+
 	// Bind the request data to update the fields
 	var updateData models.HeroConfig
 	if err := ctx.ShouldBindJSON(&updateData); err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
-	
+
 	// Update the existing config with new data
 	existingConfig.Title = updateData.Title
 	existingConfig.Description = updateData.Description
 	existingConfig.PromptText = updateData.PromptText
 	existingConfig.IsActive = updateData.IsActive
-	
+
 	err = c.heroService.UpdateHeroConfig(existingConfig)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update hero config", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero config updated successfully", existingConfig))
 }
 
@@ -71,13 +71,13 @@ func (c *HeroController) GetHeroImages(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get hero config", err.Error()))
 		return
 	}
-	
+
 	images, err := c.heroService.GetHeroImages(config.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get hero images", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero images retrieved successfully", images))
 }
 
@@ -96,7 +96,7 @@ func (c *HeroController) CreateHeroImage(ctx *gin.Context) {
 	// Determine media type from content-type
 	contentType := file.Header.Get("Content-Type")
 	mediaType := utils.GetMediaType(contentType)
-	
+
 	// Validate file type
 	if mediaType == "" {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid file type", "Only JPEG, PNG, WebP images and MP4, WebM, AVI videos are allowed"))
@@ -108,7 +108,7 @@ func (c *HeroController) CreateHeroImage(ctx *gin.Context) {
 	if mediaType == "video" {
 		maxSize = 50 * 1024 * 1024 // 50MB for videos
 	}
-	
+
 	if file.Size > maxSize {
 		maxSizeMB := maxSize / (1024 * 1024)
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("File too large", fmt.Sprintf("File size must be less than %dMB", maxSizeMB)))
@@ -146,20 +146,20 @@ func (c *HeroController) UpdateHeroImage(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid image ID", err.Error()))
 		return
 	}
-	
+
 	var image models.HeroImage
 	if err := ctx.ShouldBindJSON(&image); err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
-	
+
 	image.ID = uint(id)
 	err = c.heroService.UpdateHeroImage(&image)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update hero image", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero image updated successfully", image))
 }
 
@@ -171,12 +171,12 @@ func (c *HeroController) DeleteHeroImage(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid image ID", err.Error()))
 		return
 	}
-	
+
 	err = c.heroService.DeleteHeroImage(uint(id))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete hero image", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Hero image deleted successfully", nil))
 }

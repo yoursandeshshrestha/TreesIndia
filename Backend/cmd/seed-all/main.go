@@ -70,4 +70,3 @@ func main() {
 
 	logrus.Info("🎉 Master seed process completed successfully!")
 }
-

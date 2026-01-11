@@ -12,7 +12,7 @@ import (
 )
 
 type ChatbotController struct {
-	chatbotService    *services.ChatbotService
+	chatbotService     *services.ChatbotService
 	fastChatbotService *services.FastChatbotService
 }
 
@@ -20,9 +20,9 @@ func NewChatbotController() *ChatbotController {
 	// Initialize both services
 	chatbotService := services.NewChatbotService()
 	fastChatbotService := services.NewFastChatbotService(chatbotService.ChatbotRepo, chatbotService)
-	
+
 	return &ChatbotController{
-		chatbotService:    chatbotService,
+		chatbotService:     chatbotService,
 		fastChatbotService: fastChatbotService,
 	}
 }

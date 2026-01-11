@@ -50,7 +50,7 @@ var db *gorm.DB
 func initDatabase(appConfig *config.AppConfig) {
 	var err error
 	dsn := appConfig.GetDatabaseURL()
-	
+
 	// Connect to database
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		// Prevent GORM from auto-creating tables
@@ -91,7 +91,7 @@ func maskPassword(dsn string) string {
 func runMigrations(appConfig *config.AppConfig) error {
 	// Use the same database URL as the main application
 	dsn := appConfig.GetDatabaseURL()
-	
+
 	// Convert the connection string format for Goose if needed
 	// Goose expects format: postgres://user:password@host:port/dbname?sslmode=disable
 	if !strings.HasPrefix(dsn, "postgres://") && !strings.HasPrefix(dsn, "postgresql://") {
@@ -99,16 +99,16 @@ func runMigrations(appConfig *config.AppConfig) error {
 		// Convert it to the URL format
 		dsn = convertToURLFormat(dsn)
 	}
-	
+
 	// Run migrations using Goose
 	cmd := exec.Command("goose", "-dir", "migrations", "postgres", dsn, "up")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
-	
+
 	logrus.Info("Database migrations completed successfully")
 	return nil
 }
@@ -118,7 +118,7 @@ func convertToURLFormat(connStr string) string {
 	// Parse the connection string format: "host=... port=... user=... password=... dbname=... sslmode=..."
 	parts := strings.Fields(connStr)
 	var host, port, user, password, dbname, sslmode string
-	
+
 	for _, part := range parts {
 		if strings.HasPrefix(part, "host=") {
 			host = strings.TrimPrefix(part, "host=")
@@ -134,12 +134,10 @@ func convertToURLFormat(connStr string) string {
 			sslmode = strings.TrimPrefix(part, "sslmode=")
 		}
 	}
-	
+
 	// Construct URL format
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, dbname, sslmode)
 }
-
-
 
 func main() {
 	// Load application configuration
@@ -147,13 +145,13 @@ func main() {
 
 	// Initialize database with new config
 	initDatabase(appConfig)
-	
+
 	// Always run database migrations (both development and production)
 	// IMPORTANT: This must run BEFORE any GORM operations to ensure correct schema
 	if err := runMigrations(appConfig); err != nil {
 		log.Fatal("Failed to run migrations:", err)
 	}
-	
+
 	// Seed only admin users, admin configurations, and subscription plans (if SKIP_SEED is not set)
 	// These are seeded only if they don't exist (idempotent)
 	if os.Getenv("SKIP_SEED") == "" {
@@ -272,24 +270,9 @@ func main() {
 	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
 	routes.SetupNotificationRoutes(r.Group("/api/v1"), notificationController)
-	
+
 	// Setup admin notification routes
 	routes.SetupAdminNotificationRoutesWithController(r.Group("/api/v1/admin"), notificationController)
-
-	// Setup in-app notification services
-	notificationWsService := services.NewNotificationWebSocketService()
-	inAppNotificationService := services.NewInAppNotificationService(notificationWsService)
-	notificationIntegrationService := services.NewNotificationIntegrationService(inAppNotificationService)
-	
-	// Start WebSocket service in background
-	go notificationWsService.Run()
-	
-	// Setup in-app notification routes
-	routes.SetupInAppNotificationRoutes(r.Group("/api/v1"), notificationWsService, inAppNotificationService)
-	
-	// Store notification integration service globally for use in other services
-	// This will be used by other services to send notifications
-	services.SetGlobalNotificationIntegrationService(notificationIntegrationService)
 
 	// Setup call masking routes
 	routes.SetupCallMaskingRoutes(r.Group("/api/v1"))

@@ -23,7 +23,6 @@ func NewCallMaskingController() *CallMaskingController {
 	}
 }
 
-
 // InitiateCall initiates a call between customer and worker
 // @Summary Initiate a call
 // @Description Initiates a call between customer and worker for a booking
@@ -58,7 +57,6 @@ func (cmc *CallMaskingController) InitiateCall(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Call initiated successfully", nil)
 }
-
 
 // GetCallLogs retrieves call logs for a booking
 // @Summary Get call logs for a booking
@@ -262,7 +260,7 @@ func (cmc *CallMaskingController) InitiateCloudShopeCall(c *gin.Context) {
 	// Validate that the user is either the customer or worker for this booking
 	// This validation should be done based on the booking ID and user relationship
 	// For now, we'll proceed with the call initiation
-	
+
 	maskedNumber, err := cmc.callMaskingService.InitiateCloudShopeCall(req.FromNumber, req.MobileNumber)
 	if err != nil {
 		logrus.Errorf("Failed to initiate CloudShope call from %s to %s by user %d: %v", req.FromNumber, req.MobileNumber, userID, err)

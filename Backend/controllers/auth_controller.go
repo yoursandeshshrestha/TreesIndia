@@ -20,9 +20,9 @@ import (
 // AuthController handles authentication requests
 type AuthController struct {
 	*BaseController
-	db *gorm.DB
-	authService *services.AuthService
-	otpService *services.OTPService
+	db               *gorm.DB
+	authService      *services.AuthService
+	otpService       *services.OTPService
 	validationHelper *utils.ValidationHelper
 }
 
@@ -104,7 +104,7 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 	// Check if user exists (for existing users, check if account is active)
 	var user models.User
 	var isExistingUser bool
-	
+
 	if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// User doesn't exist yet - will be created after OTP verification
@@ -128,15 +128,14 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to send OTP", "Please try again later"))
 		return
 	}
-	
+
 	// Send admin notification for OTP request monitoring (only for existing users)
 	if isExistingUser {
-		go services.NotifyOTPRequestedToAdmin(&user, req.Phone)
 	}
-	
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("OTP sent successfully", gin.H{
-		"phone":      req.Phone,
-		"expires_in": 300, // 5 minutes (300 seconds)
+		"phone":       req.Phone,
+		"expires_in":  300, // 5 minutes (300 seconds)
 		"is_new_user": !isExistingUser,
 	}))
 }
@@ -157,10 +156,10 @@ func (ac *AuthController) RequestOTP(c *gin.Context) {
 // @Router /auth/register [post]
 func (ac *AuthController) Register(c *gin.Context) {
 	var req RegisterRequest
-	
+
 	// Check content type to handle both JSON and form-data
 	contentType := c.GetHeader("Content-Type")
-	
+
 	if strings.Contains(contentType, "application/json") {
 		// Handle JSON request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -195,14 +194,12 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-
-	
 	// Create user
 	user := models.User{
-		Phone:           req.Phone,
-		UserType:        models.UserTypeNormal,
-		IsActive:        true,
-		WalletBalance:    0,  // Default 0 balance
+		Phone:         req.Phone,
+		UserType:      models.UserTypeNormal,
+		IsActive:      true,
+		WalletBalance: 0, // Default 0 balance
 	}
 
 	if err := ac.db.Create(&user).Error; err != nil {
@@ -229,10 +226,10 @@ func (ac *AuthController) Register(c *gin.Context) {
 // @Router /auth/login [post]
 func (ac *AuthController) Login(c *gin.Context) {
 	var req LoginRequest
-	
+
 	// Check content type to handle both JSON and form-data
 	contentType := c.GetHeader("Content-Type")
-	
+
 	if strings.Contains(contentType, "application/json") {
 		// Handle JSON request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -307,9 +304,8 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		// Try to find user for failed login notification
 		var user models.User
 		if err := ac.db.Where("phone = ?", req.Phone).First(&user).Error; err == nil {
-			go services.NotifyLoginFailed(&user, req.Phone, "Invalid OTP")
 		}
-		
+
 		errorMessage := "OTP is incorrect"
 		if err != nil {
 			// Provide more specific error messages
@@ -321,7 +317,7 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 				errorMessage = "Too many failed attempts. Please request a new OTP"
 			}
 		}
-		
+
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", errorMessage))
 		return
 	}
@@ -329,17 +325,17 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	// Find user or create new one
 	var user models.User
 	var isNewUser bool
-	
+
 	if err := ac.db.Where("phone = ?", req.Phone).Preload("AdminRoles").First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Create new user
 			user = models.User{
-				Phone:           req.Phone,
-				UserType:        models.UserTypeNormal, // Default role is user
-				IsActive:        true,
-				WalletBalance:    0,  // Default 0 balance
+				Phone:         req.Phone,
+				UserType:      models.UserTypeNormal, // Default role is user
+				IsActive:      true,
+				WalletBalance: 0, // Default 0 balance
 			}
-			
+
 			if err := ac.db.Create(&user).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to create user", err.Error()))
 				return
@@ -361,7 +357,7 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 	// Update last login
 	now := time.Now()
 	user.LastLoginAt = &now
-	
+
 	if err := ac.db.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update user", err.Error()))
 		return
@@ -383,12 +379,9 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 
 	// User OTP verification and login notifications removed as per user request
 	// Send admin notifications for monitoring
-	go services.NotifyOTPVerifiedToAdmin(&user, req.Phone)
-	go services.NotifyLoginSuccessToAdmin(&user, "OTP")
-	
+
 	// If new user, also notify admin about new user registration
 	if isNewUser {
-		go services.NotifyUserRegistration(&user)
 	}
 
 	// Prepare admin roles for response (if any)
@@ -411,7 +404,7 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
-		"expires_in":    3600,  // 1 hour in seconds
+		"expires_in":    3600,      // 1 hour in seconds
 		"is_new_user":   isNewUser, // Frontend uses this to show onboarding info
 	}))
 }
@@ -428,8 +421,8 @@ func (ac *AuthController) registerDevice(user *models.User, req *VerifyOTPReques
 	if err := ac.db.Where("user_id = ?", user.ID).First(&notificationSettings).Error; err != nil {
 		// Create default notification settings
 		notificationSettings = models.UserNotificationSettings{
-			UserID:            user.ID,
-			PushNotifications: true,
+			UserID:             user.ID,
+			PushNotifications:  true,
 			EmailNotifications: true,
 			SMSNotifications:   true,
 			MarketingEmails:    false,
@@ -451,16 +444,16 @@ func (ac *AuthController) registerDevice(user *models.User, req *VerifyOTPReques
 	if err := ac.db.Where("token = ?", req.DeviceToken).First(&existingToken).Error; err == nil {
 		// Token exists, update it
 		updates := map[string]interface{}{
-			"user_id":           user.ID,
-			"platform":          req.Platform,
-			"app_version":       req.AppVersion,
-			"device_model":      req.DeviceModel,
-			"os_version":        req.OSVersion,
-			"is_active":         true,
-			"last_used_at":      time.Now(),
-			"updated_at":        time.Now(),
+			"user_id":      user.ID,
+			"platform":     req.Platform,
+			"app_version":  req.AppVersion,
+			"device_model": req.DeviceModel,
+			"os_version":   req.OSVersion,
+			"is_active":    true,
+			"last_used_at": time.Now(),
+			"updated_at":   time.Now(),
 		}
-		
+
 		if err := ac.db.Model(&existingToken).Updates(updates).Error; err != nil {
 			return fmt.Errorf("failed to update existing token: %w", err)
 		}
@@ -588,15 +581,15 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User information retrieved successfully", gin.H{
-		"id":                user.ID,
-		"name":              user.Name,
-		"phone":             user.Phone,
-		"email":             user.Email,
-		"avatar":            user.Avatar,
-		"user_type":         user.UserType,
-		"is_active":         user.IsActive,
-		"wallet_balance":    user.WalletBalance,
-		"subscription":      subscriptionStatus,
+		"id":             user.ID,
+		"name":           user.Name,
+		"phone":          user.Phone,
+		"email":          user.Email,
+		"avatar":         user.Avatar,
+		"user_type":      user.UserType,
+		"is_active":      user.IsActive,
+		"wallet_balance": user.WalletBalance,
+		"subscription":   subscriptionStatus,
 	}))
 }
 
@@ -668,7 +661,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
-		"expires_in":    3600, // 1 hour in seconds
+		"expires_in":    3600,  // 1 hour in seconds
 		"is_new_user":   false, // Always false for refresh token (user already exists)
 	}))
 }
@@ -775,10 +768,10 @@ func (ac *AuthController) validateRefreshToken(refreshToken string) (uint, strin
 
 // getUserFriendlyError converts technical validation errors to user-friendly messages
 func (ac *AuthController) getUserFriendlyError(errorMsg string) string {
-	if strings.Contains(errorMsg, "RegisterRequest.Phone") || 
-	   strings.Contains(errorMsg, "LoginRequest.Phone") || 
-	   strings.Contains(errorMsg, "VerifyOTPRequest.Phone") {
-		
+	if strings.Contains(errorMsg, "RegisterRequest.Phone") ||
+		strings.Contains(errorMsg, "LoginRequest.Phone") ||
+		strings.Contains(errorMsg, "VerifyOTPRequest.Phone") {
+
 		if strings.Contains(errorMsg, "required") {
 			return "Phone number is required"
 		} else if strings.Contains(errorMsg, "min") {
@@ -791,7 +784,7 @@ func (ac *AuthController) getUserFriendlyError(errorMsg string) string {
 			return "Please enter a valid Indian mobile number (e.g., +919876543210)"
 		}
 	}
-	
+
 	if strings.Contains(errorMsg, "VerifyOTPRequest.OTP") {
 		if strings.Contains(errorMsg, "required") {
 			return "OTP is required"
@@ -801,7 +794,7 @@ func (ac *AuthController) getUserFriendlyError(errorMsg string) string {
 			return "Please enter a valid 6-digit OTP"
 		}
 	}
-	
+
 	if strings.Contains(errorMsg, "RefreshTokenRequest.RefreshToken") {
 		if strings.Contains(errorMsg, "required") {
 			return "Refresh token is required"
@@ -809,9 +802,7 @@ func (ac *AuthController) getUserFriendlyError(errorMsg string) string {
 			return "Please provide a valid refresh token"
 		}
 	}
-	
+
 	// Default fallback
 	return "Please check your input and try again"
 }
-
-

@@ -29,7 +29,7 @@ func (cc *ChatController) GetUserChatRooms(c *gin.Context) {
 	// Parse query parameters manually like GetChatHistory
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	
+
 	// Validate page and limit
 	if page < 1 {
 		page = 1
@@ -76,7 +76,7 @@ func (cc *ChatController) GetChatHistory(c *gin.Context) {
 
 	// Combine active and closed rooms
 	allRooms := append(activeRooms, closedRooms...)
-	
+
 	// Calculate combined pagination
 	totalRooms := activePagination.Total + closedPagination.Total
 	totalPages := int((totalRooms + limit - 1) / limit)
@@ -105,7 +105,7 @@ func (cc *ChatController) GetMessages(c *gin.Context) {
 	// Parse query parameters manually
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
-	
+
 	// Validate page and limit
 	if page < 1 {
 		page = 1

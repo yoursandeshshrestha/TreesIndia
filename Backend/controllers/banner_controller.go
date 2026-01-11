@@ -28,7 +28,7 @@ func (c *BannerController) GetBannerImages(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get banner images", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Banner images retrieved successfully", images))
 }
 
@@ -87,20 +87,20 @@ func (c *BannerController) UpdateBannerImage(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid image ID", err.Error()))
 		return
 	}
-	
+
 	var image models.BannerImage
 	if err := ctx.ShouldBindJSON(&image); err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
-	
+
 	image.ID = uint(id)
 	err = c.bannerService.UpdateBannerImage(&image)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update banner image", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Banner image updated successfully", image))
 }
 
@@ -167,13 +167,13 @@ func (c *BannerController) DeleteBannerImage(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid image ID", err.Error()))
 		return
 	}
-	
+
 	err = c.bannerService.DeleteBannerImage(uint(id))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete banner image", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Banner image deleted successfully", nil))
 }
 
@@ -185,13 +185,13 @@ func (c *BannerController) GetBannerImageByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid image ID", err.Error()))
 		return
 	}
-	
+
 	image, err := c.bannerService.GetBannerImageByID(uint(id))
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Banner image not found", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Banner image retrieved successfully", image))
 }
 
@@ -207,18 +207,18 @@ func (c *BannerController) UpdateBannerImageSortOrder(ctx *gin.Context) {
 	var request struct {
 		SortOrder int `json:"sort_order" binding:"required"`
 	}
-	
+
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
 		return
 	}
-	
+
 	err = c.bannerService.UpdateBannerImageSortOrder(uint(id), request.SortOrder)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update sort order", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Sort order updated successfully", nil))
 }
 
@@ -229,7 +229,6 @@ func (c *BannerController) GetBannerImageCount(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get banner image count", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Banner image count retrieved successfully", gin.H{"count": count}))
 }
-

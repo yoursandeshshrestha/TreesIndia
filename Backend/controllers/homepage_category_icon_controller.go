@@ -26,7 +26,7 @@ func (c *HomepageCategoryIconController) GetAllActive(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get category icons", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Category icons retrieved successfully", icons))
 }
 
@@ -37,7 +37,7 @@ func (c *HomepageCategoryIconController) GetAll(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to get category icons", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Category icons retrieved successfully", icons))
 }
 
@@ -49,13 +49,13 @@ func (c *HomepageCategoryIconController) GetByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid icon ID", err.Error()))
 		return
 	}
-	
+
 	icon, err := c.iconService.GetByID(uint(id))
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Category icon not found", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Category icon retrieved successfully", icon))
 }
 
@@ -104,12 +104,12 @@ func (c *HomepageCategoryIconController) ToggleActive(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid icon ID", err.Error()))
 		return
 	}
-	
+
 	err = c.iconService.ToggleActive(uint(id))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to toggle active status", err.Error()))
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Active status toggled successfully", nil))
 }

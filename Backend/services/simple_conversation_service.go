@@ -76,7 +76,6 @@ func (s *SimpleConversationService) CreateConversation(req *models.CreateSimpleC
 	// Notify the other participant (user_2)
 	var otherUser models.User
 	if err := s.userRepo.FindByID(&otherUser, req.User2); err == nil {
-		go NotifyConversationStarted(req.User2, otherUser.Name, 0) // 0 for booking ID since it's not a booking conversation
 	}
 	
 	return conversation, nil

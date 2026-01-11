@@ -14,8 +14,8 @@ import (
 
 // AdminVendorController handles admin vendor-related operations
 type AdminVendorController struct {
-	vendorService     *services.VendorService
-	validationHelper  *utils.ValidationHelper
+	vendorService    *services.VendorService
+	validationHelper *utils.ValidationHelper
 }
 
 // NewAdminVendorController creates a new admin vendor controller
@@ -366,8 +366,8 @@ func (avc *AdminVendorController) GetVendorsByBusinessType(c *gin.Context) {
 	}
 
 	response := gin.H{
-		"vendors":      vendors,
-		"pagination":   pagination,
+		"vendors":       vendors,
+		"pagination":    pagination,
 		"business_type": businessType,
 	}
 

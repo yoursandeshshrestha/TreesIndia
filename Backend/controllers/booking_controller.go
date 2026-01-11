@@ -219,7 +219,7 @@ func (bc *BookingController) GetBookingConfig(c *gin.Context) {
 
 	// Get specific configs needed for booking
 	configKeys := []string{"working_hours_start", "working_hours_end", "booking_advance_days", "booking_buffer_time_minutes", "booking_hold_time_minutes", "inquiry_booking_fee"}
-	
+
 	configs := make(map[string]string)
 	for _, key := range configKeys {
 		config, err := adminConfigRepo.GetByKey(key)
@@ -259,13 +259,13 @@ func (bc *BookingController) GetAvailableSlots(c *gin.Context) {
 	}
 
 	availabilityService := services.NewAvailabilityService()
-	
+
 	// Use custom duration if provided, otherwise use service default
 	var customDuration *string
 	if duration != "" {
 		customDuration = &duration
 	}
-	
+
 	availableSlots, err := availabilityService.GetAvailableSlotsWithDuration(uint(serviceID), date, "", customDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get available slots", "details": err.Error()})
@@ -322,8 +322,6 @@ func (bc *BookingController) VerifyPayment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking is not in temporary hold status", "details": "Booking status is " + string(booking.Status)})
 		return
 	}
-
-
 
 	booking, err = bc.bookingService.VerifyPayment(&req)
 	if err != nil {
@@ -692,7 +690,7 @@ func (bc *BookingController) CreateBookingWithWallet(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": "Something went wrong"})
 		}
 	}()
-	
+
 	userID := bc.GetUserID(c)
 	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -738,7 +736,7 @@ func (bc *BookingController) CreateInquiryBookingWithWallet(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error", "details": "Something went wrong"})
 		}
 	}()
-	
+
 	userID := bc.GetUserID(c)
 	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})

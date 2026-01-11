@@ -25,4 +25,3 @@ func main() {
 
 	logrus.Info("✅ Cloudinary cleanup completed successfully")
 }
-

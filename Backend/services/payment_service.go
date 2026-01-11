@@ -149,7 +149,6 @@ func (ps *PaymentService) VerifyAndCompletePayment(paymentID uint, razorpayPayme
 	}
 
 	// Send payment notifications
-	go ps.sendPaymentNotifications(payment)
 
 	return payment, nil
 }
@@ -522,31 +521,6 @@ func (ps *PaymentService) GetTransactionDashboardData() (map[string]interface{},
 }
 
 // sendPaymentNotifications sends notifications for completed payments
-func (ps *PaymentService) sendPaymentNotifications(payment *models.Payment) {
-	// Get the global notification integration service
-	notificationService := GetGlobalNotificationIntegrationService()
-	if notificationService == nil {
-		logrus.Warn("Notification integration service not available")
-		return
-	}
-
-	// Get user details
-	userRepo := repositories.NewUserRepository()
-	var user models.User
-	err := userRepo.FindByID(&user, payment.UserID)
-	if err != nil {
-		logrus.Errorf("Failed to get user for payment notification: %v", err)
-		return
-	}
-
-	// Send notification to admin about payment received
-	err = notificationService.NotifyPaymentReceived(payment, &user)
-	if err != nil {
-		logrus.Errorf("Failed to send payment received notification to admin: %v", err)
-	}
-
-	// Payment confirmation notification removed as per user request
-}
 
 // CreateManualTransaction creates a manual transaction (admin only)
 func (ps *PaymentService) CreateManualTransaction(req *models.ManualTransactionRequest) (*models.Payment, error) {

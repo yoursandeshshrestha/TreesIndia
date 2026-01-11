@@ -209,7 +209,6 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 	go was.callMaskingService.EnableCallMasking(assignment.BookingID)
 
 	// Send in-app notification to user about worker assignment
-	go was.sendWorkerAssignmentNotification(assignment, "accepted")
 
 	// Send assignment accepted notification
 	go func() {
@@ -220,7 +219,6 @@ func (was *WorkerAssignmentService) AcceptAssignment(assignmentID uint, workerID
 			var service models.Service
 			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
 			if err == nil {
-				NotifyAssignmentAccepted(assignment, booking, &worker, &service)
 			}
 		}
 	}()
@@ -277,7 +275,6 @@ func (was *WorkerAssignmentService) RejectAssignment(assignmentID uint, workerID
 	go was.callMaskingService.DisableCallMasking(assignment.BookingID)
 
 	// Send notification
-	go was.notificationService.SendWorkerAssignmentRejectedNotification(assignment)
 
 	// Send assignment rejected notification
 	go func() {
@@ -288,7 +285,6 @@ func (was *WorkerAssignmentService) RejectAssignment(assignmentID uint, workerID
 			var service models.Service
 			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
 			if err == nil {
-				NotifyAssignmentRejected(assignment, booking, &worker, &service)
 			}
 		}
 	}()
@@ -349,7 +345,6 @@ func (was *WorkerAssignmentService) StartAssignment(assignmentID uint, workerID 
 			var service models.Service
 			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
 			if err == nil {
-				NotifyWorkerStarted(booking, &worker, &service)
 			}
 		}
 	}()
@@ -480,7 +475,6 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 			var service models.Service
 			err = was.serviceRepo.FindByID(&service, booking.ServiceID)
 			if err == nil {
-				NotifyWorkerCompleted(booking, &worker, &service)
 			}
 		}
 	}()
@@ -489,100 +483,7 @@ func (was *WorkerAssignmentService) CompleteAssignment(assignmentID uint, worker
 }
 
 // sendWorkerAssignmentNotification sends in-app notification about worker assignment
-func (was *WorkerAssignmentService) sendWorkerAssignmentNotification(assignment *models.WorkerAssignment, status string) {
-	// Get the global notification integration service
-	notificationService := GetGlobalNotificationIntegrationService()
-	if notificationService == nil {
-		logrus.Warn("Notification integration service not available")
-		return
-	}
-
-	// Get booking and service details
-	booking, err := was.bookingRepo.GetByID(assignment.BookingID)
-	if err != nil {
-		logrus.Errorf("Failed to get booking for notification: %v", err)
-		return
-	}
-
-	// Get worker details
-	var worker models.User
-	err = was.userRepo.FindByID(&worker, assignment.WorkerID)
-	if err != nil {
-		logrus.Errorf("Failed to get worker for notification: %v", err)
-		return
-	}
-
-	// Send notification to user (customer) about worker assignment
-	err = notificationService.NotifyWorkerAssigned(booking, &worker, &booking.Service)
-	if err != nil {
-		logrus.Errorf("Failed to send worker assignment notification to user: %v", err)
-	}
-
-	// Send notification to worker about new assignment
-	err = notificationService.NotifyWorkerAssignedToWork(booking, &worker, &booking.Service)
-	if err != nil {
-		logrus.Errorf("Failed to send worker assignment notification to worker: %v", err)
-	}
-}
 
 // sendWorkerStartedNotification sends in-app notification about work started
-func (was *WorkerAssignmentService) sendWorkerStartedNotification(assignment *models.WorkerAssignment) {
-	// Get the global notification integration service
-	notificationService := GetGlobalNotificationIntegrationService()
-	if notificationService == nil {
-		logrus.Warn("Notification integration service not available")
-		return
-	}
-
-	// Get booking and service details
-	booking, err := was.bookingRepo.GetByID(assignment.BookingID)
-	if err != nil {
-		logrus.Errorf("Failed to get booking for notification: %v", err)
-		return
-	}
-
-	// Get worker details
-	var worker models.User
-	err = was.userRepo.FindByID(&worker, assignment.WorkerID)
-	if err != nil {
-		logrus.Errorf("Failed to get worker for notification: %v", err)
-		return
-	}
-
-	// Send notification to user about work started
-	err = notificationService.NotifyWorkerStarted(booking, &worker, &booking.Service)
-	if err != nil {
-		logrus.Errorf("Failed to send worker started notification: %v", err)
-	}
-}
 
 // sendWorkerCompletedNotification sends in-app notification about work completed
-func (was *WorkerAssignmentService) sendWorkerCompletedNotification(assignment *models.WorkerAssignment) {
-	// Get the global notification integration service
-	notificationService := GetGlobalNotificationIntegrationService()
-	if notificationService == nil {
-		logrus.Warn("Notification integration service not available")
-		return
-	}
-
-	// Get booking and service details
-	booking, err := was.bookingRepo.GetByID(assignment.BookingID)
-	if err != nil {
-		logrus.Errorf("Failed to get booking for notification: %v", err)
-		return
-	}
-
-	// Get worker details
-	var worker models.User
-	err = was.userRepo.FindByID(&worker, assignment.WorkerID)
-	if err != nil {
-		logrus.Errorf("Failed to get worker for notification: %v", err)
-		return
-	}
-
-	// Send notification to user about work completed
-	err = notificationService.NotifyWorkerCompleted(booking, &worker, &booking.Service)
-	if err != nil {
-		logrus.Errorf("Failed to send worker completed notification: %v", err)
-	}
-}
