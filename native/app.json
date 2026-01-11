@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-expo-app",
-    "slug": "my-expo-app",
+    "name": "TreesIndia",
+    "slug": "treesindia",
     "version": "1.0.0",
     "web": {
       "favicon": "./assets/favicon.png"
@@ -13,14 +13,14 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/logo/logo.png",
           "color": "#ffffff",
           "sounds": []
         }
       ]
     ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo/logo.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -46,7 +46,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo/logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.treeindia.myexpoapp",
