@@ -280,11 +280,21 @@ export const AuthModal: React.FC = () => {
 
                     <p className="text-xs text-gray-500 text-center">
                       By continuing, you agree to our{" "}
-                      <a href="#" className="underline text-[#00a871]">
+                      <a
+                        href="/terms-and-conditions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-[#00a871] hover:text-[#008f5f] transition-colors"
+                      >
                         T&C
                       </a>{" "}
                       and{" "}
-                      <a href="#" className="underline text-[#00a871]">
+                      <a
+                        href="/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-[#00a871] hover:text-[#008f5f] transition-colors"
+                      >
                         Privacy policy
                       </a>
                       .
