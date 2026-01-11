@@ -3,7 +3,8 @@ export interface AuthUser {
   phone: string;
   name?: string;
   email?: string | null;
-  user_type: "admin" | "user" | "worker" | "normal" | "broker";
+  user_type?: "admin" | "user" | "worker" | "normal" | "broker";
+  role?: "admin" | "user" | "worker" | "normal" | "broker";
   wallet_balance: number;
   is_active: boolean;
   created_at?: string;

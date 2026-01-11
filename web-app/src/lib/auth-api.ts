@@ -206,6 +206,17 @@ export class AuthAPI {
 
     const authData = await handleResponse<AuthResponse>(response);
 
+    // Restrict worker and admin from logging in to web app
+    // Check both user_type and role fields as backend may use either
+    const userType = authData.user?.user_type || authData.user?.role;
+    if (userType && (userType === "worker" || userType === "admin")) {
+      throw new AuthAPIError(
+        "Workers and administrators are not allowed to login to the web application. Please use the mobile app.",
+        403,
+        "FORBIDDEN_USER_TYPE"
+      );
+    }
+
     // Store tokens in cookies (in production, backend should set HTTP-only cookies)
     if (authData.access_token) {
       setCookie(COOKIE_NAMES.ACCESS_TOKEN, authData.access_token, {
@@ -278,7 +289,22 @@ export class AuthAPI {
   async getCurrentUser(): Promise<AuthResponse["user"]> {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/auth/me`);
-      return handleResponse<AuthResponse["user"]>(response);
+      const user = await handleResponse<AuthResponse["user"]>(response);
+
+      // Restrict worker and admin from accessing web app
+      // Check both user_type and role fields as backend may use either
+      const userType = user?.user_type || user?.role;
+      if (userType && (userType === "worker" || userType === "admin")) {
+        // Logout the user
+        await this.logout();
+        throw new AuthAPIError(
+          "Workers and administrators are not allowed to login to the web application. Please use the mobile app.",
+          403,
+          "FORBIDDEN_USER_TYPE"
+        );
+      }
+
+      return user;
     } catch (error) {
       // If access token is invalid, try to refresh it
       if (error instanceof AuthAPIError && error.status === 401) {
@@ -286,7 +312,22 @@ export class AuthAPI {
           const retryResponse = await authenticatedFetch(
             `${API_BASE_URL}/auth/me`
           );
-          return handleResponse<AuthResponse["user"]>(retryResponse);
+          const user = await handleResponse<AuthResponse["user"]>(retryResponse);
+
+          // Restrict worker and admin from accessing web app
+          // Check both user_type and role fields as backend may use either
+          const userType = user?.user_type || user?.role;
+          if (userType && (userType === "worker" || userType === "admin")) {
+            // Logout the user
+            await this.logout();
+            throw new AuthAPIError(
+              "Workers and administrators are not allowed to login to the web application. Please use the mobile app.",
+              403,
+              "FORBIDDEN_USER_TYPE"
+            );
+          }
+
+          return user;
         } catch (refreshError) {
           throw refreshError;
         }
