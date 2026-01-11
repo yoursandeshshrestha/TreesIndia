@@ -51,6 +51,8 @@ class ConversationMonitorWebSocketService {
   private pingInterval: NodeJS.Timeout | null = null;
   private eventListeners: EventListeners = {};
   private isManualDisconnect: boolean = false;
+  private hasConnectedOnce: boolean = false;
+  private hasAuthError: boolean = false;
 
   private constructor() {
     // Private constructor for singleton
@@ -86,6 +88,7 @@ class ConversationMonitorWebSocketService {
 
     this.isManualDisconnect = false;
     this.reconnectAttempts = 0;
+    this.hasAuthError = false;
     this.isConnecting = true;
 
     try {
@@ -132,6 +135,8 @@ class ConversationMonitorWebSocketService {
   private handleOpen(): void {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
+    this.hasConnectedOnce = true;
+    this.hasAuthError = false;
 
     // Start ping interval to keep connection alive
     this.startPingInterval();
@@ -192,7 +197,24 @@ class ConversationMonitorWebSocketService {
     this.stopPingInterval();
     this.isConnecting = false;
 
-    if (!this.isManualDisconnect) {
+    // Don't retry if:
+    // 1. It's a manual disconnect
+    // 2. It's an authentication error (close code 1008 or 4401)
+    // 3. We never successfully connected and have multiple failed attempts (likely auth issue)
+    const isAuthError =
+      event.code === 1008 || // Policy violation (often used for auth failures)
+      event.code === 4401 || // Custom 401 code
+      (!this.hasConnectedOnce && this.reconnectAttempts >= 3); // Multiple failures without ever connecting
+
+    if (isAuthError) {
+      this.hasAuthError = true;
+      this.emit('auth_error', {
+        event: 'auth_error',
+        data: { error: 'Authentication failed. Please log in again.' }
+      });
+    }
+
+    if (!this.isManualDisconnect && !isAuthError) {
       this.handleReconnect();
     }
 
@@ -203,7 +225,7 @@ class ConversationMonitorWebSocketService {
    * Handle reconnection with exponential backoff
    */
   private handleReconnect(): void {
-    if (this.isManualDisconnect) {
+    if (this.isManualDisconnect || this.hasAuthError) {
       return;
     }
 
@@ -286,6 +308,8 @@ class ConversationMonitorWebSocketService {
 
     this.token = null;
     this.reconnectAttempts = 0;
+    this.hasConnectedOnce = false;
+    this.hasAuthError = false;
   }
 
   /**

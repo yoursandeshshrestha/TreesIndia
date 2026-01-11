@@ -26,6 +26,8 @@ export const useConversationWebSocket = ({
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const hasConnectedOnce = useRef(false);
+  const hasAuthError = useRef(false);
 
   // Callback refs to avoid stale closures
   const onMessageRef = useRef(onMessage);
@@ -62,6 +64,7 @@ export const useConversationWebSocket = ({
 
     setIsConnected(false);
     setConnectionError(null);
+    hasAuthError.current = false;
 
     try {
       // Get auth token from cookies (same as the API client)
@@ -105,6 +108,8 @@ export const useConversationWebSocket = ({
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttempts.current = 0;
+        hasConnectedOnce.current = true;
+        hasAuthError.current = false;
 
         // Send a test message to verify connection
         ws.send(JSON.stringify({ event: "test_connection" }));
@@ -179,10 +184,24 @@ export const useConversationWebSocket = ({
           pingIntervalRef.current = null;
         }
 
-        // Attempt to reconnect if not a clean close
+        // Check if this is an authentication error
+        const isAuthError =
+          event.code === 1008 || // Policy violation (often used for auth failures)
+          event.code === 4401 || // Custom 401 code
+          (!hasConnectedOnce.current && reconnectAttempts.current >= 3); // Multiple failures without ever connecting
+
+        if (isAuthError) {
+          hasAuthError.current = true;
+          setConnectionError("Authentication failed. Please log in again.");
+          console.error("WebSocket authentication error - stopping reconnection attempts");
+          return;
+        }
+
+        // Attempt to reconnect if not a clean close and not an auth error
         if (
           event.code !== 1000 &&
-          reconnectAttempts.current < maxReconnectAttempts
+          reconnectAttempts.current < maxReconnectAttempts &&
+          !hasAuthError.current
         ) {
           const delay = Math.min(
             1000 * Math.pow(2, reconnectAttempts.current),
@@ -232,6 +251,8 @@ export const useConversationWebSocket = ({
     setIsConnected(false);
     setConnectionError(null);
     reconnectAttempts.current = 0;
+    hasConnectedOnce.current = false;
+    hasAuthError.current = false;
   }, []);
 
   const sendMessage = useCallback((message: Record<string, unknown>) => {
