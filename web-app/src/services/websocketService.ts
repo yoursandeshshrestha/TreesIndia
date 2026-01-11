@@ -186,7 +186,7 @@ class LocationTrackingWebSocketService {
         const locationMessage = message as LocationUpdateWebSocketMessage;
 
         // Extract location data - check multiple possible structures
-        let locationData = locationMessage.data || locationMessage;
+        let locationData: Record<string, unknown> = locationMessage.data || locationMessage;
 
         // Handle different data structures from backend
         if (locationData && typeof locationData === "object") {
@@ -196,12 +196,12 @@ class LocationTrackingWebSocketService {
             locationData.data &&
             typeof locationData.data === "object"
           ) {
-            locationData = locationData.data;
+            locationData = locationData.data as Record<string, unknown>;
           }
 
           // Try to get coordinates from various possible locations
-          const latitude = locationData.latitude || locationMessage.latitude;
-          const longitude = locationData.longitude || locationMessage.longitude;
+          const latitude = (locationData.latitude as number) || locationMessage.latitude;
+          const longitude = (locationData.longitude as number) || locationMessage.longitude;
 
           // Check if we have valid coordinates
           const hasValidCoords =
@@ -220,8 +220,8 @@ class LocationTrackingWebSocketService {
               booking_id: locationMessage.room_id || 0,
               latitude: latitude,
               longitude: longitude,
-              accuracy: locationData.accuracy || locationMessage.accuracy || 0,
-              status: locationData.status || locationMessage.status || "active",
+              accuracy: (locationData.accuracy as number) || locationMessage.accuracy || 0,
+              status: (locationData.status as string) || locationMessage.status || "active",
               last_updated: new Date().toISOString(),
             };
 

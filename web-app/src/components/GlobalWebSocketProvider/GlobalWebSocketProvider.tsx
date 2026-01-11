@@ -2,15 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useConversationWebSocket } from "@/hooks/useConversationWebSocket";
-import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
 import { conversationStore } from "@/utils/conversationStore";
 import { getTotalUnreadCount } from "@/lib/simpleConversationApi";
 
 interface GlobalWebSocketContextType {
   isConversationConnected: boolean;
-  isNotificationConnected: boolean;
   conversationError: string | null;
-  notificationError: string | null;
   totalUnreadCount: number;
 }
 
@@ -76,22 +73,6 @@ export const GlobalWebSocketProvider: React.FC<
         conversationId,
         count
       );
-    },
-  });
-
-  // Global notification WebSocket connection
-  const {
-    isConnected: isNotificationConnected,
-    connectionError: notificationError,
-  } = useNotificationWebSocket({
-    onNewNotification: () => {
-      // New notification will be handled by the store automatically
-    },
-    onUnreadCountUpdate: () => {
-      // Unread count updates will be handled by the store automatically
-    },
-    onAllNotificationsRead: () => {
-      // All notifications read will be handled by the store automatically
     },
   });
 
@@ -166,9 +147,7 @@ export const GlobalWebSocketProvider: React.FC<
 
   const contextValue: GlobalWebSocketContextType = {
     isConversationConnected,
-    isNotificationConnected,
     conversationError,
-    notificationError,
     totalUnreadCount,
   };
 

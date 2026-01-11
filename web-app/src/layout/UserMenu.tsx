@@ -18,7 +18,6 @@ import { openChatModal } from "@/store/slices/chatModalSlice";
 import { conversationStore } from "@/utils/conversationStore";
 import { useGlobalWebSocket } from "@/components/GlobalWebSocketProvider/GlobalWebSocketProvider";
 import { useRouter } from "next/navigation";
-import { NotificationIcon } from "@/components/NotificationIcon";
 
 interface UserMenuProps {
   isMobileMenuContext?: boolean;
@@ -112,7 +111,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
               {/* 3. Notifications */}
               <button className="w-full flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-                <NotificationIcon />
                 <span className="text-base font-medium text-gray-900">
                   Notifications
                 </span>
@@ -197,10 +195,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
               {/* Notifications - Desktop */}
               <div className="hidden lg:block">
-                <NotificationIcon />
               </div>
               <div className="lg:hidden">
-                <NotificationIcon />
               </div>
 
               {/* Chat Button - Desktop only */}
