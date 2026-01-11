@@ -170,7 +170,15 @@ class WorkerAssignmentService {
     page: number = 1,
     limit: number = 20
   ): Promise<WorkerAssignmentListResponse> {
-    const url = `${API_BASE_URL}/worker/assignments`;
+    const params = new URLSearchParams();
+
+    if (status) {
+      params.append('status', status);
+    }
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const url = `${API_BASE_URL}/worker/assignments?${params.toString()}`;
 
     const response = await authenticatedFetch(url);
     const rawJson = await response.json();

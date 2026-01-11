@@ -210,6 +210,7 @@ export default function WorkerAssignmentBottomSheet({
       animationType="none"
       onRequestClose={handleClose}
       statusBarTranslucent
+      key={assignment?.ID}
     >
       <View className="flex-1">
         {/* Overlay */}
@@ -269,202 +270,200 @@ export default function WorkerAssignmentBottomSheet({
             elevation: 8,
           }}
         >
-          {(visible || translateY._value < 1000) && (
-            <SafeAreaView edges={['bottom']} className="flex-1">
-              {/* Header */}
-              <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-                <View className="flex-1">
+          <SafeAreaView edges={['bottom']} className="flex-1">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+              <View className="flex-1">
+                <Text
+                  className="text-lg font-bold text-[#111928]"
+                  style={{ fontFamily: 'Inter-Bold' }}
+                >
+                  {isCompleted ? 'Completed Assignment' : 'Assignment Details'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Content */}
+            <ScrollView className="flex-1 px-6 py-4">
+              {/* Completion Status Badge (if completed) */}
+              {isCompleted && (
+                <View className="mb-4 bg-[#D1FAE5] border border-[#6EE7B7] rounded-lg p-4">
+                  <View className="flex-row items-center mb-2">
+                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                    <Text
+                      className="text-base font-bold text-[#059669] ml-2"
+                      style={{ fontFamily: 'Inter-Bold' }}
+                    >
+                      Work Completed
+                    </Text>
+                  </View>
+                  {assignment.completed_at && (
+                    <Text
+                      className="text-sm text-[#065F46]"
+                      style={{ fontFamily: 'Inter-Regular' }}
+                    >
+                      {formatDateTime(assignment.completed_at)}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* Service Name */}
+              <View className="mb-4">
+                <Text
+                  className="text-sm text-[#6B7280] mb-1"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Service
+                </Text>
+                <Text
+                  className="text-base font-semibold text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}
+                >
+                  {booking.service?.name || 'Service'}
+                </Text>
+              </View>
+
+              {/* Customer Info */}
+              <View className="mb-4">
+                <Text
+                  className="text-sm text-[#6B7280] mb-1"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Customer
+                </Text>
+                <Text
+                  className="text-base font-semibold text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}
+                >
+                  {booking.contact_person || booking.user?.name || 'Customer'}
+                </Text>
+                {booking.contact_phone && (
+                  <View className="flex-row items-center mt-1">
+                    <Ionicons name="call-outline" size={16} color="#6B7280" />
+                    <Text
+                      className="text-sm text-[#6B7280] ml-1"
+                      style={{ fontFamily: 'Inter-Regular' }}
+                    >
+                      {booking.contact_phone}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Address */}
+              <View className="mb-4">
+                <Text
+                  className="text-sm text-[#6B7280] mb-1"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Address
+                </Text>
+                <View className="flex-row items-start">
+                  <Ionicons name="location-outline" size={18} color="#6B7280" className="mt-0.5" />
                   <Text
-                    className="text-lg font-bold text-[#111928]"
-                    style={{ fontFamily: 'Inter-Bold' }}
+                    className="flex-1 text-sm text-[#111928] ml-2"
+                    style={{ fontFamily: 'Inter-Regular' }}
                   >
-                    {isCompleted ? 'Completed Assignment' : 'Assignment Details'}
+                    {formatAddress(booking.address)}
                   </Text>
                 </View>
               </View>
 
-              {/* Content */}
-              <ScrollView className="flex-1 px-6 py-4">
-                {/* Completion Status Badge (if completed) */}
-                {isCompleted && (
-                  <View className="mb-4 bg-[#D1FAE5] border border-[#6EE7B7] rounded-lg p-4">
-                    <View className="flex-row items-center mb-2">
-                      <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                      <Text
-                        className="text-base font-bold text-[#059669] ml-2"
-                        style={{ fontFamily: 'Inter-Bold' }}
-                      >
-                        Work Completed
-                      </Text>
-                    </View>
-                    {assignment.completed_at && (
-                      <Text
-                        className="text-sm text-[#065F46]"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {formatDateTime(assignment.completed_at)}
-                      </Text>
-                    )}
-                  </View>
-                )}
-
-                {/* Service Name */}
+              {/* Scheduled Date */}
+              {booking.scheduled_date && (
                 <View className="mb-4">
                   <Text
                     className="text-sm text-[#6B7280] mb-1"
                     style={{ fontFamily: 'Inter-Regular' }}
                   >
-                    Service
+                    Scheduled Date
                   </Text>
-                  <Text
-                    className="text-base font-semibold text-[#111928]"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                    {booking.service?.name || 'Service'}
-                  </Text>
-                </View>
-
-                {/* Customer Info */}
-                <View className="mb-4">
-                  <Text
-                    className="text-sm text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    Customer
-                  </Text>
-                  <Text
-                    className="text-base font-semibold text-[#111928]"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                    {booking.contact_person || booking.user?.name || 'Customer'}
-                  </Text>
-                  {booking.contact_phone && (
-                    <View className="flex-row items-center mt-1">
-                      <Ionicons name="call-outline" size={16} color="#6B7280" />
-                      <Text
-                        className="text-sm text-[#6B7280] ml-1"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {booking.contact_phone}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Address */}
-                <View className="mb-4">
-                  <Text
-                    className="text-sm text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    Address
-                  </Text>
-                  <View className="flex-row items-start">
-                    <Ionicons name="location-outline" size={18} color="#6B7280" className="mt-0.5" />
+                  <View className="flex-row items-center">
+                    <Ionicons name="calendar-outline" size={16} color="#6B7280" />
                     <Text
-                      className="flex-1 text-sm text-[#111928] ml-2"
+                      className="text-sm text-[#111928] ml-2"
                       style={{ fontFamily: 'Inter-Regular' }}
                     >
-                      {formatAddress(booking.address)}
+                      {formatDate(booking.scheduled_date)}
                     </Text>
                   </View>
-                </View>
-
-                {/* Scheduled Date */}
-                {booking.scheduled_date && (
-                  <View className="mb-4">
-                    <Text
-                      className="text-sm text-[#6B7280] mb-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Scheduled Date
-                    </Text>
-                    <View className="flex-row items-center">
-                      <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-                      <Text
-                        className="text-sm text-[#111928] ml-2"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {formatDate(booking.scheduled_date)}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-
-                {/* Description */}
-                {booking.description && (
-                  <View className="mb-4">
-                    <Text
-                      className="text-sm text-[#6B7280] mb-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Description
-                    </Text>
-                    <Text
-                      className="text-sm text-[#111928]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      {booking.description}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Special Instructions */}
-                {booking.special_instructions && (
-                  <View className="mb-4">
-                    <Text
-                      className="text-sm text-[#6B7280] mb-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Special Instructions
-                    </Text>
-                    <View className="bg-[#FEF3C7] p-3 rounded-lg">
-                      <Text
-                        className="text-sm text-[#92400E]"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {booking.special_instructions}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-              </ScrollView>
-
-              {/* Action Buttons - Only show for in_progress assignments */}
-              {!isCompleted && (
-                <View className="px-6 py-4 border-t border-[#E5E7EB]">
-                  {/* First Row - Google Maps and Message buttons */}
-                  <View className="flex-row mb-3" style={{ gap: 12 }}>
-                    <View className="flex-1">
-                      <Button
-                        label="Navigate"
-                        onPress={openGoogleMaps}
-                        icon={<Ionicons name="navigate" size={20} color="white" />}
-                        variant="solid"
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Button
-                        label="Message"
-                        onPress={handleMessageCustomer}
-                        icon={<Ionicons name="chatbubble-outline" size={20} color="#111928" />}
-                        variant="outline"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Second Row - Complete Work button */}
-                  <Button
-                    label="Complete Work"
-                    onPress={handleCompleteWork}
-                    icon={<Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />}
-                    variant="outline"
-                    className="border-[#10B981]"
-                  />
                 </View>
               )}
-            </SafeAreaView>
-          )}
+
+              {/* Description */}
+              {booking.description && (
+                <View className="mb-4">
+                  <Text
+                    className="text-sm text-[#6B7280] mb-1"
+                    style={{ fontFamily: 'Inter-Regular' }}
+                  >
+                    Description
+                  </Text>
+                  <Text
+                    className="text-sm text-[#111928]"
+                    style={{ fontFamily: 'Inter-Regular' }}
+                  >
+                    {booking.description}
+                  </Text>
+                </View>
+              )}
+
+              {/* Special Instructions */}
+              {booking.special_instructions && (
+                <View className="mb-4">
+                  <Text
+                    className="text-sm text-[#6B7280] mb-1"
+                    style={{ fontFamily: 'Inter-Regular' }}
+                  >
+                    Special Instructions
+                  </Text>
+                  <View className="bg-[#FEF3C7] p-3 rounded-lg">
+                    <Text
+                      className="text-sm text-[#92400E]"
+                      style={{ fontFamily: 'Inter-Regular' }}
+                    >
+                      {booking.special_instructions}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Action Buttons - Only show for in_progress assignments */}
+            {!isCompleted && (
+              <View className="px-6 py-4 border-t border-[#E5E7EB]">
+                {/* First Row - Google Maps and Message buttons */}
+                <View className="flex-row mb-3" style={{ gap: 12 }}>
+                  <View className="flex-1">
+                    <Button
+                      label="Navigate"
+                      onPress={openGoogleMaps}
+                      icon={<Ionicons name="navigate" size={20} color="white" />}
+                      variant="solid"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Button
+                      label="Message"
+                      onPress={handleMessageCustomer}
+                      icon={<Ionicons name="chatbubble-outline" size={20} color="#111928" />}
+                      variant="outline"
+                    />
+                  </View>
+                </View>
+
+                {/* Second Row - Complete Work button */}
+                <Button
+                  label="Complete Work"
+                  onPress={handleCompleteWork}
+                  icon={<Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />}
+                  variant="outline"
+                  className="border-[#10B981]"
+                />
+              </View>
+            )}
+          </SafeAreaView>
         </Animated.View>
       </View>
     </Modal>

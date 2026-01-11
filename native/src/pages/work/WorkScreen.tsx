@@ -7,8 +7,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
-  Linking,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -94,49 +92,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
     }
   };
 
-  const openGoogleMaps = async (assignment: WorkerAssignment) => {
-    try {
-      const address = assignment.booking.address;
-      if (!address) {
-        Alert.alert('Error', 'Customer address not available');
-        return;
-      }
-
-      // Parse address to get coordinates
-      const addressObj = JSON.parse(address);
-      if (!addressObj.latitude || !addressObj.longitude) {
-        Alert.alert('Error', 'Customer location coordinates not available');
-        return;
-      }
-
-      const destination = `${addressObj.latitude},${addressObj.longitude}`;
-
-      // Use navigation URLs that auto-start turn-by-turn navigation
-      const googleMapsUrl = Platform.select({
-        // For iOS: use comgooglemaps with navigate parameter to auto-start
-        ios: `comgooglemaps://?daddr=${destination}&directionsmode=driving&navigate=yes`,
-        // For Android: google.navigation automatically starts navigation
-        android: `google.navigation:q=${destination}&mode=d`,
-      });
-
-      // Fallback to web URL if Google Maps app is not installed
-      const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving&dir_action=navigate`;
-
-      // Check if Google Maps app is available
-      const canOpen = googleMapsUrl ? await Linking.canOpenURL(googleMapsUrl) : false;
-
-      if (canOpen && googleMapsUrl) {
-        await Linking.openURL(googleMapsUrl);
-      } else {
-        // Fallback to web browser
-        await Linking.openURL(webUrl);
-      }
-    } catch (error) {
-      console.error('[WorkScreen] Error opening Google Maps:', error);
-      Alert.alert('Error', 'Unable to open Google Maps. Please make sure it is installed.');
-    }
-  };
-
   const handleStartWork = async (assignment: WorkerAssignment) => {
     try {
       // Call API to start the assignment
@@ -145,8 +100,12 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       // Refresh assignments to show updated status
       await fetchAssignments();
 
-      // Open Google Maps with customer location
-      await openGoogleMaps(assignment);
+      // Show success message
+      Alert.alert(
+        'Work Started',
+        'You can now tap the assignment card to view details and navigate to the location.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       console.error('Error starting work:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start work';
