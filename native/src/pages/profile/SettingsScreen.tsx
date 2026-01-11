@@ -76,15 +76,15 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   };
 
   const handleOpenTerms = () => {
-    Linking.openURL('https://treesindiaservices.com/terms-and-conditions').catch((err) =>
-      console.error('Failed to open terms:', err)
-    );
+    Linking.openURL('https://treesindiaservices.com/terms-and-conditions').catch(() => {
+      // Failed to open terms
+    });
   };
 
   const handleOpenPrivacy = () => {
-    Linking.openURL('https://treesindiaservices.com/privacy-policy').catch((err) =>
-      console.error('Failed to open privacy policy:', err)
-    );
+    Linking.openURL('https://treesindiaservices.com/privacy-policy').catch(() => {
+      // Failed to open privacy policy
+    });
   };
 
   return (

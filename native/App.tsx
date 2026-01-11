@@ -57,7 +57,6 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Add timeout to prevent infinite hang
     const timeout = setTimeout(() => {
-      console.log('Auth initialization timeout - proceeding anyway');
       setIsInitializing(false);
     }, 5000); // 5 second timeout
 
@@ -66,8 +65,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
         clearTimeout(timeout);
         setIsInitializing(false);
       })
-      .catch((error) => {
-        console.error('Auth initialization error:', error);
+      .catch(() => {
         clearTimeout(timeout);
         setIsInitializing(false);
       });
@@ -194,13 +192,10 @@ function AppContent() {
         // Register notification handlers
         const handleNotificationReceived = (notification: PushNotification) => {
           // Handle notification received while app is in foreground
-          console.log('Notification received in foreground:', notification);
         };
 
         const handleNotificationResponse = (response: NotificationResponse) => {
           // Handle notification tap
-          console.log('Notification tapped:', response);
-
           const data = response.notification.data;
 
           // Navigate based on notification type
@@ -229,7 +224,7 @@ function AppContent() {
           handleNotificationResponse
         );
       } catch (error) {
-        console.error('Error setting up notifications:', error);
+        // Error setting up notifications
       }
     };
 

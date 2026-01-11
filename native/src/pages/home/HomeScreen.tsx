@@ -114,7 +114,6 @@ export default function HomeScreen({
         }
       } catch (error) {
         // If JSON parsing fails, fallback to services page
-        console.log('Failed to parse banner link, navigating to services page');
       }
     }
 
