@@ -5,7 +5,6 @@ import { Send, Users, X } from "lucide-react";
 import Button from "@/components/Button/Base/Button";
 import Input from "@/components/Input/Base/Input";
 import Textarea from "@/components/Textarea/Base/Textarea";
-import SearchableDropdown from "@/components/SearchableDropdown/SearchableDropdown";
 import { api } from "@/lib/api-client";
 import {
   useSendFCMNotification,
@@ -21,16 +20,6 @@ interface User {
   phone?: string;
 }
 
-const NOTIFICATION_TYPES = [
-  { value: "booking", label: "Booking" },
-  { value: "worker_assignment", label: "Worker Assignment" },
-  { value: "payment", label: "Payment" },
-  { value: "subscription", label: "Subscription" },
-  { value: "chat", label: "Chat" },
-  { value: "promotional", label: "Promotional" },
-  { value: "system", label: "System" },
-];
-
 function FCMNotificationPage() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
@@ -38,12 +27,8 @@ function FCMNotificationPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    type: "promotional",
     title: "",
     body: "",
-    image_url: "",
-    click_action: "",
-    priority: "normal",
   });
 
   const sendNotificationMutation = useSendFCMNotification();
@@ -99,7 +84,6 @@ function FCMNotificationPage() {
         }))
       );
     } catch (error) {
-      console.error("Failed to load users:", error);
       toast.error("Failed to load users");
     }
   };
@@ -132,23 +116,15 @@ function FCMNotificationPage() {
     try {
       await sendNotificationMutation.mutateAsync({
         user_id: selectedUsers[0],
-        type: formData.type,
         title: formData.title,
         body: formData.body,
-        image_url: formData.image_url || undefined,
-        click_action: formData.click_action || undefined,
-        priority: formData.priority || undefined,
       });
 
       toast.success("Notification sent successfully!");
       // Reset form
       setFormData({
-        type: "promotional",
         title: "",
         body: "",
-        image_url: "",
-        click_action: "",
-        priority: "normal",
       });
       setSelectedUsers([]);
     } catch (error) {
@@ -176,12 +152,8 @@ function FCMNotificationPage() {
     try {
       const response = await sendBulkNotificationMutation.mutateAsync({
         user_ids: selectedUsers,
-        type: formData.type,
         title: formData.title,
         body: formData.body,
-        image_url: formData.image_url || undefined,
-        click_action: formData.click_action || undefined,
-        priority: formData.priority || undefined,
       });
 
       const { success_count, failure_count } = response.data;
@@ -191,12 +163,8 @@ function FCMNotificationPage() {
 
       // Reset form
       setFormData({
-        type: "promotional",
         title: "",
         body: "",
-        image_url: "",
-        click_action: "",
-        priority: "normal",
       });
       setSelectedUsers([]);
     } catch (error) {
@@ -288,44 +256,6 @@ function FCMNotificationPage() {
               <h3 className="text-lg font-medium text-gray-900">
                 Notification Details
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Notification Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notification Type
-                  </label>
-                  <SearchableDropdown
-                    options={NOTIFICATION_TYPES.map((type) => ({
-                      label: type.label,
-                      value: type.value,
-                    }))}
-                    value={formData.type}
-                    onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, type: String(value) }))
-                    }
-                    placeholder="Select notification type"
-                  />
-                </div>
-
-                {/* Priority */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Priority
-                  </label>
-                  <SearchableDropdown
-                    options={[
-                      { label: "Normal", value: "normal" },
-                      { label: "High", value: "high" },
-                      { label: "Low", value: "low" },
-                    ]}
-                    value={formData.priority}
-                    onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, priority: String(value) }))
-                    }
-                    placeholder="Select priority"
-                  />
-                </div>
-              </div>
 
               {/* Title */}
               <div>
@@ -354,47 +284,6 @@ function FCMNotificationPage() {
                   rows={4}
                   required
                 />
-              </div>
-            </div>
-
-            {/* Advanced Options Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Advanced Options
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Image URL (Optional) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Image URL
-                    <span className="text-gray-500 font-normal ml-1">
-                      (Optional)
-                    </span>
-                  </label>
-                  <Input
-                    name="image_url"
-                    value={formData.image_url}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com/image.jpg"
-                    type="url"
-                  />
-                </div>
-
-                {/* Click Action (Optional) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Click Action
-                    <span className="text-gray-500 font-normal ml-1">
-                      (Optional)
-                    </span>
-                  </label>
-                  <Input
-                    name="click_action"
-                    value={formData.click_action}
-                    onChange={handleInputChange}
-                    placeholder="e.g., OPEN_BOOKING, OPEN_CHAT"
-                  />
-                </div>
               </div>
             </div>
 
