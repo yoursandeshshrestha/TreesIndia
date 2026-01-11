@@ -17,7 +17,7 @@ type DeviceManagementService struct {
 
 // DeviceRegistrationRequest represents a device registration request
 type DeviceRegistrationRequest struct {
-	UserID      uint   `json:"user_id" binding:"required"`
+	UserID      uint   `json:"user_id"` // Will be set from authenticated user context
 	Token       string `json:"token" binding:"required"`
 	Platform    string `json:"platform" binding:"required"`
 	AppVersion  string `json:"app_version"`

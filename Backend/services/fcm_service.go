@@ -68,10 +68,10 @@ func (f *FCMService) SendToDevice(token string, notification *FCMNotification) (
 		},
 		Data: notification.Data,
 		Android: &messaging.AndroidConfig{
+			Priority: "high",
 			Notification: &messaging.AndroidNotification{
 				ClickAction: notification.ClickAction,
-				Icon:        "ic_notification",
-				Color:       "#4CAF50",
+				Sound:       "default",
 			},
 		},
 		APNS: &messaging.APNSConfig{
@@ -87,7 +87,7 @@ func (f *FCMService) SendToDevice(token string, notification *FCMNotification) (
 			},
 		},
 	}
-	
+
 	response, err := f.client.Send(context.Background(), message)
 	if err != nil {
 		return &FCMResponse{
@@ -96,7 +96,7 @@ func (f *FCMService) SendToDevice(token string, notification *FCMNotification) (
 			Errors:       []string{err.Error()},
 		}, err
 	}
-	
+
 	return &FCMResponse{
 		SuccessCount: 1,
 		FailureCount: 0,
@@ -109,20 +109,25 @@ func (f *FCMService) SendToMultipleDevices(tokens []string, notification *FCMNot
 	if len(tokens) == 0 {
 		return &FCMResponse{}, nil
 	}
-	
+
+	// If only 1 token, use SendToDevice instead of batch
+	if len(tokens) == 1 {
+		return f.SendToDevice(tokens[0], notification)
+	}
+
 	// FCM has a limit of 500 tokens per batch
 	const maxBatchSize = 500
 	var responses []string
 	var errors []string
 	successCount := 0
 	failureCount := 0
-	
+
 	for i := 0; i < len(tokens); i += maxBatchSize {
 		end := i + maxBatchSize
 		if end > len(tokens) {
 			end = len(tokens)
 		}
-		
+
 		batchTokens := tokens[i:end]
 		response, err := f.sendBatch(batchTokens, notification)
 		if err != nil {
@@ -135,7 +140,7 @@ func (f *FCMService) SendToMultipleDevices(tokens []string, notification *FCMNot
 			errors = append(errors, response.Errors...)
 		}
 	}
-	
+
 	return &FCMResponse{
 		SuccessCount: successCount,
 		FailureCount: failureCount,
@@ -248,7 +253,7 @@ func (f *FCMService) sendBatch(tokens []string, notification *FCMNotification) (
 			},
 		},
 	}
-	
+
 	response, err := f.client.SendMulticast(context.Background(), message)
 	if err != nil {
 		return &FCMResponse{
@@ -257,14 +262,12 @@ func (f *FCMService) sendBatch(tokens []string, notification *FCMNotification) (
 			Errors:       []string{err.Error()},
 		}, err
 	}
-	
+
 	var errors []string
-	// Note: BatchResponse doesn't have Successes field in current version
-	// We'll just report the overall success/failure counts
 	if response.FailureCount > 0 {
 		errors = append(errors, fmt.Sprintf("%d tokens failed to receive notification", response.FailureCount))
 	}
-	
+
 	return &FCMResponse{
 		SuccessCount: response.SuccessCount,
 		FailureCount: response.FailureCount,

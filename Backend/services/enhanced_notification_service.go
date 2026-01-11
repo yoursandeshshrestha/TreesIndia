@@ -21,13 +21,13 @@ type EnhancedNotificationService struct {
 // NotificationRequest represents a notification to be sent
 type NotificationRequest struct {
 	UserID      uint                    `json:"user_id" binding:"required"`
-	Type        models.NotificationType `json:"type" binding:"required"`
+	Type        models.NotificationType `json:"type"` // Optional, defaults to "general"
 	Title       string                  `json:"title" binding:"required"`
 	Body        string                  `json:"body" binding:"required"`
 	Data        map[string]string       `json:"data,omitempty"`
 	ImageURL    string                  `json:"image_url,omitempty"`
 	ClickAction string                  `json:"click_action,omitempty"`
-	Priority    string                  `json:"priority,omitempty"` // "high", "normal", "low"
+	Priority    string                  `json:"priority,omitempty"` // Optional, defaults to "high"
 }
 
 // NotificationResult represents the result of sending a notification
@@ -56,6 +56,14 @@ func NewEnhancedNotificationService(fcmService *FCMService, deviceService *Devic
 
 // SendNotification sends a notification through all available channels
 func (e *EnhancedNotificationService) SendNotification(req *NotificationRequest) (*NotificationResult, error) {
+	// Set defaults for optional fields
+	if req.Type == "" {
+		req.Type = "general"
+	}
+	if req.Priority == "" {
+		req.Priority = "high"
+	}
+
 	result := &NotificationResult{
 		UserID:   req.UserID,
 		Type:     req.Type,
@@ -157,6 +165,8 @@ func (e *EnhancedNotificationService) sendPushNotification(req *NotificationRequ
 		return fmt.Errorf("failed to get user device tokens: %w", err)
 	}
 
+	fmt.Printf("[EnhancedNotification] Found %d tokens for user_id %d\n", len(tokens), req.UserID)
+
 	if len(tokens) == 0 {
 		return fmt.Errorf("no active devices found for user")
 	}
@@ -166,6 +176,7 @@ func (e *EnhancedNotificationService) sendPushNotification(req *NotificationRequ
 	for _, token := range tokens {
 		if strings.TrimSpace(token) != "" {
 			validTokens = append(validTokens, token)
+			fmt.Printf("[EnhancedNotification] Token: %s...\n", token[:20])
 		}
 	}
 
@@ -182,10 +193,18 @@ func (e *EnhancedNotificationService) sendPushNotification(req *NotificationRequ
 		ClickAction: req.ClickAction,
 	}
 
+	fmt.Printf("[EnhancedNotification] Sending notification: Title='%s', Body='%s'\n", req.Title, req.Body)
+
 	// Send to all user devices
 	fcmResponse, err := e.fcmService.SendToMultipleDevices(validTokens, fcmNotification)
 	if err != nil {
+		fmt.Printf("[EnhancedNotification] FCM Error: %v\n", err)
 		return fmt.Errorf("failed to send FCM notification: %w", err)
+	}
+
+	fmt.Printf("[EnhancedNotification] FCM Response: Success=%d, Failure=%d\n", fcmResponse.SuccessCount, fcmResponse.FailureCount)
+	if len(fcmResponse.Errors) > 0 {
+		fmt.Printf("[EnhancedNotification] FCM Errors: %v\n", fcmResponse.Errors)
 	}
 
 	// Update device last used timestamps for successful tokens

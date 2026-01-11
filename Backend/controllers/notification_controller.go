@@ -451,13 +451,13 @@ func (nc *NotificationController) SendNotificationToUser(c *gin.Context) {
 func (nc *NotificationController) SendNotificationToMultipleUsers(c *gin.Context) {
 	var req struct {
 		UserIDs     []uint                  `json:"user_ids" binding:"required"`
-		Type        models.NotificationType `json:"type" binding:"required"`
+		Type        models.NotificationType `json:"type"` // Optional, defaults to "general"
 		Title       string                  `json:"title" binding:"required"`
 		Body        string                  `json:"body" binding:"required"`
 		Data        map[string]string       `json:"data,omitempty"`
 		ImageURL    string                  `json:"image_url,omitempty"`
 		ClickAction string                  `json:"click_action,omitempty"`
-		Priority    string                  `json:"priority,omitempty"`
+		Priority    string                  `json:"priority,omitempty"` // Optional, defaults to "high"
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
