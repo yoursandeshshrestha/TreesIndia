@@ -25,34 +25,54 @@ export default function DeleteConfirmationBottomSheet({
   isLoading = false,
 }: DeleteConfirmationBottomSheetProps) {
   const [isClosing, setIsClosing] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(500)).current;
 
   useEffect(() => {
     if (visible) {
       setIsClosing(false);
+
+      // Animate in
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
+          duration: 200,
           useNativeDriver: true,
         }),
-        Animated.timing(translateY, {
-          toValue: 0,
+        Animated.timing(slideAnim, {
+          toValue: 1,
           duration: 300,
-          easing: Easing.out(Easing.ease),
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Animate out
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, overlayOpacity, slideAnim]);
 
   const handleClose = () => {
-    if (isClosing) return;
+    if (isClosing || isLoading) return;
     setIsClosing(true);
     onClose();
   };
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [600, 0],
+  });
 
   if (!visible) return null;
 
@@ -62,88 +82,81 @@ export default function DeleteConfirmationBottomSheet({
       transparent
       animationType="none"
       onRequestClose={handleClose}
+      statusBarTranslucent
     >
       <View className="flex-1">
+        {/* Overlay */}
         <Animated.View
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             opacity: overlayOpacity,
           }}
+          className="absolute inset-0 bg-black/50"
         >
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
             onPress={handleClose}
+            disabled={isLoading}
           />
         </Animated.View>
 
-        {/* Floating Close Button */}
+        {/* Bottom Sheet */}
         <Animated.View
           style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 16,
             transform: [{ translateY }],
-            zIndex: 30,
           }}
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
         >
-          <TouchableOpacity
-            onPress={handleClose}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+          {/* Floating Close Button */}
+          <View
             style={{
-              marginBottom: -56,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 4,
+              position: 'absolute',
+              top: -56,
+              right: 16,
+              zIndex: 60,
             }}
           >
-            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
-          </TouchableOpacity>
-        </Animated.View>
+            <TouchableOpacity
+              onPress={handleClose}
+              disabled={isLoading}
+              className="w-12 h-12 bg-white rounded-full items-center justify-center"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 4,
+              }}
+            >
+              <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
 
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <SafeAreaView edges={['bottom']}>
-            <View className="px-6 pt-6 pb-12">
-              {/* Handle bar */}
-              <View className="items-center mb-6">
-                <View className="w-10 h-1 bg-[#D1D5DB] rounded-full" />
-              </View>
 
-              {/* Header */}
-              <Text
-                className="text-2xl font-semibold text-[#111928] mb-4"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
-                Delete Account
-              </Text>
+          {/* Header - Fixed */}
+          <View className="px-6 pt-6 pb-4 border-b border-[#E5E7EB]">
+            <Text
+              className="text-2xl font-semibold text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Delete Account
+            </Text>
+          </View>
 
-              {/* Description */}
-              <Text
-                className="text-base text-[#6B7280] mb-8"
-                style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
-              >
-                Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.
-              </Text>
+          {/* Content */}
+          <View className="px-6 pt-6 pb-6">
+            {/* Description */}
+            <Text
+              className="text-base text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
+            >
+              Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.
+            </Text>
+          </View>
 
-              {/* Buttons */}
+          {/* Action Buttons - Fixed at bottom */}
+          <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
+            <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
               <View className="flex-row" style={{ gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleClose}
@@ -184,4 +197,3 @@ export default function DeleteConfirmationBottomSheet({
     </Modal>
   );
 }
-

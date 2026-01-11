@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import BackIcon from './icons/BackIcon';
 import SearchIcon from './icons/SearchIcon';
 import LocationIcon from './icons/LocationIcon';
@@ -52,6 +53,7 @@ export default function MapLocationPicker({
   onClose,
   embedded = false,
 }: MapLocationPickerProps) {
+  const insets = useSafeAreaInsets();
   const [region, setRegion] = useState({
     latitude: initialLocation?.latitude || 12.9716,
     longitude: initialLocation?.longitude || 77.5946,
@@ -281,16 +283,18 @@ export default function MapLocationPicker({
     <View style={styles.container}>
       {/* Header - Only show in full screen mode */}
       {!embedded && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <BackIcon size={24} color="#111928" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Select Location</Text>
-          <View style={styles.placeholder} />
+        <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.backButton}>
+              <BackIcon size={24} color="#111928" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Select Location</Text>
+            <View style={styles.placeholder} />
+          </View>
         </View>
       )}
 
-      {/* Map - 30% height with center pin */}
+      {/* Map - Full height */}
       <View style={[styles.mapContainer, embedded && styles.mapContainerEmbedded]}>
         <MapView
           ref={mapRef}
@@ -329,68 +333,67 @@ export default function MapLocationPicker({
         )}
       </View>
 
-      {/* Address Details - 70% height */}
-      <View style={[styles.detailsContainer, embedded && styles.detailsContainerEmbedded]}>
-        {embedded ? (
-          /* Embedded mode - minimal clean design */
-          <View style={styles.embeddedAddressContainer}>
-            <View style={styles.embeddedAddressContent}>
-              <View style={styles.embeddedAddressTextContainer}>
-                <Text style={styles.embeddedAddressText} numberOfLines={2}>
-                  {currentAddress || 'Move the map to select location'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowSearchSheet(true)}
-                activeOpacity={0.7}
-                style={styles.embeddedChangeButton}
-              >
-                <Text style={styles.embeddedChangeButtonText}>Change</Text>
-              </TouchableOpacity>
+      {/* Address Details - Fixed at bottom */}
+      {!embedded && (
+        <SafeAreaView edges={['bottom']} style={styles.bottomContainer}>
+          {/* Address Display */}
+          <View style={styles.addressContainer}>
+            <View style={styles.addressHeader}>
+              <LocationIcon size={18} color="#00a871" />
+              <Text style={styles.addressLabel}>Selected Location</Text>
             </View>
+            <Text style={styles.addressText} numberOfLines={2}>
+              {currentAddress || 'Move the map to select a location'}
+            </Text>
           </View>
-        ) : (
-          /* Full screen mode */
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Location Summary */}
-            <View style={styles.locationSummary}>
-              <Text style={styles.locationTitle}>
-                {state && country ? `${state}, ${country}` : 'Locating...'}
-              </Text>
-              <Text style={styles.locationAddress}>
-                {currentAddress || 'Move the map to select a location'}
-              </Text>
-            </View>
 
-            {/* Change Location Button */}
+          {/* Action Buttons Row */}
+          <View style={styles.buttonsRow}>
             <TouchableOpacity
               style={styles.changeButton}
               onPress={() => setShowSearchSheet(true)}
               activeOpacity={0.7}
             >
-              <SearchIcon size={20} color="#00a871" />
+              <SearchIcon size={18} color="#00a871" />
               <Text style={styles.changeButtonText}>Change</Text>
             </TouchableOpacity>
 
-            {/* Confirm Button */}
             <TouchableOpacity
-              style={[styles.confirmButton, (!city || !state || isGeocodingAddress) && styles.confirmButtonDisabled]}
+              style={[
+                styles.confirmButton,
+                (!city || !state || isGeocodingAddress) && styles.confirmButtonDisabled
+              ]}
               onPress={handleConfirmLocation}
               activeOpacity={0.7}
               disabled={isGeocodingAddress || !city || !state}
             >
               <Text style={styles.confirmButtonText}>
-                {isGeocodingAddress ? 'Loading...' : 'Confirm Location'}
+                {isGeocodingAddress ? 'Loading...' : 'Confirm'}
               </Text>
             </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      )}
 
-            {/* Instruction Text */}
-            <Text style={styles.instructionText}>
-              Drag the map to position the pin at your exact location
-            </Text>
-          </ScrollView>
-        )}
-      </View>
+      {/* Embedded mode bottom section */}
+      {embedded && (
+        <View style={styles.embeddedAddressContainer}>
+          <View style={styles.embeddedAddressContent}>
+            <View style={styles.embeddedAddressTextContainer}>
+              <Text style={styles.embeddedAddressText} numberOfLines={2}>
+                {currentAddress || 'Move the map to select location'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowSearchSheet(true)}
+              activeOpacity={0.7}
+              style={styles.embeddedChangeButton}
+            >
+              <Text style={styles.embeddedChangeButtonText}>Change</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Search Sheet Modal */}
       <Modal
@@ -502,21 +505,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
+  headerContainer: {
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingTop: Platform.OS === 'ios' ? 60 : 16,
+    paddingVertical: 12,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     color: '#111928',
     fontFamily: 'Inter-SemiBold',
@@ -525,11 +530,12 @@ const styles = StyleSheet.create({
     width: 40,
   },
   mapContainer: {
-    height: '30%',
+    flex: 1,
     position: 'relative',
   },
   mapContainerEmbedded: {
     height: 280,
+    flex: 0,
   },
   map: {
     flex: 1,
@@ -612,70 +618,76 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  detailsContainer: {
-    flex: 1,
-    padding: 24,
+  bottomContainer: {
     backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  detailsContainerEmbedded: {
-    flex: 0,
-    padding: 0,
+  addressContainer: {
+    marginBottom: 16,
   },
-  locationSummary: {
-    marginBottom: 20,
-  },
-  locationTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111928',
+  addressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
-    fontFamily: 'Inter-Bold',
   },
-  locationAddress: {
-    fontSize: 14,
+  addressLabel: {
+    fontSize: 13,
+    fontWeight: '600',
     color: '#6B7280',
+    marginLeft: 6,
+    fontFamily: 'Inter-SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  addressText: {
+    fontSize: 15,
+    color: '#111928',
     lineHeight: 20,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
+  },
+  buttonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
   },
   changeButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#00a871',
-    marginBottom: 12,
+    backgroundColor: 'white',
   },
   changeButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#00a871',
-    marginLeft: 8,
+    marginLeft: 6,
     fontFamily: 'Inter-SemiBold',
   },
   confirmButton: {
+    flex: 1,
     backgroundColor: '#00a871',
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   confirmButtonDisabled: {
     backgroundColor: '#9CA3AF',
   },
   confirmButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: 'white',
     fontFamily: 'Inter-SemiBold',
-  },
-  instructionText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    fontFamily: 'Inter-Regular',
   },
   searchSheetContainer: {
     flex: 1,

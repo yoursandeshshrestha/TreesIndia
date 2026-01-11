@@ -14,6 +14,9 @@ export interface ServiceFilters {
   price_max?: number;
   category?: string;
   subcategory?: string;
+  city?: string;
+  state?: string;
+  search?: string;
 }
 
 interface ServiceFilterBottomSheetProps {
@@ -56,24 +59,37 @@ export default function ServiceFilterBottomSheet({
   const [priceMin, setPriceMin] = useState<number | undefined>(initialFilters.price_min);
   const [priceMax, setPriceMax] = useState<number | undefined>(initialFilters.price_max);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const isDismissing = useRef(false);
 
   const snapPoints = useMemo(() => ['60%'], []);
 
+  // Handle sheet visibility
   useEffect(() => {
     if (visible) {
-      // Reset filters to initial values when opened
-      setPriceType(initialFilters.price_type);
-      setPriceMin(initialFilters.price_min);
-      setPriceMax(initialFilters.price_max);
-
+      isDismissing.current = false;
       requestAnimationFrame(() => {
         bottomSheetRef.current?.present();
       });
+    } else if (!visible && bottomSheetRef.current) {
+      if (!isDismissing.current) {
+        isDismissing.current = true;
+        bottomSheetRef.current.dismiss();
+      }
+    }
+  }, [visible]);
+
+  // Reset filters when sheet opens
+  useEffect(() => {
+    if (visible) {
+      setPriceType(initialFilters.price_type);
+      setPriceMin(initialFilters.price_min);
+      setPriceMax(initialFilters.price_max);
     }
   }, [visible, initialFilters]);
 
   const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
+    if (index === -1 && !isDismissing.current) {
+      isDismissing.current = true;
       onClose();
     }
   }, [onClose]);
@@ -102,7 +118,10 @@ export default function ServiceFilterBottomSheet({
   };
 
   const handleClose = () => {
-    bottomSheetRef.current?.dismiss();
+    if (!isDismissing.current) {
+      isDismissing.current = true;
+      bottomSheetRef.current?.dismiss();
+    }
   };
 
   const handleApply = () => {
@@ -114,8 +133,6 @@ export default function ServiceFilterBottomSheet({
     onApply(filters);
     handleClose();
   };
-
-  if (!visible) return null;
 
   return (
     <BottomSheetModal

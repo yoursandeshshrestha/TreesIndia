@@ -256,6 +256,7 @@ export default function WorkerAssignmentBottomSheet({
             bottom: 0,
             left: 0,
             right: 0,
+            minHeight: '70%',
             maxHeight: '70%',
             backgroundColor: 'white',
             borderTopLeftRadius: 24,
@@ -432,22 +433,27 @@ export default function WorkerAssignmentBottomSheet({
               {/* Action Buttons - Only show for in_progress assignments */}
               {!isCompleted && (
                 <View className="px-6 py-4 border-t border-[#E5E7EB]">
-                  <Button
-                    label="Open in Google Maps"
-                    onPress={openGoogleMaps}
-                    icon={<Ionicons name="navigate" size={20} color="white" />}
-                    variant="solid"
-                    className="mb-3"
-                  />
+                  {/* First Row - Google Maps and Message buttons */}
+                  <View className="flex-row mb-3" style={{ gap: 12 }}>
+                    <View className="flex-1">
+                      <Button
+                        label="Navigate"
+                        onPress={openGoogleMaps}
+                        icon={<Ionicons name="navigate" size={20} color="white" />}
+                        variant="solid"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Button
+                        label="Message"
+                        onPress={handleMessageCustomer}
+                        icon={<Ionicons name="chatbubble-outline" size={20} color="#111928" />}
+                        variant="outline"
+                      />
+                    </View>
+                  </View>
 
-                  <Button
-                    label="Message Customer"
-                    onPress={handleMessageCustomer}
-                    icon={<Ionicons name="chatbubble-outline" size={20} color="#111928" />}
-                    variant="outline"
-                    className="mb-3"
-                  />
-
+                  {/* Second Row - Complete Work button */}
                   <Button
                     label="Complete Work"
                     onPress={handleCompleteWork}

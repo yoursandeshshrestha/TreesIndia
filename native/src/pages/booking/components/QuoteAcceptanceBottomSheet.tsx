@@ -533,7 +533,7 @@ export default function QuoteAcceptanceBottomSheet({
             display: 'flex',
             flexDirection: 'column',
           }}
-          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[70%]"
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl min-h-[70%] max-h-[70%]"
         >
           {/* Header - Fixed */}
           <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">

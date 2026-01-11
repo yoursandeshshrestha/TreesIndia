@@ -11,6 +11,7 @@ import {
   Animated,
   Easing,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../../components/ui/Button';
@@ -37,6 +38,7 @@ export default function WithdrawalRequestBottomSheet({
   const [notes, setNotes] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [amountError, setAmountError] = useState<string>('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(500)).current;
@@ -59,6 +61,26 @@ export default function WithdrawalRequestBottomSheet({
       ]).start();
     }
   }, [visible]);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   const validateAmount = (): boolean => {
     const amountNum = parseFloat(amount);
@@ -126,217 +148,243 @@ export default function WithdrawalRequestBottomSheet({
       transparent
       animationType="none"
       onRequestClose={handleClose}
+      statusBarTranslucent
     >
-      <View className="flex-1 justify-end">
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
-        </Animated.View>
-
-        {/* Floating Close Button */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 16,
-            transform: [{ translateY }],
-            zIndex: 30,
-          }}
-        >
-          <TouchableOpacity
-            onPress={handleClose}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View className="flex-1">
+          {/* Overlay */}
+          <Animated.View
             style={{
-              marginBottom: -56,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 4,
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              opacity: overlayOpacity,
             }}
           >
-            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
-          </TouchableOpacity>
-        </Animated.View>
+            <TouchableOpacity
+              className="flex-1"
+              activeOpacity={1}
+              onPress={handleClose}
+              disabled={isProcessing}
+            />
+          </Animated.View>
 
-        <Animated.View
-          style={{
-            backgroundColor: 'white',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            transform: [{ translateY }],
-          }}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="bg-white rounded-t-3xl"
+          {/* Floating Close Button */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              bottom: '70%',
+              right: 16,
+              transform: [{ translateY }],
+              zIndex: 30,
+            }}
           >
-            <SafeAreaView edges={['bottom']}>
-              <View className="pt-3 pb-4">
-                {/* Drag Handle */}
-                <View className="self-center w-10 h-1 bg-[#D1D5DB] rounded-full mb-6" />
+            <TouchableOpacity
+              onPress={handleClose}
+              disabled={isProcessing}
+              className="w-12 h-12 bg-white rounded-full items-center justify-center"
+              style={{
+                marginTop: -56,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 4,
+              }}
+            >
+              <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+            </TouchableOpacity>
+          </Animated.View>
 
-                {/* Content */}
-                <ScrollView
-                  className="px-5"
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {/* Title */}
+          {/* Bottom Sheet */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              maxHeight: '70%',
+              backgroundColor: 'white',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              transform: [{ translateY }],
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 12,
+              elevation: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <View className="flex-1 bg-white">
+              {/* Header */}
+              <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+                <View className="flex-1">
                   <Text
-                    className="text-xl font-bold text-[#111928] mb-2"
+                    className="text-lg font-bold text-[#111928]"
                     style={{ fontFamily: 'Inter-Bold' }}
                   >
                     Request Withdrawal
                   </Text>
                   <Text
-                    className="text-sm text-[#6B7280] mb-6"
+                    className="text-sm text-[#6B7280] mt-1"
                     style={{
                       fontFamily: 'Inter-Regular',
                       ...(Platform.OS === 'android' && { includeFontPadding: false }),
                     }}
                   >
-                    Funds will be transferred to your registered bank account
+                    Funds will be transferred to your bank account
                   </Text>
+                </View>
+              </View>
 
-                  {/* Available Balance Info */}
-                  <View className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
-                    <Text
-                      className="text-xs text-[#6B7280] mb-1"
-                      style={{ fontFamily: 'Inter-Medium' }}
-                    >
-                      Available Balance
-                    </Text>
-                    <Text
-                      className="text-2xl font-bold text-[#111928]"
-                      style={{ fontFamily: 'Inter-Bold' }}
-                    >
-                      ₹{availableBalance.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
+              {/* Content - Scrollable */}
+              <ScrollView
+                contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16, paddingBottom: 20 }}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
 
-                  {/* Amount Input */}
-                  <View className="mb-4">
-                    <Text
-                      className="text-sm font-medium text-[#374151] mb-2"
-                      style={{ fontFamily: 'Inter-Medium' }}
-                    >
-                      Withdrawal Amount
-                    </Text>
-                    <View
-                      className={`border rounded-xl ${
-                        amountError ? 'border-[#DC2626]' : 'border-[#E5E7EB]'
-                      }`}
-                      style={{ minHeight: 48 }}
-                    >
-                      <View className="flex-row items-center px-4" style={{ minHeight: 48 }}>
-                        <Text
-                          className="text-base text-[#111928] mr-2"
-                          style={{
-                            fontFamily: 'Inter-Regular',
-                            lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                            ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                          }}
-                        >
-                          ₹
-                        </Text>
-                        <TextInput
-                          value={amount}
-                          onChangeText={(text) => {
-                            setAmount(text);
-                            if (amountError) {
-                              setAmountError('');
-                            }
-                          }}
-                          placeholder="Enter amount"
-                          placeholderTextColor="#9CA3AF"
-                          keyboardType="numeric"
-                          editable={!isProcessing}
-                          maxLength={10}
-                          className="flex-1 text-base text-[#111928]"
-                          style={{
-                            fontFamily: 'Inter-Regular',
-                            paddingVertical: 0,
-                            margin: 0,
-                            fontSize: 16,
-                            lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                            textAlignVertical: 'center',
-                            ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                          }}
-                        />
-                      </View>
-                    </View>
-                    {amountError && (
+                {/* Available Balance Info */}
+                <View className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+                  <Text
+                    className="text-xs text-[#6B7280] mb-1"
+                    style={{ fontFamily: 'Inter-Medium' }}
+                  >
+                    Available Balance
+                  </Text>
+                  <Text
+                    className="text-2xl font-bold text-[#111928]"
+                    style={{ fontFamily: 'Inter-Bold' }}
+                  >
+                    ₹{availableBalance.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+
+                {/* Amount Input */}
+                <View className="mb-4">
+                  <Text
+                    className="text-sm font-medium text-[#374151] mb-2"
+                    style={{ fontFamily: 'Inter-Medium' }}
+                  >
+                    Withdrawal Amount
+                  </Text>
+                  <View
+                    className={`border rounded-xl ${
+                      amountError ? 'border-[#DC2626]' : 'border-[#E5E7EB]'
+                    }`}
+                    style={{ minHeight: 48 }}
+                  >
+                    <View className="flex-row items-center px-4" style={{ minHeight: 48 }}>
                       <Text
-                        className="text-xs text-[#DC2626] mt-1"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {amountError}
-                      </Text>
-                    )}
-                  </View>
-
-                  {/* Notes (Optional) */}
-                  <View className="mb-4">
-                    <Text
-                      className="text-sm font-medium text-[#374151] mb-2"
-                      style={{ fontFamily: 'Inter-Medium' }}
-                    >
-                      Notes (Optional)
-                    </Text>
-                    <View
-                      className="border border-[#E5E7EB] rounded-xl"
-                      style={{ minHeight: 80 }}
-                    >
-                      <TextInput
-                        value={notes}
-                        onChangeText={setNotes}
-                        placeholder="Add any additional notes..."
-                        placeholderTextColor="#9CA3AF"
-                        multiline
-                        numberOfLines={3}
-                        editable={!isProcessing}
-                        maxLength={500}
-                        className="px-4 py-3 text-base text-[#111928]"
+                        className="text-base text-[#111928] mr-2"
                         style={{
                           fontFamily: 'Inter-Regular',
-                          minHeight: 80,
+                          lineHeight: Platform.OS === 'ios' ? 20 : 22,
+                          ...(Platform.OS === 'android' && { includeFontPadding: false }),
+                        }}
+                      >
+                        ₹
+                      </Text>
+                      <TextInput
+                        value={amount}
+                        onChangeText={(text) => {
+                          setAmount(text);
+                          if (amountError) {
+                            setAmountError('');
+                          }
+                        }}
+                        placeholder="Enter amount"
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="numeric"
+                        editable={!isProcessing}
+                        maxLength={10}
+                        className="flex-1 text-base text-[#111928]"
+                        style={{
+                          fontFamily: 'Inter-Regular',
+                          paddingVertical: 0,
+                          margin: 0,
                           fontSize: 16,
-                          textAlignVertical: 'top',
+                          lineHeight: Platform.OS === 'ios' ? 20 : 22,
+                          textAlignVertical: 'center',
                           ...(Platform.OS === 'android' && { includeFontPadding: false }),
                         }}
                       />
                     </View>
                   </View>
-
-                  {/* Info Note */}
-                  <View className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+                  {amountError && (
                     <Text
-                      className="text-xs text-[#6B7280]"
+                      className="text-xs text-[#DC2626] mt-1"
+                      style={{ fontFamily: 'Inter-Regular' }}
+                    >
+                      {amountError}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Notes (Optional) */}
+                <View className="mb-4">
+                  <Text
+                    className="text-sm font-medium text-[#374151] mb-2"
+                    style={{ fontFamily: 'Inter-Medium' }}
+                  >
+                    Notes (Optional)
+                  </Text>
+                  <View
+                    className="border border-[#E5E7EB] rounded-xl"
+                    style={{ minHeight: 80 }}
+                  >
+                    <TextInput
+                      value={notes}
+                      onChangeText={setNotes}
+                      placeholder="Add any additional notes..."
+                      placeholderTextColor="#9CA3AF"
+                      multiline
+                      numberOfLines={3}
+                      editable={!isProcessing}
+                      maxLength={500}
+                      className="px-4 py-3 text-base text-[#111928]"
                       style={{
                         fontFamily: 'Inter-Regular',
-                        lineHeight: 16,
+                        minHeight: 80,
+                        fontSize: 16,
+                        textAlignVertical: 'top',
+                        ...(Platform.OS === 'android' && { includeFontPadding: false }),
                       }}
-                    >
-                      Funds will be transferred to your registered bank account after admin approval. Make sure your bank details are up to date in your profile.
-                    </Text>
+                    />
                   </View>
+                </View>
 
-                  {/* Submit Button */}
-                  <View className="mt-2 mb-12">
+                {/* Info Note */}
+                <View className="bg-[#F9FAFB] rounded-xl p-4">
+                  <Text
+                    className="text-xs text-[#6B7280]"
+                    style={{
+                      fontFamily: 'Inter-Regular',
+                      lineHeight: 16,
+                    }}
+                  >
+                    Funds will be transferred to your registered bank account after admin approval. Make sure your bank details are up to date in your profile.
+                  </Text>
+                </View>
+              </ScrollView>
+
+              {/* Action Button - Sticky at bottom */}
+              <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
+                <View
+                  className={`bg-white pt-4 ${keyboardHeight > 0 ? 'pb-4' : 'pb-10'}`}
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 8,
+                  }}
+                >
+                  <View className="px-5">
                     <Button
                       label="Submit Request"
                       onPress={handleSubmit}
@@ -344,12 +392,12 @@ export default function WithdrawalRequestBottomSheet({
                       disabled={isProcessing}
                     />
                   </View>
-                </ScrollView>
-              </View>
-            </SafeAreaView>
-          </KeyboardAvoidingView>
-        </Animated.View>
-      </View>
+                </View>
+              </SafeAreaView>
+            </View>
+          </Animated.View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

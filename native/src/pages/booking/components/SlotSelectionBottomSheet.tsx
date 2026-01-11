@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
+  Animated,
+  Easing,
 } from 'react-native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { bookingService } from '../../../services';
 import { TimeSlot, BookingConfig } from '../../../types/booking';
 import Button from '../../../components/ui/Button';
+import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface SlotSelectionBottomSheetProps {
   visible: boolean;
@@ -45,36 +48,44 @@ export default function SlotSelectionBottomSheet({
   const [currentSlot, setCurrentSlot] = useState<TimeSlot | null>(null);
   const [bookingConfig, setBookingConfig] = useState<BookingConfig | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const snapPoints = useMemo(() => ['75%'], []);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       fetchBookingConfig();
-      requestAnimationFrame(() => {
-        bottomSheetRef.current?.present();
-      });
-    }
-  }, [visible]);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
-      onClose();
+      // Animate in
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Animate out
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [onClose]);
-
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
-    ),
-    []
-  );
+  }, [visible, overlayOpacity, slideAnim]);
 
   const fetchBookingConfig = async () => {
     setIsLoadingConfig(true);
@@ -100,7 +111,7 @@ export default function SlotSelectionBottomSheet({
   const generateDates = (config: BookingConfig | null) => {
     const dateOptions: DateOption[] = [];
     const today = new Date();
-    
+
     // Get advance days from config, default to 7 if not available
     const advanceDays = config
       ? parseInt(config.booking_advance_days || '7', 10)
@@ -151,7 +162,7 @@ export default function SlotSelectionBottomSheet({
   };
 
   const handleClose = () => {
-    bottomSheetRef.current?.dismiss();
+    onClose();
   };
 
   const handleSelectSlot = (slot: TimeSlot) => {
@@ -172,66 +183,123 @@ export default function SlotSelectionBottomSheet({
     if (!time) {
       return 'N/A';
     }
-    
+
     // Format time string (e.g., "14:00:00" to "2:00 PM" or "14:00" to "2:00 PM")
     const timeParts = time.split(':');
     if (timeParts.length < 2) {
       return time; // Return as-is if format is unexpected
     }
-    
+
     const hours = timeParts[0];
     const minutes = timeParts[1];
     const hour = parseInt(hours, 10);
-    
+
     if (isNaN(hour)) {
       return time; // Return as-is if parsing fails
     }
-    
+
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [600, 0],
+  });
+
   if (!visible) return null;
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      index={0}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
-      onChange={handleSheetChanges}
-      backdropComponent={renderBackdrop}
-      enablePanDownToClose
-      backgroundStyle={{
-        backgroundColor: 'white',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-      }}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+      statusBarTranslucent
     >
       <View className="flex-1">
-            {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-              <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
-                Select Date & Time
-              </Text>
-            </View>
+        {/* Overlay */}
+        <Animated.View
+          style={{
+            opacity: overlayOpacity,
+          }}
+          className="absolute inset-0 bg-black/50"
+        >
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={handleClose}
+          />
+        </Animated.View>
 
-            {/* Date Picker */}
-            <View className="px-6 py-4 border-b border-[#E5E7EB]">
-              <Text className="text-sm text-[#6B7280] mb-3" style={{ fontFamily: 'Inter-Medium' }}>
-                Select Date
-              </Text>
-              {isLoadingConfig ? (
-                <View className="py-4 items-center">
-                  <ActivityIndicator size="small" color="#055c3a" />
-                  <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
-                    Loading dates...
-                  </Text>
-                </View>
-              ) : (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {dates.map((dateOption) => (
+        {/* Floating Close Button */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: '70%',
+            right: 16,
+            transform: [{ translateY }],
+            zIndex: 50,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleClose}
+            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            style={{
+              marginTop: -56,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Bottom Sheet */}
+        <Animated.View
+          style={{
+            transform: [{ translateY }],
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl min-h-[70%] max-h-[70%]"
+        >
+          {/* Header - Fixed */}
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+            <Text
+              className="text-lg font-semibold text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+            >
+              Select Date & Time
+            </Text>
+          </View>
+
+          {/* Date Picker - Fixed */}
+          <View className="px-6 py-4 border-b border-[#E5E7EB]">
+            <Text
+              className="text-sm text-[#6B7280] mb-3"
+              style={{ fontFamily: 'Inter-Medium' }}
+            >
+              Select Date
+            </Text>
+            {isLoadingConfig ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator size="small" color="#055c3a" />
+                <Text
+                  className="text-sm text-[#6B7280] mt-2"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Loading dates...
+                </Text>
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {dates.map((dateOption) => (
                   <TouchableOpacity
                     key={dateOption.date}
                     className={`mr-3 px-4 py-3 rounded-xl border ${
@@ -259,86 +327,116 @@ export default function SlotSelectionBottomSheet({
                     </Text>
                   </TouchableOpacity>
                 ))}
-                </ScrollView>
-              )}
-            </View>
-
-            {/* Time Slots */}
-            <BottomSheetScrollView className="px-6 py-4" style={{ maxHeight: 350 }}>
-              <Text className="text-sm text-[#6B7280] mb-3" style={{ fontFamily: 'Inter-Medium' }}>
-                Available Time Slots
-              </Text>
-
-              {isLoadingSlots ? (
-                <View className="py-8 items-center">
-                  <ActivityIndicator size="large" color="#055c3a" />
-                  <Text className="text-[#6B7280] mt-4" style={{ fontFamily: 'Inter-Regular' }}>
-                    Loading available slots...
-                  </Text>
-                </View>
-              ) : availableSlots.length === 0 ? (
-                <View className="py-8 items-center">
-                  <Text className="text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
-                    No slots available for this date
-                  </Text>
-                  <Text className="text-[#9CA3AF] text-center mt-2" style={{ fontFamily: 'Inter-Regular' }}>
-                    Please select another date
-                  </Text>
-                </View>
-              ) : (
-                <View className="flex-row flex-wrap">
-                  {availableSlots.map((slot) => (
-                    <TouchableOpacity
-                      key={slot.id}
-                      className={`w-[48%] mr-[2%] mb-3 p-4 rounded-xl border ${
-                        currentSlot?.id === slot.id
-                          ? 'border-[#055c3a] bg-[#F0FDF4]'
-                          : slot.is_available
-                          ? 'border-[#E5E7EB] bg-white'
-                          : 'border-[#E5E7EB] bg-[#F9FAFB]'
-                      }`}
-                      onPress={() => handleSelectSlot(slot)}
-                      disabled={!slot.is_available}
-                    >
-                      <Text
-                        className={`text-base font-semibold ${
-                          currentSlot?.id === slot.id
-                            ? 'text-[#055c3a]'
-                            : slot.is_available
-                            ? 'text-[#111928]'
-                            : 'text-[#9CA3AF]'
-                        }`}
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
-                        {formatTime(slot.start_time)}
-                      </Text>
-                      {!slot.is_available && (
-                        <Text className="text-xs text-[#DC2626] mt-1" style={{ fontFamily: 'Inter-Regular' }}>
-                          Booked
-                        </Text>
-                      )}
-                      {slot.is_available && slot.available_workers !== undefined && (
-                        <Text className="text-xs text-[#6B7280] mt-1" style={{ fontFamily: 'Inter-Regular' }}>
-                          {slot.available_workers} available
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </BottomSheetScrollView>
-
-            {/* Footer */}
-            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
-              <View className="px-6 pt-4 pb-4">
-                <Button
-                  label="Confirm Slot"
-                  onPress={handleConfirm}
-                  disabled={!currentSlot || isLoadingSlots}
-                />
-              </View>
-            </SafeAreaView>
+              </ScrollView>
+            )}
           </View>
-    </BottomSheetModal>
+
+          {/* Time Slots - Scrollable */}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 24,
+              paddingTop: 16,
+              paddingBottom: 16,
+            }}
+            showsVerticalScrollIndicator={true}
+          >
+            <Text
+              className="text-sm text-[#6B7280] mb-3"
+              style={{ fontFamily: 'Inter-Medium' }}
+            >
+              Available Time Slots
+            </Text>
+
+            {isLoadingSlots ? (
+              <View className="py-8 items-center">
+                <ActivityIndicator size="large" color="#055c3a" />
+                <Text
+                  className="text-[#6B7280] mt-4"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Loading available slots...
+                </Text>
+              </View>
+            ) : availableSlots.length === 0 ? (
+              <View className="py-8 items-center">
+                <Text
+                  className="text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  No slots available for this date
+                </Text>
+                <Text
+                  className="text-[#9CA3AF] text-center mt-2"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Please select another date
+                </Text>
+              </View>
+            ) : (
+              <View className="flex-row flex-wrap">
+                {availableSlots.map((slot) => (
+                  <TouchableOpacity
+                    key={slot.id}
+                    className={`w-[48%] mr-[2%] mb-3 p-4 rounded-xl border ${
+                      currentSlot?.id === slot.id
+                        ? 'border-[#055c3a] bg-[#F0FDF4]'
+                        : slot.is_available
+                        ? 'border-[#E5E7EB] bg-white'
+                        : 'border-[#E5E7EB] bg-[#F9FAFB]'
+                    }`}
+                    onPress={() => handleSelectSlot(slot)}
+                    disabled={!slot.is_available}
+                  >
+                    <Text
+                      className={`text-base font-semibold ${
+                        currentSlot?.id === slot.id
+                          ? 'text-[#055c3a]'
+                          : slot.is_available
+                          ? 'text-[#111928]'
+                          : 'text-[#9CA3AF]'
+                      }`}
+                      style={{ fontFamily: 'Inter-SemiBold' }}
+                    >
+                      {formatTime(slot.start_time)}
+                    </Text>
+                    {!slot.is_available && (
+                      <Text
+                        className="text-xs text-[#DC2626] mt-1"
+                        style={{ fontFamily: 'Inter-Regular' }}
+                      >
+                        Booked
+                      </Text>
+                    )}
+                    {slot.is_available && slot.available_workers !== undefined && (
+                      <Text
+                        className="text-xs text-[#6B7280] mt-1"
+                        style={{ fontFamily: 'Inter-Regular' }}
+                      >
+                        {slot.available_workers} available
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Footer - Fixed at bottom */}
+          <SafeAreaView
+            edges={['bottom']}
+            style={{ backgroundColor: 'white' }}
+          >
+            <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
+              <Button
+                label="Confirm Slot"
+                onPress={handleConfirm}
+                disabled={!currentSlot || isLoadingSlots}
+              />
+            </View>
+          </SafeAreaView>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 }

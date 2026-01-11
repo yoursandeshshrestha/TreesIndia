@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import LocationIcon from '../../../components/icons/LocationIcon';
-import BellIcon from '../../../components/icons/BellIcon';
 import { userLocationService, UserLocation } from '../../../services/api/user-location.service';
 
 interface HomeHeaderProps {
   onAddressPress?: () => void;
-  onNotificationPress?: () => void;
   refreshTrigger?: number; // Add refresh trigger to reload address when changed
 }
 
-export default function HomeHeader({ onAddressPress, onNotificationPress, refreshTrigger }: HomeHeaderProps) {
+export default function HomeHeader({ onAddressPress, refreshTrigger }: HomeHeaderProps) {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,12 +63,12 @@ export default function HomeHeader({ onAddressPress, onNotificationPress, refres
   };
 
   return (
-    <View className="flex-row items-center justify-between px-6 pt-4 pb-4 bg-white">
+    <View className="flex-row items-center px-6 pt-4 pb-4 bg-white">
       {/* Address Section */}
       <TouchableOpacity
         onPress={onAddressPress}
         activeOpacity={0.7}
-        className="flex-1 mr-4"
+        className="flex-1"
       >
         {isLoading ? (
           <>
@@ -101,15 +99,6 @@ export default function HomeHeader({ onAddressPress, onNotificationPress, refres
             </Text>
           </>
         )}
-      </TouchableOpacity>
-
-      {/* Notification Bell Icon */}
-      <TouchableOpacity
-        onPress={onNotificationPress}
-        activeOpacity={0.7}
-        className="p-2"
-      >
-        <BellIcon size={24} color="#111928" />
       </TouchableOpacity>
     </View>
   );

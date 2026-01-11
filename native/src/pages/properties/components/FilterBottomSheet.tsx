@@ -79,25 +79,38 @@ export default function FilterBottomSheet({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const snapPoints = useMemo(() => ['60%'], []);
+  const isDismissing = useRef(false);
 
+  // Handle sheet visibility
   useEffect(() => {
     if (visible) {
-      // Reset filters to initial values when opened
+      isDismissing.current = false;
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+    } else if (!visible && bottomSheetRef.current) {
+      if (!isDismissing.current) {
+        isDismissing.current = true;
+        bottomSheetRef.current.dismiss();
+      }
+    }
+  }, [visible]);
+
+  // Reset filters when sheet opens
+  useEffect(() => {
+    if (visible) {
       setListingType(initialFilters.listing_type);
       setPropertyType(initialFilters.property_type);
       setBedrooms(initialFilters.bedrooms);
       setBathrooms(initialFilters.bathrooms);
       setMaxPrice(initialFilters.max_price);
       setFurnishingStatus(initialFilters.furnishing_status);
-
-      requestAnimationFrame(() => {
-        bottomSheetRef.current?.present();
-      });
     }
   }, [visible, initialFilters]);
 
   const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
+    if (index === -1 && !isDismissing.current) {
+      isDismissing.current = true;
       onClose();
     }
   }, [onClose]);
@@ -151,10 +164,11 @@ export default function FilterBottomSheet({
   const priceRanges = listingType === 'rent' ? PRICE_RANGES_RENT : PRICE_RANGES_SALE;
 
   const handleClose = () => {
-    bottomSheetRef.current?.dismiss();
+    if (!isDismissing.current) {
+      isDismissing.current = true;
+      bottomSheetRef.current?.dismiss();
+    }
   };
-
-  if (!visible) return null;
 
   return (
     <BottomSheetModal

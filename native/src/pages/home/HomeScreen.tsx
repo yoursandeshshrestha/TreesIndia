@@ -89,13 +89,38 @@ export default function HomeScreen({
     }
   };
 
-  const handleNotificationPress = () => {
-    Alert.alert('Notifications', 'Notifications screen will be implemented here.');
-  };
-
   const handleBannerPress = (banner: PromotionBanner) => {
+    // Try to parse the banner link as JSON for navigation
     if (banner.link && banner.link.trim() !== '') {
-      // TODO: Handle banner link - navigate to URL or specific screen
+      try {
+        const parsed = JSON.parse(banner.link);
+
+        // Navigate based on screen type
+        if (parsed.screen === 'browseServices' && onNavigateToServices) {
+          onNavigateToServices(parsed.filters || {});
+          return;
+        } else if (parsed.screen === 'browseProperties' && onNavigateToProperties) {
+          onNavigateToProperties(parsed.filters || {});
+          return;
+        } else if (parsed.screen === 'browseProjects' && onNavigateToProjects) {
+          onNavigateToProjects(parsed.filters || {});
+          return;
+        } else if (parsed.screen === 'browseWorkers' && onNavigateToWorkers) {
+          onNavigateToWorkers(parsed.filters || {});
+          return;
+        } else if (parsed.screen === 'browseVendors' && onNavigateToVendors) {
+          onNavigateToVendors(parsed.filters || {});
+          return;
+        }
+      } catch (error) {
+        // If JSON parsing fails, fallback to services page
+        console.log('Failed to parse banner link, navigating to services page');
+      }
+    }
+
+    // Fallback: Always navigate to services page if link is missing or invalid
+    if (onNavigateToServices) {
+      onNavigateToServices({});
     }
   };
 
@@ -152,11 +177,11 @@ export default function HomeScreen({
     <View className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="white" />
 
-      {/* Header with Address and Bell Icon - Fixed at top with safe area */}
+      {/* Header with Address - Fixed at top with safe area */}
       <View style={{ paddingTop: insets.top }}>
         <HomeHeader
           onAddressPress={handleAddressPress}
-          onNotificationPress={handleNotificationPress}
+          refreshTrigger={addressRefreshTrigger}
         />
       </View>
 

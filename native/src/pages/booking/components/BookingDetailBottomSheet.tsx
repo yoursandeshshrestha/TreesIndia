@@ -576,6 +576,7 @@ export default function BookingDetailBottomSheet({
             bottom: 0,
             left: 0,
             right: 0,
+            minHeight: '70%',
             maxHeight: '70%',
             backgroundColor: 'white',
             borderTopLeftRadius: 24,

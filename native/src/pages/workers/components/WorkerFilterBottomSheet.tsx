@@ -35,21 +35,34 @@ export default function WorkerFilterBottomSheet({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const snapPoints = useMemo(() => ['60%'], []);
+  const isDismissing = useRef(false);
 
+  // Handle sheet visibility
   useEffect(() => {
     if (visible) {
-      // Reset filters to initial values when opened
-      setExperienceMin(initialFilters.experience_min);
-      setExperienceMax(initialFilters.experience_max);
-
+      isDismissing.current = false;
       requestAnimationFrame(() => {
         bottomSheetRef.current?.present();
       });
+    } else if (!visible && bottomSheetRef.current) {
+      if (!isDismissing.current) {
+        isDismissing.current = true;
+        bottomSheetRef.current.dismiss();
+      }
+    }
+  }, [visible]);
+
+  // Reset filters when sheet opens
+  useEffect(() => {
+    if (visible) {
+      setExperienceMin(initialFilters.experience_min);
+      setExperienceMax(initialFilters.experience_max);
     }
   }, [visible, initialFilters]);
 
   const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
+    if (index === -1 && !isDismissing.current) {
+      isDismissing.current = true;
       onClose();
     }
   }, [onClose]);
@@ -77,7 +90,10 @@ export default function WorkerFilterBottomSheet({
   };
 
   const handleClose = () => {
-    bottomSheetRef.current?.dismiss();
+    if (!isDismissing.current) {
+      isDismissing.current = true;
+      bottomSheetRef.current?.dismiss();
+    }
   };
 
   const handleExperienceSelect = (min: number | undefined, max: number | undefined) => {
@@ -102,8 +118,6 @@ export default function WorkerFilterBottomSheet({
     onApply(filters);
     handleClose();
   };
-
-  if (!visible) return null;
 
   return (
     <BottomSheetModal

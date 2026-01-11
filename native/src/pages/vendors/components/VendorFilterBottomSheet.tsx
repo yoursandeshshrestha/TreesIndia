@@ -36,20 +36,33 @@ export default function VendorFilterBottomSheet({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const snapPoints = useMemo(() => ['60%'], []);
+  const isDismissing = useRef(false);
 
+  // Handle sheet visibility
   useEffect(() => {
     if (visible) {
-      // Reset filters to initial values when opened
-      setBusinessType(initialFilters.business_type);
-
+      isDismissing.current = false;
       requestAnimationFrame(() => {
         bottomSheetRef.current?.present();
       });
+    } else if (!visible && bottomSheetRef.current) {
+      if (!isDismissing.current) {
+        isDismissing.current = true;
+        bottomSheetRef.current.dismiss();
+      }
+    }
+  }, [visible]);
+
+  // Reset filters when sheet opens
+  useEffect(() => {
+    if (visible) {
+      setBusinessType(initialFilters.business_type);
     }
   }, [visible, initialFilters]);
 
   const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
+    if (index === -1 && !isDismissing.current) {
+      isDismissing.current = true;
       onClose();
     }
   }, [onClose]);
@@ -76,7 +89,10 @@ export default function VendorFilterBottomSheet({
   };
 
   const handleClose = () => {
-    bottomSheetRef.current?.dismiss();
+    if (!isDismissing.current) {
+      isDismissing.current = true;
+      bottomSheetRef.current?.dismiss();
+    }
   };
 
   const handleBusinessTypeSelect = (value: string | undefined) => {
@@ -98,8 +114,6 @@ export default function VendorFilterBottomSheet({
     onApply(filters);
     handleClose();
   };
-
-  if (!visible) return null;
 
   return (
     <BottomSheetModal

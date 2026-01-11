@@ -227,7 +227,17 @@ export default function ServicesScreen({ onBack, initialFilters, onNavigateToBoo
             Services
           </Text>
           <TouchableOpacity
-            onPress={() => setShowFilterSheet(true)}
+            onPress={() => {
+              // Force state reset if already true to ensure useEffect triggers
+              if (showFilterSheet) {
+                setShowFilterSheet(false);
+                setTimeout(() => {
+                  setShowFilterSheet(true);
+                }, 50);
+              } else {
+                setShowFilterSheet(true);
+              }
+            }}
             className="flex-row items-center bg-[#F3F4F6] px-4 py-2 rounded-lg"
             activeOpacity={0.7}
           >
