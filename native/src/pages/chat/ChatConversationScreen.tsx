@@ -382,16 +382,16 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
 
       {/* Messages List */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item, index) => item?.id?.toString() || `message-${index}`}
-          contentContainerClassName="px-4 py-4"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
           ListHeaderComponent={renderListHeader}
           ListEmptyComponent={renderEmpty}
           onEndReached={handleLoadMore}
@@ -405,7 +405,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
         />
 
         {/* Chat Input */}
-        <View className="pb-4">
+        <SafeAreaView edges={['bottom']} className="bg-white">
           <ChatInput
             onSend={handleSendMessage}
             onSendWithFile={handleSendMessageWithFile}
@@ -413,7 +413,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
             disabled={isLoading && messages.length === 0}
             isSending={isSendingMessage}
           />
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

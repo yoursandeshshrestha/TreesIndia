@@ -195,7 +195,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl px-4 py-3 text-base text-[#111928] max-h-32"
             style={{
               fontFamily: 'Inter-Regular',
-              textAlignVertical: 'center',
+              textAlignVertical: 'top',
+              minHeight: 48,
             }}
             onSubmitEditing={handleSend}
             blurOnSubmit={false}
