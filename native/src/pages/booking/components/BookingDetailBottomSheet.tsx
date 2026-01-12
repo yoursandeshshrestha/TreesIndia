@@ -302,12 +302,39 @@ export default function BookingDetailBottomSheet({
           },
           (error) => {
             console.error('Razorpay error:', error);
-            Alert.alert(
-              'Payment Failed',
-              error.description || 'Payment was cancelled or failed. Please try again.',
-              [{ text: 'OK' }]
-            );
+
+            // Reset loading state AND close payment sheet first to prevent stuck UI
             setIsProcessingPayment(false);
+            setShowPaymentSheet(false);
+
+            // Check if payment was cancelled (multiple ways it can be indicated)
+            const isCancelled =
+              error.code === 'PAYMENT_CANCELLED' ||
+              error.code === '2' ||
+              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+            // Handle different error cases
+            if (isCancelled) {
+              // User cancelled payment - close sheet
+              Alert.alert(
+                'Payment Cancelled',
+                'You cancelled the payment.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onClose(); // Close the bottom sheet
+                    },
+                  },
+                ]
+              );
+            } else {
+              Alert.alert(
+                'Payment Failed',
+                error.description || 'Payment failed. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
           }
         );
       }
