@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Image, ImageProps, Animated, Easing } from 'react-native';
 
 interface ImageWithSkeletonProps extends Omit<ImageProps, 'source'> {
@@ -9,14 +9,30 @@ interface ImageWithSkeletonProps extends Omit<ImageProps, 'source'> {
 
 export default function ImageWithSkeleton({
   source,
-  skeletonColor = '#E5E7EB',
+  skeletonColor = '#F3F4F6',
   className = '',
   style,
   ...props
 }: ImageWithSkeletonProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isLoading) {
+      const shimmer = Animated.loop(
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        })
+      );
+      shimmer.start();
+      return () => shimmer.stop();
+    }
+  }, [isLoading, shimmerAnim]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -33,6 +49,11 @@ export default function ImageWithSkeleton({
     setHasError(true);
   };
 
+  const shimmerOpacity = shimmerAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.5, 1],
+  });
+
   // If source is a number (local require), don't show skeleton
   if (typeof source === 'number' || (typeof source === 'object' && 'uri' in source && !source.uri)) {
     return (
@@ -48,12 +69,13 @@ export default function ImageWithSkeleton({
 
   return (
     <View className={`relative ${className}`} style={style}>
-      {/* Skeleton Loader */}
+      {/* Skeleton Loader with Shimmer */}
       {isLoading && (
-        <View
+        <Animated.View
           className="absolute inset-0"
           style={{
             backgroundColor: skeletonColor,
+            opacity: shimmerOpacity,
           }}
         />
       )}

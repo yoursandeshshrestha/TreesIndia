@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   bannerService,
   PromotionBanner,
@@ -17,6 +17,7 @@ import {
   vendorService,
   Vendor,
 } from '../../../services';
+import { cache, CACHE_TTL, CACHE_KEYS } from '../../../utils/cache';
 
 interface HomeData {
   // Banners
@@ -65,6 +66,10 @@ interface HomeData {
 
   // Subscription
   hasActiveSubscription: boolean;
+
+  // Refresh function
+  refresh: () => Promise<void>;
+  isRefreshing: boolean;
 }
 
 export function useHomeData(isAuthenticated: boolean): HomeData {
@@ -115,62 +120,131 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
   // Subscription
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
-  // Load functions
-  const loadBanners = async () => {
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Load functions with caching (stale-while-revalidate pattern)
+  const loadBanners = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingBanners(true);
+      // Check cache first (without showing loading if we have cache)
+      if (!forceRefresh) {
+        const cached = await cache.get<PromotionBanner[]>(CACHE_KEYS.BANNERS);
+        if (cached) {
+          setBanners(cached);
+          // Don't show loading since we have cached data
+        } else {
+          // No cache, show loading
+          setIsLoadingBanners(true);
+        }
+      } else {
+        // Force refresh, show loading
+        setIsLoadingBanners(true);
+      }
+
       const promotionBanners = await bannerService.getPromotionBanners();
       setBanners(promotionBanners);
+      await cache.set(CACHE_KEYS.BANNERS, promotionBanners, { ttl: CACHE_TTL.BANNERS });
     } catch (error) {
       console.error('Failed to load banners:', error);
-      setBanners([]);
+      if (banners.length === 0) {
+        setBanners([]);
+      }
     } finally {
       setIsLoadingBanners(false);
     }
-  };
+  }, [banners.length]);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingCategories(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Category[]>(CACHE_KEYS.CATEGORIES);
+        if (cached) {
+          setCategories(cached);
+        } else {
+          setIsLoadingCategories(true);
+        }
+      } else {
+        setIsLoadingCategories(true);
+      }
+
       const rootCategories = await categoryService.getRootCategories(true);
       setCategories(rootCategories);
+      await cache.set(CACHE_KEYS.CATEGORIES, rootCategories, { ttl: CACHE_TTL.CATEGORIES });
     } catch (error) {
       console.error('Failed to load categories:', error);
-      setCategories([]);
+      if (categories.length === 0) {
+        setCategories([]);
+      }
     } finally {
       setIsLoadingCategories(false);
     }
-  };
+  }, [categories.length]);
 
-  const loadHomepageIcons = async () => {
+  const loadHomepageIcons = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingIcons(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<HomepageCategoryIcon[]>(CACHE_KEYS.HOMEPAGE_ICONS);
+        if (cached) {
+          setHomepageIcons(cached);
+        } else {
+          setIsLoadingIcons(true);
+        }
+      } else {
+        setIsLoadingIcons(true);
+      }
+
       const icons = await homepageIconService.getActiveIcons();
       setHomepageIcons(icons);
+      await cache.set(CACHE_KEYS.HOMEPAGE_ICONS, icons, { ttl: CACHE_TTL.HOMEPAGE_ICONS });
     } catch (error) {
       console.error('Failed to load homepage icons:', error);
-      setHomepageIcons([]);
+      if (homepageIcons.length === 0) {
+        setHomepageIcons([]);
+      }
     } finally {
       setIsLoadingIcons(false);
     }
-  };
+  }, [homepageIcons.length]);
 
-  const loadPopularServices = async () => {
+  const loadPopularServices = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingServices(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Service[]>(CACHE_KEYS.POPULAR_SERVICES);
+        if (cached) {
+          setPopularServices(cached);
+        } else {
+          setIsLoadingServices(true);
+        }
+      } else {
+        setIsLoadingServices(true);
+      }
+
       const services = await serviceService.getPopularServices();
       setPopularServices(services);
+      await cache.set(CACHE_KEYS.POPULAR_SERVICES, services, { ttl: CACHE_TTL.POPULAR_SERVICES });
     } catch (error) {
       console.error('Failed to load popular services:', error);
-      setPopularServices([]);
+      if (popularServices.length === 0) {
+        setPopularServices([]);
+      }
     } finally {
       setIsLoadingServices(false);
     }
-  };
+  }, [popularServices.length]);
 
-  const loadProperties = async () => {
+  const loadProperties = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingProperties(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES);
+        if (cached) {
+          setProperties(cached);
+        } else {
+          setIsLoadingProperties(true);
+        }
+      } else {
+        setIsLoadingProperties(true);
+      }
+
       const response = await propertyService.getAllProperties(1, 20);
       if (response.data && Array.isArray(response.data)) {
         const propertiesWithImages = response.data.filter(prop =>
@@ -180,46 +254,85 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
           ? propertiesWithImages.slice(0, 10)
           : response.data.slice(0, 10);
         setProperties(propertiesToShow);
+        await cache.set(CACHE_KEYS.PROPERTIES, propertiesToShow, { ttl: CACHE_TTL.PROPERTIES });
       } else {
         setProperties([]);
       }
     } catch (error) {
       console.error('Failed to load properties:', error);
-      setProperties([]);
+      if (properties.length === 0) {
+        setProperties([]);
+      }
     } finally {
       setIsLoadingProperties(false);
     }
-  };
+  }, [properties.length]);
 
-  const loadHomeServices = async () => {
+  const loadHomeServices = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingHomeServices(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Service[]>(CACHE_KEYS.HOME_SERVICES);
+        if (cached) {
+          setHomeServices(cached);
+        } else {
+          setIsLoadingHomeServices(true);
+        }
+      } else {
+        setIsLoadingHomeServices(true);
+      }
+
       const services = await serviceService.getServicesByCategory('Home Services', 10);
       setHomeServices(services);
+      await cache.set(CACHE_KEYS.HOME_SERVICES, services, { ttl: CACHE_TTL.SERVICES });
     } catch (error) {
       console.error('Failed to load home services:', error);
-      setHomeServices([]);
+      if (homeServices.length === 0) {
+        setHomeServices([]);
+      }
     } finally {
       setIsLoadingHomeServices(false);
     }
-  };
+  }, [homeServices.length]);
 
-  const loadConstructionServices = async () => {
+  const loadConstructionServices = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingConstructionServices(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Service[]>(CACHE_KEYS.CONSTRUCTION_SERVICES);
+        if (cached) {
+          setConstructionServices(cached);
+        } else {
+          setIsLoadingConstructionServices(true);
+        }
+      } else {
+        setIsLoadingConstructionServices(true);
+      }
+
       const services = await serviceService.getServicesByCategory('Construction Services', 10);
       setConstructionServices(services);
+      await cache.set(CACHE_KEYS.CONSTRUCTION_SERVICES, services, { ttl: CACHE_TTL.SERVICES });
     } catch (error) {
       console.error('Failed to load construction services:', error);
-      setConstructionServices([]);
+      if (constructionServices.length === 0) {
+        setConstructionServices([]);
+      }
     } finally {
       setIsLoadingConstructionServices(false);
     }
-  };
+  }, [constructionServices.length]);
 
-  const loadFixedPriceServices = async () => {
+  const loadFixedPriceServices = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingFixedPriceServices(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Service[]>(CACHE_KEYS.FIXED_PRICE_SERVICES);
+        if (cached) {
+          setFixedPriceServices(cached);
+        } else {
+          setIsLoadingFixedPriceServices(true);
+        }
+      } else {
+        setIsLoadingFixedPriceServices(true);
+      }
+
       const response = await serviceService.getServicesWithFilters({
         page: 1,
         limit: 10,
@@ -227,20 +340,33 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
       if (response.data) {
         setFixedPriceServices(response.data);
+        await cache.set(CACHE_KEYS.FIXED_PRICE_SERVICES, response.data, { ttl: CACHE_TTL.SERVICES });
       } else {
         setFixedPriceServices([]);
       }
     } catch (error) {
       console.error('Failed to load fixed price services:', error);
-      setFixedPriceServices([]);
+      if (fixedPriceServices.length === 0) {
+        setFixedPriceServices([]);
+      }
     } finally {
       setIsLoadingFixedPriceServices(false);
     }
-  };
+  }, [fixedPriceServices.length]);
 
-  const loadInquiryServices = async () => {
+  const loadInquiryServices = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingInquiryServices(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Service[]>(CACHE_KEYS.INQUIRY_SERVICES);
+        if (cached) {
+          setInquiryServices(cached);
+        } else {
+          setIsLoadingInquiryServices(true);
+        }
+      } else {
+        setIsLoadingInquiryServices(true);
+      }
+
       const response = await serviceService.getServicesWithFilters({
         page: 1,
         limit: 10,
@@ -248,20 +374,33 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
       if (response.data) {
         setInquiryServices(response.data);
+        await cache.set(CACHE_KEYS.INQUIRY_SERVICES, response.data, { ttl: CACHE_TTL.SERVICES });
       } else {
         setInquiryServices([]);
       }
     } catch (error) {
       console.error('Failed to load inquiry services:', error);
-      setInquiryServices([]);
+      if (inquiryServices.length === 0) {
+        setInquiryServices([]);
+      }
     } finally {
       setIsLoadingInquiryServices(false);
     }
-  };
+  }, [inquiryServices.length]);
 
-  const loadProperties2BHK = async () => {
+  const loadProperties2BHK = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingProperties2BHK(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_2BHK);
+        if (cached) {
+          setProperties2BHK(cached);
+        } else {
+          setIsLoadingProperties2BHK(true);
+        }
+      } else {
+        setIsLoadingProperties2BHK(true);
+      }
+
       const response = await propertyService.getPropertiesWithFilters({
         page: 1,
         limit: 20,
@@ -269,21 +408,35 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         bedrooms: 2,
       });
       if (response.data) {
-        setProperties2BHK(response.data.slice(0, 10));
+        const data = response.data.slice(0, 10);
+        setProperties2BHK(data);
+        await cache.set(CACHE_KEYS.PROPERTIES_2BHK, data, { ttl: CACHE_TTL.PROPERTIES });
       } else {
         setProperties2BHK([]);
       }
     } catch (error) {
       console.error('Failed to load 2 BHK properties:', error);
-      setProperties2BHK([]);
+      if (properties2BHK.length === 0) {
+        setProperties2BHK([]);
+      }
     } finally {
       setIsLoadingProperties2BHK(false);
     }
-  };
+  }, [properties2BHK.length]);
 
-  const loadProperties3BHK = async () => {
+  const loadProperties3BHK = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingProperties3BHK(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_3BHK);
+        if (cached) {
+          setProperties3BHK(cached);
+        } else {
+          setIsLoadingProperties3BHK(true);
+        }
+      } else {
+        setIsLoadingProperties3BHK(true);
+      }
+
       const response = await propertyService.getPropertiesWithFilters({
         page: 1,
         limit: 20,
@@ -291,21 +444,35 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         bedrooms: 3,
       });
       if (response.data) {
-        setProperties3BHK(response.data.slice(0, 10));
+        const data = response.data.slice(0, 10);
+        setProperties3BHK(data);
+        await cache.set(CACHE_KEYS.PROPERTIES_3BHK, data, { ttl: CACHE_TTL.PROPERTIES });
       } else {
         setProperties3BHK([]);
       }
     } catch (error) {
       console.error('Failed to load 3 BHK properties:', error);
-      setProperties3BHK([]);
+      if (properties3BHK.length === 0) {
+        setProperties3BHK([]);
+      }
     } finally {
       setIsLoadingProperties3BHK(false);
     }
-  };
+  }, [properties3BHK.length]);
 
-  const loadPropertiesUnder10K = async () => {
+  const loadPropertiesUnder10K = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingPropertiesUnder10K(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_UNDER_10K);
+        if (cached) {
+          setPropertiesUnder10K(cached);
+        } else {
+          setIsLoadingPropertiesUnder10K(true);
+        }
+      } else {
+        setIsLoadingPropertiesUnder10K(true);
+      }
+
       const response = await propertyService.getPropertiesWithFilters({
         page: 1,
         limit: 20,
@@ -313,28 +480,41 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         max_rent: 10000,
       });
       if (response.data) {
-        setPropertiesUnder10K(response.data.slice(0, 10));
+        const data = response.data.slice(0, 10);
+        setPropertiesUnder10K(data);
+        await cache.set(CACHE_KEYS.PROPERTIES_UNDER_10K, data, { ttl: CACHE_TTL.PROPERTIES });
       } else {
         setPropertiesUnder10K([]);
       }
     } catch (error) {
       console.error('Failed to load properties under 10K:', error);
-      setPropertiesUnder10K([]);
+      if (propertiesUnder10K.length === 0) {
+        setPropertiesUnder10K([]);
+      }
     } finally {
       setIsLoadingPropertiesUnder10K(false);
     }
-  };
+  }, [propertiesUnder10K.length]);
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingProjects(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Project[]>(CACHE_KEYS.PROJECTS);
+        if (cached) {
+          setProjects(cached);
+        } else {
+          setIsLoadingProjects(true);
+        }
+      } else {
+        setIsLoadingProjects(true);
+      }
+
       const response = await projectService.getProjectsWithFilters({
         page: 1,
         limit: 10,
       });
 
       if (response.success && response.data) {
-        // Parse subscription status
         if (response.data.user_subscription) {
           setHasActiveSubscription(
             response.data.user_subscription.has_active_subscription
@@ -342,24 +522,35 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         }
 
         setProjects(response.data.projects);
+        await cache.set(CACHE_KEYS.PROJECTS, response.data.projects, { ttl: CACHE_TTL.PROJECTS });
       } else {
         setProjects([]);
       }
     } catch (error) {
-      // Silently handle subscription errors - projects section just won't show
       const errorMessage = error instanceof Error ? error.message : '';
       if (!errorMessage.includes('Subscription required')) {
         console.error('Failed to load projects:', error);
       }
-      setProjects([]);
+      if (projects.length === 0) {
+        setProjects([]);
+      }
     } finally {
       setIsLoadingProjects(false);
     }
-  };
+  }, [projects.length]);
 
-  const loadTopWorkers = async () => {
+  const loadTopWorkers = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingWorkers(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Worker[]>(CACHE_KEYS.TOP_WORKERS);
+        if (cached) {
+          setTopWorkers(cached);
+        } else {
+          setIsLoadingWorkers(true);
+        }
+      } else {
+        setIsLoadingWorkers(true);
+      }
 
       const response = await workerService.getWorkersWithFilters({
         page: 1,
@@ -370,7 +561,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
 
       if (response.success && response.data) {
-        // Parse subscription status
         if (response.data.user_subscription) {
           setHasActiveSubscription(
             response.data.user_subscription.has_active_subscription
@@ -378,24 +568,35 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         }
 
         setTopWorkers(response.data.workers);
+        await cache.set(CACHE_KEYS.TOP_WORKERS, response.data.workers, { ttl: CACHE_TTL.WORKERS });
       } else {
         setTopWorkers([]);
       }
     } catch (error) {
-      // Silently handle subscription errors - workers section just won't show
       const errorMessage = error instanceof Error ? error.message : '';
       if (!errorMessage.includes('Subscription required')) {
         console.error('Failed to load top workers:', error);
       }
-      setTopWorkers([]);
+      if (topWorkers.length === 0) {
+        setTopWorkers([]);
+      }
     } finally {
       setIsLoadingWorkers(false);
     }
-  };
+  }, [topWorkers.length]);
 
-  const loadTopVendors = async () => {
+  const loadTopVendors = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoadingVendors(true);
+      if (!forceRefresh) {
+        const cached = await cache.get<Vendor[]>(CACHE_KEYS.TOP_VENDORS);
+        if (cached) {
+          setTopVendors(cached);
+        } else {
+          setIsLoadingVendors(true);
+        }
+      } else {
+        setIsLoadingVendors(true);
+      }
 
       const response = await vendorService.getVendorsWithFilters({
         page: 1,
@@ -403,7 +604,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
 
       if (response.success && response.data) {
-        // Parse subscription status
         if (response.data.user_subscription) {
           setHasActiveSubscription(
             response.data.user_subscription.has_active_subscription
@@ -411,30 +611,73 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         }
 
         setTopVendors(response.data.vendors);
+        await cache.set(CACHE_KEYS.TOP_VENDORS, response.data.vendors, { ttl: CACHE_TTL.VENDORS });
       } else {
         setTopVendors([]);
       }
     } catch (error) {
-      // Silently handle subscription errors - vendors section just won't show
       const errorMessage = error instanceof Error ? error.message : '';
       if (!errorMessage.includes('Subscription required')) {
         console.error('Failed to load top vendors:', error);
       }
-      setTopVendors([]);
+      if (topVendors.length === 0) {
+        setTopVendors([]);
+      }
     } finally {
       setIsLoadingVendors(false);
     }
-  };
+  }, [topVendors.length]);
 
+  // Refresh function to force reload all data
+  const refresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        loadBanners(true),
+        loadCategories(true),
+        loadHomepageIcons(true),
+        loadPopularServices(true),
+        loadProperties(true),
+        loadHomeServices(true),
+        loadConstructionServices(true),
+        loadFixedPriceServices(true),
+        loadInquiryServices(true),
+        loadProperties2BHK(true),
+        loadProperties3BHK(true),
+        loadPropertiesUnder10K(true),
+        loadTopWorkers(true),
+        loadTopVendors(true),
+        ...(isAuthenticated ? [loadProjects(true)] : []),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [
+    isAuthenticated,
+    loadBanners,
+    loadCategories,
+    loadHomepageIcons,
+    loadPopularServices,
+    loadProperties,
+    loadHomeServices,
+    loadConstructionServices,
+    loadFixedPriceServices,
+    loadInquiryServices,
+    loadProperties2BHK,
+    loadProperties3BHK,
+    loadPropertiesUnder10K,
+    loadProjects,
+    loadTopWorkers,
+    loadTopVendors,
+  ]);
+
+  // Initial load
   useEffect(() => {
     loadBanners();
     loadCategories();
     loadHomepageIcons();
     loadPopularServices();
     loadProperties();
-    if (isAuthenticated) {
-      loadProjects();
-    }
     loadHomeServices();
     loadConstructionServices();
     loadFixedPriceServices();
@@ -444,8 +687,27 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
     loadPropertiesUnder10K();
     loadTopWorkers();
     loadTopVendors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+    if (isAuthenticated) {
+      loadProjects();
+    }
+  }, [
+    isAuthenticated,
+    loadBanners,
+    loadCategories,
+    loadHomepageIcons,
+    loadPopularServices,
+    loadProperties,
+    loadHomeServices,
+    loadConstructionServices,
+    loadFixedPriceServices,
+    loadInquiryServices,
+    loadProperties2BHK,
+    loadProperties3BHK,
+    loadPropertiesUnder10K,
+    loadProjects,
+    loadTopWorkers,
+    loadTopVendors,
+  ]);
 
   return {
     banners,
@@ -479,5 +741,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
     topVendors,
     isLoadingVendors,
     hasActiveSubscription,
+    refresh,
+    isRefreshing,
   };
 }

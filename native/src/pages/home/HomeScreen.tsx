@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -207,6 +207,14 @@ export default function HomeScreen({
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={homeData.isRefreshing}
+            onRefresh={homeData.refresh}
+            colors={['#34A853']}
+            tintColor="#34A853"
+          />
+        }
       >
         {/* Banner Carousel */}
         <BannerCarousel

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import CardSkeleton from './CardSkeleton';
 
 interface HorizontalSectionProps {
   title: string;
@@ -16,8 +17,8 @@ export default function HorizontalSection({
   isEmpty = false,
   children,
 }: HorizontalSectionProps) {
-  // Don't render if loading or empty
-  if (isLoading || isEmpty) {
+  // Don't render if empty and not loading
+  if (isEmpty && !isLoading) {
     return null;
   }
 
@@ -30,7 +31,7 @@ export default function HorizontalSection({
         >
           {title}
         </Text>
-        {onSeeAll && (
+        {onSeeAll && !isLoading && (
           <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7}>
             <Text
               className="text-sm font-medium text-[#00a871]"
@@ -41,7 +42,27 @@ export default function HorizontalSection({
           </TouchableOpacity>
         )}
       </View>
-      {children}
+
+      {isLoading ? (
+        <View style={{ height: 240 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 24 }}
+          >
+            {[1, 2].map((index) => (
+              <View
+                key={index}
+                style={{ marginLeft: index === 1 ? 24 : 16 }}
+              >
+                <CardSkeleton width={200} height={240} />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      ) : (
+        children
+      )}
     </View>
   );
 }

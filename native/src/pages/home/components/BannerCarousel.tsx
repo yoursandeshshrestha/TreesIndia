@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 import { PromotionBanner } from '../../../services';
+import BannerSkeleton from './BannerSkeleton';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const BANNER_ASPECT_RATIO = 16 / 9;
@@ -66,9 +67,9 @@ export default function BannerCarousel({
     }
   };
 
-  // Don't render if loading or no banners
+  // Show skeleton if loading or no banners
   if (isLoading || banners.length === 0) {
-    return null;
+    return <BannerSkeleton />;
   }
 
   return (

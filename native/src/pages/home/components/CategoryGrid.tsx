@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Category, HomepageCategoryIcon } from '../../../services';
 import ImageWithSkeleton from '../../../components/ImageWithSkeleton';
 import NotFoundIcon from '../../../components/icons/NotFoundIcon';
@@ -16,6 +16,61 @@ const fixedCategories = [
   { slug: 'construction-services', title: 'Construction Service', name: 'Construction Service' },
   { slug: 'marketplace', title: 'Marketplace', name: 'Marketplace' },
 ];
+
+function CategorySkeleton() {
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const shimmer = Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: 1,
+        duration: 1500,
+        easing: Easing.ease,
+        useNativeDriver: true,
+      })
+    );
+    shimmer.start();
+    return () => shimmer.stop();
+  }, [shimmerAnim]);
+
+  const opacity = shimmerAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.5, 1],
+  });
+
+  return (
+    <View className="flex-row" style={{ gap: 8 }}>
+      {[1, 2, 3].map((index) => (
+        <Animated.View
+          key={index}
+          className="flex-1 bg-[#F3F4F6] rounded-lg"
+          style={{ height: 120, opacity }}
+        >
+          <View className="items-center justify-center" style={{ height: 80 }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#E5E7EB',
+              }}
+            />
+          </View>
+          <View className="px-2 items-center">
+            <View
+              style={{
+                width: '70%',
+                height: 12,
+                borderRadius: 4,
+                backgroundColor: '#E5E7EB',
+              }}
+            />
+          </View>
+        </Animated.View>
+      ))}
+    </View>
+  );
+}
 
 export default function CategoryGrid({
   categories,
@@ -40,13 +95,7 @@ export default function CategoryGrid({
       </Text>
 
       {isLoading ? (
-        <View className="flex-row" style={{ gap: 8 }}>
-          {[1, 2, 3].map((index) => (
-            <View key={index} className="flex-1 bg-[#F5F5F5] rounded-lg" style={{ height: 120 }}>
-              <ActivityIndicator size="small" color="#00a871" className="mt-10" />
-            </View>
-          ))}
-        </View>
+        <CategorySkeleton />
       ) : (
         <View className="flex-row" style={{ gap: 8 }}>
           {fixedCategories.map((fixedCategory, index) => {
