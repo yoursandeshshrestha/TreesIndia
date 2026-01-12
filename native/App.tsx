@@ -211,8 +211,8 @@ function AppContent() {
             setActiveTab('booking');
             setCurrentScreen('home');
           } else if (data?.type === 'work' && data?.assignmentId) {
-            // Navigate to work tab (for workers)
-            if (user?.user_type === 'worker') {
+            // Navigate to work tab (for treesindia workers only)
+            if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
               setActiveTab('work');
               setCurrentScreen('home');
             }
@@ -241,8 +241,8 @@ function AppContent() {
     if (isAuthenticated && currentScreen === 'otp') {
       // Navigate to home after successful OTP verification
       setCurrentScreen('home');
-      // Reset to home tab (or work tab for workers)
-      if (user?.user_type === 'worker') {
+      // Reset to home tab (or work tab for treesindia workers)
+      if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
         setActiveTab('work');
       } else {
         setActiveTab('home');
@@ -257,9 +257,10 @@ function AppContent() {
   // Set default tab based on user type
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.user_type === 'worker' && activeTab === 'home') {
+      const isTreesIndiaWorker = user.user_type === 'worker' && user.worker_type === 'treesindia_worker';
+      if (isTreesIndiaWorker && activeTab === 'home') {
         setActiveTab('work');
-      } else if (user.user_type !== 'worker' && activeTab === 'work') {
+      } else if (!isTreesIndiaWorker && activeTab === 'work') {
         setActiveTab('home');
       }
     }
@@ -600,8 +601,8 @@ function AppContent() {
 
     switch (activeTab) {
       case 'home':
-        // Workers don't have access to home screen
-        if (user?.user_type === 'worker') {
+        // TreesIndia workers don't have access to home screen
+        if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
           return (
             <WorkScreen
               onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
@@ -704,8 +705,8 @@ function AppContent() {
           />
         );
       default:
-        // Workers default to work screen, others default to home screen
-        if (user?.user_type === 'worker') {
+        // TreesIndia workers default to work screen, others default to home screen
+        if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
           return (
             <WorkScreen
               onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
@@ -752,6 +753,7 @@ function AppContent() {
           onTabChange={setActiveTab}
           chatUnreadCount={totalUnreadCount}
           userType={user?.user_type}
+          workerType={user?.worker_type}
         />
       )}
     </View>
