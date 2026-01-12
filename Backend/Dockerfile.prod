@@ -25,6 +25,17 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     -ldflags="-w -s -extldflags '-static'" \
     -o main .
 
+# Build seed and utility binaries
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -a -installsuffix cgo \
+    -ldflags="-w -s -extldflags '-static'" \
+    -o seed-all ./cmd/seed-all/main.go && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -a -installsuffix cgo \
+    -ldflags="-w -s -extldflags '-static'" \
+    -o clean-bookings ./cmd/clean-bookings/main.go
+
 # Final stage - Use alpine for smaller image with necessary tools
 FROM alpine:latest
 
@@ -40,8 +51,10 @@ RUN addgroup -g 1001 -S appgroup && \
 # Set working directory
 WORKDIR /app
 
-# Copy binary from builder stage
+# Copy binaries from builder stage
 COPY --from=builder /app/main .
+COPY --from=builder /app/seed-all .
+COPY --from=builder /app/clean-bookings .
 
 # Copy migrations directory
 COPY --from=builder /app/migrations ./migrations
