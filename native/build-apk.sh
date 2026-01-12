@@ -48,6 +48,7 @@ case $choice in
         GRADLE_TASK="assembleDebug"
         APK_NAME="app-debug.apk"
         OUTPUT_NAME="TreesIndia-dev-$(date +%Y%m%d-%H%M%S).apk"
+        ENV_FILE=".env.development"
         ;;
     2)
         BUILD_TYPE="release"
@@ -55,6 +56,7 @@ case $choice in
         GRADLE_TASK="assembleRelease"
         APK_NAME="app-release.apk"
         OUTPUT_NAME="TreesIndia-prod-$(date +%Y%m%d-%H%M%S).apk"
+        ENV_FILE=".env.production"
 
         # Check if release keystore exists
         if [ ! -f "$SCRIPT_DIR/android/keystore.properties" ]; then
@@ -102,6 +104,19 @@ case $choice in
 esac
 
 echo ""
+print_info "Setting up environment: $ENV_FILE"
+
+# Check if environment file exists
+if [ ! -f "$SCRIPT_DIR/$ENV_FILE" ]; then
+    print_error "Environment file $ENV_FILE not found!"
+    exit 1
+fi
+
+# Copy the selected environment file to .env
+cp "$SCRIPT_DIR/$ENV_FILE" "$SCRIPT_DIR/.env"
+print_success "Using environment: $ENV_FILE"
+echo ""
+
 print_info "Building ${BUILD_VARIANT} APK..."
 echo ""
 
