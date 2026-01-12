@@ -208,9 +208,7 @@ export default function ApplyForBrokerScreen({ onBack }: ApplyForBrokerScreenPro
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactInfo.email)) {
           newErrors.email = 'Please enter a valid email address';
         }
-        if (!contactInfo.alternative_number.trim()) {
-          newErrors.alternative_number = 'Alternative phone number is required';
-        } else if (!/^\+?[0-9]{10,20}$/.test(contactInfo.alternative_number.replace(/\s/g, ''))) {
+        if (contactInfo.alternative_number.trim() && !/^\+?[0-9]{10,20}$/.test(contactInfo.alternative_number.replace(/\s/g, ''))) {
           newErrors.alternative_number = 'Please enter a valid phone number';
         }
         break;
@@ -403,7 +401,6 @@ export default function ApplyForBrokerScreen({ onBack }: ApplyForBrokerScreenPro
           placeholder="Enter alternative phone number"
           keyboardType="phone-pad"
           error={errors.alternative_number}
-          required
         />
       </View>
     </View>
