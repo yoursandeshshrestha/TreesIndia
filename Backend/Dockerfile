@@ -10,14 +10,14 @@ WORKDIR /app
 # Copy go mod files
 COPY go.mod go.sum ./
 
-# Tidy go modules to ensure consistency
-RUN go mod tidy
-
 # Download dependencies
 RUN go mod download
 
 # Copy source code
 COPY . .
+
+# Tidy go modules to ensure consistency with all source files
+RUN go mod tidy
 
 # Build the application with optimizations
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
