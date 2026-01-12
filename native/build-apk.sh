@@ -117,6 +117,14 @@ cp "$SCRIPT_DIR/$ENV_FILE" "$SCRIPT_DIR/.env"
 print_success "Using environment: $ENV_FILE"
 echo ""
 
+# Clear Metro bundler cache to ensure fresh environment variables
+print_info "Clearing Metro bundler cache..."
+cd "$SCRIPT_DIR"
+rm -rf node_modules/.cache
+rm -rf .expo
+print_success "Cache cleared"
+echo ""
+
 print_info "Building ${BUILD_VARIANT} APK..."
 echo ""
 

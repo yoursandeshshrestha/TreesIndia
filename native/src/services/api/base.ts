@@ -18,6 +18,12 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+// Log the API configuration for debugging
+console.log('=== TreesIndia API Configuration ===');
+console.log('Environment:', EXPO_ENVIRONMENT);
+console.log('API Base URL:', API_BASE_URL);
+console.log('=====================================');
+
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'treesindia_access_token',
   REFRESH_TOKEN: 'treesindia_refresh_token',
