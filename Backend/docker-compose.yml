@@ -4,7 +4,9 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: backend/Dockerfile
+      dockerfile: ${BACKEND_DIR:-backend}/Dockerfile
+      args:
+        BACKEND_DIR: ${BACKEND_DIR:-backend}
     container_name: treesindia-backend
     ports:
       - "${PORT}:${PORT}"

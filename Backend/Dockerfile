@@ -4,17 +4,20 @@ FROM golang:1.23-alpine AS builder
 # Install git and ca-certificates (needed for go mod download)
 RUN apk add --no-cache git ca-certificates tzdata
 
+# Build argument for backend directory name (handles both 'backend' and 'Backend')
+ARG BACKEND_DIR=backend
+
 # Set working directory
 WORKDIR /app
 
 # Copy go mod files
-COPY backend/go.mod backend/go.sum ./
+COPY ${BACKEND_DIR}/go.mod ${BACKEND_DIR}/go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy source code
-COPY backend/ .
+COPY ${BACKEND_DIR}/ .
 
 # Tidy go modules to ensure consistency with all source files
 RUN go mod tidy
