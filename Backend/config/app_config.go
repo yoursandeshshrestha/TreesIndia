@@ -28,7 +28,7 @@ type AppConfig struct {
 
 	// JWT Configuration
 	JWTSecret         string
-	JWTExpiryHours    int
+	JWTExpiryHours    float64
 	RefreshExpiryDays int
 
 	// OTP Configuration
@@ -119,7 +119,7 @@ func LoadConfig() *AppConfig {
 
 		// JWT Configuration
 		JWTSecret:         getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
-		JWTExpiryHours:    getEnvAsInt("JWT_EXPIRY_HOURS", 1),
+		JWTExpiryHours:    getEnvAsFloat64("JWT_EXPIRY_HOURS", 1.0),
 		RefreshExpiryDays: getEnvAsInt("REFRESH_EXPIRY_DAYS", 30),
 
 		// OTP Configuration
@@ -218,7 +218,7 @@ func (ac *AppConfig) IsTest() bool {
 
 // GetJWTExpiry returns the JWT expiry duration
 func (ac *AppConfig) GetJWTExpiry() time.Duration {
-	return time.Duration(ac.JWTExpiryHours) * time.Hour
+	return time.Duration(ac.JWTExpiryHours * float64(time.Hour))
 }
 
 // GetRefreshExpiry returns the refresh token expiry duration

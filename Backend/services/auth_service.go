@@ -180,27 +180,29 @@ type TokenResponse struct {
 
 // generateTokens generates access and refresh tokens
 func (as *AuthService) generateTokens(user models.User) (*TokenResponse, error) {
-	// Generate access token (1 hour expiry)
+	// Load config first to get expiry settings
+	appConfig := config.LoadConfig()
+
+	// Generate access token with configured expiry
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":   user.ID,
 		"phone":     user.Phone,
 		"user_type": user.UserType,
-		"exp":       time.Now().Add(time.Hour).Unix(),
+		"exp":       time.Now().Add(appConfig.GetJWTExpiry()).Unix(),
 		"iat":       time.Now().Unix(),
 		"type":      "access",
 	})
 
-	// Generate refresh token (30 days expiry)
+	// Generate refresh token with configured expiry
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"phone":   user.Phone,
-		"exp":     time.Now().AddDate(0, 0, 30).Unix(), // 30 days
+		"exp":     time.Now().Add(appConfig.GetRefreshExpiry()).Unix(),
 		"iat":     time.Now().Unix(),
 		"type":    "refresh",
 	})
 
 	// Sign tokens with secret key
-	appConfig := config.LoadConfig()
 	secretKey := appConfig.JWTSecret
 	accessTokenString, err := accessToken.SignedString([]byte(secretKey))
 	if err != nil {
@@ -215,7 +217,7 @@ func (as *AuthService) generateTokens(user models.User) (*TokenResponse, error) 
 	return &TokenResponse{
 		AccessToken:  accessTokenString,
 		RefreshToken: refreshTokenString,
-		ExpiresIn:    3600, // 1 hour in seconds
+		ExpiresIn:    int64(appConfig.GetJWTExpiry().Seconds()),
 	}, nil
 }
 

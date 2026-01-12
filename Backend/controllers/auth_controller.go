@@ -392,6 +392,10 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		}
 	}
 
+	// Get configured JWT expiry for response
+	appConfig := config.LoadConfig()
+	expiresInSeconds := int64(appConfig.GetJWTExpiry().Seconds())
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Login successful", gin.H{
 		"user": gin.H{
 			"id":             user.ID,
@@ -404,7 +408,7 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
-		"expires_in":    3600,      // 1 hour in seconds
+		"expires_in":    expiresInSeconds,
 		"is_new_user":   isNewUser, // Frontend uses this to show onboarding info
 	}))
 }
@@ -661,7 +665,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 		},
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
-		"expires_in":    3600,  // 1 hour in seconds
+		"expires_in":    int64(appConfig.GetJWTExpiry().Seconds()),
 		"is_new_user":   false, // Always false for refresh token (user already exists)
 	}))
 }
@@ -679,11 +683,14 @@ func (ac *AuthController) generateTokens(user models.User) (string, string, erro
 		}
 	}
 
+	// Load config first to get expiry settings
+	appConfig := config.LoadConfig()
+
 	claims := jwt.MapClaims{
 		"user_id":   user.ID,
 		"phone":     user.Phone,
 		"user_type": user.UserType,
-		"exp":       time.Now().Add(time.Hour).Unix(),
+		"exp":       time.Now().Add(appConfig.GetJWTExpiry()).Unix(),
 		"iat":       time.Now().Unix(),
 		"type":      "access",
 	}
@@ -691,20 +698,19 @@ func (ac *AuthController) generateTokens(user models.User) (string, string, erro
 		claims["admin_roles"] = adminRoleCodes
 	}
 
-	// Generate access token (1 hour expiry)
+	// Generate access token with configured expiry
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Generate refresh token (30 days expiry)
+	// Generate refresh token with configured expiry
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"phone":   user.Phone,
-		"exp":     time.Now().AddDate(0, 0, 30).Unix(), // 30 days
+		"exp":     time.Now().Add(appConfig.GetRefreshExpiry()).Unix(),
 		"iat":     time.Now().Unix(),
 		"type":    "refresh",
 	})
 
 	// Sign tokens with secret key
-	appConfig := config.LoadConfig()
 	secretKey := appConfig.JWTSecret
 	accessTokenString, err := accessToken.SignedString([]byte(secretKey))
 	if err != nil {

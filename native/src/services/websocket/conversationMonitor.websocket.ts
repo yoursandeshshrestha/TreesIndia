@@ -110,6 +110,10 @@ class ConversationMonitorWebSocketService {
    * Establish WebSocket connection
    */
   private async establishConnection(): Promise<void> {
+    // Always fetch fresh token from storage before connecting
+    // This ensures we use refreshed tokens from HTTP interceptor
+    this.token = await tokenStorage.getAccessToken();
+
     if (!this.token) {
       this.isConnecting = false;
       return;
@@ -181,7 +185,7 @@ class ConversationMonitorWebSocketService {
   /**
    * Handle WebSocket error
    */
-  private handleError(error: Event): void {
+  private handleError(_error: Event): void {
     this.isConnecting = false;
 
     this.emit('error', {
@@ -197,16 +201,21 @@ class ConversationMonitorWebSocketService {
     this.stopPingInterval();
     this.isConnecting = false;
 
+    console.log(`[WebSocket] Connection closed. Code: ${event.code}, Attempts: ${this.reconnectAttempts}, HasConnected: ${this.hasConnectedOnce}`);
+
     // Don't retry if:
     // 1. It's a manual disconnect
     // 2. It's an authentication error (close code 1008 or 4401)
-    // 3. We never successfully connected and have multiple failed attempts (likely auth issue)
+    // 3. Close code 1006 with reason suggesting auth failure (connection closed before upgrade)
+    // 4. We never successfully connected and have multiple failed attempts (likely auth issue)
     const isAuthError =
       event.code === 1008 || // Policy violation (often used for auth failures)
       event.code === 4401 || // Custom 401 code
+      (event.code === 1006 && !this.hasConnectedOnce && this.reconnectAttempts >= 1) || // Connection closed abnormally before first success (likely 401)
       (!this.hasConnectedOnce && this.reconnectAttempts >= 3); // Multiple failures without ever connecting
 
     if (isAuthError) {
+      console.log('[WebSocket] Auth error detected - stopping retries');
       this.hasAuthError = true;
       this.emit('auth_error', {
         event: 'auth_error',
@@ -215,7 +224,10 @@ class ConversationMonitorWebSocketService {
     }
 
     if (!this.isManualDisconnect && !isAuthError) {
+      console.log('[WebSocket] Will retry connection');
       this.handleReconnect();
+    } else {
+      console.log('[WebSocket] Not retrying. ManualDisconnect: ${this.isManualDisconnect}, AuthError: ${isAuthError}');
     }
 
     this.emit('disconnected', { event: 'disconnected' });
