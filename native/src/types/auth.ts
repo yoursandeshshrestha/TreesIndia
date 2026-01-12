@@ -5,6 +5,7 @@ export interface AuthUser {
   email?: string | null;
   avatar?: string | null;
   user_type: 'admin' | 'user' | 'worker' | 'normal' | 'broker';
+  worker_type?: 'normal' | 'treesindia_worker';
   wallet_balance: number;
   is_active: boolean;
   has_active_subscription?: boolean;
