@@ -42,6 +42,7 @@ export default function PaymentMethodBottomSheet({
   useEffect(() => {
     if (visible) {
       setSelectedMethod(null);
+      setIsProcessing(false); // Reset processing state when sheet opens
 
       // Animate in
       Animated.parallel([
