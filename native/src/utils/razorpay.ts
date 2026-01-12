@@ -286,10 +286,21 @@ class RazorpayService {
         metadata: errorObj.metadata || errorObj.error?.metadata,
       };
 
-      paymentLogger.flow('Razorpay payment', 'error', {
-        code: razorpayError.code,
-        description: razorpayError.description,
-      });
+      // Check if payment was cancelled (multiple ways it can be indicated)
+      const isCancelled =
+        razorpayError.code === 'PAYMENT_CANCELLED' ||
+        razorpayError.code === '2' ||
+        (razorpayError.code === 'UNKNOWN_ERROR' && razorpayError.description?.toLowerCase().includes('cancel'));
+
+      // Log appropriately based on error type
+      if (isCancelled) {
+        paymentLogger.info('Payment cancelled by user');
+      } else {
+        paymentLogger.flow('Razorpay payment', 'error', {
+          code: razorpayError.code,
+          description: razorpayError.description,
+        });
+      }
 
       onError(razorpayError);
     }
