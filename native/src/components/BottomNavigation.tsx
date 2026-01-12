@@ -21,6 +21,7 @@ interface BottomNavigationProps {
   onTabChange: (tab: TabType) => void;
   chatUnreadCount?: number;
   userType?: 'admin' | 'user' | 'worker' | 'normal' | 'broker';
+  workerType?: 'normal' | 'treesindia_worker';
 }
 
 interface TabItem {
@@ -34,17 +35,19 @@ export default function BottomNavigation({
   onTabChange,
   chatUnreadCount = 0,
   userType = 'normal',
+  workerType,
 }: BottomNavigationProps) {
-  const isWorker = userType === 'worker';
+  // Only treesindia workers get the worker UI
+  const isTreesIndiaWorker = userType === 'worker' && workerType === 'treesindia_worker';
 
   const tabs: TabItem[] = [
-    ...(!isWorker
+    ...(!isTreesIndiaWorker
       ? [{ id: 'home' as TabType, label: 'Home', icon: HomeIcon }]
       : []),
-    isWorker
+    isTreesIndiaWorker
       ? { id: 'work', label: 'Work', icon: WorkIcon }
       : { id: 'booking', label: 'Booking', icon: BookingIcon },
-    ...(isWorker
+    ...(isTreesIndiaWorker
       ? [{ id: 'earnings' as TabType, label: 'Earnings', icon: EarningsIcon }]
       : []),
     { id: 'chat', label: 'Chat', icon: ChatIcon },
