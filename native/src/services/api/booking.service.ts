@@ -387,7 +387,12 @@ class BookingService {
       return result;
     } catch (error) {
       bookingLogger.api('POST', '/bookings/inquiry/wallet', 'error', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error_type: typeof error,
+        error_instance: error instanceof Error,
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_status: (error as any)?.status,
+        error_code: (error as any)?.code,
+        error_name: error instanceof Error ? error.name : undefined,
       });
       throw error;
     }
