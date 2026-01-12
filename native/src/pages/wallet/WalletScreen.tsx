@@ -165,39 +165,16 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         return;
       }
 
-      // Check if Razorpay is available
-      if (!razorpayService.isAvailable()) {
-        Alert.alert(
-          'Payment Gateway Unavailable',
-          'Razorpay SDK is not available. Please ensure react-native-razorpay is installed and you are using a development build.',
-          [{ text: 'OK' }]
-        );
-        setIsRecharging(false);
-        return;
-      }
+      // Use key_id from backend response (must match the key used to create the order)
+      const paymentOrder = rechargeResponse.payment_order;
 
-      // Get Razorpay key (you may want to get this from backend or env)
-      const razorpayKey = razorpayService.getRazorpayKey();
-      if (!razorpayKey) {
-        Alert.alert(
-          'Configuration Error',
-          'Razorpay key is not configured. Please set EXPO_PUBLIC_DEV_RAZORPAY_APIKEY or EXPO_PUBLIC_PROD_RAZORPAY_APIKEY in your environment.',
-          [{ text: 'OK' }]
-        );
-        setIsRecharging(false);
-        return;
-      }
-
-      // Ensure order_id is a string (Razorpay requires string)
-      const orderId = String(rechargeResponse.payment_order.id);
-      
       // Open Razorpay checkout
       await razorpayService.openCheckout(
         {
-          key: razorpayKey,
-          amount: rechargeResponse.payment_order.amount, // Already in paise
-          currency: rechargeResponse.payment_order.currency || 'INR',
-          order_id: orderId,
+          key: paymentOrder.key_id,
+          amount: paymentOrder.amount, // Already in paise
+          currency: paymentOrder.currency || 'INR',
+          order_id: paymentOrder.id,
           name: 'Trees India',
           description: 'Wallet Recharge',
           prefill: {
@@ -251,22 +228,36 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           }
         },
         (error) => {
-          // Payment failed or cancelled
-          if (error.code === 'NETWORK_ERROR') {
+          // Reset loading state first to prevent stuck UI
+          setIsRecharging(false);
+
+          // Check if payment was cancelled (multiple ways it can be indicated)
+          const isCancelled =
+            error.code === 'PAYMENT_CANCELLED' ||
+            error.code === '2' ||
+            (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+          // Handle different error cases
+          if (isCancelled) {
+            // User cancelled payment
+            Alert.alert(
+              'Payment Cancelled',
+              'You cancelled the payment. No amount was charged.',
+              [{ text: 'OK' }]
+            );
+          } else if (error.code === 'NETWORK_ERROR') {
             Alert.alert(
               'Network Error',
               'Please check your internet connection and try again.',
               [{ text: 'OK' }]
             );
-          } else if (error.code !== 'PAYMENT_CANCELLED') {
+          } else {
             Alert.alert(
               'Payment Failed',
               error.description || 'Payment could not be processed. Please try again.',
               [{ text: 'OK' }]
             );
           }
-          // If payment was cancelled, user already knows, no need to show alert
-          setIsRecharging(false);
         }
       );
       
