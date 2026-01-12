@@ -126,7 +126,7 @@ export interface PaymentVerificationResponse {
 export interface ContactInfoData {
   contactPerson: string;
   phone: string;
-  description: string;
+  description?: string;
   specialInstructions?: string;
 }
 
