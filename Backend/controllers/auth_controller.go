@@ -611,6 +611,8 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /auth/refresh-token [post]
 func (ac *AuthController) RefreshToken(c *gin.Context) {
+	appConfig := config.LoadConfig()
+
 	var req RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		errorMsg := ac.getUserFriendlyError(err.Error())
