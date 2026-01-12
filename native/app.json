@@ -22,8 +22,14 @@
     "orientation": "portrait",
     "icon": "./assets/logo/logo.png",
     "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
     "assetBundlePatterns": [
-      "**/*"
+      "assets/fonts/**",
+      "assets/logo/**",
+      "assets/icons/**"
     ],
     "ios": {
       "supportsTablet": true,
@@ -54,7 +60,10 @@
         "googleMaps": {
           "apiKey": "AIzaSyDztQVnDQQpPUX9hNT-U-eOrfDfuxgPiXI"
         }
-      }
+      },
+      "jsEngine": "hermes",
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResourcesInReleaseBuilds": true
     }
   }
 }
