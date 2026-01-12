@@ -111,4 +111,3 @@ func BuildCategoryPath(category *Category) string {
 	
 	return result
 }
-
