@@ -456,43 +456,95 @@ export default function BookingFlowScreen({
             }
           },
           (error) => {
-            bookingLogger.error('Razorpay payment error', error, {
-              code: error.code,
-              description: error.description,
-            });
-
             // Check if component is still mounted
             if (!isMountedRef.current) {
               bookingLogger.warn('Component unmounted during payment error callback');
               return;
             }
 
-            if (error.code !== 'PAYMENT_CANCELLED' && error.code !== '2' && error.code !== 'CHECKOUT_TIMEOUT') {
-              // Code 2 is user cancellation
-              Alert.alert('Payment Failed', error.description || 'Please try again');
+            // Reset loading state AND close payment sheet first to prevent stuck UI
+            safeSetState(() => {
+              setIsSubmitting(false);
+              setShowPaymentSheet(false);
+            });
+            isProcessingPaymentRef.current = false;
+
+            // Check if payment was cancelled (multiple ways it can be indicated)
+            const isCancelled =
+              error.code === 'PAYMENT_CANCELLED' ||
+              error.code === '2' ||
+              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+            // Log appropriately based on error type
+            if (isCancelled) {
+              bookingLogger.info('Payment cancelled by user');
+              // User cancellation - show gentle message and navigate home
+              Alert.alert(
+                'Payment Cancelled',
+                'You cancelled the payment. Your booking was not created.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onComplete(); // Navigate to home
+                    },
+                  },
+                ]
+              );
             } else if (error.code === 'CHECKOUT_TIMEOUT') {
+              bookingLogger.warn('Payment timeout', { code: error.code });
               Alert.alert(
                 'Payment Timeout',
-                'The payment process took too long. Please check your bookings and try again if needed.'
+                'The payment process took too long. Please check your bookings and try again if needed.',
+                [{ text: 'OK' }]
               );
+            } else {
+              // Log actual errors
+              bookingLogger.error('Razorpay payment error', error, {
+                code: error.code,
+                description: error.description,
+              });
+              // Other errors - show error message
+              const errorMessage = error.description || error.reason || 'Payment failed. Please try again.';
+              Alert.alert('Payment Failed', errorMessage, [{ text: 'OK' }]);
             }
-
-            safeSetState(() => setIsSubmitting(false));
-            isProcessingPaymentRef.current = false;
           }
         );
       }
     } catch (error) {
       bookingLogger.flow('Fixed price booking', 'error', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error_type: typeof error,
+        error_instance: error instanceof Error,
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_status: (error as any)?.status,
+        error_code: (error as any)?.code,
       });
 
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create booking'
-      );
+      // Determine user-friendly error message
+      let errorMessage = 'Failed to create booking';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        const errObj = error as any;
+        errorMessage = errObj.message || errObj.error || errorMessage;
+      }
 
-      safeSetState(() => setIsSubmitting(false));
+      // Check if it's insufficient balance error
+      if (errorMessage.toLowerCase().includes('insufficient') ||
+          errorMessage.toLowerCase().includes('balance')) {
+        Alert.alert(
+          'Insufficient Balance',
+          errorMessage,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Booking Failed', errorMessage, [{ text: 'OK' }]);
+      }
+
+      safeSetState(() => {
+        setIsSubmitting(false);
+        setShowPaymentSheet(false);
+      });
       isProcessingPaymentRef.current = false;
     }
   };
@@ -656,43 +708,96 @@ export default function BookingFlowScreen({
             }
           },
           (error) => {
-            bookingLogger.error('Inquiry Razorpay payment error', error, {
-              code: error.code,
-              description: error.description,
-            });
-
             // Check if component is still mounted
             if (!isMountedRef.current) {
               bookingLogger.warn('Component unmounted during inquiry payment error callback');
               return;
             }
 
-            if (error.code !== 'PAYMENT_CANCELLED' && error.code !== '2' && error.code !== 'CHECKOUT_TIMEOUT') {
-              // Code 2 is user cancellation
-              Alert.alert('Payment Failed', error.description || 'Please try again');
+            // Reset loading state AND close payment sheet first to prevent stuck UI
+            safeSetState(() => {
+              setIsSubmitting(false);
+              setShowPaymentSheet(false);
+            });
+            isProcessingPaymentRef.current = false;
+
+            // Check if payment was cancelled (multiple ways it can be indicated)
+            const isCancelled =
+              error.code === 'PAYMENT_CANCELLED' ||
+              error.code === '2' ||
+              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+            // Log appropriately based on error type
+            if (isCancelled) {
+              bookingLogger.info('Inquiry payment cancelled by user');
+              // User cancellation - show gentle message and navigate home
+              Alert.alert(
+                'Payment Cancelled',
+                'You cancelled the payment. Your inquiry was not created.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onComplete(); // Navigate to home
+                    },
+                  },
+                ]
+              );
             } else if (error.code === 'CHECKOUT_TIMEOUT') {
+              bookingLogger.warn('Inquiry payment timeout', { code: error.code });
               Alert.alert(
                 'Payment Timeout',
-                'The payment process took too long. Please check your bookings and try again if needed.'
+                'The payment process took too long. Please check your inquiries and try again if needed.',
+                [{ text: 'OK' }]
               );
+            } else {
+              // Log actual errors
+              bookingLogger.error('Inquiry Razorpay payment error', error, {
+                code: error.code,
+                description: error.description,
+              });
+              // Other errors - show error message
+              const errorMessage = error.description || error.reason || 'Payment failed. Please try again.';
+              Alert.alert('Payment Failed', errorMessage, [{ text: 'OK' }]);
             }
-
-            safeSetState(() => setIsSubmitting(false));
-            isProcessingPaymentRef.current = false;
           }
         );
       }
     } catch (error) {
+      // Log detailed error information for debugging
       bookingLogger.flow('Inquiry booking', 'error', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error_type: typeof error,
+        error_instance: error instanceof Error,
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_status: (error as any)?.status,
+        error_code: (error as any)?.code,
       });
 
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create inquiry'
-      );
+      // Determine user-friendly error message
+      let errorMessage = 'Failed to create inquiry';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        const errObj = error as any;
+        errorMessage = errObj.message || errObj.error || errorMessage;
+      }
 
-      safeSetState(() => setIsSubmitting(false));
+      // Check if it's insufficient balance error
+      if (errorMessage.toLowerCase().includes('insufficient') ||
+          errorMessage.toLowerCase().includes('balance')) {
+        Alert.alert(
+          'Insufficient Balance',
+          errorMessage,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Booking Failed', errorMessage, [{ text: 'OK' }]);
+      }
+
+      safeSetState(() => {
+        setIsSubmitting(false);
+        setShowPaymentSheet(false);
+      });
       isProcessingPaymentRef.current = false;
     }
   };
