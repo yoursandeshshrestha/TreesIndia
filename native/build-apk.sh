@@ -114,6 +114,13 @@ fi
 # Navigate to android directory
 cd "$SCRIPT_DIR/android"
 
+# Set Java 17 for build (required for CMake compatibility)
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+print_info "Using Java version: $(java -version 2>&1 | head -1)"
+echo ""
+
 # Clean previous builds (skip if it fails - often happens on first build)
 print_info "Cleaning previous builds..."
 ./gradlew clean 2>/dev/null || print_warning "Clean skipped (this is normal for first build)"

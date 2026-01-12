@@ -47,7 +47,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo/logo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#34A853"
       },
       "package": "com.treeindia.myexpoapp",
       "permissions": [

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "TREESINDIA Backend API",
   "scripts": {
+    "prod": "docker compose --env-file .env.production -f docker-compose.prod.yml up -d",
     "clear:db": "bun run scripts/clear-db.ts",
     "seed:all": "go run cmd/seed-all/main.go",
     "clean:booking": "go run cmd/clean-bookings/main.go"
