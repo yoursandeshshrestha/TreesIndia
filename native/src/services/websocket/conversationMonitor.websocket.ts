@@ -120,7 +120,9 @@ class ConversationMonitorWebSocketService {
     }
 
     try {
-      const wsUrl = `${getWebSocketUrl()}/ws/conversations/monitor?token=${this.token}`;
+      const baseWsUrl = getWebSocketUrl();
+      const wsUrl = `${baseWsUrl}/ws/conversations/monitor?token=${this.token}`;
+
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = this.handleOpen.bind(this);
@@ -201,33 +203,34 @@ class ConversationMonitorWebSocketService {
     this.stopPingInterval();
     this.isConnecting = false;
 
-    console.log(`[WebSocket] Connection closed. Code: ${event.code}, Attempts: ${this.reconnectAttempts}, HasConnected: ${this.hasConnectedOnce}`);
+    // Check if it's a HTTP error (400, 401, 403, 404, etc.)
+    const is400Error = event.reason && event.reason.includes('400');
+    const is404Error = event.reason && event.reason.includes('404');
+    const isHttpError = is400Error || is404Error || (event.reason && /\b[4-5]\d{2}\b/.test(event.reason));
 
     // Don't retry if:
     // 1. It's a manual disconnect
-    // 2. It's an authentication error (close code 1008 or 4401)
-    // 3. Close code 1006 with reason suggesting auth failure (connection closed before upgrade)
-    // 4. We never successfully connected and have multiple failed attempts (likely auth issue)
+    // 2. It's an HTTP error (endpoint doesn't exist or bad request)
+    // 3. It's an authentication error (close code 1008 or 4401)
+    // 4. Close code 1006 with reason suggesting auth failure
+    // 5. We never successfully connected and have multiple failed attempts
     const isAuthError =
       event.code === 1008 || // Policy violation (often used for auth failures)
       event.code === 4401 || // Custom 401 code
-      (event.code === 1006 && !this.hasConnectedOnce && this.reconnectAttempts >= 1) || // Connection closed abnormally before first success (likely 401)
+      (event.code === 1006 && !this.hasConnectedOnce && this.reconnectAttempts >= 1) || // Connection closed abnormally before first success
       (!this.hasConnectedOnce && this.reconnectAttempts >= 3); // Multiple failures without ever connecting
 
-    if (isAuthError) {
-      console.log('[WebSocket] Auth error detected - stopping retries');
-      this.hasAuthError = true;
-      this.emit('auth_error', {
-        event: 'auth_error',
-        data: { error: 'Authentication failed. Please log in again.' }
-      });
-    }
+    const shouldNotRetry = this.isManualDisconnect || isHttpError || isAuthError;
 
-    if (!this.isManualDisconnect && !isAuthError) {
-      console.log('[WebSocket] Will retry connection');
-      this.handleReconnect();
+    if (shouldNotRetry) {
+      if (isHttpError && !this.hasConnectedOnce) {
+        // WebSocket endpoint doesn't exist or configuration error - fail silently
+        this.hasAuthError = true; // Mark as auth error to prevent future retries
+      } else if (isAuthError) {
+        this.hasAuthError = true;
+      }
     } else {
-      console.log('[WebSocket] Not retrying. ManualDisconnect: ${this.isManualDisconnect}, AuthError: ${isAuthError}');
+      this.handleReconnect();
     }
 
     this.emit('disconnected', { event: 'disconnected' });

@@ -41,11 +41,7 @@ class UserLocationService {
       const response = await authenticatedFetch(`${API_BASE_URL}/locations/user/me`);
       
       if (!response.ok) {
-        if (response.status === 404) {
-          // Location doesn't exist yet
-          return null;
-        }
-        console.error('Get location failed:', response.status, response.statusText);
+        // Location doesn't exist yet or other error - handle gracefully
         return null;
       }
 
@@ -58,7 +54,7 @@ class UserLocationService {
       
       return null;
     } catch (error) {
-      console.error('Failed to get user location:', error);
+      // Handle gracefully - location is optional
       return null;
     }
   }

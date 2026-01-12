@@ -18,12 +18,6 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// Log the API configuration for debugging
-console.log('=== TreesIndia API Configuration ===');
-console.log('Environment:', EXPO_ENVIRONMENT);
-console.log('API Base URL:', API_BASE_URL);
-console.log('=====================================');
-
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'treesindia_access_token',
   REFRESH_TOKEN: 'treesindia_refresh_token',
@@ -154,10 +148,15 @@ export const authenticatedFetch = async (
     (headers as Record<string, string>).Authorization = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    throw new Error(`Network request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   // If we get a 401, try to refresh the token and retry the request
   if (response.status === 401 && (accessToken || refreshToken)) {

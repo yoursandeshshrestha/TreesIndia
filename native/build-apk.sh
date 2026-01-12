@@ -117,6 +117,26 @@ cp "$SCRIPT_DIR/$ENV_FILE" "$SCRIPT_DIR/.env"
 print_success "Using environment: $ENV_FILE"
 echo ""
 
+# Load and export environment variables
+print_info "Loading environment variables..."
+set -a  # automatically export all variables
+source "$SCRIPT_DIR/.env"
+set +a  # stop automatically exporting
+
+# Display the environment being used
+echo ""
+echo -e "${GREEN}Environment Configuration:${NC}"
+echo -e "  EXPO_ENVIRONMENT: ${EXPO_ENVIRONMENT}"
+if [ "$EXPO_ENVIRONMENT" = "prod" ]; then
+    echo -e "  API URL: ${EXPO_PUBLIC_PROD_API_URL}"
+    echo -e "  Razorpay: ${EXPO_PUBLIC_PROD_RAZORPAY_APIKEY}"
+else
+    echo -e "  API URL: ${EXPO_PUBLIC_DEV_API_URL}"
+    echo -e "  Razorpay: ${EXPO_PUBLIC_DEV_RAZORPAY_APIKEY}"
+fi
+print_success "Environment variables loaded"
+echo ""
+
 # Clear Metro bundler cache to ensure fresh environment variables
 print_info "Clearing Metro bundler cache..."
 cd "$SCRIPT_DIR"

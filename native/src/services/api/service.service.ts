@@ -95,7 +95,10 @@ class ServiceService {
     const response = await fetch(url); // Public endpoint
     const data = await handleResponse<Service[]>(response);
 
-    // Normalize service data
+    // Normalize service data - handle null/undefined gracefully
+    if (!data || !Array.isArray(data)) {
+      return [];
+    }
     return data.map((service) => this.normalizeService(service));
   }
 

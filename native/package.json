@@ -7,6 +7,9 @@
     "start": "expo start",
     "prebuild": "expo prebuild",
     "build-apk": "./build-apk.sh",
+    "diagnose": "./diagnose-build.sh",
+    "clean": "rm -rf node_modules/.cache .expo android/app/build android/build",
+    "clean:full": "rm -rf node_modules/.cache .expo android/app/build android/build android/.gradle && cd android && ./gradlew clean && cd ..",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "web": "expo start --web"
