@@ -392,20 +392,36 @@ func (ac *AuthController) VerifyOTP(c *gin.Context) {
 		}
 	}
 
+	// Get worker type if user is a worker
+	var workerType string
+	if user.UserType == models.UserTypeWorker {
+		var worker models.Worker
+		if err := ac.db.Where("user_id = ?", user.ID).First(&worker).Error; err == nil {
+			workerType = string(worker.WorkerType)
+		}
+	}
+
 	// Get configured JWT expiry for response
 	appConfig := config.LoadConfig()
 	expiresInSeconds := int64(appConfig.GetJWTExpiry().Seconds())
 
+	userResponse := gin.H{
+		"id":             user.ID,
+		"phone":          user.Phone,
+		"name":           user.Name,
+		"role":           user.UserType,
+		"wallet_balance": user.WalletBalance,
+		"created_at":     user.CreatedAt,
+		"admin_roles":    adminRoleCodes,
+	}
+
+	// Add worker_type if user is a worker
+	if workerType != "" {
+		userResponse["worker_type"] = workerType
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Login successful", gin.H{
-		"user": gin.H{
-			"id":             user.ID,
-			"phone":          user.Phone,
-			"name":           user.Name,
-			"role":           user.UserType,
-			"wallet_balance": user.WalletBalance,
-			"created_at":     user.CreatedAt,
-			"admin_roles":    adminRoleCodes,
-		},
+		"user":          userResponse,
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 		"expires_in":    expiresInSeconds,
@@ -584,7 +600,16 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		subscriptionStatus = "active"
 	}
 
-	c.JSON(http.StatusOK, views.CreateSuccessResponse("User information retrieved successfully", gin.H{
+	// Get worker type if user is a worker
+	var workerType string
+	if user.UserType == models.UserTypeWorker {
+		var worker models.Worker
+		if err := ac.db.Where("user_id = ?", user.ID).First(&worker).Error; err == nil {
+			workerType = string(worker.WorkerType)
+		}
+	}
+
+	userResponse := gin.H{
 		"id":             user.ID,
 		"name":           user.Name,
 		"phone":          user.Phone,
@@ -594,7 +619,14 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 		"is_active":      user.IsActive,
 		"wallet_balance": user.WalletBalance,
 		"subscription":   subscriptionStatus,
-	}))
+	}
+
+	// Add worker_type if user is a worker
+	if workerType != "" {
+		userResponse["worker_type"] = workerType
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("User information retrieved successfully", userResponse))
 }
 
 // RefreshToken godoc
@@ -655,16 +687,32 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 		}
 	}
 
+	// Get worker type if user is a worker
+	var workerType string
+	if user.UserType == models.UserTypeWorker {
+		var worker models.Worker
+		if err := ac.db.Where("user_id = ?", user.ID).First(&worker).Error; err == nil {
+			workerType = string(worker.WorkerType)
+		}
+	}
+
+	userResponse := gin.H{
+		"id":             user.ID,
+		"phone":          user.Phone,
+		"name":           user.Name,
+		"role":           user.UserType,
+		"wallet_balance": user.WalletBalance,
+		"created_at":     user.CreatedAt,
+		"admin_roles":    adminRoleCodes,
+	}
+
+	// Add worker_type if user is a worker
+	if workerType != "" {
+		userResponse["worker_type"] = workerType
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Token refreshed successfully", gin.H{
-		"user": gin.H{
-			"id":             user.ID,
-			"phone":          user.Phone,
-			"name":           user.Name,
-			"role":           user.UserType,
-			"wallet_balance": user.WalletBalance,
-			"created_at":     user.CreatedAt,
-			"admin_roles":    adminRoleCodes,
-		},
+		"user":          userResponse,
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 		"expires_in":    int64(appConfig.GetJWTExpiry().Seconds()),
