@@ -4,6 +4,8 @@
   "description": "TREESINDIA Backend API",
   "scripts": {
     "prod": "docker compose --env-file .env.production -f docker-compose.prod.yml up -d",
+    "prod:build": "docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build",
+    "prod:down": "docker compose -f docker-compose.prod.yml down",
     "clear:db": "bun run scripts/clear-db.ts",
     "seed:all": "go run cmd/seed-all/main.go",
     "seed:all:docker": "docker compose -f docker-compose.prod.yml exec backend ./seed-all",
