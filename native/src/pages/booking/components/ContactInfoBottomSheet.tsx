@@ -97,10 +97,6 @@ export default function ContactInfoBottomSheet({
       }
     }
 
-    if (!description.trim()) {
-      newErrors.description = 'Description is required';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,7 +113,7 @@ export default function ContactInfoBottomSheet({
     const data: ContactInfoData = {
       contactPerson: contactPerson.trim(),
       phone: phone.trim(),
-      description: description.trim(),
+      description: description.trim() || undefined,
       specialInstructions: specialInstructions.trim() || undefined,
     };
 
@@ -227,8 +223,7 @@ export default function ContactInfoBottomSheet({
                 <View className="mb-4">
                   <Input
                     label="Description"
-                    required
-                    placeholder="Describe your requirements"
+                    placeholder="Describe your requirements (optional)"
                     value={description}
                     onChangeText={(text) => {
                       setDescription(text);
