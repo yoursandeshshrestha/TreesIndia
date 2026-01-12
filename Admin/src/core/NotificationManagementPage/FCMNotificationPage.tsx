@@ -27,6 +27,7 @@ function FCMNotificationPage() {
 
   // Form state
   const [formData, setFormData] = useState({
+    type: "general",
     title: "",
     body: "",
   });
@@ -83,7 +84,7 @@ function FCMNotificationPage() {
           phone: user.phone || user.phone_number || "",
         }))
       );
-    } catch (error) {
+    } catch {
       toast.error("Failed to load users");
     }
   };
@@ -116,6 +117,7 @@ function FCMNotificationPage() {
     try {
       await sendNotificationMutation.mutateAsync({
         user_id: selectedUsers[0],
+        type: formData.type,
         title: formData.title,
         body: formData.body,
       });
@@ -123,6 +125,7 @@ function FCMNotificationPage() {
       toast.success("Notification sent successfully!");
       // Reset form
       setFormData({
+        type: "general",
         title: "",
         body: "",
       });
@@ -152,6 +155,7 @@ function FCMNotificationPage() {
     try {
       const response = await sendBulkNotificationMutation.mutateAsync({
         user_ids: selectedUsers,
+        type: formData.type,
         title: formData.title,
         body: formData.body,
       });
@@ -163,6 +167,7 @@ function FCMNotificationPage() {
 
       // Reset form
       setFormData({
+        type: "general",
         title: "",
         body: "",
       });

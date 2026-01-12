@@ -68,7 +68,10 @@ export const useUserState = () => {
   // Update error state
   useEffect(() => {
     if (queryError) {
-      dispatch(setUserError(queryError.message || "Failed to load user data"));
+      const errorMessage = queryError instanceof Error
+        ? queryError.message
+        : "Failed to load user data";
+      dispatch(setUserError(errorMessage));
     } else {
       dispatch(setUserError(null));
     }

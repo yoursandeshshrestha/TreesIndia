@@ -47,6 +47,7 @@ export interface WithdrawalListResponse {
 export interface ApproveRejectRequest {
   notes?: string;
   reason?: string;
+  [key: string]: string | undefined;
 }
 
 class WorkerWithdrawalService {

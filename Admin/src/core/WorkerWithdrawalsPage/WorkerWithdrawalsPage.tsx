@@ -33,12 +33,6 @@ export default function WorkerWithdrawalsPage() {
     page: 1,
     limit: 10,
   });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    total_pages: 0,
-  });
 
   // Modal states
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WorkerWithdrawal | null>(null);
@@ -59,9 +53,6 @@ export default function WorkerWithdrawalsPage() {
       setLoading(true);
       const data = await workerWithdrawalService.getAllWithdrawals(filters);
       setWithdrawals(data.withdrawals);
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
 
       // Calculate statistics
       const pending = data.withdrawals.filter((w) => w.status === 'pending');
@@ -91,7 +82,7 @@ export default function WorkerWithdrawalsPage() {
   const handleStatusChange = (value: string) => {
     setFilters((prev) => ({
       ...prev,
-      status: value as any,
+      status: (value as WorkerWithdrawalFilters['status']) || undefined,
       page: 1,
     }));
   };

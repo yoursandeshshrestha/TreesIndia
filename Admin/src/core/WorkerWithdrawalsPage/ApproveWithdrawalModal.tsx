@@ -89,8 +89,8 @@ export default function ApproveWithdrawalModal({
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-yellow-800">
-              <strong>Warning:</strong> Approving this withdrawal will deduct {formatCurrency(withdrawal.amount)} from the worker's wallet balance.
-              Please ensure the amount will be transferred to the worker's bank account offline.
+              <strong>Warning:</strong> Approving this withdrawal will deduct {formatCurrency(withdrawal.amount)} from the worker&apos;s wallet balance.
+              Please ensure the amount will be transferred to the worker&apos;s bank account offline.
             </p>
           </div>
 
