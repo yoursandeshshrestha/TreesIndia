@@ -49,6 +49,8 @@ export default function QuoteAcceptanceBottomSheet({
       setSelectedSlot(null);
       setShowPaymentSheet(false);
       setShowSlotSheet(false);
+      setIsProcessingPayment(false);
+      setIsRedirecting(false);
 
       // Fetch wallet balance
       fetchWalletBalance();
@@ -90,7 +92,7 @@ export default function QuoteAcceptanceBottomSheet({
       const summary = await walletService.getWalletSummary();
       setWalletBalance(summary.current_balance || 0);
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
+      // Silently fail - not critical
     } finally {
       setIsLoadingWallet(false);
     }
@@ -220,9 +222,6 @@ export default function QuoteAcceptanceBottomSheet({
           const paymentOrder = (segmentResponse as any).payment_order;
 
           if (!paymentOrder) {
-            console.error('[QuoteAcceptance] No payment order in response', {
-              segmentResponse,
-            });
             throw new Error('Payment order not received');
           }
 
@@ -274,7 +273,6 @@ export default function QuoteAcceptanceBottomSheet({
                   ]
                 );
               } catch (error: any) {
-                console.error('Payment verification error:', error);
                 Alert.alert(
                   'Payment Error',
                   error?.message || 'Failed to verify payment. Please contact support.'
@@ -283,12 +281,38 @@ export default function QuoteAcceptanceBottomSheet({
               }
             },
             (error) => {
-              console.error('Razorpay error:', error);
-              Alert.alert(
-                'Payment Error',
-                error?.description || 'Payment was cancelled or failed.'
-              );
+              // Reset loading state and close payment sheet first to prevent stuck UI
               setIsProcessingPayment(false);
+              setShowPaymentSheet(false);
+
+              // Check if payment was cancelled (multiple ways it can be indicated)
+              const isCancelled =
+                error.code === 'PAYMENT_CANCELLED' ||
+                error.code === '2' ||
+                (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+              // Handle different error cases
+              if (isCancelled) {
+                // User cancelled payment - close sheet
+                Alert.alert(
+                  'Payment Cancelled',
+                  'You cancelled the payment.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        onClose(); // Close the bottom sheet
+                      },
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  'Payment Error',
+                  error?.description || 'Payment failed. Please try again.',
+                  [{ text: 'OK' }]
+                );
+              }
             }
           );
         } else {
@@ -314,7 +338,6 @@ export default function QuoteAcceptanceBottomSheet({
           );
 
           if (!response.payment_order) {
-            console.error('[QuoteAcceptance] No payment order in response');
             throw new Error('Payment order not received');
           }
 
@@ -363,7 +386,6 @@ export default function QuoteAcceptanceBottomSheet({
                   ]
                 );
               } catch (error: any) {
-                console.error('Payment verification error:', error);
                 Alert.alert(
                   'Payment Error',
                   error?.message || 'Failed to verify payment. Please contact support.'
@@ -372,18 +394,43 @@ export default function QuoteAcceptanceBottomSheet({
               }
             },
             (error) => {
-              console.error('Razorpay error:', error);
-              Alert.alert(
-                'Payment Error',
-                error?.description || 'Payment was cancelled or failed.'
-              );
+              // Reset loading state and close payment sheet first to prevent stuck UI
               setIsProcessingPayment(false);
+              setShowPaymentSheet(false);
+
+              // Check if payment was cancelled (multiple ways it can be indicated)
+              const isCancelled =
+                error.code === 'PAYMENT_CANCELLED' ||
+                error.code === '2' ||
+                (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+
+              // Handle different error cases
+              if (isCancelled) {
+                // User cancelled payment - close sheet
+                Alert.alert(
+                  'Payment Cancelled',
+                  'You cancelled the payment.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        onClose(); // Close the bottom sheet
+                      },
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  'Payment Error',
+                  error?.description || 'Payment failed. Please try again.',
+                  [{ text: 'OK' }]
+                );
+              }
             }
           );
         }
       }
     } catch (error: any) {
-      console.error('Payment error:', error);
       Alert.alert(
         'Payment Failed',
         error?.message || 'Failed to process payment. Please try again.',
