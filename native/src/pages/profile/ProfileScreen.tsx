@@ -96,9 +96,11 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
     Alert.alert('Coming Soon', `${label} feature will be available soon.`);
   };
 
-  const isWorker = user?.user_type === 'worker';
+  // Only treesindia workers get the worker UI
+  const isTreesIndiaWorker = user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
+  const isAnyWorker = user?.user_type === 'worker'; // Any type of worker (normal or treesindia)
   const isBroker = user?.user_type === 'broker';
-  const canAccessVendorProfile = (hasActiveSubscription || isAdmin) && !isWorker;
+  const canAccessVendorProfile = (hasActiveSubscription || isAdmin) && !isTreesIndiaWorker;
 
   return (
     <View className="flex-1 bg-white">
@@ -124,7 +126,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
         </View>
 
         {/* Worker Verification Badge Section */}
-        {isWorker && (
+        {isTreesIndiaWorker && (
           <View className="px-6 pb-8">
             <View className="border border-[#E5E7EB] rounded-xl py-4 px-6 flex-row items-center justify-center bg-white">
               <PawLeftIcon size={24} color="#00a871" />
@@ -162,7 +164,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
                 label="Manage addresses"
                 onPress={() => handleMenuItemPress('Manage addresses')}
               />
-              {!isWorker && (
+              {!isTreesIndiaWorker && (
                 <MenuItem
                   icon={PropertyIcon}
                   label="My Properties"
@@ -176,7 +178,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
                   onPress={() => handleMenuItemPress('My Vendor Profile')}
                 />
               )}
-              {!isWorker && (
+              {!isTreesIndiaWorker && (
                 <MenuItem
                   icon={SubscriptionIcon}
                   label="My Subscription"
@@ -188,7 +190,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
           </View>
 
           {/* Services Section */}
-          {!isWorker && (
+          {!isAnyWorker && !isBroker && (
             <View className="mb-8">
               <Text
                 className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
