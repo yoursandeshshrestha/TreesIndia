@@ -16,8 +16,8 @@
       "address": "Sevoke Road, Siliguri",
       "pincode": "734001",
       "landmark": "Near City Center",
-      "profile_picture": "../assets/vendor/1.jpg",
-      "business_gallery": ["../assets/vendor/2.jpg", "../assets/vendor/3.jpg"]
+      "profile_picture": "./assets/vendor/1.jpg",
+      "business_gallery": ["./assets/vendor/2.jpg", "./assets/vendor/3.jpg"]
     },
     {
       "name": "Priya Sharma",
@@ -35,8 +35,8 @@
       "address": "GS Road, Guwahati",
       "pincode": "781005",
       "landmark": "Near Dispur",
-      "profile_picture": "../assets/vendor/4.jpg",
-      "business_gallery": ["../assets/vendor/5.jpg"]
+      "profile_picture": "./assets/vendor/4.jpg",
+      "business_gallery": ["./assets/vendor/5.jpg"]
     },
     {
       "name": "Amit Das",
@@ -54,8 +54,8 @@
       "address": "Park Street, Kolkata",
       "pincode": "700016",
       "landmark": "Near Park Street Metro",
-      "profile_picture": "../assets/vendor/7.jpg",
-      "business_gallery": ["../assets/vendor/8.jpg"]
+      "profile_picture": "./assets/vendor/7.jpg",
+      "business_gallery": ["./assets/vendor/8.jpg"]
     },
     {
       "name": "Anjali Mehta",
@@ -73,8 +73,8 @@
       "address": "MG Marg, Gangtok",
       "pincode": "737101",
       "landmark": "City Center",
-      "profile_picture": "../assets/vendor/9.jpg",
-      "business_gallery": ["../assets/vendor/10.jpg"]
+      "profile_picture": "./assets/vendor/9.jpg",
+      "business_gallery": ["./assets/vendor/10.jpg"]
     },
     {
       "name": "Vikram Singh",
@@ -92,8 +92,8 @@
       "address": "Mall Road, Darjeeling",
       "pincode": "734101",
       "landmark": "Near Clock Tower",
-      "profile_picture": "../assets/vendor/1.jpg",
-      "business_gallery": ["../assets/vendor/2.jpg"]
+      "profile_picture": "./assets/vendor/1.jpg",
+      "business_gallery": ["./assets/vendor/2.jpg"]
     },
     {
       "name": "Suresh Patel",
@@ -111,8 +111,8 @@
       "address": "Hill Cart Road, Siliguri",
       "pincode": "734001",
       "landmark": "Near NJP Station",
-      "profile_picture": "../assets/vendor/3.jpg",
-      "business_gallery": ["../assets/vendor/4.jpg"]
+      "profile_picture": "./assets/vendor/3.jpg",
+      "business_gallery": ["./assets/vendor/4.jpg"]
     },
     {
       "name": "Meera Devi",
@@ -130,8 +130,8 @@
       "address": "Beltola, Guwahati",
       "pincode": "781028",
       "landmark": "Near Beltola Market",
-      "profile_picture": "../assets/vendor/5.jpg",
-      "business_gallery": ["../assets/vendor/7.jpg"]
+      "profile_picture": "./assets/vendor/5.jpg",
+      "business_gallery": ["./assets/vendor/7.jpg"]
     },
     {
       "name": "Rohit Verma",
@@ -149,8 +149,8 @@
       "address": "Salt Lake, Kolkata",
       "pincode": "700091",
       "landmark": "Sector V",
-      "profile_picture": "../assets/vendor/8.jpg",
-      "business_gallery": ["../assets/vendor/9.jpg"]
+      "profile_picture": "./assets/vendor/8.jpg",
+      "business_gallery": ["./assets/vendor/9.jpg"]
     },
     {
       "name": "Kavita Roy",
@@ -168,8 +168,8 @@
       "address": "Deorali, Gangtok",
       "pincode": "737102",
       "landmark": "Near Deorali Bazaar",
-      "profile_picture": "../assets/vendor/10.jpg",
-      "business_gallery": ["../assets/vendor/1.jpg"]
+      "profile_picture": "./assets/vendor/10.jpg",
+      "business_gallery": ["./assets/vendor/1.jpg"]
     },
     {
       "name": "Deepak Yadav",
@@ -187,8 +187,8 @@
       "address": "Chowrasta, Darjeeling",
       "pincode": "734101",
       "landmark": "Main Square",
-      "profile_picture": "../assets/vendor/2.jpg",
-      "business_gallery": ["../assets/vendor/3.jpg", "../assets/vendor/4.jpg"]
+      "profile_picture": "./assets/vendor/2.jpg",
+      "business_gallery": ["./assets/vendor/3.jpg", "./assets/vendor/4.jpg"]
     }
   ]
 }

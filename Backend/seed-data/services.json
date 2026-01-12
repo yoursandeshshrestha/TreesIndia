@@ -8,7 +8,7 @@
       "price": 1500,
       "duration": "2-3 hours",
       "category_path": ["Home Services", "Electronics", "AC Repair"],
-      "images": ["../assets/services/1.jpg"],
+      "images": ["./assets/services/1.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -18,7 +18,7 @@
       "description": "Expert split AC repair services. We handle all types of split air conditioner repairs including gas refilling, compressor issues, and electrical problems.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Electronics", "AC Repair", "Split AC Repair"],
-      "images": ["../assets/services/2.jpg"],
+      "images": ["./assets/services/2.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Guwahati"],
       "is_active": true
     },
@@ -30,7 +30,7 @@
       "price": 1200,
       "duration": "2-3 hours",
       "category_path": ["Home Services", "Electronics", "AC Repair", "Window AC Repair"],
-      "images": ["../assets/services/3.jpg"],
+      "images": ["./assets/services/3.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata"],
       "is_active": true
     },
@@ -42,7 +42,7 @@
       "price": 2500,
       "duration": "3-4 hours",
       "category_path": ["Home Services", "Electronics", "AC Repair", "Split AC Repair", "Premium Service"],
-      "images": ["../assets/services/4.jpg"],
+      "images": ["./assets/services/4.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -54,7 +54,7 @@
       "price": 2500,
       "duration": "3-4 hours",
       "category_path": ["Home Services", "Electronics", "AC Repair", "AC Installation"],
-      "images": ["../assets/services/5.jpg"],
+      "images": ["./assets/services/5.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata", "Gangtok", "Guwahati"],
       "is_active": true
     },
@@ -66,7 +66,7 @@
       "price": 1200,
       "duration": "2 hours",
       "category_path": ["Home Services", "Electronics", "AC Repair", "AC Maintenance"],
-      "images": ["../assets/services/6.jpg"],
+      "images": ["./assets/services/6.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -76,7 +76,7 @@
       "description": "Complete plumbing services for homes and offices. Expert plumbers for all your plumbing needs.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Plumbing", "General Plumbing"],
-      "images": ["../assets/services/7.jpg"],
+      "images": ["./assets/services/7.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -86,7 +86,7 @@
       "description": "Expert water leak repair services. We fix all types of leaks quickly and efficiently.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Plumbing", "Repair", "Leak Repair"],
-      "images": ["../assets/services/8.jpg"],
+      "images": ["./assets/services/8.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -98,7 +98,7 @@
       "price": 2000,
       "duration": "3-5 hours",
       "category_path": ["Home Services", "Plumbing", "Installation", "Bathroom Fixtures"],
-      "images": ["../assets/services/9.jpg"],
+      "images": ["./assets/services/9.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Guwahati"],
       "is_active": true
     },
@@ -108,7 +108,7 @@
       "description": "Professional kitchen plumbing services including sink installation, water filter setup, and kitchen pipe repairs.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Plumbing", "Installation", "Kitchen Fixtures"],
-      "images": ["../assets/services/10.jpg"],
+      "images": ["./assets/services/10.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata"],
       "is_active": true
     },
@@ -120,7 +120,7 @@
       "price": 3500,
       "duration": "4-6 hours",
       "category_path": ["Home Services", "Plumbing", "Installation", "Kitchen Fixtures", "Premium Installation"],
-      "images": ["../assets/services/11.jpg"],
+      "images": ["./assets/services/11.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -130,7 +130,7 @@
       "description": "Complete electrical services for homes and offices. Safe and certified electrical work.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Electrical", "General Electrical"],
-      "images": ["../assets/services/12.jpg"],
+      "images": ["./assets/services/12.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok", "Guwahati"],
       "is_active": true
     },
@@ -140,7 +140,7 @@
       "description": "Professional electrical wiring services for homes and offices. Safe and certified electrical work with proper safety standards.",
       "price_type": "inquiry",
       "category_path": ["Home Services", "Electrical", "Installation", "House Wiring"],
-      "images": ["../assets/services/14.jpg"],
+      "images": ["./assets/services/14.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok", "Guwahati"],
       "is_active": true
     },
@@ -152,7 +152,7 @@
       "price": 500,
       "duration": "1-2 hours",
       "category_path": ["Home Services", "Electrical", "Installation", "Switch Installation"],
-      "images": ["../assets/services/15.jpg"],
+      "images": ["./assets/services/15.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata"],
       "is_active": true
     },
@@ -162,7 +162,7 @@
       "description": "Complete home renovation service. Transform your living space with our comprehensive home renovation solutions including interior remodeling, structural changes, flooring, painting, and finishing work.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Renovation", "Home Renovation"],
-      "images": ["../assets/services/1.jpg"],
+      "images": ["./assets/services/1.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata", "Gangtok", "Guwahati"],
       "is_active": true
     },
@@ -172,7 +172,7 @@
       "description": "Full home renovation from top to bottom. Complete transformation of your living space.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Renovation", "Home Renovation", "Complete Renovation"],
-      "images": ["../assets/services/2.jpg"],
+      "images": ["./assets/services/2.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -182,7 +182,7 @@
       "description": "Professional kitchen renovation services. We design and renovate kitchens with modern fixtures, cabinets, and appliances.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Renovation", "Home Renovation", "Kitchen Renovation"],
-      "images": ["../assets/services/3.jpg"],
+      "images": ["./assets/services/3.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok"],
       "is_active": true
     },
@@ -192,7 +192,7 @@
       "description": "Premium luxury kitchen renovation with high-end materials and designer finishes.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Renovation", "Home Renovation", "Kitchen Renovation", "Luxury Renovation"],
-      "images": ["../assets/services/4.jpg"],
+      "images": ["./assets/services/4.jpg"],
       "service_areas": ["Siliguri", "Kolkata"],
       "is_active": true
     },
@@ -202,7 +202,7 @@
       "description": "Complete bathroom renovation services including tiling, fixtures, plumbing, and modern bathroom design.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Renovation", "Home Renovation", "Bathroom Renovation"],
-      "images": ["../assets/services/5.jpg"],
+      "images": ["./assets/services/5.jpg"],
       "service_areas": ["Siliguri", "Darjeeling", "Kolkata"],
       "is_active": true
     },
@@ -212,7 +212,7 @@
       "description": "Professional building construction services for residential and commercial buildings. Complete construction from foundation to finishing.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Construction", "Building Construction"],
-      "images": ["../assets/services/6.jpg"],
+      "images": ["./assets/services/6.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Guwahati"],
       "is_active": true
     },
@@ -222,7 +222,7 @@
       "description": "Complete residential building construction services. We build homes from foundation to finishing.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Construction", "Building Construction", "Residential Building"],
-      "images": ["../assets/services/7.jpg"],
+      "images": ["./assets/services/7.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Guwahati"],
       "is_active": true
     },
@@ -232,7 +232,7 @@
       "description": "Expert commercial building construction services. We build offices, shops, and commercial complexes with modern architecture.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Construction", "Building Construction", "Commercial Building"],
-      "images": ["../assets/services/8.jpg"],
+      "images": ["./assets/services/8.jpg"],
       "service_areas": ["Siliguri", "Kolkata", "Gangtok", "Guwahati"],
       "is_active": true
     },
@@ -242,7 +242,7 @@
       "description": "Premium residential construction with high-end materials and luxury finishes.",
       "price_type": "inquiry",
       "category_path": ["Construction Services", "Construction", "Building Construction", "Residential Building", "Premium Construction"],
-      "images": ["../assets/services/9.jpg"],
+      "images": ["./assets/services/9.jpg"],
       "service_areas": ["Siliguri", "Kolkata"],
       "is_active": true
     }

@@ -2,35 +2,35 @@
   "banner_images": [
     {
       "title": "Banner 1",
-      "image": "../assets/banner/1.png",
+      "image": "./assets/banner/1.png",
       "link": "/",
       "sort_order": 0,
       "is_active": true
     },
     {
       "title": "Banner 2",
-      "image": "../assets/banner/2.png",
+      "image": "./assets/banner/2.png",
       "link": "/",
       "sort_order": 1,
       "is_active": true
     },
     {
       "title": "Banner 3",
-      "image": "../assets/banner/3.png",
+      "image": "./assets/banner/3.png",
       "link": "/",
       "sort_order": 2,
       "is_active": true
     },
     {
       "title": "Banner 4",
-      "image": "../assets/banner/4.png",
+      "image": "./assets/banner/4.png",
       "link": "/",
       "sort_order": 0,
       "is_active": false
     },
     {
       "title": "Banner 5",
-      "image": "../assets/banner/5.png",
+      "image": "./assets/banner/5.png",
       "link": "/",
       "sort_order": 0,
       "is_active": false

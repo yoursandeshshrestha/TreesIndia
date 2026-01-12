@@ -2,31 +2,31 @@
   "promotion_banners": [
     {
       "title": "Professional Cleaning Services",
-      "image": "../assets/banner/1.png",
+      "image": "./assets/banner/1.png",
       "link": "/services/cleaning",
       "is_active": true
     },
     {
       "title": "Expert Plumbing Solutions",
-      "image": "../assets/banner/2.png",
+      "image": "./assets/banner/2.png",
       "link": "/services/plumbing",
       "is_active": true
     },
     {
       "title": "Home Maintenance Specialists",
-      "image": "../assets/banner/3.png",
+      "image": "./assets/banner/3.png",
       "link": "/services/maintenance",
       "is_active": true
     },
     {
       "title": "Quality Construction Services",
-      "image": "../assets/banner/4.png",
+      "image": "./assets/banner/4.png",
       "link": "/services/construction",
       "is_active": true
     },
     {
       "title": "Reliable Home Services",
-      "image": "../assets/banner/5.png",
+      "image": "./assets/banner/5.png",
       "link": "/services",
       "is_active": false
     }

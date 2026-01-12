@@ -18,7 +18,7 @@
       "city": "Siliguri",
       "address": "Sevoke Road, Siliguri",
       "pincode": "734001",
-      "images": ["../assets/property/1.jpg"],
+      "images": ["./assets/property/1.jpg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -40,7 +40,7 @@
       "city": "Kolkata",
       "address": "Park Street, Kolkata",
       "pincode": "700016",
-      "images": ["../assets/property/2.jpeg"],
+      "images": ["./assets/property/2.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -62,7 +62,7 @@
       "city": "Guwahati",
       "address": "GS Road, Guwahati",
       "pincode": "781005",
-      "images": ["../assets/property/3.jpeg"],
+      "images": ["./assets/property/3.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -84,7 +84,7 @@
       "city": "Darjeeling",
       "address": "Mall Road, Darjeeling",
       "pincode": "734101",
-      "images": ["../assets/property/4.jpg"],
+      "images": ["./assets/property/4.jpg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -106,7 +106,7 @@
       "city": "Gangtok",
       "address": "MG Marg, Gangtok",
       "pincode": "737101",
-      "images": ["../assets/property/5.jpeg"],
+      "images": ["./assets/property/5.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -128,7 +128,7 @@
       "city": "Howrah",
       "address": "Howrah Station Road, Howrah",
       "pincode": "711101",
-      "images": ["../assets/property/6.jpeg"],
+      "images": ["./assets/property/6.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -150,7 +150,7 @@
       "city": "Patna",
       "address": "Industrial Area, Patna",
       "pincode": "800001",
-      "images": ["../assets/property/8.jpeg"],
+      "images": ["./assets/property/8.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -172,7 +172,7 @@
       "city": "Siliguri",
       "address": "Hill Cart Road, Siliguri",
       "pincode": "734001",
-      "images": ["../assets/property/9.png"],
+      "images": ["./assets/property/9.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -194,7 +194,7 @@
       "city": "Kolkata",
       "address": "Salt Lake City, Kolkata",
       "pincode": "700064",
-      "images": ["../assets/property/10.jpeg"],
+      "images": ["./assets/property/10.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -216,7 +216,7 @@
       "city": "Guwahati",
       "address": "Beltola, Guwahati",
       "pincode": "781028",
-      "images": ["../assets/property/11.png"],
+      "images": ["./assets/property/11.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -238,7 +238,7 @@
       "city": "Darjeeling",
       "address": "Lebong, Darjeeling",
       "pincode": "734101",
-      "images": ["../assets/property/12.png"],
+      "images": ["./assets/property/12.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -260,7 +260,7 @@
       "city": "Howrah",
       "address": "Shibpur, Howrah",
       "pincode": "711102",
-      "images": ["../assets/property/13.png"],
+      "images": ["./assets/property/13.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -282,7 +282,7 @@
       "city": "Gangtok",
       "address": "Deorali, Gangtok",
       "pincode": "737102",
-      "images": ["../assets/property/14.jpeg"],
+      "images": ["./assets/property/14.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -304,7 +304,7 @@
       "city": "Patna",
       "address": "Boring Road, Patna",
       "pincode": "800001",
-      "images": ["../assets/property/9.png"],
+      "images": ["./assets/property/9.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -326,7 +326,7 @@
       "city": "Siliguri",
       "address": "Pradhan Nagar, Siliguri",
       "pincode": "734003",
-      "images": ["../assets/property/10.jpeg"],
+      "images": ["./assets/property/10.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -348,7 +348,7 @@
       "city": "Kolkata",
       "address": "New Town, Kolkata",
       "pincode": "700156",
-      "images": ["../assets/property/11.png"],
+      "images": ["./assets/property/11.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -370,7 +370,7 @@
       "city": "Guwahati",
       "address": "Dispur, Guwahati",
       "pincode": "781006",
-      "images": ["../assets/property/12.png"],
+      "images": ["./assets/property/12.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -392,7 +392,7 @@
       "city": "Darjeeling",
       "address": "Chowrasta, Darjeeling",
       "pincode": "734101",
-      "images": ["../assets/property/13.png"],
+      "images": ["./assets/property/13.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -414,7 +414,7 @@
       "city": "Howrah",
       "address": "Andul Road, Howrah",
       "pincode": "711109",
-      "images": ["../assets/property/14.jpeg"],
+      "images": ["./assets/property/14.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -436,7 +436,7 @@
       "city": "Siliguri",
       "address": "Bidhan Nagar, Siliguri",
       "pincode": "734001",
-      "images": ["../assets/property/15.png"],
+      "images": ["./assets/property/15.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -458,7 +458,7 @@
       "city": "Kolkata",
       "address": "Ballygunge, Kolkata",
       "pincode": "700019",
-      "images": ["../assets/property/16.png"],
+      "images": ["./assets/property/16.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -480,7 +480,7 @@
       "city": "Guwahati",
       "address": "Ulubari, Guwahati",
       "pincode": "781007",
-      "images": ["../assets/property/17.png"],
+      "images": ["./assets/property/17.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -502,7 +502,7 @@
       "city": "Siliguri",
       "address": "Subhash Pally, Siliguri",
       "pincode": "734001",
-      "images": ["../assets/property/15.png"],
+      "images": ["./assets/property/15.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -524,7 +524,7 @@
       "city": "Kolkata",
       "address": "Alipore, Kolkata",
       "pincode": "700027",
-      "images": ["../assets/property/1.jpg"],
+      "images": ["./assets/property/1.jpg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -546,7 +546,7 @@
       "city": "Guwahati",
       "address": "Paltan Bazaar, Guwahati",
       "pincode": "781008",
-      "images": ["../assets/property/16.png"],
+      "images": ["./assets/property/16.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -568,7 +568,7 @@
       "city": "Darjeeling",
       "address": "Jorebungalow, Darjeeling",
       "pincode": "734101",
-      "images": ["../assets/property/12.png"],
+      "images": ["./assets/property/12.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -590,7 +590,7 @@
       "city": "Howrah",
       "address": "Santragachi, Howrah",
       "pincode": "711104",
-      "images": ["../assets/property/17.png"],
+      "images": ["./assets/property/17.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -612,7 +612,7 @@
       "city": "Gangtok",
       "address": "Tadong, Gangtok",
       "pincode": "737102",
-      "images": ["../assets/property/14.jpeg"],
+      "images": ["./assets/property/14.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -634,7 +634,7 @@
       "city": "Patna",
       "address": "Kankarbagh, Patna",
       "pincode": "800020",
-      "images": ["../assets/property/15.png"],
+      "images": ["./assets/property/15.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -656,7 +656,7 @@
       "city": "Siliguri",
       "address": "Matigara, Siliguri",
       "pincode": "734010",
-      "images": ["../assets/property/10.jpeg"],
+      "images": ["./assets/property/10.jpeg"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -678,7 +678,7 @@
       "city": "Kolkata",
       "address": "Tollygunge, Kolkata",
       "pincode": "700033",
-      "images": ["../assets/property/16.png"],
+      "images": ["./assets/property/16.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -700,7 +700,7 @@
       "city": "Darjeeling",
       "address": "North Point, Darjeeling",
       "pincode": "734101",
-      "images": ["../assets/property/12.png"],
+      "images": ["./assets/property/12.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     },
@@ -722,7 +722,7 @@
       "city": "Guwahati",
       "address": "Zoo Road, Guwahati",
       "pincode": "781024",
-      "images": ["../assets/property/17.png"],
+      "images": ["./assets/property/17.png"],
       "uploaded_by_admin": true,
       "treesindia_assured": true
     }

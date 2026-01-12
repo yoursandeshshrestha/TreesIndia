@@ -8,13 +8,13 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /app
 
 # Copy go mod files
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy source code
-COPY . .
+COPY backend/ .
 
 # Tidy go modules to ensure consistency with all source files
 RUN go mod tidy
@@ -45,6 +45,9 @@ COPY --from=builder /app/migrations ./migrations
 
 # Copy seed-data directory
 COPY --from=builder /app/seed-data ./seed-data
+
+# Copy assets directory for service images
+COPY assets ./assets
 
 # Copy .env file if it exists
 COPY --from=builder /app/.env* ./

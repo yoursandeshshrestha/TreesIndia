@@ -15,7 +15,7 @@
         "email": "info@greenvalley.com",
         "contact_person": "Mr. Rajesh Kumar"
       },
-      "images": ["../assets/projects/1.jpeg"]
+      "images": ["./assets/projects/1.jpeg"]
     },
     {
       "title": "Tech Park Commercial Hub",
@@ -32,7 +32,7 @@
         "email": "sales@techpark.com",
         "contact_person": "Ms. Priya Sharma"
       },
-      "images": ["../assets/projects/2.jpeg"]
+      "images": ["./assets/projects/2.jpeg"]
     },
     {
       "title": "Highway Infrastructure Development",
@@ -49,7 +49,7 @@
         "email": "info@highwayproject.gov.in",
         "contact_person": "Mr. Amit Das"
       },
-      "images": ["../assets/projects/3.jpeg"]
+      "images": ["./assets/projects/3.jpeg"]
     },
     {
       "title": "Luxury Apartments - Skyline Towers",
@@ -66,7 +66,7 @@
         "email": "sales@skylinetowers.com",
         "contact_person": "Ms. Anjali Mehta"
       },
-      "images": ["../assets/projects/4.jpeg"]
+      "images": ["./assets/projects/4.jpeg"]
     },
     {
       "title": "Smart City Commercial Plaza",
@@ -83,7 +83,7 @@
         "email": "info@smartplaza.com",
         "contact_person": "Mr. Vikram Singh"
       },
-      "images": ["../assets/projects/5.jpeg"]
+      "images": ["./assets/projects/5.jpeg"]
     }
   ]
 }

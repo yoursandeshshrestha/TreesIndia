@@ -26,8 +26,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: backend/Dockerfile.prod
       args:
         PORT: ${PORT}
     container_name: treesindia-backend-prod
