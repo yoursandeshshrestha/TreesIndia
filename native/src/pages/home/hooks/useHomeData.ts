@@ -19,6 +19,19 @@ import {
 } from '../../../services';
 import { cache, CACHE_TTL, CACHE_KEYS } from '../../../utils/cache';
 
+export type SectionType =
+  | 'properties'
+  | 'fixedPriceServices'
+  | 'projects'
+  | 'homeServices'
+  | 'workers'
+  | 'vendors'
+  | 'properties2BHK'
+  | 'properties3BHK'
+  | 'propertiesUnder10K'
+  | 'constructionServices'
+  | 'inquiryServices';
+
 interface HomeData {
   // Banners
   banners: PromotionBanner[];
@@ -66,6 +79,10 @@ interface HomeData {
 
   // Subscription
   hasActiveSubscription: boolean;
+
+  // Lazy loading
+  loadSection: (section: SectionType) => void;
+  loadedSections: Set<SectionType>;
 
   // Refresh function
   refresh: () => Promise<void>;
@@ -122,6 +139,9 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
 
   // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Track which sections have been loaded
+  const [loadedSections, setLoadedSections] = useState<Set<SectionType>>(new Set());
 
   // Load functions with caching (stale-while-revalidate pattern)
   const loadBanners = useCallback(async (forceRefresh = false) => {
@@ -238,6 +258,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES);
         if (cached) {
           setProperties(cached);
+          setIsLoadingProperties(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingProperties(true);
         }
@@ -274,6 +296,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Service[]>(CACHE_KEYS.HOME_SERVICES);
         if (cached) {
           setHomeServices(cached);
+          setIsLoadingHomeServices(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingHomeServices(true);
         }
@@ -300,6 +324,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Service[]>(CACHE_KEYS.CONSTRUCTION_SERVICES);
         if (cached) {
           setConstructionServices(cached);
+          setIsLoadingConstructionServices(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingConstructionServices(true);
         }
@@ -326,6 +352,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Service[]>(CACHE_KEYS.FIXED_PRICE_SERVICES);
         if (cached) {
           setFixedPriceServices(cached);
+          setIsLoadingFixedPriceServices(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingFixedPriceServices(true);
         }
@@ -360,6 +388,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Service[]>(CACHE_KEYS.INQUIRY_SERVICES);
         if (cached) {
           setInquiryServices(cached);
+          setIsLoadingInquiryServices(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingInquiryServices(true);
         }
@@ -394,6 +424,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_2BHK);
         if (cached) {
           setProperties2BHK(cached);
+          setIsLoadingProperties2BHK(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingProperties2BHK(true);
         }
@@ -430,6 +462,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_3BHK);
         if (cached) {
           setProperties3BHK(cached);
+          setIsLoadingProperties3BHK(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingProperties3BHK(true);
         }
@@ -466,6 +500,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Property[]>(CACHE_KEYS.PROPERTIES_UNDER_10K);
         if (cached) {
           setPropertiesUnder10K(cached);
+          setIsLoadingPropertiesUnder10K(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingPropertiesUnder10K(true);
         }
@@ -477,7 +513,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         page: 1,
         limit: 20,
         listing_type: 'rent',
-        max_rent: 10000,
+        max_price: 10000,
       });
       if (response.data) {
         const data = response.data.slice(0, 10);
@@ -502,6 +538,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Project[]>(CACHE_KEYS.PROJECTS);
         if (cached) {
           setProjects(cached);
+          setIsLoadingProjects(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingProjects(true);
         }
@@ -545,6 +583,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Worker[]>(CACHE_KEYS.TOP_WORKERS);
         if (cached) {
           setTopWorkers(cached);
+          setIsLoadingWorkers(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingWorkers(true);
         }
@@ -591,6 +631,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         const cached = await cache.get<Vendor[]>(CACHE_KEYS.TOP_VENDORS);
         if (cached) {
           setTopVendors(cached);
+          setIsLoadingVendors(false);
+          return; // Use cache, skip fetch
         } else {
           setIsLoadingVendors(true);
         }
@@ -628,31 +670,130 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
     }
   }, [topVendors.length]);
 
-  // Refresh function to force reload all data
+  // Lazy load section function
+  const loadSection = useCallback((section: SectionType) => {
+    // Don't load if already loaded
+    if (loadedSections.has(section)) {
+      return;
+    }
+
+    // Mark section as loaded
+    setLoadedSections(prev => new Set(prev).add(section));
+
+    // Load the appropriate section
+    switch (section) {
+      case 'properties':
+        loadProperties();
+        break;
+      case 'fixedPriceServices':
+        loadFixedPriceServices();
+        break;
+      case 'projects':
+        if (isAuthenticated) {
+          loadProjects();
+        }
+        break;
+      case 'homeServices':
+        loadHomeServices();
+        break;
+      case 'workers':
+        loadTopWorkers();
+        break;
+      case 'vendors':
+        loadTopVendors();
+        break;
+      case 'properties2BHK':
+        loadProperties2BHK();
+        break;
+      case 'properties3BHK':
+        loadProperties3BHK();
+        break;
+      case 'propertiesUnder10K':
+        loadPropertiesUnder10K();
+        break;
+      case 'constructionServices':
+        loadConstructionServices();
+        break;
+      case 'inquiryServices':
+        loadInquiryServices();
+        break;
+    }
+  }, [
+    loadedSections,
+    isAuthenticated,
+    loadProperties,
+    loadFixedPriceServices,
+    loadProjects,
+    loadHomeServices,
+    loadTopWorkers,
+    loadTopVendors,
+    loadProperties2BHK,
+    loadProperties3BHK,
+    loadPropertiesUnder10K,
+    loadConstructionServices,
+    loadInquiryServices,
+  ]);
+
+  // Refresh function to reload visible/loaded sections only
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([
+      // Always refresh above-the-fold content
+      const refreshPromises = [
         loadBanners(true),
         loadCategories(true),
         loadHomepageIcons(true),
         loadPopularServices(true),
-        loadProperties(true),
-        loadHomeServices(true),
-        loadConstructionServices(true),
-        loadFixedPriceServices(true),
-        loadInquiryServices(true),
-        loadProperties2BHK(true),
-        loadProperties3BHK(true),
-        loadPropertiesUnder10K(true),
-        loadTopWorkers(true),
-        loadTopVendors(true),
-        ...(isAuthenticated ? [loadProjects(true)] : []),
-      ]);
+      ];
+
+      // Refresh only sections that have been loaded
+      const sectionsToRefresh: SectionType[] = Array.from(loadedSections);
+      sectionsToRefresh.forEach((section) => {
+        switch (section) {
+          case 'properties':
+            refreshPromises.push(loadProperties(true));
+            break;
+          case 'fixedPriceServices':
+            refreshPromises.push(loadFixedPriceServices(true));
+            break;
+          case 'projects':
+            if (isAuthenticated) {
+              refreshPromises.push(loadProjects(true));
+            }
+            break;
+          case 'homeServices':
+            refreshPromises.push(loadHomeServices(true));
+            break;
+          case 'workers':
+            refreshPromises.push(loadTopWorkers(true));
+            break;
+          case 'vendors':
+            refreshPromises.push(loadTopVendors(true));
+            break;
+          case 'properties2BHK':
+            refreshPromises.push(loadProperties2BHK(true));
+            break;
+          case 'properties3BHK':
+            refreshPromises.push(loadProperties3BHK(true));
+            break;
+          case 'propertiesUnder10K':
+            refreshPromises.push(loadPropertiesUnder10K(true));
+            break;
+          case 'constructionServices':
+            refreshPromises.push(loadConstructionServices(true));
+            break;
+          case 'inquiryServices':
+            refreshPromises.push(loadInquiryServices(true));
+            break;
+        }
+      });
+
+      await Promise.all(refreshPromises);
     } finally {
       setIsRefreshing(false);
     }
   }, [
+    loadedSections,
     isAuthenticated,
     loadBanners,
     loadCategories,
@@ -671,42 +812,18 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
     loadTopVendors,
   ]);
 
-  // Initial load
+  // Initial load - only load above the fold content
   useEffect(() => {
     loadBanners();
     loadCategories();
     loadHomepageIcons();
     loadPopularServices();
-    loadProperties();
-    loadHomeServices();
-    loadConstructionServices();
-    loadFixedPriceServices();
-    loadInquiryServices();
-    loadProperties2BHK();
-    loadProperties3BHK();
-    loadPropertiesUnder10K();
-    loadTopWorkers();
-    loadTopVendors();
-    if (isAuthenticated) {
-      loadProjects();
-    }
+    // All other sections will be lazily loaded as user scrolls
   }, [
-    isAuthenticated,
     loadBanners,
     loadCategories,
     loadHomepageIcons,
     loadPopularServices,
-    loadProperties,
-    loadHomeServices,
-    loadConstructionServices,
-    loadFixedPriceServices,
-    loadInquiryServices,
-    loadProperties2BHK,
-    loadProperties3BHK,
-    loadPropertiesUnder10K,
-    loadProjects,
-    loadTopWorkers,
-    loadTopVendors,
   ]);
 
   return {
@@ -741,6 +858,8 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
     topVendors,
     isLoadingVendors,
     hasActiveSubscription,
+    loadSection,
+    loadedSections,
     refresh,
     isRefreshing,
   };

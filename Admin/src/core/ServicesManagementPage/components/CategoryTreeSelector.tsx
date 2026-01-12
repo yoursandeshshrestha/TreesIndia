@@ -109,7 +109,14 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          onSelect(category.id);
+          // Only allow unselecting the actual selected category, not parents
+          if (isSelected) {
+            onSelect(0);
+          } else if (!isInParentChain) {
+            // Only select if it's not a parent of the currently selected category
+            onSelect(category.id);
+          }
+          // If it's a parent in the chain, do nothing (clicking doesn't change selection)
         }}
       >
         {/* Expand/Collapse button */}
@@ -142,7 +149,14 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
           onChange={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onSelect(category.id);
+            // Only allow unselecting the actual selected category, not parents
+            if (isSelected) {
+              onSelect(0);
+            } else if (!isInParentChain) {
+              // Only select if it's not a parent of the currently selected category
+              onSelect(category.id);
+            }
+            // If it's a parent in the chain, do nothing
           }}
           onClick={(e) => {
             e.preventDefault();
@@ -155,7 +169,6 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
                 : "bg-blue-600 border-blue-600 text-white"
               : "border-gray-300 bg-white"
           }`}
-          disabled={isInParentChain} // Disable if this is a parent of the selected category
         />
 
         {/* Icon */}
@@ -216,6 +229,7 @@ const CategoryTreeSelector: React.FC<CategoryTreeSelectorProps> = ({
   onSelect,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
+  const previousSelectedIdRef = React.useRef<number>(selectedCategoryId);
 
   const toggleExpand = (categoryId: number) => {
     const newExpanded = new Set(expandedNodes);
@@ -248,52 +262,74 @@ const CategoryTreeSelector: React.FC<CategoryTreeSelectorProps> = ({
     }
 
     const roots = categories.filter((cat) => !cat.parent_id);
-    const newExpanded = new Set<number>();
+    const previousSelectedId = previousSelectedIdRef.current;
 
-    // Always expand all root categories by default to show the tree
-    roots.forEach((cat) => newExpanded.add(cat.id));
+    // Check if we're unselecting (going from selected to 0)
+    const isUnselecting = previousSelectedId > 0 && selectedCategoryId === 0;
 
-    if (selectedCategoryId && selectedCategoryId > 0) {
-      // First try to find in flattened list
-      let selectedCategory = allCategories.find(
-        (c) => c.id === selectedCategoryId
-      );
+    // Update the ref for next render
+    previousSelectedIdRef.current = selectedCategoryId;
 
-      // If not found in flattened list, search recursively in tree
-      if (!selectedCategory) {
-        selectedCategory = findCategoryInTree(
-          categories,
-          selectedCategoryId
-        ) as Category;
-      }
-
-      if (selectedCategory) {
-        // Get all parent IDs in the chain
-        const parentIds = getParentCategoryIds(selectedCategory, allCategories);
-
-        // Expand all parent categories (this includes the root if it's a parent)
-        parentIds.forEach((id) => newExpanded.add(id));
-
-        // Find and expand the root category that contains the selected category
-        const findRootCategory = (cat: Category): Category | null => {
-          if (!cat.parent_id) return cat;
-          const parent = allCategories.find((c) => c.id === cat.parent_id);
-          return parent ? findRootCategory(parent) : null;
-        };
-
-        const rootCategory = findRootCategory(selectedCategory);
-        if (rootCategory) {
-          newExpanded.add(rootCategory.id);
-        }
-
-        // If the selected category itself has children, expand it too
-        if (selectedCategory.children && selectedCategory.children.length > 0) {
-          newExpanded.add(selectedCategory.id);
-        }
-      }
+    // If unselecting, don't change the expanded state - keep tree open
+    if (isUnselecting) {
+      return;
     }
 
-    setExpandedNodes(newExpanded);
+    // Use functional update to get current state
+    setExpandedNodes((prevExpanded) => {
+      const newExpanded = new Set(prevExpanded);
+
+      // Always expand all root categories by default to show the tree
+      roots.forEach((cat) => newExpanded.add(cat.id));
+
+      if (selectedCategoryId && selectedCategoryId > 0) {
+        // First try to find in flattened list
+        let selectedCategory = allCategories.find(
+          (c) => c.id === selectedCategoryId
+        );
+
+        // If not found in flattened list, search recursively in tree
+        if (!selectedCategory) {
+          selectedCategory = findCategoryInTree(
+            categories,
+            selectedCategoryId
+          ) as Category;
+        }
+
+        if (selectedCategory) {
+          // Get all parent IDs in the chain
+          const parentIds = getParentCategoryIds(
+            selectedCategory,
+            allCategories
+          );
+
+          // Expand all parent categories (this includes the root if it's a parent)
+          parentIds.forEach((id) => newExpanded.add(id));
+
+          // Find and expand the root category that contains the selected category
+          const findRootCategory = (cat: Category): Category | null => {
+            if (!cat.parent_id) return cat;
+            const parent = allCategories.find((c) => c.id === cat.parent_id);
+            return parent ? findRootCategory(parent) : null;
+          };
+
+          const rootCategory = findRootCategory(selectedCategory);
+          if (rootCategory) {
+            newExpanded.add(rootCategory.id);
+          }
+
+          // If the selected category itself has children, expand it too
+          if (
+            selectedCategory.children &&
+            selectedCategory.children.length > 0
+          ) {
+            newExpanded.add(selectedCategory.id);
+          }
+        }
+      }
+
+      return newExpanded;
+    });
   }, [selectedCategoryId, categories, allCategories]);
 
   // Get root categories (no parent_id)

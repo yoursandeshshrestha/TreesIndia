@@ -13,15 +13,27 @@ import {
   PeriodFilter,
   WorkerEarningsDashboard,
 } from '../../services/api/worker-earnings.service';
+import {
+  workerWithdrawalService,
+  WorkerWithdrawalResponse,
+} from '../../services/api/worker-withdrawal.service';
 import WithdrawalRequestBottomSheet from './components/WithdrawalRequestBottomSheet';
+
+type ActivityTab = 'active' | 'withdraw';
 
 export default function EarningsScreen() {
   const [activePeriod, setActivePeriod] = useState<PeriodFilter>('30_days');
+  const [activeTab, setActiveTab] = useState<ActivityTab>('active');
   const [dashboard, setDashboard] =
     useState<WorkerEarningsDashboard | null>(null);
+  const [withdrawals, setWithdrawals] = useState<WorkerWithdrawalResponse[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [withdrawalsError, setWithdrawalsError] = useState<string | null>(null);
   const [showWithdrawalSheet, setShowWithdrawalSheet] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
@@ -42,14 +54,39 @@ export default function EarningsScreen() {
     }
   }, [activePeriod]);
 
+  const fetchWithdrawals = useCallback(async () => {
+    try {
+      setWithdrawalsLoading(true);
+      setWithdrawalsError(null);
+      const data = await workerWithdrawalService.getWithdrawals(1, 20);
+      setWithdrawals(data.withdrawals);
+    } catch (err) {
+      console.error('Error fetching withdrawals:', err);
+      setWithdrawalsError(
+        err instanceof Error ? err.message : 'Failed to load withdrawals'
+      );
+    } finally {
+      setWithdrawalsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
 
+  useEffect(() => {
+    if (activeTab === 'withdraw') {
+      fetchWithdrawals();
+    }
+  }, [activeTab, fetchWithdrawals]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchDashboard();
-  }, [fetchDashboard]);
+    if (activeTab === 'withdraw') {
+      fetchWithdrawals();
+    }
+  }, [fetchDashboard, fetchWithdrawals, activeTab]);
 
   const getPeriodLabel = (period: PeriodFilter): string => {
     switch (period) {
@@ -117,6 +154,42 @@ export default function EarningsScreen() {
     );
   };
 
+  const renderActivityTabs = () => {
+    const tabs: { key: ActivityTab; label: string }[] = [
+      { key: 'active', label: 'Recent Active' },
+      { key: 'withdraw', label: 'Recent Withdraw' },
+    ];
+
+    return (
+      <View className="flex-row bg-[#F9FAFB] p-1 rounded-xl">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              className={`flex-1 py-2.5 rounded-lg ${
+                isActive ? 'bg-[#055c3a]' : 'bg-transparent'
+              }`}
+              activeOpacity={0.7}
+            >
+              <Text
+                className={`text-sm font-medium text-center ${
+                  isActive ? 'text-white' : 'text-[#6B7280]'
+                }`}
+                style={{
+                  fontFamily: isActive ? 'Inter-SemiBold' : 'Inter-Medium',
+                }}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderStatCard = (
     title: string,
     value: string
@@ -139,16 +212,39 @@ export default function EarningsScreen() {
     );
   };
 
+  const getStatusColor = (status: WorkerWithdrawalResponse['status']) => {
+    switch (status) {
+      case 'completed':
+        return '#10B981';
+      case 'pending':
+        return '#D97706';
+      case 'failed':
+      case 'cancelled':
+        return '#DC2626';
+      default:
+        return '#6B7280';
+    }
+  };
+
+  const getStatusLabel = (status: WorkerWithdrawalResponse['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'Completed';
+      case 'pending':
+        return 'Pending';
+      case 'failed':
+        return 'Failed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  };
+
   const renderRecentAssignments = () => {
     if (!dashboard || dashboard.recent_assignments.length === 0) {
       return (
         <View className="mx-6">
-          <Text
-            className="text-xs font-semibold text-[#6B7280] mb-3 uppercase tracking-wide"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
-            Recent Activity
-          </Text>
           <View className="bg-[#F9FAFB] rounded-2xl p-6">
             <Text
               className="text-sm text-[#6B7280] text-center"
@@ -163,12 +259,6 @@ export default function EarningsScreen() {
 
     return (
       <View className="px-6">
-        <Text
-          className="text-xs font-semibold text-[#6B7280] mb-3 uppercase tracking-wide"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
-          Recent Activity
-        </Text>
         {dashboard.recent_assignments.map((assignment, index) => (
           <View
             key={assignment.id}
@@ -230,6 +320,155 @@ export default function EarningsScreen() {
                 #{assignment.booking_reference}
               </Text>
             </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderRecentWithdrawals = () => {
+    if (withdrawalsLoading) {
+      return (
+        <View className="mx-6">
+          <View className="bg-[#F9FAFB] rounded-2xl p-6">
+            <ActivityIndicator size="small" color="#055c3a" />
+          </View>
+        </View>
+      );
+    }
+
+    if (withdrawalsError) {
+      return (
+        <View className="mx-6">
+          <View className="bg-[#F9FAFB] rounded-2xl p-6">
+            <Text
+              className="text-sm text-[#DC2626] text-center mb-3"
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              {withdrawalsError}
+            </Text>
+            <TouchableOpacity
+              onPress={fetchWithdrawals}
+              className="bg-[#055c3a] px-4 py-2 rounded-lg self-center"
+              activeOpacity={0.7}
+            >
+              <Text
+                className="text-white font-semibold text-sm"
+                style={{ fontFamily: 'Inter-SemiBold' }}
+              >
+                Retry
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    if (withdrawals.length === 0) {
+      return (
+        <View className="mx-6">
+          <View className="bg-[#F9FAFB] rounded-2xl p-6">
+            <Text
+              className="text-sm text-[#6B7280] text-center"
+              style={{ fontFamily: 'Inter-Regular' }}
+            >
+              No withdrawal history yet
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View className="px-6">
+        {withdrawals.map((withdrawal, index) => (
+          <View
+            key={withdrawal.id}
+            className={`bg-[#F9FAFB] rounded-2xl p-4 ${
+              index < withdrawals.length - 1 ? 'mb-3' : ''
+            }`}
+          >
+            {/* Amount and Status */}
+            <View className="flex-row justify-between items-start mb-3">
+              <View className="flex-1 mr-3">
+                <Text
+                  className="text-lg font-bold text-[#111928] mb-1"
+                  style={{ fontFamily: 'Inter-Bold' }}
+                >
+                  {formatCurrency(withdrawal.amount)}
+                </Text>
+                <View
+                  className="self-start px-2 py-1 rounded-md"
+                  style={{ backgroundColor: `${getStatusColor(withdrawal.status)}15` }}
+                >
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{
+                      fontFamily: 'Inter-SemiBold',
+                      color: getStatusColor(withdrawal.status),
+                    }}
+                  >
+                    {getStatusLabel(withdrawal.status)}
+                  </Text>
+                </View>
+              </View>
+              <Text
+                className="text-xs text-[#9CA3AF]"
+                style={{ fontFamily: 'Inter-Regular' }}
+              >
+                #{withdrawal.payment_reference}
+              </Text>
+            </View>
+
+            {/* Bank Details */}
+            <View className="mb-3">
+              <Text
+                className="text-sm font-semibold text-[#111928] mb-1"
+                style={{ fontFamily: 'Inter-SemiBold' }}
+              >
+                {withdrawal.account_name}
+              </Text>
+              <Text
+                className="text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-Regular' }}
+              >
+                {withdrawal.bank_name} - {withdrawal.account_number}
+              </Text>
+            </View>
+
+            {/* Details Row */}
+            <View className="flex-row items-center flex-wrap gap-2">
+              <Text
+                className="text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-Regular' }}
+              >
+                Requested: {formatDate(withdrawal.requested_at)}
+              </Text>
+
+              {withdrawal.processed_at && (
+                <>
+                  <View className="w-1 h-1 rounded-full bg-[#D1D5DB]" />
+                  <Text
+                    className="text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}
+                  >
+                    Processed: {formatDate(withdrawal.processed_at)}
+                  </Text>
+                </>
+              )}
+            </View>
+
+            {/* Rejection Reason */}
+            {withdrawal.rejection_reason && (
+              <View className="mt-3 pt-3 border-t border-[#E5E7EB]">
+                <Text
+                  className="text-xs text-[#DC2626]"
+                  style={{ fontFamily: 'Inter-Regular' }}
+                >
+                  Reason: {withdrawal.rejection_reason}
+                </Text>
+              </View>
+            )}
           </View>
         ))}
       </View>
@@ -441,8 +680,19 @@ export default function EarningsScreen() {
                 </View>
               )}
 
-              {/* Recent Assignments */}
-              {renderRecentAssignments()}
+              {/* Activity Tabs Section */}
+              <View className="px-6 mb-4">
+                <Text
+                  className="text-xs font-semibold text-[#6B7280] mb-3 uppercase tracking-wide"
+                  style={{ fontFamily: 'Inter-SemiBold' }}
+                >
+                  Activity
+                </Text>
+                {renderActivityTabs()}
+              </View>
+
+              {/* Tab Content */}
+              {activeTab === 'active' ? renderRecentAssignments() : renderRecentWithdrawals()}
 
               {/* Bottom Padding */}
               <View className="h-8" />

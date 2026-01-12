@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import { View, BackHandler } from 'react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -265,6 +265,117 @@ function AppContent() {
       }
     }
   }, [isAuthenticated, user, activeTab]);
+
+  // Handle Android hardware back button
+  React.useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Handle back button based on current screen
+      if (currentScreen === 'chatConversation') {
+        setCurrentScreen('home');
+        setActiveTab(chatPreviousTab);
+        setSelectedConversationId(null);
+        setChatWorkerInfo(null);
+        return true;
+      }
+
+      if (currentScreen === 'categoryServices') {
+        if (categoryStack.length > 0) {
+          const newStack = [...categoryStack];
+          const previousCategory = newStack.pop();
+          setCategoryStack(newStack);
+          setCategoryForServices(previousCategory);
+        } else {
+          setCurrentScreen('home');
+          setActiveTab('home');
+          setCategoryForServices(null);
+        }
+        return true;
+      }
+
+      if (currentScreen === 'subscriptionPlans') {
+        setCurrentScreen('subscription');
+        return true;
+      }
+
+      if (currentScreen === 'addProperty') {
+        setPropertyToEdit(null);
+        setCurrentScreen('properties');
+        return true;
+      }
+
+      if (currentScreen === 'addVendor') {
+        setVendorToEdit(null);
+        setCurrentScreen('vendorProfiles');
+        return true;
+      }
+
+      if (currentScreen === 'bookingFlow' && serviceForBooking) {
+        setServiceForBooking(null);
+        setCurrentScreen('home');
+        setActiveTab('home');
+        return true;
+      }
+
+      // For all other sub-screens, go back to home with profile tab
+      if (currentScreen === 'editProfile' ||
+          currentScreen === 'wallet' ||
+          currentScreen === 'addresses' ||
+          currentScreen === 'subscription' ||
+          currentScreen === 'settings' ||
+          currentScreen === 'about' ||
+          currentScreen === 'applyWorker' ||
+          currentScreen === 'applyBroker' ||
+          currentScreen === 'properties' ||
+          currentScreen === 'vendorProfiles') {
+        setCurrentScreen('home');
+        setActiveTab('profile');
+        return true;
+      }
+
+      // For browse screens, go back to home tab
+      if (currentScreen === 'addressSelection' ||
+          currentScreen === 'serviceSearch' ||
+          currentScreen === 'browseProperties' ||
+          currentScreen === 'browseServices' ||
+          currentScreen === 'browseProjects' ||
+          currentScreen === 'browseWorkers' ||
+          currentScreen === 'browseVendors') {
+        setCurrentScreen('home');
+        setActiveTab('home');
+        setPropertiesInitialFilters(null);
+        setServicesInitialFilters(null);
+        setProjectsInitialFilters(null);
+        setWorkersInitialFilters(null);
+        setVendorsInitialFilters(null);
+        return true;
+      }
+
+      // If on main home screen with tabs
+      if (currentScreen === 'home') {
+        const isTreesIndiaWorker = user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
+        const defaultTab = isTreesIndiaWorker ? 'work' : 'home';
+
+        // If already on default tab, allow app to exit
+        if (activeTab === defaultTab) {
+          return false;
+        }
+
+        // Otherwise, go to default tab
+        setActiveTab(defaultTab);
+        return true;
+      }
+
+      // If on login/otp screens, allow default behavior (exit app)
+      if (currentScreen === 'login' || currentScreen === 'otp') {
+        return false;
+      }
+
+      // Default: prevent exit
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [currentScreen, activeTab, chatPreviousTab, categoryStack, serviceForBooking, user]);
 
   const renderScreen = () => {
     if (currentScreen === 'editProfile') {

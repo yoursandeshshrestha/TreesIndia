@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -19,7 +19,7 @@ import PropertiesSection from './components/PropertiesSection';
 import ProjectsSection from './components/ProjectsSection';
 import WorkersSection from './components/WorkersSection';
 import VendorsSection from './components/VendorsSection';
-import { useHomeData } from './hooks/useHomeData';
+import { useHomeData, type SectionType } from './hooks/useHomeData';
 import { PromotionBanner, Category, Service, Property, Project, Worker, Vendor, VendorFilters } from '../../services';
 import { PropertyFilters } from '../properties/components/FilterBottomSheet';
 import { ServiceFilters } from '../services/components/ServiceFilterBottomSheet';
@@ -79,6 +79,38 @@ export default function HomeScreen({
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [showVendorDetailSheet, setShowVendorDetailSheet] = useState(false);
   const [showSubscriptionSheet, setShowSubscriptionSheet] = useState(false);
+
+  // Track section positions
+  const sectionPositions = useRef<{ [key: string]: number }>({});
+  const scrollViewRef = useRef<ScrollView>(null);
+  const lastScrollY = useRef(0);
+
+  // Handle section layout to track position
+  const handleSectionLayout = useCallback((sectionKey: SectionType, y: number) => {
+    sectionPositions.current[sectionKey] = y;
+  }, []);
+
+  // Handle scroll to trigger lazy loading
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
+    lastScrollY.current = currentScrollY;
+
+    // Only trigger loading when scrolling down
+    if (scrollDirection !== 'down') return;
+
+    // Measure sections and trigger loading when they're about to become visible
+    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
+    const triggerOffset = viewportHeight * 0.8; // Trigger when section is 80% of viewport away
+
+    // Check each section
+    Object.entries(sectionPositions.current).forEach(([sectionKey, sectionY]) => {
+      // If section is approaching viewport, load it
+      if (sectionY - currentScrollY < viewportHeight + triggerOffset) {
+        homeData.loadSection(sectionKey as SectionType);
+      }
+    });
+  }, [homeData]);
 
   // Event Handlers
   const handleAddressPress = () => {
@@ -204,9 +236,12 @@ export default function HomeScreen({
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={homeData.isRefreshing}
@@ -241,107 +276,129 @@ export default function HomeScreen({
         />
 
         {/* Properties */}
-        <PropertiesSection
-          title="Properties"
-          properties={homeData.properties}
-          isLoading={homeData.isLoadingProperties}
-          onPropertyPress={handlePropertyPress}
-          onSeeAll={() => onNavigateToProperties?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('properties', e.nativeEvent.layout.y)}>
+          <PropertiesSection
+            title="Properties"
+            properties={homeData.properties}
+            isLoading={homeData.isLoadingProperties}
+            onPropertyPress={handlePropertyPress}
+            onSeeAll={() => onNavigateToProperties?.()}
+          />
+        </View>
 
         {/* Fixed Price Services */}
-        <ServicesSection
-          title="Fixed Price Services"
-          services={homeData.fixedPriceServices}
-          isLoading={homeData.isLoadingFixedPriceServices}
-          onServicePress={handleServicePress}
-          onSeeAll={() => onNavigateToServices?.({ price_type: 'fixed' })}
-        />
+        <View onLayout={(e) => handleSectionLayout('fixedPriceServices', e.nativeEvent.layout.y)}>
+          <ServicesSection
+            title="Fixed Price Services"
+            services={homeData.fixedPriceServices}
+            isLoading={homeData.isLoadingFixedPriceServices}
+            onServicePress={handleServicePress}
+            onSeeAll={() => onNavigateToServices?.({ price_type: 'fixed' })}
+          />
+        </View>
 
         {/* Projects */}
         {isAuthenticated && (
-          <ProjectsSection
-            projects={homeData.projects}
-            isLoading={homeData.isLoadingProjects}
-            hasActiveSubscription={homeData.hasActiveSubscription}
-            onProjectPress={handleProjectPress}
-            onSeeAll={() => onNavigateToProjects?.()}
-          />
+          <View onLayout={(e) => handleSectionLayout('projects', e.nativeEvent.layout.y)}>
+            <ProjectsSection
+              projects={homeData.projects}
+              isLoading={homeData.isLoadingProjects}
+              hasActiveSubscription={homeData.hasActiveSubscription}
+              onProjectPress={handleProjectPress}
+              onSeeAll={() => onNavigateToProjects?.()}
+            />
+          </View>
         )}
 
         {/* Home Services */}
-        <ServicesSection
-          title="Home Services"
-          services={homeData.homeServices}
-          isLoading={homeData.isLoadingHomeServices}
-          onServicePress={handleServicePress}
-          onSeeAll={() => onNavigateToServices?.({ category: 'Home Services' })}
-        />
+        <View onLayout={(e) => handleSectionLayout('homeServices', e.nativeEvent.layout.y)}>
+          <ServicesSection
+            title="Home Services"
+            services={homeData.homeServices}
+            isLoading={homeData.isLoadingHomeServices}
+            onServicePress={handleServicePress}
+            onSeeAll={() => onNavigateToServices?.({ category: 'Home Services' })}
+          />
+        </View>
 
         {/* Top Rated Workers */}
-        <WorkersSection
-          workers={homeData.topWorkers}
-          isLoading={homeData.isLoadingWorkers}
-          hasActiveSubscription={homeData.hasActiveSubscription}
-          onWorkerPress={handleWorkerPress}
-          onSeeAll={() => onNavigateToWorkers?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('workers', e.nativeEvent.layout.y)}>
+          <WorkersSection
+            workers={homeData.topWorkers}
+            isLoading={homeData.isLoadingWorkers}
+            hasActiveSubscription={homeData.hasActiveSubscription}
+            onWorkerPress={handleWorkerPress}
+            onSeeAll={() => onNavigateToWorkers?.()}
+          />
+        </View>
 
         {/* Top Vendors */}
-        <VendorsSection
-          vendors={homeData.topVendors}
-          isLoading={homeData.isLoadingVendors}
-          hasActiveSubscription={homeData.hasActiveSubscription}
-          onVendorPress={handleVendorPress}
-          onSeeAll={() => onNavigateToVendors?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('vendors', e.nativeEvent.layout.y)}>
+          <VendorsSection
+            vendors={homeData.topVendors}
+            isLoading={homeData.isLoadingVendors}
+            hasActiveSubscription={homeData.hasActiveSubscription}
+            onVendorPress={handleVendorPress}
+            onSeeAll={() => onNavigateToVendors?.()}
+          />
+        </View>
 
         {/* 2 BHK Rental Properties */}
-        <PropertiesSection
-          title="2 BHK Rentals"
-          properties={homeData.properties2BHK}
-          isLoading={homeData.isLoadingProperties2BHK}
-          onPropertyPress={handlePropertyPress}
-          onSeeAll={() => onNavigateToProperties?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('properties2BHK', e.nativeEvent.layout.y)}>
+          <PropertiesSection
+            title="2 BHK Rentals"
+            properties={homeData.properties2BHK}
+            isLoading={homeData.isLoadingProperties2BHK}
+            onPropertyPress={handlePropertyPress}
+            onSeeAll={() => onNavigateToProperties?.()}
+          />
+        </View>
 
         {/* 3 BHK Properties */}
-        <PropertiesSection
-          title="3 BHK Rentals"
-          properties={homeData.properties3BHK}
-          isLoading={homeData.isLoadingProperties3BHK}
-          onPropertyPress={handlePropertyPress}
-          onSeeAll={() => onNavigateToProperties?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('properties3BHK', e.nativeEvent.layout.y)}>
+          <PropertiesSection
+            title="3 BHK Rentals"
+            properties={homeData.properties3BHK}
+            isLoading={homeData.isLoadingProperties3BHK}
+            onPropertyPress={handlePropertyPress}
+            onSeeAll={() => onNavigateToProperties?.()}
+          />
+        </View>
 
         {/* Properties Under 10K Monthly Rent */}
-        <PropertiesSection
-          title="Rentals Under ₹10,000"
-          properties={homeData.propertiesUnder10K}
-          isLoading={homeData.isLoadingPropertiesUnder10K}
-          onPropertyPress={handlePropertyPress}
-          onSeeAll={() => onNavigateToProperties?.()}
-        />
+        <View onLayout={(e) => handleSectionLayout('propertiesUnder10K', e.nativeEvent.layout.y)}>
+          <PropertiesSection
+            title="Rentals Under ₹10,000"
+            properties={homeData.propertiesUnder10K}
+            isLoading={homeData.isLoadingPropertiesUnder10K}
+            onPropertyPress={handlePropertyPress}
+            onSeeAll={() => onNavigateToProperties?.()}
+          />
+        </View>
 
         {/* Construction Services */}
-        <ServicesSection
-          title="Construction Services"
-          services={homeData.constructionServices}
-          isLoading={homeData.isLoadingConstructionServices}
-          onServicePress={handleServicePress}
-          onSeeAll={() => onNavigateToServices?.({ category: 'Construction Services' })}
-        />
+        <View onLayout={(e) => handleSectionLayout('constructionServices', e.nativeEvent.layout.y)}>
+          <ServicesSection
+            title="Construction Services"
+            services={homeData.constructionServices}
+            isLoading={homeData.isLoadingConstructionServices}
+            onServicePress={handleServicePress}
+            onSeeAll={() => onNavigateToServices?.({ category: 'Construction Services' })}
+          />
+        </View>
 
-        
+
 
         {/* Inquiry Services */}
-        <ServicesSection
-          title="Inquiry Services"
-          services={homeData.inquiryServices}
-          isLoading={homeData.isLoadingInquiryServices}
-          onServicePress={handleServicePress}
-          onSeeAll={() => onNavigateToServices?.({ price_type: 'inquiry' })}
-        />
+        <View onLayout={(e) => handleSectionLayout('inquiryServices', e.nativeEvent.layout.y)}>
+          <ServicesSection
+            title="Inquiry Services"
+            services={homeData.inquiryServices}
+            isLoading={homeData.isLoadingInquiryServices}
+            onServicePress={handleServicePress}
+            onSeeAll={() => onNavigateToServices?.({ price_type: 'inquiry' })}
+          />
+        </View>
       </ScrollView>
 
       {/* Property Detail Bottom Sheet */}
