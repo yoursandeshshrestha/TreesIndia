@@ -13,14 +13,14 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/logo/logo.png",
+          "icon": "./assets/logo/app-icon.png",
           "color": "#ffffff",
           "sounds": []
         }
       ]
     ],
     "orientation": "portrait",
-    "icon": "./assets/logo/logo.png",
+    "icon": "./assets/logo/app-icon.png",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
     "updates": {
@@ -47,8 +47,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo/logo.png",
-        "backgroundColor": "#34A853"
+        "foregroundImage": "./assets/logo/app-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "package": "com.treeindia.myexpoapp",
       "permissions": [

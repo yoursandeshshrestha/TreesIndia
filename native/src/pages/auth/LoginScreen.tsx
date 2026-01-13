@@ -69,8 +69,8 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
             {/* Logo */}
             <View className="items-center pt-16 pb-12">
               <Image
-                source={require('../../../assets/logo/logo.png')}
-                className="w-16 h-16"
+                source={require('../../../assets/logo/main_logo_with_name.png')}
+                className="w-64 h-16"
                 resizeMode="contain"
               />
             </View>
