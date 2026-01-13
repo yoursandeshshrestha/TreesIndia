@@ -34,5 +34,5 @@ export interface TableProps<T> {
   emptyState?: ReactNode;
   loading?: boolean;
   loadingState?: ReactNode;
-  actions?: Action<T>[];
+  actions?: Action<T>[] | ((row: T) => Action<T>[]);
 }

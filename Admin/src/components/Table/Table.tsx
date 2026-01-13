@@ -124,7 +124,7 @@ const Table = <T extends object>({
                   </div>
                 </th>
               ))}
-              {actions.length > 0 && (
+              {actions && (Array.isArray(actions) ? actions.length > 0 : true) && (
                 <th
                   scope="col"
                   className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -182,31 +182,33 @@ const Table = <T extends object>({
                     </div>
                   </td>
                 ))}
-                {actions.length > 0 && (
-                  <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-1">
-                      {actions.map((action, index) => {
-                        const isDisabled = action.disabled?.(row);
-                        return (
-                          <button
-                            key={index}
-                            onClick={(e) =>
-                              handleActionClick(e, action.onClick, row)
-                            }
-                            disabled={isDisabled}
-                            className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium ${
-                              isDisabled
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                : typeof action.className === "function"
-                                ? action.className(row)
-                                : action.className ||
-                                  "text-blue-700 bg-blue-100 hover:bg-blue-200"
-                            }`}
-                          >
-                            {action.icon && (
-                              <span className="mr-1">{action.icon}</span>
-                            )}
-                            {typeof action.label === "function"
+                {actions && (() => {
+                  const rowActions = typeof actions === 'function' ? actions(row) : actions;
+                  return rowActions.length > 0 && (
+                    <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-1">
+                        {rowActions.map((action, index) => {
+                          const isDisabled = action.disabled?.(row);
+                          return (
+                            <button
+                              key={index}
+                              onClick={(e) =>
+                                handleActionClick(e, action.onClick, row)
+                              }
+                              disabled={isDisabled}
+                              className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium ${
+                                isDisabled
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : typeof action.className === "function"
+                                  ? action.className(row)
+                                  : action.className ||
+                                    "text-blue-700 bg-blue-100 hover:bg-blue-200"
+                              }`}
+                            >
+                              {action.icon && (
+                                <span className="mr-1">{action.icon}</span>
+                              )}
+                              {typeof action.label === "function"
                               ? action.label(row)
                               : action.label}
                           </button>
@@ -214,7 +216,8 @@ const Table = <T extends object>({
                       })}
                     </div>
                   </td>
-                )}
+                  );
+                })()}
               </tr>
             ))}
           </tbody>
