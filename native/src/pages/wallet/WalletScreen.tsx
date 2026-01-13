@@ -235,7 +235,10 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           const isCancelled =
             error.code === 'PAYMENT_CANCELLED' ||
             error.code === '2' ||
-            (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+            (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+            // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
+            (error.code === 'BAD_REQUEST_ERROR' &&
+             (error.description === 'undefined' || error.reason === 'payment_error'));
 
           // Handle different error cases
           if (isCancelled) {
@@ -342,8 +345,16 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         }
       },
       (error) => {
-        // Payment failed or cancelled
-        if (error.code !== 'PAYMENT_CANCELLED') {
+        // Payment failed or cancelled - check if it's a cancellation
+        const isCancelled =
+          error.code === 'PAYMENT_CANCELLED' ||
+          error.code === '2' ||
+          (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+          // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
+          (error.code === 'BAD_REQUEST_ERROR' &&
+           (error.description === 'undefined' || error.reason === 'payment_error'));
+
+        if (!isCancelled) {
           Alert.alert(
             'Payment Failed',
             error.description || 'Payment could not be processed. Please try again.',

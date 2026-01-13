@@ -290,7 +290,10 @@ class RazorpayService {
       const isCancelled =
         razorpayError.code === 'PAYMENT_CANCELLED' ||
         razorpayError.code === '2' ||
-        (razorpayError.code === 'UNKNOWN_ERROR' && razorpayError.description?.toLowerCase().includes('cancel'));
+        (razorpayError.code === 'UNKNOWN_ERROR' && razorpayError.description?.toLowerCase().includes('cancel')) ||
+        // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
+        (razorpayError.code === 'BAD_REQUEST_ERROR' &&
+         (razorpayError.description === 'undefined' || razorpayError.reason === 'payment_error'));
 
       // Log appropriately based on error type
       if (isCancelled) {

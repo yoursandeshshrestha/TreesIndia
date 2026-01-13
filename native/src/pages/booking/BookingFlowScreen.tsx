@@ -473,7 +473,10 @@ export default function BookingFlowScreen({
             const isCancelled =
               error.code === 'PAYMENT_CANCELLED' ||
               error.code === '2' ||
-              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+              // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
+              (error.code === 'BAD_REQUEST_ERROR' &&
+               (error.description === 'undefined' || error.reason === 'payment_error'));
 
             // Log appropriately based on error type
             if (isCancelled) {
@@ -725,7 +728,10 @@ export default function BookingFlowScreen({
             const isCancelled =
               error.code === 'PAYMENT_CANCELLED' ||
               error.code === '2' ||
-              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel'));
+              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+              // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
+              (error.code === 'BAD_REQUEST_ERROR' &&
+               (error.description === 'undefined' || error.reason === 'payment_error'));
 
             // Log appropriately based on error type
             if (isCancelled) {
