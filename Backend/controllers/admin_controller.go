@@ -390,6 +390,115 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 	}))
 }
 
+// GetUserStats godoc
+// @Summary Get user statistics
+// @Description Get count of users grouped by user type
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.Response "User statistics retrieved successfully"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /admin/users/stats [get]
+func (ac *AdminController) GetUserStats(c *gin.Context) {
+	var totalCount, workerCount, brokerCount, adminCount, normalCount int64
+
+	// Get total count
+	if err := ac.db.Model(&models.User{}).Count(&totalCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count users", err.Error()))
+		return
+	}
+
+	// Get count by user type
+	if err := ac.db.Model(&models.User{}).Where("user_type = ?", "worker").Count(&workerCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count workers", err.Error()))
+		return
+	}
+
+	if err := ac.db.Model(&models.User{}).Where("user_type = ?", "broker").Count(&brokerCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count brokers", err.Error()))
+		return
+	}
+
+	if err := ac.db.Model(&models.User{}).Where("user_type = ?", "admin").Count(&adminCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count admins", err.Error()))
+		return
+	}
+
+	if err := ac.db.Model(&models.User{}).Where("user_type = ?", "normal").Count(&normalCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count normal users", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("User statistics retrieved successfully", gin.H{
+		"total":   totalCount,
+		"workers": workerCount,
+		"brokers": brokerCount,
+		"admins":  adminCount,
+		"normal":  normalCount,
+	}))
+}
+
+// GetWorkerStats godoc
+// @Summary Get worker statistics
+// @Description Get count of workers grouped by status and type
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.Response "Worker statistics retrieved successfully"
+// @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 500 {object} models.Response "Internal server error"
+// @Router /admin/workers/stats [get]
+func (ac *AdminController) GetWorkerStats(c *gin.Context) {
+	var totalCount, activeCount, inactiveCount, normalCount, premiumCount int64
+
+	// Get total count of workers (users with user_type = "worker")
+	if err := ac.db.Model(&models.User{}).Where("user_type = ?", "worker").Count(&totalCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count workers", err.Error()))
+		return
+	}
+
+	// Get active workers count
+	if err := ac.db.Model(&models.User{}).Where("user_type = ? AND is_active = ?", "worker", true).Count(&activeCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count active workers", err.Error()))
+		return
+	}
+
+	// Get inactive workers count
+	if err := ac.db.Model(&models.User{}).Where("user_type = ? AND is_active = ?", "worker", false).Count(&inactiveCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count inactive workers", err.Error()))
+		return
+	}
+
+	// Get normal workers count
+	if err := ac.db.Table("users").
+		Joins("JOIN workers ON workers.user_id = users.id").
+		Where("users.user_type = ? AND workers.worker_type = ?", "worker", "normal").
+		Count(&normalCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count normal workers", err.Error()))
+		return
+	}
+
+	// Get TreesIndia workers count
+	if err := ac.db.Table("users").
+		Joins("JOIN workers ON workers.user_id = users.id").
+		Where("users.user_type = ? AND workers.worker_type = ?", "worker", "treesindia_worker").
+		Count(&premiumCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to count treesindia workers", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Worker statistics retrieved successfully", gin.H{
+		"total":      totalCount,
+		"active":     activeCount,
+		"inactive":   inactiveCount,
+		"normal":     normalCount,
+		"treesindia": premiumCount,
+	}))
+}
+
 // GetUserByID godoc
 // @Summary Get user by ID
 // @Description Get detailed information about a specific user
