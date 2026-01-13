@@ -62,7 +62,6 @@ export default function BookingScreen(props: BookingScreenProps) {
     try {
       await dispatch(fetchMyBookings({ page: 1, limit: 20 })).unwrap();
     } catch (error) {
-      console.error('[BookingScreen] Failed to load bookings:', error);
       setError('Failed to load bookings. Please try again.');
     }
   }, [dispatch]);
@@ -560,7 +559,6 @@ export default function BookingScreen(props: BookingScreenProps) {
                         setBookingForQuote(updatedBooking);
                         setShowQuoteAcceptanceSheet(true);
                       } catch (error: any) {
-                        console.error('Error accepting quote:', error);
                         Alert.alert(
                           'Error',
                           error?.message || 'Failed to accept quote. Please try again.'
@@ -607,7 +605,6 @@ export default function BookingScreen(props: BookingScreenProps) {
                                 await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
                                 Alert.alert('Success', 'Quote rejected successfully');
                               } catch (error: any) {
-                                console.error('Error rejecting quote:', error);
                                 Alert.alert(
                                   'Error',
                                   error?.message || 'Failed to reject quote. Please try again.'

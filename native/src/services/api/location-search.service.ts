@@ -39,9 +39,8 @@ class LocationSearchService {
       }
 
       const response = await authenticatedFetch(`${API_BASE_URL}/places/autocomplete?${params.toString()}`);
-      
+
       if (!response.ok) {
-        console.error('Search failed:', response.status, response.statusText);
         return [];
       }
 
@@ -66,7 +65,6 @@ class LocationSearchService {
 
       return results;
     } catch (error) {
-      console.error('Failed to search locations:', error);
       return [];
     }
   }

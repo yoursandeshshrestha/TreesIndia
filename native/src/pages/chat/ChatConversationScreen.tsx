@@ -95,7 +95,6 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
       try {
         const token = await tokenStorage.getAccessToken();
         if (!token) {
-          console.error('[ChatConversation] No access token available');
           return;
         }
 
@@ -135,7 +134,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
           chatWebSocketService.off('message', handleWebSocketMessage);
         };
       } catch (error) {
-        console.error('[ChatConversation] Error connecting WebSocket:', error);
+        // Error handling
       }
     };
 
@@ -177,7 +176,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
           flatListRef.current?.scrollToEnd({ animated: true });
         }, 100);
       } catch (error) {
-        console.error('[ChatConversation] Error sending message:', error);
+        // Error handling
       }
     },
     [dispatch, conversationId]
@@ -224,7 +223,6 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
           })
         ).unwrap();
       } catch (error) {
-        console.error('[ChatConversation] Error sending message with file:', error);
         // The rejected reducer will automatically mark the pending message as failed
       }
     },
@@ -250,7 +248,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
         })
       ).unwrap();
     } catch (error) {
-      console.error('[ChatConversation] Error loading more messages:', error);
+      // Error handling
     } finally {
       setIsLoadingMore(false);
     }

@@ -122,7 +122,6 @@ export default function CategoryBottomSheet({
         setSubcategories(subs);
       }
     } catch (error) {
-      console.error('Failed to load subcategories:', error);
       setSubcategories([]);
     } finally {
       setIsLoadingSubcategories(false);

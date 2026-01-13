@@ -96,7 +96,7 @@ export default function ChatScreen(props: ChatScreenProps) {
       await dispatch(fetchConversations({ page: 1, limit: 20 })).unwrap();
       await dispatch(fetchTotalUnreadCount()).unwrap();
     } catch (error) {
-      console.error('[ChatScreen] Refresh error:', error);
+      // Error handling
     } finally {
       setRefreshing(false);
     }

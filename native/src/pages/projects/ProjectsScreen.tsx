@@ -90,7 +90,7 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
         setHasMore(false);
       }
     } catch (error) {
-      console.error('Error loading projects:', error);
+      // Error handling
     } finally {
       setLoading(false);
       setRefreshing(false);

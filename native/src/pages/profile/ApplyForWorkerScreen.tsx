@@ -156,10 +156,6 @@ export default function ApplyForWorkerScreen({ onBack }: ApplyForWorkerScreenPro
       }
     } catch (error: any) {
       // If application not found (404), it's normal - user hasn't applied yet
-      // Only log other errors
-      if (error?.status !== 404) {
-        console.error('Failed to load application:', error);
-      }
     } finally {
       setIsLoading(false);
     }
@@ -224,7 +220,6 @@ export default function ApplyForWorkerScreen({ onBack }: ApplyForWorkerScreenPro
         }
       }
     } catch (error) {
-      console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };

@@ -22,7 +22,6 @@ export default function HomeHeader({ onAddressPress, refreshTrigger }: HomeHeade
       const location = await userLocationService.getUserLocation();
       setUserLocation(location);
     } catch (error) {
-      console.error('Failed to load location:', error);
       setUserLocation(null);
     } finally {
       setIsLoading(false);

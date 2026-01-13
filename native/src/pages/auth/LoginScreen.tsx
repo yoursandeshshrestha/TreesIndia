@@ -48,7 +48,7 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
         }
       }
     } catch (error) {
-      console.error('Error requesting OTP:', error);
+      // Error handling
     }
   };
 

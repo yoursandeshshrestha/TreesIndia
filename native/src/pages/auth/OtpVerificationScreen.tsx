@@ -32,7 +32,7 @@ export default function OtpVerificationScreen({
         // Navigation will be handled by App.tsx based on auth state
       }
     } catch (error) {
-      console.error('Error verifying OTP:', error);
+      // Error handling
     }
   }, [otp, phoneNumber, dispatch, isLoading]);
 

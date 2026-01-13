@@ -81,8 +81,6 @@ export default function ServicesScreen({ onBack, initialFilters, onNavigateToBoo
       const errorMessage = error instanceof Error ? error.message : '';
       if (errorMessage.includes('Subscription required')) {
         setSubscriptionRequired(true);
-      } else {
-        console.error('Error loading services:', error);
       }
     } finally {
       setLoading(false);

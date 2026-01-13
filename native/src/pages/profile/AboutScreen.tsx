@@ -10,31 +10,31 @@ interface AboutScreenProps {
 export default function AboutScreen({ onBack }: AboutScreenProps) {
   const handleOpenTerms = () => {
     // TODO: Open Terms and Conditions modal or navigate to terms page
-    Linking.openURL('https://treesindiaservices.com/terms-and-conditions').catch((err) =>
-      console.error('Failed to open terms:', err)
-    );
+    Linking.openURL('https://treesindiaservices.com/terms-and-conditions').catch(() => {
+      // Error handling
+    });
   };
 
   const handleOpenPrivacy = () => {
     // TODO: Open Privacy Policy modal or navigate to privacy page
-    Linking.openURL('https://treesindiaservices.com/privacy-policy').catch((err) =>
-      console.error('Failed to open privacy policy:', err)
-    );
+    Linking.openURL('https://treesindiaservices.com/privacy-policy').catch(() => {
+      // Error handling
+    });
   };
 
   const handleContact = (type: 'email' | 'phone1' | 'phone2') => {
     if (type === 'email') {
-      Linking.openURL('mailto:support@treesindiaservices.com').catch((err) =>
-        console.error('Failed to open email:', err)
-      );
+      Linking.openURL('mailto:support@treesindiaservices.com').catch(() => {
+        // Error handling
+      });
     } else if (type === 'phone1') {
-      Linking.openURL('tel:+919641864615').catch((err) =>
-        console.error('Failed to open phone:', err)
-      );
+      Linking.openURL('tel:+919641864615').catch(() => {
+        // Error handling
+      });
     } else if (type === 'phone2') {
-      Linking.openURL('tel:+917363952622').catch((err) =>
-        console.error('Failed to open phone:', err)
-      );
+      Linking.openURL('tel:+917363952622').catch(() => {
+        // Error handling
+      });
     }
   };
 

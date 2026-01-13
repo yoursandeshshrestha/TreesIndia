@@ -61,7 +61,6 @@ export default function CategoryServicesScreen({
       setLevel3Categories(level3);
       return level3;
     } catch (error) {
-      console.error('Failed to load level 3 categories:', error);
       setLevel3Categories([]);
       return [];
     }
@@ -179,7 +178,6 @@ export default function CategoryServicesScreen({
 
       setServiceSections(sections);
     } catch (error) {
-      console.error('Error loading services:', error);
       setServiceSections([]);
     } finally {
       setLoading(false);

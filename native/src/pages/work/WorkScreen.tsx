@@ -49,7 +49,7 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       const response = await workerAssignmentService.getWorkerAssignments(statuses);
       setAssignments(response.assignments || []);
     } catch (error) {
-      console.error('Error fetching assignments:', error);
+      // Error handling
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -72,7 +72,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       });
       fetchAssignments();
     } catch (error) {
-      console.error('Error accepting assignment:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to accept assignment';
       Alert.alert('Error', errorMessage);
     }
@@ -86,7 +85,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       });
       fetchAssignments();
     } catch (error) {
-      console.error('Error rejecting assignment:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to reject assignment';
       Alert.alert('Error', errorMessage);
     }
@@ -107,7 +105,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error('Error starting work:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start work';
       Alert.alert('Error', errorMessage);
     }
@@ -118,7 +115,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       await workerAssignmentService.completeAssignment(assignmentId);
       fetchAssignments();
     } catch (error) {
-      console.error('Error completing work:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to complete work';
       Alert.alert('Error', errorMessage);
     }
@@ -161,7 +157,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
         profileImage: customerInfo.avatar,
       });
     } catch (error) {
-      console.error('[WorkScreen] Error opening chat:', error);
       Alert.alert('Error', 'Failed to open chat. Please try again.');
     }
   };

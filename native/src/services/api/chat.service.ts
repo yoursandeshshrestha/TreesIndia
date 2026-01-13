@@ -54,7 +54,6 @@ class ChatService {
 
       throw new Error('Invalid conversation response format');
     } catch (error) {
-      console.error('[ChatService] Error creating conversation:', error);
       throw error;
     }
   }
@@ -132,7 +131,6 @@ class ChatService {
         },
       };
     } catch (error) {
-      console.error('[ChatService] Error fetching conversations:', error);
       throw error;
     }
   }
@@ -156,7 +154,6 @@ class ChatService {
       // Handle direct conversation response
       return result as SimpleConversation;
     } catch (error) {
-      console.error('[ChatService] Error fetching conversation:', error);
       throw error;
     }
   }
@@ -235,7 +232,6 @@ class ChatService {
         },
       };
     } catch (error) {
-      console.error('[ChatService] Error fetching messages:', error);
       throw error;
     }
   }
@@ -274,7 +270,6 @@ class ChatService {
       // Handle direct message response
       return result as SimpleConversationMessage;
     } catch (error) {
-      console.error('[ChatService] Error sending message:', error);
       throw error;
     }
   }
@@ -329,7 +324,6 @@ class ChatService {
       // Handle direct message response
       return result as SimpleConversationMessage;
     } catch (error) {
-      console.error('[ChatService] Error sending message with file:', error);
       throw error;
     }
   }
@@ -353,7 +347,6 @@ class ChatService {
         message: result.message || 'Messages marked as read',
       };
     } catch (error) {
-      console.error('[ChatService] Error marking messages as read:', error);
       throw error;
     }
   }
@@ -371,7 +364,6 @@ class ChatService {
 
       return result.unread_count || result.count || 0;
     } catch (error) {
-      console.error('[ChatService] Error fetching unread count:', error);
       return 0;
     }
   }
@@ -392,7 +384,6 @@ class ChatService {
 
       return count;
     } catch (error) {
-      console.error('[ChatService] Error fetching total unread count:', error);
       return 0;
     }
   }

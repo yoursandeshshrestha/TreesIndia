@@ -76,7 +76,6 @@ class SearchHistoryService {
 
       return result.data;
     } catch (error) {
-      console.error('Error saving search history:', error);
       throw error;
     }
   }
@@ -98,7 +97,6 @@ class SearchHistoryService {
 
       return result.data || [];
     } catch (error) {
-      console.error('Error getting recent searches:', error);
       // Return empty array on error instead of throwing
       // This ensures the UI doesn't break if search history fails
       return [];
@@ -123,7 +121,6 @@ class SearchHistoryService {
         throw new Error(result.message || 'Failed to delete search history');
       }
     } catch (error) {
-      console.error('Error deleting search history:', error);
       throw error;
     }
   }
@@ -146,7 +143,6 @@ class SearchHistoryService {
         throw new Error(result.message || 'Failed to clear search history');
       }
     } catch (error) {
-      console.error('Error clearing search history:', error);
       throw error;
     }
   }

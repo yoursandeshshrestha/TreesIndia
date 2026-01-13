@@ -83,7 +83,7 @@ export default function VendorsScreen({ onBack, initialFilters, onNavigateToSubs
         }
       }
     } catch (error) {
-      console.error('Error loading vendors:', error);
+      // Error handling
     } finally {
       setLoading(false);
       setRefreshing(false);

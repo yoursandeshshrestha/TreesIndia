@@ -93,7 +93,6 @@ class ChatWebSocketService {
    */
   private establishConnection(): void {
     if (!this.conversationId || !this.token) {
-      console.error('[ChatWebSocket] Missing conversationId or token');
       return;
     }
 
@@ -109,7 +108,6 @@ class ChatWebSocketService {
       this.ws.onerror = this.handleError.bind(this);
       this.ws.onclose = this.handleClose.bind(this);
     } catch (error) {
-      console.error('[ChatWebSocket] Error establishing connection:', error);
       this.setStatus('error');
       this.handleReconnect();
     }
@@ -158,8 +156,7 @@ class ChatWebSocketService {
         }
       }
     } catch (error) {
-      console.error('[ChatWebSocket] Error parsing message:', error);
-      console.error('[ChatWebSocket] Raw data was:', event.data);
+      // Error parsing message
     }
   }
 
@@ -167,7 +164,6 @@ class ChatWebSocketService {
    * Handle WebSocket error
    */
   private handleError(error: Event): void {
-    console.error('[ChatWebSocket] WebSocket error:', error);
     this.setStatus('error');
 
     this.emit('error', {
@@ -204,7 +200,6 @@ class ChatWebSocketService {
     }
 
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('[ChatWebSocket] Max reconnection attempts reached');
       this.setStatus('error');
       return;
     }
@@ -230,7 +225,7 @@ class ChatWebSocketService {
         try {
           this.ws.send(JSON.stringify({ event: 'ping' }));
         } catch (error) {
-          console.error('[ChatWebSocket] Error sending ping:', error);
+          // Error sending ping
         }
       }
     }, 30000); // Ping every 30 seconds
@@ -251,7 +246,6 @@ class ChatWebSocketService {
    */
   send(message: string): boolean {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error('[ChatWebSocket] WebSocket is not connected');
       return false;
     }
 
@@ -264,7 +258,6 @@ class ChatWebSocketService {
       this.ws.send(JSON.stringify(payload));
       return true;
     } catch (error) {
-      console.error('[ChatWebSocket] Error sending message:', error);
       return false;
     }
   }
@@ -285,7 +278,7 @@ class ChatWebSocketService {
 
       this.ws.send(JSON.stringify(payload));
     } catch (error) {
-      console.error('[ChatWebSocket] Error sending typing indicator:', error);
+      // Error sending typing indicator
     }
   }
 
@@ -305,7 +298,7 @@ class ChatWebSocketService {
 
       this.ws.send(JSON.stringify(payload));
     } catch (error) {
-      console.error('[ChatWebSocket] Error sending message read:', error);
+      // Error sending message read
     }
   }
 
@@ -325,7 +318,7 @@ class ChatWebSocketService {
       try {
         this.ws.close(1000, 'Manual disconnect');
       } catch (error) {
-        console.error('[ChatWebSocket] Error closing WebSocket:', error);
+        // Error closing WebSocket
       }
       this.ws = null;
     }
@@ -371,7 +364,7 @@ class ChatWebSocketService {
       try {
         callback(data);
       } catch (error) {
-        console.error(`[ChatWebSocket] Error in event listener for ${event}:`, error);
+        // Error in event listener
       }
     });
   }

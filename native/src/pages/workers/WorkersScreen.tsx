@@ -83,7 +83,7 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
         }
       }
     } catch (error) {
-      console.error('Error loading workers:', error);
+      // Error handling
     } finally {
       setLoading(false);
       setRefreshing(false);

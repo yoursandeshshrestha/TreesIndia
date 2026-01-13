@@ -120,7 +120,6 @@ const bookingSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMyBookings.rejected, (state, action) => {
-        console.error('[bookingSlice] fetchMyBookings rejected:', action.payload);
         state.isLoading = false;
         state.error = action.payload as string;
       });

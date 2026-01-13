@@ -94,7 +94,6 @@ export default function SlotSelectionBottomSheet({
       setBookingConfig(config);
       generateDates(config);
     } catch (error) {
-      console.error('[SlotSelectionBottomSheet] Failed to fetch booking config:', error);
       // Generate dates with default 7 days if config fetch fails
       generateDates(null);
     } finally {
@@ -146,14 +145,6 @@ export default function SlotSelectionBottomSheet({
       const slots = await bookingService.getAvailableSlots(serviceId, date, duration);
       setAvailableSlots(slots);
     } catch (error) {
-      console.error('[SlotSelectionBottomSheet] Failed to fetch slots:', {
-        error,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        errorStack: error instanceof Error ? error.stack : 'N/A',
-        serviceId,
-        date,
-        duration,
-      });
       Alert.alert('Error', 'Failed to fetch available slots. Please try again.');
       setAvailableSlots([]);
     } finally {

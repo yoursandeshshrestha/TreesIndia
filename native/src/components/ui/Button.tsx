@@ -25,11 +25,11 @@ export default function Button({
       const result = onPress();
       if (result instanceof Promise) {
         result.catch((error) => {
-          console.error('Error in button press handler:', error);
+          // Error handling
         });
       }
     } catch (error) {
-      console.error('Error in button press handler:', error);
+      // Error handling
     }
   };
 

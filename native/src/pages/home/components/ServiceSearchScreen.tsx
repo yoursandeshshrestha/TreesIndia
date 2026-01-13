@@ -61,7 +61,7 @@ export default function ServiceSearchScreen({
       const data = await serviceService.getSearchSuggestions();
       setSuggestions(data);
     } catch (error) {
-      console.error('Failed to load suggestions:', error);
+      // Error handling
       setSuggestions({ keywords: [], services: [] });
     } finally {
       setIsLoadingSuggestions(false);
@@ -89,7 +89,7 @@ export default function ServiceSearchScreen({
       const response = await serviceService.searchServices(query);
       setSearchResults(response.results || []);
     } catch (error) {
-      console.error('Search error:', error);
+      // Error handling
       setSearchResults([]);
     } finally {
       setIsSearching(false);

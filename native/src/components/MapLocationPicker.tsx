@@ -131,7 +131,6 @@ export default function MapLocationPicker({
       mapRef.current?.animateToRegion(newRegion, 500);
       reverseGeocodeLocation(newRegion.latitude, newRegion.longitude);
     } catch (error) {
-      console.error('Error getting current location:', error);
       Alert.alert('Error', 'Failed to get your current location');
     } finally {
       setIsLoadingLocation(false);
@@ -215,7 +214,7 @@ export default function MapLocationPicker({
         }
       }
     } catch (error) {
-      console.error('Error reverse geocoding:', error);
+      // Error handling
     } finally {
       setIsGeocodingAddress(false);
     }
@@ -231,7 +230,6 @@ export default function MapLocationPicker({
       );
       setSearchResults(results);
     } catch (error) {
-      console.error('Search error:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);

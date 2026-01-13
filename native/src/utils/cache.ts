@@ -42,7 +42,7 @@ class CacheManager {
 
       return entry.data;
     } catch (error) {
-      console.error(`Cache error for ${key}:`, error);
+      // Error handling
       return null;
     }
   }
@@ -64,7 +64,7 @@ class CacheManager {
       const cacheKey = this.prefix + key;
       await AsyncStorage.setItem(cacheKey, JSON.stringify(entry));
     } catch (error) {
-      console.error(`Cache set error for ${key}:`, error);
+      // Error handling
     }
   }
 
@@ -84,7 +84,7 @@ class CacheManager {
       const cacheKey = this.prefix + key;
       await AsyncStorage.removeItem(cacheKey);
     } catch (error) {
-      console.error(`Cache remove error for key ${key}:`, error);
+      // Error handling
     }
   }
 
@@ -97,7 +97,7 @@ class CacheManager {
       const cacheKeys = keys.filter(key => key.startsWith(this.prefix));
       await AsyncStorage.multiRemove(cacheKeys);
     } catch (error) {
-      console.error('Cache clear error:', error);
+      // Error handling
     }
   }
 
@@ -116,7 +116,7 @@ class CacheManager {
       const entry: CacheEntry<unknown> = JSON.parse(cached);
       return entry.timestamp;
     } catch (error) {
-      console.error(`Cache getTimestamp error for key ${key}:`, error);
+      // Error handling
       return null;
     }
   }

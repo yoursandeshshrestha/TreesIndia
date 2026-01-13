@@ -52,9 +52,8 @@ class AddressService {
   async getAddresses(): Promise<Address[]> {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/addresses`);
-      
+
       if (!response.ok) {
-        console.error('Address fetch failed:', response.status, response.statusText);
         return [];
       }
       
@@ -78,7 +77,6 @@ class AddressService {
       
       // Ensure we have an array before mapping
       if (!Array.isArray(addresses)) {
-        console.error('Addresses is not an array after processing:', addresses);
         return [];
       }
       
@@ -109,7 +107,6 @@ class AddressService {
       
       return normalized;
     } catch (error) {
-      console.error('Error fetching addresses:', error);
       return [];
     }
   }

@@ -98,7 +98,6 @@ export default function BookingDetailBottomSheet({
       const summary = await walletService.getWalletSummary();
       setWalletBalance(summary.current_balance);
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
       setWalletBalance(0);
     }
   };
@@ -291,7 +290,6 @@ export default function BookingDetailBottomSheet({
                 },
               ]);
             } catch (error: any) {
-              console.error('Payment verification error:', error);
               Alert.alert(
                 'Verification Failed',
                 error?.message || 'Failed to verify payment. Please contact support.',
@@ -301,8 +299,6 @@ export default function BookingDetailBottomSheet({
             }
           },
           (error) => {
-            console.error('Razorpay error:', error);
-
             // Reset loading state AND close payment sheet first to prevent stuck UI
             setIsProcessingPayment(false);
             setShowPaymentSheet(false);
@@ -339,7 +335,6 @@ export default function BookingDetailBottomSheet({
         );
       }
     } catch (error: any) {
-      console.error('Payment error:', error);
       Alert.alert(
         'Payment Failed',
         error?.message || 'Failed to process payment. Please try again.',
@@ -1080,7 +1075,6 @@ export default function BookingDetailBottomSheet({
                             });
                           }, 300);
                         } catch (error) {
-                          console.error('[BookingDetail] Error opening chat:', error);
                           Alert.alert(
                             'Error',
                             error instanceof Error

@@ -77,7 +77,7 @@ export default function AddressSelectionScreen({
       const predictions = histories.map(convertSearchHistoryToLocationPrediction);
       setRecentSearches(predictions);
     } catch (error) {
-      console.error('Failed to load recent searches:', error);
+      // Error handling
       setRecentSearches([]);
     }
   };
@@ -87,7 +87,7 @@ export default function AddressSelectionScreen({
       const addresses = await addressService.getAddresses();
       setSavedAddresses(addresses);
     } catch (error) {
-      console.error('Failed to load saved addresses:', error);
+      // Error handling
       setSavedAddresses([]);
     }
   };
@@ -112,7 +112,7 @@ export default function AddressSelectionScreen({
       // Reload recent searches after saving
       await loadRecentSearches();
     } catch (error) {
-      console.error('Failed to save recent search:', error);
+      // Error handling
     }
   };
 
@@ -130,7 +130,7 @@ export default function AddressSelectionScreen({
 
       await saveLocation(locationData);
     } catch (error: any) {
-      console.error('Select saved address error:', error);
+      // Error handling
       Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
     }
   };
@@ -160,7 +160,7 @@ export default function AddressSelectionScreen({
       );
       setSearchResults(results);
     } catch (error) {
-      console.error('Search error:', error);
+      // Error handling
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -242,7 +242,7 @@ export default function AddressSelectionScreen({
         );
       }
     } catch (error: any) {
-      console.error('Location error:', error);
+      // Error handling
       Alert.alert(
         'Error',
         error.message || 'Failed to get your current location. Please try again or search manually.',
@@ -260,7 +260,7 @@ export default function AddressSelectionScreen({
       onAddressSelected?.();
       onBack();
     } catch (error: any) {
-      console.error('Save location error:', error);
+      // Error handling
       Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
     }
   };
@@ -300,7 +300,7 @@ export default function AddressSelectionScreen({
 
       await saveLocation(locationData);
     } catch (error: any) {
-      console.error('Select location error:', error);
+      // Error handling
       Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
     }
   };
@@ -333,7 +333,7 @@ export default function AddressSelectionScreen({
 
       await saveLocation(createLocationData);
     } catch (error: any) {
-      console.error('Map location selection error:', error);
+      // Error handling
       Alert.alert('Error', error.message || 'Failed to save location. Please try again.');
     }
   };

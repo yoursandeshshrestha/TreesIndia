@@ -165,7 +165,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setBanners(promotionBanners);
       await cache.set(CACHE_KEYS.BANNERS, promotionBanners, { ttl: CACHE_TTL.BANNERS });
     } catch (error) {
-      console.error('Failed to load banners:', error);
+      // Error handling
       if (banners.length === 0) {
         setBanners([]);
       }
@@ -191,7 +191,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setCategories(rootCategories);
       await cache.set(CACHE_KEYS.CATEGORIES, rootCategories, { ttl: CACHE_TTL.CATEGORIES });
     } catch (error) {
-      console.error('Failed to load categories:', error);
+      // Error handling
       if (categories.length === 0) {
         setCategories([]);
       }
@@ -217,7 +217,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setHomepageIcons(icons);
       await cache.set(CACHE_KEYS.HOMEPAGE_ICONS, icons, { ttl: CACHE_TTL.HOMEPAGE_ICONS });
     } catch (error) {
-      console.error('Failed to load homepage icons:', error);
+      // Error handling
       if (homepageIcons.length === 0) {
         setHomepageIcons([]);
       }
@@ -243,7 +243,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setPopularServices(services);
       await cache.set(CACHE_KEYS.POPULAR_SERVICES, services, { ttl: CACHE_TTL.POPULAR_SERVICES });
     } catch (error) {
-      console.error('Failed to load popular services:', error);
+      // Error handling
       if (popularServices.length === 0) {
         setPopularServices([]);
       }
@@ -281,7 +281,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setProperties([]);
       }
     } catch (error) {
-      console.error('Failed to load properties:', error);
+      // Error handling
       if (properties.length === 0) {
         setProperties([]);
       }
@@ -309,7 +309,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setHomeServices(services);
       await cache.set(CACHE_KEYS.HOME_SERVICES, services, { ttl: CACHE_TTL.SERVICES });
     } catch (error) {
-      console.error('Failed to load home services:', error);
+      // Error handling
       if (homeServices.length === 0) {
         setHomeServices([]);
       }
@@ -337,7 +337,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       setConstructionServices(services);
       await cache.set(CACHE_KEYS.CONSTRUCTION_SERVICES, services, { ttl: CACHE_TTL.SERVICES });
     } catch (error) {
-      console.error('Failed to load construction services:', error);
+      // Error handling
       if (constructionServices.length === 0) {
         setConstructionServices([]);
       }
@@ -373,7 +373,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setFixedPriceServices([]);
       }
     } catch (error) {
-      console.error('Failed to load fixed price services:', error);
+      // Error handling
       if (fixedPriceServices.length === 0) {
         setFixedPriceServices([]);
       }
@@ -409,7 +409,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setInquiryServices([]);
       }
     } catch (error) {
-      console.error('Failed to load inquiry services:', error);
+      // Error handling
       if (inquiryServices.length === 0) {
         setInquiryServices([]);
       }
@@ -447,7 +447,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setProperties2BHK([]);
       }
     } catch (error) {
-      console.error('Failed to load 2 BHK properties:', error);
+      // Error handling
       if (properties2BHK.length === 0) {
         setProperties2BHK([]);
       }
@@ -485,7 +485,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setProperties3BHK([]);
       }
     } catch (error) {
-      console.error('Failed to load 3 BHK properties:', error);
+      // Error handling
       if (properties3BHK.length === 0) {
         setProperties3BHK([]);
       }
@@ -523,7 +523,7 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
         setPropertiesUnder10K([]);
       }
     } catch (error) {
-      console.error('Failed to load properties under 10K:', error);
+      // Error handling
       if (propertiesUnder10K.length === 0) {
         setPropertiesUnder10K([]);
       }
@@ -566,9 +566,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
-      if (!errorMessage.includes('Subscription required')) {
-        console.error('Failed to load projects:', error);
-      }
       if (projects.length === 0) {
         setProjects([]);
       }
@@ -614,9 +611,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
-      if (!errorMessage.includes('Subscription required')) {
-        console.error('Failed to load top workers:', error);
-      }
       if (topWorkers.length === 0) {
         setTopWorkers([]);
       }
@@ -659,9 +653,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
-      if (!errorMessage.includes('Subscription required')) {
-        console.error('Failed to load top vendors:', error);
-      }
       if (topVendors.length === 0) {
         setTopVendors([]);
       }

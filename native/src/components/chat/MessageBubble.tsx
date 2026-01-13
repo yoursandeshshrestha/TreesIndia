@@ -89,7 +89,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         Alert.alert('Error', 'Unable to open video');
       }
     } catch (error) {
-      console.error('[MessageBubble] Error opening video:', error);
       Alert.alert('Error', 'Failed to open video');
     }
   };
@@ -106,7 +105,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         Alert.alert('Error', 'Unable to open image');
       }
     } catch (error) {
-      console.error('[MessageBubble] Error opening image:', error);
       Alert.alert('Error', 'Failed to open image');
     }
   };

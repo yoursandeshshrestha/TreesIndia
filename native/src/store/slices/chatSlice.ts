@@ -686,7 +686,7 @@ const chatSlice = createSlice({
         state.unreadCounts[conversationId] = 0;
       })
       .addCase(markConversationAsRead.rejected, (state, action) => {
-        console.error('[chatSlice] markAsRead failed:', action.payload);
+        // Mark as read failed
       });
 
     // Fetch unread count
@@ -696,7 +696,7 @@ const chatSlice = createSlice({
         state.unreadCounts[conversationId] = count;
       })
       .addCase(fetchUnreadCount.rejected, (state, action) => {
-        console.error('[chatSlice] fetchUnreadCount failed:', action.payload);
+        // Fetch unread count failed
       });
 
     // Fetch total unread count
@@ -705,7 +705,7 @@ const chatSlice = createSlice({
         state.totalUnreadCount = action.payload;
       })
       .addCase(fetchTotalUnreadCount.rejected, (state, action) => {
-        console.error('[chatSlice] fetchTotalUnreadCount failed:', action.payload);
+        // Fetch total unread count failed
       });
   },
 });

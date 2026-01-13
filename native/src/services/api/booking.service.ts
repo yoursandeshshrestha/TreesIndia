@@ -40,11 +40,6 @@ class BookingService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[BookingService] Response not OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText,
-        });
         throw new Error(`Failed to get available slots: ${response.status} ${response.statusText}`);
       }
 
@@ -123,14 +118,6 @@ class BookingService {
 
       return mappedSlots;
     } catch (error) {
-      console.error('[BookingService] Error in getAvailableSlots:', {
-        error,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        errorStack: error instanceof Error ? error.stack : 'N/A',
-        serviceId,
-        date,
-        duration,
-      });
       throw error;
     }
   }
@@ -503,7 +490,6 @@ class BookingService {
         },
       };
     } catch (error) {
-      console.error('[BookingService] Error in getMyBookings:', error);
       throw error;
     }
   }

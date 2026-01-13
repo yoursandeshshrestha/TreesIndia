@@ -111,7 +111,6 @@ export default function WorkerAssignmentBottomSheet({
         await Linking.openURL(webUrl);
       }
     } catch (error) {
-      console.error('[WorkerAssignmentBottomSheet] Error opening Google Maps:', error);
       Alert.alert('Error', 'Unable to open Google Maps. Please make sure it is installed.');
     }
   };

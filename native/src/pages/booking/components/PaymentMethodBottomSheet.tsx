@@ -95,7 +95,6 @@ export default function PaymentMethodBottomSheet({
       await onSelectMethod(method);
       // Note: Don't close here - let the parent handle closing after successful payment
     } catch (error) {
-      console.error('Payment error:', error);
       setIsProcessing(false);
     }
   };

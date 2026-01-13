@@ -63,7 +63,6 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       const profileData = await userService.getUserProfile();
       setProfile(profileData);
     } catch (error) {
-      console.error('Failed to load profile:', error);
       // Continue with auth user data if profile load fails
     } finally {
       setIsLoadingProfile(false);
@@ -179,7 +178,6 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         }
       }
     } catch (error: any) {
-      console.error('Image picker error:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };

@@ -44,7 +44,6 @@ export default function EarningsScreen() {
       );
       setDashboard(data);
     } catch (err) {
-      console.error('Error fetching earnings dashboard:', err);
       setError(
         err instanceof Error ? err.message : 'Failed to load earnings data'
       );
@@ -61,7 +60,6 @@ export default function EarningsScreen() {
       const data = await workerWithdrawalService.getWithdrawals(1, 20);
       setWithdrawals(data.withdrawals);
     } catch (err) {
-      console.error('Error fetching withdrawals:', err);
       setWithdrawalsError(
         err instanceof Error ? err.message : 'Failed to load withdrawals'
       );

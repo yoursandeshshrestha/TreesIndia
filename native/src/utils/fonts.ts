@@ -15,7 +15,7 @@ export function useAppFonts() {
   });
 
   if (error) {
-    console.error('Error loading fonts:', error);
+    // Error handling
   }
 
   return fontsLoaded;

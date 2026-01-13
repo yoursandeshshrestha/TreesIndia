@@ -71,7 +71,7 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
         }
       }
     } catch (error) {
-      console.error('Error loading properties:', error);
+      // Error handling
     } finally {
       setLoading(false);
       setRefreshing(false);

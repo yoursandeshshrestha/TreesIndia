@@ -21,7 +21,7 @@ export const requestCameraPermission = async (): Promise<boolean> => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('[FileUpload] Error requesting camera permission:', error);
+    // Error handling
     return false;
   }
 };
@@ -34,7 +34,7 @@ export const requestMediaLibraryPermission = async (): Promise<boolean> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('[FileUpload] Error requesting media library permission:', error);
+    // Error handling
     return false;
   }
 };
@@ -72,7 +72,6 @@ export const pickImageFromCamera = async (): Promise<PickedFile | null> => {
       fileSize: asset.fileSize || 0,
     };
   } catch (error) {
-    console.error('[FileUpload] Error picking image from camera:', error);
     throw error;
   }
 };
@@ -110,7 +109,6 @@ export const pickImageFromGallery = async (): Promise<PickedFile | null> => {
       fileSize: asset.fileSize || 0,
     };
   } catch (error) {
-    console.error('[FileUpload] Error picking image from gallery:', error);
     throw error;
   }
 };
@@ -157,7 +155,6 @@ export const pickVideoFromGallery = async (): Promise<PickedFile | null> => {
       fileSize: asset.fileSize || 0,
     };
   } catch (error) {
-    console.error('[FileUpload] Error picking video from gallery:', error);
     throw error;
   }
 };
@@ -204,7 +201,6 @@ export const recordVideoFromCamera = async (): Promise<PickedFile | null> => {
       fileSize: asset.fileSize || 0,
     };
   } catch (error) {
-    console.error('[FileUpload] Error recording video from camera:', error);
     throw error;
   }
 };
