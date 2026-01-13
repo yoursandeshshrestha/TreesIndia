@@ -344,7 +344,7 @@ export default function HomeScreen({
         </View>
 
         {/* 2 BHK Rental Properties */}
-        <View onLayout={(e) => handleSectionLayout('properties2BHK', e.nativeEvent.layout.y)}>
+        {/* <View onLayout={(e) => handleSectionLayout('properties2BHK', e.nativeEvent.layout.y)}>
           <PropertiesSection
             title="2 BHK Rentals"
             properties={homeData.properties2BHK}
@@ -352,10 +352,10 @@ export default function HomeScreen({
             onPropertyPress={handlePropertyPress}
             onSeeAll={() => onNavigateToProperties?.()}
           />
-        </View>
+        </View> */}
 
         {/* 3 BHK Properties */}
-        <View onLayout={(e) => handleSectionLayout('properties3BHK', e.nativeEvent.layout.y)}>
+        {/* <View onLayout={(e) => handleSectionLayout('properties3BHK', e.nativeEvent.layout.y)}>
           <PropertiesSection
             title="3 BHK Rentals"
             properties={homeData.properties3BHK}
@@ -363,10 +363,10 @@ export default function HomeScreen({
             onPropertyPress={handlePropertyPress}
             onSeeAll={() => onNavigateToProperties?.()}
           />
-        </View>
+        </View> */}
 
         {/* Properties Under 10K Monthly Rent */}
-        <View onLayout={(e) => handleSectionLayout('propertiesUnder10K', e.nativeEvent.layout.y)}>
+        {/* <View onLayout={(e) => handleSectionLayout('propertiesUnder10K', e.nativeEvent.layout.y)}>
           <PropertiesSection
             title="Rentals Under ₹10,000"
             properties={homeData.propertiesUnder10K}
@@ -374,10 +374,10 @@ export default function HomeScreen({
             onPropertyPress={handlePropertyPress}
             onSeeAll={() => onNavigateToProperties?.()}
           />
-        </View>
+        </View> */}
 
         {/* Construction Services */}
-        <View onLayout={(e) => handleSectionLayout('constructionServices', e.nativeEvent.layout.y)}>
+        {/* <View onLayout={(e) => handleSectionLayout('constructionServices', e.nativeEvent.layout.y)}>
           <ServicesSection
             title="Construction Services"
             services={homeData.constructionServices}
@@ -385,12 +385,12 @@ export default function HomeScreen({
             onServicePress={handleServicePress}
             onSeeAll={() => onNavigateToServices?.({ category: 'Construction Services' })}
           />
-        </View>
+        </View> */}
 
 
 
         {/* Inquiry Services */}
-        <View onLayout={(e) => handleSectionLayout('inquiryServices', e.nativeEvent.layout.y)}>
+        {/* <View onLayout={(e) => handleSectionLayout('inquiryServices', e.nativeEvent.layout.y)}>
           <ServicesSection
             title="Inquiry Services"
             services={homeData.inquiryServices}
@@ -398,7 +398,7 @@ export default function HomeScreen({
             onServicePress={handleServicePress}
             onSeeAll={() => onNavigateToServices?.({ price_type: 'inquiry' })}
           />
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Property Detail Bottom Sheet */}
