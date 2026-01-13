@@ -46,6 +46,19 @@ export default function BrokerDetailPage() {
 
       // If user has broker data, transform it to EnhancedBroker format
       if (user.broker && user.user_type === "broker") {
+        // Helper function to parse data that might be a string or already an object
+        const parseIfString = <T,>(data: T | string, fallback: T): T => {
+          if (!data) return fallback;
+          if (typeof data === "string") {
+            try {
+              return JSON.parse(data);
+            } catch {
+              return fallback;
+            }
+          }
+          return data as T;
+        };
+
         const transformedBroker: EnhancedBroker = {
           ID: user.broker.ID,
           id: user.broker.ID,
@@ -54,19 +67,21 @@ export default function BrokerDetailPage() {
           DeletedAt: user.broker.DeletedAt,
           user_id: user.broker.user_id,
           role_application_id: user.broker.role_application_id,
-          contact_info: user.broker.contact_info
-            ? JSON.parse(user.broker.contact_info)
-            : { alternative_number: "" },
-          address: user.broker.address
-            ? JSON.parse(user.broker.address)
-            : { street: "", city: "", state: "", pincode: "", landmark: "" },
-          documents: user.broker.documents
-            ? JSON.parse(user.broker.documents)
-            : {
-                aadhar_card: "",
-                pan_card: "",
-                profile_pic: user.avatar || "",
-              },
+          contact_info: parseIfString(user.broker.contact_info, {
+            alternative_number: "",
+          }),
+          address: parseIfString(user.broker.address, {
+            street: "",
+            city: "",
+            state: "",
+            pincode: "",
+            landmark: "",
+          }),
+          documents: parseIfString(user.broker.documents, {
+            aadhar_card: "",
+            pan_card: "",
+            profile_pic: user.avatar || "",
+          }),
           license: user.broker.license,
           agency: user.broker.agency,
           is_active: user.broker.is_active,

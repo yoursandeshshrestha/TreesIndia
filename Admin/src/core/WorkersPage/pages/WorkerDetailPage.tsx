@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin, Phone, Mail, Calendar, Copy } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import Button from "@/components/Button/Base/Button";
 import { Loader } from "@/components/Loader";
 import { api } from "@/lib/api-client";
@@ -17,6 +18,7 @@ export default function WorkerDetailPage() {
   const [worker, setWorker] = useState<EnhancedWorker | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTogglingType, setIsTogglingType] = useState(false);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -54,45 +56,61 @@ export default function WorkerDetailPage() {
 
       // If user has worker data, transform it to EnhancedWorker format
       if (user.worker && user.user_type === "worker") {
+        // Helper function to parse data that might be a string or already an object
+        const parseIfString = <T,>(data: T | string, fallback: T): T => {
+          if (!data) return fallback;
+          if (typeof data === "string") {
+            try {
+              return JSON.parse(data);
+            } catch {
+              return fallback;
+            }
+          }
+          return data as T;
+        };
+
+        // Handle both camelCase and snake_case from API
+        const workerData = user.worker as any;
+
         const transformedWorker: EnhancedWorker = {
-          ID: user.worker.ID,
-          id: user.worker.ID,
-          CreatedAt: user.worker.CreatedAt,
-          UpdatedAt: user.worker.UpdatedAt,
-          DeletedAt: user.worker.DeletedAt,
-          user_id: user.worker.user_id,
-          role_application_id: user.worker.role_application_id,
-          worker_type: user.worker.worker_type,
-          contact_info: user.worker.contact_info
-            ? JSON.parse(user.worker.contact_info)
-            : { alternative_number: "" },
-          address: user.worker.address
-            ? JSON.parse(user.worker.address)
-            : { street: "", city: "", state: "", pincode: "", landmark: "" },
-          banking_info: user.worker.banking_info
-            ? JSON.parse(user.worker.banking_info)
-            : {
-                account_number: "",
-                ifsc_code: "",
-                bank_name: "",
-                account_holder_name: "",
-              },
-          documents: user.worker.documents
-            ? JSON.parse(user.worker.documents)
-            : {
-                aadhar_card: "",
-                pan_card: "",
-                profile_pic: user.avatar || "",
-                police_verification: "",
-              },
-          skills: user.worker.skills ? JSON.parse(user.worker.skills) : [],
-          experience_years: user.worker.experience_years,
-          is_available: user.worker.is_available,
-          rating: user.worker.rating,
-          total_bookings: user.worker.total_bookings,
-          earnings: user.worker.earnings,
-          total_jobs: user.worker.total_jobs,
-          is_active: user.worker.is_active,
+          ID: workerData.id || workerData.ID,
+          id: workerData.id || workerData.ID,
+          CreatedAt: workerData.created_at || workerData.CreatedAt,
+          UpdatedAt: workerData.updated_at || workerData.UpdatedAt,
+          DeletedAt: workerData.deleted_at || workerData.DeletedAt,
+          user_id: workerData.user_id,
+          role_application_id: workerData.role_application_id,
+          worker_type: workerData.worker_type,
+          contact_info: parseIfString(workerData.contact_info, {
+            alternative_number: "",
+          }),
+          address: parseIfString(workerData.address, {
+            street: "",
+            city: "",
+            state: "",
+            pincode: "",
+            landmark: "",
+          }),
+          banking_info: parseIfString(workerData.banking_info, {
+            account_number: "",
+            ifsc_code: "",
+            bank_name: "",
+            account_holder_name: "",
+          }),
+          documents: parseIfString(workerData.documents, {
+            aadhar_card: "",
+            pan_card: "",
+            profile_pic: user.avatar || "",
+            police_verification: "",
+          }),
+          skills: parseIfString(workerData.skills, []),
+          experience_years: workerData.experience_years,
+          is_available: workerData.is_available,
+          rating: workerData.rating,
+          total_bookings: workerData.total_bookings,
+          earnings: workerData.earnings,
+          total_jobs: workerData.total_jobs,
+          is_active: workerData.is_active,
           user: {
             ...user,
             id: user.ID,
@@ -107,6 +125,29 @@ export default function WorkerDetailPage() {
       setError("Failed to fetch worker data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleWorkerType = async () => {
+    if (!worker) return;
+
+    const newType = worker.worker_type === "normal" ? "treesindia_worker" : "normal";
+
+    try {
+      setIsTogglingType(true);
+      await api.put(`/admin/workers/${worker.ID}/toggle-worker-type`, {
+        worker_type: newType,
+      });
+      toast.success(
+        `Worker type changed to ${newType === "treesindia_worker" ? "TreesIndia Worker" : "Normal"}`
+      );
+      // Refresh worker data
+      await fetchWorker();
+    } catch (error) {
+      console.error("Error toggling worker type:", error);
+      toast.error("Failed to change worker type");
+    } finally {
+      setIsTogglingType(false);
     }
   };
 
@@ -480,11 +521,36 @@ export default function WorkerDetailPage() {
                     {worker.is_available ? "Available" : "Unavailable"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Worker Type</span>
-                  <span className="font-medium capitalize">
-                    {worker.worker_type.replace("_", " ")}
-                  </span>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Worker Type</span>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        worker.worker_type === "treesindia_worker"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {worker.worker_type === "treesindia_worker"
+                        ? "TreesIndia Worker"
+                        : "Normal"}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={
+                      worker.worker_type === "normal" ? "primary" : "outline"
+                    }
+                    onClick={toggleWorkerType}
+                    disabled={isTogglingType}
+                    className="w-full"
+                  >
+                    {isTogglingType
+                      ? "Updating..."
+                      : worker.worker_type === "normal"
+                      ? "Make TreesIndia Worker"
+                      : "Make Normal Worker"}
+                  </Button>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">
