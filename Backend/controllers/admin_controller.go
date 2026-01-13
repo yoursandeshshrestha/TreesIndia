@@ -377,8 +377,42 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 		}
 	}
 
+	// Transform users to include worker_type at top level
+	usersResponse := make([]gin.H, len(users))
+	for i, user := range users {
+		userMap := gin.H{
+			"id":                         user.ID,
+			"name":                       user.Name,
+			"email":                      user.Email,
+			"phone":                      user.Phone,
+			"user_type":                  user.UserType,
+			"avatar":                     user.Avatar,
+			"gender":                     user.Gender,
+			"is_active":                  user.IsActive,
+			"last_login_at":              user.LastLoginAt,
+			"role_application_status":    user.RoleApplicationStatus,
+			"application_date":           user.ApplicationDate,
+			"approval_date":              user.ApprovalDate,
+			"wallet_balance":             user.WalletBalance,
+			"subscription_id":            user.SubscriptionID,
+			"subscription":               user.Subscription,
+			"has_active_subscription":    user.HasActiveSubscription,
+			"subscription_expiry_date":   user.SubscriptionExpiryDate,
+			"user_notification_settings": user.UserNotificationSettings,
+			"created_at":                 user.CreatedAt,
+			"updated_at":                 user.UpdatedAt,
+		}
+
+		// Add worker_type if user is a worker
+		if user.UserType == models.UserTypeWorker && user.Worker != nil {
+			userMap["worker_type"] = user.Worker.WorkerType
+		}
+
+		usersResponse[i] = userMap
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Users retrieved successfully", gin.H{
-		"users": users,
+		"users": usersResponse,
 		"pagination": gin.H{
 			"page":        page,
 			"limit":       limit,
@@ -529,8 +563,37 @@ func (ac *AdminController) GetUserByID(c *gin.Context) {
 		return
 	}
 
+	// Transform user to include worker_type at top level
+	userResponse := gin.H{
+		"id":                         user.ID,
+		"name":                       user.Name,
+		"email":                      user.Email,
+		"phone":                      user.Phone,
+		"user_type":                  user.UserType,
+		"avatar":                     user.Avatar,
+		"gender":                     user.Gender,
+		"is_active":                  user.IsActive,
+		"last_login_at":              user.LastLoginAt,
+		"role_application_status":    user.RoleApplicationStatus,
+		"application_date":           user.ApplicationDate,
+		"approval_date":              user.ApprovalDate,
+		"wallet_balance":             user.WalletBalance,
+		"subscription_id":            user.SubscriptionID,
+		"subscription":               user.Subscription,
+		"has_active_subscription":    user.HasActiveSubscription,
+		"subscription_expiry_date":   user.SubscriptionExpiryDate,
+		"user_notification_settings": user.UserNotificationSettings,
+		"created_at":                 user.CreatedAt,
+		"updated_at":                 user.UpdatedAt,
+	}
+
+	// Add worker_type if user is a worker
+	if user.UserType == models.UserTypeWorker && user.Worker != nil {
+		userResponse["worker_type"] = user.Worker.WorkerType
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("User retrieved successfully", gin.H{
-		"user": user,
+		"user": userResponse,
 	}))
 }
 
@@ -564,6 +627,7 @@ func (ac *AdminController) SearchUsers(c *gin.Context) {
 	var users []models.User
 
 	if err := ac.db.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm).
+		Preload("Worker").
 		Limit(limit).
 		Order("created_at DESC").
 		Find(&users).Error; err != nil {
@@ -571,8 +635,32 @@ func (ac *AdminController) SearchUsers(c *gin.Context) {
 		return
 	}
 
+	// Transform users to include worker_type at top level
+	usersResponse := make([]gin.H, len(users))
+	for i, user := range users {
+		userMap := gin.H{
+			"id":                      user.ID,
+			"name":                    user.Name,
+			"email":                   user.Email,
+			"phone":                   user.Phone,
+			"user_type":               user.UserType,
+			"avatar":                  user.Avatar,
+			"is_active":               user.IsActive,
+			"wallet_balance":          user.WalletBalance,
+			"has_active_subscription": user.HasActiveSubscription,
+			"created_at":              user.CreatedAt,
+		}
+
+		// Add worker_type if user is a worker
+		if user.UserType == models.UserTypeWorker && user.Worker != nil {
+			userMap["worker_type"] = user.Worker.WorkerType
+		}
+
+		usersResponse[i] = userMap
+	}
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Search results retrieved successfully", gin.H{
-		"users": users,
+		"users": usersResponse,
 		"query": query,
 		"limit": limit,
 	}))
