@@ -43,6 +43,7 @@ function WorkersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalWorkers, setTotalWorkers] = useState(0);
 
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -177,6 +178,7 @@ function WorkersPage() {
 
       setWorkers(transformedWorkers);
       setTotalPages(response?.data?.pagination?.total_pages || 1);
+      setTotalWorkers(response?.data?.pagination?.total || 0);
     } catch (err) {
       toast.error("Error loading workers");
       console.error("Failed to load workers", err);
