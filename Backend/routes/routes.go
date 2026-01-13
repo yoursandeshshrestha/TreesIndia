@@ -56,6 +56,7 @@ func SetupRoutes(r *gin.Engine) {
 		SetupHomepageCategoryIconRoutes(v1)
 		SetupVendorRoutes(v1)
 		SetupWorkerRoutes(v1)
+		SetupBrokerRoutes(v1)
 		SetupWorkerEarningsRoutes(v1)
 		SetupWorkerWithdrawalRoutes(v1)
 		SetupChatbotRoutes(v1)
