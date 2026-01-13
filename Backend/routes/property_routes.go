@@ -3,14 +3,15 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupPropertyRoutes sets up property-related routes
-func SetupPropertyRoutes(router *gin.RouterGroup) {
-	propertyController := controllers.NewPropertyController()
-	
+func SetupPropertyRoutes(router *gin.RouterGroup, enhancedNotificationService *services.EnhancedNotificationService) {
+	propertyController := controllers.NewPropertyController(enhancedNotificationService)
+
 	// Public routes (no authentication required)
 	properties := router.Group("/properties")
 	{
@@ -18,7 +19,7 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 		properties.GET("/:id", propertyController.GetPropertyByID)                // Get property by ID
 		properties.GET("/slug/:slug", propertyController.GetPropertyBySlug)       // Get property by slug
 	}
-	
+
 	// User routes (authentication required - for both users and brokers)
 	userProperties := router.Group("/user/properties")
 	userProperties.Use(middleware.AuthMiddleware())
@@ -28,7 +29,7 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 		userProperties.PUT("/:id", propertyController.UpdateUserProperty)        // Update user's property
 		userProperties.DELETE("/:id", propertyController.DeleteUserProperty)      // Delete user's property
 	}
-	
+
 	// Admin routes (admin authentication required)
 	adminProperties := router.Group("/admin/properties")
 	adminProperties.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
@@ -43,5 +44,6 @@ func SetupPropertyRoutes(router *gin.RouterGroup) {
 		adminProperties.PATCH("/:id/status", propertyController.UpdatePropertyStatus) // Update property status (admin only)
 		adminProperties.DELETE("/:id", propertyController.DeleteProperty)         // Delete property (admin only)
 		adminProperties.POST("/:id/approve", propertyController.ApproveProperty)  // Approve property (admin only)
+		adminProperties.POST("/:id/reject", propertyController.RejectProperty)    // Reject property (admin only)
 	}
 }

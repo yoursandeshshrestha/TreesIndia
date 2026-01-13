@@ -153,9 +153,6 @@ func (wac *WorkerAssignmentController) AcceptAssignment(c *gin.Context) {
 		return
 	}
 
-	// Send notification to customer
-	wac.sendAssignmentNotification(assignment, "accepted")
-
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment accepted successfully", assignment))
 }
 
@@ -197,9 +194,6 @@ func (wac *WorkerAssignmentController) RejectAssignment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to reject assignment", err.Error()))
 		return
 	}
-
-	// Send notification to customer
-	wac.sendAssignmentNotification(assignment, "rejected")
 
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Assignment rejected successfully", assignment))
 }
@@ -323,18 +317,6 @@ func (wac *WorkerAssignmentController) sendAssignmentNotification(assignment *mo
 		}
 
 		switch notificationType {
-		case "accepted":
-			title = "Worker Accepted!"
-			body = fmt.Sprintf("%s has accepted your booking", worker.Name)
-			recipientUserID = booking.UserID
-			notifType = models.NotificationTypeBooking
-
-		case "rejected":
-			title = "Worker Rejected"
-			body = fmt.Sprintf("%s has rejected your booking. We'll assign another worker soon.", worker.Name)
-			recipientUserID = booking.UserID
-			notifType = models.NotificationTypeBooking
-
 		case "started":
 			title = "Work Started!"
 			body = fmt.Sprintf("%s has started working on your booking", worker.Name)

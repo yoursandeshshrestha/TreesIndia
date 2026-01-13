@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 	"treesindia/models"
 	"treesindia/repositories"
@@ -13,13 +14,15 @@ import (
 
 type QuoteController struct {
 	BaseController
-	quoteService *services.QuoteService
+	quoteService                *services.QuoteService
+	enhancedNotificationService *services.EnhancedNotificationService
 }
 
-func NewQuoteController() *QuoteController {
+func NewQuoteController(enhancedNotificationService *services.EnhancedNotificationService) *QuoteController {
 	return &QuoteController{
-		BaseController: *NewBaseController(),
-		quoteService: services.NewQuoteService(),
+		BaseController:              *NewBaseController(),
+		quoteService:                services.NewQuoteService(),
+		enhancedNotificationService: enhancedNotificationService,
 	}
 }
 
@@ -69,6 +72,9 @@ func (qc *QuoteController) ProvideQuote(c *gin.Context) {
 		c.JSON(500, views.CreateErrorResponse("Failed to provide quote", err.Error()))
 		return
 	}
+
+	// Send notification to customer about new quote
+	qc.sendQuoteNotification(booking)
 
 	c.JSON(200, views.CreateSuccessResponse("Quote provided successfully", booking))
 }
@@ -548,4 +554,39 @@ func (qc *QuoteController) WalletPayment(c *gin.Context) {
 	}
 
 	c.JSON(200, views.CreateSuccessResponse("Wallet payment processed successfully", booking))
+}
+
+// sendQuoteNotification sends notification when admin provides a quote
+func (qc *QuoteController) sendQuoteNotification(booking *models.Booking) {
+	// This runs in a goroutine, so it doesn't block the response
+	go func() {
+		// Skip if notification service is not available
+		if qc.enhancedNotificationService == nil {
+			logrus.Warn("Notification service not available, skipping quote notification")
+			return
+		}
+
+		title := "Quote Ready!"
+		body := fmt.Sprintf("Admin has provided a quote of ₹%.2f for your booking. Review and accept to proceed.", booking.QuoteAmount)
+
+		notificationReq := &services.NotificationRequest{
+			UserID:   booking.UserID,
+			Type:     models.NotificationTypeBooking,
+			Title:    title,
+			Body:     body,
+			Data: map[string]string{
+				"type":        "quote",
+				"bookingId":   fmt.Sprintf("%d", booking.ID),
+				"quoteAmount": fmt.Sprintf("%.2f", booking.QuoteAmount),
+			},
+			Priority: "high",
+		}
+
+		_, err := qc.enhancedNotificationService.SendNotification(notificationReq)
+		if err != nil {
+			logrus.Errorf("Failed to send quote notification for booking %d: %v", booking.ID, err)
+		} else {
+			logrus.Infof("Sent quote notification for booking %d to user %d", booking.ID, booking.UserID)
+		}
+	}()
 }

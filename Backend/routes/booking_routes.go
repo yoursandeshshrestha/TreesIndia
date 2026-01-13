@@ -3,12 +3,13 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupBookingRoutes sets up booking-related routes
-func SetupBookingRoutes(router *gin.RouterGroup) {
+func SetupBookingRoutes(router *gin.RouterGroup, enhancedNotificationService *services.EnhancedNotificationService) {
 	bookingController := controllers.NewBookingController()
 
 	// Public booking routes (no authentication required)
@@ -24,19 +25,19 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 	{
 		// POST /api/v1/bookings - Create new booking (handles all booking types)
 		userBookings.POST("", bookingController.CreateBooking)
-		
+
 		// POST /api/v1/bookings/:id/verify-payment - Verify payment for booking
 		userBookings.POST("/:id/verify-payment", bookingController.VerifyPayment)
-		
+
 		// GET /api/v1/bookings - Get user's bookings
 		userBookings.GET("", bookingController.GetUserBookings)
-		
+
 		// GET /api/v1/bookings/available-slots - Get available time slots
 		userBookings.GET("/available-slots", bookingController.GetAvailableSlots)
-		
+
 		// GET /api/v1/bookings/:id - Get booking by ID
 		userBookings.GET("/:id", bookingController.GetBookingByID)
-		
+
 		// PUT /api/v1/bookings/:id/cancel - Cancel booking
 		userBookings.PUT("/:id/cancel", bookingController.CancelUserBooking)
 	}
@@ -44,13 +45,13 @@ func SetupBookingRoutes(router *gin.RouterGroup) {
 	// Inquiry-based booking routes
 	bookings.POST("/inquiry", middleware.AuthMiddleware(), bookingController.CreateInquiryBooking)
 	bookings.POST("/inquiry/verify-payment", middleware.AuthMiddleware(), bookingController.VerifyInquiryPayment)
-	
+
 	// Wallet payment routes for regular bookings
 	bookings.POST("/wallet", middleware.AuthMiddleware(), bookingController.CreateBookingWithWallet)
 	bookings.POST("/inquiry/wallet", middleware.AuthMiddleware(), bookingController.CreateInquiryBookingWithWallet)
 
 	// Quote management routes (user authentication required)
-	quoteController := controllers.NewQuoteController()
+	quoteController := controllers.NewQuoteController(enhancedNotificationService)
 	{
 		// POST /api/v1/bookings/:id/accept-quote - Accept quote
 		bookings.POST("/:id/accept-quote", middleware.AuthMiddleware(), quoteController.AcceptQuote)

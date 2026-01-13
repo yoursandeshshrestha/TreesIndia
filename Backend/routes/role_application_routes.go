@@ -3,13 +3,14 @@ package routes
 import (
 	"treesindia/controllers"
 	"treesindia/middleware"
+	"treesindia/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupRoleApplicationRoutes sets up role application-related routes
-func SetupRoleApplicationRoutes(group *gin.RouterGroup) {
-	applicationController := controllers.NewRoleApplicationController()
+func SetupRoleApplicationRoutes(group *gin.RouterGroup, enhancedNotificationService *services.EnhancedNotificationService) {
+	applicationController := controllers.NewRoleApplicationController(enhancedNotificationService)
 	
 	// Role application routes (authenticated users)
 	applications := group.Group("/role-applications")

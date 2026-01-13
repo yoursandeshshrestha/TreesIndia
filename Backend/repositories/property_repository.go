@@ -278,8 +278,30 @@ func (pr *PropertyRepository) ApproveProperty(id uint, adminID uint) error {
 		logrus.Errorf("PropertyRepository.ApproveProperty database error: %v", err)
 		return err
 	}
-	
+
 	logrus.Infof("PropertyRepository.ApproveProperty successfully approved property ID: %d", id)
+	return nil
+}
+
+// RejectProperty rejects a user property listing (soft delete)
+func (pr *PropertyRepository) RejectProperty(id uint, adminID uint, reason string) error {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("PropertyRepository.RejectProperty panic: %v", r)
+		}
+	}()
+
+	logrus.Infof("PropertyRepository.RejectProperty called for property ID: %d by admin ID: %d (reason: %s)", id, adminID, reason)
+
+	// Soft delete the property
+	err := pr.GetDB().Delete(&models.Property{}, id).Error
+
+	if err != nil {
+		logrus.Errorf("PropertyRepository.RejectProperty database error: %v", err)
+		return err
+	}
+
+	logrus.Infof("PropertyRepository.RejectProperty successfully rejected property ID: %d", id)
 	return nil
 }
 

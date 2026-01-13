@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -14,31 +15,30 @@ import (
 )
 
 type RoleApplicationController struct {
-	applicationService *services.RoleApplicationService
-	cloudinaryService  *services.CloudinaryService
+	applicationService              *services.RoleApplicationService
+	cloudinaryService               *services.CloudinaryService
+	enhancedNotificationService     *services.EnhancedNotificationService
 }
 
-func NewRoleApplicationController() *RoleApplicationController {
+func NewRoleApplicationController(enhancedNotificationService *services.EnhancedNotificationService) *RoleApplicationController {
 	logrus.Info("Initializing RoleApplicationController...")
-	
+
 	applicationRepo := repositories.NewRoleApplicationRepository()
 	userRepo := repositories.NewUserRepository()
-	
+
 	logrus.Info("Repositories initialized")
-	
-	// Initialize notification services
-	
+
 	applicationService := services.NewRoleApplicationService(applicationRepo, userRepo, nil)
-	
+
 	// Initialize Cloudinary service
 	cloudinaryService, err := services.NewCloudinaryService()
 	if err != nil {
 		logrus.Errorf("Failed to initialize Cloudinary service: %v", err)
 		cloudinaryService = nil
 	}
-	
+
 	logrus.Info("Services initialized")
-	
+
 	// Ensure role_applications table exists
 	// DISABLED: Using Goose migrations instead of GORM AutoMigrate
 	/*
@@ -49,11 +49,12 @@ func NewRoleApplicationController() *RoleApplicationController {
 		logrus.Info("Role_applications table auto-migrated successfully")
 	}
 	*/
-	
+
 	logrus.Info("RoleApplicationController initialization completed")
 	return &RoleApplicationController{
-		applicationService: applicationService,
-		cloudinaryService:  cloudinaryService,
+		applicationService:          applicationService,
+		cloudinaryService:           cloudinaryService,
+		enhancedNotificationService: enhancedNotificationService,
 	}
 }
 
@@ -503,6 +504,9 @@ func (c *RoleApplicationController) UpdateApplication(ctx *gin.Context) {
 		return
 	}
 
+	// Send notification to user about application status
+	c.sendApplicationStatusNotification(application, req.Status)
+
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Application updated successfully", application))
 }
 
@@ -685,4 +689,57 @@ func (c *RoleApplicationController) DeleteApplication(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Application deleted successfully", nil))
+}
+
+// sendApplicationStatusNotification sends notification about application approval/rejection
+func (c *RoleApplicationController) sendApplicationStatusNotification(application *models.RoleApplication, status string) {
+	// This runs in a goroutine, so it doesn't block the response
+	go func() {
+		// Skip if notification service is not available
+		if c.enhancedNotificationService == nil {
+			logrus.Warn("Notification service not available, skipping application status notification")
+			return
+		}
+
+		var title, body string
+		var notifType models.NotificationType
+
+		roleTitle := "Worker"
+		if application.RequestedRole == string(models.RoleTypeBroker) {
+			roleTitle = "Broker"
+		}
+
+		if status == "approved" {
+			title = fmt.Sprintf("%s Application Approved!", roleTitle)
+			body = fmt.Sprintf("Congratulations! Your %s application has been approved. You can now start using your new role.", roleTitle)
+			notifType = models.NotificationTypeSystem
+		} else if status == "rejected" {
+			title = fmt.Sprintf("%s Application Rejected", roleTitle)
+			body = fmt.Sprintf("Unfortunately, your %s application has been rejected. Please contact support for more information.", roleTitle)
+			notifType = models.NotificationTypeSystem
+		} else {
+			return
+		}
+
+		notificationReq := &services.NotificationRequest{
+			UserID:   application.UserID,
+			Type:     notifType,
+			Title:    title,
+			Body:     body,
+			Data: map[string]string{
+				"type":           "role_application",
+				"applicationId":  fmt.Sprintf("%d", application.ID),
+				"requestedRole":  string(application.RequestedRole),
+				"status":         status,
+			},
+			Priority: "high",
+		}
+
+		_, err := c.enhancedNotificationService.SendNotification(notificationReq)
+		if err != nil {
+			logrus.Errorf("Failed to send %s notification for application %d: %v", status, application.ID, err)
+		} else {
+			logrus.Infof("Sent %s notification for %s application %d to user %d", status, roleTitle, application.ID, application.UserID)
+		}
+	}()
 }

@@ -41,9 +41,9 @@ func SetupRoutes(r *gin.Engine) {
 		SetupLocationRoutes(v1)
 		SetupGeoapifyRoutes(v1)
 		SetupGoogleMapsRoutes(v1)
-		SetupRoleApplicationRoutes(v1)
+		// Role application routes will be set up in main.go with notification service
 		SetupUserRoutes(v1)
-		SetupPropertyRoutes(v1)
+		// Property routes will be set up in main.go with notification service
 		SetupProjectRoutes(v1)
 		SetupSubscriptionRoutes(v1)
 		SetupWalletRoutes(v1)
@@ -60,12 +60,12 @@ func SetupRoutes(r *gin.Engine) {
 		SetupWorkerEarningsRoutes(v1)
 		SetupWorkerWithdrawalRoutes(v1)
 		SetupChatbotRoutes(v1)
-		
-		// Booking routes with booking system middleware
+
+		// Booking routes will be set up in main.go with notification service
+		// Worker inquiry routes with booking system middleware
 		bookingMiddleware := middleware.NewDynamicConfigMiddleware()
 		bookingGroup := v1.Group("")
 		bookingGroup.Use(bookingMiddleware.BookingSystem())
-		SetupBookingRoutes(bookingGroup)
 		SetupWorkerInquiryRoutes(bookingGroup)
 		// Worker assignment routes will be set up in main.go with chat service
 		

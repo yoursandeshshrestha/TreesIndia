@@ -808,8 +808,40 @@ func (ps *PropertyService) ApproveProperty(id uint, adminID uint) error {
 		logrus.Errorf("PropertyService.ApproveProperty repository error: %v", err)
 		return err
 	}
-	
+
 	logrus.Infof("PropertyService.ApproveProperty successfully approved property ID: %d", id)
+	return nil
+}
+
+// RejectProperty rejects a user property listing
+func (ps *PropertyService) RejectProperty(id uint, adminID uint, reason string) error {
+	logrus.Infof("PropertyService.RejectProperty called for property ID: %d by admin ID: %d", id, adminID)
+
+	// Check if property exists
+	property, err := ps.propertyRepo.GetByID(id)
+	if err != nil {
+		logrus.Errorf("PropertyService.RejectProperty property not found: %v", err)
+		return err
+	}
+
+	// Check if property is already approved
+	if property.IsApproved {
+		return fmt.Errorf("cannot reject an already approved property")
+	}
+
+	// Check if property is by broker or admin (they don't need approval)
+	if property.BrokerID != nil || property.UploadedByAdmin {
+		return fmt.Errorf("broker and admin properties cannot be rejected")
+	}
+
+	// Reject property (delete it)
+	err = ps.propertyRepo.RejectProperty(id, adminID, reason)
+	if err != nil {
+		logrus.Errorf("PropertyService.RejectProperty repository error: %v", err)
+		return err
+	}
+
+	logrus.Infof("PropertyService.RejectProperty successfully rejected property ID: %d (reason: %s)", id, reason)
 	return nil
 }
 

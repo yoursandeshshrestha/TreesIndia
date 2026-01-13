@@ -16,13 +16,14 @@ import (
 )
 
 type PropertyController struct {
-	propertyService  *services.PropertyService
-	cloudinaryService *services.CloudinaryService
+	propertyService             *services.PropertyService
+	cloudinaryService           *services.CloudinaryService
+	enhancedNotificationService *services.EnhancedNotificationService
 }
 
-func NewPropertyController() *PropertyController {
+func NewPropertyController(enhancedNotificationService *services.EnhancedNotificationService) *PropertyController {
 	logrus.Info("Initializing PropertyController...")
-	
+
 	// Initialize Cloudinary service
 	cloudinaryService, err := services.NewCloudinaryService()
 	if err != nil {
@@ -32,14 +33,15 @@ func NewPropertyController() *PropertyController {
 	} else {
 		logrus.Info("CloudinaryService initialized successfully")
 	}
-	
+
 	propertyService := services.NewPropertyService(cloudinaryService)
 	logrus.Info("PropertyService initialized")
-	
+
 	logrus.Info("PropertyController initialization completed")
 	return &PropertyController{
-		propertyService:  propertyService,
-		cloudinaryService: cloudinaryService,
+		propertyService:             propertyService,
+		cloudinaryService:           cloudinaryService,
+		enhancedNotificationService: enhancedNotificationService,
 	}
 }
 
@@ -940,13 +942,24 @@ func (pc *PropertyController) ApproveProperty(c *gin.Context) {
 		return
 	}
 	
+	// Get property before approval for notification
+	property, err := pc.propertyService.GetPropertyByID(uint(id))
+	if err != nil {
+		logrus.Errorf("PropertyController.ApproveProperty property not found: %v", err)
+		c.JSON(http.StatusNotFound, views.CreateErrorResponse("Property not found", err.Error()))
+		return
+	}
+
 	err = pc.propertyService.ApproveProperty(uint(id), userID.(uint))
 	if err != nil {
 		logrus.Errorf("PropertyController.ApproveProperty service error: %v", err)
 		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to approve property", err.Error()))
 		return
 	}
-	
+
+	// Send notification to property owner
+	pc.sendPropertyStatusNotification(property, "approved")
+
 	c.JSON(http.StatusOK, views.CreateSuccessResponse("Property approved successfully", nil))
 }
 
@@ -1273,6 +1286,114 @@ func (pc *PropertyController) parseFormDataPropertyUpdate(c *gin.Context, update
 			(*updates)["images"] = imageURLs
 		}
 	}
-	
+
 	return nil
+}
+
+// RejectProperty rejects a property listing (admin only)
+// @Summary Reject property listing
+// @Description Admin rejects a pending property listing
+// @Tags properties
+// @Accept json
+// @Produce json
+// @Param id path integer true "Property ID"
+// @Param reason body object{reason:string} false "Rejection reason"
+// @Success 200 {object} views.SuccessResponse
+// @Failure 400 {object} views.ErrorResponse
+// @Failure 401 {object} views.ErrorResponse
+// @Failure 403 {object} views.ErrorResponse
+// @Failure 404 {object} views.ErrorResponse
+// @Router /api/v1/admin/properties/{id}/reject [post]
+// @Security ApiKeyAuth
+func (pc *PropertyController) RejectProperty(c *gin.Context) {
+	logrus.Infof("PropertyController.RejectProperty called")
+
+	// Get user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		logrus.Errorf("PropertyController.RejectProperty user_id not found in context")
+		c.JSON(http.StatusUnauthorized, views.CreateErrorResponse("Unauthorized", "User not authenticated"))
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		logrus.Errorf("PropertyController.RejectProperty invalid ID: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid property ID", "ID must be a valid number"))
+		return
+	}
+
+	// Parse rejection reason from request body (optional)
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	// Get property before rejection for notification
+	property, err := pc.propertyService.GetPropertyByID(uint(id))
+	if err != nil {
+		logrus.Errorf("PropertyController.RejectProperty property not found: %v", err)
+		c.JSON(http.StatusNotFound, views.CreateErrorResponse("Property not found", err.Error()))
+		return
+	}
+
+	err = pc.propertyService.RejectProperty(uint(id), userID.(uint), req.Reason)
+	if err != nil {
+		logrus.Errorf("PropertyController.RejectProperty service error: %v", err)
+		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Failed to reject property", err.Error()))
+		return
+	}
+
+	// Send notification to property owner
+	pc.sendPropertyStatusNotification(property, "rejected")
+
+	c.JSON(http.StatusOK, views.CreateSuccessResponse("Property rejected successfully", nil))
+}
+
+// sendPropertyStatusNotification sends notification about property approval/rejection
+func (pc *PropertyController) sendPropertyStatusNotification(property *models.Property, status string) {
+	// This runs in a goroutine, so it doesn't block the response
+	go func() {
+		// Skip if notification service is not available
+		if pc.enhancedNotificationService == nil {
+			logrus.Warn("Notification service not available, skipping property status notification")
+			return
+		}
+
+		var title, body string
+		var notifType models.NotificationType
+
+		if status == "approved" {
+			title = "Property Approved!"
+			body = fmt.Sprintf("Your property listing '%s' has been approved and is now visible to potential buyers/renters.", property.Title)
+			notifType = models.NotificationTypeSystem
+		} else if status == "rejected" {
+			title = "Property Rejected"
+			body = fmt.Sprintf("Your property listing '%s' has been rejected. Please review and update your listing or contact support for more information.", property.Title)
+			notifType = models.NotificationTypeSystem
+		} else {
+			return
+		}
+
+		notificationReq := &services.NotificationRequest{
+			UserID:   property.UserID,
+			Type:     notifType,
+			Title:    title,
+			Body:     body,
+			Data: map[string]string{
+				"type":       "property",
+				"propertyId": fmt.Sprintf("%d", property.ID),
+				"status":     status,
+			},
+			Priority: "high",
+		}
+
+		_, err := pc.enhancedNotificationService.SendNotification(notificationReq)
+		if err != nil {
+			logrus.Errorf("Failed to send %s notification for property %d: %v", status, property.ID, err)
+		} else {
+			logrus.Infof("Sent %s notification for property %d to user %d", status, property.ID, property.UserID)
+		}
+	}()
 }

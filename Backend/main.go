@@ -248,6 +248,10 @@ func main() {
 	tokenCleanupService := services.NewTokenCleanupService(deviceManagementService)
 	tokenCleanupService.Start()
 
+	// Start payment segment reminder service
+	paymentSegmentReminderService := services.NewPaymentSegmentReminderService(enhancedNotificationService)
+	paymentSegmentReminderService.Start()
+
 	// Start Simple Conversation WebSocket service
 	go simpleConversationWsService.Start()
 
@@ -266,6 +270,15 @@ func main() {
 	bookingGroup := r.Group("/api/v1")
 	bookingGroup.Use(bookingMiddleware.BookingSystem())
 	routes.SetupWorkerAssignmentRoutes(bookingGroup, workerAssignmentService, enhancedNotificationService, db)
+
+	// Setup role application routes with notification service
+	routes.SetupRoleApplicationRoutes(r.Group("/api/v1"), enhancedNotificationService)
+
+	// Setup booking routes with notification service
+	routes.SetupBookingRoutes(bookingGroup, enhancedNotificationService)
+
+	// Setup property routes with notification service
+	routes.SetupPropertyRoutes(r.Group("/api/v1"), enhancedNotificationService)
 
 	// Setup notification routes (existing push notifications)
 	notificationController := controllers.NewNotificationController(enhancedNotificationService, deviceManagementService)
