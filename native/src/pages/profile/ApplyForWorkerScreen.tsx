@@ -1075,8 +1075,9 @@ export default function ApplyForWorkerScreen({ onBack }: ApplyForWorkerScreenPro
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Header */}
         <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">

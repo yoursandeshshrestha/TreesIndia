@@ -883,7 +883,7 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <KeyboardAvoidingView behavior="padding" className="flex-1" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Header */}
         <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
           <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
