@@ -8,7 +8,14 @@ import { toast } from "sonner";
 import Button from "@/components/Button/Base/Button";
 import { Loader } from "@/components/Loader";
 import { api } from "@/lib/api-client";
-import { EnhancedWorker, User as UserType } from "@/types/worker";
+import {
+  EnhancedWorker,
+  User as UserType,
+  ContactInfo,
+  WorkerAddress,
+  BankingInfo,
+  Documents
+} from "@/types/worker";
 
 export default function WorkerDetailPage() {
   const params = useParams();
@@ -70,14 +77,40 @@ export default function WorkerDetailPage() {
         };
 
         // Handle both camelCase and snake_case from API
-        const workerData = user.worker as any;
+        interface WorkerApiData {
+          id?: number;
+          ID?: number;
+          created_at?: string;
+          CreatedAt?: string;
+          updated_at?: string;
+          UpdatedAt?: string;
+          deleted_at?: string | null;
+          DeletedAt?: string | null;
+          user_id: number;
+          role_application_id?: number | null;
+          worker_type: string;
+          contact_info: ContactInfo | string;
+          address: WorkerAddress | string;
+          banking_info: BankingInfo | string;
+          documents: Documents | string;
+          skills: string[] | string;
+          experience_years: number;
+          is_available: boolean;
+          rating: number;
+          total_bookings: number;
+          earnings: number;
+          total_jobs: number;
+          is_active: boolean;
+        }
+
+        const workerData = user.worker as unknown as WorkerApiData;
 
         const transformedWorker: EnhancedWorker = {
-          ID: workerData.id || workerData.ID,
-          id: workerData.id || workerData.ID,
-          CreatedAt: workerData.created_at || workerData.CreatedAt,
-          UpdatedAt: workerData.updated_at || workerData.UpdatedAt,
-          DeletedAt: workerData.deleted_at || workerData.DeletedAt,
+          ID: workerData.ID ?? workerData.id ?? 0,
+          id: workerData.ID ?? workerData.id ?? 0,
+          CreatedAt: workerData.CreatedAt ?? workerData.created_at ?? "",
+          UpdatedAt: workerData.UpdatedAt ?? workerData.updated_at ?? "",
+          DeletedAt: workerData.DeletedAt ?? workerData.deleted_at ?? null,
           user_id: workerData.user_id,
           role_application_id: workerData.role_application_id,
           worker_type: workerData.worker_type,
