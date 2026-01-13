@@ -109,15 +109,13 @@ function WorkersPage() {
       const response = data as WorkersResponse;
 
       // Transform the data to map ID to id for compatibility
-      // Note: The API returns users with worker data preloaded
+      // Note: The API returns users with worker fields at the top level
       const transformedWorkers = (response?.data?.users || [])
         .filter((user: User) => {
-          // Only include users that have worker data
-          return user.worker != null;
+          // Only include users that have user_type as worker
+          return user.user_type === "worker";
         })
         .map((user: User) => {
-          const worker = user.worker!; // Non-null assertion since we filtered for it
-
           // Helper function to parse JSON if it's a string, otherwise return as-is
           const parseIfString = <T,>(value: T | string, defaultValue: T): T => {
             if (!value) return defaultValue;
@@ -131,43 +129,49 @@ function WorkersPage() {
             return value as T;
           };
 
+          // Extract worker data from the worker object if it exists, otherwise use defaults
+          const worker = user.worker;
+
+          // Handle both uppercase ID and lowercase id from API
+          const userId = user.ID || user.id || (user as { id?: number }).id || 0;
+
           return {
-            ID: user.ID, // Use user ID for navigation
-            id: user.ID, // Add lowercase id for compatibility
-            CreatedAt: worker.CreatedAt,
-            UpdatedAt: worker.UpdatedAt,
-            DeletedAt: worker.DeletedAt,
-            user_id: worker.user_id,
-            role_application_id: worker.role_application_id,
-            worker_type: worker.worker_type,
-            contact_info: parseIfString(worker.contact_info, { alternative_number: "" }),
-            address: parseIfString(worker.address, {
+            ID: userId, // Use user ID for navigation
+            id: userId, // Add lowercase id for compatibility
+            CreatedAt: worker?.CreatedAt || user.CreatedAt,
+            UpdatedAt: worker?.UpdatedAt || user.UpdatedAt,
+            DeletedAt: worker?.DeletedAt || user.DeletedAt,
+            user_id: worker?.user_id || userId,
+            role_application_id: worker?.role_application_id || null,
+            worker_type: worker?.worker_type || user.worker_type || "normal",
+            contact_info: parseIfString(worker?.contact_info || "", { alternative_number: "" }),
+            address: parseIfString(worker?.address || "", {
               street: "",
               city: "",
               state: "",
               pincode: "",
               landmark: "",
             }),
-            banking_info: parseIfString(worker.banking_info, {
+            banking_info: parseIfString(worker?.banking_info || "", {
               account_number: "",
               ifsc_code: "",
               bank_name: "",
               account_holder_name: "",
             }),
-            documents: parseIfString(worker.documents, {
+            documents: parseIfString(worker?.documents || "", {
               aadhar_card: "",
               pan_card: "",
               profile_pic: user.avatar || "",
               police_verification: "",
             }),
-            skills: parseIfString(worker.skills, []),
-            experience_years: worker.experience_years,
-            is_available: worker.is_available,
-            rating: worker.rating,
-            total_bookings: worker.total_bookings,
-            earnings: worker.earnings,
-            total_jobs: worker.total_jobs,
-            is_active: worker.is_active,
+            skills: parseIfString(worker?.skills || "", []),
+            experience_years: worker?.experience_years || 0,
+            is_available: worker?.is_available ?? true,
+            rating: worker?.rating || 0,
+            total_bookings: worker?.total_bookings || 0,
+            earnings: worker?.earnings || 0,
+            total_jobs: worker?.total_jobs || 0,
+            is_active: worker?.is_active ?? user.is_active,
             user: {
               ...user,
               id: user.ID, // Add lowercase id for compatibility
@@ -262,17 +266,12 @@ function WorkersPage() {
             search: "",
             is_active: "",
             worker_type: "",
-            user_type: "worker", // Keep worker filter
+            user_type: "worker",
             date_from: "",
             date_to: "",
           });
           setLocalSearch("");
           setIsSearching(false);
-        }}
-        user_type={filters.user_type}
-        onUserTypeChange={(value) => {
-          setFilters((prev) => ({ ...prev, user_type: value }));
-          setCurrentPage(1);
         }}
         isSearching={isSearching}
       />

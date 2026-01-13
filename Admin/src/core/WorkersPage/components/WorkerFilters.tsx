@@ -8,11 +8,9 @@ interface WorkerFiltersProps {
   search: string;
   is_active: string;
   worker_type: string;
-  user_type: string;
   onSearchChange: (value: string) => void;
   onActiveChange: (value: string) => void;
   onWorkerTypeChange: (value: string) => void;
-  onUserTypeChange: (value: string) => void;
   onClear: () => void;
   isSearching: boolean;
 }
@@ -21,11 +19,9 @@ function WorkerFilters({
   search,
   is_active,
   worker_type,
-  user_type,
   onSearchChange,
   onActiveChange,
   onWorkerTypeChange,
-  onUserTypeChange,
   onClear,
   isSearching,
 }: WorkerFiltersProps) {
@@ -68,20 +64,6 @@ function WorkerFilters({
         value={worker_type}
         onChange={(val) => onWorkerTypeChange(val as string)}
         placeholder="Worker Type"
-        className="w-44 h-10"
-        width="13rem"
-      />
-
-      <SearchableDropdown
-        options={[
-          { label: "All Users", value: "" },
-          { label: "Worker", value: "worker" },
-          { label: "Broker", value: "broker" },
-          { label: "Customer", value: "customer" },
-        ]}
-        value={user_type}
-        onChange={(val) => onUserTypeChange(val as string)}
-        placeholder="User Type"
         className="w-44 h-10"
         width="13rem"
       />

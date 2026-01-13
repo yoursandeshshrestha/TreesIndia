@@ -61,8 +61,8 @@ export default function WorkerDetailPage() {
         return;
       }
 
-      // If user has worker data, transform it to EnhancedWorker format
-      if (user.worker && user.user_type === "worker") {
+      // Check if user is a worker (either has nested worker object or worker_type at top level)
+      if (user.user_type === "worker" && (user.worker || user.worker_type)) {
         // Helper function to parse data that might be a string or already an object
         const parseIfString = <T,>(data: T | string, fallback: T): T => {
           if (!data) return fallback;
@@ -103,47 +103,70 @@ export default function WorkerDetailPage() {
           is_active: boolean;
         }
 
-        const workerData = user.worker as unknown as WorkerApiData;
+        const workerData = user.worker as unknown as WorkerApiData | undefined;
 
+        // Use worker data if available, otherwise use defaults
         const transformedWorker: EnhancedWorker = {
-          ID: workerData.ID ?? workerData.id ?? 0,
-          id: workerData.ID ?? workerData.id ?? 0,
-          CreatedAt: workerData.CreatedAt ?? workerData.created_at ?? "",
-          UpdatedAt: workerData.UpdatedAt ?? workerData.updated_at ?? "",
-          DeletedAt: workerData.DeletedAt ?? workerData.deleted_at ?? null,
-          user_id: workerData.user_id,
-          role_application_id: workerData.role_application_id,
-          worker_type: workerData.worker_type,
-          contact_info: parseIfString(workerData.contact_info, {
-            alternative_number: "",
-          }),
-          address: parseIfString(workerData.address, {
-            street: "",
-            city: "",
-            state: "",
-            pincode: "",
-            landmark: "",
-          }),
-          banking_info: parseIfString(workerData.banking_info, {
-            account_number: "",
-            ifsc_code: "",
-            bank_name: "",
-            account_holder_name: "",
-          }),
-          documents: parseIfString(workerData.documents, {
-            aadhar_card: "",
-            pan_card: "",
-            profile_pic: user.avatar || "",
-            police_verification: "",
-          }),
-          skills: parseIfString(workerData.skills, []),
-          experience_years: workerData.experience_years,
-          is_available: workerData.is_available,
-          rating: workerData.rating,
-          total_bookings: workerData.total_bookings,
-          earnings: workerData.earnings,
-          total_jobs: workerData.total_jobs,
-          is_active: workerData.is_active,
+          ID: workerData?.ID ?? workerData?.id ?? user.ID,
+          id: workerData?.ID ?? workerData?.id ?? user.id ?? user.ID,
+          CreatedAt: workerData?.CreatedAt ?? workerData?.created_at ?? user.CreatedAt,
+          UpdatedAt: workerData?.UpdatedAt ?? workerData?.updated_at ?? user.UpdatedAt,
+          DeletedAt: workerData?.DeletedAt ?? workerData?.deleted_at ?? null,
+          user_id: workerData?.user_id ?? user.ID,
+          role_application_id: workerData?.role_application_id ?? null,
+          worker_type: workerData?.worker_type ?? (user as { worker_type?: string }).worker_type ?? "normal",
+          contact_info: workerData?.contact_info
+            ? parseIfString(workerData.contact_info, { alternative_number: "" })
+            : { alternative_number: "" },
+          address: workerData?.address
+            ? parseIfString(workerData.address, {
+                street: "",
+                city: "",
+                state: "",
+                pincode: "",
+                landmark: "",
+              })
+            : {
+                street: "",
+                city: "",
+                state: "",
+                pincode: "",
+                landmark: "",
+              },
+          banking_info: workerData?.banking_info
+            ? parseIfString(workerData.banking_info, {
+                account_number: "",
+                ifsc_code: "",
+                bank_name: "",
+                account_holder_name: "",
+              })
+            : {
+                account_number: "",
+                ifsc_code: "",
+                bank_name: "",
+                account_holder_name: "",
+              },
+          documents: workerData?.documents
+            ? parseIfString(workerData.documents, {
+                aadhar_card: "",
+                pan_card: "",
+                profile_pic: user.avatar || "",
+                police_verification: "",
+              })
+            : {
+                aadhar_card: "",
+                pan_card: "",
+                profile_pic: user.avatar || "",
+                police_verification: "",
+              },
+          skills: workerData?.skills ? parseIfString(workerData.skills, []) : [],
+          experience_years: workerData?.experience_years ?? 0,
+          is_available: workerData?.is_available ?? true,
+          rating: workerData?.rating ?? 0,
+          total_bookings: workerData?.total_bookings ?? 0,
+          earnings: workerData?.earnings ?? 0,
+          total_jobs: workerData?.total_jobs ?? 0,
+          is_active: workerData?.is_active ?? user.is_active,
           user: {
             ...user,
             id: user.ID,
@@ -229,10 +252,11 @@ export default function WorkerDetailPage() {
               </h1>
               <p className="text-sm text-gray-600">
                 Joined on{" "}
-                {format(
-                  new Date(worker.user?.CreatedAt || worker.CreatedAt),
-                  "MMM dd, yyyy"
-                )}
+                {(() => {
+                  const dateStr = worker.user?.CreatedAt || worker.CreatedAt;
+                  const date = new Date(dateStr);
+                  return !isNaN(date.getTime()) ? format(date, "MMM dd, yyyy") : "N/A";
+                })()}
               </p>
             </div>
           </div>
@@ -326,12 +350,11 @@ export default function WorkerDetailPage() {
                       <div>
                         <p className="text-sm text-gray-600">Joined</p>
                         <p className="font-medium">
-                          {format(
-                            new Date(
-                              worker.user?.CreatedAt || worker.CreatedAt
-                            ),
-                            "MMM dd, yyyy"
-                          )}
+                          {(() => {
+                            const dateStr = worker.user?.CreatedAt || worker.CreatedAt;
+                            const date = new Date(dateStr);
+                            return !isNaN(date.getTime()) ? format(date, "MMM dd, yyyy") : "N/A";
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -393,7 +416,7 @@ export default function WorkerDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Performance & Statistics
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">
                     {worker.total_jobs}
@@ -411,12 +434,6 @@ export default function WorkerDetailPage() {
                     ₹{worker.earnings.toFixed(2)}
                   </div>
                   <div className="text-sm text-gray-600">Total Earnings</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {worker.rating.toFixed(1)}
-                  </div>
-                  <div className="text-sm text-gray-600">Rating</div>
                 </div>
               </div>
             </div>
@@ -628,17 +645,17 @@ export default function WorkerDetailPage() {
                     ₹{worker.user?.wallet_balance?.toFixed(2) || "0.00"}
                   </span>
                 </div>
-                {worker.user?.last_login_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Last Login</span>
-                    <span className="font-medium text-xs">
-                      {format(
-                        new Date(worker.user.last_login_at),
-                        "MMM dd, yyyy HH:mm"
-                      )}
-                    </span>
-                  </div>
-                )}
+                {worker.user?.last_login_at && (() => {
+                  const date = new Date(worker.user.last_login_at);
+                  return !isNaN(date.getTime()) ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Last Login</span>
+                      <span className="font-medium text-xs">
+                        {format(date, "MMM dd, yyyy HH:mm")}
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </div>
 

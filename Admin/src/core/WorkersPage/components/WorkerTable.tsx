@@ -1,7 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Eye, Users, Star } from "lucide-react";
-import { format } from "date-fns";
+import { Trash2, Eye, Users } from "lucide-react";
 import Table from "@/components/Table/Table";
 import { EnhancedWorker } from "@/types/worker";
 
@@ -76,16 +75,6 @@ function WorkerTable({
     return { city: "Not provided", state: "Not provided" };
   };
 
-  const getSkills = (worker: EnhancedWorker) => {
-    if (worker.skills && worker.skills.length > 0) {
-      return (
-        worker.skills.slice(0, 3).join(", ") +
-        (worker.skills.length > 3 ? "..." : "")
-      );
-    }
-    return "No skills listed";
-  };
-
   const columns = [
     {
       header: "Worker",
@@ -135,52 +124,6 @@ function WorkerTable({
           </div>
         );
       },
-    },
-    {
-      header: "Skills",
-      accessor: (worker: EnhancedWorker) => (
-        <div className="text-sm text-gray-900 max-w-xs truncate">
-          {getSkills(worker)}
-        </div>
-      ),
-    },
-    {
-      header: "Rating",
-      accessor: (worker: EnhancedWorker) => (
-        <div className="flex items-center">
-          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-          <span className="ml-1 text-sm text-gray-900">
-            {worker.rating.toFixed(1)}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: "Experience",
-      accessor: (worker: EnhancedWorker) => (
-        <div className="text-sm text-gray-500">
-          {worker.experience_years} years
-        </div>
-      ),
-    },
-    {
-      header: "Jobs",
-      accessor: (worker: EnhancedWorker) => (
-        <div className="text-sm text-gray-500">
-          {worker.total_jobs} completed
-        </div>
-      ),
-    },
-    {
-      header: "Joined",
-      accessor: (worker: EnhancedWorker) => (
-        <div className="text-sm text-gray-500">
-          {format(
-            new Date(worker.user?.CreatedAt || worker.CreatedAt),
-            "MMM dd, yyyy"
-          )}
-        </div>
-      ),
     },
   ];
 

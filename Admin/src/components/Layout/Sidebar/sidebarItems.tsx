@@ -240,7 +240,7 @@ export const sidebarItems: SidebarItem[] = [
       createMenuItem(
         "workforce-workers",
         "Workers",
-        "/dashboard/marketplace/workforce/workers",
+        "/dashboard/workers",
         <UserCheck size={16} />,
         ["super_admin", "vendor_manager"]
       ),

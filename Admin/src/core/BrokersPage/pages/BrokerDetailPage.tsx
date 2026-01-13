@@ -45,7 +45,7 @@ export default function BrokerDetailPage() {
       }
 
       // If user has broker data, transform it to EnhancedBroker format
-      if (user.broker && user.user_type === "broker") {
+      if (user.user_type === "broker") {
         // Helper function to parse data that might be a string or already an object
         const parseIfString = <T,>(data: T | string, fallback: T): T => {
           if (!data) return fallback;
@@ -59,32 +59,49 @@ export default function BrokerDetailPage() {
           return data as T;
         };
 
+        const brokerData = user.broker;
+        const userId = user.ID || user.id || 0;
+
         const transformedBroker: EnhancedBroker = {
-          ID: user.broker.ID,
-          id: user.broker.ID,
-          CreatedAt: user.broker.CreatedAt,
-          UpdatedAt: user.broker.UpdatedAt,
-          DeletedAt: user.broker.DeletedAt,
-          user_id: user.broker.user_id,
-          role_application_id: user.broker.role_application_id,
-          contact_info: parseIfString(user.broker.contact_info, {
-            alternative_number: "",
-          }),
-          address: parseIfString(user.broker.address, {
-            street: "",
-            city: "",
-            state: "",
-            pincode: "",
-            landmark: "",
-          }),
-          documents: parseIfString(user.broker.documents, {
-            aadhar_card: "",
-            pan_card: "",
-            profile_pic: user.avatar || "",
-          }),
-          license: user.broker.license,
-          agency: user.broker.agency,
-          is_active: user.broker.is_active,
+          ID: brokerData?.ID || userId,
+          id: brokerData?.ID || userId,
+          CreatedAt: brokerData?.CreatedAt || user.CreatedAt,
+          UpdatedAt: brokerData?.UpdatedAt || user.UpdatedAt,
+          DeletedAt: brokerData?.DeletedAt || user.DeletedAt,
+          user_id: brokerData?.user_id || userId,
+          role_application_id: brokerData?.role_application_id || null,
+          contact_info: brokerData?.contact_info
+            ? parseIfString(brokerData.contact_info, { alternative_number: "" })
+            : { alternative_number: "" },
+          address: brokerData?.address
+            ? parseIfString(brokerData.address, {
+                street: "",
+                city: "",
+                state: "",
+                pincode: "",
+                landmark: "",
+              })
+            : {
+                street: "",
+                city: "",
+                state: "",
+                pincode: "",
+                landmark: "",
+              },
+          documents: brokerData?.documents
+            ? parseIfString(brokerData.documents, {
+                aadhar_card: "",
+                pan_card: "",
+                profile_pic: user.avatar || "",
+              })
+            : {
+                aadhar_card: "",
+                pan_card: "",
+                profile_pic: user.avatar || "",
+              },
+          license: brokerData?.license || "",
+          agency: brokerData?.agency || "",
+          is_active: brokerData?.is_active ?? user.is_active,
           user: {
             ...user,
             id: user.ID,
@@ -92,7 +109,7 @@ export default function BrokerDetailPage() {
         };
         setBroker(transformedBroker);
       } else {
-        setError("User is not a broker or has no broker record");
+        setError("User is not a broker");
       }
     } catch (error) {
       console.error("Error fetching broker:", error);
@@ -147,10 +164,13 @@ export default function BrokerDetailPage() {
               </h1>
               <p className="text-sm text-gray-600">
                 Joined on{" "}
-                {format(
-                  new Date(broker.user?.CreatedAt || broker.CreatedAt),
-                  "MMM dd, yyyy"
-                )}
+                {(() => {
+                  const dateStr = broker.user?.CreatedAt || broker.CreatedAt;
+                  const date = new Date(dateStr);
+                  return !isNaN(date.getTime())
+                    ? format(date, "MMM dd, yyyy")
+                    : "N/A";
+                })()}
               </p>
             </div>
           </div>
@@ -222,12 +242,14 @@ export default function BrokerDetailPage() {
                       <div>
                         <p className="text-sm text-gray-600">Joined</p>
                         <p className="font-medium">
-                          {format(
-                            new Date(
-                              broker.user?.CreatedAt || broker.CreatedAt
-                            ),
-                            "MMM dd, yyyy"
-                          )}
+                          {(() => {
+                            const dateStr =
+                              broker.user?.CreatedAt || broker.CreatedAt;
+                            const date = new Date(dateStr);
+                            return !isNaN(date.getTime())
+                              ? format(date, "MMM dd, yyyy")
+                              : "N/A";
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -419,17 +441,18 @@ export default function BrokerDetailPage() {
                     ₹{broker.user?.wallet_balance?.toFixed(2) || "0.00"}
                   </span>
                 </div>
-                {broker.user?.last_login_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Last Login</span>
-                    <span className="font-medium text-xs">
-                      {format(
-                        new Date(broker.user.last_login_at),
-                        "MMM dd, yyyy HH:mm"
-                      )}
-                    </span>
-                  </div>
-                )}
+                {broker.user?.last_login_at &&
+                  !isNaN(new Date(broker.user.last_login_at).getTime()) && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Last Login</span>
+                      <span className="font-medium text-xs">
+                        {format(
+                          new Date(broker.user.last_login_at),
+                          "MMM dd, yyyy HH:mm"
+                        )}
+                      </span>
+                    </div>
+                  )}
               </div>
             </div>
           </div>

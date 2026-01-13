@@ -183,6 +183,7 @@ func (ac *AdminController) SeedAdminUsers(c *gin.Context) {
 // @Param page query int false "Page number (default: 1)"
 // @Param limit query int false "Items per page (default: 10, max: 100)"
 // @Param user_type query string false "Filter by user type (normal, worker, broker, admin)"
+// @Param worker_type query string false "Filter by worker type (normal, treesindia_worker) - only applicable when user_type=worker"
 // @Param is_active query string false "Filter by active status (true, false)"
 // @Param role_application_status query string false "Filter by role application status (none, pending, approved, rejected)"
 // @Param has_active_subscription query string false "Filter by subscription status (true, false)"
@@ -239,6 +240,16 @@ func (ac *AdminController) GetAllUsers(c *gin.Context) {
 				hasWorkerJoin = true
 			}
 		}
+	}
+
+	// Filter by worker_type if provided (only applicable when user_type is worker)
+	if workerType := c.Query("worker_type"); workerType != "" {
+		// Join workers table if not already joined
+		if !hasWorkerJoin {
+			query = query.Joins("JOIN workers ON users.id = workers.user_id")
+			hasWorkerJoin = true
+		}
+		query = query.Where("workers.worker_type = ?", workerType)
 	}
 
 	if isActive := c.Query("is_active"); isActive != "" {

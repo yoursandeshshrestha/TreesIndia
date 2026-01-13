@@ -110,56 +110,69 @@ function BrokersPage() {
 
       // Transform the data to map ID to id for compatibility
       const transformedBrokers: EnhancedBroker[] = response.data.users
-        .filter((user) => user.broker)
+        .filter((user) => user.user_type === "broker")
         .map((user) => {
-          const broker = user.broker!;
-          let contactInfo, address, documents;
+          const broker = user.broker;
 
-          try {
-            contactInfo = JSON.parse(broker.contact_info);
-          } catch {
-            contactInfo = { alternative_number: "" };
-          }
+          // Helper function to parse JSON strings
+          const parseIfString = <T,>(value: T | string, defaultValue: T): T => {
+            if (!value) return defaultValue;
+            if (typeof value === 'string') {
+              try {
+                return JSON.parse(value);
+              } catch {
+                return defaultValue;
+              }
+            }
+            return value as T;
+          };
 
-          try {
-            address = JSON.parse(broker.address);
-          } catch {
-            address = {
-              street: "",
-              city: "",
-              state: "",
-              pincode: "",
-              landmark: "",
-            };
-          }
-
-          try {
-            documents = JSON.parse(broker.documents);
-          } catch {
-            documents = {
-              aadhar_card: "",
-              pan_card: "",
-              profile_pic: "",
-            };
-          }
+          // Handle both uppercase ID and lowercase id from API
+          const userId = user.ID || user.id || (user as { id?: number }).id || 0;
 
           return {
-            ID: broker.ID,
-            id: broker.ID, // For compatibility
-            CreatedAt: broker.CreatedAt,
-            UpdatedAt: broker.UpdatedAt,
-            DeletedAt: broker.DeletedAt,
-            user_id: broker.user_id,
-            role_application_id: broker.role_application_id,
-            contact_info: contactInfo,
-            address: address,
-            documents: documents,
-            license: broker.license,
-            agency: broker.agency,
-            is_active: broker.is_active,
+            ID: broker?.ID || userId,
+            id: broker?.ID || userId, // For compatibility
+            CreatedAt: broker?.CreatedAt || user.CreatedAt,
+            UpdatedAt: broker?.UpdatedAt || user.UpdatedAt,
+            DeletedAt: broker?.DeletedAt || user.DeletedAt,
+            user_id: broker?.user_id || userId,
+            role_application_id: broker?.role_application_id || null,
+            contact_info: broker?.contact_info
+              ? parseIfString(broker.contact_info, { alternative_number: "" })
+              : { alternative_number: "" },
+            address: broker?.address
+              ? parseIfString(broker.address, {
+                  street: "",
+                  city: "",
+                  state: "",
+                  pincode: "",
+                  landmark: "",
+                })
+              : {
+                  street: "",
+                  city: "",
+                  state: "",
+                  pincode: "",
+                  landmark: "",
+                },
+            documents: broker?.documents
+              ? parseIfString(broker.documents, {
+                  aadhar_card: "",
+                  pan_card: "",
+                  profile_pic: user.avatar || "",
+                })
+              : {
+                  aadhar_card: "",
+                  pan_card: "",
+                  profile_pic: user.avatar || "",
+                },
+            license: broker?.license || "",
+            agency: broker?.agency || "",
+            is_active: broker?.is_active ?? user.is_active,
             user: {
               ...user,
-              id: user.ID,
+              id: userId,
             },
           };
         });

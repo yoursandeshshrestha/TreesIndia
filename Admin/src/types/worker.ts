@@ -21,6 +21,9 @@ export interface User {
   has_active_subscription: boolean;
   subscription_expiry_date?: string | null;
 
+  // Worker type at top level (for API responses that return flattened data)
+  worker_type?: string;
+
   // Worker and Broker relationships
   worker?: Worker | null;
   broker?: Broker | null;
