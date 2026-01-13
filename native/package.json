@@ -6,7 +6,7 @@
     "ios": "expo run:ios",
     "start": "expo start",
     "prebuild": "expo prebuild",
-    "": "./build-apk.sh",
+    "apk": "./build-apk.sh",
     "diagnose": "./diagnose-build.sh",
     "clean": "rm -rf node_modules/.cache .expo android/app/build android/build",
     "clean:full": "rm -rf node_modules/.cache .expo android/app/build android/build android/.gradle && cd android && ./gradlew clean && cd ..",
