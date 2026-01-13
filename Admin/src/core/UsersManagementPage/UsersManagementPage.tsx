@@ -12,6 +12,7 @@ import { api } from "@/lib/api-client";
 import UserHeader from "@/core/UsersManagementPage/components/UserHeader";
 import UserFilters from "@/core/UsersManagementPage/components/UserFilters";
 import UserTable from "@/core/UsersManagementPage/components/UserTable";
+import UserTabs, { UserTabType } from "@/core/UsersManagementPage/components/UserTabs";
 import CreateEditUserModal from "@/core/UsersManagementPage/components/CreateEditUserModal";
 import UserPreviewModal from "@/core/UsersManagementPage/components/UserPreviewModal";
 import ManualWalletAdditionForm from "@/core/UsersManagementPage/components/ManualWalletAdditionForm";
@@ -38,6 +39,15 @@ function UsersManagementPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
+  // Stats for tabs
+  const [userStats, setUserStats] = useState({
+    total: 0,
+    workers: 0,
+    brokers: 0,
+    admins: 0,
+    normal: 0,
+  });
+
   const [selectionMode] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -51,6 +61,9 @@ function UsersManagementPage() {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<UserTabType>("all");
 
   // Filters
   const [filters, setFilters] = useState<UserFilterState>({
@@ -93,6 +106,30 @@ function UsersManagementPage() {
     }
   }, [debouncedSearch, filters.search]);
 
+  const loadUserStats = useCallback(async () => {
+    try {
+      // Fetch user stats from the backend endpoint
+      const data = await api.get(`/admin/users/stats`);
+      const statsData = (data as BackendApiResponse<{
+        total: number;
+        workers: number;
+        brokers: number;
+        admins: number;
+        normal: number;
+      }>).data;
+
+      setUserStats({
+        total: statsData?.total || 0,
+        workers: statsData?.workers || 0,
+        brokers: statsData?.brokers || 0,
+        admins: statsData?.admins || 0,
+        normal: statsData?.normal || 0,
+      });
+    } catch (err) {
+      console.error("Failed to load user stats", err);
+    }
+  }, []);
+
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
 
@@ -125,6 +162,11 @@ function UsersManagementPage() {
     }
   }, [currentPage, itemsPerPage, filters]);
 
+  // Load stats on mount
+  useEffect(() => {
+    loadUserStats();
+  }, [loadUserStats]);
+
   // Load users when filters or pagination changes
   useEffect(() => {
     loadUsers();
@@ -136,6 +178,7 @@ function UsersManagementPage() {
       toast.success("User created successfully");
       setIsCreateModalOpen(false);
       loadUsers();
+      loadUserStats(); // Refresh stats
     } catch (err) {
       console.error("Failed to create user", err);
       toast.error("Failed to create user");
@@ -165,6 +208,7 @@ function UsersManagementPage() {
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
       loadUsers();
+      loadUserStats(); // Refresh stats
     } catch (err) {
       console.error("Failed to delete user", err);
       // Extract error message from ApiError
@@ -223,6 +267,17 @@ function UsersManagementPage() {
     loadUsers(); // Refresh the user list to show updated wallet balance
   };
 
+  const handleTabChange = (tab: UserTabType) => {
+    setActiveTab(tab);
+    // Update the user_type filter based on the active tab
+    if (tab === "all") {
+      setFilters((prev) => ({ ...prev, user_type: "" }));
+    } else {
+      setFilters((prev) => ({ ...prev, user_type: tab }));
+    }
+    setCurrentPage(1);
+  };
+
   // Filter users based on current filters
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -247,6 +302,7 @@ function UsersManagementPage() {
       matchesSearch && matchesUserType && matchesActive && matchesSubscription
     );
   });
+
 
   if (isLoading && users.length === 0) {
     return (
@@ -332,6 +388,15 @@ function UsersManagementPage() {
         }
       />
 
+      <div className="mt-6">
+        <UserTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          stats={userStats}
+          isLoading={isLoading}
+        />
+      </div>
+
       <UserFilters
         search={localSearch}
         user_type={filters.user_type}
@@ -343,6 +408,12 @@ function UsersManagementPage() {
         }}
         onUserTypeChange={(value) => {
           setFilters((prev) => ({ ...prev, user_type: value }));
+          // Update active tab when user type filter changes
+          if (value === "") setActiveTab("all");
+          else if (value === "worker") setActiveTab("worker");
+          else if (value === "broker") setActiveTab("broker");
+          else if (value === "admin") setActiveTab("admin");
+          else if (value === "normal") setActiveTab("normal");
           setCurrentPage(1);
         }}
         onIsActiveChange={(value) => {
@@ -354,6 +425,7 @@ function UsersManagementPage() {
           setCurrentPage(1);
         }}
         onClear={() => {
+          setActiveTab("all");
           setFilters({
             search: "",
             user_type: "",

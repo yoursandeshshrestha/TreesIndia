@@ -248,22 +248,31 @@ const UserTable = ({
           selectedRows={users.filter(
             (user) => user.ID && selectedUsers.includes(user.ID.toString())
           )}
-          actions={[
-            {
-              label: "Edit User",
-              onClick: (row: User) => onEditUser(row),
-              className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
-              icon: <Edit2 size={14} />,
-              disabled: () => selectionMode,
-            },
-            {
+          actions={(row: User) => {
+            const baseActions = [];
+
+            // Only show Edit button for normal and admin users
+            if (row.user_type !== "worker" && row.user_type !== "broker") {
+              baseActions.push({
+                label: "Edit User",
+                onClick: (row: User) => onEditUser(row),
+                className: "text-blue-700 bg-blue-100 hover:bg-blue-200",
+                icon: <Edit2 size={14} />,
+                disabled: () => selectionMode,
+              });
+            }
+
+            // Add to Wallet action for all users
+            baseActions.push({
               label: "Add to Wallet",
               onClick: (row: User) => onWalletAddition(row),
               className: "text-green-700 bg-green-100 hover:bg-green-200",
               icon: <IndianRupee size={14} />,
               disabled: () => selectionMode,
-            },
-            {
+            });
+
+            // Activate/Deactivate action for all users except admin
+            baseActions.push({
               label: (row: User) =>
                 row.is_active ? "Deactivate User" : "Activate User",
               onClick: (row: User) => onToggleActivation(row),
@@ -273,16 +282,20 @@ const UserTable = ({
                   : "text-green-700 bg-green-100 hover:bg-green-200",
               disabled: (row: User) =>
                 selectionMode || row.user_type === "admin",
-            },
-            {
+            });
+
+            // Delete action for all users except admin
+            baseActions.push({
               label: "Delete",
               onClick: (row: User) => onDeleteUser(row),
               className: "text-red-700 bg-red-100 hover:bg-red-200",
               icon: <Trash2 size={14} />,
               disabled: (row: User) =>
                 selectionMode || row.user_type === "admin",
-            },
-          ]}
+            });
+
+            return baseActions;
+          }}
           onRowClick={onRowClick}
         />
       </div>
