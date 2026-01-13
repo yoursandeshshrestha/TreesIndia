@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, AuthResponse, RequestOTPResponse } from '../../types/auth';
 import { apiClient, tokenStorage } from '../../services';
+import { workerProfileService, UpdateWorkerProfileRequest } from '../../services/api/workerProfile.service';
+import { brokerProfileService, UpdateBrokerProfileRequest } from '../../services/api/brokerProfile.service';
 
 // Initial state
 const initialState: AuthState = {
@@ -10,6 +12,8 @@ const initialState: AuthState = {
   error: null,
   hasActiveSubscription: false,
   subscriptionExpiryDate: null,
+  workerProfile: null,
+  brokerProfile: null,
 };
 
 // Async thunks
@@ -87,7 +91,6 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     await apiClient.logout();
     return true;
   } catch (err) {
-    console.error('Logout error:', err);
     return true;
   }
 });
@@ -128,6 +131,60 @@ export const updateSubscriptionStatus = createAsyncThunk(
       };
     } catch (err) {
       return rejectWithValue('Failed to update subscription status');
+    }
+  }
+);
+
+// Worker profile async thunks
+export const getWorkerProfile = createAsyncThunk(
+  'auth/getWorkerProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const profile = await workerProfileService.getWorkerProfile();
+      return profile;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get worker profile';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateWorkerProfile = createAsyncThunk(
+  'auth/updateWorkerProfile',
+  async (data: UpdateWorkerProfileRequest, { rejectWithValue }) => {
+    try {
+      const profile = await workerProfileService.updateWorkerProfile(data);
+      return profile;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update worker profile';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Broker profile async thunks
+export const getBrokerProfile = createAsyncThunk(
+  'auth/getBrokerProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const profile = await brokerProfileService.getBrokerProfile();
+      return profile;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get broker profile';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateBrokerProfile = createAsyncThunk(
+  'auth/updateBrokerProfile',
+  async (data: UpdateBrokerProfileRequest, { rejectWithValue }) => {
+    try {
+      const profile = await brokerProfileService.updateBrokerProfile(data);
+      return profile;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update broker profile';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -271,6 +328,42 @@ const authSlice = createSlice({
       state.hasActiveSubscription = action.payload.hasActiveSubscription;
       state.subscriptionExpiryDate = action.payload.subscriptionExpiryDate;
     });
+
+    // Get worker profile
+    builder
+      .addCase(getWorkerProfile.fulfilled, (state, action) => {
+        state.workerProfile = action.payload;
+      })
+      .addCase(getWorkerProfile.rejected, (state) => {
+        state.workerProfile = null;
+      });
+
+    // Update worker profile
+    builder
+      .addCase(updateWorkerProfile.fulfilled, (state, action) => {
+        state.workerProfile = action.payload;
+      })
+      .addCase(updateWorkerProfile.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // Get broker profile
+    builder
+      .addCase(getBrokerProfile.fulfilled, (state, action) => {
+        state.brokerProfile = action.payload;
+      })
+      .addCase(getBrokerProfile.rejected, (state) => {
+        state.brokerProfile = null;
+      });
+
+    // Update broker profile
+    builder
+      .addCase(updateBrokerProfile.fulfilled, (state, action) => {
+        state.brokerProfile = action.payload;
+      })
+      .addCase(updateBrokerProfile.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
   },
 });
 

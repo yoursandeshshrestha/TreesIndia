@@ -50,5 +50,50 @@ export interface AuthState {
   error: string | null;
   hasActiveSubscription: boolean;
   subscriptionExpiryDate: string | null;
+  workerProfile: WorkerProfile | null;
+  brokerProfile: BrokerProfile | null;
+}
+
+// Worker and Broker profile types (placeholder - to be imported from services)
+export interface WorkerProfile {
+  id: number;
+  user_id: number;
+  worker_type: 'normal' | 'treesindia_worker';
+  contact_info: { alternative_number: string };
+  address: Address;
+  skills: string[];
+  experience_years: number;
+  banking_info: BankingInfo;
+  is_active: boolean;
+  is_available: boolean;
+  rating: number;
+  total_bookings: number;
+}
+
+export interface BrokerProfile {
+  id: number;
+  user_id: number;
+  contact_info: { alternative_number: string };
+  address: Address;
+  license: string;
+  agency: string;
+  is_active: boolean;
+}
+
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface BankingInfo {
+  account_number: string;
+  ifsc_code: string;
+  bank_name: string;
+  account_holder_name: string;
 }
 
