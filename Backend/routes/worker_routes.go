@@ -22,4 +22,14 @@ func SetupWorkerRoutes(router *gin.RouterGroup) {
 		// GET /api/v1/workers/:id - Get worker by ID (requires subscription)
 		workersGroup.GET("/:id", workerController.GetWorkerByID)
 	}
+
+	// Worker profile management (requires worker role)
+	workerProfileGroup := router.Group("/workers/profile")
+	workerProfileGroup.Use(middleware.AuthMiddleware(), middleware.WorkerMiddleware())
+	{
+		// GET /api/v1/workers/profile - Get own worker profile
+		workerProfileGroup.GET("", workerController.GetWorkerProfile)
+		// PUT /api/v1/workers/profile - Update own worker profile
+		workerProfileGroup.PUT("", workerController.UpdateWorkerProfile)
+	}
 }

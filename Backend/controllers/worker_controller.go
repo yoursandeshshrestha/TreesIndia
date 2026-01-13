@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"treesindia/models"
@@ -295,4 +296,186 @@ func (wc *WorkerController) GetWorkerByID(ctx *gin.Context) {
 			"subscription_expiry_date": user.SubscriptionExpiryDate,
 		},
 	}))
+}
+
+// UpdateWorkerProfileRequest represents the request body for updating worker profile
+type UpdateWorkerProfileRequest struct {
+	ContactInfo struct {
+		AlternativeNumber string `json:"alternative_number"`
+	} `json:"contact_info" binding:"required"`
+
+	Address struct {
+		Street   string  `json:"street" binding:"required"`
+		City     string  `json:"city" binding:"required"`
+		State    string  `json:"state" binding:"required"`
+		Pincode  string  `json:"pincode" binding:"required"`
+		Landmark string  `json:"landmark"`
+		Lat      float64 `json:"lat"`
+		Lng      float64 `json:"lng"`
+	} `json:"address" binding:"required"`
+
+	Skills             []string `json:"skills" binding:"required,min=1"`
+	ExperienceYears    int      `json:"experience_years" binding:"required,min=0"`
+
+	BankingInfo struct {
+		AccountNumber     string `json:"account_number" binding:"required"`
+		IFSCCode          string `json:"ifsc_code" binding:"required"`
+		BankName          string `json:"bank_name" binding:"required"`
+		AccountHolderName string `json:"account_holder_name" binding:"required"`
+	} `json:"banking_info" binding:"required"`
+}
+
+// GetWorkerProfile gets the authenticated worker's profile
+// @Summary Get own worker profile
+// @Description Get the authenticated worker's profile information
+// @Tags Workers
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} views.Response{data=models.Worker}
+// @Failure 401 {object} views.Response "Unauthorized"
+// @Failure 403 {object} views.Response "Not a worker or not approved"
+// @Failure 404 {object} views.Response "Worker profile not found"
+// @Router /workers/profile [get]
+func (wc *WorkerController) GetWorkerProfile(ctx *gin.Context) {
+	userID := ctx.GetUint("user_id")
+
+	// Get worker by user ID
+	worker, err := wc.workerRepo.GetByUserID(userID)
+	if err != nil {
+		logrus.Errorf("Worker not found for user_id: %d, error: %v", userID, err)
+		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Worker profile not found", err.Error()))
+		return
+	}
+
+	logrus.Infof("Worker profile retrieved successfully for user_id: %d", userID)
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Worker profile retrieved successfully", worker))
+}
+
+// UpdateWorkerProfile updates the authenticated worker's profile
+// @Summary Update worker profile
+// @Description Update worker's editable profile fields (contact, address, skills, banking). Documents and worker_type cannot be updated.
+// @Tags Workers
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body UpdateWorkerProfileRequest true "Update profile request"
+// @Success 200 {object} views.Response{data=models.Worker}
+// @Failure 400 {object} views.Response "Invalid request"
+// @Failure 401 {object} views.Response "Unauthorized"
+// @Failure 403 {object} views.Response "Not approved or not a worker"
+// @Failure 404 {object} views.Response "Worker profile not found"
+// @Router /workers/profile [put]
+func (wc *WorkerController) UpdateWorkerProfile(ctx *gin.Context) {
+	userID := ctx.GetUint("user_id")
+
+	// Get worker by user ID
+	worker, err := wc.workerRepo.GetByUserID(userID)
+	if err != nil {
+		logrus.Errorf("Worker not found for user_id: %d, error: %v", userID, err)
+		ctx.JSON(http.StatusNotFound, views.CreateErrorResponse("Worker profile not found", err.Error()))
+		return
+	}
+
+	// Check if worker is approved
+	if !worker.IsActive {
+		logrus.Warnf("Unapproved worker attempted to edit profile: user_id=%d", userID)
+		ctx.JSON(http.StatusForbidden, views.CreateErrorResponse(
+			"Profile editing not allowed",
+			"Your worker application is pending approval or has been rejected",
+		))
+		return
+	}
+
+	// Parse and validate request
+	var req UpdateWorkerProfileRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		logrus.Errorf("Invalid request body: %v", err)
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request body", err.Error()))
+		return
+	}
+
+	// Additional validation for phone number (if provided)
+	if req.ContactInfo.AlternativeNumber != "" && len(req.ContactInfo.AlternativeNumber) < 10 {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid alternative number", "Alternative number must be at least 10 digits"))
+		return
+	}
+
+	// Validate pincode
+	if len(req.Address.Pincode) != 6 {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid pincode", "Pincode must be 6 digits"))
+		return
+	}
+
+	// Validate IFSC code format (basic validation)
+	if len(req.BankingInfo.IFSCCode) != 11 {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid IFSC code", "IFSC code must be 11 characters"))
+		return
+	}
+
+	// Validate experience years (reasonable range)
+	if req.ExperienceYears < 0 || req.ExperienceYears > 70 {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid experience", "Experience years must be between 0 and 70"))
+		return
+	}
+
+	// Validate skills count
+	if len(req.Skills) > 20 {
+		ctx.JSON(http.StatusBadRequest, views.CreateErrorResponse("Too many skills", "Maximum 20 skills allowed"))
+		return
+	}
+
+	// Marshal JSON fields
+	contactInfoJSON, err := json.Marshal(req.ContactInfo)
+	if err != nil {
+		logrus.Errorf("Failed to marshal contact_info: %v", err)
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process contact info", err.Error()))
+		return
+	}
+
+	addressJSON, err := json.Marshal(req.Address)
+	if err != nil {
+		logrus.Errorf("Failed to marshal address: %v", err)
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process address", err.Error()))
+		return
+	}
+
+	skillsJSON, err := json.Marshal(req.Skills)
+	if err != nil {
+		logrus.Errorf("Failed to marshal skills: %v", err)
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process skills", err.Error()))
+		return
+	}
+
+	bankingInfoJSON, err := json.Marshal(req.BankingInfo)
+	if err != nil {
+		logrus.Errorf("Failed to marshal banking_info: %v", err)
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to process banking info", err.Error()))
+		return
+	}
+
+	// Update ONLY editable fields (exclude documents, worker_type, is_active)
+	worker.ContactInfo = string(contactInfoJSON)
+	worker.Address = string(addressJSON)
+	worker.Skills = string(skillsJSON)
+	worker.Experience = req.ExperienceYears
+	worker.BankingInfo = string(bankingInfoJSON)
+
+	// Save updates
+	if err := wc.workerRepo.Update(worker); err != nil {
+		logrus.Errorf("Failed to update worker profile: %v", err)
+		ctx.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update profile", err.Error()))
+		return
+	}
+
+	// Fetch updated worker to return
+	updatedWorker, err := wc.workerRepo.GetByUserID(userID)
+	if err != nil {
+		logrus.Errorf("Failed to fetch updated worker: %v", err)
+		// Still return success since update worked
+		ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Profile updated successfully", worker))
+		return
+	}
+
+	logrus.Infof("Worker profile updated successfully for user_id: %d", userID)
+	ctx.JSON(http.StatusOK, views.CreateSuccessResponse("Profile updated successfully", updatedWorker))
 }
