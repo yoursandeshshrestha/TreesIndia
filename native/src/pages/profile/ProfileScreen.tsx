@@ -18,6 +18,7 @@ import InfoIcon from '../../components/icons/InfoIcon';
 import LogoutIcon from '../../components/icons/LogoutIcon';
 import PawLeftIcon from '../../components/icons/PawLeftIcon';
 import PawRightIcon from '../../components/icons/PawRightIcon';
+import EditIcon from '../../components/icons/EditIcon';
 // import Constants from 'expo-constants';
 
 interface ProfileScreenProps {
@@ -31,15 +32,18 @@ interface ProfileScreenProps {
   onNavigateToApplyBroker?: () => void;
   onNavigateToProperties?: () => void;
   onNavigateToVendorProfile?: () => void;
+  onNavigateToEditWorkerProfile?: () => void;
+  onNavigateToEditBrokerProfile?: () => void;
 }
 
-export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties, onNavigateToVendorProfile }: ProfileScreenProps) {
+export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties, onNavigateToVendorProfile, onNavigateToEditWorkerProfile, onNavigateToEditBrokerProfile }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const { hasActiveSubscription, isAdmin } = useSubscriptionStatus();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
 
   // TODO: Get version from package.json or app config when available
   const versionText = 'Version 1.0.0+1';
@@ -92,6 +96,14 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
       onNavigateToVendorProfile();
       return;
     }
+    if (label === 'Edit Worker Profile' && onNavigateToEditWorkerProfile) {
+      onNavigateToEditWorkerProfile();
+      return;
+    }
+    if (label === 'Edit Broker Profile' && onNavigateToEditBrokerProfile) {
+      onNavigateToEditBrokerProfile();
+      return;
+    }
     // Placeholder for navigation - will be implemented later
     Alert.alert('Coming Soon', `${label} feature will be available soon.`);
   };
@@ -101,6 +113,7 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
   const isAnyWorker = user?.user_type === 'worker'; // Any type of worker (normal or treesindia)
   const isBroker = user?.user_type === 'broker';
   const canAccessVendorProfile = (hasActiveSubscription || isAdmin) && !isTreesIndiaWorker;
+
 
   return (
     <View className="flex-1 bg-white">
@@ -164,6 +177,20 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
                 label="Manage addresses"
                 onPress={() => handleMenuItemPress('Manage addresses')}
               />
+              {isAnyWorker && (
+                <MenuItem
+                  icon={EditIcon}
+                  label="Edit Worker Profile"
+                  onPress={() => handleMenuItemPress('Edit Worker Profile')}
+                />
+              )}
+              {isBroker && (
+                <MenuItem
+                  icon={EditIcon}
+                  label="Edit Broker Profile"
+                  onPress={() => handleMenuItemPress('Edit Broker Profile')}
+                />
+              )}
               {!isTreesIndiaWorker && (
                 <MenuItem
                   icon={PropertyIcon}

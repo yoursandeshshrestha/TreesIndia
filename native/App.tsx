@@ -33,6 +33,8 @@ import SettingsScreen from './src/pages/profile/SettingsScreen';
 import AboutScreen from './src/pages/profile/AboutScreen';
 import ApplyForWorkerScreen from './src/pages/profile/ApplyForWorkerScreen';
 import ApplyForBrokerScreen from './src/pages/profile/ApplyForBrokerScreen';
+import EditWorkerProfileScreen from './src/pages/profile/EditWorkerProfileScreen';
+import EditBrokerProfileScreen from './src/pages/profile/EditBrokerProfileScreen';
 import MyPropertiesScreen from './src/pages/profile/MyPropertiesScreen';
 import AddPropertyScreen from './src/pages/profile/AddPropertyScreen';
 import MyVendorProfileScreen from './src/pages/profile/MyVendorProfileScreen';
@@ -85,7 +87,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const dispatch = useAppDispatch();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices' | 'chatConversation'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices' | 'chatConversation' | 'editWorkerProfile' | 'editBrokerProfile'>('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
   const [vendorToEdit, setVendorToEdit] = useState<any>(null);
   const [serviceForBooking, setServiceForBooking] = useState<any>(null);
@@ -481,6 +483,28 @@ function AppContent() {
       );
     }
 
+    if (currentScreen === 'editWorkerProfile') {
+      return (
+        <EditWorkerProfileScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('profile');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'editBrokerProfile') {
+      return (
+        <EditBrokerProfileScreen
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('profile');
+          }}
+        />
+      );
+    }
+
     if (currentScreen === 'properties') {
       return (
         <MyPropertiesScreen
@@ -813,6 +837,8 @@ function AppContent() {
               setVendorToEdit(null);
               setCurrentScreen('vendorProfiles');
             }}
+            onNavigateToEditWorkerProfile={() => setCurrentScreen('editWorkerProfile')}
+            onNavigateToEditBrokerProfile={() => setCurrentScreen('editBrokerProfile')}
           />
         );
       default:
