@@ -158,8 +158,27 @@ func (f *FCMService) SendToTopic(topic string, notification *FCMNotification) (*
 			Body:  notification.Body,
 		},
 		Data: notification.Data,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+			Notification: &messaging.AndroidNotification{
+				ClickAction: notification.ClickAction,
+				Sound:       "default",
+			},
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Alert: &messaging.ApsAlert{
+						Title: notification.Title,
+						Body:  notification.Body,
+					},
+					Badge: func() *int { v := 1; return &v }(),
+					Sound: "default",
+				},
+			},
+		},
 	}
-	
+
 	response, err := f.client.Send(context.Background(), message)
 	if err != nil {
 		return &FCMResponse{
@@ -168,7 +187,7 @@ func (f *FCMService) SendToTopic(topic string, notification *FCMNotification) (*
 			Errors:       []string{err.Error()},
 		}, err
 	}
-	
+
 	return &FCMResponse{
 		SuccessCount: 1,
 		FailureCount: 0,
@@ -234,10 +253,12 @@ func (f *FCMService) sendBatch(tokens []string, notification *FCMNotification) (
 		},
 		Data: notification.Data,
 		Android: &messaging.AndroidConfig{
+			Priority: "high",
 			Notification: &messaging.AndroidNotification{
 				ClickAction: notification.ClickAction,
 				Icon:        "ic_notification",
 				Color:       "#4CAF50",
+				Sound:       "default",
 			},
 		},
 		APNS: &messaging.APNSConfig{
