@@ -271,7 +271,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
           booking.payment_progress;
         const isComplete = paid_segments === total_segments;
         const hasOverdue = booking.payment_progress.segments?.some(
-          (segment) => segment.is_overdue && segment.status === "pending"
+          (segment) => segment.status === "overdue"
         );
 
         return (

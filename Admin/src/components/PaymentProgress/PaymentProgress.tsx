@@ -120,7 +120,7 @@ export default function PaymentProgress({
                     Paid: {new Date(segment.paid_at).toLocaleDateString()}
                   </div>
                 )}
-                {segment.is_overdue && segment.status === "pending" && (
+                {segment.status === "overdue" && (
                   <div className="text-xs text-red-600">Overdue</div>
                 )}
               </div>

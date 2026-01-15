@@ -385,7 +385,7 @@ export default function BookingDetailsPage() {
                           paymentProgress.total_segments
                             ? "Complete"
                             : paymentProgress.segments?.some(
-                                (s) => s.is_overdue && s.status === "pending"
+                                (s) => s.status === "overdue"
                               )
                             ? "Overdue"
                             : "In Progress"}
