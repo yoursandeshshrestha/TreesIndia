@@ -60,17 +60,9 @@ export default function QuoteModal({
 
     setIsSubmitting(true);
     try {
-      // Convert date format from YYYY-MM-DD to RFC3339 format
-      const formattedSegments = segments.map((segment) => ({
-        ...segment,
-        due_date: segment.due_date
-          ? segment.due_date + "T00:00:00Z"
-          : undefined,
-      }));
-
       await apiClient.post(`/admin/bookings/${booking.ID}/provide-quote`, {
         notes: formData.notes,
-        segments: formattedSegments,
+        segments: segments,
         duration: formData.duration || undefined, // Only send if duration is provided
       });
 

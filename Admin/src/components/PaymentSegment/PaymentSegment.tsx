@@ -26,10 +26,6 @@ export default function PaymentSegment({
     onUpdate(index, { ...segment, amount });
   };
 
-  const handleDueDateChange = (value: string) => {
-    onUpdate(index, { ...segment, due_date: value || undefined });
-  };
-
   const handleNotesChange = (value: string) => {
     onUpdate(index, { ...segment, notes: value });
   };
@@ -58,7 +54,7 @@ export default function PaymentSegment({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Amount */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -72,19 +68,6 @@ export default function PaymentSegment({
             value={segment.amount || ""}
             onChange={(e) => handleAmountChange(e.target.value)}
             placeholder="0.00"
-            className="w-full text-sm"
-          />
-        </div>
-
-        {/* Due Date */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Due Date
-          </label>
-          <Input
-            type="date"
-            value={segment.due_date || ""}
-            onChange={(e) => handleDueDateChange(e.target.value)}
             className="w-full text-sm"
           />
         </div>

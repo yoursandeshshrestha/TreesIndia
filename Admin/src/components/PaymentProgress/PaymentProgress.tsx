@@ -110,11 +110,6 @@ export default function PaymentProgress({
                   </div>
                   <div className="text-sm opacity-75">
                     ₹{segment.amount.toFixed(2)}
-                    {segment.due_date && (
-                      <span className="ml-2">
-                        Due: {new Date(segment.due_date).toLocaleDateString()}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

@@ -351,7 +351,6 @@ export interface CreateBookingRequest {
 // Payment Segment Types
 export interface PaymentSegmentRequest {
   amount: number;
-  due_date?: string; // ISO date string
   notes?: string;
 }
 
@@ -359,13 +358,10 @@ export interface PaymentSegmentInfo {
   id: number;
   segment_number: number;
   amount: number;
-  due_date?: string;
   status: "pending" | "paid" | "overdue" | "cancelled";
   paid_at?: string;
   notes: string;
   payment_id?: number;
-  is_overdue: boolean;
-  days_until_due?: number;
 }
 
 export interface PaymentProgress {

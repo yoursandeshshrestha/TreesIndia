@@ -92,7 +92,7 @@ export default function BookingDetailsPage() {
 
   const workerOptions = workers.map((worker) => ({
     label: `${worker.name} (${worker.phone})`,
-    value: worker.ID.toString(),
+    value: ((worker as { id?: number }).id || worker.ID).toString(),
   }));
 
   const loadBookingDetails = useCallback(async () => {
@@ -420,9 +420,6 @@ export default function BookingDetailsPage() {
                                       <div>
                                         <p className="text-sm font-medium text-gray-900">
                                           {displayCurrency(segment.amount)}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                          Due: {displayDate(segment.due_date)}
                                         </p>
                                         {segment.notes && (
                                           <p className="text-xs text-blue-600 mt-1">

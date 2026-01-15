@@ -93,7 +93,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
   };
 
   const workerOptions = workers.map((worker) => ({
-    value: worker.ID.toString(),
+    value: ((worker as { id?: number }).id || worker.ID).toString(),
     label: `${worker.name} (${worker.phone})`,
   }));
 
@@ -364,6 +364,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                         }
                         placeholder="Select worker..."
                         className="w-full text-xs"
+                        usePortal={true}
                       />
                     </div>
                   )}
