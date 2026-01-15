@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Search, Loader2 } from "lucide-react";
 import type {
   SearchableDropdownProps,
@@ -22,10 +23,12 @@ const SearchableDropdown = ({
   maxHeight = "200px",
   width = "100%",
   onOpen,
+  usePortal = false,
 }: SearchableDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const optionsListRef = useRef<HTMLDivElement>(null);
@@ -51,6 +54,31 @@ const SearchableDropdown = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Calculate dropdown position for portal
+  useEffect(() => {
+    if (isOpen && usePortal && dropdownRef.current) {
+      const updatePosition = () => {
+        const rect = dropdownRef.current?.getBoundingClientRect();
+        if (rect) {
+          setDropdownPosition({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+          });
+        }
+      };
+
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [isOpen, usePortal]);
 
   useEffect(() => {
     if (isOpen) {
@@ -364,76 +392,85 @@ const SearchableDropdown = ({
 
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
 
-      {isOpen && (
-        <div
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
-          style={{ maxHeight }}
-        >
-          <div className="p-2 border-b border-gray-200">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                className="w-full pl-8 pr-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                onClick={(e) => e.stopPropagation()}
-                aria-autocomplete="list"
-                aria-controls="dropdown-options"
-              />
+      {isOpen && (() => {
+        const dropdownMenu = (
+          <div
+            className={usePortal ? "fixed z-[9999] mt-1 bg-white border border-gray-300 rounded-md shadow-lg" : "absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"}
+            style={usePortal ? {
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+              maxHeight
+            } : { maxHeight }}
+          >
+            <div className="p-2 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="w-full pl-8 pr-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={searchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-autocomplete="list"
+                  aria-controls="dropdown-options"
+                />
+              </div>
+            </div>
+
+            <div
+              ref={optionsListRef}
+              className="overflow-auto"
+              role="listbox"
+              id="dropdown-options"
+              style={{ maxHeight: `calc(${maxHeight} - 60px)` }}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center p-4 text-sm text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {loadingMessage}
+                </div>
+              ) : filteredOptions.length === 0 ? (
+                <div className="p-4 text-sm text-gray-500 text-center">
+                  {noOptionsMessage}
+                </div>
+              ) : (
+                filteredOptions.map((option, index) => (
+                  <div
+                    key={option.value}
+                    ref={(el) => {
+                      optionRefs.current[index] = el;
+                    }}
+                    className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
+                      option.disabled
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "hover:bg-gray-100"
+                    } ${selectedIndex === index ? "bg-blue-100" : ""} ${
+                      option.value === value ? "bg-blue-50" : ""
+                    }`}
+                    onClick={() => handleOptionClick(option)}
+                    role="option"
+                    aria-selected={
+                      option.value === value || selectedIndex === index
+                    }
+                    onMouseEnter={() => setSelectedIndex(index)}
+                  >
+                    <div className="flex items-center">
+                      {option.icon && <span className="mr-2">{option.icon}</span>}
+                      {option.label}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
+        );
 
-          <div
-            ref={optionsListRef}
-            className="overflow-auto"
-            role="listbox"
-            id="dropdown-options"
-            style={{ maxHeight: `calc(${maxHeight} - 60px)` }}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center p-4 text-sm text-gray-500">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                {loadingMessage}
-              </div>
-            ) : filteredOptions.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500 text-center">
-                {noOptionsMessage}
-              </div>
-            ) : (
-              filteredOptions.map((option, index) => (
-                <div
-                  key={option.value}
-                  ref={(el) => {
-                    optionRefs.current[index] = el;
-                  }}
-                  className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
-                    option.disabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-gray-100"
-                  } ${selectedIndex === index ? "bg-blue-100" : ""} ${
-                    option.value === value ? "bg-blue-50" : ""
-                  }`}
-                  onClick={() => handleOptionClick(option)}
-                  role="option"
-                  aria-selected={
-                    option.value === value || selectedIndex === index
-                  }
-                  onMouseEnter={() => setSelectedIndex(index)}
-                >
-                  <div className="flex items-center">
-                    {option.icon && <span className="mr-2">{option.icon}</span>}
-                    {option.label}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+        return usePortal ? createPortal(dropdownMenu, document.body) : dropdownMenu;
+      })()}
     </div>
   );
 };
