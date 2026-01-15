@@ -431,15 +431,10 @@ export default function BookingDetailsPage() {
                                     <div className="flex items-center space-x-2">
                                       <span
                                         className={`inline-flex px-3 py-1 text-xs font-semibold rounded-md ${getPaymentSegmentStatusColor(
-                                          segment.status,
-                                          segment.is_overdue
+                                          segment.status
                                         )}`}
                                       >
-                                        {segment.status === "paid"
-                                          ? "PAID"
-                                          : segment.is_overdue
-                                          ? "OVERDUE"
-                                          : "PENDING"}
+                                        {segment.status.toUpperCase()}
                                       </span>
                                     </div>
                                   </div>
