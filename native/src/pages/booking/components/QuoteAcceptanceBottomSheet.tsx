@@ -782,14 +782,6 @@ export default function QuoteAcceptanceBottomSheet({
                                 Paid on {formatDate(String(segment.paid_at))}
                               </Text>
                             )}
-                            {segment.due_date && !isPaid && (
-                              <Text
-                                className="text-xs text-[#6B7280] mt-1"
-                                style={{ fontFamily: 'Inter-Regular' }}
-                              >
-                                Due: {formatDate(String(segment.due_date))}
-                              </Text>
-                            )}
                           </View>
                         );
                       })}

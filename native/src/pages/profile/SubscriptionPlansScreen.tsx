@@ -20,7 +20,7 @@ import PaymentMethodModal from './components/PaymentMethodModal';
 
 interface SubscriptionPlansScreenProps {
   onBack: () => void;
-  onPurchaseSuccess?: () => void;
+  onPurchaseSuccess?: () => void | Promise<void>;
 }
 
 export default function SubscriptionPlansScreen({
@@ -117,11 +117,10 @@ export default function SubscriptionPlansScreen({
           [
             {
               text: 'OK',
-              onPress: () => {
+              onPress: async () => {
                 if (onPurchaseSuccess) {
-                  onPurchaseSuccess();
+                  await onPurchaseSuccess();
                 }
-                onBack();
               },
             },
           ]
@@ -191,11 +190,10 @@ export default function SubscriptionPlansScreen({
                 [
                   {
                     text: 'OK',
-                    onPress: () => {
+                    onPress: async () => {
                       if (onPurchaseSuccess) {
-                        onPurchaseSuccess();
+                        await onPurchaseSuccess();
                       }
-                      onBack();
                     },
                   },
                 ]

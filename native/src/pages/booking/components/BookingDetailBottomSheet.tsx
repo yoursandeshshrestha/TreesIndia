@@ -52,6 +52,7 @@ export default function BookingDetailBottomSheet({
   const [showSlotSheet, setShowSlotSheet] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isAcceptingQuote, setIsAcceptingQuote] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
@@ -154,16 +155,18 @@ export default function BookingDetailBottomSheet({
           );
         } else {
           // Segmented payment - no scheduling required, just pay the segment
-          // For segmented payments, we need to find the next pending segment
-          const pendingSegments = paymentSegments.filter((seg: any) => seg.status === 'pending');
-          if (pendingSegments.length === 0) {
+          // For segmented payments, we need to find the next pending segment (sorted by segment_number)
+          const sortedPendingSegments = paymentSegments
+            .filter((seg: any) => seg.status === 'pending')
+            .sort((a: any, b: any) => (a.segment_number || 0) - (b.segment_number || 0));
+          if (sortedPendingSegments.length === 0) {
             Alert.alert('No Pending Segments', 'All payment segments have been paid.');
             setIsProcessingPayment(false);
             return;
           }
 
           // Pay the next pending segment using the segment payment API
-          const nextSegment = pendingSegments[0];
+          const nextSegment = sortedPendingSegments[0];
           await bookingService.paySegment(
             bookingId,
             nextSegment.segment_number || 1,
@@ -191,14 +194,17 @@ export default function BookingDetailBottomSheet({
 
         if (isSegmentedPayment) {
           // For segmented payments, use paySegment API
-          const pendingSegments = paymentSegments.filter((seg: any) => seg.status === 'pending');
-          if (pendingSegments.length === 0) {
+          // Get pending segments sorted by segment_number to pay in sequence
+          const sortedPendingSegments = paymentSegments
+            .filter((seg: any) => seg.status === 'pending')
+            .sort((a: any, b: any) => (a.segment_number || 0) - (b.segment_number || 0));
+          if (sortedPendingSegments.length === 0) {
             Alert.alert('No Pending Segments', 'All payment segments have been paid.');
             setIsProcessingPayment(false);
             return;
           }
 
-          const nextSegment = pendingSegments[0];
+          const nextSegment = sortedPendingSegments[0];
           const segmentResponse = await bookingService.paySegment(
             bookingId,
             nextSegment.segment_number || 1,
@@ -352,6 +358,35 @@ export default function BookingDetailBottomSheet({
     onClose();
   };
 
+  const handleAcceptQuote = async () => {
+    if (!booking) return;
+
+    setIsAcceptingQuote(true);
+    const bookingId = booking.id || booking.ID;
+
+    try {
+      await bookingService.acceptQuote(bookingId);
+
+      Alert.alert('Success', 'Quote accepted successfully! You can now proceed with payment.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            onClose();
+            onPaymentSuccess?.(); // Refresh bookings to show updated status
+          },
+        },
+      ]);
+    } catch (error: any) {
+      Alert.alert(
+        'Failed to Accept Quote',
+        error?.message || 'Failed to accept quote. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsAcceptingQuote(false);
+    }
+  };
+
   if (!booking) {
     return null;
   }
@@ -502,7 +537,7 @@ export default function BookingDetailBottomSheet({
   // Calculate remaining amount to pay
   const paidSegments = paymentSegments.filter((seg: any) => seg.status === 'paid');
   const paidAmount = paidSegments.reduce((sum: number, seg: any) => sum + (seg.amount || 0), 0);
-  
+
   // Check if payment is fully completed
   const bookingStatus = (bookingData as any).status || booking.status;
   const paymentStatusStr = String(paymentStatus || '');
@@ -520,11 +555,25 @@ export default function BookingDetailBottomSheet({
                          (bookingStatus === 'confirmed' || bookingStatus === 'assigned') ||
                          (hasQuote && paidAmount >= quoteAmount);
   }
-  
+
+  // Get the next pending segment (sorted by segment_number)
+  const pendingSegments = paymentSegments
+    .filter((seg: any) => seg.status === 'pending')
+    .sort((a: any, b: any) => (a.segment_number || 0) - (b.segment_number || 0));
+  const nextPendingSegment = pendingSegments[0];
+
   // Calculate remaining amount - if payment is completed, remaining should be 0
-  const remainingAmount = (hasQuote && !isPaymentCompleted) ? Math.max(0, quoteAmount - paidAmount) : 0;
-  // Allow payment for quote_provided, quote_accepted, and partially_paid if there's remaining amount
-  const canPay = hasQuote && remainingAmount > 0 && (bookingStatus === 'quote_provided' || bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid');
+  // For segmented payments, show the next pending segment's amount
+  // For non-segmented payments, show the total remaining amount
+  const remainingAmount = (hasQuote && !isPaymentCompleted)
+    ? (isSegmentedPayment && nextPendingSegment
+        ? nextPendingSegment.amount
+        : Math.max(0, quoteAmount - paidAmount))
+    : 0;
+
+  // Determine which button to show based on booking status
+  const shouldShowAcceptQuoteButton = hasQuote && bookingStatus === 'quote_provided';
+  const shouldShowPayButton = hasQuote && remainingAmount > 0 && (bookingStatus === 'quote_accepted' || bookingStatus === 'partially_paid');
 
   // Handle worker assignment
   let workerName: string | undefined;
@@ -852,14 +901,6 @@ export default function BookingDetailBottomSheet({
                                         Paid on {formatDate(String(segment.paid_at))}
                                       </Text>
                                     )}
-                                    {segment.due_date && !isPaid && (
-                                      <Text
-                                        className="text-xs text-[#6B7280] mt-1"
-                                        style={{ fontFamily: 'Inter-Regular' }}
-                                      >
-                                        Due: {formatDate(String(segment.due_date))}
-                                      </Text>
-                                    )}
                                   </View>
                                 );
                               })}
@@ -1010,10 +1051,19 @@ export default function BookingDetailBottomSheet({
           </ScrollView>
 
           {/* Action Buttons - Fixed at bottom */}
-          {(canPay || workerName) && (
+          {(shouldShowAcceptQuoteButton || shouldShowPayButton || workerName) && (
             <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
               <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
-                {canPay && (
+                {shouldShowAcceptQuoteButton && (
+                  <Button
+                    label="Accept Quote"
+                    onPress={handleAcceptQuote}
+                    variant="solid"
+                    className={workerName ? "mb-3" : ""}
+                    isLoading={isAcceptingQuote}
+                  />
+                )}
+                {shouldShowPayButton && (
                   <Button
                     label={`Pay ₹${remainingAmount.toLocaleString('en-IN')}`}
                     onPress={handlePayButtonPress}
@@ -1086,7 +1136,7 @@ export default function BookingDetailBottomSheet({
                           );
                         }
                       }}
-                      variant={canPay ? 'outline' : 'solid'}
+                      variant={(shouldShowAcceptQuoteButton || shouldShowPayButton) ? 'outline' : 'solid'}
                       className="mb-2"
                     />
                   </>

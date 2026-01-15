@@ -24,6 +24,7 @@ import EditIcon from '../../components/icons/EditIcon';
 
 interface ApplyForBrokerScreenProps {
   onBack: () => void;
+  onSubmitSuccess?: () => Promise<void>;
 }
 
 type Step = 'personal' | 'documents' | 'address' | 'brokerDetails' | 'review';
@@ -47,7 +48,7 @@ interface FileInfo {
   name: string;
 }
 
-export default function ApplyForBrokerScreen({ onBack }: ApplyForBrokerScreenProps) {
+export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyForBrokerScreenProps) {
   const { user } = useAppSelector((state) => state.auth);
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [isLoading, setIsLoading] = useState(true);
@@ -278,6 +279,12 @@ export default function ApplyForBrokerScreen({ onBack }: ApplyForBrokerScreenPro
       };
 
       await brokerApplicationService.submitApplication(applicationData);
+
+      // Refresh user data in Redux if callback provided
+      if (onSubmitSuccess) {
+        await onSubmitSuccess();
+      }
+
       Alert.alert(
         'Success',
         'Your application has been submitted successfully. We will review it and get back to you soon.',

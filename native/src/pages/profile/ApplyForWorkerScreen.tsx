@@ -24,6 +24,7 @@ import EditIcon from '../../components/icons/EditIcon';
 
 interface ApplyForWorkerScreenProps {
   onBack: () => void;
+  onSubmitSuccess?: () => Promise<void>;
 }
 
 type Step = 'personal' | 'documents' | 'address' | 'skills' | 'banking' | 'review';
@@ -49,7 +50,7 @@ interface FileInfo {
   name: string;
 }
 
-export default function ApplyForWorkerScreen({ onBack }: ApplyForWorkerScreenProps) {
+export default function ApplyForWorkerScreen({ onBack, onSubmitSuccess }: ApplyForWorkerScreenProps) {
   const { user } = useAppSelector((state) => state.auth);
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [isLoading, setIsLoading] = useState(true);
@@ -359,6 +360,12 @@ export default function ApplyForWorkerScreen({ onBack }: ApplyForWorkerScreenPro
       };
 
       await workerApplicationService.submitApplication(applicationData);
+
+      // Refresh user data in Redux if callback provided
+      if (onSubmitSuccess) {
+        await onSubmitSuccess();
+      }
+
       Alert.alert(
         'Success',
         'Your application has been submitted successfully. We will review it and get back to you soon.',
