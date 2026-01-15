@@ -11,6 +11,12 @@ import (
 // CORSMiddleware creates a CORS middleware with configurable origins
 func CORSMiddleware(config *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Debug log for DELETE /users/account
+		if c.Request.Method == "DELETE" && strings.Contains(c.Request.URL.Path, "/users/account") {
+			println("=== CORSMiddleware: DELETE /users/account ===")
+			println("Origin:", c.Request.Header.Get("Origin"))
+		}
+
 		origin := c.Request.Header.Get("Origin")
 		
 		// Check if origin is allowed
