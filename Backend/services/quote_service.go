@@ -664,19 +664,18 @@ func (qs *QuoteService) WalletPayment(bookingID uint, userID uint, req *models.W
 // createPaymentSegments creates payment segments for a booking
 func (qs *QuoteService) createPaymentSegments(bookingID uint, segments []models.PaymentSegmentRequest) error {
 	var paymentSegments []models.PaymentSegment
-	
+
 	for i, segmentReq := range segments {
 		segment := models.PaymentSegment{
 			BookingID:     bookingID,
 			SegmentNumber: i + 1,
 			Amount:        segmentReq.Amount,
-			DueDate:       segmentReq.DueDate,
 			Status:        models.PaymentSegmentStatusPending,
 			Notes:         segmentReq.Notes,
 		}
 		paymentSegments = append(paymentSegments, segment)
 	}
-	
+
 	return qs.paymentSegmentRepo.CreateMultiple(paymentSegments)
 }
 
@@ -1065,7 +1064,6 @@ func (qs *QuoteService) GetPendingSegments(bookingID uint, userID uint) ([]model
 			ID:            segment.ID,
 			SegmentNumber: segment.SegmentNumber,
 			Amount:        segment.Amount,
-			DueDate:       segment.DueDate,
 			Status:        segment.Status,
 			PaidAt:        segment.PaidAt,
 			Notes:         segment.Notes,
@@ -1102,7 +1100,6 @@ func (qs *QuoteService) GetPaidSegments(bookingID uint, userID uint) ([]models.P
 			ID:            segment.ID,
 			SegmentNumber: segment.SegmentNumber,
 			Amount:        segment.Amount,
-			DueDate:       segment.DueDate,
 			Status:        segment.Status,
 			PaidAt:        segment.PaidAt,
 			Notes:         segment.Notes,
