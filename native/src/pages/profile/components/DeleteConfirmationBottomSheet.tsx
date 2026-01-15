@@ -9,7 +9,6 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CancelIcon from '../../../components/icons/CancelIcon';
 
 interface DeleteConfirmationBottomSheetProps {
   visible: boolean;
@@ -107,32 +106,6 @@ export default function DeleteConfirmationBottomSheet({
           }}
           className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
         >
-          {/* Floating Close Button */}
-          <View
-            style={{
-              position: 'absolute',
-              top: -56,
-              right: 16,
-              zIndex: 60,
-            }}
-          >
-            <TouchableOpacity
-              onPress={handleClose}
-              disabled={isLoading}
-              className="w-12 h-12 bg-white rounded-full items-center justify-center"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 4,
-              }}
-            >
-              <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
-            </TouchableOpacity>
-          </View>
-
-
           {/* Header - Fixed */}
           <View className="px-6 pt-6 pb-4 border-b border-[#E5E7EB]">
             <Text

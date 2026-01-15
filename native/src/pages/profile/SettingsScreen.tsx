@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch } from '../../store/hooks';
 import { logout } from '../../store/slices/authSlice';
 import BackIcon from '../../components/icons/BackIcon';
 import DeleteConfirmationBottomSheet from './components/DeleteConfirmationBottomSheet';
-import OtpBottomSheet from './components/OtpBottomSheet';
 import { userService } from '../../services';
 
 interface SettingsScreenProps {
@@ -15,10 +14,7 @@ interface SettingsScreenProps {
 export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   const dispatch = useAppDispatch();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showOtpSheet, setShowOtpSheet] = useState(false);
-  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
 
   const policyItems = [
     "You'll no longer be able to access your saved professionals",
@@ -34,43 +30,26 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
 
   const handleConfirmDelete = async () => {
     setShowDeleteConfirmation(false);
-    setIsRequestingOtp(true);
-
-    try {
-      const response = await userService.requestDeleteOTP();
-      setPhoneNumber(response.phone);
-      setIsRequestingOtp(false);
-      setShowOtpSheet(true);
-    } catch (error: any) {
-      setIsRequestingOtp(false);
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to request OTP. Please try again.'
-      );
-    }
-  };
-
-  const handleOtpSubmit = async (otp: string) => {
     setIsDeleting(true);
 
     try {
-      await userService.deleteAccount(otp);
-      setShowOtpSheet(false);
+      await userService.deleteAccount();
       setIsDeleting(false);
-      
+
       // Logout user after successful deletion
       await dispatch(logout()).unwrap();
-      
+
       Alert.alert(
         'Account Deleted',
         'Your account has been permanently deleted.',
         [{ text: 'OK' }]
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsDeleting(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete account. Please try again.';
       Alert.alert(
         'Error',
-        error?.message || 'Failed to delete account. Please try again.'
+        errorMessage
       );
     }
   };
@@ -224,16 +203,7 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
         visible={showDeleteConfirmation}
         onClose={() => setShowDeleteConfirmation(false)}
         onConfirm={handleConfirmDelete}
-        isLoading={isRequestingOtp}
-      />
-
-      {/* OTP Bottom Sheet */}
-      <OtpBottomSheet
-        visible={showOtpSheet}
-        onClose={() => setShowOtpSheet(false)}
-        phoneNumber={phoneNumber}
-        onSubmit={handleOtpSubmit}
-        isDeleting={isDeleting}
+        isLoading={isDeleting}
       />
     </SafeAreaView>
   );

@@ -104,11 +104,11 @@ class UserService {
     };
   }
 
-  async deleteAccount(otp: string): Promise<void> {
+  async deleteAccount(): Promise<void> {
     const response = await authenticatedFetch(`${API_BASE_URL}/users/account`, {
       method: 'DELETE',
-      body: JSON.stringify({ otp }),
     });
+
     return handleResponse<void>(response);
   }
 }
