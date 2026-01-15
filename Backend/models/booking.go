@@ -556,24 +556,10 @@ func (b *Booking) GetPaymentProgress() *PaymentProgress {
 			ID:            segment.ID,
 			SegmentNumber: segment.SegmentNumber,
 			Amount:        segment.Amount,
-			DueDate:       segment.DueDate,
 			Status:        segment.Status,
 			PaidAt:        segment.PaidAt,
 			Notes:         segment.Notes,
 			PaymentID:     segment.PaymentID,
-			IsOverdue:     false,
-		}
-
-		// Calculate if overdue
-		if segment.DueDate != nil && segment.Status == PaymentSegmentStatusPending {
-			now := time.Now()
-			if segment.DueDate.Before(now) {
-				segmentInfo.IsOverdue = true
-				segmentInfo.Status = PaymentSegmentStatusOverdue
-			} else {
-				daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
-				segmentInfo.DaysUntilDue = &daysUntilDue
-			}
 		}
 
 		if segment.Status == PaymentSegmentStatusPaid {

@@ -131,12 +131,11 @@ func (psr *PaymentSegmentRepository) GetPaymentProgress(bookingID uint) (*models
 
 	for _, segment := range segments {
 		totalAmount += segment.Amount
-		
+
 		segmentInfo := models.PaymentSegmentInfo{
 			ID:            segment.ID,
 			SegmentNumber: segment.SegmentNumber,
 			Amount:        segment.Amount,
-			DueDate:       segment.DueDate,
 			Status:        segment.Status,
 			PaidAt:        segment.PaidAt,
 			Notes:         segment.Notes,

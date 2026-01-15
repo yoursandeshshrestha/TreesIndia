@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"time"
-	"treesindia/database"
 	"treesindia/models"
 
 	"github.com/sirupsen/logrus"
@@ -53,46 +52,11 @@ func (ps *PaymentSegmentReminderService) Stop() {
 }
 
 // checkAndSendReminders checks for upcoming due dates and sends reminders
+// NOTE: Due dates have been removed from payment segments. This functionality is now disabled.
 func (ps *PaymentSegmentReminderService) checkAndSendReminders() {
-	logrus.Info("PaymentSegmentReminderService: Checking for payment segments with upcoming due dates...")
-
-	db := database.GetDB()
-
-	// Find segments that are:
-	// 1. Pending status
-	// 2. Due date is within next 3 days
-	// 3. Due date is not in the past
-	threeDaysFromNow := time.Now().Add(3 * 24 * time.Hour)
-	now := time.Now()
-
-	var segments []models.PaymentSegment
-	err := db.Preload("Booking").Preload("Booking.User").
-		Where("status = ? AND due_date IS NOT NULL AND due_date <= ? AND due_date >= ?",
-			models.PaymentSegmentStatusPending, threeDaysFromNow, now).
-		Find(&segments).Error
-
-	if err != nil {
-		logrus.Errorf("PaymentSegmentReminderService: Failed to fetch segments: %v", err)
-		return
-	}
-
-	logrus.Infof("PaymentSegmentReminderService: Found %d segments with upcoming due dates", len(segments))
-
-	// Send reminder for each segment
-	for _, segment := range segments {
-		// Check if booking and user are properly loaded
-		if segment.Booking.ID == 0 || segment.Booking.User.ID == 0 {
-			logrus.Warnf("PaymentSegmentReminderService: Skipping segment %d - missing booking or user", segment.ID)
-			continue
-		}
-
-		// Calculate days until due
-		daysUntilDue := int(time.Until(*segment.DueDate).Hours() / 24)
-
-		ps.sendSegmentDueReminder(&segment, daysUntilDue)
-	}
-
-	logrus.Info("PaymentSegmentReminderService: Finished checking payment segments")
+	logrus.Info("PaymentSegmentReminderService: Due date functionality has been removed - skipping reminder checks")
+	// Due dates are no longer used in the system, so this service does nothing
+	return
 }
 
 // sendSegmentDueReminder sends a notification reminder for an upcoming payment segment

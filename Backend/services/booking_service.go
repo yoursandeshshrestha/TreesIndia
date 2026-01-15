@@ -1493,24 +1493,10 @@ func (bs *BookingService) ConvertToOptimizedBookingResponse(booking *models.Book
 				ID:            segment.ID,
 				SegmentNumber: segment.SegmentNumber,
 				Amount:        segment.Amount,
-				DueDate:       segment.DueDate,
 				Status:        segment.Status,
 				PaidAt:        segment.PaidAt,
 				Notes:         segment.Notes,
 				PaymentID:     segment.PaymentID,
-				IsOverdue:     false,
-			}
-
-			// Calculate if overdue
-			if segment.DueDate != nil && segment.Status == models.PaymentSegmentStatusPending {
-				now := time.Now()
-				if segment.DueDate.Before(now) {
-					segmentInfo.IsOverdue = true
-					segmentInfo.Status = models.PaymentSegmentStatusOverdue
-				} else {
-					daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
-					segmentInfo.DaysUntilDue = &daysUntilDue
-				}
 			}
 
 			paymentSegments = append(paymentSegments, segmentInfo)
@@ -1640,24 +1626,10 @@ func (bs *BookingService) ConvertToUserOptimizedBookingResponse(booking *models.
 				ID:            segment.ID,
 				SegmentNumber: segment.SegmentNumber,
 				Amount:        segment.Amount,
-				DueDate:       segment.DueDate,
 				Status:        segment.Status,
 				PaidAt:        segment.PaidAt,
 				Notes:         segment.Notes,
 				PaymentID:     segment.PaymentID,
-				IsOverdue:     false,
-			}
-
-			// Calculate if overdue
-			if segment.DueDate != nil && segment.Status == models.PaymentSegmentStatusPending {
-				now := time.Now()
-				if segment.DueDate.Before(now) {
-					segmentInfo.IsOverdue = true
-					segmentInfo.Status = models.PaymentSegmentStatusOverdue
-				} else {
-					daysUntilDue := int(segment.DueDate.Sub(now).Hours() / 24)
-					segmentInfo.DaysUntilDue = &daysUntilDue
-				}
 			}
 
 			paymentSegments = append(paymentSegments, segmentInfo)
