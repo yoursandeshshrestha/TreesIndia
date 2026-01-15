@@ -56,7 +56,7 @@ type NotificationSettingsRequest struct {
 
 // RequestDeleteOTPRequest represents OTP request for account deletion
 type RequestDeleteOTPRequest struct {
-	OTP string `json:"otp" binding:"required,len=6"`
+	OTP string `json:"otp" binding:"omitempty,len=6"`
 }
 
 // GetUserProfile godoc
@@ -448,25 +448,17 @@ func (uc *UserController) RequestDeleteOTP(c *gin.Context) {
 
 // DeleteAccount godoc
 // @Summary Delete user account
-// @Description Permanently delete the authenticated user's account after OTP verification
+// @Description Permanently delete the authenticated user's account
 // @Tags Users
-// @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body RequestDeleteOTPRequest true "OTP verification request"
 // @Success 200 {object} models.Response "Account deleted successfully"
-// @Failure 400 {object} models.Response "Invalid OTP or request data"
 // @Failure 401 {object} models.Response "Unauthorized"
+// @Failure 404 {object} models.Response "User not found"
 // @Failure 500 {object} models.Response "Internal server error"
 // @Router /users/account [delete]
 func (uc *UserController) DeleteAccount(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	var req RequestDeleteOTPRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid request data", err.Error()))
-		return
-	}
 
 	// Get current user
 	var user models.User
@@ -476,24 +468,6 @@ func (uc *UserController) DeleteAccount(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Database error", err.Error()))
-		return
-	}
-
-	// Verify OTP using OTP service
-	valid, err := uc.otpService.VerifyOTP(user.Phone, req.OTP, "account_deletion")
-	if err != nil || !valid {
-		errorMessage := "OTP is incorrect"
-		if err != nil {
-			// Provide more specific error messages
-			if strings.Contains(err.Error(), "expired") {
-				errorMessage = "OTP has expired. Please request a new one"
-			} else if strings.Contains(err.Error(), "not found") {
-				errorMessage = "No valid OTP found. Please request a new one"
-			} else if strings.Contains(err.Error(), "too many") {
-				errorMessage = "Too many failed attempts. Please request a new OTP"
-			}
-		}
-		c.JSON(http.StatusBadRequest, views.CreateErrorResponse("Invalid OTP", errorMessage))
 		return
 	}
 
@@ -561,54 +535,74 @@ func (uc *UserController) DeleteAccount(c *gin.Context) {
 		}
 	}
 
-	// 3. Delete payments
+	// 3. Delete worker assignments for user's bookings
+	if len(bookingIDs) > 0 {
+		if err := tx.Unscoped().Where("booking_id IN ?", bookingIDs).Delete(&models.WorkerAssignment{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker assignments", err.Error()))
+			return
+		}
+	}
+
+	// 4. Delete buffer requests for user's bookings
+	if len(bookingIDs) > 0 {
+		if err := tx.Unscoped().Where("booking_id IN ?", bookingIDs).Delete(&models.BufferRequest{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete buffer requests", err.Error()))
+			return
+		}
+	}
+
+	// Delete chat room participants where user is a participant
+	if err := tx.Exec("DELETE FROM chat_room_participants WHERE user_id = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete chat room participants", err.Error()))
+		return
+	}
+
+	// 5. Delete wallet transactions
+	if err := tx.Exec("DELETE FROM wallet_transactions WHERE user_id = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete wallet transactions", err.Error()))
+		return
+	}
+
+	// 6. Delete payments
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Payment{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete payments", err.Error()))
 		return
 	}
 
-	// 4. Delete bookings
+	// 6. Delete bookings (payment_segments will be cascade deleted)
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Booking{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete bookings", err.Error()))
 		return
 	}
 
-	// 5. Delete worker inquiries
+	// 7. Delete worker inquiries
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.WorkerInquiry{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker inquiries", err.Error()))
 		return
 	}
 
-	// 6. Delete properties
+	// 8. Delete properties
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Property{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete properties", err.Error()))
 		return
 	}
 
-	// 7. Delete addresses
+	// 9. Delete addresses
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Address{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete addresses", err.Error()))
 		return
 	}
 
-	// 8. Delete user documents
-	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserDocument{}).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user documents", err.Error()))
-		return
-	}
-
-	// 9. Delete user skills
-	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.UserSkill{}).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete user skills", err.Error()))
-		return
-	}
+	// Note: user_documents and user_skills tables don't exist in migrations, skipping their deletion
 
 	// 10. Delete subscription warnings
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.SubscriptionWarning{}).Error; err != nil {
@@ -649,6 +643,44 @@ func (uc *UserController) DeleteAccount(c *gin.Context) {
 	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Worker{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete worker record", err.Error()))
+		return
+	}
+
+	// 16. Delete simple conversation messages where user is the sender
+	if err := tx.Unscoped().Where("sender_id = ?", userID).Delete(&models.SimpleConversationMessage{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete conversation messages", err.Error()))
+		return
+	}
+
+	// 17. Delete simple conversations where user is participant
+	if err := tx.Unscoped().Where("user_1 = ? OR user_2 = ? OR last_message_sender_id = ?", userID, userID, userID).Delete(&models.SimpleConversation{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete conversations", err.Error()))
+		return
+	}
+
+	// 18. Delete broker record if exists
+	if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Broker{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to delete broker record", err.Error()))
+		return
+	}
+
+	// 19. Update ledger entries (set foreign key to NULL instead of deleting)
+	if err := tx.Exec("UPDATE ledger_entries SET created_by = NULL WHERE created_by = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update ledger entries (created_by)", err.Error()))
+		return
+	}
+	if err := tx.Exec("UPDATE ledger_entries SET updated_by = NULL WHERE updated_by = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update ledger entries (updated_by)", err.Error()))
+		return
+	}
+	if err := tx.Exec("UPDATE cash_bank_balances SET last_updated_by = NULL WHERE last_updated_by = ?", userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, views.CreateErrorResponse("Failed to update cash bank balances", err.Error()))
 		return
 	}
 
