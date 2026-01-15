@@ -327,12 +327,13 @@ class ProjectService {
     });
 
     // Filter to prioritize projects with images
-    const projectsWithImages = projects.filter(proj =>
-      proj.images && Array.isArray(proj.images) && proj.images.length > 0
+    const projectsWithImages = projects.filter(
+      (proj) => proj.images && Array.isArray(proj.images) && proj.images.length > 0
     );
-    const finalProjects = projectsWithImages.length > 0
-      ? projectsWithImages.slice(0, filters.limit || 20)
-      : projects.slice(0, filters.limit || 20);
+    const finalProjects =
+      projectsWithImages.length > 0
+        ? projectsWithImages.slice(0, filters.limit || 20)
+        : projects.slice(0, filters.limit || 20);
 
     // Extract pagination and user_subscription from the response
     const pagination = jsonData.data?.pagination || jsonData.pagination;

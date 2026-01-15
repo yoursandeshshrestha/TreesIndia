@@ -11,5 +11,3 @@ export function useFontFamily(weight: 'regular' | 'medium' | 'semibold' | 'bold'
     return { fontFamily: fontMap[weight] };
   }, [weight]);
 }
-
-

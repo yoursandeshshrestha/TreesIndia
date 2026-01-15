@@ -62,7 +62,7 @@ class PropertyService {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/user/properties?page=${page}&limit=${limit}`
     );
-    
+
     if (!response.ok) {
       let errorMessage = 'An error occurred';
       try {
@@ -75,12 +75,12 @@ class PropertyService {
     }
 
     const jsonData = await response.json();
-    
+
     // Backend returns: { success, message, data: [...], pagination: {...} }
     // handleResponse would extract data.data, but we need the full structure
     // So we need to parse the full response ourselves
     let properties: Property[] = [];
-    
+
     let rawProperties: any[] = [];
     if (Array.isArray(jsonData.data)) {
       rawProperties = jsonData.data;
@@ -93,7 +93,7 @@ class PropertyService {
     } else {
       rawProperties = [];
     }
-    
+
     // Normalize property data (handle ID -> id, etc.)
     properties = rawProperties.map((prop: any) => ({
       ...prop,
@@ -131,12 +131,26 @@ class PropertyService {
       expires_at: prop.expires_at || prop.ExpiresAt,
       broker_id: prop.broker_id || prop.BrokerID,
       // Extract contact information from nested user object
-      contact_number: prop.contact_number || prop.ContactNumber || prop.contact || prop.Contact ||
-                     (prop.user?.phone || prop.user?.Phone) || (prop.User?.phone || prop.User?.Phone),
-      owner_name: prop.owner_name || prop.OwnerName || prop.owner || prop.Owner ||
-                 (prop.user?.name || prop.user?.Name) || (prop.User?.name || prop.User?.Name),
+      contact_number:
+        prop.contact_number ||
+        prop.ContactNumber ||
+        prop.contact ||
+        prop.Contact ||
+        prop.user?.phone ||
+        prop.user?.Phone ||
+        prop.User?.phone ||
+        prop.User?.Phone,
+      owner_name:
+        prop.owner_name ||
+        prop.OwnerName ||
+        prop.owner ||
+        prop.Owner ||
+        prop.user?.name ||
+        prop.user?.Name ||
+        prop.User?.name ||
+        prop.User?.Name,
     }));
-    
+
     return {
       success: jsonData.success !== false,
       message: jsonData.message || 'Properties retrieved successfully',
@@ -281,7 +295,7 @@ class PropertyService {
 
     let properties: Property[] = [];
     let rawProperties: any[] = [];
-    
+
     if (Array.isArray(jsonData.data)) {
       rawProperties = jsonData.data;
     } else if (jsonData.data === null || jsonData.data === undefined) {
@@ -359,10 +373,24 @@ class PropertyService {
         expires_at: prop.expires_at || prop.ExpiresAt,
         broker_id: prop.broker_id || prop.BrokerID,
         // Extract contact information from nested user object
-        contact_number: prop.contact_number || prop.ContactNumber || prop.contact || prop.Contact ||
-                       (prop.user?.phone || prop.user?.Phone) || (prop.User?.phone || prop.User?.Phone),
-        owner_name: prop.owner_name || prop.OwnerName || prop.owner || prop.Owner ||
-                   (prop.user?.name || prop.user?.Name) || (prop.User?.name || prop.User?.Name),
+        contact_number:
+          prop.contact_number ||
+          prop.ContactNumber ||
+          prop.contact ||
+          prop.Contact ||
+          prop.user?.phone ||
+          prop.user?.Phone ||
+          prop.User?.phone ||
+          prop.User?.Phone,
+        owner_name:
+          prop.owner_name ||
+          prop.OwnerName ||
+          prop.owner ||
+          prop.Owner ||
+          prop.user?.name ||
+          prop.user?.Name ||
+          prop.User?.name ||
+          prop.User?.Name,
       };
     });
 
@@ -407,7 +435,7 @@ class PropertyService {
 
     let properties: Property[] = [];
     let rawProperties: any[] = [];
-    
+
     if (Array.isArray(jsonData.data)) {
       rawProperties = jsonData.data;
     } else if (jsonData.data === null || jsonData.data === undefined) {
@@ -487,10 +515,24 @@ class PropertyService {
         expires_at: prop.expires_at || prop.ExpiresAt,
         broker_id: prop.broker_id || prop.BrokerID,
         // Extract contact information from nested user object
-        contact_number: prop.contact_number || prop.ContactNumber || prop.contact || prop.Contact ||
-                       (prop.user?.phone || prop.user?.Phone) || (prop.User?.phone || prop.User?.Phone),
-        owner_name: prop.owner_name || prop.OwnerName || prop.owner || prop.Owner ||
-                   (prop.user?.name || prop.user?.Name) || (prop.User?.name || prop.User?.Name),
+        contact_number:
+          prop.contact_number ||
+          prop.ContactNumber ||
+          prop.contact ||
+          prop.Contact ||
+          prop.user?.phone ||
+          prop.user?.Phone ||
+          prop.User?.phone ||
+          prop.User?.Phone,
+        owner_name:
+          prop.owner_name ||
+          prop.OwnerName ||
+          prop.owner ||
+          prop.Owner ||
+          prop.user?.name ||
+          prop.user?.Name ||
+          prop.User?.name ||
+          prop.User?.Name,
       };
     });
 
@@ -504,4 +546,3 @@ class PropertyService {
 }
 
 export const propertyService = new PropertyService();
-

@@ -19,5 +19,3 @@ export default function BackIcon({ size = 24, color = 'currentColor' }: BackIcon
     </Svg>
   );
 }
-
-

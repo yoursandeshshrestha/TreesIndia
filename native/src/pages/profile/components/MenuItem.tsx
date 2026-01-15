@@ -20,19 +20,17 @@ export default function MenuItem({
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.6}
-        className="py-4 flex-row items-center"
-      >
-        <View className="w-6 h-6 items-center justify-center">
+        className="flex-row items-center py-4">
+        <View className="h-6 w-6 items-center justify-center">
           <Icon size={22} color="#111928" />
         </View>
         <Text
-          className="flex-1 ml-4 text-base text-[#111928]"
+          className="ml-4 flex-1 text-base text-[#111928]"
           style={{
             fontFamily: 'Inter-Regular',
             lineHeight: 22,
             ...(Platform.OS === 'android' && { includeFontPadding: false }),
-          }}
-        >
+          }}>
           {label}
         </Text>
         <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
@@ -45,10 +43,7 @@ export default function MenuItem({
           />
         </Svg>
       </TouchableOpacity>
-      {showDivider && (
-        <View className="h-px bg-[#E5E7EB] ml-10" />
-      )}
+      {showDivider && <View className="ml-10 h-px bg-[#E5E7EB]" />}
     </>
   );
 }
-

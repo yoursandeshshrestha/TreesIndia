@@ -172,16 +172,22 @@ class VendorService {
     return {
       success: jsonData.success !== false,
       message: jsonData.message || 'Vendor retrieved successfully',
-      data: jsonData.data ? {
-        vendor: this.normalizeVendor(jsonData.data.vendor),
-      } : undefined,
+      data: jsonData.data
+        ? {
+            vendor: this.normalizeVendor(jsonData.data.vendor),
+          }
+        : undefined,
     };
   }
 
   /**
    * Search vendors (requires subscription)
    */
-  async searchVendors(query: string, page: number = 1, limit: number = 20): Promise<VendorListResponse> {
+  async searchVendors(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<VendorListResponse> {
     const params = new URLSearchParams({
       q: query.trim(),
       page: page.toString(),
@@ -227,7 +233,11 @@ class VendorService {
   /**
    * Get vendors by business type (requires subscription)
    */
-  async getVendorsByBusinessType(businessType: string, page: number = 1, limit: number = 20): Promise<VendorListResponse> {
+  async getVendorsByBusinessType(
+    businessType: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<VendorListResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),

@@ -21,7 +21,10 @@ export const fcmService = {
   /**
    * Register FCM token with the backend
    */
-  async registerToken(token: string, deviceInfo?: Record<string, string>): Promise<FCMTokenResponse> {
+  async registerToken(
+    token: string,
+    deviceInfo?: Record<string, string>
+  ): Promise<FCMTokenResponse> {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
 
     const requestBody: FCMTokenRegistrationRequest = {
@@ -43,9 +46,12 @@ export const fcmService = {
    * Unregister FCM token from the backend
    */
   async unregisterToken(token: string): Promise<FCMTokenResponse> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/notifications/unregister-device?token=${encodeURIComponent(token)}`, {
-      method: 'DELETE',
-    });
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/notifications/unregister-device?token=${encodeURIComponent(token)}`,
+      {
+        method: 'DELETE',
+      }
+    );
 
     return handleResponse<FCMTokenResponse>(response);
   },
@@ -53,11 +59,15 @@ export const fcmService = {
   /**
    * Get all devices for the authenticated user
    */
-  async getUserDevices(): Promise<{ devices: Array<{ token: string; platform: string; is_active: boolean }> }> {
+  async getUserDevices(): Promise<{
+    devices: Array<{ token: string; platform: string; is_active: boolean }>;
+  }> {
     const response = await authenticatedFetch(`${API_BASE_URL}/notifications/devices`, {
       method: 'GET',
     });
 
-    return handleResponse<{ devices: Array<{ token: string; platform: string; is_active: boolean }> }>(response);
+    return handleResponse<{
+      devices: Array<{ token: string; platform: string; is_active: boolean }>;
+    }>(response);
   },
 };

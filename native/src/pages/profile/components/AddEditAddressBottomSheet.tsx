@@ -12,7 +12,11 @@ import {
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { type Address, type CreateAddressRequest, type UpdateAddressRequest } from '../../../services';
+import {
+  type Address,
+  type CreateAddressRequest,
+  type UpdateAddressRequest,
+} from '../../../services';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/common/Input';
 import MapLocationPicker from '../../../components/MapLocationPicker';
@@ -48,7 +52,9 @@ export default function AddEditAddressBottomSheet({
   const [city, setCity] = useState(address?.city || '');
   const [state, setState] = useState(address?.state || '');
   const [pincode, setPincode] = useState(address?.postalCode || address?.postal_code || '');
-  const [houseNumber, setHouseNumber] = useState(address?.houseNumber || address?.house_number || '');
+  const [houseNumber, setHouseNumber] = useState(
+    address?.houseNumber || address?.house_number || ''
+  );
   const [landmark, setLandmark] = useState(address?.landmark || '');
   const [fetchedLatitude, setFetchedLatitude] = useState<number | undefined>(address?.latitude);
   const [fetchedLongitude, setFetchedLongitude] = useState<number | undefined>(address?.longitude);
@@ -275,13 +281,11 @@ export default function AddEditAddressBottomSheet({
       transparent
       animationType="none"
       onRequestClose={handleClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <View className="flex-1">
           <Animated.View
             style={{
@@ -292,13 +296,8 @@ export default function AddEditAddressBottomSheet({
               bottom: 0,
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               opacity: overlayOpacity,
-            }}
-          >
-            <TouchableOpacity
-              className="flex-1"
-              activeOpacity={1}
-              onPress={handleClose}
-            />
+            }}>
+            <TouchableOpacity className="flex-1" activeOpacity={1} onPress={handleClose} />
           </Animated.View>
 
           {/* Floating Close Button - At top of bottom sheet */}
@@ -309,11 +308,10 @@ export default function AddEditAddressBottomSheet({
               right: 16,
               transform: [{ translateY }],
               zIndex: 30,
-            }}
-          >
+            }}>
             <TouchableOpacity
               onPress={handleClose}
-              className="w-12 h-12 bg-white rounded-full items-center justify-center"
+              className="h-12 w-12 items-center justify-center rounded-full bg-white"
               style={{
                 marginTop: -56,
                 shadowColor: '#000',
@@ -321,8 +319,7 @@ export default function AddEditAddressBottomSheet({
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
                 elevation: 4,
-              }}
-            >
+              }}>
               <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
             </TouchableOpacity>
           </Animated.View>
@@ -344,22 +341,30 @@ export default function AddEditAddressBottomSheet({
               shadowRadius: 12,
               elevation: 20,
               overflow: 'hidden',
-            }}
-          >
+            }}>
             <View className="flex-1 bg-white">
               <ScrollView
                 ref={scrollViewRef}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
+                showsVerticalScrollIndicator={false}>
                 {/* Map Section */}
-                <View style={{ height: 380, overflow: 'hidden', borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+                <View
+                  style={{
+                    height: 380,
+                    overflow: 'hidden',
+                    borderTopLeftRadius: 24,
+                    borderTopRightRadius: 24,
+                  }}>
                   <MapLocationPicker
-                    initialLocation={fetchedLatitude && fetchedLongitude ? {
-                      latitude: fetchedLatitude,
-                      longitude: fetchedLongitude,
-                    } : undefined}
+                    initialLocation={
+                      fetchedLatitude && fetchedLongitude
+                        ? {
+                            latitude: fetchedLatitude,
+                            longitude: fetchedLongitude,
+                          }
+                        : undefined
+                    }
                     onLocationSelected={handleMapLocationSelected}
                     embedded={true}
                   />
@@ -367,186 +372,194 @@ export default function AddEditAddressBottomSheet({
 
                 {/* Form Section */}
                 <View className="px-5">
-                    {/* Address Label Section - Only show if requireLabel is true */}
-                    {requireLabel && (
-                      <>
-                        <View className="mb-5">
-                          <Text className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
-                            Save as
-                          </Text>
-                          <View className="flex-row gap-3">
-                            {ADDRESS_LABELS.map((label) => (
-                              <TouchableOpacity
-                                key={label}
-                                onPress={() => handleLabelSelect(label)}
-                                className={`flex-1 py-3 px-4 rounded-xl border-2 ${
-                                  name === label
-                                    ? 'bg-[#00a871] border-[#00a871]'
-                                    : 'bg-white border-[#E5E7EB]'
+                  {/* Address Label Section - Only show if requireLabel is true */}
+                  {requireLabel && (
+                    <>
+                      <View className="mb-5">
+                        <Text
+                          className="mb-3 font-semibold text-xs uppercase tracking-wider text-[#6B7280]"
+                          style={{ fontFamily: 'Inter-SemiBold' }}>
+                          Save as
+                        </Text>
+                        <View className="flex-row gap-3">
+                          {ADDRESS_LABELS.map((label) => (
+                            <TouchableOpacity
+                              key={label}
+                              onPress={() => handleLabelSelect(label)}
+                              className={`flex-1 rounded-xl border-2 px-4 py-3 ${
+                                name === label
+                                  ? 'border-[#00a871] bg-[#00a871]'
+                                  : 'border-[#E5E7EB] bg-white'
+                              }`}
+                              activeOpacity={0.7}
+                              style={{
+                                shadowColor: name === label ? '#00a871' : 'transparent',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.15,
+                                shadowRadius: 4,
+                                elevation: name === label ? 3 : 0,
+                              }}>
+                              <Text
+                                className={`text-center font-semibold text-sm ${
+                                  name === label ? 'text-white' : 'text-[#374151]'
                                 }`}
-                                activeOpacity={0.7}
-                                style={{
-                                  shadowColor: name === label ? '#00a871' : 'transparent',
-                                  shadowOffset: { width: 0, height: 2 },
-                                  shadowOpacity: 0.15,
-                                  shadowRadius: 4,
-                                  elevation: name === label ? 3 : 0,
-                                }}
-                              >
-                                <Text
-                                  className={`text-sm font-semibold text-center ${
-                                    name === label ? 'text-white' : 'text-[#374151]'
-                                  }`}
-                                  style={{ fontFamily: 'Inter-SemiBold' }}
-                                >
-                                  {label}
-                                </Text>
-                              </TouchableOpacity>
-                            ))}
-                          </View>
-                          {errors.name && (
-                            <Text className="text-xs text-[#EF4444] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
-                              {errors.name}
-                            </Text>
-                          )}
+                                style={{ fontFamily: 'Inter-SemiBold' }}>
+                                {label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
                         </View>
-
-                        {/* Custom label input when "Other" is selected */}
-                        {name === 'Other' && (
-                          <View className="mb-5">
-                            <Input
-                              label="Custom Label"
-                              value={name}
-                              onChangeText={(text) => {
-                                setName(text);
-                                if (errors.name) {
-                                  setErrors({ ...errors, name: undefined });
-                                }
-                              }}
-                              placeholder="e.g., Office, Friend's Place"
-                              error={errors.name}
-                            />
-                          </View>
+                        {errors.name && (
+                          <Text
+                            className="mt-2 text-xs text-[#EF4444]"
+                            style={{ fontFamily: 'Inter-Medium' }}>
+                            {errors.name}
+                          </Text>
                         )}
-                      </>
-                    )}
-
-                    {/* Address Details Section */}
-                    <View className="mb-5">
-                      <Text className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
-                        Address Details
-                      </Text>
-
-                      {/* House/Flat Number and Landmark - Only show if showOptionalFields is true */}
-                      {showOptionalFields && (
-                        <View className="flex-row mb-4 gap-3">
-                          <View className="flex-1" ref={houseNumberRef}>
-                            <Input
-                              label={requiredFields.houseNumber ? "House/Flat No." : "House/Flat No. (Optional)"}
-                              value={houseNumber}
-                              onChangeText={(text) => {
-                                setHouseNumber(text);
-                                if (errors.houseNumber) {
-                                  setErrors({ ...errors, houseNumber: undefined });
-                                }
-                              }}
-                              placeholder="e.g., 123"
-                              error={errors.houseNumber}
-                              required={requiredFields.houseNumber}
-                            />
-                          </View>
-                          <View className="flex-1">
-                            <Input
-                              label={requiredFields.landmark ? "Landmark" : "Landmark (Optional)"}
-                              value={landmark}
-                              onChangeText={(text) => {
-                                setLandmark(text);
-                                if (errors.landmark) {
-                                  setErrors({ ...errors, landmark: undefined });
-                                }
-                              }}
-                              placeholder="Optional"
-                              error={errors.landmark}
-                              required={requiredFields.landmark}
-                            />
-                          </View>
-                        </View>
-                      )}
-
-                      {/* Street Address */}
-                      <View className="mb-4" ref={addressRef}>
-                        <Input
-                          label="Street Address"
-                          value={addressText}
-                          onChangeText={(text) => {
-                            setAddressText(text);
-                            if (errors.address) {
-                              setErrors({ ...errors, address: undefined });
-                            }
-                          }}
-                          placeholder="Building name, street name, area"
-                          error={errors.address}
-                          required
-                          multiline
-                          numberOfLines={2}
-                        />
                       </View>
 
-                      {/* City and Pincode */}
-                      <View className="flex-row mb-4 gap-3">
-                        <View className="flex-[1.5]" ref={cityRef}>
+                      {/* Custom label input when "Other" is selected */}
+                      {name === 'Other' && (
+                        <View className="mb-5">
                           <Input
-                            label="City"
-                            value={city}
+                            label="Custom Label"
+                            value={name}
                             onChangeText={(text) => {
-                              setCity(text);
-                              if (errors.city) {
-                                setErrors({ ...errors, city: undefined });
+                              setName(text);
+                              if (errors.name) {
+                                setErrors({ ...errors, name: undefined });
                               }
                             }}
-                            placeholder="City name"
-                            error={errors.city}
-                            required
+                            placeholder="e.g., Office, Friend's Place"
+                            error={errors.name}
+                          />
+                        </View>
+                      )}
+                    </>
+                  )}
+
+                  {/* Address Details Section */}
+                  <View className="mb-5">
+                    <Text
+                      className="mb-3 font-semibold text-xs uppercase tracking-wider text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
+                      Address Details
+                    </Text>
+
+                    {/* House/Flat Number and Landmark - Only show if showOptionalFields is true */}
+                    {showOptionalFields && (
+                      <View className="mb-4 flex-row gap-3">
+                        <View className="flex-1" ref={houseNumberRef}>
+                          <Input
+                            label={
+                              requiredFields.houseNumber
+                                ? 'House/Flat No.'
+                                : 'House/Flat No. (Optional)'
+                            }
+                            value={houseNumber}
+                            onChangeText={(text) => {
+                              setHouseNumber(text);
+                              if (errors.houseNumber) {
+                                setErrors({ ...errors, houseNumber: undefined });
+                              }
+                            }}
+                            placeholder="e.g., 123"
+                            error={errors.houseNumber}
+                            required={requiredFields.houseNumber}
                           />
                         </View>
                         <View className="flex-1">
                           <Input
-                            label="Pincode"
-                            value={pincode}
+                            label={requiredFields.landmark ? 'Landmark' : 'Landmark (Optional)'}
+                            value={landmark}
                             onChangeText={(text) => {
-                              const numericText = text.replace(/\D/g, '');
-                              setPincode(numericText);
-                              if (errors.pincode) {
-                                setErrors({ ...errors, pincode: undefined });
+                              setLandmark(text);
+                              if (errors.landmark) {
+                                setErrors({ ...errors, landmark: undefined });
                               }
                             }}
-                            placeholder="000000"
-                            keyboardType="number-pad"
-                            error={errors.pincode}
-                            required
-                            maxLength={6}
+                            placeholder="Optional"
+                            error={errors.landmark}
+                            required={requiredFields.landmark}
                           />
                         </View>
                       </View>
+                    )}
 
-                      {/* State */}
-                      <View className="mb-4" ref={stateRef}>
+                    {/* Street Address */}
+                    <View className="mb-4" ref={addressRef}>
+                      <Input
+                        label="Street Address"
+                        value={addressText}
+                        onChangeText={(text) => {
+                          setAddressText(text);
+                          if (errors.address) {
+                            setErrors({ ...errors, address: undefined });
+                          }
+                        }}
+                        placeholder="Building name, street name, area"
+                        error={errors.address}
+                        required
+                        multiline
+                        numberOfLines={2}
+                      />
+                    </View>
+
+                    {/* City and Pincode */}
+                    <View className="mb-4 flex-row gap-3">
+                      <View className="flex-[1.5]" ref={cityRef}>
                         <Input
-                          label="State"
-                          value={state}
+                          label="City"
+                          value={city}
                           onChangeText={(text) => {
-                            setState(text);
-                            if (errors.state) {
-                              setErrors({ ...errors, state: undefined });
+                            setCity(text);
+                            if (errors.city) {
+                              setErrors({ ...errors, city: undefined });
                             }
                           }}
-                          placeholder="State name"
-                          error={errors.state}
+                          placeholder="City name"
+                          error={errors.city}
                           required
                         />
                       </View>
+                      <View className="flex-1">
+                        <Input
+                          label="Pincode"
+                          value={pincode}
+                          onChangeText={(text) => {
+                            const numericText = text.replace(/\D/g, '');
+                            setPincode(numericText);
+                            if (errors.pincode) {
+                              setErrors({ ...errors, pincode: undefined });
+                            }
+                          }}
+                          placeholder="000000"
+                          keyboardType="number-pad"
+                          error={errors.pincode}
+                          required
+                          maxLength={6}
+                        />
+                      </View>
+                    </View>
+
+                    {/* State */}
+                    <View className="mb-4" ref={stateRef}>
+                      <Input
+                        label="State"
+                        value={state}
+                        onChangeText={(text) => {
+                          setState(text);
+                          if (errors.state) {
+                            setErrors({ ...errors, state: undefined });
+                          }
+                        }}
+                        placeholder="State name"
+                        error={errors.state}
+                        required
+                      />
                     </View>
                   </View>
+                </View>
               </ScrollView>
 
               {/* Save Button - Sticky at bottom */}
@@ -559,11 +572,18 @@ export default function AddEditAddressBottomSheet({
                     shadowOpacity: 0.05,
                     shadowRadius: 8,
                     elevation: 8,
-                  }}
-                >
+                  }}>
                   <View className="px-5">
                     <Button
-                      label={isSaving ? (isEditing ? 'Updating...' : 'Saving...') : (isEditing ? 'Update Address' : 'Save Address')}
+                      label={
+                        isSaving
+                          ? isEditing
+                            ? 'Updating...'
+                            : 'Saving...'
+                          : isEditing
+                            ? 'Update Address'
+                            : 'Save Address'
+                      }
                       onPress={handleSave}
                       isLoading={isSaving}
                       disabled={isSaving}
@@ -578,4 +598,3 @@ export default function AddEditAddressBottomSheet({
     </Modal>
   );
 }
-

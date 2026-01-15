@@ -7,7 +7,8 @@ export function useSubscriptionStatus() {
 
   const isAdmin = user?.user_type === 'admin';
   // Check both Redux state and user object for subscription status
-  const userHasActiveSub = user?.has_active_subscription === true || user?.subscription === 'active';
+  const userHasActiveSub =
+    user?.has_active_subscription === true || user?.subscription === 'active';
   const canAccessPremiumContent = hasActiveSubscription || isAdmin || userHasActiveSub;
 
   return {

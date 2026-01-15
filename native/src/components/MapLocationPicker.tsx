@@ -350,8 +350,7 @@ export default function MapLocationPicker({
             <TouchableOpacity
               style={styles.changeButton}
               onPress={() => setShowSearchSheet(true)}
-              activeOpacity={0.7}
-            >
+              activeOpacity={0.7}>
               <SearchIcon size={18} color="#00a871" />
               <Text style={styles.changeButtonText}>Change</Text>
             </TouchableOpacity>
@@ -359,12 +358,11 @@ export default function MapLocationPicker({
             <TouchableOpacity
               style={[
                 styles.confirmButton,
-                (!city || !state || isGeocodingAddress) && styles.confirmButtonDisabled
+                (!city || !state || isGeocodingAddress) && styles.confirmButtonDisabled,
               ]}
               onPress={handleConfirmLocation}
               activeOpacity={0.7}
-              disabled={isGeocodingAddress || !city || !state}
-            >
+              disabled={isGeocodingAddress || !city || !state}>
               <Text style={styles.confirmButtonText}>
                 {isGeocodingAddress ? 'Loading...' : 'Confirm'}
               </Text>
@@ -385,8 +383,7 @@ export default function MapLocationPicker({
             <TouchableOpacity
               onPress={() => setShowSearchSheet(true)}
               activeOpacity={0.7}
-              style={styles.embeddedChangeButton}
-            >
+              style={styles.embeddedChangeButton}>
               <Text style={styles.embeddedChangeButtonText}>Change</Text>
             </TouchableOpacity>
           </View>
@@ -398,8 +395,7 @@ export default function MapLocationPicker({
         visible={showSearchSheet}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowSearchSheet(false)}
-      >
+        onRequestClose={() => setShowSearchSheet(false)}>
         <View style={styles.searchSheetContainer}>
           {/* Drag Handle */}
           <View style={styles.dragHandleContainer}>
@@ -432,8 +428,7 @@ export default function MapLocationPicker({
             }}
             disabled={isLoadingLocation}
             style={styles.currentLocationButton}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <View style={styles.currentLocationIconContainer}>
               {isLoadingLocation ? (
                 <ActivityIndicator size="small" color="#00a871" />
@@ -466,8 +461,7 @@ export default function MapLocationPicker({
                     key={result.place_id || `${result.latitude}-${result.longitude}`}
                     style={styles.searchResultItem}
                     onPress={() => handleSearchResultSelect(result)}
-                    activeOpacity={0.7}
-                  >
+                    activeOpacity={0.7}>
                     <View style={styles.resultIconContainer}>
                       <LocationIcon size={16} color="#6B7280" />
                     </View>

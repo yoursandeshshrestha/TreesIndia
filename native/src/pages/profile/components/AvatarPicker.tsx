@@ -30,40 +30,32 @@ export default function AvatarPicker({
       onPress={onPress}
       disabled={isLoading}
       activeOpacity={0.7}
-      className="self-center"
-    >
+      className="self-center">
       <View className="relative">
-        <View className="w-[120px] h-[120px] rounded-full border-[3px] border-[#055c3a]/20 items-center justify-center overflow-hidden bg-[#055c3a]/10 shadow-lg">
+        <View className="h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full border-[3px] border-[#055c3a]/20 bg-[#055c3a]/10 shadow-lg">
           {isLoading ? (
-            <View className="absolute inset-0 bg-black/60 items-center justify-center rounded-full">
+            <View className="absolute inset-0 items-center justify-center rounded-full bg-black/60">
               <ActivityIndicator size="large" color="#ffffff" />
             </View>
           ) : avatarUrl ? (
-            <Image
-              source={{ uri: avatarUrl }}
-              className="w-full h-full"
-              resizeMode="cover"
-            />
+            <Image source={{ uri: avatarUrl }} className="h-full w-full" resizeMode="cover" />
           ) : (
             <Text
-              className="text-[#055c3a] text-4xl font-semibold"
+              className="font-semibold text-4xl text-[#055c3a]"
               style={{
                 fontFamily: 'Inter-SemiBold',
                 lineHeight: 48,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               {getInitials(name)}
             </Text>
           )}
         </View>
         {/* Camera Icon Button */}
-        <View className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-[#055c3a] items-center justify-center shadow-lg">
+        <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full bg-[#055c3a] shadow-lg">
           <CameraIcon size={20} color="#ffffff" />
         </View>
       </View>
     </TouchableOpacity>
   );
 }
-
-

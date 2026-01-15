@@ -39,75 +39,59 @@ export default function AccountSettingsScreen({ onBack }: AccountSettingsScreenP
       // Logout user after successful deletion
       await dispatch(logout()).unwrap();
 
-      Alert.alert(
-        'Account Deleted',
-        'Your account has been permanently deleted.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Account Deleted', 'Your account has been permanently deleted.', [
+        { text: 'OK' },
+      ]);
     } catch (error: any) {
       setIsDeleting(false);
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to delete account. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to delete account. Please try again.');
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity
-          onPress={onBack}
-          className="p-2 -ml-2"
-          activeOpacity={0.7}
-        >
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+        <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <Text
-          className="text-xl font-semibold text-[#111928] ml-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="ml-2 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Account
         </Text>
       </View>
 
       <ScrollView className="flex-1 bg-[#F9FAFB]">
-        <View className="px-6 pt-6 pb-8">
+        <View className="px-6 pb-8 pt-6">
           <Text
-            className="text-2xl font-semibold text-[#111928] mb-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-1 font-semibold text-2xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Account
           </Text>
-          <Text
-            className="text-base text-[#6B7280] mb-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-6 text-base text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Manage your account settings
           </Text>
 
           {/* Account Deletion Policy */}
-          <View className="bg-white rounded-xl border border-[#E5E7EB] mb-4 overflow-hidden">
-            <View className="px-4 py-4 border-b border-[#E5E7EB]">
+          <View className="mb-4 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+            <View className="border-b border-[#E5E7EB] px-4 py-4">
               <Text
-                className="text-base font-semibold text-[#111928]"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="font-semibold text-base text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 Account Deletion Policy
               </Text>
             </View>
             <View className="px-4 py-4">
               {policyItems.map((item, index) => (
-                <View key={index} className="flex-row items-start mb-2">
+                <View key={index} className="mb-2 flex-row items-start">
                   <View
-                    className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+                    className="mr-3 mt-2 h-1 w-1 rounded-full bg-[#9CA3AF]"
                     style={{ marginTop: 8 }}
                   />
                   <Text
                     className="flex-1 text-sm text-[#374151]"
-                    style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-                  >
+                    style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}>
                     {item}
                   </Text>
                 </View>
@@ -116,31 +100,25 @@ export default function AccountSettingsScreen({ onBack }: AccountSettingsScreenP
           </View>
 
           {/* Delete Account Section */}
-          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+          <View className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <View className="flex-row items-center">
-              <View className="flex-1 mr-4">
+              <View className="mr-4 flex-1">
                 <Text
-                  className="text-base font-semibold text-[#111928] mb-1"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="mb-1 font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Delete Account
                 </Text>
-                <Text
-                  className="text-sm text-[#6B7280]"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                   Permanently delete your account and all associated data
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={handleDeleteAccountPress}
-                className="bg-[#DC2626] rounded-lg px-4 py-3"
-                activeOpacity={0.7}
-              >
+                className="rounded-lg bg-[#DC2626] px-4 py-3"
+                activeOpacity={0.7}>
                 <Text
-                  className="text-base font-semibold text-white"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-base text-white"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Delete Account
                 </Text>
               </TouchableOpacity>
@@ -159,4 +137,3 @@ export default function AccountSettingsScreen({ onBack }: AccountSettingsScreenP
     </SafeAreaView>
   );
 }
-

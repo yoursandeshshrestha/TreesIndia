@@ -56,19 +56,12 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
   const currentUserId = currentUser?.id;
 
   // Get messages and state from Redux
-  const messagesFromStore = useAppSelector(
-    (state) => state.chat.messages[conversationId]
-  );
+  const messagesFromStore = useAppSelector((state) => state.chat.messages[conversationId]);
   // Use useMemo to memoize empty array to prevent unnecessary rerenders
-  const messages = useMemo(
-    () => messagesFromStore || [],
-    [messagesFromStore]
-  );
+  const messages = useMemo(() => messagesFromStore || [], [messagesFromStore]);
   const isLoading = useAppSelector((state) => state.chat.isLoading);
   const isSendingMessage = useAppSelector((state) => state.chat.isSendingMessage);
-  const pagination = useAppSelector(
-    (state) => state.chat.pagination.messages[conversationId]
-  );
+  const pagination = useAppSelector((state) => state.chat.pagination.messages[conversationId]);
   const currentPage = pagination?.page || 1;
   const hasMore = pagination?.has_more ?? (pagination && pagination.page < pagination.total_pages);
 
@@ -111,7 +104,10 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
           const messageType = wsMessage.type || wsMessage.event;
           const incomingMessage = wsMessage.message || wsMessage.data?.message;
 
-          if ((messageType === 'message' || messageType === 'conversation_message') && incomingMessage) {
+          if (
+            (messageType === 'message' || messageType === 'conversation_message') &&
+            incomingMessage
+          ) {
             // Add message to Redux store
             dispatch(
               addMessage({
@@ -257,17 +253,28 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
   /**
    * Render individual message
    */
-  const renderMessage = ({ item }: { item: SimpleConversationMessage | { message: SimpleConversationMessage } }) => {
+  const renderMessage = ({
+    item,
+  }: {
+    item: SimpleConversationMessage | { message: SimpleConversationMessage };
+  }) => {
     // Defensive: handle case where item is wrapped in a 'message' field
     let actualItem: SimpleConversationMessage;
-    if ('message' in item && typeof item.message === 'object' && item.message !== null && 'id' in item.message) {
+    if (
+      'message' in item &&
+      typeof item.message === 'object' &&
+      item.message !== null &&
+      'id' in item.message
+    ) {
       actualItem = item.message as SimpleConversationMessage;
     } else {
       actualItem = item as SimpleConversationMessage;
     }
 
     const isSent = actualItem.sender_id === currentUserId;
-    const senderName = !isSent ? (actualItem.sender?.name || actualItem.Sender?.name || workerName) : undefined;
+    const senderName = !isSent
+      ? actualItem.sender?.name || actualItem.Sender?.name || workerName
+      : undefined;
 
     // Defensive: ensure message is a string
     let messageText: string | null = null;
@@ -303,7 +310,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
     }
 
     return (
-      <View className="py-4 items-center">
+      <View className="items-center py-4">
         <ActivityIndicator size="small" color="#00a871" />
       </View>
     );
@@ -317,10 +324,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
       return (
         <View className="flex-1 items-center justify-center py-12">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-[#6B7280] text-sm mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading messages...
           </Text>
         </View>
@@ -329,16 +333,12 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
 
     return (
       <View className="flex-1 items-center justify-center py-12">
-        <Text
-          className="text-[#6B7280] text-base"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+        <Text className="text-base text-[#6B7280]" style={{ fontFamily: 'Inter-Medium' }}>
           Start the conversation
         </Text>
         <Text
-          className="text-[#9CA3AF] text-sm mt-2 text-center px-8"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+          className="mt-2 px-8 text-center text-sm text-[#9CA3AF]"
+          style={{ fontFamily: 'Inter-Regular' }}>
           Send a message to {workerName}
         </Text>
       </View>
@@ -350,29 +350,21 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
       <StatusBar barStyle="dark-content" backgroundColor="white" />
 
       {/* Header */}
-      <View className="flex-row items-center px-4 py-4 border-b border-[#E5E7EB]">
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-4 py-4">
         {/* Back Button */}
-        <TouchableOpacity
-          onPress={onBack}
-          className="mr-3 p-2 -ml-2"
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity onPress={onBack} className="-ml-2 mr-3 p-2" activeOpacity={0.7}>
           <BackIcon />
         </TouchableOpacity>
 
         {/* Worker Name */}
         <View className="flex-1">
           <Text
-            className="text-[#111928] text-lg"
+            className="text-lg text-[#111928]"
             style={{ fontFamily: 'Inter-SemiBold' }}
-            numberOfLines={1}
-          >
+            numberOfLines={1}>
             {workerName}
           </Text>
-          <Text
-            className="text-[#6B7280] text-sm"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Worker
           </Text>
         </View>
@@ -382,8 +374,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <FlatList
           ref={flatListRef}
           data={messages}

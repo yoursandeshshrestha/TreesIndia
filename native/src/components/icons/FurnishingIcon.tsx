@@ -61,5 +61,3 @@ export default function FurnishingIcon({ size = 24, color = '#6B7280' }: Furnish
     </Svg>
   );
 }
-
-

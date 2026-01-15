@@ -47,5 +47,3 @@ export default function WorkerIcon({ size = 24, color = 'currentColor' }: Worker
     </Svg>
   );
 }
-
-

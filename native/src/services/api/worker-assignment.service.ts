@@ -190,9 +190,7 @@ class WorkerAssignmentService {
    * Get a specific assignment by ID
    */
   async getWorkerAssignment(assignmentId: number): Promise<WorkerAssignment> {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/worker/assignments/${assignmentId}`
-    );
+    const response = await authenticatedFetch(`${API_BASE_URL}/worker/assignments/${assignmentId}`);
     return handleResponse<WorkerAssignment>(response);
   }
 

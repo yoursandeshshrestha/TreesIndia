@@ -24,19 +24,14 @@ export default function PropertiesSection({
       title={title}
       onSeeAll={onSeeAll}
       isLoading={isLoading}
-      isEmpty={properties.length === 0}
-    >
+      isEmpty={properties.length === 0}>
       <View style={{ height: 240 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 24 }}
-        >
+          contentContainerStyle={{ paddingRight: 24 }}>
           {properties.map((property, index) => (
-            <View
-              key={property.id}
-              style={{ marginLeft: index === 0 ? 24 : 16 }}
-            >
+            <View key={property.id} style={{ marginLeft: index === 0 ? 24 : 16 }}>
               <PropertyCardCompact
                 property={property}
                 onPress={() => onPropertyPress(property)}

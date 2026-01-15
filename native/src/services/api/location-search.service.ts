@@ -22,7 +22,11 @@ export interface AutocompleteResponse {
 }
 
 class LocationSearchService {
-  async searchLocations(query: string, latitude?: number, longitude?: number): Promise<LocationPrediction[]> {
+  async searchLocations(
+    query: string,
+    latitude?: number,
+    longitude?: number
+  ): Promise<LocationPrediction[]> {
     if (!query || query.trim().length < 2) {
       return [];
     }
@@ -38,7 +42,9 @@ class LocationSearchService {
         params.append('radius', '5000'); // 5km radius
       }
 
-      const response = await authenticatedFetch(`${API_BASE_URL}/places/autocomplete?${params.toString()}`);
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/places/autocomplete?${params.toString()}`
+      );
 
       if (!response.ok) {
         return [];
@@ -71,4 +77,3 @@ class LocationSearchService {
 }
 
 export const locationSearchService = new LocationSearchService();
-

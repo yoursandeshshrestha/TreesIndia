@@ -1,11 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addressService, bookingService, type Address } from '../../../services';
@@ -65,20 +59,18 @@ export default function AddressSelectionBottomSheet({
     setSelectedId(selectedAddressId);
   }, [selectedAddressId]);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const renderBackdrop = useCallback(
     (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
   );
@@ -95,11 +87,7 @@ export default function AddressSelectionBottomSheet({
     } catch (error) {
       bookingLogger.error('Failed to fetch addresses', error);
       setAddresses([]);
-      Alert.alert(
-        'Error',
-        'Failed to load your addresses. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to load your addresses. Please try again.', [{ text: 'OK' }]);
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +273,19 @@ export default function AddressSelectionBottomSheet({
     }
   };
 
-  const handleAddAddress = async (data: { name: string; address: string; city: string; state: string; country?: string; postal_code: string; latitude?: number; longitude?: number; house_number?: string; landmark?: string; is_default?: boolean }) => {
+  const handleAddAddress = async (data: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    country?: string;
+    postal_code: string;
+    latitude?: number;
+    longitude?: number;
+    house_number?: string;
+    landmark?: string;
+    is_default?: boolean;
+  }) => {
     bookingLogger.info('Adding new address', {
       name: data.name,
       city: data.city,
@@ -329,113 +329,124 @@ export default function AddressSelectionBottomSheet({
           backgroundColor: 'white',
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
-        }}
-      >
+        }}>
         <View className="flex-1">
           {/* Header */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-            <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
+          <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
+            <Text
+              className="font-semibold text-xl text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Select Address
             </Text>
           </View>
 
           {/* Content */}
           <BottomSheetScrollView className="px-6 py-4" style={{ maxHeight: 400 }}>
-                {isLoading ? (
-                  <View className="py-8 items-center">
-                    <ActivityIndicator size="large" color="#055c3a" />
-                  </View>
-                ) : addresses.length === 0 ? (
-                  <View className="py-8 items-center">
-                    <AddressIcon size={48} color="#9CA3AF" />
-                    <Text className="text-[#6B7280] mt-4" style={{ fontFamily: 'Inter-Regular' }}>
-                      No addresses found
-                    </Text>
-                    <Text className="text-[#9CA3AF] text-center mt-2" style={{ fontFamily: 'Inter-Regular' }}>
-                      Add your first address to continue with booking
-                    </Text>
-                  </View>
-                ) : (
-                  addresses.map((address) => (
-                    <TouchableOpacity
-                      key={address.id}
-                      className={`mb-3 p-4 rounded-xl border ${
-                        selectedId === address.id ? 'border-[#055c3a] bg-[#F0FDF4]' : 'border-[#E5E7EB] bg-white'
-                      }`}
-                      onPress={() => handleSelectAddress(address)}
-                      disabled={isCheckingAvailability}
-                    >
-                      <View className="flex-row items-start justify-between">
-                        <View className="flex-1">
-                          <View className="flex-row items-center">
-                            <AddressIcon size={16} color={selectedId === address.id ? '#055c3a' : '#6B7280'} />
-                            <Text
-                              className={`ml-2 font-semibold ${
-                                selectedId === address.id ? 'text-[#055c3a]' : 'text-[#111928]'
-                              }`}
-                              style={{ fontFamily: 'Inter-SemiBold' }}
-                            >
-                              {address.name}
-                            </Text>
-                          </View>
-                          <Text className="text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
-                            {address.house_number ? `${address.house_number}, ` : ''}
-                            {address.address}
-                          </Text>
-                          <Text className="text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
-                            {address.city}, {address.state} - {address.postal_code}
-                          </Text>
-                          {address.landmark && (
-                            <Text className="text-[#9CA3AF] text-sm mt-1" style={{ fontFamily: 'Inter-Regular' }}>
-                              Landmark: {address.landmark}
-                            </Text>
-                          )}
-                          {checkingAddressId === address.id && isCheckingAvailability && (
-                            <Text className="text-xs text-[#055c3a] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
-                              Checking availability...
-                            </Text>
-                          )}
-                        </View>
-                        {checkingAddressId === address.id && isCheckingAvailability ? (
-                          <View className="ml-3">
-                            <ActivityIndicator size="small" color="#055c3a" />
-                          </View>
-                        ) : (
-                          selectedId === address.id && (
-                            <View className="ml-3">
-                              <CheckmarkIcon size={24} color="#055c3a" />
-                            </View>
-                          )
-                        )}
+            {isLoading ? (
+              <View className="items-center py-8">
+                <ActivityIndicator size="large" color="#055c3a" />
+              </View>
+            ) : addresses.length === 0 ? (
+              <View className="items-center py-8">
+                <AddressIcon size={48} color="#9CA3AF" />
+                <Text className="mt-4 text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                  No addresses found
+                </Text>
+                <Text
+                  className="mt-2 text-center text-[#9CA3AF]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
+                  Add your first address to continue with booking
+                </Text>
+              </View>
+            ) : (
+              addresses.map((address) => (
+                <TouchableOpacity
+                  key={address.id}
+                  className={`mb-3 rounded-xl border p-4 ${
+                    selectedId === address.id
+                      ? 'border-[#055c3a] bg-[#F0FDF4]'
+                      : 'border-[#E5E7EB] bg-white'
+                  }`}
+                  onPress={() => handleSelectAddress(address)}
+                  disabled={isCheckingAvailability}>
+                  <View className="flex-row items-start justify-between">
+                    <View className="flex-1">
+                      <View className="flex-row items-center">
+                        <AddressIcon
+                          size={16}
+                          color={selectedId === address.id ? '#055c3a' : '#6B7280'}
+                        />
+                        <Text
+                          className={`ml-2 font-semibold ${
+                            selectedId === address.id ? 'text-[#055c3a]' : 'text-[#111928]'
+                          }`}
+                          style={{ fontFamily: 'Inter-SemiBold' }}>
+                          {address.name}
+                        </Text>
                       </View>
-                    </TouchableOpacity>
-                  ))
-                )}
-              </BottomSheetScrollView>
+                      <Text className="mt-2 text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                        {address.house_number ? `${address.house_number}, ` : ''}
+                        {address.address}
+                      </Text>
+                      <Text className="text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                        {address.city}, {address.state} - {address.postal_code}
+                      </Text>
+                      {address.landmark && (
+                        <Text
+                          className="mt-1 text-sm text-[#9CA3AF]"
+                          style={{ fontFamily: 'Inter-Regular' }}>
+                          Landmark: {address.landmark}
+                        </Text>
+                      )}
+                      {checkingAddressId === address.id && isCheckingAvailability && (
+                        <Text
+                          className="mt-2 text-xs text-[#055c3a]"
+                          style={{ fontFamily: 'Inter-Medium' }}>
+                          Checking availability...
+                        </Text>
+                      )}
+                    </View>
+                    {checkingAddressId === address.id && isCheckingAvailability ? (
+                      <View className="ml-3">
+                        <ActivityIndicator size="small" color="#055c3a" />
+                      </View>
+                    ) : (
+                      selectedId === address.id && (
+                        <View className="ml-3">
+                          <CheckmarkIcon size={24} color="#055c3a" />
+                        </View>
+                      )
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </BottomSheetScrollView>
 
-              {/* Footer */}
-              <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
-                <View className="px-6 pt-4 pb-4 gap-3">
-                  <TouchableOpacity
-                    className="py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] items-center"
-                    onPress={() => {
-                      bookingLogger.info('Opening add address modal');
-                      setShowAddAddressSheet(true);
-                    }}
-                  >
-                    <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
-                      + Add New Address
-                    </Text>
-                  </TouchableOpacity>
-                  <Button
-                    label="Confirm"
-                    onPress={handleConfirm}
-                    disabled={!selectedId || isLoading || isCheckingAvailability}
-                    isLoading={isCheckingAvailability}
-                  />
-                </View>
-              </SafeAreaView>
+          {/* Footer */}
+          <SafeAreaView edges={['bottom']} className="border-t border-[#E5E7EB] bg-white">
+            <View className="gap-3 px-6 pb-4 pt-4">
+              <TouchableOpacity
+                className="items-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3"
+                onPress={() => {
+                  bookingLogger.info('Opening add address modal');
+                  setShowAddAddressSheet(true);
+                }}>
+                <Text
+                  className="font-semibold text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
+                  + Add New Address
+                </Text>
+              </TouchableOpacity>
+              <Button
+                label="Confirm"
+                onPress={handleConfirm}
+                disabled={!selectedId || isLoading || isCheckingAvailability}
+                isLoading={isCheckingAvailability}
+              />
             </View>
+          </SafeAreaView>
+        </View>
       </BottomSheetModal>
 
       {/* Add Address Bottom Sheet */}

@@ -22,5 +22,3 @@ export default function SettingsIcon({ size = 24, color = 'currentColor' }: Sett
     </Svg>
   );
 }
-
-

@@ -10,7 +10,7 @@ interface CancelIconProps {
 export default function CancelIcon({
   size = 24,
   color = '#000000',
-  strokeWidth = 1.5
+  strokeWidth = 1.5,
 }: CancelIconProps) {
   return (
     <Svg
@@ -21,8 +21,7 @@ export default function CancelIcon({
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+      strokeLinejoin="round">
       <Path d="M18 6L6.00081 17.9992M17.9992 18L6 6.00085" />
     </Svg>
   );

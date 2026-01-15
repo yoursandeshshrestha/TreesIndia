@@ -14,7 +14,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppSelector } from '../../store/hooks';
-import { brokerApplicationService, type UserApplicationResponse, type Address, type CreateAddressRequest } from '../../services';
+import {
+  brokerApplicationService,
+  type UserApplicationResponse,
+  type Address,
+  type CreateAddressRequest,
+} from '../../services';
 import Button from '../../components/ui/Button';
 import Input from '../../components/common/Input';
 import BackIcon from '../../components/icons/BackIcon';
@@ -36,7 +41,6 @@ interface ContactInfo {
   alternative_number: string;
 }
 
-
 interface BrokerDetails {
   license: string;
   agency: string;
@@ -48,12 +52,17 @@ interface FileInfo {
   name: string;
 }
 
-export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyForBrokerScreenProps) {
+export default function ApplyForBrokerScreen({
+  onBack,
+  onSubmitSuccess,
+}: ApplyForBrokerScreenProps) {
   const { user } = useAppSelector((state) => state.auth);
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingApplication, setExistingApplication] = useState<UserApplicationResponse['data'] | null>(null);
+  const [existingApplication, setExistingApplication] = useState<
+    UserApplicationResponse['data'] | null
+  >(null);
 
   // Form data
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
@@ -204,7 +213,10 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactInfo.email)) {
           newErrors.email = 'Please enter a valid email address';
         }
-        if (contactInfo.alternative_number.trim() && !/^\+?[0-9]{10,20}$/.test(contactInfo.alternative_number.replace(/\s/g, ''))) {
+        if (
+          contactInfo.alternative_number.trim() &&
+          !/^\+?[0-9]{10,20}$/.test(contactInfo.alternative_number.replace(/\s/g, ''))
+        ) {
           newErrors.alternative_number = 'Please enter a valid phone number';
         }
         break;
@@ -260,13 +272,15 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
 
     setIsSubmitting(true);
     try {
-      const addressData = selectedAddress ? {
-        street: selectedAddress.address,
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        pincode: selectedAddress.postal_code,
-        landmark: selectedAddress.landmark,
-      } : null;
+      const addressData = selectedAddress
+        ? {
+            street: selectedAddress.address,
+            city: selectedAddress.city,
+            state: selectedAddress.state,
+            pincode: selectedAddress.postal_code,
+            landmark: selectedAddress.landmark,
+          }
+        : null;
 
       const applicationData = {
         license: brokerDetails.license,
@@ -300,25 +314,24 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
   const renderStepIndicator = () => {
     const currentIndex = steps.findIndex((s) => s.id === currentStep);
     const currentStepData = steps[currentIndex];
-    
+
     return (
-      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         {/* Progress bar */}
-        <View className="flex-row mb-4" style={{ gap: 4 }}>
+        <View className="mb-4 flex-row" style={{ gap: 4 }}>
           {steps.map((_, index) => {
             const isCompleted = index < currentIndex;
             const isActive = index === currentIndex;
-            
+
             return (
               <View
                 key={index}
                 className="flex-1"
                 style={{
                   height: 4,
-                  backgroundColor:
-                    isCompleted
-                      ? '#055c3a' // Button color - completed
-                      : isActive
+                  backgroundColor: isCompleted
+                    ? '#055c3a' // Button color - completed
+                    : isActive
                       ? '#055c3a' // Button color - active
                       : '#E5E7EB', // gray-200 - pending
                   borderRadius: 2,
@@ -330,16 +343,10 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
 
         {/* Step info */}
         <View>
-          <Text
-            className="text-xs text-[#6B7280] mb-1"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Step {currentIndex + 1} of {steps.length}
           </Text>
-          <Text
-            className="text-sm font-bold text-[#111928]"
-            style={{ fontFamily: 'Inter-Bold' }}
-          >
+          <Text className="font-bold text-sm text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
             {currentStepData.title}
           </Text>
         </View>
@@ -350,15 +357,11 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
   const renderPersonalInfo = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Personal Information
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please provide your contact information
       </Text>
 
@@ -411,109 +414,96 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
   const renderDocuments = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Documents
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please upload the required documents
       </Text>
 
       <View>
         <View className="mb-4">
           <Text
-            className="text-sm font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Aadhar Card {errors.aadhar_card && <Text className="text-[#DC2626]">*</Text>}
           </Text>
           <TouchableOpacity
             onPress={() => pickImage('aadhar')}
-            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg border border-[#E5E7EB] p-4"
+            activeOpacity={0.7}>
             {aadharCard && (
               <Image
                 source={{ uri: aadharCard.uri }}
-                className="w-12 h-12 rounded-lg mr-3"
+                className="mr-3 h-12 w-12 rounded-lg"
                 resizeMode="cover"
               />
             )}
             <Text
               className={`flex-1 text-sm ${aadharCard ? 'text-[#111928]' : 'text-[#6B7280]'}`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              style={{ fontFamily: 'Inter-Regular' }}>
               {aadharCard ? 'Change Aadhar Card' : 'Upload Aadhar Card'}
             </Text>
           </TouchableOpacity>
           {errors.aadhar_card && (
-            <Text className="text-xs text-[#DC2626] mt-1">{errors.aadhar_card}</Text>
+            <Text className="mt-1 text-xs text-[#DC2626]">{errors.aadhar_card}</Text>
           )}
         </View>
 
         <View className="mb-4">
           <Text
-            className="text-sm font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             PAN Card {errors.pan_card && <Text className="text-[#DC2626]">*</Text>}
           </Text>
           <TouchableOpacity
             onPress={() => pickImage('pan')}
-            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg border border-[#E5E7EB] p-4"
+            activeOpacity={0.7}>
             {panCard && (
               <Image
                 source={{ uri: panCard.uri }}
-                className="w-12 h-12 rounded-lg mr-3"
+                className="mr-3 h-12 w-12 rounded-lg"
                 resizeMode="cover"
               />
             )}
             <Text
               className={`flex-1 text-sm ${panCard ? 'text-[#111928]' : 'text-[#6B7280]'}`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              style={{ fontFamily: 'Inter-Regular' }}>
               {panCard ? 'Change PAN Card' : 'Upload PAN Card'}
             </Text>
           </TouchableOpacity>
           {errors.pan_card && (
-            <Text className="text-xs text-[#DC2626] mt-1">{errors.pan_card}</Text>
+            <Text className="mt-1 text-xs text-[#DC2626]">{errors.pan_card}</Text>
           )}
         </View>
 
         <View className="mb-4">
           <Text
-            className="text-sm font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Profile Picture {errors.profile_pic && <Text className="text-[#DC2626]">*</Text>}
           </Text>
           <TouchableOpacity
             onPress={() => pickImage('profile')}
-            className="border border-[#E5E7EB] rounded-lg p-4 flex-row items-center"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg border border-[#E5E7EB] p-4"
+            activeOpacity={0.7}>
             {profilePic && (
               <Image
                 source={{ uri: profilePic.uri }}
-                className="w-12 h-12 rounded-lg mr-3"
+                className="mr-3 h-12 w-12 rounded-lg"
                 resizeMode="cover"
               />
             )}
             <Text
               className={`flex-1 text-sm ${profilePic ? 'text-[#111928]' : 'text-[#6B7280]'}`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              style={{ fontFamily: 'Inter-Regular' }}>
               {profilePic ? 'Change Profile Picture' : 'Upload Profile Picture'}
             </Text>
           </TouchableOpacity>
           {errors.profile_pic && (
-            <Text className="text-xs text-[#DC2626] mt-1">{errors.profile_pic}</Text>
+            <Text className="mt-1 text-xs text-[#DC2626]">{errors.profile_pic}</Text>
           )}
         </View>
       </View>
@@ -523,27 +513,25 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
   const renderAddress = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Address Information
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Select your residential address
       </Text>
 
       {selectedAddress ? (
         <View className="mb-4">
-          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <View className="flex-row justify-between items-start mb-2">
+          <View className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+            <View className="mb-2 flex-row items-start justify-between">
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-[#111928] mb-1" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="mb-1 font-semibold text-sm text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {selectedAddress.name}
                 </Text>
-                <Text className="text-sm text-[#374151] mb-1">
+                <Text className="mb-1 text-sm text-[#374151]">
                   {selectedAddress.house_number && `${selectedAddress.house_number}, `}
                   {selectedAddress.address}
                 </Text>
@@ -551,7 +539,7 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
                   {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
                 </Text>
                 {selectedAddress.landmark && (
-                  <Text className="text-xs text-[#6B7280] mt-1">
+                  <Text className="mt-1 text-xs text-[#6B7280]">
                     Landmark: {selectedAddress.landmark}
                   </Text>
                 )}
@@ -559,8 +547,7 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
               <TouchableOpacity
                 onPress={() => setShowAddressSheet(true)}
                 className="ml-2 p-2"
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <EditIcon size={20} color="#055c3a" />
               </TouchableOpacity>
             </View>
@@ -569,37 +556,29 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
       ) : (
         <TouchableOpacity
           onPress={() => setShowAddressSheet(true)}
-          className="flex-row items-center justify-center border-2 border-dashed border-[#D1D5DB] rounded-xl py-6 mb-4"
-          activeOpacity={0.7}
-        >
+          className="mb-4 flex-row items-center justify-center rounded-xl border-2 border-dashed border-[#D1D5DB] py-6"
+          activeOpacity={0.7}>
           <AddressIcon size={24} color="#6B7280" />
           <Text
-            className="text-base font-medium text-[#6B7280] ml-2"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="ml-2 font-medium text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Add Your Address
           </Text>
         </TouchableOpacity>
       )}
 
-      {errors.address && (
-        <Text className="text-xs text-[#DC2626] mt-1 mb-4">{errors.address}</Text>
-      )}
+      {errors.address && <Text className="mb-4 mt-1 text-xs text-[#DC2626]">{errors.address}</Text>}
     </View>
   );
 
   const renderBrokerDetails = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Broker Details
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Enter your broker license and agency information
       </Text>
 
@@ -626,49 +605,45 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
       </View>
 
       {/* Info Box */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] mt-4 overflow-hidden">
-        <View className="px-4 py-4 border-b border-[#E5E7EB]">
+      <View className="mt-4 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+        <View className="border-b border-[#E5E7EB] px-4 py-4">
           <Text
-            className="text-base font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-base text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Important Information
           </Text>
         </View>
         <View className="px-4 py-4">
-          <View className="flex-row items-start mb-2">
+          <View className="mb-2 flex-row items-start">
             <View
-              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              className="mr-3 mt-2 h-1 w-1 rounded-full bg-[#9CA3AF]"
               style={{ marginTop: 8 }}
             />
             <Text
               className="flex-1 text-sm text-[#374151]"
-              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-            >
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}>
               Ensure your broker license is valid and active
             </Text>
           </View>
-          <View className="flex-row items-start mb-2">
+          <View className="mb-2 flex-row items-start">
             <View
-              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              className="mr-3 mt-2 h-1 w-1 rounded-full bg-[#9CA3AF]"
               style={{ marginTop: 8 }}
             />
             <Text
               className="flex-1 text-sm text-[#374151]"
-              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-            >
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}>
               Agency name must match official registration
             </Text>
           </View>
           <View className="flex-row items-start">
             <View
-              className="w-1 h-1 rounded-full bg-[#9CA3AF] mt-2 mr-3"
+              className="mr-3 mt-2 h-1 w-1 rounded-full bg-[#9CA3AF]"
               style={{ marginTop: 8 }}
             />
             <Text
               className="flex-1 text-sm text-[#374151]"
-              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-            >
+              style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}>
               All details will be verified before approval
             </Text>
           </View>
@@ -680,42 +655,38 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
   const renderReview = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Review Your Application
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please review all information before submitting
       </Text>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Personal Information
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">Name: {contactInfo.name}</Text>
-        <Text className="text-sm text-[#374151] mb-1">Email: {contactInfo.email}</Text>
-        <Text className="text-sm text-[#374151] mb-1">Phone: {contactInfo.phone}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">Name: {contactInfo.name}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">Email: {contactInfo.email}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">Phone: {contactInfo.phone}</Text>
         <Text className="text-sm text-[#374151]">Alt. Phone: {contactInfo.alternative_number}</Text>
       </View>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Address
         </Text>
         {selectedAddress ? (
           <>
-            <Text className="text-sm text-[#374151] font-semibold mb-1">{selectedAddress.name}</Text>
-            <Text className="text-sm text-[#374151] mb-1">
+            <Text className="mb-1 font-semibold text-sm text-[#374151]">
+              {selectedAddress.name}
+            </Text>
+            <Text className="mb-1 text-sm text-[#374151]">
               {selectedAddress.house_number && `${selectedAddress.house_number}, `}
               {selectedAddress.address}
             </Text>
@@ -723,7 +694,9 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
               {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
             </Text>
             {selectedAddress.landmark && (
-              <Text className="text-xs text-[#6B7280] mt-1">Landmark: {selectedAddress.landmark}</Text>
+              <Text className="mt-1 text-xs text-[#6B7280]">
+                Landmark: {selectedAddress.landmark}
+              </Text>
             )}
           </>
         ) : (
@@ -731,14 +704,13 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
         )}
       </View>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Broker Details
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">License Number: {brokerDetails.license}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">License Number: {brokerDetails.license}</Text>
         <Text className="text-sm text-[#374151]">Agency Name: {brokerDetails.agency}</Text>
       </View>
       <View className="pb-8" />
@@ -765,10 +737,7 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
       <SafeAreaView className="flex-1 bg-white" edges={['top']}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading...
           </Text>
         </View>
@@ -785,47 +754,44 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
 
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] ml-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="ml-2 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Apply for Broker
           </Text>
         </View>
 
         <ScrollView className="flex-1 bg-[#F9FAFB]">
           <View className="px-6 pt-6">
-            <View className="bg-white rounded-xl border border-[#E5E7EB] p-6 items-center">
+            <View className="items-center rounded-xl border border-[#E5E7EB] bg-white p-6">
               <View
-                className="px-4 py-2 rounded-lg mb-4"
-                style={{ backgroundColor: `${statusColors[existingApplication.status] || '#6B7280'}20` }}
-              >
+                className="mb-4 rounded-lg px-4 py-2"
+                style={{
+                  backgroundColor: `${statusColors[existingApplication.status] || '#6B7280'}20`,
+                }}>
                 <Text
-                  className="text-sm font-semibold capitalize"
+                  className="font-semibold text-sm capitalize"
                   style={{
                     color: statusColors[existingApplication.status] || '#6B7280',
                     fontFamily: 'Inter-SemiBold',
-                  }}
-                >
+                  }}>
                   {existingApplication.status}
                 </Text>
               </View>
               <Text
-                className="text-base text-[#374151] text-center"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+                className="text-center text-base text-[#374151]"
+                style={{ fontFamily: 'Inter-Regular' }}>
                 {existingApplication.status === 'pending' &&
                   'Your application is under review. We will notify you once it is processed.'}
                 {existingApplication.status === 'approved' &&
                   'Congratulations! Your application has been approved.'}
-                {existingApplication.status === 'rejected' &&
-                  existingApplication.rejection_reason
-                    ? `Your application was rejected: ${existingApplication.rejection_reason}`
-                    : 'Your application was rejected. Please contact support for more information.'}
+                {existingApplication.status === 'rejected' && existingApplication.rejection_reason
+                  ? `Your application was rejected: ${existingApplication.rejection_reason}`
+                  : 'Your application was rejected. Please contact support for more information.'}
               </Text>
             </View>
           </View>
@@ -839,17 +805,15 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
       <KeyboardAvoidingView
         behavior="padding"
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] ml-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="ml-2 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Apply for Broker
           </Text>
         </View>
@@ -861,13 +825,13 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
         <ScrollView
           className="flex-1 bg-[#F9FAFB]"
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {renderCurrentStep()}
         </ScrollView>
 
         {/* Navigation Buttons */}
-        <View className={`px-6 pt-4 bg-white border-t border-[#E5E7EB] ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
+        <View
+          className={`border-t border-[#E5E7EB] bg-white px-6 pt-4 ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
           <View className="flex-row" style={{ gap: 12 }}>
             {currentStep !== 'personal' && (
               <View className="flex-1">
@@ -888,11 +852,7 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
                   disabled={isSubmitting}
                 />
               ) : (
-                <Button
-                  label="Next"
-                  onPress={handleNext}
-                  disabled={isSubmitting}
-                />
+                <Button label="Next" onPress={handleNext} disabled={isSubmitting} />
               )}
             </View>
           </View>
@@ -913,4 +873,3 @@ export default function ApplyForBrokerScreen({ onBack, onSubmitSuccess }: ApplyF
     </SafeAreaView>
   );
 }
-

@@ -48,31 +48,28 @@ export default function ActiveSubscriptionCard({ subscription }: ActiveSubscript
   const isExpiringSoon = daysRemaining <= 7;
 
   return (
-    <View className="bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+    <View className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
       {/* Header with icon and status */}
-      <View className="flex-row items-center mb-4">
-        <View className="bg-[#055c3a] rounded-full p-2">
+      <View className="mb-4 flex-row items-center">
+        <View className="rounded-full bg-[#055c3a] p-2">
           <SubscriptionIcon size={20} color="#FFFFFF" />
         </View>
-        <View className="flex-1 ml-3">
+        <View className="ml-3 flex-1">
           <Text
-            className="text-base font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-base text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {subscription.plan?.name || 'Subscription Plan'}
           </Text>
           <View className="mt-1">
             <View
-              className={`px-2 py-1 rounded-xl self-start ${
+              className={`self-start rounded-xl px-2 py-1 ${
                 isActive ? 'bg-[#D1FAE5]' : 'bg-[#E5E7EB]'
-              }`}
-            >
+              }`}>
               <Text
-                className={`text-xs font-semibold ${
+                className={`font-semibold text-xs ${
                   isActive ? 'text-[#065F46]' : 'text-[#4B5563]'
                 }`}
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 {getStatusDisplay(subscription.status)}
               </Text>
             </View>
@@ -81,23 +78,12 @@ export default function ActiveSubscriptionCard({ subscription }: ActiveSubscript
       </View>
 
       {/* Subscription details */}
-      <View className="bg-white rounded-lg p-4 border border-[#E5E7EB]">
-        <DetailRow
-          label="One-time payment"
-          value={formatAmount(subscription.amount)}
-          isAmount
-        />
+      <View className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+        <DetailRow label="One-time payment" value={formatAmount(subscription.amount)} isAmount />
         <View className="h-3" />
-        <DetailRow
-          label="Expires"
-          value={formatDate(subscription.end_date)}
-        />
+        <DetailRow label="Expires" value={formatDate(subscription.end_date)} />
         <View className="h-3" />
-        <DetailRow
-          label="Days remaining"
-          value={`${daysRemaining}`}
-          highlight={isExpiringSoon}
-        />
+        <DetailRow label="Days remaining" value={`${daysRemaining}`} highlight={isExpiringSoon} />
       </View>
     </View>
   );
@@ -112,23 +98,17 @@ interface DetailRowProps {
 
 function DetailRow({ label, value, isAmount = false, highlight = false }: DetailRowProps) {
   return (
-    <View className="flex-row justify-between items-center">
-      <Text
-        className="text-sm text-[#4B5563]"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+    <View className="flex-row items-center justify-between">
+      <Text className="text-sm text-[#4B5563]" style={{ fontFamily: 'Inter-Regular' }}>
         {label}
       </Text>
       <Text
         className={`${isAmount ? 'text-base' : 'text-sm'} font-semibold ${
           highlight ? 'text-[#B3261E]' : isAmount ? 'text-[#111928]' : 'text-[#1F2937]'
         }`}
-        style={{ fontFamily: isAmount ? 'Inter-Bold' : 'Inter-SemiBold' }}
-      >
+        style={{ fontFamily: isAmount ? 'Inter-Bold' : 'Inter-SemiBold' }}>
         {value}
       </Text>
     </View>
   );
 }
-
-

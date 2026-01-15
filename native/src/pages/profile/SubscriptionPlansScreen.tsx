@@ -10,7 +10,12 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { subscriptionService, walletService, type SubscriptionPlan, type PricingOption } from '../../services';
+import {
+  subscriptionService,
+  walletService,
+  type SubscriptionPlan,
+  type PricingOption,
+} from '../../services';
 import { razorpayService } from '../../utils/razorpay';
 import { useAppSelector } from '../../store/hooks';
 import Button from '../../components/ui/Button';
@@ -30,7 +35,9 @@ export default function SubscriptionPlansScreen({
   const { user } = useAppSelector((state) => state.auth);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
-  const [selectedDurationType, setSelectedDurationType] = useState<'monthly' | 'yearly' | null>(null);
+  const [selectedDurationType, setSelectedDurationType] = useState<'monthly' | 'yearly' | null>(
+    null
+  );
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -76,7 +83,7 @@ export default function SubscriptionPlansScreen({
       // Find the first plan with a yearly option
       for (const plan of plans) {
         if (Array.isArray(plan.pricing)) {
-          const yearlyPricing = plan.pricing.find(p => p.duration_type === 'yearly');
+          const yearlyPricing = plan.pricing.find((p) => p.duration_type === 'yearly');
           if (yearlyPricing) {
             setSelectedPlanId(plan.id);
             setSelectedDurationType('yearly');
@@ -84,7 +91,7 @@ export default function SubscriptionPlansScreen({
           }
         }
       }
-      
+
       // If no yearly option found, select the first available pricing option
       const firstPlan = plans[0];
       if (firstPlan && Array.isArray(firstPlan.pricing) && firstPlan.pricing.length > 0) {
@@ -109,22 +116,22 @@ export default function SubscriptionPlansScreen({
     try {
       if (method === 'wallet') {
         // Direct purchase with wallet
-        await subscriptionService.purchaseSubscription(selectedPlanId, 'wallet', selectedDurationType);
-
-        Alert.alert(
-          'Success',
-          'Subscription purchased successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: async () => {
-                if (onPurchaseSuccess) {
-                  await onPurchaseSuccess();
-                }
-              },
-            },
-          ]
+        await subscriptionService.purchaseSubscription(
+          selectedPlanId,
+          'wallet',
+          selectedDurationType
         );
+
+        Alert.alert('Success', 'Subscription purchased successfully!', [
+          {
+            text: 'OK',
+            onPress: async () => {
+              if (onPurchaseSuccess) {
+                await onPurchaseSuccess();
+              }
+            },
+          },
+        ]);
       } else if (method === 'razorpay') {
         // Create payment order and open Razorpay
         if (!razorpayService.isAvailable()) {
@@ -144,11 +151,7 @@ export default function SubscriptionPlansScreen({
         const razorpayKey = razorpayService.getRazorpayKey();
 
         if (!razorpayKey) {
-          Alert.alert(
-            'Configuration Error',
-            'Razorpay key is not configured.',
-            [{ text: 'OK' }]
-          );
+          Alert.alert('Configuration Error', 'Razorpay key is not configured.', [{ text: 'OK' }]);
           setIsPurchasing(false);
           return;
         }
@@ -165,7 +168,7 @@ export default function SubscriptionPlansScreen({
             currency: paymentData.payment_order.currency,
             order_id: paymentData.payment_order.id,
             name: 'Trees India',
-            description: `Subscription: ${plans.find(p => p.id === selectedPlanId)?.name || 'Plan'}`,
+            description: `Subscription: ${plans.find((p) => p.id === selectedPlanId)?.name || 'Plan'}`,
             prefill: {
               contact: user?.phone || '',
               email: user?.email || '',
@@ -184,20 +187,16 @@ export default function SubscriptionPlansScreen({
                 response.razorpay_signature
               );
 
-              Alert.alert(
-                'Success',
-                'Subscription purchased successfully!',
-                [
-                  {
-                    text: 'OK',
-                    onPress: async () => {
-                      if (onPurchaseSuccess) {
-                        await onPurchaseSuccess();
-                      }
-                    },
+              Alert.alert('Success', 'Subscription purchased successfully!', [
+                {
+                  text: 'OK',
+                  onPress: async () => {
+                    if (onPurchaseSuccess) {
+                      await onPurchaseSuccess();
+                    }
                   },
-                ]
-              );
+                },
+              ]);
             } catch (error: any) {
               Alert.alert(
                 'Payment Verification Failed',
@@ -216,10 +215,11 @@ export default function SubscriptionPlansScreen({
             const isCancelled =
               error.code === 'PAYMENT_CANCELLED' ||
               error.code === '2' ||
-              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+              (error.code === 'UNKNOWN_ERROR' &&
+                error.description?.toLowerCase().includes('cancel')) ||
               // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
               (error.code === 'BAD_REQUEST_ERROR' &&
-               (error.description === 'undefined' || error.reason === 'payment_error'));
+                (error.description === 'undefined' || error.reason === 'payment_error'));
 
             // Handle different error cases
             if (isCancelled) {
@@ -230,11 +230,9 @@ export default function SubscriptionPlansScreen({
                 [{ text: 'OK' }]
               );
             } else if (error.code === 'NETWORK_ERROR') {
-              Alert.alert(
-                'Network Error',
-                'Please check your internet connection and try again.',
-                [{ text: 'OK' }]
-              );
+              Alert.alert('Network Error', 'Please check your internet connection and try again.', [
+                { text: 'OK' },
+              ]);
             } else {
               Alert.alert(
                 'Payment Failed',
@@ -271,11 +269,13 @@ export default function SubscriptionPlansScreen({
 
           if (pricing.duration_type === 'yearly') {
             // Compare yearly price to 12 months of monthly price
-            const monthlyPricing = plan.pricing.find(p => p.duration_type === 'monthly');
+            const monthlyPricing = plan.pricing.find((p) => p.duration_type === 'monthly');
             if (monthlyPricing) {
               originalPrice = monthlyPricing.price * 12;
               if (originalPrice > pricing.price) {
-                savePercentage = Math.round(((originalPrice - pricing.price) / originalPrice) * 100);
+                savePercentage = Math.round(
+                  ((originalPrice - pricing.price) / originalPrice) * 100
+                );
               }
             }
           } else if (pricing.duration_type === 'monthly') {
@@ -285,9 +285,12 @@ export default function SubscriptionPlansScreen({
 
           options.push({
             planId: plan.id,
-            planName: pricing.duration_type === 'yearly' ? 'Annual' : 
-                     pricing.duration_type === 'monthly' ? 'Monthly' : 
-                     'Quarter',
+            planName:
+              pricing.duration_type === 'yearly'
+                ? 'Annual'
+                : pricing.duration_type === 'monthly'
+                  ? 'Monthly'
+                  : 'Quarter',
             pricing,
             originalPrice,
             savePercentage,
@@ -308,13 +311,13 @@ export default function SubscriptionPlansScreen({
 
   const renderContent = () => {
     // Calculate selected plan inside render to ensure it's always up-to-date
-    const selectedPlan = selectedPlanId ? plans.find(p => p.id === selectedPlanId) : null;
-    
+    const selectedPlan = selectedPlanId ? plans.find((p) => p.id === selectedPlanId) : null;
+
     // Get price from the selected pricing option
     let selectedPlanPrice = 0;
     if (selectedPlan && selectedDurationType && Array.isArray(selectedPlan.pricing)) {
       const selectedPricing = selectedPlan.pricing.find(
-        p => p.duration_type === selectedDurationType
+        (p) => p.duration_type === selectedDurationType
       );
       selectedPlanPrice = selectedPricing?.price || 0;
     }
@@ -327,12 +330,19 @@ export default function SubscriptionPlansScreen({
           }
           if (typeof selectedPlan.features === 'object' && selectedPlan.features !== null) {
             // Backend stores features as {"description": "feature1\nfeature2\nfeature3"}
-            if ('description' in selectedPlan.features && typeof selectedPlan.features.description === 'string') {
+            if (
+              'description' in selectedPlan.features &&
+              typeof selectedPlan.features.description === 'string'
+            ) {
               // Split by newline and filter out empty strings
-              return selectedPlan.features.description.split('\n').filter((f: string) => f.trim() !== '');
+              return selectedPlan.features.description
+                .split('\n')
+                .filter((f: string) => f.trim() !== '');
             }
             // Fallback: try to extract string values from object
-            return Object.values(selectedPlan.features).filter((f): f is string => typeof f === 'string');
+            return Object.values(selectedPlan.features).filter(
+              (f): f is string => typeof f === 'string'
+            );
           }
           return [];
         })()
@@ -341,10 +351,7 @@ export default function SubscriptionPlansScreen({
       return (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading subscription plans...
           </Text>
         </View>
@@ -355,22 +362,16 @@ export default function SubscriptionPlansScreen({
       return (
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Failed to load plans
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center mb-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mb-6 text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {error}
           </Text>
-          <Button
-            label="Try Again"
-            onPress={() => loadData()}
-            variant="solid"
-          />
+          <Button label="Try Again" onPress={() => loadData()} variant="solid" />
         </View>
       );
     }
@@ -379,15 +380,13 @@ export default function SubscriptionPlansScreen({
       return (
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             No Plans Available
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             There are no subscription plans available at the moment.
           </Text>
         </View>
@@ -405,14 +404,14 @@ export default function SubscriptionPlansScreen({
               onRefresh={() => loadData(true)}
               tintColor="#055c3a"
             />
-          }
-        >
-          <View className="px-6 pt-6 pb-24">
+          }>
+          <View className="px-6 pb-24 pt-6">
             {/* Subscription Options List */}
             {allPricingOptions.map((option, index) => {
-              const isSelected = selectedPlanId === option.planId && 
-                                selectedDurationType === option.pricing.duration_type;
-              
+              const isSelected =
+                selectedPlanId === option.planId &&
+                selectedDurationType === option.pricing.duration_type;
+
               return (
                 <SubscriptionOptionRow
                   key={`${option.planId}-${option.pricing.duration_type}-${index}`}
@@ -427,7 +426,7 @@ export default function SubscriptionPlansScreen({
             })}
 
             {/* Separator */}
-            <View className="h-px bg-[#E5E7EB] my-6" />
+            <View className="my-6 h-px bg-[#E5E7EB]" />
 
             {/* Features List */}
             {featuresArray.length > 0 && (
@@ -436,7 +435,7 @@ export default function SubscriptionPlansScreen({
                   const featureText = typeof feature === 'string' ? feature : String(feature || '');
                   const featureKey = `feature-${index}-${featureText.substring(0, 10).replace(/\s/g, '-')}`;
                   return (
-                    <View key={featureKey} className="flex-row items-start mb-3">
+                    <View key={featureKey} className="mb-3 flex-row items-start">
                       <Image
                         source={require('../../../assets/icons/common/checkbox.png')}
                         style={{ width: 20, height: 20, marginRight: 12, marginTop: 2 }}
@@ -444,11 +443,10 @@ export default function SubscriptionPlansScreen({
                       />
                       <Text
                         className="flex-1 text-sm text-[#374151]"
-                        style={{ 
+                        style={{
                           fontFamily: 'Inter-Regular',
                           lineHeight: 20,
-                        }}
-                      >
+                        }}>
                         {featureText.trim()}
                       </Text>
                     </View>
@@ -461,7 +459,7 @@ export default function SubscriptionPlansScreen({
 
         {/* Subscribe Button */}
         {selectedPlanId && (
-          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] px-6 pt-4 pb-16">
+          <View className="absolute bottom-0 left-0 right-0 border-t border-[#E5E7EB] bg-white px-6 pb-16 pt-4">
             <Button
               label={
                 isPurchasing
@@ -486,18 +484,13 @@ export default function SubscriptionPlansScreen({
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity
-          onPress={onBack}
-          className="p-2 -ml-2"
-          activeOpacity={0.7}
-        >
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+        <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <Text
-          className="text-xl font-semibold text-[#111928] ml-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="ml-2 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Subscription Plans
         </Text>
       </View>
@@ -513,10 +506,16 @@ export default function SubscriptionPlansScreen({
         walletBalance={walletBalance}
         amount={(() => {
           // Calculate price when modal is rendered - same logic as in renderContent
-          const currentSelectedPlan = selectedPlanId ? plans.find(p => p.id === selectedPlanId) : null;
-          if (currentSelectedPlan && selectedDurationType && Array.isArray(currentSelectedPlan.pricing)) {
+          const currentSelectedPlan = selectedPlanId
+            ? plans.find((p) => p.id === selectedPlanId)
+            : null;
+          if (
+            currentSelectedPlan &&
+            selectedDurationType &&
+            Array.isArray(currentSelectedPlan.pricing)
+          ) {
             const selectedPricing = currentSelectedPlan.pricing.find(
-              p => p.duration_type === selectedDurationType
+              (p) => p.duration_type === selectedDurationType
             );
             return selectedPricing?.price || 0;
           }
@@ -527,4 +526,3 @@ export default function SubscriptionPlansScreen({
     </SafeAreaView>
   );
 }
-

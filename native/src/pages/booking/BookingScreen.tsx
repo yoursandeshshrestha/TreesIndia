@@ -51,7 +51,15 @@ export default function BookingScreen(props: BookingScreenProps) {
   // Filter bookings based on active tab
   const filteredBookings = bookings.filter((booking) => {
     if (activeTab === 'ongoing') {
-      return ['pending', 'confirmed', 'in_progress', 'assigned', 'quote_provided', 'quote_accepted', 'partially_paid'].includes(booking.status);
+      return [
+        'pending',
+        'confirmed',
+        'in_progress',
+        'assigned',
+        'quote_provided',
+        'quote_accepted',
+        'partially_paid',
+      ].includes(booking.status);
     } else {
       return ['completed', 'cancelled'].includes(booking.status);
     }
@@ -69,7 +77,6 @@ export default function BookingScreen(props: BookingScreenProps) {
   useEffect(() => {
     loadBookings();
   }, [isAuthenticated, user, loadBookings]);
-
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -175,18 +182,18 @@ export default function BookingScreen(props: BookingScreenProps) {
     // Format date for display - handle both booking_date and scheduled_date
     const displayDate = booking.booking_date || (booking as any).scheduled_date;
     const displayTime = booking.start_time || (booking as any).scheduled_time;
-    
+
     // Handle contact info - can be in contact object or direct fields
     const contactInfo = (booking as any).contact || {};
     const contactPerson = booking.contact_person || contactInfo.contact_person;
     const contactPhone = booking.contact_phone || contactInfo.contact_phone;
     const description = booking.description || contactInfo.description;
-    
+
     // Handle payment info - can be in payment object or direct fields
     const paymentInfo = (booking as any).payment || {};
     const totalAmount = booking.total_amount || paymentInfo.amount;
     const paymentStatus = booking.payment_status || paymentInfo.status;
-    
+
     // Handle quote info for inquiry bookings
     const quoteAmount = (booking as any).quote_amount;
     const quoteProvidedAt = (booking as any).quote_provided_at;
@@ -194,28 +201,31 @@ export default function BookingScreen(props: BookingScreenProps) {
     const paymentSegments = (booking as any).payment_segments || [];
     const paidSegments = paymentSegments.filter((seg: any) => seg.status === 'paid');
     const paidAmount = paidSegments.reduce((sum: number, seg: any) => sum + (seg.amount || 0), 0);
-    
+
     // Check if payment is fully completed
-    // Payment is complete if: 
+    // Payment is complete if:
     // 1. payment_status is 'completed' or 'paid' (check as string since backend may use 'completed')
     // 2. booking status is 'confirmed' or 'assigned' (indicates payment was completed)
     // 3. all segments are paid
     // 4. paidAmount >= quoteAmount
     const bookingStatus = (booking as any).status || booking.status;
     const paymentStatusStr = String(paymentStatus || '');
-    const isPaymentCompleted = paymentStatusStr === 'completed' || 
-                               paymentStatusStr === 'paid' ||
-                               (bookingStatus === 'confirmed' || bookingStatus === 'assigned') ||
-                               (paymentSegments.length > 0 && paymentSegments.every((seg: any) => seg.status === 'paid')) ||
-                               (hasQuote && paidAmount >= quoteAmount);
-    
+    const isPaymentCompleted =
+      paymentStatusStr === 'completed' ||
+      paymentStatusStr === 'paid' ||
+      bookingStatus === 'confirmed' ||
+      bookingStatus === 'assigned' ||
+      (paymentSegments.length > 0 && paymentSegments.every((seg: any) => seg.status === 'paid')) ||
+      (hasQuote && paidAmount >= quoteAmount);
+
     // Calculate remaining amount - if payment is completed, remaining should be 0
-    const remainingAmount = (hasQuote && !isPaymentCompleted) ? Math.max(0, quoteAmount - paidAmount) : 0;
-    
+    const remainingAmount =
+      hasQuote && !isPaymentCompleted ? Math.max(0, quoteAmount - paidAmount) : 0;
+
     // Handle worker assignment - check if it exists and is not null
     let workerName: string | undefined;
     let workerPhone: string | undefined;
-    
+
     try {
       const workerAssignment = (booking as any).worker_assignment;
 
@@ -224,8 +234,13 @@ export default function BookingScreen(props: BookingScreenProps) {
         const worker = workerAssignment.worker || workerAssignment;
 
         if (worker && typeof worker === 'object' && worker !== null) {
-          workerName = worker.name || worker.contact_info?.name || worker.contact_person_name || worker.Name;
-          workerPhone = worker.phone || worker.contact_info?.phone || worker.contact_person_phone || worker.Phone;
+          workerName =
+            worker.name || worker.contact_info?.name || worker.contact_person_name || worker.Name;
+          workerPhone =
+            worker.phone ||
+            worker.contact_info?.phone ||
+            worker.contact_person_phone ||
+            worker.Phone;
         }
       }
     } catch (error) {
@@ -252,39 +267,32 @@ export default function BookingScreen(props: BookingScreenProps) {
             setShowDetailSheet(true);
           }
         }}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View className="px-6 py-4">
           {/* Header: Service Name and Status */}
-          <View className="flex-row items-start justify-between mb-2">
-            <View className="flex-1 mr-3">
+          <View className="mb-2 flex-row items-start justify-between">
+            <View className="mr-3 flex-1">
               <Text
-                className="text-base font-bold text-[#111928]"
+                className="font-bold text-base text-[#111928]"
                 style={{ fontFamily: 'Inter-Bold' }}
-                numberOfLines={2}
-              >
+                numberOfLines={2}>
                 {booking.service?.name || 'Service'}
               </Text>
             </View>
             <View className="flex-row items-center gap-2">
               {isInquiry && (
-                <View className="px-2.5 py-1.5 rounded-lg bg-[#3B82F6]">
+                <View className="rounded-lg bg-[#3B82F6] px-2.5 py-1.5">
                   <Text
-                    className="text-xs font-semibold text-white"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="font-semibold text-xs text-white"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     Inquiry
                   </Text>
                 </View>
               )}
-              <View
-                className="px-3 py-1.5 rounded-lg"
-                style={{ backgroundColor: statusColor }}
-              >
+              <View className="rounded-lg px-3 py-1.5" style={{ backgroundColor: statusColor }}>
                 <Text
-                  className="text-xs font-semibold text-white"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-xs text-white"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {statusLabel}
                 </Text>
               </View>
@@ -294,15 +302,11 @@ export default function BookingScreen(props: BookingScreenProps) {
           {/* Booking ID */}
           <View className="mb-3">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-1"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-1 font-semibold text-xs text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               BOOKING ID
             </Text>
-            <Text
-              className="text-sm text-[#111928]"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+            <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
               {formatBookingId(booking)}
             </Text>
           </View>
@@ -314,15 +318,11 @@ export default function BookingScreen(props: BookingScreenProps) {
               {contactPerson && (
                 <View className="mb-3">
                   <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="mb-1 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     CONTACT PERSON
                   </Text>
-                  <Text
-                    className="text-sm text-[#111928]"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                  <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
                     {contactPerson}
                     {contactPhone && ` • ${contactPhone}`}
                   </Text>
@@ -333,15 +333,13 @@ export default function BookingScreen(props: BookingScreenProps) {
               {description && (
                 <View className="mb-3">
                   <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="mb-1 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     DESCRIPTION
                   </Text>
                   <Text
-                    className="text-sm text-[#4B5563] leading-5"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="text-sm leading-5 text-[#4B5563]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     {description}
                   </Text>
                 </View>
@@ -351,43 +349,38 @@ export default function BookingScreen(props: BookingScreenProps) {
               {hasQuote ? (
                 <View className="mb-3">
                   <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="mb-1 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     QUOTE AMOUNT
                   </Text>
-                  <View className="flex-row items-center justify-between mb-1">
+                  <View className="mb-1 flex-row items-center justify-between">
                     <Text
-                      className="text-xl font-bold text-[#00a871]"
-                      style={{ fontFamily: 'Inter-Bold' }}
-                    >
+                      className="font-bold text-xl text-[#00a871]"
+                      style={{ fontFamily: 'Inter-Bold' }}>
                       ₹{quoteAmount.toLocaleString('en-IN')}
                     </Text>
                     {paidAmount > 0 && (
-                      <View className="px-2 py-0.5 rounded bg-[#D1FAE5]">
+                      <View className="rounded bg-[#D1FAE5] px-2 py-0.5">
                         <Text
-                          className="text-xs font-semibold"
-                          style={{ fontFamily: 'Inter-SemiBold', color: '#065F46' }}
-                        >
+                          className="font-semibold text-xs"
+                          style={{ fontFamily: 'Inter-SemiBold', color: '#065F46' }}>
                           Paid: ₹{paidAmount.toLocaleString('en-IN')}
                         </Text>
                       </View>
                     )}
                   </View>
                   {remainingAmount > 0 && (
-                    <View className="flex-row items-center gap-2 mb-2">
+                    <View className="mb-2 flex-row items-center gap-2">
                       <Text
                         className="text-xs text-[#6B7280]"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
+                        style={{ fontFamily: 'Inter-Regular' }}>
                         Remaining: ₹{remainingAmount.toLocaleString('en-IN')}
                       </Text>
                       {bookingStatusForSheet === 'partially_paid' && (
-                        <View className="px-2 py-0.5 rounded bg-[#FEF3C7]">
+                        <View className="rounded bg-[#FEF3C7] px-2 py-0.5">
                           <Text
-                            className="text-xs font-semibold"
-                            style={{ fontFamily: 'Inter-SemiBold', color: '#92400E' }}
-                          >
+                            className="font-semibold text-xs"
+                            style={{ fontFamily: 'Inter-SemiBold', color: '#92400E' }}>
                             Tap to Pay
                           </Text>
                         </View>
@@ -397,25 +390,23 @@ export default function BookingScreen(props: BookingScreenProps) {
                   {quoteProvidedAt && (
                     <Text
                       className="text-xs text-[#6B7280]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       Quote provided on {formatDate(quoteProvidedAt)}
                     </Text>
                   )}
                 </View>
               ) : (
-                <View className="bg-[#F9FAFB] border-y border-[#E5E7EB] -mx-6 px-6 py-3 mt-1">
+                <View className="-mx-6 mt-1 border-y border-[#E5E7EB] bg-[#F9FAFB] px-6 py-3">
                   <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-1.5"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="mb-1.5 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     NOTE
                   </Text>
                   <Text
-                    className="text-sm text-[#4B5563] leading-5"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    Please wait for TreesIndia to provide you the quote. TreesIndia support might contact you regarding your booking.
+                    className="text-sm leading-5 text-[#4B5563]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    Please wait for TreesIndia to provide you the quote. TreesIndia support might
+                    contact you regarding your booking.
                   </Text>
                 </View>
               )}
@@ -426,28 +417,23 @@ export default function BookingScreen(props: BookingScreenProps) {
               {/* Service Date */}
               <View className="mb-3">
                 <Text
-                  className="text-xs font-semibold text-[#6B7280] mb-1"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="mb-1 font-semibold text-xs text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   SERVICE DATE
                 </Text>
                 {displayDate ? (
                   <View className="flex-row items-center">
                     <CalendarIcon size={14} color="#111928" />
                     <Text
-                      className="text-sm text-[#111928] ml-2"
+                      className="ml-2 text-sm text-[#111928]"
                       style={{ fontFamily: 'Inter-Medium' }}
-                      numberOfLines={1}
-                    >
+                      numberOfLines={1}>
                       {formatDate(displayDate)}
                       {displayTime && ` • ${formatTime(displayTime)}`}
                     </Text>
                   </View>
                 ) : (
-                  <Text
-                    className="text-sm text-[#6B7280]"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                  <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                     To be scheduled after quote acceptance
                   </Text>
                 )}
@@ -457,15 +443,11 @@ export default function BookingScreen(props: BookingScreenProps) {
               {workerName && (
                 <View className="mb-3">
                   <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="mb-1 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     WORKER ASSIGNED
                   </Text>
-                  <Text
-                    className="text-sm text-[#111928]"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                  <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
                     {workerName}
                     {workerPhone && ` • ${workerPhone}`}
                   </Text>
@@ -477,33 +459,30 @@ export default function BookingScreen(props: BookingScreenProps) {
                 {totalAmount != null && totalAmount > 0 ? (
                   <View>
                     <Text
-                      className="text-xs font-semibold text-[#6B7280] mb-1"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="mb-1 font-semibold text-xs text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       TOTAL AMOUNT
                     </Text>
                     <View className="flex-row items-center justify-between">
                       <Text
-                        className="text-xl font-bold text-[#00a871]"
+                        className="font-bold text-xl text-[#00a871]"
                         style={{ fontFamily: 'Inter-Bold' }}
-                        numberOfLines={1}
-                      >
+                        numberOfLines={1}>
                         ₹{totalAmount.toLocaleString('en-IN')}
                       </Text>
-                      {((paymentStatus as string) === 'paid' || (paymentStatus as string) === 'completed') && (
+                      {((paymentStatus as string) === 'paid' ||
+                        (paymentStatus as string) === 'completed') && (
                         <View
-                          className="px-3 py-1.5 rounded-lg"
+                          className="rounded-lg px-3 py-1.5"
                           style={{
                             backgroundColor: '#D1FAE5',
-                          }}
-                        >
+                          }}>
                           <Text
-                            className="text-xs font-bold"
+                            className="font-bold text-xs"
                             style={{
                               fontFamily: 'Inter-Bold',
                               color: '#065F46',
-                            }}
-                          >
+                            }}>
                             PAID
                           </Text>
                         </View>
@@ -511,18 +490,17 @@ export default function BookingScreen(props: BookingScreenProps) {
                     </View>
                   </View>
                 ) : (
-                  <View className="bg-[#F9FAFB] border-y border-[#E5E7EB] -mx-6 px-6 py-3">
+                  <View className="-mx-6 border-y border-[#E5E7EB] bg-[#F9FAFB] px-6 py-3">
                     <Text
-                      className="text-xs font-semibold text-[#6B7280] mb-1.5"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="mb-1.5 font-semibold text-xs text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       NOTE
                     </Text>
                     <Text
-                      className="text-sm text-[#4B5563] leading-5"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Please wait for TreesIndia to provide you the quote. TreesIndia support might contact you regarding your booking.
+                      className="text-sm leading-5 text-[#4B5563]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
+                      Please wait for TreesIndia to provide you the quote. TreesIndia support might
+                      contact you regarding your booking.
                     </Text>
                   </View>
                 )}
@@ -531,26 +509,29 @@ export default function BookingScreen(props: BookingScreenProps) {
           )}
 
           {/* Accept/Reject/View Quote Buttons - Only for quote_provided status */}
-          {isInquiry && ((booking as any).status === 'quote_provided') && hasQuote && (
-            <View className="mt-4 pt-4 pb-4 border-t border-[#E5E7EB]">
+          {isInquiry && (booking as any).status === 'quote_provided' && hasQuote && (
+            <View className="mt-4 border-t border-[#E5E7EB] pb-4 pt-4">
               <View className="flex-row gap-2">
                 <View className="flex-1">
                   <TouchableOpacity
                     onPress={async () => {
                       const bookingId = booking.id || booking.ID;
                       if (!bookingId) return;
-                      
+
                       // Close detail sheet first if open
                       if (showDetailSheet && selectedBooking?.id === booking.id) {
                         setShowDetailSheet(false);
                         setSelectedBooking(null);
                         // Wait a bit for animation to complete
-                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await new Promise((resolve) => setTimeout(resolve, 300));
                       }
-                      
+
                       setIsAcceptingQuote(true);
                       try {
-                        await bookingService.acceptQuote(bookingId, 'Quote accepted via mobile app');
+                        await bookingService.acceptQuote(
+                          bookingId,
+                          'Quote accepted via mobile app'
+                        );
                         // Refresh bookings to get updated status
                         await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
                         // Use current booking with updated status (will be refreshed from API)
@@ -568,16 +549,14 @@ export default function BookingScreen(props: BookingScreenProps) {
                       }
                     }}
                     disabled={isAcceptingQuote}
-                    className="flex-1 bg-[#055c3a] rounded-lg py-2.5 items-center justify-center"
-                    activeOpacity={0.8}
-                  >
+                    className="flex-1 items-center justify-center rounded-lg bg-[#055c3a] py-2.5"
+                    activeOpacity={0.8}>
                     {isAcceptingQuote ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
                       <Text
-                        className="text-white text-sm font-semibold"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
+                        className="font-semibold text-sm text-white"
+                        style={{ fontFamily: 'Inter-SemiBold' }}>
                         Accept
                       </Text>
                     )}
@@ -586,48 +565,42 @@ export default function BookingScreen(props: BookingScreenProps) {
                 <View className="flex-1">
                   <TouchableOpacity
                     onPress={async () => {
-                      Alert.alert(
-                        'Reject Quote',
-                        'Are you sure you want to reject this quote?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Reject',
-                            style: 'destructive',
-                            onPress: async () => {
-                              const bookingId = booking.id || booking.ID;
-                              if (!bookingId) return;
-                              
-                              setIsRejectingQuote(true);
-                              try {
-                                await bookingService.rejectQuote(bookingId, 'Rejected by customer');
-                                // Refresh bookings
-                                await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
-                                Alert.alert('Success', 'Quote rejected successfully');
-                              } catch (error: any) {
-                                Alert.alert(
-                                  'Error',
-                                  error?.message || 'Failed to reject quote. Please try again.'
-                                );
-                              } finally {
-                                setIsRejectingQuote(false);
-                              }
-                            },
+                      Alert.alert('Reject Quote', 'Are you sure you want to reject this quote?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Reject',
+                          style: 'destructive',
+                          onPress: async () => {
+                            const bookingId = booking.id || booking.ID;
+                            if (!bookingId) return;
+
+                            setIsRejectingQuote(true);
+                            try {
+                              await bookingService.rejectQuote(bookingId, 'Rejected by customer');
+                              // Refresh bookings
+                              await dispatch(fetchMyBookings({ page: 1, limit: 20 }));
+                              Alert.alert('Success', 'Quote rejected successfully');
+                            } catch (error: any) {
+                              Alert.alert(
+                                'Error',
+                                error?.message || 'Failed to reject quote. Please try again.'
+                              );
+                            } finally {
+                              setIsRejectingQuote(false);
+                            }
                           },
-                        ]
-                      );
+                        },
+                      ]);
                     }}
                     disabled={isRejectingQuote}
-                    className="flex-1 border border-[#055c3a] bg-transparent rounded-lg py-2.5 items-center justify-center"
-                    activeOpacity={0.8}
-                  >
+                    className="flex-1 items-center justify-center rounded-lg border border-[#055c3a] bg-transparent py-2.5"
+                    activeOpacity={0.8}>
                     {isRejectingQuote ? (
                       <ActivityIndicator size="small" color="#055c3a" />
                     ) : (
                       <Text
-                        className="text-[#055c3a] text-sm font-semibold"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
+                        className="font-semibold text-sm text-[#055c3a]"
+                        style={{ fontFamily: 'Inter-SemiBold' }}>
                         Reject
                       </Text>
                     )}
@@ -636,30 +609,33 @@ export default function BookingScreen(props: BookingScreenProps) {
               </View>
             </View>
           )}
-          
+
           {/* Pay Button for quote_accepted status with remaining payment */}
-          {isInquiry && ((booking as any).status === 'quote_accepted') && hasQuote && remainingAmount > 0 && (
-            <View className="mt-4 pt-4 border-t border-[#E5E7EB]">
-              <Button
-                label={`Pay ₹${remainingAmount.toLocaleString('en-IN')}`}
-                onPress={async () => {
-                  // Close detail sheet first if open
-                  if (showDetailSheet && selectedBooking?.id === booking.id) {
-                    setShowDetailSheet(false);
-                    setSelectedBooking(null);
-                    // Wait a bit for animation to complete
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                  }
-                  // Open quote acceptance bottom sheet for payment
-                  setBookingForQuote(booking);
-                  setShowQuoteAcceptanceSheet(true);
-                }}
-                variant="solid"
-              />
-            </View>
-          )}
+          {isInquiry &&
+            (booking as any).status === 'quote_accepted' &&
+            hasQuote &&
+            remainingAmount > 0 && (
+              <View className="mt-4 border-t border-[#E5E7EB] pt-4">
+                <Button
+                  label={`Pay ₹${remainingAmount.toLocaleString('en-IN')}`}
+                  onPress={async () => {
+                    // Close detail sheet first if open
+                    if (showDetailSheet && selectedBooking?.id === booking.id) {
+                      setShowDetailSheet(false);
+                      setSelectedBooking(null);
+                      // Wait a bit for animation to complete
+                      await new Promise((resolve) => setTimeout(resolve, 300));
+                    }
+                    // Open quote acceptance bottom sheet for payment
+                    setBookingForQuote(booking);
+                    setShowQuoteAcceptanceSheet(true);
+                  }}
+                  variant="solid"
+                />
+              </View>
+            )}
         </View>
-        <View className="h-px bg-[#E5E7EB] -mx-6" />
+        <View className="-mx-6 h-px bg-[#E5E7EB]" />
       </TouchableOpacity>
     );
   };
@@ -676,26 +652,16 @@ export default function BookingScreen(props: BookingScreenProps) {
     if (error && bookings.length === 0) {
       return (
         <View className="flex-1 items-center justify-center px-6">
-          <Text
-            className="text-4xl mb-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-4 text-4xl" style={{ fontFamily: 'Inter-Regular' }}>
             ⚠️
           </Text>
           <Text
-            className="text-base text-[#B3261E] mb-4 text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mb-4 text-center text-base text-[#B3261E]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {error}
           </Text>
-          <TouchableOpacity
-            onPress={loadBookings}
-            className="bg-[#055c3a] px-6 py-3 rounded-lg"
-          >
-            <Text
-              className="text-white font-semibold"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+          <TouchableOpacity onPress={loadBookings} className="rounded-lg bg-[#055c3a] px-6 py-3">
+            <Text className="font-semibold text-white" style={{ fontFamily: 'Inter-SemiBold' }}>
               Retry
             </Text>
           </TouchableOpacity>
@@ -708,15 +674,13 @@ export default function BookingScreen(props: BookingScreenProps) {
         <View className="flex-1 items-center justify-center px-6">
           <BookingIcon size={64} color="#9CA3AF" />
           <Text
-            className="text-lg font-semibold text-[#4B5563] mb-2 mt-4 text-center"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 mt-4 text-center font-semibold text-lg text-[#4B5563]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             No {activeTab} bookings
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {activeTab === 'ongoing'
               ? 'Book a service to see your bookings here'
               : 'Your completed bookings will appear here'}
@@ -730,13 +694,8 @@ export default function BookingScreen(props: BookingScreenProps) {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#055c3a"
-          />
-        }
-      >
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#055c3a" />
+        }>
         {filteredBookings.map((booking, index) =>
           renderBookingCard(booking, index, filteredBookings.length)
         )}
@@ -747,11 +706,10 @@ export default function BookingScreen(props: BookingScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
         <Text
-          className="text-xl font-semibold text-[#111928] flex-1"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="flex-1 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           My Bookings
         </Text>
       </View>
@@ -761,22 +719,17 @@ export default function BookingScreen(props: BookingScreenProps) {
         <TouchableOpacity
           onPress={() => setActiveTab('ongoing')}
           className="flex-1"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View
-            className={`py-4 px-6 border-b-2 ${
-              activeTab === 'ongoing'
-                ? 'border-[#055c3a]'
-                : 'border-transparent'
-            }`}
-          >
+            className={`border-b-2 px-6 py-4 ${
+              activeTab === 'ongoing' ? 'border-[#055c3a]' : 'border-transparent'
+            }`}>
             <Text
-              className="text-base font-medium text-center"
+              className="text-center font-medium text-base"
               style={{
                 fontFamily: 'Inter-Medium',
                 color: activeTab === 'ongoing' ? '#055c3a' : '#6B7280',
-              }}
-            >
+              }}>
               Ongoing
             </Text>
           </View>
@@ -784,22 +737,17 @@ export default function BookingScreen(props: BookingScreenProps) {
         <TouchableOpacity
           onPress={() => setActiveTab('completed')}
           className="flex-1"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View
-            className={`py-4 px-6 border-b-2 ${
-              activeTab === 'completed'
-                ? 'border-[#055c3a]'
-                : 'border-transparent'
-            }`}
-          >
+            className={`border-b-2 px-6 py-4 ${
+              activeTab === 'completed' ? 'border-[#055c3a]' : 'border-transparent'
+            }`}>
             <Text
-              className="text-base font-medium text-center"
+              className="text-center font-medium text-base"
               style={{
                 fontFamily: 'Inter-Medium',
                 color: activeTab === 'completed' ? '#055c3a' : '#6B7280',
-              }}
-            >
+              }}>
               Completed
             </Text>
           </View>
@@ -811,7 +759,7 @@ export default function BookingScreen(props: BookingScreenProps) {
 
       {/* Global loading overlay while bookings are refreshing (e.g. after payment) */}
       {isLoading && bookings.length > 0 && (
-        <View className="absolute inset-0 bg-black/10 items-center justify-center">
+        <View className="absolute inset-0 items-center justify-center bg-black/10">
           <ActivityIndicator size="large" color="#055c3a" />
         </View>
       )}

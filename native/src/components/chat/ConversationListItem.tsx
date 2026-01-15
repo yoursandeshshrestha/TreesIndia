@@ -88,23 +88,19 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
       style={{
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
-      }}
-    >
+      }}>
       <View className="flex-row items-start">
         {/* Profile Picture - WhatsApp style */}
         <View className="mr-3">
           {avatarUrl ? (
             <Image
               source={{ uri: avatarUrl }}
-              className="w-[52px] h-[52px] rounded-full"
+              className="h-[52px] w-[52px] rounded-full"
               style={{ backgroundColor: '#DDD' }}
             />
           ) : (
-            <View className="w-[52px] h-[52px] rounded-full bg-[#DDD] items-center justify-center">
-              <Text
-                className="text-[#666] text-xl"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+            <View className="h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DDD]">
+              <Text className="text-xl text-[#666]" style={{ fontFamily: 'Inter-SemiBold' }}>
                 {displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
@@ -114,26 +110,24 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
         {/* Content - Name, Message, Time, Badge */}
         <View className="flex-1">
           {/* Top Row: Name and Timestamp */}
-          <View className="flex-row items-center justify-between mb-1">
+          <View className="mb-1 flex-row items-center justify-between">
             {/* Name */}
             <Text
-              className="text-[17px] text-[#000] flex-1"
+              className="flex-1 text-[17px] text-[#000]"
               style={{
                 fontFamily: hasUnread ? 'Inter-SemiBold' : 'Inter-Medium',
               }}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {displayName}
             </Text>
 
             {/* Timestamp */}
             {lastMessageTime && (
               <Text
-                className={`text-[13px] ml-2 ${hasUnread ? 'text-[#25D366]' : 'text-[#667781]'}`}
+                className={`ml-2 text-[13px] ${hasUnread ? 'text-[#25D366]' : 'text-[#667781]'}`}
                 style={{
                   fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
-                }}
-              >
+                }}>
                 {formatTimestamp(lastMessageTime)}
               </Text>
             )}
@@ -142,40 +136,37 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
           {/* Bottom Row: Message and Badge */}
           <View className="flex-row items-center justify-between">
             {/* Last Message */}
-            <View className="flex-row items-center flex-1">
+            <View className="flex-1 flex-row items-center">
               {/* Show "You: " prefix if sent by current user */}
               {isSentByMe && lastMessage !== 'Tap to start chatting' && (
                 <Text
                   className="text-[15px] text-[#667781]"
                   style={{
                     fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
-                  }}
-                >
+                  }}>
                   You:{' '}
                 </Text>
               )}
 
               <Text
-                className={`text-[15px] flex-1 ${hasUnread ? 'text-[#111]' : 'text-[#667781]'}`}
+                className={`flex-1 text-[15px] ${hasUnread ? 'text-[#111]' : 'text-[#667781]'}`}
                 style={{
                   fontFamily: hasUnread ? 'Inter-Medium' : 'Inter-Regular',
                 }}
-                numberOfLines={1}
-              >
+                numberOfLines={1}>
                 {lastMessage}
               </Text>
             </View>
 
             {/* Unread Badge - WhatsApp green */}
             {hasUnread && (
-              <View className="bg-[#25D366] rounded-full min-w-[20px] h-[20px] items-center justify-center px-1.5 ml-2">
+              <View className="ml-2 h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#25D366] px-1.5">
                 <Text
-                  className="text-white text-[12px]"
+                  className="text-[12px] text-white"
                   style={{
                     fontFamily: 'Inter-Bold',
                     lineHeight: 14,
-                  }}
-                >
+                  }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>
               </View>

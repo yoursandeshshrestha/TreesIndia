@@ -48,7 +48,6 @@ export default function ChatScreen(props: ChatScreenProps) {
   const isLoading = useAppSelector((state) => state.chat.isLoading);
   const unreadCounts = useAppSelector((state) => state.chat.unreadCounts);
 
-
   /**
    * Filter conversations based on search query
    */
@@ -62,8 +61,8 @@ export default function ChatScreen(props: ChatScreenProps) {
       // Get other user data
       const isUser1 = conversation.user_1 === currentUserId;
       const otherUser = isUser1
-        ? (conversation.user_2_data || conversation.User2Data)
-        : (conversation.user_1_data || conversation.User1Data);
+        ? conversation.user_2_data || conversation.User2Data
+        : conversation.user_1_data || conversation.User1Data;
 
       // Check if name matches
       const name = otherUser?.name?.toLowerCase() || '';
@@ -115,8 +114,8 @@ export default function ChatScreen(props: ChatScreenProps) {
       // Backend uses snake_case (user_1_data, user_2_data)
       const isUser1 = conversation.user_1 === currentUserId;
       const otherUser = isUser1
-        ? (conversation.user_2_data || conversation.User2Data)
-        : (conversation.user_1_data || conversation.User1Data);
+        ? conversation.user_2_data || conversation.User2Data
+        : conversation.user_1_data || conversation.User1Data;
       const otherUserId = isUser1 ? conversation.user_2 : conversation.user_1;
 
       if (!otherUserId) {
@@ -159,10 +158,7 @@ export default function ChatScreen(props: ChatScreenProps) {
       return (
         <View className="flex-1 items-center justify-center py-12">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-[#6B7280] text-sm mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading conversations...
           </Text>
         </View>
@@ -170,22 +166,20 @@ export default function ChatScreen(props: ChatScreenProps) {
     }
 
     return (
-      <View className="flex-1 items-center justify-center py-12 px-8">
+      <View className="flex-1 items-center justify-center px-8 py-12">
         {/* Chat Icon */}
-        <View className="w-20 h-20 rounded-full bg-[#F0FDF4] items-center justify-center mb-4">
+        <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#F0FDF4]">
           <ChatIcon size={40} color="#055c3a" />
         </View>
 
         <Text
-          className="text-[#111928] text-lg mb-2 text-center"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 text-center text-lg text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           No conversations yet
         </Text>
         <Text
-          className="text-[#6B7280] text-sm text-center"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+          className="text-center text-sm text-[#6B7280]"
+          style={{ fontFamily: 'Inter-Regular' }}>
           Start a conversation with a worker from your bookings
         </Text>
       </View>
@@ -197,19 +191,18 @@ export default function ChatScreen(props: ChatScreenProps) {
       <StatusBar barStyle="dark-content" backgroundColor="white" />
 
       {/* Header */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
         <Text
-          className="text-xl font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Messages
         </Text>
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-[#F3F4F6] rounded-lg px-3 py-2.5">
+        <View className="flex-row items-center rounded-lg bg-[#F3F4F6] px-3 py-2.5">
           <SearchIcon size={18} color="#9CA3AF" />
           <TextInput
-            className="flex-1 ml-2 text-[15px] text-[#111928]"
+            className="ml-2 flex-1 text-[15px] text-[#111928]"
             style={{ fontFamily: 'Inter-Regular' }}
             placeholder="Search conversations..."
             placeholderTextColor="#9CA3AF"
@@ -222,9 +215,8 @@ export default function ChatScreen(props: ChatScreenProps) {
             <TouchableOpacity
               onPress={() => setSearchQuery('')}
               className="ml-2"
-              activeOpacity={0.7}
-            >
-              <Text className="text-[#9CA3AF] text-lg">✕</Text>
+              activeOpacity={0.7}>
+              <Text className="text-lg text-[#9CA3AF]">✕</Text>
             </TouchableOpacity>
           )}
         </View>

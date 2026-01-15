@@ -64,7 +64,14 @@ export interface Booking {
   service?: Service;
   address_id: number;
   address?: Address;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'quote_provided' | 'quote_accepted';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled'
+    | 'quote_provided'
+    | 'quote_accepted';
   booking_date?: string;
   slot_id?: string;
   start_time?: string;

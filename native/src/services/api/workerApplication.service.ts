@@ -106,4 +106,3 @@ class WorkerApplicationService {
 }
 
 export const workerApplicationService = new WorkerApplicationService();
-

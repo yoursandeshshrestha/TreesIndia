@@ -103,7 +103,7 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
       // Refresh user data
       await dispatch(getCurrentUser()).unwrap();
-      
+
       // Reload profile to get updated data
       await loadUserProfile();
 
@@ -114,11 +114,11 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         error?.message || error?.status === 409
           ? 'This email is already registered'
           : 'Failed to update profile. Please try again.';
-      
+
       if (error?.status === 409) {
         setErrors({ email: 'This email is already registered' });
       }
-      
+
       Alert.alert('Error', errorMessage);
     } finally {
       setIsUpdating(false);
@@ -170,8 +170,7 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
           Alert.alert('Success', 'Profile picture updated successfully!');
         } catch (error: any) {
-          const errorMessage =
-            error?.message || 'Failed to upload avatar. Please try again.';
+          const errorMessage = error?.message || 'Failed to upload avatar. Please try again.';
           Alert.alert('Error', errorMessage);
         } finally {
           setIsUploadingAvatar(false);
@@ -186,10 +185,7 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top']}>
         <View className="flex-1 items-center justify-center">
-          <Text
-            className="text-base text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-base text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading profile...
           </Text>
         </View>
@@ -202,21 +198,15 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         {/* Header - Fixed at top */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4 p-2 -ml-2"
-            activeOpacity={0.7}
-          >
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] flex-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="flex-1 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Edit Profile
           </Text>
         </View>
@@ -225,11 +215,10 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
           <ScrollView
             contentContainerStyle={{ paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             <View className="px-6 pt-6">
               {/* Avatar Section */}
-              <View className="items-center mb-8">
+              <View className="mb-8 items-center">
                 <AvatarPicker
                   avatarUrl={avatarUrl}
                   name={name}
@@ -279,37 +268,31 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
                 {/* Gender Selection */}
                 <View className="mb-6">
                   <Text
-                    className="text-sm font-medium text-[#111928] mb-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-2 font-medium text-sm text-[#111928]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Gender
                   </Text>
-                  <GenderSelector
-                    selectedGender={gender}
-                    onGenderChange={setGender}
-                  />
+                  <GenderSelector selectedGender={gender} onGenderChange={setGender} />
                 </View>
 
                 {/* Phone Number Field (Read-only) */}
                 <View className="mb-6">
                   <View>
                     <Text
-                      className="text-sm font-medium text-[#111928] mb-2"
+                      className="mb-2 font-medium text-sm text-[#111928]"
                       style={{
                         fontFamily: 'Inter-Medium',
                         lineHeight: 18,
                         ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                      }}
-                    >
+                      }}>
                       Phone Number
                     </Text>
                     <View
-                      className="border border-[#E5E7EB] rounded-lg px-4 bg-[#F9FAFB]"
+                      className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4"
                       style={{
                         minHeight: 48,
                         justifyContent: 'center',
-                      }}
-                    >
+                      }}>
                       <Text
                         className="text-base text-[#6B7280]"
                         style={{
@@ -318,21 +301,18 @@ export default function EditProfileScreen({ onBack }: EditProfileScreenProps) {
                           lineHeight: Platform.OS === 'ios' ? 20 : 22,
                           textAlignVertical: 'center',
                           ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                        }}
-                      >
+                        }}>
                         {profile?.phone || user?.phone || 'N/A'}
                       </Text>
                     </View>
                   </View>
                 </View>
               </View>
-
-              
             </View>
           </ScrollView>
 
           {/* Update Button - Fixed at bottom */}
-          <View className="px-6 pb-4 bg-white border-t border-[#E5E7EB]" style={{ paddingTop: 12 }}>
+          <View className="border-t border-[#E5E7EB] bg-white px-6 pb-4" style={{ paddingTop: 12 }}>
             <Button
               label="Update Profile"
               onPress={handleUpdateProfile}

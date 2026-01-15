@@ -10,7 +10,7 @@ export interface InputProps extends TextInputProps {
 
 /**
  * Production-ready Input component with proper vertical centering and text cutoff prevention
- * 
+ *
  * Features:
  * - Proper vertical text centering on iOS and Android
  * - Prevents text cutoff for descenders (g, y, p, q)
@@ -34,24 +34,22 @@ export default function Input({
     <View className={containerClassName}>
       {label && (
         <Text
-          className="text-sm font-medium text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+          className="mb-2 font-medium text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-Medium' }}>
           {label}
           {required && <Text className="text-[#B3261E]"> *</Text>}
         </Text>
       )}
-      
+
       <View
-        className="border rounded-lg"
+        className="rounded-lg border"
         style={{
           minHeight: 48,
           borderColor,
           borderWidth: 1,
           justifyContent: 'center',
           alignSelf: 'stretch',
-        }}
-      >
+        }}>
         <TextInput
           className="text-base text-[#111928]"
           placeholderTextColor="#9CA3AF"
@@ -76,12 +74,9 @@ export default function Input({
           {...textInputProps}
         />
       </View>
-      
+
       {hasError && (
-        <Text
-          className="text-sm text-[#B3261E] mt-2"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+        <Text className="mt-2 text-sm text-[#B3261E]" style={{ fontFamily: 'Inter-Regular' }}>
           {error}
         </Text>
       )}

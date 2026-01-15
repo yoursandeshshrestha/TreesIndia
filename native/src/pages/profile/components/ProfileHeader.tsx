@@ -8,7 +8,6 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps) {
-
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name
@@ -26,12 +25,13 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
     }
 
     return (
-      <View className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg shadow-sm" style={{ backgroundColor: '#047857' }}>
-        <View className="w-2 h-2 rounded-full bg-white" />
+      <View
+        className="flex-row items-center gap-1.5 rounded-lg px-3 py-2 shadow-sm"
+        style={{ backgroundColor: '#047857' }}>
+        <View className="h-2 w-2 rounded-full bg-white" />
         <Text
-          className="text-xs font-bold tracking-wide text-white"
-          style={{ fontFamily: 'Inter-Bold' }}
-        >
+          className="font-bold text-xs tracking-wide text-white"
+          style={{ fontFamily: 'Inter-Bold' }}>
           BROKER
         </Text>
       </View>
@@ -39,18 +39,14 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
   };
 
   return (
-    <TouchableOpacity
-      onPress={onEditPress}
-      activeOpacity={0.7}
-      className="flex-row items-center"
-    >
+    <TouchableOpacity onPress={onEditPress} activeOpacity={0.7} className="flex-row items-center">
       {/* Avatar - Larger Airbnb Style */}
-      <View className="w-20 h-20 rounded-full bg-[#00a871] items-center justify-center overflow-hidden">
+      <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#00a871]">
         {user?.avatar && user.avatar.trim() !== '' ? (
           <Image
             key={user.avatar}
             source={{ uri: user.avatar }}
-            className="w-full h-full"
+            className="h-full w-full"
             resizeMode="cover"
             onError={() => {
               // If image fails to load, it will fall back to initials
@@ -58,37 +54,31 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
           />
         ) : user?.name ? (
           <Text
-            className="text-white text-2xl font-semibold"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-2xl text-white"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {getInitials(user.name)}
           </Text>
         ) : (
           <Text
-            className="text-white text-2xl font-semibold"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-2xl text-white"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             U
           </Text>
         )}
       </View>
 
       <View className="ml-5 flex-1">
-        <View className="flex-row items-center gap-3 mb-1">
+        <View className="mb-1 flex-row items-center gap-3">
           {user?.name && (
             <Text
-              className="text-2xl font-semibold text-[#111928]"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-2xl text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               {user.name}
             </Text>
           )}
         </View>
         {user?.phone && (
-          <Text
-            className="text-base text-[#6B7280] mb-2"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-2 text-base text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             {user.phone}
           </Text>
         )}
@@ -99,4 +89,3 @@ export default function ProfileHeader({ user, onEditPress }: ProfileHeaderProps)
     </TouchableOpacity>
   );
 }
-

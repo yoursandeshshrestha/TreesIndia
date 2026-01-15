@@ -118,24 +118,20 @@ export default function WorkerAssignmentBottomSheet({
   const handleCompleteWork = () => {
     if (!assignment) return;
 
-    Alert.alert(
-      'Complete Work',
-      'Are you sure you want to mark this work as completed?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
+    Alert.alert('Complete Work', 'Are you sure you want to mark this work as completed?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Complete',
+        style: 'default',
+        onPress: () => {
+          onCompleteWork(assignment.ID);
+          onClose();
         },
-        {
-          text: 'Complete',
-          style: 'default',
-          onPress: () => {
-            onCompleteWork(assignment.ID);
-            onClose();
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleMessageCustomer = () => {
@@ -188,15 +184,19 @@ export default function WorkerAssignmentBottomSheet({
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }) + ' at ' + date.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      return (
+        date.toLocaleDateString('en-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }) +
+        ' at ' +
+        date.toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      );
     } catch {
       return 'N/A';
     }
@@ -209,8 +209,7 @@ export default function WorkerAssignmentBottomSheet({
       animationType="none"
       onRequestClose={handleClose}
       statusBarTranslucent
-      key={assignment?.ID}
-    >
+      key={assignment?.ID}>
       <View className="flex-1">
         {/* Overlay */}
         <Animated.View
@@ -218,8 +217,7 @@ export default function WorkerAssignmentBottomSheet({
             flex: 1,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             opacity: overlayOpacity,
-          }}
-        >
+          }}>
           <TouchableOpacity className="flex-1" onPress={handleClose} activeOpacity={1} />
         </Animated.View>
 
@@ -231,11 +229,10 @@ export default function WorkerAssignmentBottomSheet({
             right: 16,
             transform: [{ translateY }],
             zIndex: 30,
-          }}
-        >
+          }}>
           <TouchableOpacity
             onPress={handleClose}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            className="h-12 w-12 items-center justify-center rounded-full bg-white"
             style={{
               marginTop: -56,
               shadowColor: '#000',
@@ -243,8 +240,7 @@ export default function WorkerAssignmentBottomSheet({
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 4,
-            }}
-          >
+            }}>
             <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
           </TouchableOpacity>
         </Animated.View>
@@ -267,16 +263,14 @@ export default function WorkerAssignmentBottomSheet({
             shadowOpacity: 0.1,
             shadowRadius: 12,
             elevation: 8,
-          }}
-        >
+          }}>
           <SafeAreaView edges={['bottom']} className="flex-1">
             {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+            <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
               <View className="flex-1">
                 <Text
-                  className="text-lg font-bold text-[#111928]"
-                  style={{ fontFamily: 'Inter-Bold' }}
-                >
+                  className="font-bold text-lg text-[#111928]"
+                  style={{ fontFamily: 'Inter-Bold' }}>
                   {isCompleted ? 'Completed Assignment' : 'Assignment Details'}
                 </Text>
               </View>
@@ -286,21 +280,19 @@ export default function WorkerAssignmentBottomSheet({
             <ScrollView className="flex-1 px-6 py-4">
               {/* Completion Status Badge (if completed) */}
               {isCompleted && (
-                <View className="mb-4 bg-[#D1FAE5] border border-[#6EE7B7] rounded-lg p-4">
-                  <View className="flex-row items-center mb-2">
+                <View className="mb-4 rounded-lg border border-[#6EE7B7] bg-[#D1FAE5] p-4">
+                  <View className="mb-2 flex-row items-center">
                     <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                     <Text
-                      className="text-base font-bold text-[#059669] ml-2"
-                      style={{ fontFamily: 'Inter-Bold' }}
-                    >
+                      className="ml-2 font-bold text-base text-[#059669]"
+                      style={{ fontFamily: 'Inter-Bold' }}>
                       Work Completed
                     </Text>
                   </View>
                   {assignment.completed_at && (
                     <Text
                       className="text-sm text-[#065F46]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {formatDateTime(assignment.completed_at)}
                     </Text>
                   )}
@@ -310,15 +302,13 @@ export default function WorkerAssignmentBottomSheet({
               {/* Service Name */}
               <View className="mb-4">
                 <Text
-                  className="text-sm text-[#6B7280] mb-1"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                  className="mb-1 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Service
                 </Text>
                 <Text
-                  className="text-base font-semibold text-[#111928]"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {booking.service?.name || 'Service'}
                 </Text>
               </View>
@@ -326,24 +316,21 @@ export default function WorkerAssignmentBottomSheet({
               {/* Customer Info */}
               <View className="mb-4">
                 <Text
-                  className="text-sm text-[#6B7280] mb-1"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                  className="mb-1 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Customer
                 </Text>
                 <Text
-                  className="text-base font-semibold text-[#111928]"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {booking.contact_person || booking.user?.name || 'Customer'}
                 </Text>
                 {booking.contact_phone && (
-                  <View className="flex-row items-center mt-1">
+                  <View className="mt-1 flex-row items-center">
                     <Ionicons name="call-outline" size={16} color="#6B7280" />
                     <Text
-                      className="text-sm text-[#6B7280] ml-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      className="ml-1 text-sm text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {booking.contact_phone}
                     </Text>
                   </View>
@@ -353,17 +340,15 @@ export default function WorkerAssignmentBottomSheet({
               {/* Address */}
               <View className="mb-4">
                 <Text
-                  className="text-sm text-[#6B7280] mb-1"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                  className="mb-1 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Address
                 </Text>
                 <View className="flex-row items-start">
                   <Ionicons name="location-outline" size={18} color="#6B7280" className="mt-0.5" />
                   <Text
-                    className="flex-1 text-sm text-[#111928] ml-2"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="ml-2 flex-1 text-sm text-[#111928]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     {formatAddress(booking.address)}
                   </Text>
                 </View>
@@ -373,17 +358,15 @@ export default function WorkerAssignmentBottomSheet({
               {booking.scheduled_date && (
                 <View className="mb-4">
                   <Text
-                    className="text-sm text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mb-1 text-sm text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     Scheduled Date
                   </Text>
                   <View className="flex-row items-center">
                     <Ionicons name="calendar-outline" size={16} color="#6B7280" />
                     <Text
-                      className="text-sm text-[#111928] ml-2"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      className="ml-2 text-sm text-[#111928]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {formatDate(booking.scheduled_date)}
                     </Text>
                   </View>
@@ -394,15 +377,11 @@ export default function WorkerAssignmentBottomSheet({
               {booking.description && (
                 <View className="mb-4">
                   <Text
-                    className="text-sm text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mb-1 text-sm text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     Description
                   </Text>
-                  <Text
-                    className="text-sm text-[#111928]"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                  <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                     {booking.description}
                   </Text>
                 </View>
@@ -412,16 +391,14 @@ export default function WorkerAssignmentBottomSheet({
               {booking.special_instructions && (
                 <View className="mb-4">
                   <Text
-                    className="text-sm text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mb-1 text-sm text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     Special Instructions
                   </Text>
-                  <View className="bg-[#FEF3C7] p-3 rounded-lg">
+                  <View className="rounded-lg bg-[#FEF3C7] p-3">
                     <Text
                       className="text-sm text-[#92400E]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {booking.special_instructions}
                     </Text>
                   </View>
@@ -431,9 +408,9 @@ export default function WorkerAssignmentBottomSheet({
 
             {/* Action Buttons - Only show for in_progress assignments */}
             {!isCompleted && (
-              <View className="px-6 py-4 border-t border-[#E5E7EB]">
+              <View className="border-t border-[#E5E7EB] px-6 py-4">
                 {/* First Row - Google Maps and Message buttons */}
-                <View className="flex-row mb-3" style={{ gap: 12 }}>
+                <View className="mb-3 flex-row" style={{ gap: 12 }}>
                   <View className="flex-1">
                     <Button
                       label="Navigate"

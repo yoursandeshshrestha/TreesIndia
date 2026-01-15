@@ -94,7 +94,7 @@ class CacheManager {
   async clear(): Promise<void> {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const cacheKeys = keys.filter(key => key.startsWith(this.prefix));
+      const cacheKeys = keys.filter((key) => key.startsWith(this.prefix));
       await AsyncStorage.multiRemove(cacheKeys);
     } catch (error) {
       // Error handling

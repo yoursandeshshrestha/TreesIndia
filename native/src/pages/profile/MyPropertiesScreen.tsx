@@ -30,7 +30,9 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
   const [error, setError] = useState<string | null>(null);
   const [deletingPropertyId, setDeletingPropertyId] = useState<number | null>(null);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
-  const [propertyToDelete, setPropertyToDelete] = useState<{ id: number; title: string } | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<{ id: number; title: string } | null>(
+    null
+  );
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
 
@@ -44,7 +46,7 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
       setError(null);
 
       const response = await propertyService.getUserProperties();
-      
+
       if (response.data && Array.isArray(response.data)) {
         setProperties(response.data);
       } else {
@@ -101,27 +103,21 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
     <View className="flex-1 items-center justify-center px-6 py-12">
       <PropertyIcon size={64} color="#D1D5DB" />
       <Text
-        className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         No Properties Yet
       </Text>
       <Text
-        className="text-sm text-[#6B7280] text-center mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+        className="mb-6 text-center text-sm text-[#6B7280]"
+        style={{ fontFamily: 'Inter-Regular' }}>
         Click the + button to add your first property
       </Text>
       <TouchableOpacity
         onPress={handleAddProperty}
-        className="bg-[#055c3a] rounded-lg px-6 py-3 flex-row items-center"
-        activeOpacity={0.7}
-      >
+        className="flex-row items-center rounded-lg bg-[#055c3a] px-6 py-3"
+        activeOpacity={0.7}>
         <PlusIcon size={20} color="#FFFFFF" />
-        <Text
-          className="text-white font-semibold ml-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+        <Text className="ml-2 font-semibold text-white" style={{ fontFamily: 'Inter-SemiBold' }}>
           Add Property
         </Text>
       </TouchableOpacity>
@@ -130,28 +126,22 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
 
   const renderErrorState = () => (
     <View className="flex-1 items-center justify-center px-6 py-12">
-      <Text className="text-4xl mb-4">⚠️</Text>
+      <Text className="mb-4 text-4xl">⚠️</Text>
       <Text
-        className="text-lg font-semibold text-[#111928] mb-2 text-center"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 text-center font-semibold text-lg text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Error Loading Properties
       </Text>
       <Text
-        className="text-sm text-[#6B7280] text-center mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+        className="mb-6 text-center text-sm text-[#6B7280]"
+        style={{ fontFamily: 'Inter-Regular' }}>
         {error}
       </Text>
       <TouchableOpacity
         onPress={() => loadProperties()}
-        className="bg-[#055c3a] rounded-lg px-6 py-3"
-        activeOpacity={0.7}
-      >
-        <Text
-          className="text-white font-semibold"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+        className="rounded-lg bg-[#055c3a] px-6 py-3"
+        activeOpacity={0.7}>
+        <Text className="font-semibold text-white" style={{ fontFamily: 'Inter-SemiBold' }}>
           Try Again
         </Text>
       </TouchableOpacity>
@@ -163,10 +153,7 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
       return (
         <View className="flex-1 items-center justify-center py-12">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading properties...
           </Text>
         </View>
@@ -202,30 +189,27 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+        <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <Text
-          className="text-xl font-semibold text-[#111928] ml-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="ml-2 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           My Properties
         </Text>
       </View>
 
       {/* Add Property Button - Always visible */}
-      <View className="px-6 py-4 border-b border-[#F3F4F6]">
+      <View className="border-b border-[#F3F4F6] px-6 py-4">
         <TouchableOpacity
           onPress={handleAddProperty}
           className="flex-row items-center"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <PlusIcon size={20} color="#055c3a" />
           <Text
-            className="text-[#055c3a] font-medium ml-4"
-            style={{ fontFamily: 'Inter-Medium', fontSize: 16 }}
-          >
+            className="ml-4 font-medium text-[#055c3a]"
+            style={{ fontFamily: 'Inter-Medium', fontSize: 16 }}>
             Add Property
           </Text>
         </TouchableOpacity>
@@ -242,8 +226,7 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
           />
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16 }}
-      >
+        contentContainerStyle={{ padding: 16 }}>
         {renderContent()}
       </ScrollView>
 
@@ -288,4 +271,3 @@ export default function MyPropertiesScreen({ onBack, onAddProperty }: MyProperti
     </SafeAreaView>
   );
 }
-

@@ -24,19 +24,14 @@ export default function WorkersSection({
       title="Top Rated Workers"
       onSeeAll={onSeeAll}
       isLoading={isLoading}
-      isEmpty={workers.length === 0}
-    >
+      isEmpty={workers.length === 0}>
       <View style={{ height: 240 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 24 }}
-        >
+          contentContainerStyle={{ paddingRight: 24 }}>
           {workers.map((worker, index) => (
-            <View
-              key={worker.id}
-              style={{ marginLeft: index === 0 ? 24 : 16 }}
-            >
+            <View key={worker.id} style={{ marginLeft: index === 0 ? 24 : 16 }}>
               <WorkerCard
                 worker={worker}
                 onPress={() => onWorkerPress(worker)}

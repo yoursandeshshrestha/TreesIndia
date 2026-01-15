@@ -206,7 +206,8 @@ class ConversationMonitorWebSocketService {
     // Check if it's a HTTP error (400, 401, 403, 404, etc.)
     const is400Error = event.reason && event.reason.includes('400');
     const is404Error = event.reason && event.reason.includes('404');
-    const isHttpError = is400Error || is404Error || (event.reason && /\b[4-5]\d{2}\b/.test(event.reason));
+    const isHttpError =
+      is400Error || is404Error || (event.reason && /\b[4-5]\d{2}\b/.test(event.reason));
 
     // Don't retry if:
     // 1. It's a manual disconnect
@@ -345,9 +346,7 @@ class ConversationMonitorWebSocketService {
       return;
     }
 
-    this.eventListeners[event] = this.eventListeners[event].filter(
-      (cb) => cb !== callback
-    );
+    this.eventListeners[event] = this.eventListeners[event].filter((cb) => cb !== callback);
   }
 
   /**

@@ -1,33 +1,105 @@
 // Export all services from a single entry point
 export * from './api/base';
-export * from './api/auth.service';
-export * from './api/user.service';
-export * from './api/wallet.service';
 
-// Export service instances for convenience
+// Export service instances and their types
 export { authService } from './api/auth.service';
 export { userService } from './api/user.service';
 export { walletService } from './api/wallet.service';
-export { addressService, type Address, type CreateAddressRequest, type UpdateAddressRequest } from './api/address.service';
+export {
+  addressService,
+  type Address,
+  type CreateAddressRequest,
+  type UpdateAddressRequest,
+} from './api/address.service';
 export { locationSearchService, type LocationPrediction } from './api/location-search.service';
-export { userLocationService, type UserLocation, type CreateLocationRequest, type UpdateLocationRequest } from './api/user-location.service';
-export { subscriptionService, type SubscriptionPlan, type PricingOption, type UserSubscription, type SubscriptionHistory } from './api/subscription.service';
-export { workerApplicationService, type WorkerApplicationRequest, type WorkerApplicationResponse, type UserApplicationResponse } from './api/workerApplication.service';
-export { brokerApplicationService, type BrokerApplicationRequest, type BrokerApplicationResponse } from './api/brokerApplication.service';
-export { propertyService, type Property, type PropertyListResponse, type PropertyResponse } from './api/property.service';
-export { serviceService, type Service, type SearchResponse, type SearchSuggestionsResponse, type SearchSuggestion } from './api/service.service';
+export {
+  userLocationService,
+  type UserLocation,
+  type CreateLocationRequest,
+  type UpdateLocationRequest,
+} from './api/user-location.service';
+export {
+  subscriptionService,
+  type SubscriptionPlan,
+  type PricingOption,
+  type UserSubscription,
+  type SubscriptionHistory,
+} from './api/subscription.service';
+export {
+  workerApplicationService,
+  type WorkerApplicationRequest,
+  type WorkerApplicationResponse,
+  type UserApplicationResponse,
+} from './api/workerApplication.service';
+export {
+  brokerApplicationService,
+  type BrokerApplicationRequest,
+  type BrokerApplicationResponse,
+} from './api/brokerApplication.service';
+export {
+  propertyService,
+  type Property,
+  type PropertyListResponse,
+  type PropertyResponse,
+} from './api/property.service';
+export {
+  serviceService,
+  type Service,
+  type SearchResponse,
+  type SearchSuggestionsResponse,
+  type SearchSuggestion,
+} from './api/service.service';
 export { bannerService, type PromotionBanner } from './api/banner.service';
 export { categoryService, type Category } from './api/category.service';
 export { homepageIconService, type HomepageCategoryIcon } from './api/homepage-icon.service';
-export { projectService, type Project, type ProjectListResponse, type ProjectResponse, type ContactInfo } from './api/project.service';
-export { workerService, type Worker, type WorkerListResponse, type WorkerResponse, type WorkerFilters } from './api/worker.service';
-export { vendorService, type Vendor, type VendorListResponse, type VendorResponse, type VendorFilters } from './api/vendor.service';
-export { searchHistoryService, type SearchHistoryEntry, type SaveSearchHistoryRequest } from './api/search-history.service';
+export {
+  projectService,
+  type Project,
+  type ProjectListResponse,
+  type ProjectResponse,
+  type ContactInfo,
+} from './api/project.service';
+export {
+  workerService,
+  type Worker,
+  type WorkerListResponse,
+  type WorkerResponse,
+  type WorkerFilters,
+} from './api/worker.service';
+export {
+  vendorService,
+  type Vendor,
+  type VendorListResponse,
+  type VendorResponse,
+  type VendorFilters,
+} from './api/vendor.service';
+export {
+  searchHistoryService,
+  type SearchHistoryEntry,
+  type SaveSearchHistoryRequest,
+} from './api/search-history.service';
 export { bookingService } from './api/booking.service';
 export { chatService } from './api/chat.service';
-export { workerAssignmentService, type WorkerAssignment, type WorkerAssignmentListResponse, type AcceptAssignmentRequest, type RejectAssignmentRequest } from './api/worker-assignment.service';
-export { workerEarningsService, type WorkerEarningsDashboard, type EarningsSummary, type RecentAssignment, type PeriodFilter, type WithdrawalSummary } from './api/worker-earnings.service';
-export { workerWithdrawalService, type WorkerWithdrawalRequest, type WorkerWithdrawalResponse } from './api/worker-withdrawal.service';
+export {
+  workerAssignmentService,
+  type WorkerAssignment,
+  type WorkerAssignmentListResponse,
+  type AcceptAssignmentRequest,
+  type RejectAssignmentRequest,
+} from './api/worker-assignment.service';
+export {
+  workerEarningsService,
+  type WorkerEarningsDashboard,
+  type EarningsSummary,
+  type RecentAssignment,
+  type PeriodFilter,
+  type WithdrawalSummary,
+} from './api/worker-earnings.service';
+export {
+  workerWithdrawalService,
+  type WorkerWithdrawalRequest,
+  type WorkerWithdrawalResponse,
+} from './api/worker-withdrawal.service';
 
 // Legacy API client for backward compatibility
 // TODO: Remove this once all imports are updated
@@ -61,4 +133,3 @@ export class APIClient {
 }
 
 export const apiClient = APIClient.getInstance();
-

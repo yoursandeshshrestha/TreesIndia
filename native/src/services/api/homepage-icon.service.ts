@@ -28,4 +28,3 @@ class HomepageIconService {
 }
 
 export const homepageIconService = new HomepageIconService();
-

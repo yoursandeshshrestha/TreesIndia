@@ -26,5 +26,3 @@ export default function MoneyIcon({ size = 24, color = 'currentColor' }: MoneyIc
     </Svg>
   );
 }
-
-

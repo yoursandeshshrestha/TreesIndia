@@ -15,7 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { projectService, type Project } from '../../services';
 import ProjectCard from '../../components/ProjectCard';
 import ProjectDetailBottomSheet from '../home/components/ProjectDetailBottomSheet';
-import ProjectFilterBottomSheet, { type ProjectFilters } from './components/ProjectFilterBottomSheet';
+import ProjectFilterBottomSheet, {
+  type ProjectFilters,
+} from './components/ProjectFilterBottomSheet';
 import SubscriptionRequiredBottomSheet from '../../components/SubscriptionRequiredBottomSheet';
 import SearchIcon from '../../components/icons/SearchIcon';
 import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
@@ -29,7 +31,11 @@ interface ProjectsScreenProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 columns with padding
 
-export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSubscription }: ProjectsScreenProps) {
+export default function ProjectsScreen({
+  onBack,
+  initialFilters,
+  onNavigateToSubscription,
+}: ProjectsScreenProps) {
   const { hasActiveSubscription } = useSubscriptionStatus();
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -174,17 +180,15 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
   const renderEmptyState = () => {
     return (
       <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-6xl mb-4">🏗️</Text>
+        <Text className="mb-4 text-6xl">🏗️</Text>
         <Text
-          className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           No Projects Found
         </Text>
         <Text
-          className="text-sm text-[#6B7280] text-center mb-6"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+          className="mb-6 text-center text-sm text-[#6B7280]"
+          style={{ fontFamily: 'Inter-Regular' }}>
           {getActiveFilterCount() > 0
             ? 'Try adjusting your filters to see more results'
             : 'Check back later for new project listings'}
@@ -192,13 +196,11 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
         {getActiveFilterCount() > 0 && (
           <TouchableOpacity
             onPress={() => setFilters({})}
-            className="bg-[#00a871] px-6 py-3 rounded-lg"
-            activeOpacity={0.7}
-          >
+            className="rounded-lg bg-[#00a871] px-6 py-3"
+            activeOpacity={0.7}>
             <Text
-              className="text-base font-semibold text-white"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-base text-white"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Clear Filters
             </Text>
           </TouchableOpacity>
@@ -219,39 +221,31 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4"
-            activeOpacity={0.7}
-          >
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
+        <View className="mb-4 flex-row items-center justify-between">
+          <TouchableOpacity onPress={onBack} className="mr-4" activeOpacity={0.7}>
             <Text className="text-2xl">←</Text>
           </TouchableOpacity>
           <Text
-            className="flex-1 text-xl font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="flex-1 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Projects
           </Text>
           <TouchableOpacity
             onPress={() => setShowFilterSheet(true)}
-            className="flex-row items-center bg-[#F3F4F6] px-4 py-2 rounded-lg"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg bg-[#F3F4F6] px-4 py-2"
+            activeOpacity={0.7}>
             <SearchIcon size={18} color="#4B5563" />
             <Text
-              className="text-sm font-medium text-[#4B5563] ml-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="ml-2 font-medium text-sm text-[#4B5563]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Filters
             </Text>
             {getActiveFilterCount() > 0 && (
-              <View className="ml-2 w-5 h-5 bg-[#00a871] rounded-full items-center justify-center">
+              <View className="ml-2 h-5 w-5 items-center justify-center rounded-full bg-[#00a871]">
                 <Text
-                  className="text-xs font-semibold text-white"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-xs text-white"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {getActiveFilterCount()}
                 </Text>
               </View>
@@ -260,14 +254,14 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
         </View>
 
         {/* Search Bar */}
-        <View className="bg-white rounded-xl border border-[#E5E7EB] flex-row items-center px-4 mb-3">
+        <View className="mb-3 flex-row items-center rounded-xl border border-[#E5E7EB] bg-white px-4">
           <SearchIcon size={20} color="#6B7280" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search projects..."
             placeholderTextColor="#9CA3AF"
-            className="flex-1 ml-3 text-base text-[#111928]"
+            className="ml-3 flex-1 text-base text-[#111928]"
             style={{
               fontFamily: 'Inter-Regular',
               paddingVertical: Platform.OS === 'ios' ? 12 : 10,
@@ -282,10 +276,7 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
             }}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery('')}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
               <Text className="text-xl text-[#6B7280]">×</Text>
             </TouchableOpacity>
           )}
@@ -296,44 +287,39 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
+            contentContainerStyle={{ gap: 8 }}>
             {filters.project_type && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {getProjectTypeLabel(filters.project_type)}
                 </Text>
               </View>
             )}
             {filters.status && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {getStatusLabel(filters.status)}
                 </Text>
               </View>
             )}
             {filters.state && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.state}
                 </Text>
               </View>
             )}
             {filters.city && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.city}
                 </Text>
               </View>
@@ -346,10 +332,7 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading projects...
           </Text>
         </View>
@@ -376,11 +359,7 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
             />
           )}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#00a871"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#00a871" />
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}

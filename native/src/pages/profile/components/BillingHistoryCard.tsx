@@ -36,46 +36,32 @@ export default function BillingHistoryCard({ subscription }: BillingHistoryCardP
   const isActive = subscription.status === 'active';
 
   return (
-    <View className="bg-white rounded-lg p-4 border border-[#E5E7EB]">
+    <View className="rounded-lg border border-[#E5E7EB] bg-white p-4">
       <View className="flex-row items-center">
         {/* Date and Plan Section */}
-        <View className="flex-1 mr-3">
+        <View className="mr-3 flex-1">
           <Text
-            className="text-sm font-semibold text-[#111928] mb-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-1 font-semibold text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {formatDate(subscription.start_date)}
           </Text>
-          <Text
-            className="text-xs text-[#4B5563]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#4B5563]" style={{ fontFamily: 'Inter-Regular' }}>
             {subscription.plan?.name || 'Growth Plan'}
           </Text>
         </View>
 
         {/* Amount Section */}
         <View className="mr-3">
-          <Text
-            className="text-sm font-bold text-[#111928]"
-            style={{ fontFamily: 'Inter-Bold' }}
-          >
+          <Text className="font-bold text-sm text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
             {formatAmount(subscription.amount)}
           </Text>
         </View>
 
         {/* Status Badge */}
-        <View
-          className={`px-2 py-1 rounded-xl ${
-            isActive ? 'bg-[#D1FAE5]' : 'bg-[#F3F4F6]'
-          }`}
-        >
+        <View className={`rounded-xl px-2 py-1 ${isActive ? 'bg-[#D1FAE5]' : 'bg-[#F3F4F6]'}`}>
           <Text
-            className={`text-xs font-semibold ${
-              isActive ? 'text-[#065F46]' : 'text-[#4B5563]'
-            }`}
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className={`font-semibold text-xs ${isActive ? 'text-[#065F46]' : 'text-[#4B5563]'}`}
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {getStatusDisplay(subscription.status)}
           </Text>
         </View>
@@ -83,5 +69,3 @@ export default function BillingHistoryCard({ subscription }: BillingHistoryCardP
     </View>
   );
 }
-
-

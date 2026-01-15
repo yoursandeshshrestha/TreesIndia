@@ -51,13 +51,9 @@ export default function Button({
       disabled={isDisabled}
       className={`${baseClasses} ${variantClasses} ${className}`}
       style={{ minHeight: 48 }}
-      activeOpacity={0.8}
-    >
+      activeOpacity={0.8}>
       {isLoading ? (
-        <ActivityIndicator
-          size="small"
-          color={textColor}
-        />
+        <ActivityIndicator size="small" color={textColor} />
       ) : (
         <Text
           style={{
@@ -66,8 +62,7 @@ export default function Button({
             lineHeight: 22,
             textAlignVertical: 'center',
             ...(Platform.OS === 'android' && { includeFontPadding: false }),
-          }}
-        >
+          }}>
           {label}
         </Text>
       )}

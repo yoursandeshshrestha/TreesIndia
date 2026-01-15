@@ -42,9 +42,8 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
     if (!user) return;
 
     try {
-      const statuses = activeTab === 'ongoing'
-        ? 'assigned,accepted,in_progress'
-        : 'completed,rejected';
+      const statuses =
+        activeTab === 'ongoing' ? 'assigned,accepted,in_progress' : 'completed,rejected';
 
       const response = await workerAssignmentService.getWorkerAssignments(statuses);
       setAssignments(response.assignments || []);
@@ -119,7 +118,6 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       Alert.alert('Error', errorMessage);
     }
   };
-
 
   const handleNavigateToChat = async (assignment: WorkerAssignment) => {
     try {
@@ -237,28 +235,22 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
         activeOpacity={0.7}
         className="bg-white"
         onPress={() => handleCardPress(assignment)}
-        disabled={!isClickable}
-      >
+        disabled={!isClickable}>
         <View className="px-6 py-4">
           {/* Header: Service Name and Status */}
-          <View className="flex-row items-start justify-between mb-2">
-            <View className="flex-1 mr-3">
+          <View className="mb-2 flex-row items-start justify-between">
+            <View className="mr-3 flex-1">
               <Text
-                className="text-base font-bold text-[#111928]"
+                className="font-bold text-base text-[#111928]"
                 style={{ fontFamily: 'Inter-Bold' }}
-                numberOfLines={2}
-              >
+                numberOfLines={2}>
                 {booking.service?.name || 'Service'}
               </Text>
             </View>
-            <View
-              className="px-3 py-1.5 rounded-lg"
-              style={{ backgroundColor: statusColor }}
-            >
+            <View className="rounded-lg px-3 py-1.5" style={{ backgroundColor: statusColor }}>
               <Text
-                className="text-xs font-semibold text-white"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="font-semibold text-xs text-white"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 {getStatusLabel(assignment.status)}
               </Text>
             </View>
@@ -267,15 +259,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           {/* Booking ID */}
           <View className="mb-3">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-1"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-1 font-semibold text-xs text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               BOOKING ID
             </Text>
-            <Text
-              className="text-sm text-[#111928]"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+            <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
               {booking.booking_reference}
             </Text>
           </View>
@@ -284,25 +272,23 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           {(booking.scheduled_date || booking.scheduled_time) && (
             <View className="mb-3">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-1"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-1 font-semibold text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 SCHEDULED
               </Text>
-              <Text
-                className="text-sm text-[#111928]"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
-                {booking.scheduled_date && new Date(booking.scheduled_date).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+              <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
+                {booking.scheduled_date &&
+                  new Date(booking.scheduled_date).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 {booking.scheduled_time && booking.scheduled_date && ' • '}
-                {booking.scheduled_time && new Date(booking.scheduled_time).toLocaleTimeString('en-IN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {booking.scheduled_time &&
+                  new Date(booking.scheduled_time).toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
               </Text>
             </View>
           )}
@@ -311,15 +297,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           {booking.contact_person && (
             <View className="mb-3">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-1"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-1 font-semibold text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 CUSTOMER
               </Text>
-              <Text
-                className="text-sm text-[#111928]"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
+              <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
                 {booking.contact_person}
                 {booking.contact_phone && ` • ${booking.contact_phone}`}
               </Text>
@@ -330,16 +312,14 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           {booking.address && (
             <View className="mb-3">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-1"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-1 font-semibold text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 ADDRESS
               </Text>
               <Text
-                className="text-sm text-[#4B5563] leading-5"
+                className="text-sm leading-5 text-[#4B5563]"
                 style={{ fontFamily: 'Inter-Regular' }}
-                numberOfLines={2}
-              >
+                numberOfLines={2}>
                 {formatAddress(booking.address)}
               </Text>
             </View>
@@ -349,15 +329,13 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           {booking.quote_amount && (
             <View className="mb-3">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-1"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-1 font-semibold text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 QUOTE AMOUNT
               </Text>
               <Text
-                className="text-xl font-bold text-[#00a871]"
-                style={{ fontFamily: 'Inter-Bold' }}
-              >
+                className="font-bold text-xl text-[#00a871]"
+                style={{ fontFamily: 'Inter-Bold' }}>
                 ₹{booking.quote_amount.toLocaleString('en-IN')}
               </Text>
             </View>
@@ -365,17 +343,15 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
 
           {/* Notes */}
           {assignment.assignment_notes && (
-            <View className="bg-[#F9FAFB] border-y border-[#E5E7EB] -mx-6 px-6 py-3 mt-1">
+            <View className="-mx-6 mt-1 border-y border-[#E5E7EB] bg-[#F9FAFB] px-6 py-3">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-1.5"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-1.5 font-semibold text-xs text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 ASSIGNMENT NOTES
               </Text>
               <Text
-                className="text-sm text-[#4B5563] leading-5"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+                className="text-sm leading-5 text-[#4B5563]"
+                style={{ fontFamily: 'Inter-Regular' }}>
                 {assignment.assignment_notes}
               </Text>
             </View>
@@ -388,13 +364,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
                 <View className="flex-1">
                   <TouchableOpacity
                     onPress={() => handleRejectAssignment(assignment.ID)}
-                    className="flex-1 border border-[#055c3a] bg-transparent rounded-lg py-2.5 items-center justify-center"
-                    activeOpacity={0.8}
-                  >
+                    className="flex-1 items-center justify-center rounded-lg border border-[#055c3a] bg-transparent py-2.5"
+                    activeOpacity={0.8}>
                     <Text
-                      className="text-[#055c3a] text-sm font-semibold"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="font-semibold text-sm text-[#055c3a]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       Decline
                     </Text>
                   </TouchableOpacity>
@@ -402,13 +376,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
                 <View className="flex-1">
                   <TouchableOpacity
                     onPress={() => handleAcceptAssignment(assignment.ID)}
-                    className="flex-1 bg-[#055c3a] rounded-lg py-2.5 items-center justify-center"
-                    activeOpacity={0.8}
-                  >
+                    className="flex-1 items-center justify-center rounded-lg bg-[#055c3a] py-2.5"
+                    activeOpacity={0.8}>
                     <Text
-                      className="text-white text-sm font-semibold"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="font-semibold text-sm text-white"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       Accept
                     </Text>
                   </TouchableOpacity>
@@ -422,13 +394,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
               <View className="mt-4">
                 <TouchableOpacity
                   onPress={() => handleStartWork(assignment)}
-                  className="bg-[#055c3a] rounded-lg py-2.5 items-center justify-center"
-                  activeOpacity={0.8}
-                >
+                  className="items-center justify-center rounded-lg bg-[#055c3a] py-2.5"
+                  activeOpacity={0.8}>
                   <Text
-                    className="text-white text-sm font-semibold"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="font-semibold text-sm text-white"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     Start Work
                   </Text>
                 </TouchableOpacity>
@@ -436,13 +406,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
               <View className="mt-2">
                 <TouchableOpacity
                   onPress={() => handleNavigateToChat(assignment)}
-                  className="border border-[#055c3a] bg-transparent rounded-lg py-2.5 items-center justify-center"
-                  activeOpacity={0.8}
-                >
+                  className="items-center justify-center rounded-lg border border-[#055c3a] bg-transparent py-2.5"
+                  activeOpacity={0.8}>
                   <Text
-                    className="text-[#055c3a] text-sm font-semibold"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
+                    className="font-semibold text-sm text-[#055c3a]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
                     Message Customer
                   </Text>
                 </TouchableOpacity>
@@ -451,22 +419,20 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           )}
 
           {assignment.status === 'in_progress' && (
-            <View className="mt-4 bg-[#EFF6FF] border border-[#DBEAFE] rounded-lg p-3">
+            <View className="mt-4 rounded-lg border border-[#DBEAFE] bg-[#EFF6FF] p-3">
               <Text
-                className="text-xs text-[#1E40AF] text-center"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
+                className="text-center text-xs text-[#1E40AF]"
+                style={{ fontFamily: 'Inter-Medium' }}>
                 Tap to view actions
               </Text>
             </View>
           )}
 
           {assignment.status === 'completed' && (
-            <View className="mt-4 bg-[#D1FAE5] border border-[#6EE7B7] rounded-lg p-3">
+            <View className="mt-4 rounded-lg border border-[#6EE7B7] bg-[#D1FAE5] p-3">
               <Text
-                className="text-xs text-[#059669] text-center"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
+                className="text-center text-xs text-[#059669]"
+                style={{ fontFamily: 'Inter-Medium' }}>
                 Tap to view completion details
               </Text>
             </View>
@@ -476,13 +442,11 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
             <View className="mt-4">
               <TouchableOpacity
                 onPress={() => handleNavigateToChat(assignment)}
-                className="border border-[#055c3a] bg-transparent rounded-lg py-2.5 items-center justify-center"
-                activeOpacity={0.8}
-              >
+                className="items-center justify-center rounded-lg border border-[#055c3a] bg-transparent py-2.5"
+                activeOpacity={0.8}>
                 <Text
-                  className="text-[#055c3a] text-sm font-semibold"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Message Customer
                 </Text>
               </TouchableOpacity>
@@ -497,11 +461,10 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
         <Text
-          className="text-xl font-semibold text-[#111928] flex-1"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="flex-1 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           My Work
         </Text>
       </View>
@@ -511,22 +474,17 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
         <TouchableOpacity
           onPress={() => setActiveTab('ongoing')}
           className="flex-1"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View
-            className={`py-4 px-6 border-b-2 ${
-              activeTab === 'ongoing'
-                ? 'border-[#055c3a]'
-                : 'border-transparent'
-            }`}
-          >
+            className={`border-b-2 px-6 py-4 ${
+              activeTab === 'ongoing' ? 'border-[#055c3a]' : 'border-transparent'
+            }`}>
             <Text
-              className="text-base font-medium text-center"
+              className="text-center font-medium text-base"
               style={{
                 fontFamily: 'Inter-Medium',
                 color: activeTab === 'ongoing' ? '#055c3a' : '#6B7280',
-              }}
-            >
+              }}>
               Ongoing
             </Text>
           </View>
@@ -534,22 +492,17 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
         <TouchableOpacity
           onPress={() => setActiveTab('completed')}
           className="flex-1"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View
-            className={`py-4 px-6 border-b-2 ${
-              activeTab === 'completed'
-                ? 'border-[#055c3a]'
-                : 'border-transparent'
-            }`}
-          >
+            className={`border-b-2 px-6 py-4 ${
+              activeTab === 'completed' ? 'border-[#055c3a]' : 'border-transparent'
+            }`}>
             <Text
-              className="text-base font-medium text-center"
+              className="text-center font-medium text-base"
               style={{
                 fontFamily: 'Inter-Medium',
                 color: activeTab === 'completed' ? '#055c3a' : '#6B7280',
-              }}
-            >
+              }}>
               Completed
             </Text>
           </View>
@@ -564,15 +517,13 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
       ) : assignments.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#4B5563] mb-2 mt-4 text-center"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 mt-4 text-center font-semibold text-lg text-[#4B5563]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             No {activeTab} assignments
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {activeTab === 'ongoing'
               ? 'Your active work assignments will appear here'
               : 'Your completed assignments will appear here'}
@@ -583,13 +534,8 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
           className="flex-1"
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#055c3a"
-            />
-          }
-        >
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#055c3a" />
+          }>
           {assignments.map(renderAssignmentCard)}
         </ScrollView>
       )}
@@ -612,4 +558,3 @@ export default function WorkScreen({ onNavigateToChat }: WorkScreenProps) {
     </SafeAreaView>
   );
 }
-

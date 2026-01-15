@@ -40,5 +40,3 @@ export default function BookingIcon({ size = 24, color = 'currentColor' }: Booki
     </Svg>
   );
 }
-
-

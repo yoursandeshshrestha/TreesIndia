@@ -9,7 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { subscriptionService, type UserSubscription, type SubscriptionHistory } from '../../services';
+import {
+  subscriptionService,
+  type UserSubscription,
+  type SubscriptionHistory,
+} from '../../services';
 import Button from '../../components/ui/Button';
 import BackIcon from '../../components/icons/BackIcon';
 import ActiveSubscriptionCard from './components/ActiveSubscriptionCard';
@@ -73,11 +77,11 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
   const isSubscriptionActive = (subscription: UserSubscription | null): boolean => {
     if (!subscription) return false;
     if (subscription.status !== 'active') return false;
-    
+
     const endDate = new Date(subscription.end_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return endDate >= today;
   };
 
@@ -86,10 +90,7 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
       return (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading subscription data...
           </Text>
         </View>
@@ -100,22 +101,16 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
       return (
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Something went wrong
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center mb-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mb-6 text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {error}
           </Text>
-          <Button
-            label="Try Again"
-            onPress={() => loadSubscriptionData()}
-            variant="solid"
-          />
+          <Button label="Try Again" onPress={() => loadSubscriptionData()} variant="solid" />
         </View>
       );
     }
@@ -127,13 +122,8 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
         className="flex-1"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor="#055c3a"
-          />
-        }
-      >
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#055c3a" />
+        }>
         <View className="px-6 py-4">
           {/* Active Subscription Section */}
           {hasActiveSubscription && currentSubscription ? (
@@ -151,11 +141,7 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
           {/* Buy Subscription Button */}
           {!hasActiveSubscription && (
             <View>
-              <Button
-                label="Buy Subscription"
-                onPress={handleBuySubscription}
-                variant="solid"
-              />
+              <Button label="Buy Subscription" onPress={handleBuySubscription} variant="solid" />
               <View className="h-6" />
             </View>
           )}
@@ -164,17 +150,14 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
           {subscriptionHistory.length > 0 && (
             <View>
               <Text
-                className="text-lg font-bold text-[#111928] mb-4"
-                style={{ fontFamily: 'Inter-Bold' }}
-              >
+                className="mb-4 font-bold text-lg text-[#111928]"
+                style={{ fontFamily: 'Inter-Bold' }}>
                 Billing History
               </Text>
               {subscriptionHistory.map((subscription, index) => (
                 <View key={`subscription-${subscription.id}-${index}`}>
                   <BillingHistoryCard subscription={subscription} />
-                  {index < subscriptionHistory.length - 1 && (
-                    <View className="h-4" />
-                  )}
+                  {index < subscriptionHistory.length - 1 && <View className="h-4" />}
                 </View>
               ))}
             </View>
@@ -190,18 +173,13 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity
-          onPress={onBack}
-          className="p-2 -ml-2"
-          activeOpacity={0.7}
-        >
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+        <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <Text
-          className="text-xl font-semibold text-[#111928] ml-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="ml-2 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           My Subscription
         </Text>
       </View>
@@ -211,4 +189,3 @@ export default function SubscriptionScreen({ onBack, onNavigateToPlans }: Subscr
     </SafeAreaView>
   );
 }
-

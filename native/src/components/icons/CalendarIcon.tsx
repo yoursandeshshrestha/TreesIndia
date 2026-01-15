@@ -40,5 +40,3 @@ export default function CalendarIcon({ size = 24, color = '#6B7280' }: CalendarI
     </Svg>
   );
 }
-
-

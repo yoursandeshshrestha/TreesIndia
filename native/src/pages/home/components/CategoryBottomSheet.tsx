@@ -1,11 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Category, categoryService } from '../../../services';
@@ -42,21 +36,19 @@ export default function CategoryBottomSheet({
     }
   }, [visible, category]);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
-      setSubcategories([]);
-      onClose();
-    }
-  }, [onClose]);
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        setSubcategories([]);
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const renderBackdrop = useCallback(
     (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
   );
@@ -128,7 +120,6 @@ export default function CategoryBottomSheet({
     }
   };
 
-
   const handleSelectSubcategory = (subcategory: Category) => {
     if (onSelectSubcategory) {
       onSelectSubcategory(subcategory);
@@ -141,8 +132,8 @@ export default function CategoryBottomSheet({
     // Use icon directly from category
     // Handle both empty strings and undefined
     if (category.icon !== undefined && category.icon !== null && category.icon.trim() !== '') {
-      const isImageUrl = category.icon.startsWith('http://') ||
-                        category.icon.startsWith('https://');
+      const isImageUrl =
+        category.icon.startsWith('http://') || category.icon.startsWith('https://');
       if (isImageUrl) {
         return { iconUrl: category.icon, hasIcon: true };
       }
@@ -166,81 +157,72 @@ export default function CategoryBottomSheet({
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-      }}
-    >
+      }}>
       <View className="flex-1">
-            {/* Header */}
-            <View className="px-6 py-6 border-b border-[#E5E7EB]">
-              <Text
-                className="text-lg font-semibold text-[#111928] text-center"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
-                {category.name}
+        {/* Header */}
+        <View className="border-b border-[#E5E7EB] px-6 py-6">
+          <Text
+            className="text-center font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
+            {category.name}
+          </Text>
+        </View>
+
+        <BottomSheetScrollView
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}>
+          {/* Subcategories Grid */}
+          {isLoadingSubcategories ? (
+            <View className="items-center justify-center py-12">
+              <ActivityIndicator size="large" color="#00a871" />
+              <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                Loading...
               </Text>
             </View>
+          ) : subcategories.length > 0 ? (
+            <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+              {subcategories.map((subcategory) => {
+                const { iconUrl, hasIcon } = getCategoryIcon(subcategory);
 
-            <BottomSheetScrollView
-              contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Subcategories Grid */}
-              {isLoadingSubcategories ? (
-                <View className="items-center justify-center py-12">
-                  <ActivityIndicator size="large" color="#00a871" />
-                  <Text
-                    className="text-sm text-[#6B7280] mt-4"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    Loading...
-                  </Text>
-                </View>
-              ) : subcategories.length > 0 ? (
-                <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-                  {subcategories.map((subcategory) => {
-                    const { iconUrl, hasIcon } = getCategoryIcon(subcategory);
-
-                    return (
-                      <TouchableOpacity
-                        key={subcategory.id || subcategory.ID}
-                        onPress={() => handleSelectSubcategory(subcategory)}
-                        className="items-center"
-                        activeOpacity={0.7}
-                        style={{ width: '30%' }}
-                      >
-                        <View className="w-full h-[70px] bg-[#F5F5F5] rounded-lg items-center justify-center mb-2">
-                          {hasIcon && iconUrl ? (
-                            <Image
-                              source={{ uri: iconUrl }}
-                              style={{ width: 40, height: 40 }}
-                              resizeMode="contain"
-                            />
-                          ) : (
-                            <NotFoundIcon size={40} color="#9CA3AF" />
-                          )}
-                        </View>
-                        <Text
-                          className="text-xs font-medium text-[#111928] text-center"
-                          style={{ fontFamily: 'Inter-Medium', lineHeight: 16 }}
-                          numberOfLines={2}
-                        >
-                          {subcategory.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              ) : (
-                <View className="items-center justify-center py-8">
-                  <CategoryIcon size={48} color="#D1D5DB" />
-                  <Text
-                    className="text-sm text-[#6B7280] text-center mt-4"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
-                    No subcategories available
-                  </Text>
-                </View>
-              )}
-            </BottomSheetScrollView>
+                return (
+                  <TouchableOpacity
+                    key={subcategory.id || subcategory.ID}
+                    onPress={() => handleSelectSubcategory(subcategory)}
+                    className="items-center"
+                    activeOpacity={0.7}
+                    style={{ width: '30%' }}>
+                    <View className="mb-2 h-[70px] w-full items-center justify-center rounded-lg bg-[#F5F5F5]">
+                      {hasIcon && iconUrl ? (
+                        <Image
+                          source={{ uri: iconUrl }}
+                          style={{ width: 40, height: 40 }}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <NotFoundIcon size={40} color="#9CA3AF" />
+                      )}
+                    </View>
+                    <Text
+                      className="text-center font-medium text-xs text-[#111928]"
+                      style={{ fontFamily: 'Inter-Medium', lineHeight: 16 }}
+                      numberOfLines={2}>
+                      {subcategory.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View className="items-center justify-center py-8">
+              <CategoryIcon size={48} color="#D1D5DB" />
+              <Text
+                className="mt-4 text-center text-sm text-[#6B7280]"
+                style={{ fontFamily: 'Inter-Regular' }}>
+                No subcategories available
+              </Text>
+            </View>
+          )}
+        </BottomSheetScrollView>
       </View>
     </BottomSheetModal>
   );

@@ -3,7 +3,7 @@ import {
   OpenSans_400Regular,
   OpenSans_500Medium,
   OpenSans_600SemiBold,
-  OpenSans_700Bold
+  OpenSans_700Bold,
 } from '@expo-google-fonts/open-sans';
 
 export function useAppFonts() {
@@ -20,4 +20,3 @@ export function useAppFonts() {
 
   return fontsLoaded;
 }
-

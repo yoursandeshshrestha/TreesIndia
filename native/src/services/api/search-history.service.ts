@@ -53,20 +53,15 @@ class SearchHistoryService {
   /**
    * Save a location search to user's search history
    */
-  async saveSearchHistory(
-    searchData: SaveSearchHistoryRequest
-  ): Promise<SearchHistoryEntry> {
+  async saveSearchHistory(searchData: SaveSearchHistoryRequest): Promise<SearchHistoryEntry> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/search-history`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(searchData),
-        }
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/search-history`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchData),
+      });
 
       const result: SearchHistoryResponse = await response.json();
 
@@ -85,9 +80,7 @@ class SearchHistoryService {
    */
   async getRecentSearches(limit: number = 10): Promise<SearchHistoryEntry[]> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/search-history?limit=${limit}`
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/search-history?limit=${limit}`);
 
       const result: SearchHistoriesResponse = await response.json();
 
@@ -108,12 +101,9 @@ class SearchHistoryService {
    */
   async deleteSearchHistory(id: number): Promise<void> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/search-history/${id}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/search-history/${id}`, {
+        method: 'DELETE',
+      });
 
       const result: DeleteResponse = await response.json();
 
@@ -130,12 +120,9 @@ class SearchHistoryService {
    */
   async clearAllSearchHistory(): Promise<void> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/search-history/clear`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/search-history/clear`, {
+        method: 'DELETE',
+      });
 
       const result: DeleteResponse = await response.json();
 

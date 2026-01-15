@@ -43,9 +43,8 @@ function CategorySkeleton() {
       {[1, 2, 3].map((index) => (
         <Animated.View
           key={index}
-          className="flex-1 bg-[#F3F4F6] rounded-lg"
-          style={{ height: 120, opacity }}
-        >
+          className="flex-1 rounded-lg bg-[#F3F4F6]"
+          style={{ height: 120, opacity }}>
           <View className="items-center justify-center" style={{ height: 80 }}>
             <View
               style={{
@@ -56,7 +55,7 @@ function CategorySkeleton() {
               }}
             />
           </View>
-          <View className="px-2 items-center">
+          <View className="items-center px-2">
             <View
               style={{
                 width: '70%',
@@ -83,16 +82,14 @@ export default function CategoryGrid({
   };
 
   const getHomepageIcon = (categoryName: string): HomepageCategoryIcon | null => {
-    return homepageIcons.find((icon) => icon.name.toLowerCase() === categoryName.toLowerCase()) || null;
+    return (
+      homepageIcons.find((icon) => icon.name.toLowerCase() === categoryName.toLowerCase()) || null
+    );
   };
 
   return (
-    <View className="px-6 pt-4 pb-4">
-      <Text
-        className="text-xl font-bold text-[#111928] mb-4 "
-      >
-        What are you looking for?
-      </Text>
+    <View className="px-6 pb-4 pt-4">
+      <Text className="mb-4 font-bold text-xl text-[#111928] ">What are you looking for?</Text>
 
       {isLoading ? (
         <CategorySkeleton />
@@ -103,7 +100,10 @@ export default function CategoryGrid({
             const homepageIcon = getHomepageIcon(fixedCategory.name);
             const iconUrl = homepageIcon?.icon_url;
             // Check if icon is a URL (http/https)
-            const isImageUrl = iconUrl && iconUrl.trim() !== '' && (iconUrl.startsWith('http://') || iconUrl.startsWith('https://'));
+            const isImageUrl =
+              iconUrl &&
+              iconUrl.trim() !== '' &&
+              (iconUrl.startsWith('http://') || iconUrl.startsWith('https://'));
 
             return (
               <View key={fixedCategory.slug} className="flex-1">
@@ -122,9 +122,8 @@ export default function CategoryGrid({
                     }
                   }}
                   className="flex-1"
-                  style={{ width: '100%', height: 120 }}
-                >
-                  <View className="bg-[#F5F5F5] rounded-lg flex-1">
+                  style={{ width: '100%', height: 120 }}>
+                  <View className="flex-1 rounded-lg bg-[#F5F5F5]">
                     {/* Icon container - fixed height */}
                     <View className="items-center justify-center" style={{ height: 80 }}>
                       {isImageUrl ? (
@@ -138,12 +137,11 @@ export default function CategoryGrid({
                       )}
                     </View>
                     {/* Title - fixed position */}
-                    <View className="px-2 flex-1 justify-start">
+                    <View className="flex-1 justify-start px-2">
                       <Text
-                        className="text-sm font-medium text-[#111928] text-center"
+                        className="text-center font-medium text-sm text-[#111928]"
                         style={{ fontFamily: 'Inter-Medium' }}
-                        numberOfLines={2}
-                      >
+                        numberOfLines={2}>
                         {categoryEntity?.name || fixedCategory.title}
                       </Text>
                     </View>

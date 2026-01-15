@@ -25,5 +25,3 @@ export default function ChatIcon({ size = 24, color = 'currentColor' }: ChatIcon
     </Svg>
   );
 }
-
-

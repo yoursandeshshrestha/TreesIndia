@@ -1,8 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, AuthResponse, RequestOTPResponse } from '../../types/auth';
 import { apiClient, tokenStorage } from '../../services';
-import { workerProfileService, UpdateWorkerProfileRequest } from '../../services/api/workerProfile.service';
-import { brokerProfileService, UpdateBrokerProfileRequest } from '../../services/api/brokerProfile.service';
+import {
+  workerProfileService,
+  UpdateWorkerProfileRequest,
+} from '../../services/api/workerProfile.service';
+import {
+  brokerProfileService,
+  UpdateBrokerProfileRequest,
+} from '../../services/api/brokerProfile.service';
 
 // Initial state
 const initialState: AuthState = {
@@ -60,8 +66,7 @@ export const requestOTP = createAsyncThunk(
       const response = await apiClient.requestOTP(phone);
       return response as RequestOTPResponse;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to request OTP';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to request OTP';
       return rejectWithValue(errorMessage);
     }
   }
@@ -69,18 +74,14 @@ export const requestOTP = createAsyncThunk(
 
 export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
-  async (
-    { phone, otp }: { phone: string; otp: string },
-    { rejectWithValue }
-  ) => {
+  async ({ phone, otp }: { phone: string; otp: string }, { rejectWithValue }) => {
     try {
       const response = await apiClient.verifyOTP(phone, otp);
       // Fetch complete user profile after OTP verification
       const user = await apiClient.getCurrentUser();
       return { ...response, user } as AuthResponse;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to verify OTP';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to verify OTP';
       return rejectWithValue(errorMessage);
     }
   }
@@ -312,8 +313,9 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
         // Check both has_active_subscription and subscription === "active"
-        const hasActiveSub = action.payload?.has_active_subscription === true || 
-                            action.payload?.subscription === 'active';
+        const hasActiveSub =
+          action.payload?.has_active_subscription === true ||
+          action.payload?.subscription === 'active';
         state.hasActiveSubscription = hasActiveSub;
         state.subscriptionExpiryDate = action.payload?.subscription_expiry_date || null;
         state.error = null;
@@ -373,4 +375,3 @@ const authSlice = createSlice({
 
 export const { clearError, setLoading, setAuthenticated, updateAvatar } = authSlice.actions;
 export default authSlice.reducer;
-

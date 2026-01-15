@@ -6,14 +6,10 @@ const EXPO_ENVIRONMENT = process.env.EXPO_ENVIRONMENT || 'dev';
 // Select API URL based on environment
 const getApiBaseUrl = () => {
   if (EXPO_ENVIRONMENT === 'prod') {
-    return (
-      process.env.EXPO_PUBLIC_PROD_API_URL || 'http://localhost:8080/api/v1'
-    );
+    return process.env.EXPO_PUBLIC_PROD_API_URL || 'http://localhost:8080/api/v1';
   }
   // Default to dev
-  return (
-    process.env.EXPO_PUBLIC_DEV_API_URL || 'http://localhost:8080/api/v1'
-  );
+  return process.env.EXPO_PUBLIC_DEV_API_URL || 'http://localhost:8080/api/v1';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -78,10 +74,7 @@ export const tokenStorage = {
   },
 
   async clearTokens(): Promise<void> {
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.ACCESS_TOKEN,
-      STORAGE_KEYS.REFRESH_TOKEN,
-    ]);
+    await AsyncStorage.multiRemove([STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN]);
   },
 
   async hasTokens(): Promise<boolean> {
@@ -114,10 +107,7 @@ export const authenticatedFetch = async (
         const data = await response.json();
         const authData = data.data || data;
         if (authData.access_token && authData.refresh_token) {
-          await tokenStorage.setTokens(
-            authData.access_token,
-            authData.refresh_token
-          );
+          await tokenStorage.setTokens(authData.access_token, authData.refresh_token);
           accessToken = authData.access_token;
         }
       }
@@ -155,7 +145,9 @@ export const authenticatedFetch = async (
       headers,
     });
   } catch (error) {
-    throw new Error(`Network request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Network request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   // If we get a 401, try to refresh the token and retry the request
@@ -173,15 +165,10 @@ export const authenticatedFetch = async (
         const refreshData = await refreshResponse.json();
         const authData = refreshData.data || refreshData;
         if (authData.access_token && authData.refresh_token) {
-          await tokenStorage.setTokens(
-            authData.access_token,
-            authData.refresh_token
-          );
+          await tokenStorage.setTokens(authData.access_token, authData.refresh_token);
 
           // Retry the request with the new token
-          (
-            headers as Record<string, string>
-          ).Authorization = `Bearer ${authData.access_token}`;
+          (headers as Record<string, string>).Authorization = `Bearer ${authData.access_token}`;
           const retryResponse = await fetch(url, {
             ...options,
             headers,
@@ -196,4 +183,3 @@ export const authenticatedFetch = async (
 
   return response;
 };
-

@@ -26,5 +26,3 @@ export default function LogoutIcon({ size = 24, color = 'currentColor' }: Logout
     </Svg>
   );
 }
-
-

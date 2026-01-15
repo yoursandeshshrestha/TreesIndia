@@ -26,4 +26,3 @@ export default function BellIcon({ size = 24, color = 'currentColor' }: BellIcon
     </Svg>
   );
 }
-

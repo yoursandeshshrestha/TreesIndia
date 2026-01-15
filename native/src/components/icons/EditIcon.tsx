@@ -26,4 +26,3 @@ export default function EditIcon({ size = 24, color = 'currentColor' }: EditIcon
     </Svg>
   );
 }
-

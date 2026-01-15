@@ -70,7 +70,7 @@ export default function OtpBottomSheet({
 
   const handleOtpChange = (text: string, index: number) => {
     const numericText = text.replace(/\D/g, '');
-    
+
     if (numericText.length > 1) {
       // Handle paste
       const pastedOtp = numericText.substring(0, 6).split('');
@@ -84,9 +84,10 @@ export default function OtpBottomSheet({
       const newOtp = newInputs.join('');
       setOtp(newOtp);
       setErrorMessage(null);
-      
+
       const nextEmptyIndex = newInputs.findIndex((val, idx) => idx >= index && val === '');
-      const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pastedOtp.length - 1, 5);
+      const focusIndex =
+        nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pastedOtp.length - 1, 5);
       if (focusIndex < 6 && focusIndex >= 0) {
         setTimeout(() => {
           inputRefs.current[focusIndex]?.focus();
@@ -147,17 +148,11 @@ export default function OtpBottomSheet({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <View className="flex-1">
           <Animated.View
             style={{
@@ -168,13 +163,8 @@ export default function OtpBottomSheet({
               bottom: 0,
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               opacity: overlayOpacity,
-            }}
-          >
-            <TouchableOpacity
-              className="flex-1"
-              activeOpacity={1}
-              onPress={handleClose}
-            />
+            }}>
+            <TouchableOpacity className="flex-1" activeOpacity={1} onPress={handleClose} />
           </Animated.View>
 
           <Animated.View
@@ -188,47 +178,43 @@ export default function OtpBottomSheet({
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
               transform: [{ translateY }],
-            }}
-          >
+            }}>
             <SafeAreaView edges={['bottom']} className="flex-1">
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-              >
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
                 <View className="flex-1">
                   <View className="px-6 pt-6">
                     {/* Handle bar */}
-                    <View className="items-center mb-6">
-                      <View className="w-10 h-1 bg-[#D1D5DB] rounded-full" />
+                    <View className="mb-6 items-center">
+                      <View className="h-1 w-10 rounded-full bg-[#D1D5DB]" />
                     </View>
 
                     {/* Header */}
                     <Text
-                      className="text-2xl font-semibold text-[#111928] mb-2"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="mb-2 font-semibold text-2xl text-[#111928]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       Verify OTP
                     </Text>
                     <Text
-                      className="text-sm text-[#6B7280] mb-8"
-                      style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}
-                    >
-                      Enter the 6-digit OTP sent to {formatPhoneNumber(phoneNumber)} to confirm account deletion.
+                      className="mb-8 text-sm text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-Regular', lineHeight: 20 }}>
+                      Enter the 6-digit OTP sent to {formatPhoneNumber(phoneNumber)} to confirm
+                      account deletion.
                     </Text>
 
                     {/* OTP Inputs */}
-                    <View className="flex-row justify-between mb-4" style={{ gap: 8 }}>
+                    <View className="mb-4 flex-row justify-between" style={{ gap: 8 }}>
                       {otpInputs.map((value, index) => (
                         <View
                           key={index}
-                          className="flex-1 border border-[#E5E7EB] rounded-lg"
+                          className="flex-1 rounded-lg border border-[#E5E7EB]"
                           style={{
                             height: 56,
                             justifyContent: 'center',
                             alignItems: 'center',
-                          }}
-                        >
+                          }}>
                           <TextInput
                             ref={(ref) => (inputRefs.current[index] = ref)}
                             value={value}
@@ -260,27 +246,26 @@ export default function OtpBottomSheet({
                     {/* Error Message */}
                     {errorMessage && (
                       <Text
-                        className="text-sm text-[#DC2626] mb-4"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
+                        className="mb-4 text-sm text-[#DC2626]"
+                        style={{ fontFamily: 'Inter-Regular' }}>
                         {errorMessage}
                       </Text>
                     )}
                   </View>
 
                   {/* Buttons - Fixed at bottom */}
-                  <View className="px-6 pb-12 bg-white border-t border-[#E5E7EB]" style={{ paddingTop: 12 }}>
+                  <View
+                    className="border-t border-[#E5E7EB] bg-white px-6 pb-12"
+                    style={{ paddingTop: 12 }}>
                     <View className="flex-row" style={{ gap: 12 }}>
                       <TouchableOpacity
                         onPress={handleClose}
                         disabled={isDeleting}
-                        className="flex-1 border border-[#D1D5DB] rounded-xl py-4 items-center"
-                        activeOpacity={0.7}
-                      >
+                        className="flex-1 items-center rounded-xl border border-[#D1D5DB] py-4"
+                        activeOpacity={0.7}>
                         <Text
-                          className="text-base font-medium text-[#374151]"
-                          style={{ fontFamily: 'Inter-Medium' }}
-                        >
+                          className="font-medium text-base text-[#374151]"
+                          style={{ fontFamily: 'Inter-Medium' }}>
                           Cancel
                         </Text>
                       </TouchableOpacity>
@@ -288,19 +273,17 @@ export default function OtpBottomSheet({
                       <TouchableOpacity
                         onPress={handleSubmit}
                         disabled={isDeleting || otp.length !== 6}
-                        className="flex-1 bg-[#DC2626] rounded-xl py-4 items-center"
+                        className="flex-1 items-center rounded-xl bg-[#DC2626] py-4"
                         activeOpacity={0.7}
                         style={{
                           opacity: isDeleting || otp.length !== 6 ? 0.5 : 1,
-                        }}
-                      >
+                        }}>
                         {isDeleting ? (
                           <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
                           <Text
-                            className="text-base font-semibold text-white"
-                            style={{ fontFamily: 'Inter-SemiBold' }}
-                          >
+                            className="font-semibold text-base text-white"
+                            style={{ fontFamily: 'Inter-SemiBold' }}>
                             Delete Account
                           </Text>
                         )}
@@ -316,4 +299,3 @@ export default function OtpBottomSheet({
     </Modal>
   );
 }
-

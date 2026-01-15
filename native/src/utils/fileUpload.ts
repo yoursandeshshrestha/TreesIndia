@@ -208,10 +208,7 @@ export const recordVideoFromCamera = async (): Promise<PickedFile | null> => {
 /**
  * Validate file size
  */
-export const validateFileSize = (
-  file: PickedFile,
-  maxSizeMB: number = 5
-): boolean => {
+export const validateFileSize = (file: PickedFile, maxSizeMB: number = 5): boolean => {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   return file.fileSize <= maxSizeBytes;
 };

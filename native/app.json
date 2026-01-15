@@ -26,20 +26,14 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "assets/fonts/**",
-      "assets/logo/**",
-      "assets/icons/**"
-    ],
+    "assetBundlePatterns": ["assets/fonts/**", "assets/logo/**", "assets/icons/**"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.treeindia.myexpoapp",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you add addresses quickly.",
-        "LSApplicationQueriesSchemes": [
-          "comgooglemaps"
-        ]
+        "LSApplicationQueriesSchemes": ["comgooglemaps"]
       },
       "config": {
         "googleMapsApiKey": "AIzaSyDztQVnDQQpPUX9hNT-U-eOrfDfuxgPiXI"
@@ -51,10 +45,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.treeindia.myexpoapp",
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ],
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {

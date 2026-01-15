@@ -28,20 +28,18 @@ export default function SubscriptionRequiredBottomSheet({
     }
   }, [visible]);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const renderBackdrop = useCallback(
     (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
   );
@@ -68,15 +66,18 @@ export default function SubscriptionRequiredBottomSheet({
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-      }}
-    >
+      }}>
       <BottomSheetScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
         <View style={styles.header}>
           <Text style={styles.title}>Subscription Required</Text>
         </View>
 
         <View style={styles.iconContainer}>
-          <Image source={require('../../assets/subscription.png')} style={styles.iconImage} resizeMode="contain" />
+          <Image
+            source={require('../../assets/subscription.png')}
+            style={styles.iconImage}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.message}>{getMessage()}</Text>
@@ -92,7 +93,9 @@ export default function SubscriptionRequiredBottomSheet({
           <Text style={styles.subscribeButtonText}>View Subscription Plans</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => bottomSheetRef.current?.dismiss()} style={styles.cancelButton}>
+        <TouchableOpacity
+          onPress={() => bottomSheetRef.current?.dismiss()}
+          style={styles.cancelButton}>
           <Text style={styles.cancelText}>Maybe Later</Text>
         </TouchableOpacity>
       </BottomSheetScrollView>

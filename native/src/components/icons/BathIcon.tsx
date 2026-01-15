@@ -26,5 +26,3 @@ export default function BathIcon({ size = 24, color = '#6B7280' }: BathIconProps
     </Svg>
   );
 }
-
-

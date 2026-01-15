@@ -37,8 +37,7 @@ export default function CardSkeleton({ width = 200, height = 240 }: CardSkeleton
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#F3F4F6',
-      }}
-    >
+      }}>
       {/* Image placeholder */}
       <Animated.View
         style={{

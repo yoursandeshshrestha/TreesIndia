@@ -1,10 +1,5 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  Animated,
-  Easing,
-} from 'react-native';
+import { View, Text, Animated, Easing } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TouchableOpacity } from 'react-native';
@@ -59,12 +54,7 @@ export default function BookingSuccessBottomSheet({
 
   const renderBackdrop = useCallback(
     (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
   );
@@ -83,8 +73,7 @@ export default function BookingSuccessBottomSheet({
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-      }}
-    >
+      }}>
       <SafeAreaView edges={['bottom']} className="flex-1">
         {/* Floating Close Button */}
         <View
@@ -93,75 +82,76 @@ export default function BookingSuccessBottomSheet({
             top: -56,
             right: 16,
             zIndex: 30,
-          }}
-        >
+          }}>
           <TouchableOpacity
             onPress={onViewBookings}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            className="h-12 w-12 items-center justify-center rounded-full bg-white"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 4,
-            }}
-          >
+            }}>
             <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
           </TouchableOpacity>
         </View>
 
         {/* Content */}
         <View className="px-6 py-8">
-              {/* Success Icon */}
-              <Animated.View
-                className="items-center mb-6"
-                style={{
-                  transform: [{ scale: scaleAnim }],
-                }}
-              >
-                <View className="w-20 h-20 bg-[#00a871] rounded-full items-center justify-center">
-                  <CheckmarkIcon size={40} color="white" />
-                </View>
-              </Animated.View>
+          {/* Success Icon */}
+          <Animated.View
+            className="mb-6 items-center"
+            style={{
+              transform: [{ scale: scaleAnim }],
+            }}>
+            <View className="h-20 w-20 items-center justify-center rounded-full bg-[#00a871]">
+              <CheckmarkIcon size={40} color="white" />
+            </View>
+          </Animated.View>
 
-              {/* Success Message */}
+          {/* Success Message */}
+          <Text
+            className="mb-2 text-center font-bold text-2xl text-[#111928]"
+            style={{ fontFamily: 'Inter-Bold' }}>
+            {bookingType === 'fixed' ? 'Booking Confirmed!' : 'Inquiry Submitted!'}
+          </Text>
+
+          <Text
+            className="mb-6 text-center text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
+            {bookingType === 'fixed'
+              ? 'Your booking has been confirmed successfully. You will receive a confirmation shortly.'
+              : 'Your inquiry has been submitted. Our team will contact you soon with more details.'}
+          </Text>
+
+          {/* Booking ID */}
+          {bookingId && (
+            <View className="mb-6 rounded-xl bg-[#F9FAFB] p-4">
               <Text
-                className="text-2xl font-bold text-[#111928] text-center mb-2"
-                style={{ fontFamily: 'Inter-Bold' }}
-              >
-                {bookingType === 'fixed' ? 'Booking Confirmed!' : 'Inquiry Submitted!'}
+                className="text-center text-sm text-[#6B7280]"
+                style={{ fontFamily: 'Inter-Regular' }}>
+                Booking ID
               </Text>
-
               <Text
-                className="text-base text-[#6B7280] text-center mb-6"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
-                {bookingType === 'fixed'
-                  ? 'Your booking has been confirmed successfully. You will receive a confirmation shortly.'
-                  : 'Your inquiry has been submitted. Our team will contact you soon with more details.'}
-              </Text>
-
-              {/* Booking ID */}
-              {bookingId && (
-                <View className="mb-6 p-4 bg-[#F9FAFB] rounded-xl">
-                  <Text className="text-sm text-[#6B7280] text-center" style={{ fontFamily: 'Inter-Regular' }}>
-                    Booking ID
-                  </Text>
-                  <Text className="text-xl font-semibold text-[#111928] text-center mt-1" style={{ fontFamily: 'Inter-SemiBold' }}>
-                    #{bookingId}
-                  </Text>
-                </View>
-              )}
-
-              {/* Action Button */}
-              <Button label="View My Bookings" onPress={onViewBookings} />
-
-              {/* Auto-redirect message */}
-              <Text className="text-sm text-[#9CA3AF] text-center mt-4" style={{ fontFamily: 'Inter-Regular' }}>
-                Redirecting in 3 seconds...
+                className="mt-1 text-center font-semibold text-xl text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
+                #{bookingId}
               </Text>
             </View>
-          </SafeAreaView>
+          )}
+
+          {/* Action Button */}
+          <Button label="View My Bookings" onPress={onViewBookings} />
+
+          {/* Auto-redirect message */}
+          <Text
+            className="mt-4 text-center text-sm text-[#9CA3AF]"
+            style={{ fontFamily: 'Inter-Regular' }}>
+            Redirecting in 3 seconds...
+          </Text>
+        </View>
+      </SafeAreaView>
     </BottomSheetModal>
   );
 }

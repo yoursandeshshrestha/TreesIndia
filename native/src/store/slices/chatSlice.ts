@@ -31,16 +31,12 @@ const initialState: ChatState = {
  */
 export const fetchConversations = createAsyncThunk(
   'chat/fetchConversations',
-  async (
-    { page = 1, limit = 20 }: { page?: number; limit?: number },
-    { rejectWithValue }
-  ) => {
+  async ({ page = 1, limit = 20 }: { page?: number; limit?: number }, { rejectWithValue }) => {
     try {
       const response = await chatService.getConversations(page, limit);
       return response;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch conversations';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch conversations';
       return rejectWithValue(errorMessage);
     }
   }
@@ -63,8 +59,7 @@ export const fetchMessages = createAsyncThunk(
       const response = await chatService.getMessages(conversationId, page, limit);
       return { conversationId, ...response };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch messages';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch messages';
       return rejectWithValue(errorMessage);
     }
   }
@@ -102,8 +97,7 @@ export const sendChatMessage = createAsyncThunk(
       const sentMessage = await chatService.sendMessage(conversationId, messageData);
       return { conversationId, message: sentMessage };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to send message';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       return rejectWithValue(errorMessage);
     }
   }
@@ -140,8 +134,7 @@ export const sendChatMessageWithFile = createAsyncThunk(
       );
       return { conversationId, message: sentMessage };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to send message with file';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message with file';
       return rejectWithValue(errorMessage);
     }
   }
@@ -152,16 +145,12 @@ export const sendChatMessageWithFile = createAsyncThunk(
  */
 export const createOrGetConversation = createAsyncThunk(
   'chat/createOrGetConversation',
-  async (
-    { userId1, userId2 }: { userId1: number; userId2: number },
-    { rejectWithValue }
-  ) => {
+  async ({ userId1, userId2 }: { userId1: number; userId2: number }, { rejectWithValue }) => {
     try {
       const conversation = await chatService.createConversation(userId1, userId2);
       return { conversation };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to create conversation';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create conversation';
       return rejectWithValue(errorMessage);
     }
   }
@@ -177,8 +166,7 @@ export const markConversationAsRead = createAsyncThunk(
       await chatService.markAsRead(conversationId);
       return { conversationId };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to mark as read';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to mark as read';
       return rejectWithValue(errorMessage);
     }
   }
@@ -194,8 +182,7 @@ export const fetchUnreadCount = createAsyncThunk(
       const count = await chatService.getUnreadCount(conversationId);
       return { conversationId, count };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch unread count';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch unread count';
       return rejectWithValue(errorMessage);
     }
   }
@@ -243,8 +230,7 @@ const chatSlice = createSlice({
 
         // Sort messages by created_at (newest last)
         state.messages[conversationId].sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
       }
 
@@ -271,7 +257,8 @@ const chatSlice = createSlice({
         attachmentType?: 'image' | 'video';
       }>
     ) => {
-      const { conversationId, tempId, message, senderId, localFileUri, attachmentType } = action.payload;
+      const { conversationId, tempId, message, senderId, localFileUri, attachmentType } =
+        action.payload;
 
       if (!state.messages[conversationId]) {
         state.messages[conversationId] = [];
@@ -317,8 +304,7 @@ const chatSlice = createSlice({
 
           // Sort messages by created_at (newest last)
           state.messages[conversationId].sort(
-            (a, b) =>
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         }
       }
@@ -378,9 +364,9 @@ const chatSlice = createSlice({
         }
       } else {
         // Remove user from typing list
-        state.typingUsers[conversationId] = state.typingUsers[
-          conversationId
-        ].filter((id) => id !== userId);
+        state.typingUsers[conversationId] = state.typingUsers[conversationId].filter(
+          (id) => id !== userId
+        );
       }
     },
 
@@ -512,8 +498,7 @@ const chatSlice = createSlice({
         // Initialize or replace messages for this conversation
         // Sort messages by created_at (newest last) for consistent ordering
         state.messages[conversationId] = data.sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
 
         // Store pagination info
@@ -550,8 +535,7 @@ const chatSlice = createSlice({
 
           // Sort messages by created_at (newest last) for consistent ordering
           state.messages[conversationId].sort(
-            (a, b) =>
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         }
 
@@ -589,13 +573,17 @@ const chatSlice = createSlice({
 
         if (existingIndex !== -1) {
           // Message already exists (likely from WebSocket), just remove the pending message
-          const pendingIndex = state.messages[conversationId].findIndex((m) => m.isPending === true);
+          const pendingIndex = state.messages[conversationId].findIndex(
+            (m) => m.isPending === true
+          );
           if (pendingIndex !== -1) {
             state.messages[conversationId].splice(pendingIndex, 1);
           }
         } else {
           // Message doesn't exist, replace pending or add new
-          const pendingIndex = state.messages[conversationId].findIndex((m) => m.isPending === true);
+          const pendingIndex = state.messages[conversationId].findIndex(
+            (m) => m.isPending === true
+          );
 
           if (pendingIndex !== -1) {
             // Replace the pending message with the actual message
@@ -607,8 +595,7 @@ const chatSlice = createSlice({
 
         // Sort messages by created_at (newest last) for consistent ordering
         state.messages[conversationId].sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
 
         // Update conversation's last message
@@ -632,7 +619,7 @@ const chatSlice = createSlice({
             const pendingMessage = messages.find((m) => m.isPending === true);
             if (pendingMessage) {
               pendingMessage.isPending = false;
-              pendingMessage.uploadError = action.payload as string || 'Upload failed';
+              pendingMessage.uploadError = (action.payload as string) || 'Upload failed';
             }
           }
         });

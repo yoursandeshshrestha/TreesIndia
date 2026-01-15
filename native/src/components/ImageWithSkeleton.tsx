@@ -55,15 +55,12 @@ export default function ImageWithSkeleton({
   });
 
   // If source is a number (local require), don't show skeleton
-  if (typeof source === 'number' || (typeof source === 'object' && 'uri' in source && !source.uri)) {
+  if (
+    typeof source === 'number' ||
+    (typeof source === 'object' && 'uri' in source && !source.uri)
+  ) {
     return (
-      <Image
-        source={source}
-        className={className}
-        style={style}
-        onError={handleError}
-        {...props}
-      />
+      <Image source={source} className={className} style={style} onError={handleError} {...props} />
     );
   }
 
@@ -86,11 +83,10 @@ export default function ImageWithSkeleton({
           className="absolute inset-0"
           style={{
             opacity: isLoading ? 0 : fadeAnim,
-          }}
-        >
+          }}>
           <Image
             source={source}
-            className="w-full h-full"
+            className="h-full w-full"
             style={{ width: '100%', height: '100%' }}
             onLoad={handleLoad}
             onError={handleError}
@@ -100,12 +96,7 @@ export default function ImageWithSkeleton({
       )}
 
       {/* Error State */}
-      {hasError && (
-        <View
-          className="absolute inset-0 bg-[#F3F4F6] items-center justify-center"
-        />
-      )}
+      {hasError && <View className="absolute inset-0 items-center justify-center bg-[#F3F4F6]" />}
     </View>
   );
 }
-

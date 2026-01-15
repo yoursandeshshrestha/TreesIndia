@@ -40,10 +40,7 @@ class AuthService {
 
     // Store tokens
     if (authData.access_token && authData.refresh_token) {
-      await tokenStorage.setTokens(
-        authData.access_token,
-        authData.refresh_token
-      );
+      await tokenStorage.setTokens(authData.access_token, authData.refresh_token);
     }
 
     return authData;
@@ -80,10 +77,7 @@ class AuthService {
 
     // Update tokens
     if (authData.access_token && authData.refresh_token) {
-      await tokenStorage.setTokens(
-        authData.access_token,
-        authData.refresh_token
-      );
+      await tokenStorage.setTokens(authData.access_token, authData.refresh_token);
     }
 
     return authData;
@@ -128,5 +122,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-
-

@@ -204,9 +204,11 @@ class WorkerService {
     return {
       success: jsonData.success !== false,
       message: jsonData.message || 'Worker retrieved successfully',
-      data: jsonData.data ? {
-        worker: this.normalizeWorker(jsonData.data.worker),
-      } : undefined,
+      data: jsonData.data
+        ? {
+            worker: this.normalizeWorker(jsonData.data.worker),
+          }
+        : undefined,
     };
   }
 
@@ -242,7 +244,11 @@ class WorkerService {
   /**
    * Search workers
    */
-  async searchWorkers(query: string, page: number = 1, limit: number = 20): Promise<WorkerListResponse> {
+  async searchWorkers(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<WorkerListResponse> {
     return this.getWorkersWithFilters({
       search: query.trim(),
       page: page,
@@ -333,9 +339,8 @@ class WorkerService {
     let profilePic = worker.profile_pic || worker.ProfilePic;
     if (!profilePic && worker.documents) {
       try {
-        const documents = typeof worker.documents === 'string'
-          ? JSON.parse(worker.documents)
-          : worker.documents;
+        const documents =
+          typeof worker.documents === 'string' ? JSON.parse(worker.documents) : worker.documents;
         profilePic = documents.profile_pic;
       } catch {
         // If parsing fails, profile_pic remains undefined
@@ -343,25 +348,25 @@ class WorkerService {
     }
 
     // Get name from various sources with proper fallbacks
-    const workerName = worker.name?.trim() ||
-                       contactInfo?.name?.trim() ||
-                       worker.contact_person_name?.trim() ||
-                       'Worker';
+    const workerName =
+      worker.name?.trim() ||
+      contactInfo?.name?.trim() ||
+      worker.contact_person_name?.trim() ||
+      'Worker';
 
     // Get phone from various sources
-    const workerPhone = worker.phone?.trim() ||
-                        contactInfo?.phone?.trim() ||
-                        worker.contact_person_phone?.trim() ||
-                        '';
+    const workerPhone =
+      worker.phone?.trim() ||
+      contactInfo?.phone?.trim() ||
+      worker.contact_person_phone?.trim() ||
+      '';
 
     // Get email from various sources
-    const workerEmail = worker.email?.trim() ||
-                        contactInfo?.email?.trim() ||
-                        worker.contact_person_email?.trim();
+    const workerEmail =
+      worker.email?.trim() || contactInfo?.email?.trim() || worker.contact_person_email?.trim();
 
     // Get alternative number
-    const altNumber = worker.alternative_number?.trim() ||
-                      contactInfo?.alternative_number?.trim();
+    const altNumber = worker.alternative_number?.trim() || contactInfo?.alternative_number?.trim();
 
     return {
       id: worker.id || worker.ID || 0,

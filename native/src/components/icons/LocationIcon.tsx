@@ -26,5 +26,3 @@ export default function LocationIcon({ size = 24, color = '#6B7280' }: LocationI
     </Svg>
   );
 }
-
-

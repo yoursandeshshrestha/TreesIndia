@@ -33,5 +33,3 @@ export default function FloorIcon({ size = 24, color = '#6B7280' }: FloorIconPro
     </Svg>
   );
 }
-
-

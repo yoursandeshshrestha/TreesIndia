@@ -24,7 +24,9 @@ class Logger {
    * Check if logging is enabled for a module
    */
   private isEnabled(module: string): boolean {
-    return this.isDevelopment && (this.enabledModules.has('all') || this.enabledModules.has(module));
+    return (
+      this.isDevelopment && (this.enabledModules.has('all') || this.enabledModules.has(module))
+    );
   }
 
   /**
@@ -71,9 +73,10 @@ class Logger {
   error(module: string, message: string, error?: unknown, context?: LogContext): void {
     if (!this.isEnabled(module)) return;
 
-    const errorDetails = error instanceof Error
-      ? { message: error.message, stack: error.stack, name: error.name }
-      : { error };
+    const errorDetails =
+      error instanceof Error
+        ? { message: error.message, stack: error.stack, name: error.name }
+        : { error };
 
     const fullContext = { ...context, error: errorDetails };
     console.error(this.formatMessage('error', module, message, fullContext));
@@ -82,7 +85,12 @@ class Logger {
   /**
    * Log flow step (for tracking multi-step processes)
    */
-  flow(module: string, step: string, status: 'start' | 'success' | 'error', context?: LogContext): void {
+  flow(
+    module: string,
+    step: string,
+    status: 'start' | 'success' | 'error',
+    context?: LogContext
+  ): void {
     if (!this.isEnabled(module)) return;
 
     const emoji = status === 'start' ? '▶️' : status === 'success' ? '✅' : '❌';
@@ -151,11 +159,16 @@ export const bookingLogger = {
   debug: (message: string, context?: LogContext) => logger.debug('Booking', message, context),
   info: (message: string, context?: LogContext) => logger.info('Booking', message, context),
   warn: (message: string, context?: LogContext) => logger.warn('Booking', message, context),
-  error: (message: string, error?: unknown, context?: LogContext) => logger.error('Booking', message, error, context),
+  error: (message: string, error?: unknown, context?: LogContext) =>
+    logger.error('Booking', message, error, context),
   flow: (step: string, status: 'start' | 'success' | 'error', context?: LogContext) =>
     logger.flow('Booking', step, status, context),
-  api: (method: string, endpoint: string, status: 'start' | 'success' | 'error', context?: LogContext) =>
-    logger.api('Booking', method, endpoint, status, context),
+  api: (
+    method: string,
+    endpoint: string,
+    status: 'start' | 'success' | 'error',
+    context?: LogContext
+  ) => logger.api('Booking', method, endpoint, status, context),
   group: (label: string) => logger.group('Booking', label),
   groupEnd: () => logger.groupEnd(),
 };
@@ -164,7 +177,8 @@ export const paymentLogger = {
   debug: (message: string, context?: LogContext) => logger.debug('Payment', message, context),
   info: (message: string, context?: LogContext) => logger.info('Payment', message, context),
   warn: (message: string, context?: LogContext) => logger.warn('Payment', message, context),
-  error: (message: string, error?: unknown, context?: LogContext) => logger.error('Payment', message, error, context),
+  error: (message: string, error?: unknown, context?: LogContext) =>
+    logger.error('Payment', message, error, context),
   flow: (step: string, status: 'start' | 'success' | 'error', context?: LogContext) =>
     logger.flow('Payment', step, status, context),
 };

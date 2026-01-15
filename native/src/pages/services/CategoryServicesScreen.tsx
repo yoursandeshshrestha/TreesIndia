@@ -67,130 +67,131 @@ export default function CategoryServicesScreen({
   }, [category.id, category.ID]);
 
   // Load services grouped by level 3 categories with their level 4 children
-  const loadServices = useCallback(async (isRefresh: boolean = false, level3Cats?: Category[]) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const loadServices = useCallback(
+    async (isRefresh: boolean = false, level3Cats?: Category[]) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      // Use provided level3Cats or fall back to state
-      const categoriesToUse = level3Cats !== undefined ? level3Cats : level3Categories;
-      const allCategories = await categoryService.getCategories();
-      const sections: ServiceSectionWithCategories[] = [];
+        // Use provided level3Cats or fall back to state
+        const categoriesToUse = level3Cats !== undefined ? level3Cats : level3Categories;
+        const allCategories = await categoryService.getCategories();
+        const sections: ServiceSectionWithCategories[] = [];
 
-      // Load services for each level 3 category
-      for (const level3Cat of categoriesToUse) {
-        const level3Id = level3Cat.id || level3Cat.ID;
+        // Load services for each level 3 category
+        for (const level3Cat of categoriesToUse) {
+          const level3Id = level3Cat.id || level3Cat.ID;
 
-        // Get level 4 categories for this level 3 category
-        const allLevel4Cats = allCategories.filter(
-          (cat) => cat.parent_id === level3Id && cat.is_active !== false
-        );
-
-        // Filter level 4 categories to only include those with children or services
-        const level4CatsWithContent: Category[] = [];
-        for (const level4Cat of allLevel4Cats) {
-          const level4Id = level4Cat.id || level4Cat.ID;
-          
-          // Check if category has children
-          const hasChildren = allCategories.some(
-            (cat) => cat.parent_id === level4Id && cat.is_active !== false
+          // Get level 4 categories for this level 3 category
+          const allLevel4Cats = allCategories.filter(
+            (cat) => cat.parent_id === level3Id && cat.is_active !== false
           );
-          
-          // Check if category has services
-          const servicesResponse = await serviceService.getServicesWithFilters({
-            category: level4Cat.name,
-            limit: 1,
+
+          // Filter level 4 categories to only include those with children or services
+          const level4CatsWithContent: Category[] = [];
+          for (const level4Cat of allLevel4Cats) {
+            const level4Id = level4Cat.id || level4Cat.ID;
+
+            // Check if category has children
+            const hasChildren = allCategories.some(
+              (cat) => cat.parent_id === level4Id && cat.is_active !== false
+            );
+
+            // Check if category has services
+            const servicesResponse = await serviceService.getServicesWithFilters({
+              category: level4Cat.name,
+              limit: 1,
+            });
+            const hasServices =
+              servicesResponse.success && servicesResponse.data && servicesResponse.data.length > 0;
+
+            if (hasChildren || hasServices) {
+              level4CatsWithContent.push(level4Cat);
+            }
+          }
+
+          // Load services for this level 3 category
+          const response = await serviceService.getServicesWithFilters({
+            category: level3Cat.name,
+            limit: 50,
           });
-          const hasServices = servicesResponse.success && 
-                              servicesResponse.data && 
-                              servicesResponse.data.length > 0;
-          
-          if (hasChildren || hasServices) {
-            level4CatsWithContent.push(level4Cat);
+
+          if (response.success && response.data && response.data.length > 0) {
+            sections.push({
+              title: level3Cat.name,
+              category: level3Cat,
+              data: response.data,
+              level4Categories: level4CatsWithContent,
+            });
           }
         }
 
-        // Load services for this level 3 category
-        const response = await serviceService.getServicesWithFilters({
-          category: level3Cat.name,
-          limit: 50,
-        });
-
-        if (response.success && response.data && response.data.length > 0) {
-          sections.push({
-            title: level3Cat.name,
-            category: level3Cat,
-            data: response.data,
-            level4Categories: level4CatsWithContent,
-          });
-        }
-      }
-
-      // Load services for current category if no level 3 categories
-      if (categoriesToUse.length === 0) {
-        // Get child categories of current category
-        const currentCategoryId = category.id || category.ID;
-        const allChildCategories = allCategories.filter(
-          (cat) => cat.parent_id === currentCategoryId && cat.is_active !== false
-        );
-
-        // Filter child categories to only include those with children or services
-        const childCategoriesWithContent: Category[] = [];
-        for (const childCat of allChildCategories) {
-          const childId = childCat.id || childCat.ID;
-          
-          // Check if category has children
-          const hasChildren = allCategories.some(
-            (cat) => cat.parent_id === childId && cat.is_active !== false
+        // Load services for current category if no level 3 categories
+        if (categoriesToUse.length === 0) {
+          // Get child categories of current category
+          const currentCategoryId = category.id || category.ID;
+          const allChildCategories = allCategories.filter(
+            (cat) => cat.parent_id === currentCategoryId && cat.is_active !== false
           );
-          
-          // Check if category has services
-          const servicesResponse = await serviceService.getServicesWithFilters({
-            category: childCat.name,
-            limit: 1,
+
+          // Filter child categories to only include those with children or services
+          const childCategoriesWithContent: Category[] = [];
+          for (const childCat of allChildCategories) {
+            const childId = childCat.id || childCat.ID;
+
+            // Check if category has children
+            const hasChildren = allCategories.some(
+              (cat) => cat.parent_id === childId && cat.is_active !== false
+            );
+
+            // Check if category has services
+            const servicesResponse = await serviceService.getServicesWithFilters({
+              category: childCat.name,
+              limit: 1,
+            });
+            const hasServices =
+              servicesResponse.success && servicesResponse.data && servicesResponse.data.length > 0;
+
+            if (hasChildren || hasServices) {
+              childCategoriesWithContent.push(childCat);
+            }
+          }
+
+          const response = await serviceService.getServicesWithFilters({
+            category: category.name,
+            limit: 50,
           });
-          const hasServices = servicesResponse.success && 
-                              servicesResponse.data && 
-                              servicesResponse.data.length > 0;
-          
-          if (hasChildren || hasServices) {
-            childCategoriesWithContent.push(childCat);
+
+          if (response.success && response.data && response.data.length > 0) {
+            sections.push({
+              title: category.name,
+              category: category,
+              data: response.data,
+              level4Categories: childCategoriesWithContent,
+            });
           }
         }
 
-        const response = await serviceService.getServicesWithFilters({
-          category: category.name,
-          limit: 50,
-        });
-
-        if (response.success && response.data && response.data.length > 0) {
-          sections.push({
-            title: category.name,
-            category: category,
-            data: response.data,
-            level4Categories: childCategoriesWithContent,
-          });
-        }
+        setServiceSections(sections);
+      } catch (error) {
+        setServiceSections([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      setServiceSections(sections);
-    } catch (error) {
-      setServiceSections([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [level3Categories, category]);
+    },
+    [level3Categories, category]
+  );
 
   const getCategoryIcon = (category: Category): { iconUrl?: string; hasIcon: boolean } => {
     // Use icon directly from category
     // Handle both empty strings and undefined
     if (category.icon !== undefined && category.icon !== null && category.icon.trim() !== '') {
-      const isImageUrl = category.icon.startsWith('http://') ||
-                        category.icon.startsWith('https://');
+      const isImageUrl =
+        category.icon.startsWith('http://') || category.icon.startsWith('https://');
       if (isImageUrl) {
         return { iconUrl: category.icon, hasIcon: true };
       }
@@ -240,19 +241,17 @@ export default function CategoryServicesScreen({
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center px-6 py-16">
-      <View className="w-20 h-20 rounded-full bg-[#F3F4F6] items-center justify-center mb-4">
+      <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#F3F4F6]">
         <CategoryIcon size={40} color="#9CA3AF" />
       </View>
       <Text
-        className="text-xl font-semibold text-[#111928] mb-2 text-center"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 text-center font-semibold text-xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         No Services Found
       </Text>
       <Text
-        className="text-sm text-[#6B7280] text-center max-w-xs"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+        className="max-w-xs text-center text-sm text-[#6B7280]"
+        style={{ fontFamily: 'Inter-Regular' }}>
         No services available in &ldquo;{category.name}&rdquo; yet
       </Text>
     </View>
@@ -261,17 +260,13 @@ export default function CategoryServicesScreen({
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <View className="flex-row items-center">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4 p-2 -ml-2"
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <View className="flex-1 flex-row items-center">
-            <View className="w-10 h-10 rounded-lg bg-[#F3F4F6] items-center justify-center mr-3">
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6]">
               {(() => {
                 const { iconUrl, hasIcon } = getCategoryIcon(category);
 
@@ -289,10 +284,9 @@ export default function CategoryServicesScreen({
               })()}
             </View>
             <Text
-              className="flex-1 text-xl font-semibold text-[#111928]"
+              className="flex-1 font-semibold text-xl text-[#111928]"
               style={{ fontFamily: 'Inter-SemiBold' }}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {category.name}
             </Text>
           </View>
@@ -306,24 +300,18 @@ export default function CategoryServicesScreen({
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
-            >
+              contentContainerStyle={{ gap: 8 }}>
               {/* "All" option */}
-              <TouchableOpacity
-                onPress={() => handleLevel3Press(null)}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity onPress={() => handleLevel3Press(null)} activeOpacity={0.7}>
                 <View
                   className={`rounded-xl px-5 py-2.5 ${
-                    selectedLevel3Id === null ? 'bg-[#00a871]' : 'bg-white border border-[#E5E7EB]'
-                  }`}
-                >
+                    selectedLevel3Id === null ? 'bg-[#00a871]' : 'border border-[#E5E7EB] bg-white'
+                  }`}>
                   <Text
-                    className={`text-sm font-medium ${
+                    className={`font-medium text-sm ${
                       selectedLevel3Id === null ? 'text-white' : 'text-[#111928]'
                     }`}
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     All
                   </Text>
                 </View>
@@ -337,19 +325,16 @@ export default function CategoryServicesScreen({
                   <TouchableOpacity
                     key={level3Id}
                     onPress={() => handleLevel3Press(level3Id)}
-                    activeOpacity={0.7}
-                  >
+                    activeOpacity={0.7}>
                     <View
                       className={`rounded-xl px-5 py-2.5 ${
-                        isSelected ? 'bg-[#00a871]' : 'bg-white border border-[#E5E7EB]'
-                      }`}
-                    >
+                        isSelected ? 'bg-[#00a871]' : 'border border-[#E5E7EB] bg-white'
+                      }`}>
                       <Text
-                        className={`text-sm font-medium ${
+                        className={`font-medium text-sm ${
                           isSelected ? 'text-white' : 'text-[#111928]'
                         }`}
-                        style={{ fontFamily: 'Inter-Medium' }}
-                      >
+                        style={{ fontFamily: 'Inter-Medium' }}>
                         {level3Cat.name}
                       </Text>
                     </View>
@@ -365,10 +350,7 @@ export default function CategoryServicesScreen({
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading services...
           </Text>
         </View>
@@ -386,8 +368,7 @@ export default function CategoryServicesScreen({
             />
           }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-        >
+          contentContainerStyle={{ paddingBottom: 32 }}>
           <View className="pt-6">
             {serviceSections
               .map((section, originalIndex) => ({ section, originalIndex }))
@@ -404,17 +385,15 @@ export default function CategoryServicesScreen({
                   {section.level4Categories.length > 0 && (
                     <View className="mb-6">
                       <Text
-                        className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
+                        className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+                        style={{ fontFamily: 'Inter-SemiBold' }}>
                         More Categories Related to {section.title}
                       </Text>
-                      <View className="bg-white rounded-xl py-4">
+                      <View className="rounded-xl bg-white py-4">
                         <ScrollView
                           horizontal
                           showsHorizontalScrollIndicator={false}
-                          contentContainerStyle={{ gap: 16 }}
-                        >
+                          contentContainerStyle={{ gap: 16 }}>
                           {section.level4Categories.map((level4Cat) => {
                             const { iconUrl, hasIcon } = getCategoryIcon(level4Cat);
 
@@ -423,10 +402,9 @@ export default function CategoryServicesScreen({
                                 key={level4Cat.id || level4Cat.ID}
                                 onPress={() => handleLevel4CategoryPress(level4Cat)}
                                 activeOpacity={0.7}
-                                style={{ width: 80 }}
-                              >
+                                style={{ width: 80 }}>
                                 <View className="items-center">
-                                  <View className="w-[80px] h-[80px] bg-[#F9FAFB] rounded-xl items-center justify-center mb-2 border border-[#E5E7EB]">
+                                  <View className="mb-2 h-[80px] w-[80px] items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]">
                                     {hasIcon && iconUrl ? (
                                       <Image
                                         source={{ uri: iconUrl }}
@@ -438,10 +416,9 @@ export default function CategoryServicesScreen({
                                     )}
                                   </View>
                                   <Text
-                                    className="text-xs font-medium text-[#111928] text-center"
+                                    className="text-center font-medium text-xs text-[#111928]"
                                     style={{ fontFamily: 'Inter-Medium', lineHeight: 16 }}
-                                    numberOfLines={2}
-                                  >
+                                    numberOfLines={2}>
                                     {level4Cat.name}
                                   </Text>
                                 </View>
@@ -456,14 +433,11 @@ export default function CategoryServicesScreen({
                   {/* Services Section */}
                   <View>
                     <Text
-                      className="text-xs font-semibold text-[#6B7280]  uppercase tracking-wide"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="font-semibold text-xs uppercase  tracking-wide text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       {section.title} Services
                     </Text>
-                    <View className="bg-white rounded-xl py-4">
-                      
-
+                    <View className="rounded-xl bg-white py-4">
                       {/* Services Grid */}
                       <View className="">
                         <View className="flex-row flex-wrap" style={{ gap: 12 }}>

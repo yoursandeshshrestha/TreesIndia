@@ -6,10 +6,7 @@ interface GenderSelectorProps {
   onGenderChange: (gender: 'male' | 'female') => void;
 }
 
-export default function GenderSelector({
-  selectedGender,
-  onGenderChange,
-}: GenderSelectorProps) {
+export default function GenderSelector({ selectedGender, onGenderChange }: GenderSelectorProps) {
   const GenderTab = ({
     value,
     label,
@@ -22,22 +19,16 @@ export default function GenderSelector({
     <TouchableOpacity
       onPress={() => onGenderChange(value)}
       activeOpacity={0.7}
-      className={`px-4 py-2 rounded-lg border ${
-        isSelected
-          ? 'bg-[#055c3a]/10 border-[#055c3a]'
-          : 'bg-[#F9FAFB] border-[#E5E7EB]'
-      }`}
-    >
+      className={`rounded-lg border px-4 py-2 ${
+        isSelected ? 'border-[#055c3a] bg-[#055c3a]/10' : 'border-[#E5E7EB] bg-[#F9FAFB]'
+      }`}>
       <Text
-        className={`text-sm font-medium ${
-          isSelected ? 'text-[#055c3a]' : 'text-[#6B7280]'
-        }`}
+        className={`font-medium text-sm ${isSelected ? 'text-[#055c3a]' : 'text-[#6B7280]'}`}
         style={{
           fontFamily: isSelected ? 'Inter-Medium' : 'Inter-Regular',
           lineHeight: 18,
           ...(Platform.OS === 'android' && { includeFontPadding: false }),
-        }}
-      >
+        }}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -45,18 +36,8 @@ export default function GenderSelector({
 
   return (
     <View className="flex-row gap-3">
-      <GenderTab
-        value="male"
-        label="Male"
-        isSelected={selectedGender === 'male'}
-      />
-      <GenderTab
-        value="female"
-        label="Female"
-        isSelected={selectedGender === 'female'}
-      />
+      <GenderTab value="male" label="Male" isSelected={selectedGender === 'male'} />
+      <GenderTab value="female" label="Female" isSelected={selectedGender === 'female'} />
     </View>
   );
 }
-
-

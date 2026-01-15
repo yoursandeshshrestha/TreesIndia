@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, Alert, Image, Animated, Easing, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  Alert,
+  Image,
+  Animated,
+  Easing,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WalletIcon from '../../../components/icons/WalletIcon';
 import CancelIcon from '../../../components/icons/CancelIcon';
@@ -102,16 +112,14 @@ export default function PaymentMethodModal({
       transparent
       animationType="none"
       onRequestClose={handleClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <View className="flex-1">
         {/* Overlay */}
         <Animated.View
           style={{
             opacity: overlayOpacity,
           }}
-          className="absolute inset-0 bg-black/50"
-        >
+          className="absolute inset-0 bg-black/50">
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
@@ -128,12 +136,11 @@ export default function PaymentMethodModal({
             right: 16,
             transform: [{ translateY }],
             zIndex: 60,
-          }}
-        >
+          }}>
           <TouchableOpacity
             onPress={handleClose}
             disabled={isProcessing || isLoading}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            className="h-12 w-12 items-center justify-center rounded-full bg-white"
             style={{
               marginTop: -56,
               shadowColor: '#000',
@@ -141,8 +148,7 @@ export default function PaymentMethodModal({
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 4,
-            }}
-          >
+            }}>
             <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
           </TouchableOpacity>
         </Animated.View>
@@ -155,35 +161,26 @@ export default function PaymentMethodModal({
             display: 'flex',
             flexDirection: 'column',
           }}
-          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl min-h-[50%] max-h-[70%]"
-        >
+          className="absolute bottom-0 left-0 right-0 max-h-[70%] min-h-[50%] rounded-t-3xl bg-white">
           {/* Header - Fixed */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+          <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
             <Text
-              className="text-lg font-semibold text-[#111928]"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Select Payment Method
             </Text>
           </View>
 
           {/* Content - Scrollable */}
-          <View
-            style={{ flex: 1 }}
-            className="px-6 pt-6 pb-6"
-          >
+          <View style={{ flex: 1 }} className="px-6 pb-6 pt-6">
             {/* Amount */}
             <View className="mb-6">
-              <Text
-                className="text-sm text-[#6B7280] mb-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="mb-1 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 Amount to pay
               </Text>
               <Text
-                className="text-2xl font-bold text-[#111928]"
-                style={{ fontFamily: 'Inter-Bold' }}
-              >
+                className="font-bold text-2xl text-[#111928]"
+                style={{ fontFamily: 'Inter-Bold' }}>
                 ₹{(amount || 0).toLocaleString('en-IN')}
               </Text>
             </View>
@@ -192,36 +189,30 @@ export default function PaymentMethodModal({
             <TouchableOpacity
               onPress={handleSelectWallet}
               disabled={isProcessing || isLoading || !canUseWallet}
-              className={`flex-row items-center p-4 rounded-lg border mb-3 ${
+              className={`mb-3 flex-row items-center rounded-lg border p-4 ${
                 selectedMethod === 'wallet'
                   ? 'border-[#055c3a] bg-[#F0FDF4]'
                   : canUseWallet
-                  ? 'border-[#E5E7EB] bg-white'
-                  : 'border-[#E5E7EB] bg-[#F9FAFB] opacity-60'
+                    ? 'border-[#E5E7EB] bg-white'
+                    : 'border-[#E5E7EB] bg-[#F9FAFB] opacity-60'
               }`}
-              activeOpacity={0.5}
-            >
-              <View className="w-12 h-12 bg-[#055c3a] rounded-full items-center justify-center mr-4">
+              activeOpacity={0.5}>
+              <View className="mr-4 h-12 w-12 items-center justify-center rounded-full bg-[#055c3a]">
                 <WalletIcon size={24} color="#FFFFFF" />
               </View>
               <View className="flex-1">
                 <Text
-                  className="text-base font-semibold text-[#111928] mb-1"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="mb-1 font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Wallet
                 </Text>
-                <Text
-                  className="text-sm text-[#4B5563]"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                <Text className="text-sm text-[#4B5563]" style={{ fontFamily: 'Inter-Regular' }}>
                   Balance: ₹{(walletBalance || 0).toLocaleString('en-IN')}
                 </Text>
                 {!canUseWallet && (
                   <Text
-                    className="text-xs text-[#B3261E] mt-1"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mt-1 text-xs text-[#B3261E]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     Insufficient balance
                   </Text>
                 )}
@@ -232,14 +223,13 @@ export default function PaymentMethodModal({
             <TouchableOpacity
               onPress={handleSelectRazorpay}
               disabled={isProcessing || isLoading}
-              className={`flex-row items-center p-4 rounded-lg border ${
+              className={`flex-row items-center rounded-lg border p-4 ${
                 selectedMethod === 'razorpay'
                   ? 'border-[#055c3a] bg-[#F0FDF4]'
                   : 'border-[#E5E7EB] bg-white'
               }`}
-              activeOpacity={0.5}
-            >
-              <View className="w-12 h-12 bg-white rounded-lg items-center justify-center mr-4 border border-[#E5E7EB]">
+              activeOpacity={0.5}>
+              <View className="mr-4 h-12 w-12 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white">
                 <Image
                   source={require('../../../../assets/icons/common/razorpay.png')}
                   style={{ width: 32, height: 32 }}
@@ -248,15 +238,11 @@ export default function PaymentMethodModal({
               </View>
               <View className="flex-1">
                 <Text
-                  className="text-base font-semibold text-[#111928] mb-1"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="mb-1 font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Razorpay
                 </Text>
-                <Text
-                  className="text-sm text-[#4B5563]"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                <Text className="text-sm text-[#4B5563]" style={{ fontFamily: 'Inter-Regular' }}>
                   Pay via UPI, Cards, Net Banking
                 </Text>
               </View>
@@ -266,21 +252,18 @@ export default function PaymentMethodModal({
           {/* Processing Overlay */}
           {(isProcessing || isLoading) && (
             <View
-              className="absolute inset-0 bg-black/20 items-center justify-center"
-              style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
-            >
-              <View className="bg-white p-8 rounded-2xl items-center">
+              className="absolute inset-0 items-center justify-center bg-black/20"
+              style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+              <View className="items-center rounded-2xl bg-white p-8">
                 <ActivityIndicator size="large" color="#055c3a" />
                 <Text
-                  className="text-[#111928] mt-4 text-lg font-semibold"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="mt-4 font-semibold text-lg text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   Processing
                 </Text>
                 <Text
-                  className="text-[#6B7280] mt-2 text-center"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                  className="mt-2 text-center text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Please wait...
                 </Text>
               </View>

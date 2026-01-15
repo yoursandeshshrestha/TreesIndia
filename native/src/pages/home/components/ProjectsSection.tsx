@@ -24,19 +24,14 @@ export default function ProjectsSection({
       title="Projects"
       onSeeAll={onSeeAll}
       isLoading={isLoading}
-      isEmpty={projects.length === 0}
-    >
+      isEmpty={projects.length === 0}>
       <View style={{ height: 240 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 24 }}
-        >
+          contentContainerStyle={{ paddingRight: 24 }}>
           {projects.map((project, index) => (
-            <View
-              key={project.id}
-              style={{ marginLeft: index === 0 ? 24 : 16 }}
-            >
+            <View key={project.id} style={{ marginLeft: index === 0 ? 24 : 16 }}>
               <ProjectCard
                 project={project}
                 onPress={() => onProjectPress(project)}

@@ -56,12 +56,12 @@ class AddressService {
       if (!response.ok) {
         return [];
       }
-      
+
       const rawData = await response.json();
-      
+
       // Backend returns: { success: true, message: "...", data: [...] }
       let addresses: Address[] = [];
-      
+
       // Extract data from response
       if (rawData && typeof rawData === 'object') {
         if (Array.isArray(rawData.data)) {
@@ -74,12 +74,12 @@ class AddressService {
           addresses = [];
         }
       }
-      
+
       // Ensure we have an array before mapping
       if (!Array.isArray(addresses)) {
         return [];
       }
-      
+
       // Normalize the data and compute fullAddress
       // Backend returns snake_case: is_default, postal_code, house_number
       const normalized = addresses.map((addr: any) => {
@@ -97,14 +97,24 @@ class AddressService {
           house_number: addr.house_number || addr.houseNumber || '',
           houseNumber: addr.house_number || addr.houseNumber || '',
           landmark: addr.landmark || '',
-          is_default: addr.is_default !== undefined ? addr.is_default : (addr.isDefault !== undefined ? addr.isDefault : false),
-          isDefault: addr.is_default !== undefined ? addr.is_default : (addr.isDefault !== undefined ? addr.isDefault : false),
+          is_default:
+            addr.is_default !== undefined
+              ? addr.is_default
+              : addr.isDefault !== undefined
+                ? addr.isDefault
+                : false,
+          isDefault:
+            addr.is_default !== undefined
+              ? addr.is_default
+              : addr.isDefault !== undefined
+                ? addr.isDefault
+                : false,
         };
-        
+
         normalizedAddr.fullAddress = this.buildFullAddress(normalizedAddr);
         return normalizedAddr;
       });
-      
+
       return normalized;
     } catch (error) {
       return [];
@@ -139,25 +149,22 @@ class AddressService {
   }
 
   async updateAddress(data: UpdateAddressRequest): Promise<Address> {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/addresses/${data.id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          name: data.name,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          country: data.country || 'India',
-          postal_code: data.postal_code,
-          latitude: data.latitude || 0.0,
-          longitude: data.longitude || 0.0,
-          house_number: data.house_number || null,
-          landmark: data.landmark || null,
-          is_default: data.is_default || false,
-        }),
-      }
-    );
+    const response = await authenticatedFetch(`${API_BASE_URL}/addresses/${data.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: data.name,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country || 'India',
+        postal_code: data.postal_code,
+        latitude: data.latitude || 0.0,
+        longitude: data.longitude || 0.0,
+        house_number: data.house_number || null,
+        landmark: data.landmark || null,
+        is_default: data.is_default || false,
+      }),
+    });
     const address = await handleResponse<Address>(response);
     return {
       ...address,
@@ -169,12 +176,9 @@ class AddressService {
   }
 
   async deleteAddress(addressId: number): Promise<void> {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/addresses/${addressId}`,
-      {
-        method: 'DELETE',
-      }
-    );
+    const response = await authenticatedFetch(`${API_BASE_URL}/addresses/${addressId}`, {
+      method: 'DELETE',
+    });
     return handleResponse<void>(response);
   }
 
@@ -203,4 +207,3 @@ class AddressService {
 }
 
 export const addressService = new AddressService();
-

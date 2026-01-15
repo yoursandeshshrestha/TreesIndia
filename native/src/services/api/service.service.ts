@@ -61,14 +61,20 @@ class ServiceService {
   /**
    * Search services with a query
    */
-  async searchServices(query: string, page: number = 1, limit: number = 20): Promise<SearchResponse> {
+  async searchServices(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<SearchResponse> {
     const params = new URLSearchParams({
       q: query.trim(),
       page: page.toString(),
       limit: limit.toString(),
     });
 
-    const response = await authenticatedFetch(`${API_BASE_URL}/services/search?${params.toString()}`);
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/services/search?${params.toString()}`
+    );
     const data = await handleResponse<SearchResponse>(response);
 
     // Normalize service data
@@ -276,4 +282,3 @@ class ServiceService {
 }
 
 export const serviceService = new ServiceService();
-

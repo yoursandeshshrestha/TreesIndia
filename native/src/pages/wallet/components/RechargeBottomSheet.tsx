@@ -105,12 +105,7 @@ export default function RechargeBottomSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
       <View className="flex-1 justify-end">
         <Animated.View
           style={{
@@ -121,13 +116,8 @@ export default function RechargeBottomSheet({
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             opacity: overlayOpacity,
-          }}
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
+          }}>
+          <TouchableOpacity className="flex-1" activeOpacity={1} onPress={handleClose} />
         </Animated.View>
 
         {/* Floating Close Button */}
@@ -138,11 +128,10 @@ export default function RechargeBottomSheet({
             right: 16,
             transform: [{ translateY }],
             zIndex: 30,
-          }}
-        >
+          }}>
           <TouchableOpacity
             onPress={handleClose}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            className="h-12 w-12 items-center justify-center rounded-full bg-white"
             style={{
               marginBottom: -56,
               shadowColor: '#000',
@@ -150,8 +139,7 @@ export default function RechargeBottomSheet({
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 4,
-            }}
-          >
+            }}>
             <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
           </TouchableOpacity>
         </Animated.View>
@@ -162,68 +150,60 @@ export default function RechargeBottomSheet({
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             transform: [{ translateY }],
-          }}
-        >
+          }}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="bg-white rounded-t-3xl"
-          >
+            className="rounded-t-3xl bg-white">
             <SafeAreaView edges={['bottom']}>
-              <View className="pt-3 pb-4">
+              <View className="pb-4 pt-3">
                 {/* Drag Handle */}
-                <View className="self-center w-10 h-1 bg-[#D1D5DB] rounded-full mb-6" />
+                <View className="mb-6 h-1 w-10 self-center rounded-full bg-[#D1D5DB]" />
 
                 {/* Content */}
                 <ScrollView
                   className="px-5"
                   showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
+                  keyboardShouldPersistTaps="handled">
                   {/* Title */}
                   <Text
-                    className="text-xl font-bold text-[#111928] mb-2"
-                    style={{ fontFamily: 'Inter-Bold' }}
-                  >
+                    className="mb-2 font-bold text-xl text-[#111928]"
+                    style={{ fontFamily: 'Inter-Bold' }}>
                     Recharge Wallet
                   </Text>
                   <Text
-                    className="text-sm text-[#6B7280] mb-6"
+                    className="mb-6 text-sm text-[#6B7280]"
                     style={{
                       fontFamily: 'Inter-Regular',
                       ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                    }}
-                  >
+                    }}>
                     Select or enter amount to add to your wallet
                   </Text>
 
                   {/* Quick Select */}
                   <Text
-                    className="text-sm font-medium text-[#374151] mb-3"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-3 font-medium text-sm text-[#374151]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Quick Select
                   </Text>
-                  <View className="flex-row flex-wrap gap-3 mb-6">
+                  <View className="mb-6 flex-row flex-wrap gap-3">
                     {QUICK_AMOUNTS.map((amount) => {
                       const isSelected = selectedAmount === amount;
                       return (
                         <TouchableOpacity
                           key={amount}
                           onPress={() => handleSelectQuickAmount(amount)}
-                          className={`px-4 py-2 rounded-lg border ${
+                          className={`rounded-lg border px-4 py-2 ${
                             isSelected
-                              ? 'bg-[#055c3a]/10 border-[#055c3a]'
-                              : 'bg-[#F9FAFB] border-[#E5E7EB]'
+                              ? 'border-[#055c3a] bg-[#055c3a]/10'
+                              : 'border-[#E5E7EB] bg-[#F9FAFB]'
                           }`}
                           activeOpacity={0.7}
-                          disabled={isProcessing || isLoading}
-                        >
+                          disabled={isProcessing || isLoading}>
                           <Text
-                            className={`text-sm font-medium ${
+                            className={`font-medium text-sm ${
                               isSelected ? 'text-[#055c3a]' : 'text-[#4B5563]'
                             }`}
-                            style={{ fontFamily: 'Inter-Medium' }}
-                          >
+                            style={{ fontFamily: 'Inter-Medium' }}>
                             ₹{amount}
                           </Text>
                         </TouchableOpacity>
@@ -233,24 +213,21 @@ export default function RechargeBottomSheet({
 
                   {/* Enter Amount */}
                   <Text
-                    className="text-sm font-medium text-[#374151] mb-3"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-3 font-medium text-sm text-[#374151]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Enter Amount
                   </Text>
                   <View
-                    className="border border-[#E5E7EB] rounded-lg mb-2"
-                    style={{ minHeight: 48 }}
-                  >
+                    className="mb-2 rounded-lg border border-[#E5E7EB]"
+                    style={{ minHeight: 48 }}>
                     <View className="flex-row items-center px-4" style={{ minHeight: 48 }}>
                       <Text
-                        className="text-base text-[#111928] mr-2"
+                        className="mr-2 text-base text-[#111928]"
                         style={{
                           fontFamily: 'Inter-Regular',
                           lineHeight: Platform.OS === 'ios' ? 20 : 22,
                           ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                        }}
-                      >
+                        }}>
                         ₹
                       </Text>
                       <TextInput
@@ -276,30 +253,25 @@ export default function RechargeBottomSheet({
 
                   {/* Minimum Error */}
                   {showMinimumError && (
-                    <View className="flex-row items-center mb-4">
+                    <View className="mb-4 flex-row items-center">
                       <Text
                         className="text-xs text-[#DC2626]"
                         style={{
                           fontFamily: 'Inter-Regular',
                           ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                        }}
-                      >
+                        }}>
                         Minimum ₹{MINIMUM_AMOUNT} is required
                       </Text>
                     </View>
                   )}
 
                   {/* Proceed Button */}
-                  <View className="mt-2 mb-12">
+                  <View className="mb-12 mt-2">
                     <Button
                       label="Proceed to Payment"
                       onPress={handleRecharge}
                       isLoading={isProcessing || isLoading}
-                      disabled={
-                        selectedAmount < MINIMUM_AMOUNT ||
-                        isProcessing ||
-                        isLoading
-                      }
+                      disabled={selectedAmount < MINIMUM_AMOUNT || isProcessing || isLoading}
                     />
                   </View>
                 </ScrollView>
@@ -311,4 +283,3 @@ export default function RechargeBottomSheet({
     </Modal>
   );
 }
-

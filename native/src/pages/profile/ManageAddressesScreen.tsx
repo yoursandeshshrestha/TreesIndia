@@ -10,7 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { addressService, type Address, type CreateAddressRequest, type UpdateAddressRequest } from '../../services';
+import {
+  addressService,
+  type Address,
+  type CreateAddressRequest,
+  type UpdateAddressRequest,
+} from '../../services';
 import BackIcon from '../../components/icons/BackIcon';
 import AddEditAddressBottomSheet from './components/AddEditAddressBottomSheet';
 import AddressItem from './components/AddressItem';
@@ -97,7 +102,8 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
       setEditingAddress(null);
       loadAddresses();
     } catch (err: any) {
-      const errorMessage = err?.message || `Failed to ${editingAddress ? 'update' : 'add'} address. Please try again.`;
+      const errorMessage =
+        err?.message || `Failed to ${editingAddress ? 'update' : 'add'} address. Please try again.`;
       Alert.alert('Error', errorMessage);
     }
   };
@@ -114,26 +120,18 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
     if (error && addresses.length === 0) {
       return (
         <View className="flex-1 items-center justify-center px-6">
-          <Text
-            className="text-4xl mb-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-4 text-4xl" style={{ fontFamily: 'Inter-Regular' }}>
             ⚠️
           </Text>
           <Text
-            className="text-base text-[#B3261E] mb-4 text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mb-4 text-center text-base text-[#B3261E]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {error}
           </Text>
           <TouchableOpacity
             onPress={() => loadAddresses()}
-            className="bg-[#055c3a] px-6 py-3 rounded-lg"
-          >
-            <Text
-              className="text-white font-semibold"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+            className="rounded-lg bg-[#055c3a] px-6 py-3">
+            <Text className="font-semibold text-white" style={{ fontFamily: 'Inter-SemiBold' }}>
               Retry
             </Text>
           </TouchableOpacity>
@@ -145,15 +143,13 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
       return (
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#4B5563] mb-2 text-center"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 text-center font-semibold text-lg text-[#4B5563]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             No addresses found
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             Add your first address to get started
           </Text>
         </View>
@@ -170,8 +166,7 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
             onRefresh={() => loadAddresses(true)}
             tintColor="#055c3a"
           />
-        }
-      >
+        }>
         <View className="px-6 py-4">
           {addresses.map((address, index) => (
             <View key={address.id}>
@@ -181,9 +176,7 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
                 onDelete={() => handleDeleteAddress(address.id)}
                 isLastAddress={addresses.length === 1}
               />
-              {index < addresses.length - 1 && (
-                <View className="h-px bg-[#E5E7EB] my-4" />
-              )}
+              {index < addresses.length - 1 && <View className="my-4 h-px bg-[#E5E7EB]" />}
             </View>
           ))}
         </View>
@@ -194,18 +187,13 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-        <TouchableOpacity
-          onPress={onBack}
-          className="mr-4 p-2 -ml-2"
-          activeOpacity={0.7}
-        >
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+        <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <Text
-          className="text-xl font-semibold text-[#111928] flex-1"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="flex-1 font-semibold text-xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Manage Addresses
         </Text>
       </View>
@@ -213,19 +201,16 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
       {/* Add Another Address Button */}
       <TouchableOpacity
         onPress={handleAddAddress}
-        className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]"
-        activeOpacity={0.7}
-      >
+        className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4"
+        activeOpacity={0.7}>
         <Text
-          className="text-base font-medium text-[#055c3a]"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+          className="font-medium text-base text-[#055c3a]"
+          style={{ fontFamily: 'Inter-Medium' }}>
           +
         </Text>
         <Text
-          className="text-base font-medium text-[#055c3a] ml-2"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+          className="ml-2 font-medium text-base text-[#055c3a]"
+          style={{ fontFamily: 'Inter-Medium' }}>
           Add another address
         </Text>
       </TouchableOpacity>
@@ -256,4 +241,3 @@ export default function ManageAddressesScreen({ onBack }: ManageAddressesScreenP
     </SafeAreaView>
   );
 }
-

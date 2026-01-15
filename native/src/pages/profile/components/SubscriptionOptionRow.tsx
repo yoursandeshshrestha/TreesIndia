@@ -32,11 +32,7 @@ export default function SubscriptionOptionRow({
   const durationDisplay = getDurationLabel();
 
   return (
-    <TouchableOpacity
-      onPress={onSelect}
-      activeOpacity={0.7}
-      className="flex-row items-center py-4"
-    >
+    <TouchableOpacity onPress={onSelect} activeOpacity={0.7} className="flex-row items-center py-4">
       {/* Radio Button */}
       <View className="mr-4">
         <View
@@ -49,8 +45,7 @@ export default function SubscriptionOptionRow({
             backgroundColor: isSelected ? '#055c3a' : '#FFFFFF',
             alignItems: 'center',
             justifyContent: 'center',
-          }}
-        >
+          }}>
           {isSelected && (
             <View
               style={{
@@ -66,22 +61,17 @@ export default function SubscriptionOptionRow({
 
       {/* Plan Name */}
       <Text
-        className="text-base font-medium text-[#111928] mr-3"
-        style={{ fontFamily: 'Inter-Medium' }}
-      >
+        className="mr-3 font-medium text-base text-[#111928]"
+        style={{ fontFamily: 'Inter-Medium' }}>
         {planName}
       </Text>
 
       {/* Save Badge */}
       {savePercentage && savePercentage > 0 && (
-        <View
-          className="px-3 py-1 rounded-full mr-3"
-          style={{ backgroundColor: '#055c3a' }}
-        >
+        <View className="mr-3 rounded-full px-3 py-1" style={{ backgroundColor: '#055c3a' }}>
           <Text
-            className="text-xs font-semibold text-white"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-xs text-white"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Save {savePercentage}%
           </Text>
         </View>
@@ -91,23 +81,20 @@ export default function SubscriptionOptionRow({
       <View className="flex-1 flex-row items-center justify-end">
         {originalPrice && originalPrice > pricing.price && (
           <Text
-            className="text-sm text-[#9CA3AF] mr-2"
+            className="mr-2 text-sm text-[#9CA3AF]"
             style={{
               fontFamily: 'Inter-Regular',
               textDecorationLine: 'line-through',
-            }}
-          >
+            }}>
             ₹{originalPrice.toLocaleString('en-IN')}
           </Text>
         )}
         <Text
-          className="text-base font-medium text-[#111928]"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+          className="font-medium text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-Medium' }}>
           {formatPrice(pricing.price)} / {durationDisplay}
         </Text>
       </View>
     </TouchableOpacity>
   );
 }
-

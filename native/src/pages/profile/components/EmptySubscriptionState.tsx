@@ -4,24 +4,20 @@ import SubscriptionIcon from '../../../components/icons/SubscriptionIcon';
 
 export default function EmptySubscriptionState() {
   return (
-    <View className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB] items-center">
-      <View className="w-20 h-20 bg-[#E5E7EB] rounded-full items-center justify-center mb-4">
+    <View className="items-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-6">
+      <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#E5E7EB]">
         <SubscriptionIcon size={40} color="#6B7280" />
       </View>
       <Text
-        className="text-lg font-semibold text-[#1F2937] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-lg text-[#1F2937]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         No Active Subscription
       </Text>
       <Text
-        className="text-sm text-[#4B5563] text-center leading-5"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+        className="text-center text-sm leading-5 text-[#4B5563]"
+        style={{ fontFamily: 'Inter-Regular' }}>
         Subscribe to unlock premium features and get unlimited access to property listings.
       </Text>
     </View>
   );
 }
-
-

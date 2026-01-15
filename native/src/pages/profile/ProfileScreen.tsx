@@ -36,14 +36,26 @@ interface ProfileScreenProps {
   onNavigateToEditBrokerProfile?: () => void;
 }
 
-export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNavigateToAddresses, onNavigateToSubscription, onNavigateToSettings, onNavigateToAbout, onNavigateToApplyWorker, onNavigateToApplyBroker, onNavigateToProperties, onNavigateToVendorProfile, onNavigateToEditWorkerProfile, onNavigateToEditBrokerProfile }: ProfileScreenProps) {
+export default function ProfileScreen({
+  onEditProfile,
+  onNavigateToWallet,
+  onNavigateToAddresses,
+  onNavigateToSubscription,
+  onNavigateToSettings,
+  onNavigateToAbout,
+  onNavigateToApplyWorker,
+  onNavigateToApplyBroker,
+  onNavigateToProperties,
+  onNavigateToVendorProfile,
+  onNavigateToEditWorkerProfile,
+  onNavigateToEditBrokerProfile,
+}: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const { hasActiveSubscription, isAdmin } = useSubscriptionStatus();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
 
   // TODO: Get version from package.json or app config when available
   const versionText = 'Version 1.0.0+1';
@@ -109,11 +121,11 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
   };
 
   // Only treesindia workers get the worker UI
-  const isTreesIndiaWorker = user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
+  const isTreesIndiaWorker =
+    user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
   const isAnyWorker = user?.user_type === 'worker'; // Any type of worker (normal or treesindia)
   const isBroker = user?.user_type === 'broker';
   const canAccessVendorProfile = (hasActiveSubscription || isAdmin) && !isTreesIndiaWorker;
-
 
   return (
     <View className="flex-1 bg-white">
@@ -122,10 +134,9 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
+        contentContainerStyle={{ flexGrow: 1 }}>
         {/* Profile Header Section - Airbnb Style */}
-        <View className="px-6 pt-8 pb-6">
+        <View className="px-6 pb-6 pt-8">
           <ProfileHeader
             user={user}
             onEditPress={() => {
@@ -141,13 +152,12 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
         {/* Worker Verification Badge Section */}
         {isTreesIndiaWorker && (
           <View className="px-6 pb-8">
-            <View className="border border-[#E5E7EB] rounded-xl py-4 px-6 flex-row items-center justify-center bg-white">
+            <View className="flex-row items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-6 py-4">
               <PawLeftIcon size={24} color="#00a871" />
               <View className="mx-4 flex-1 items-center">
                 <Text
-                  className="text-base font-bold text-[#00a871] tracking-wider"
-                  style={{ fontFamily: 'Inter-Bold' }}
-                >
+                  className="font-bold text-base tracking-wider text-[#00a871]"
+                  style={{ fontFamily: 'Inter-Bold' }}>
                   VERIFIED WORKER
                 </Text>
               </View>
@@ -161,12 +171,11 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
           {/* Account Section */}
           <View className="mb-8">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Account
             </Text>
-            <View className="bg-white rounded-xl">
+            <View className="rounded-xl bg-white">
               <MenuItem
                 icon={WalletIcon}
                 label="Wallet"
@@ -220,12 +229,11 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
           {!isAnyWorker && !isBroker && (
             <View className="mb-8">
               <Text
-                className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 Services
               </Text>
-              <View className="bg-white rounded-xl">
+              <View className="rounded-xl bg-white">
                 <MenuItem
                   icon={WorkerIcon}
                   label="Apply for Worker"
@@ -244,12 +252,11 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
           {/* Support Section */}
           <View className="mb-8">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Support
             </Text>
-            <View className="bg-white rounded-xl">
+            <View className="rounded-xl bg-white">
               <MenuItem
                 icon={SettingsIcon}
                 label="Settings"
@@ -266,26 +273,23 @@ export default function ProfileScreen({ onEditProfile, onNavigateToWallet, onNav
         </View>
 
         {/* Logout Button - Airbnb Style */}
-        <View className="px-6 pb-8 mt-auto">
+        <View className="mt-auto px-6 pb-8">
           <TouchableOpacity
             onPress={() => setShowLogoutModal(true)}
-            className="h-12 rounded-lg bg-white border border-[#E5E7EB] items-center justify-center flex-row gap-2"
-            activeOpacity={0.7}
-          >
+            className="h-12 flex-row items-center justify-center gap-2 rounded-lg border border-[#E5E7EB] bg-white"
+            activeOpacity={0.7}>
             <LogoutIcon size={18} color="#DC2626" />
             <Text
-              className="text-base font-medium text-[#DC2626]"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="font-medium text-base text-[#DC2626]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Log out
             </Text>
           </TouchableOpacity>
 
           {/* Version */}
           <Text
-            className="text-xs text-[#9CA3AF] text-center mt-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mt-6 text-center text-xs text-[#9CA3AF]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {versionText}
           </Text>
         </View>

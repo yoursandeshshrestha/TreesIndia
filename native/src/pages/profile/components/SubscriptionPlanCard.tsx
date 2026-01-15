@@ -16,12 +16,10 @@ export default function SubscriptionPlanCard({
   onSelect,
 }: SubscriptionPlanCardProps) {
   // Get pricing options from the pricing array
-  const pricingOptions = Array.isArray(plan.pricing) && plan.pricing.length > 0 
-    ? plan.pricing 
-    : [];
+  const pricingOptions = Array.isArray(plan.pricing) && plan.pricing.length > 0 ? plan.pricing : [];
 
-  const monthlyOption = pricingOptions.find(p => p.duration_type === 'monthly');
-  const yearlyOption = pricingOptions.find(p => p.duration_type === 'yearly');
+  const monthlyOption = pricingOptions.find((p) => p.duration_type === 'monthly');
+  const yearlyOption = pricingOptions.find((p) => p.duration_type === 'yearly');
 
   const formatPrice = (price: number | undefined): string => {
     const safePrice = typeof price === 'number' ? price : 0;
@@ -33,38 +31,31 @@ export default function SubscriptionPlanCard({
   };
 
   // Get features array
-  const featuresArray = Array.isArray(plan.features) 
-    ? plan.features 
-    : (typeof plan.features === 'object' && plan.features !== null
-        ? Object.values(plan.features).filter((f): f is string => typeof f === 'string')
-        : []);
+  const featuresArray = Array.isArray(plan.features)
+    ? plan.features
+    : typeof plan.features === 'object' && plan.features !== null
+      ? Object.values(plan.features).filter((f): f is string => typeof f === 'string')
+      : [];
 
   return (
-    <View
-      className="rounded-xl bg-white"
-    >
+    <View className="rounded-xl bg-white">
       {/* Header */}
-      <View 
+      <View
         className="bg-[#055c3a] p-4"
         style={{
           borderTopLeftRadius: 12,
           borderTopRightRadius: 12,
-        }}
-      >
-        <Text
-          className="text-lg font-bold text-white mb-1"
-          style={{ fontFamily: 'Inter-Bold' }}
-        >
+        }}>
+        <Text className="mb-1 font-bold text-lg text-white" style={{ fontFamily: 'Inter-Bold' }}>
           {plan.name}
         </Text>
         {plan.description && (
           <Text
             className="text-sm text-white"
-            style={{ 
+            style={{
               fontFamily: 'Inter-Regular',
               lineHeight: 20,
-            }}
-          >
+            }}>
             {plan.description}
           </Text>
         )}
@@ -100,16 +91,15 @@ export default function SubscriptionPlanCard({
         {featuresArray.length > 0 && (
           <>
             <Text
-              className="text-base font-semibold text-[#111928] mb-4"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
-              What's included:
+              className="mb-4 font-semibold text-base text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
+              What&apos;s included:
             </Text>
             {featuresArray.map((feature, index) => {
               const featureText = typeof feature === 'string' ? feature : String(feature || '');
               const featureKey = `feature-${index}-${featureText.substring(0, 10).replace(/\s/g, '-')}`;
               return (
-                <View key={featureKey} className="flex-row items-start mb-3">
+                <View key={featureKey} className="mb-3 flex-row items-start">
                   <Image
                     source={require('../../../../assets/icons/common/checkbox.png')}
                     style={{ width: 20, height: 20, marginRight: 12, marginTop: 2 }}
@@ -117,11 +107,10 @@ export default function SubscriptionPlanCard({
                   />
                   <Text
                     className="flex-1 text-sm text-[#374151]"
-                    style={{ 
+                    style={{
                       fontFamily: 'Inter-Regular',
                       lineHeight: 20,
-                    }}
-                  >
+                    }}>
                     {featureText.trim()}
                   </Text>
                 </View>
@@ -141,7 +130,12 @@ interface PricingOptionCardProps {
   isPopular?: boolean;
 }
 
-function PricingOptionCard({ pricing, isSelected, onSelect, isPopular = false }: PricingOptionCardProps) {
+function PricingOptionCard({
+  pricing,
+  isSelected,
+  onSelect,
+  isPopular = false,
+}: PricingOptionCardProps) {
   const formatPrice = (price: number): string => {
     return `₹${price.toLocaleString('en-IN')}`;
   };
@@ -162,19 +156,14 @@ function PricingOptionCard({ pricing, isSelected, onSelect, isPopular = false }:
         borderWidth: 1,
         borderColor: isSelected ? '#055c3a' : '#E5E7EB',
         backgroundColor: isSelected ? '#F0FDF4' : '#F9FAFB',
-      }}
-    >
+      }}>
       {/* Badge */}
       {isPopular && (
         <View className="mb-3">
-          <View 
-            className="px-3 py-1 rounded-xl self-start"
-            style={{ backgroundColor: '#055c3a' }}
-          >
+          <View className="self-start rounded-xl px-3 py-1" style={{ backgroundColor: '#055c3a' }}>
             <Text
-              className="text-xs font-semibold text-white"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-xs text-white"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Most Popular
             </Text>
           </View>
@@ -182,19 +171,13 @@ function PricingOptionCard({ pricing, isSelected, onSelect, isPopular = false }:
       )}
 
       {/* Price and Duration */}
-      <View className="flex-row items-baseline mb-3">
+      <View className="mb-3 flex-row items-baseline">
         <Text
-          className={`text-xl font-bold ${
-            isSelected ? 'text-[#065F46]' : 'text-[#111928]'
-          }`}
-          style={{ fontFamily: 'Inter-Bold' }}
-        >
+          className={`font-bold text-xl ${isSelected ? 'text-[#065F46]' : 'text-[#111928]'}`}
+          style={{ fontFamily: 'Inter-Bold' }}>
           {formatPrice(pricing.price)}
         </Text>
-        <Text
-          className="text-sm text-[#4B5563] ml-1"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+        <Text className="ml-1 text-sm text-[#4B5563]" style={{ fontFamily: 'Inter-Regular' }}>
           / {getDurationLabel()}
         </Text>
       </View>
@@ -209,14 +192,12 @@ function PricingOptionCard({ pricing, isSelected, onSelect, isPopular = false }:
           backgroundColor: isSelected ? '#055c3a' : '#FFFFFF',
           borderWidth: 1,
           borderColor: '#055c3a',
-        }}
-      >
+        }}>
         <Text
-          className={`text-sm font-semibold text-center ${
+          className={`text-center font-semibold text-sm ${
             isSelected ? 'text-white' : 'text-[#055c3a]'
           }`}
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           {isSelected ? 'Selected' : 'Select Plan'}
         </Text>
       </View>

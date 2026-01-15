@@ -52,9 +52,7 @@ class WorkerEarningsService {
   /**
    * Get worker earnings dashboard with optional time period filter
    */
-  async getEarningsDashboard(
-    period: PeriodFilter = '30_days'
-  ): Promise<WorkerEarningsDashboard> {
+  async getEarningsDashboard(period: PeriodFilter = '30_days'): Promise<WorkerEarningsDashboard> {
     const url = `${API_BASE_URL}/worker/earnings/dashboard?period=${period}`;
     const response = await authenticatedFetch(url);
     const result: WorkerEarningsDashboardResponse = await response.json();

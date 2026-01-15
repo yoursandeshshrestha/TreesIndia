@@ -33,5 +33,3 @@ export default function CameraIcon({ size = 24, color = 'currentColor' }: Camera
     </Svg>
   );
 }
-
-

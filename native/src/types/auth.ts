@@ -96,4 +96,3 @@ export interface BankingInfo {
   bank_name: string;
   account_holder_name: string;
 }
-

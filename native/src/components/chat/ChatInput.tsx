@@ -123,37 +123,33 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = (message.trim().length > 0 || selectedFile !== null) && !disabled && !isSending;
 
   return (
-    <View className="bg-white border-t border-[#E5E7EB]">
+    <View className="border-t border-[#E5E7EB] bg-white">
       {/* File Preview */}
       {selectedFile && (
         <View className="px-4 pt-3">
-          <View className="flex-row items-center bg-[#F9FAFB] rounded-lg p-2 border border-[#E5E7EB]">
+          <View className="flex-row items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-2">
             {/* Preview */}
             {selectedFile.type === 'image' ? (
               <Image
                 source={{ uri: selectedFile.uri }}
-                className="w-12 h-12 rounded"
+                className="h-12 w-12 rounded"
                 resizeMode="cover"
               />
             ) : (
-              <View className="w-12 h-12 rounded bg-[#E5E7EB] items-center justify-center">
+              <View className="h-12 w-12 items-center justify-center rounded bg-[#E5E7EB]">
                 <VideoIcon size={24} color="#6B7280" />
               </View>
             )}
 
             {/* File Info */}
-            <View className="flex-1 ml-2">
+            <View className="ml-2 flex-1">
               <Text
                 className="text-sm text-[#111928]"
                 style={{ fontFamily: 'Inter-Medium' }}
-                numberOfLines={1}
-              >
+                numberOfLines={1}>
                 {selectedFile.fileName}
               </Text>
-              <Text
-                className="text-xs text-[#6B7280]"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 {selectedFile.type === 'image' ? 'Image' : 'Video'}
               </Text>
             </View>
@@ -161,9 +157,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             {/* Remove Button */}
             <TouchableOpacity
               onPress={handleRemoveFile}
-              className="w-8 h-8 items-center justify-center"
-              activeOpacity={0.7}
-            >
+              className="h-8 w-8 items-center justify-center"
+              activeOpacity={0.7}>
               <CloseIcon size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
@@ -176,14 +171,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <TouchableOpacity
           onPress={showAttachmentOptions}
           disabled={disabled || isSending}
-          className="w-10 h-10 items-center justify-center mr-2"
-          activeOpacity={0.7}
-        >
+          className="mr-2 h-10 w-10 items-center justify-center"
+          activeOpacity={0.7}>
           <AttachmentIcon size={24} color={disabled || isSending ? '#9CA3AF' : '#6B7280'} />
         </TouchableOpacity>
 
         {/* Text Input */}
-        <View className="flex-1 mr-2">
+        <View className="mr-2 flex-1">
           <TextInput
             value={message}
             onChangeText={setMessage}
@@ -192,7 +186,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             multiline
             maxLength={1000}
             editable={!disabled && !isSending}
-            className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl px-4 py-3 text-base text-[#111928] max-h-32"
+            className="max-h-32 rounded-3xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-base text-[#111928]"
             style={{
               fontFamily: 'Inter-Regular',
               textAlignVertical: 'top',
@@ -207,11 +201,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <TouchableOpacity
           onPress={handleSend}
           disabled={!canSend}
-          className={`w-12 h-12 rounded-full items-center justify-center ${
+          className={`h-12 w-12 items-center justify-center rounded-full ${
             canSend ? 'bg-[#00a871]' : 'bg-[#E5E7EB]'
           }`}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           {isSending ? (
             <ActivityIndicator color="white" size="small" />
           ) : (

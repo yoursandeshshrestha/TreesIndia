@@ -97,7 +97,9 @@ class UserService {
       method: 'POST',
       body: JSON.stringify({}),
     });
-    const data = await handleResponse<{ phone: string; expires_in: number; message: string }>(response);
+    const data = await handleResponse<{ phone: string; expires_in: number; message: string }>(
+      response
+    );
     return {
       phone: data.phone,
       expires_in: data.expires_in || 300,
@@ -114,4 +116,3 @@ class UserService {
 }
 
 export const userService = new UserService();
-

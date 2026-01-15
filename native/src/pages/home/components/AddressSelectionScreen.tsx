@@ -18,10 +18,19 @@ import BackIcon from '../../../components/icons/BackIcon';
 import SearchIcon from '../../../components/icons/SearchIcon';
 import LocationIcon from '../../../components/icons/LocationIcon';
 import AddressIcon from '../../../components/icons/AddressIcon';
-import { locationSearchService, LocationPrediction } from '../../../services/api/location-search.service';
-import { userLocationService, CreateLocationRequest } from '../../../services/api/user-location.service';
+import {
+  locationSearchService,
+  LocationPrediction,
+} from '../../../services/api/location-search.service';
+import {
+  userLocationService,
+  CreateLocationRequest,
+} from '../../../services/api/user-location.service';
 import { addressService, type Address } from '../../../services';
-import { searchHistoryService, SearchHistoryEntry } from '../../../services/api/search-history.service';
+import {
+  searchHistoryService,
+  SearchHistoryEntry,
+} from '../../../services/api/search-history.service';
 import MapLocationPicker from '../../../components/MapLocationPicker';
 
 interface AddressSelectionScreenProps {
@@ -30,7 +39,9 @@ interface AddressSelectionScreenProps {
 }
 
 // Helper function to convert SearchHistoryEntry to LocationPrediction
-const convertSearchHistoryToLocationPrediction = (history: SearchHistoryEntry): LocationPrediction => ({
+const convertSearchHistoryToLocationPrediction = (
+  history: SearchHistoryEntry
+): LocationPrediction => ({
   place_id: history.place_id,
   description: history.description,
   formatted_address: history.formatted_address,
@@ -135,7 +146,6 @@ export default function AddressSelectionScreen({
     }
   };
 
-
   // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -204,7 +214,8 @@ export default function AddressSelectionScreen({
         const streetParts: string[] = [];
         if (addressData.streetNumber) streetParts.push(addressData.streetNumber);
         if (addressData.street) streetParts.push(addressData.street);
-        const streetAddress = streetParts.length > 0 ? streetParts.join(', ') : addressData.name || '';
+        const streetAddress =
+          streetParts.length > 0 ? streetParts.join(', ') : addressData.name || '';
 
         const city = addressData.city || addressData.subregion || '';
         const state = addressData.region || addressData.district || '';
@@ -245,7 +256,8 @@ export default function AddressSelectionScreen({
       // Error handling
       Alert.alert(
         'Error',
-        error.message || 'Failed to get your current location. Please try again or search manually.',
+        error.message ||
+          'Failed to get your current location. Please try again or search manually.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -274,17 +286,24 @@ export default function AddressSelectionScreen({
       const city = location.city || '';
       const state = location.state || '';
       const country = location.country || 'India';
-      const address = location.address_line1 || location.formatted_address || location.description || '';
+      const address =
+        location.address_line1 || location.formatted_address || location.description || '';
       const postalCode = location.postcode || '';
 
       // Validate required fields - backend requires: city, state, country
       if (!city.trim() || !state.trim()) {
-        Alert.alert('Error', 'City and state information is required. Please select a different location.');
+        Alert.alert(
+          'Error',
+          'City and state information is required. Please select a different location.'
+        );
         return;
       }
 
       if (!country.trim()) {
-        Alert.alert('Error', 'Country information is required. Please select a different location.');
+        Alert.alert(
+          'Error',
+          'Country information is required. Please select a different location.'
+        );
         return;
       }
 
@@ -312,7 +331,10 @@ export default function AddressSelectionScreen({
 
       // Validate required fields
       if (!locationData.city?.trim() || !locationData.state?.trim()) {
-        Alert.alert('Error', 'City and state information is required. Please try a different location.');
+        Alert.alert(
+          'Error',
+          'City and state information is required. Please try a different location.'
+        );
         return;
       }
 
@@ -342,9 +364,8 @@ export default function AddressSelectionScreen({
     <TouchableOpacity
       onPress={() => handleSelectLocation(item)}
       activeOpacity={0.7}
-      className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]"
-    >
-      <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3">
+      className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+      <View className="mr-3 h-8 w-8 items-center justify-center rounded-full bg-[#F3F4F6]">
         {isRecent ? (
           <SearchIcon size={18} color="#6B7280" />
         ) : (
@@ -353,18 +374,16 @@ export default function AddressSelectionScreen({
       </View>
       <View className="flex-1">
         <Text
-          className="text-base font-medium text-[#111928] mb-1"
+          className="mb-1 font-medium text-base text-[#111928]"
           style={{ fontFamily: 'Inter-Medium' }}
-          numberOfLines={1}
-        >
+          numberOfLines={1}>
           {item.description || item.formatted_address}
         </Text>
         {(item.city || item.state) && (
           <Text
             className="text-sm text-[#6B7280]"
             style={{ fontFamily: 'Inter-Regular' }}
-            numberOfLines={1}
-          >
+            numberOfLines={1}>
             {[item.city, item.state].filter(Boolean).join(', ')}
           </Text>
         )}
@@ -376,30 +395,28 @@ export default function AddressSelectionScreen({
     <TouchableOpacity
       onPress={() => handleSelectSavedAddress(address)}
       activeOpacity={0.7}
-      className="py-4"
-    >
+      className="py-4">
       <View className="flex-row items-start">
-        <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3 mt-0.5">
+        <View className="mr-3 mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-[#F3F4F6]">
           <AddressIcon size={18} color="#6B7280" />
         </View>
         <View className="flex-1">
           <Text
-            className="text-base font-bold text-[#111928] mb-1"
+            className="mb-1 font-bold text-base text-[#111928]"
             style={{ fontFamily: 'Inter-Bold' }}
-            numberOfLines={1}
-          >
+            numberOfLines={1}>
             {address.name}
           </Text>
           <Text
             className="text-sm text-[#4B5563]"
             style={{ fontFamily: 'Inter-Regular' }}
-            numberOfLines={2}
-          >
-            {address.fullAddress || `${address.address}, ${address.city}, ${address.state} ${address.postalCode || address.postal_code || ''}`.trim()}
+            numberOfLines={2}>
+            {address.fullAddress ||
+              `${address.address}, ${address.city}, ${address.state} ${address.postalCode || address.postal_code || ''}`.trim()}
           </Text>
         </View>
       </View>
-      {index < total - 1 && <View className="h-px bg-[#E5E7EB] mt-4" />}
+      {index < total - 1 && <View className="mt-4 h-px bg-[#E5E7EB]" />}
     </TouchableOpacity>
   );
 
@@ -408,18 +425,18 @@ export default function AddressSelectionScreen({
       <View className="px-6 py-4">
         {/* Skeleton for Saved Addresses */}
         <View className="mb-8">
-          <View className="h-3 w-32 bg-gray-200 rounded mb-4" />
-          <View className="bg-white rounded-xl">
+          <View className="mb-4 h-3 w-32 rounded bg-gray-200" />
+          <View className="rounded-xl bg-white">
             {[1, 2].map((index) => (
               <View key={index} className="py-4">
                 <View className="flex-row items-start">
-                  <View className="w-8 h-8 rounded-full bg-gray-200 mr-3" />
+                  <View className="mr-3 h-8 w-8 rounded-full bg-gray-200" />
                   <View className="flex-1">
-                    <View className="h-4 bg-gray-200 rounded mb-2 w-3/4" />
-                    <View className="h-3 bg-gray-200 rounded w-full" />
+                    <View className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
+                    <View className="h-3 w-full rounded bg-gray-200" />
                   </View>
                 </View>
-                {index < 2 && <View className="h-px bg-[#E5E7EB] mt-4" />}
+                {index < 2 && <View className="mt-4 h-px bg-[#E5E7EB]" />}
               </View>
             ))}
           </View>
@@ -427,18 +444,18 @@ export default function AddressSelectionScreen({
 
         {/* Skeleton for Recent Searches */}
         <View className="mb-8">
-          <View className="h-3 w-32 bg-gray-200 rounded mb-4" />
-          <View className="bg-white rounded-xl">
+          <View className="mb-4 h-3 w-32 rounded bg-gray-200" />
+          <View className="rounded-xl bg-white">
             {[1, 2, 3].map((index) => (
               <View key={index} className="py-3">
                 <View className="flex-row items-start">
-                  <View className="w-8 h-8 rounded-full bg-gray-200 mr-3" />
+                  <View className="mr-3 h-8 w-8 rounded-full bg-gray-200" />
                   <View className="flex-1">
-                    <View className="h-4 bg-gray-200 rounded mb-2 w-2/3" />
-                    <View className="h-3 bg-gray-200 rounded w-1/2" />
+                    <View className="mb-2 h-4 w-2/3 rounded bg-gray-200" />
+                    <View className="h-3 w-1/2 rounded bg-gray-200" />
                   </View>
                 </View>
-                {index < 3 && <View className="h-px bg-[#E5E7EB] mt-3" />}
+                {index < 3 && <View className="mt-3 h-px bg-[#E5E7EB]" />}
               </View>
             ))}
           </View>
@@ -458,10 +475,7 @@ export default function AddressSelectionScreen({
       return (
         <View className="items-center justify-center py-20">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Searching...
           </Text>
         </View>
@@ -473,15 +487,13 @@ export default function AddressSelectionScreen({
       return (
         <View className="items-center justify-center py-20">
           <Text
-            className="text-base font-medium text-[#6B7280] mb-2"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="mb-2 font-medium text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Type at least 2 characters
           </Text>
           <Text
-            className="text-sm text-[#9CA3AF] text-center px-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="px-6 text-center text-sm text-[#9CA3AF]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             Continue typing to see location suggestions
           </Text>
         </View>
@@ -493,15 +505,13 @@ export default function AddressSelectionScreen({
       return (
         <View className="items-center justify-center py-20">
           <Text
-            className="text-base font-medium text-[#6B7280] mb-2"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="mb-2 font-medium text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             No locations found
           </Text>
           <Text
-            className="text-sm text-[#9CA3AF] text-center px-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="px-6 text-center text-sm text-[#9CA3AF]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             Try searching with a different term
           </Text>
         </View>
@@ -528,12 +538,11 @@ export default function AddressSelectionScreen({
         {savedAddresses.length > 0 && (
           <View className="mb-8">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Saved Addresses
             </Text>
-            <View className="bg-white rounded-xl">
+            <View className="rounded-xl bg-white">
               {savedAddresses.map((address, index) => (
                 <View key={address.id}>
                   {renderSavedAddressItem(address, index, savedAddresses.length)}
@@ -547,37 +556,33 @@ export default function AddressSelectionScreen({
         {recentSearches.length > 0 && (
           <View className="mb-8">
             <Text
-              className="text-xs font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-4 font-semibold text-xs uppercase tracking-wide text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Recent Searches
             </Text>
-            <View className="bg-white rounded-xl">
+            <View className="rounded-xl bg-white">
               {recentSearches.map((item, index) => (
                 <View key={item.place_id || `${item.latitude}-${item.longitude}`}>
                   <TouchableOpacity
                     onPress={() => handleSelectLocation(item)}
                     activeOpacity={0.7}
-                    className="py-3"
-                  >
+                    className="py-3">
                     <View className="flex-row items-start">
-                      <View className="w-8 h-8 rounded-full bg-[#F3F4F6] items-center justify-center mr-3 mt-0.5">
+                      <View className="mr-3 mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-[#F3F4F6]">
                         <SearchIcon size={18} color="#6B7280" />
                       </View>
                       <View className="flex-1">
                         <Text
-                          className="text-base font-bold text-[#111928] mb-1"
+                          className="mb-1 font-bold text-base text-[#111928]"
                           style={{ fontFamily: 'Inter-Bold' }}
-                          numberOfLines={1}
-                        >
+                          numberOfLines={1}>
                           {item.description || item.formatted_address}
                         </Text>
                         {(item.city || item.state) && (
                           <Text
                             className="text-sm text-[#4B5563]"
                             style={{ fontFamily: 'Inter-Regular' }}
-                            numberOfLines={2}
-                          >
+                            numberOfLines={2}>
                             {[item.city, item.state].filter(Boolean).join(', ')}
                           </Text>
                         )}
@@ -596,15 +601,13 @@ export default function AddressSelectionScreen({
           <View className="items-center justify-center py-20">
             <SearchIcon size={64} color="#9CA3AF" />
             <Text
-              className="text-base font-medium text-[#6B7280] mt-4 mb-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="mb-2 mt-4 font-medium text-base text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Start typing to search
             </Text>
             <Text
-              className="text-sm text-[#9CA3AF] text-center px-6"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className="px-6 text-center text-sm text-[#9CA3AF]"
+              style={{ fontFamily: 'Inter-Regular' }}>
               Enter your location to see suggestions
             </Text>
           </View>
@@ -619,15 +622,11 @@ export default function AddressSelectionScreen({
 
       {/* Header - Fixed at top with safe area */}
       <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4 p-2 -ml-2"
-            activeOpacity={0.7}
-          >
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
-          <View className="flex-1 flex-row items-center bg-[#F9FAFB] rounded-lg px-4 py-3 border border-[#E5E7EB]">
+          <View className="flex-1 flex-row items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
             <SearchIcon size={20} color="#6B7280" />
             <TextInput
               ref={searchInputRef}
@@ -635,7 +634,7 @@ export default function AddressSelectionScreen({
               onChangeText={setSearchQuery}
               placeholder="Search for a location..."
               placeholderTextColor="#9CA3AF"
-              className="flex-1 ml-3 text-base text-[#111928]"
+              className="ml-3 flex-1 text-base text-[#111928]"
               style={{
                 fontFamily: 'Inter-Regular',
                 paddingVertical: 0,
@@ -660,21 +659,19 @@ export default function AddressSelectionScreen({
       </View>
 
       {/* Location Actions - Fixed below header */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
         {/* Use Current Location Button */}
         <TouchableOpacity
           onPress={handleUseCurrentLocation}
           disabled={isLoadingLocation}
-          className="flex-row items-center mb-3"
-          activeOpacity={0.7}
-        >
+          className="mb-3 flex-row items-center"
+          activeOpacity={0.7}>
           {isLoadingLocation ? (
             <>
               <ActivityIndicator size="small" color="#055c3a" />
               <Text
-                className="text-base font-medium text-[#055c3a] ml-3"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
+                className="ml-3 font-medium text-base text-[#055c3a]"
+                style={{ fontFamily: 'Inter-Medium' }}>
                 Getting your location...
               </Text>
             </>
@@ -682,9 +679,8 @@ export default function AddressSelectionScreen({
             <>
               <AddressIcon size={20} color="#055c3a" />
               <Text
-                className="text-base font-medium text-[#055c3a] ml-3"
-                style={{ fontFamily: 'Inter-Medium' }}
-              >
+                className="ml-3 font-medium text-base text-[#055c3a]"
+                style={{ fontFamily: 'Inter-Medium' }}>
                 Use current location
               </Text>
             </>
@@ -695,13 +691,11 @@ export default function AddressSelectionScreen({
         <TouchableOpacity
           onPress={() => setShowMapPicker(true)}
           className="flex-row items-center"
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <LocationIcon size={20} color="#00a871" />
           <Text
-            className="text-base font-medium text-[#00a871] ml-3"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="ml-3 font-medium text-base text-[#00a871]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Select on map
           </Text>
         </TouchableOpacity>
@@ -711,29 +705,27 @@ export default function AddressSelectionScreen({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
+          contentContainerStyle={{ flexGrow: 1 }}>
           {renderContent()}
         </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Map Location Picker Modal */}
-      <Modal
-        visible={showMapPicker}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
+      <Modal visible={showMapPicker} animationType="slide" presentationStyle="fullScreen">
         <MapLocationPicker
-          initialLocation={currentLocation ? {
-            latitude: currentLocation.lat,
-            longitude: currentLocation.lng,
-          } : undefined}
+          initialLocation={
+            currentLocation
+              ? {
+                  latitude: currentLocation.lat,
+                  longitude: currentLocation.lng,
+                }
+              : undefined
+          }
           onLocationSelected={handleMapLocationSelected}
           onClose={() => setShowMapPicker(false)}
         />
@@ -741,4 +733,3 @@ export default function AddressSelectionScreen({
     </View>
   );
 }
-

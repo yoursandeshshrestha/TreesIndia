@@ -27,10 +27,7 @@ interface ServiceSearchScreenProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
-export default function ServiceSearchScreen({
-  onBack,
-  onServiceSelect,
-}: ServiceSearchScreenProps) {
+export default function ServiceSearchScreen({ onBack, onServiceSelect }: ServiceSearchScreenProps) {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Service[]>([]);
@@ -119,29 +116,23 @@ export default function ServiceSearchScreen({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
+      className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
         {/* Header with Search Bar */}
-        <View className="px-6 py-4 border-b border-[#E5E7EB]">
-          <View className="flex-row items-center mb-3">
-            <TouchableOpacity
-              onPress={onBack}
-              activeOpacity={0.7}
-              className="mr-4"
-            >
+        <View className="border-b border-[#E5E7EB] px-6 py-4">
+          <View className="mb-3 flex-row items-center">
+            <TouchableOpacity onPress={onBack} activeOpacity={0.7} className="mr-4">
               <BackIcon size={24} color="#111928" />
             </TouchableOpacity>
             <Text
-              className="text-xl font-semibold text-[#111928]"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-xl text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Search Services
             </Text>
           </View>
 
-          <View className="flex-row items-center bg-[#F9FAFB] rounded-lg px-4 py-3 border border-[#E5E7EB]">
+          <View className="flex-row items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
             <SearchIcon size={20} color="#6B7280" />
             <TextInput
               ref={searchInputRef}
@@ -149,7 +140,7 @@ export default function ServiceSearchScreen({
               onChangeText={setSearchQuery}
               placeholder="Search for services..."
               placeholderTextColor="#9CA3AF"
-              className="flex-1 ml-3 text-base text-[#111928]"
+              className="ml-3 flex-1 text-base text-[#111928]"
               style={{
                 fontFamily: 'Inter-Regular',
                 paddingVertical: 0,
@@ -170,11 +161,7 @@ export default function ServiceSearchScreen({
               }}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClearSearch}
-                activeOpacity={0.7}
-                className="ml-2"
-              >
+              <TouchableOpacity onPress={handleClearSearch} activeOpacity={0.7} className="ml-2">
                 <Text className="text-xl text-[#6B7280]">×</Text>
               </TouchableOpacity>
             )}
@@ -185,8 +172,7 @@ export default function ServiceSearchScreen({
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+        keyboardShouldPersistTaps="handled">
         {!hasSearched && searchQuery.trim().length === 0 ? (
           // Show suggestions when no search has been performed
           <View className="px-6 py-6">
@@ -200,9 +186,8 @@ export default function ServiceSearchScreen({
                 {suggestions && suggestions.services && suggestions.services.length > 0 ? (
                   <View>
                     <Text
-                      className="text-sm font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="mb-4 font-semibold text-sm uppercase tracking-wide text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       Popular Services
                     </Text>
                     <FlatList
@@ -229,15 +214,13 @@ export default function ServiceSearchScreen({
                   <View className="items-center justify-center py-12">
                     <SearchIcon size={64} color="#D1D5DB" />
                     <Text
-                      className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
+                      className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
                       Start Searching
                     </Text>
                     <Text
-                      className="text-sm text-[#6B7280] text-center"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      className="text-center text-sm text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       Search for services you need
                     </Text>
                   </View>
@@ -249,33 +232,27 @@ export default function ServiceSearchScreen({
           // Searching
           <View className="items-center justify-center py-12">
             <ActivityIndicator size="large" color="#00a871" />
-            <Text
-              className="text-sm text-[#6B7280] mt-4"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
               Searching...
             </Text>
           </View>
         ) : hasSearched && searchResults.length === 0 ? (
           // No results found
-          <View className="items-center justify-center py-12 px-6">
+          <View className="items-center justify-center px-6 py-12">
             <SearchIcon size={64} color="#D1D5DB" />
             <Text
-              className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               No Services Found
             </Text>
             <Text
-              className="text-sm text-[#6B7280] text-center"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
-              No services found for "{searchQuery}"
+              className="text-center text-sm text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Regular' }}>
+              No services found for &quot;{searchQuery}&quot;
             </Text>
             <Text
-              className="text-sm text-[#9CA3AF] text-center mt-2"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className="mt-2 text-center text-sm text-[#9CA3AF]"
+              style={{ fontFamily: 'Inter-Regular' }}>
               Try searching with different keywords
             </Text>
           </View>
@@ -283,9 +260,8 @@ export default function ServiceSearchScreen({
           // Search results grid
           <View className="px-6 py-6">
             <Text
-              className="text-sm font-semibold text-[#6B7280] mb-4 uppercase tracking-wide"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-4 font-semibold text-sm uppercase tracking-wide text-[#6B7280]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               {searchResults.length} {searchResults.length === 1 ? 'Result' : 'Results'}
             </Text>
             <FlatList

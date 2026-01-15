@@ -26,5 +26,3 @@ export default function HomeIcon({ size = 24, color = 'currentColor' }: HomeIcon
     </Svg>
   );
 }
-
-

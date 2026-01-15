@@ -15,7 +15,12 @@ interface PropertyCardProps {
   isDeleting?: boolean;
 }
 
-export default function PropertyCard({ property, onPress, onDelete, isDeleting }: PropertyCardProps) {
+export default function PropertyCard({
+  property,
+  onPress,
+  onDelete,
+  isDeleting,
+}: PropertyCardProps) {
   const getDisplayPrice = () => {
     if (property.listing_type === 'sale' && property.sale_price) {
       return `₹${property.sale_price.toLocaleString('en-IN')}`;
@@ -39,24 +44,17 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
     return null;
   };
 
-  
-
   const primaryImage = property.images && property.images.length > 0 ? property.images[0] : null;
   const imageCount = property.images?.length || 0;
 
   return (
-    <TouchableOpacity
-      className="mb-6"
-      activeOpacity={0.7}
-      disabled={isDeleting}
-      onPress={onPress}
-    >
+    <TouchableOpacity className="mb-6" activeOpacity={0.7} disabled={isDeleting} onPress={onPress}>
       {/* Image Section */}
-      <View 
-        className="relative mb-3" 
-        style={{ 
-          height: 300, 
-          borderRadius: 20, 
+      <View
+        className="relative mb-3"
+        style={{
+          height: 300,
+          borderRadius: 20,
           overflow: 'hidden',
           ...Platform.select({
             ios: {
@@ -69,21 +67,17 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
               elevation: 10,
             },
           }),
-        }}
-      >
+        }}>
         {primaryImage ? (
           <ImageWithSkeleton
             source={{ uri: primaryImage }}
-            className="w-full h-full"
+            className="h-full w-full"
             resizeMode="cover"
           />
         ) : (
-          <View className="w-full h-full bg-[#F3F4F6] items-center justify-center">
+          <View className="h-full w-full items-center justify-center bg-[#F3F4F6]">
             <NotFoundIcon size={64} color="#9CA3AF" />
-            <Text
-              className="text-sm text-[#9CA3AF] mt-2"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="mt-2 text-sm text-[#9CA3AF]" style={{ fontFamily: 'Inter-Regular' }}>
               No Image
             </Text>
           </View>
@@ -91,8 +85,8 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
 
         {/* Image Count Badge */}
         {imageCount > 1 && (
-          <View className="absolute top-4 right-4 px-2.5 py-1.5 rounded-lg bg-black/70 flex-row items-center">
-            <Text className="text-white text-xs font-medium" style={{ fontFamily: 'Inter-Medium' }}>
+          <View className="absolute right-4 top-4 flex-row items-center rounded-lg bg-black/70 px-2.5 py-1.5">
+            <Text className="font-medium text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
               {imageCount} photos
             </Text>
           </View>
@@ -103,34 +97,29 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
       <View>
         {/* Title and Location */}
         <Text
-          className="text-base font-semibold text-[#111928] mb-2"
+          className="mb-2 font-semibold text-base text-[#111928]"
           style={{ fontFamily: 'Inter-SemiBold' }}
-          numberOfLines={2}
-        >
+          numberOfLines={2}>
           {property.title}
         </Text>
-        
+
         {/* Location */}
-        <View className="flex-row items-center mb-3">
+        <View className="mb-3 flex-row items-center">
           <LocationIcon size={14} color="#6B7280" />
           <Text
-            className="text-sm text-[#6B7280] ml-1 underline"
+            className="ml-1 text-sm text-[#6B7280] underline"
             style={{ fontFamily: 'Inter-Regular' }}
-            numberOfLines={1}
-          >
+            numberOfLines={1}>
             {getDisplayLocation()}
           </Text>
         </View>
 
         {/* Property Info Row - Airbnb style */}
-        <View className="flex-row items-center mb-3" style={{ gap: 16 }}>
+        <View className="mb-3 flex-row items-center" style={{ gap: 16 }}>
           {property.bedrooms && (
             <View className="flex-row items-center">
               <BedIcon size={16} color="#6B7280" />
-              <Text
-                className="text-sm text-[#111928] ml-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="ml-1 text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                 {property.bedrooms} {property.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
               </Text>
             </View>
@@ -138,10 +127,7 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
           {property.bathrooms && (
             <View className="flex-row items-center">
               <BathIcon size={16} color="#6B7280" />
-              <Text
-                className="text-sm text-[#111928] ml-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="ml-1 text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                 {property.bathrooms} {property.bathrooms === 1 ? 'bathroom' : 'bathrooms'}
               </Text>
             </View>
@@ -149,10 +135,7 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
           {getDisplayArea() && (
             <View className="flex-row items-center">
               <SqftIcon size={16} color="#6B7280" />
-              <Text
-                className="text-sm text-[#111928] ml-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="ml-1 text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                 {getDisplayArea()}
               </Text>
             </View>
@@ -162,25 +145,18 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
         {/* Price */}
         <View className="flex-row items-baseline" style={{ gap: 4 }}>
           <Text
-            className="text-lg font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {getDisplayPrice()}
           </Text>
           {property.listing_type === 'rent' && (
-            <Text
-              className="text-sm text-[#6B7280]"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
               month
             </Text>
           )}
         </View>
         {property.price_negotiable && (
-          <Text
-            className="text-sm text-[#6B7280] mt-1"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-1 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Price is negotiable
           </Text>
         )}
@@ -188,4 +164,3 @@ export default function PropertyCard({ property, onPress, onDelete, isDeleting }
     </TouchableOpacity>
   );
 }
-

@@ -6,10 +6,7 @@ interface EarningsIconProps {
   color?: string;
 }
 
-export default function EarningsIcon({
-  size = 24,
-  color = 'currentColor',
-}: EarningsIconProps) {
+export default function EarningsIcon({ size = 24, color = 'currentColor' }: EarningsIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle

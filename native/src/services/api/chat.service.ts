@@ -18,10 +18,7 @@ class ChatService {
    * Create a new conversation between two users
    * If conversation already exists, returns existing conversation
    */
-  async createConversation(
-    userId1: number,
-    userId2: number
-  ): Promise<SimpleConversation> {
+  async createConversation(userId1: number, userId2: number): Promise<SimpleConversation> {
     try {
       const requestBody: CreateConversationRequest = {
         user_1: userId1,
@@ -36,7 +33,9 @@ class ChatService {
         body: JSON.stringify(requestBody),
       });
 
-      const result = await handleResponse<CreateConversationResponse | SimpleConversation>(response);
+      const result = await handleResponse<CreateConversationResponse | SimpleConversation>(
+        response
+      );
 
       // handleResponse already unwraps data.data, so result is either:
       // 1. { conversation: SimpleConversation } (if backend returns data.conversation)
@@ -61,10 +60,7 @@ class ChatService {
   /**
    * Get user's conversations with pagination
    */
-  async getConversations(
-    page: number = 1,
-    limit: number = 20
-  ): Promise<GetConversationsResponse> {
+  async getConversations(page: number = 1, limit: number = 20): Promise<GetConversationsResponse> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -75,19 +71,26 @@ class ChatService {
         `${API_BASE_URL}/conversations?${params.toString()}`
       );
 
-      const rawData = await handleResponse<GetConversationsResponse | { data: SimpleConversation[] } | { conversations: SimpleConversation[]; pagination?: PaginationInfo }>(response);
+      const rawData = await handleResponse<
+        | GetConversationsResponse
+        | { data: SimpleConversation[] }
+        | { conversations: SimpleConversation[]; pagination?: PaginationInfo }
+      >(response);
 
       // Handle format with 'conversations' field (actual backend format)
       if ('conversations' in rawData && Array.isArray(rawData.conversations)) {
         return {
           success: true,
           data: rawData.conversations,
-          pagination: 'pagination' in rawData ? rawData.pagination : {
-            page,
-            limit,
-            total: rawData.conversations.length,
-            total_pages: 1,
-          },
+          pagination:
+            'pagination' in rawData
+              ? rawData.pagination
+              : {
+                  page,
+                  limit,
+                  total: rawData.conversations.length,
+                  total_pages: 1,
+                },
         };
       }
 
@@ -96,12 +99,15 @@ class ChatService {
         return {
           success: true,
           data: rawData.data,
-          pagination: 'pagination' in rawData ? rawData.pagination : {
-            page,
-            limit,
-            total: rawData.data.length,
-            total_pages: 1,
-          },
+          pagination:
+            'pagination' in rawData
+              ? rawData.pagination
+              : {
+                  page,
+                  limit,
+                  total: rawData.data.length,
+                  total_pages: 1,
+                },
         };
       }
 
@@ -140,11 +146,11 @@ class ChatService {
    */
   async getConversationById(conversationId: number): Promise<SimpleConversation> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/conversations/${conversationId}`
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/conversations/${conversationId}`);
 
-      const result = await handleResponse<GetConversationByIdResponse | SimpleConversation>(response);
+      const result = await handleResponse<GetConversationByIdResponse | SimpleConversation>(
+        response
+      );
 
       // Handle wrapped response
       if ('data' in result && result.data && 'conversation' in result.data) {
@@ -176,19 +182,26 @@ class ChatService {
         `${API_BASE_URL}/conversations/${conversationId}/messages?${params.toString()}`
       );
 
-      const rawData = await handleResponse<GetMessagesResponse | { data: SimpleConversationMessage[] } | { messages: SimpleConversationMessage[]; pagination?: PaginationInfo }>(response);
+      const rawData = await handleResponse<
+        | GetMessagesResponse
+        | { data: SimpleConversationMessage[] }
+        | { messages: SimpleConversationMessage[]; pagination?: PaginationInfo }
+      >(response);
 
       // Handle format with 'messages' field (actual backend format)
       if ('messages' in rawData && Array.isArray(rawData.messages)) {
         return {
           success: true,
           data: rawData.messages,
-          pagination: 'pagination' in rawData ? rawData.pagination : {
-            page,
-            limit,
-            total: rawData.messages.length,
-            total_pages: 1,
-          },
+          pagination:
+            'pagination' in rawData
+              ? rawData.pagination
+              : {
+                  page,
+                  limit,
+                  total: rawData.messages.length,
+                  total_pages: 1,
+                },
         };
       }
 
@@ -197,12 +210,15 @@ class ChatService {
         return {
           success: true,
           data: rawData.data,
-          pagination: 'pagination' in rawData ? rawData.pagination : {
-            page,
-            limit,
-            total: rawData.data.length,
-            total_pages: 1,
-          },
+          pagination:
+            'pagination' in rawData
+              ? rawData.pagination
+              : {
+                  page,
+                  limit,
+                  total: rawData.data.length,
+                  total_pages: 1,
+                },
         };
       }
 
@@ -255,7 +271,9 @@ class ChatService {
         }
       );
 
-      const result = await handleResponse<SendMessageResponse | SimpleConversationMessage>(response);
+      const result = await handleResponse<SendMessageResponse | SimpleConversationMessage>(
+        response
+      );
 
       // Handle wrapped response with data.message
       if ('data' in result && result.data && 'message' in result.data) {
@@ -263,7 +281,12 @@ class ChatService {
       }
 
       // Handle wrapped response with just message (backend format after handleResponse)
-      if ('message' in result && result.message && typeof result.message === 'object' && 'id' in result.message) {
+      if (
+        'message' in result &&
+        result.message &&
+        typeof result.message === 'object' &&
+        'id' in result.message
+      ) {
         return result.message as SimpleConversationMessage;
       }
 
@@ -309,7 +332,9 @@ class ChatService {
         }
       );
 
-      const result = await handleResponse<SendMessageResponse | SimpleConversationMessage>(response);
+      const result = await handleResponse<SendMessageResponse | SimpleConversationMessage>(
+        response
+      );
 
       // Handle wrapped response with data.message
       if ('data' in result && result.data && 'message' in result.data) {
@@ -317,7 +342,12 @@ class ChatService {
       }
 
       // Handle wrapped response with just message (backend format after handleResponse)
-      if ('message' in result && result.message && typeof result.message === 'object' && 'id' in result.message) {
+      if (
+        'message' in result &&
+        result.message &&
+        typeof result.message === 'object' &&
+        'id' in result.message
+      ) {
         return result.message as SimpleConversationMessage;
       }
 
@@ -373,11 +403,13 @@ class ChatService {
    */
   async getTotalUnreadCount(): Promise<number> {
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/conversations/unread-count/total`
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/conversations/unread-count/total`);
 
-      const result = await handleResponse<{ total_unread_count?: number; total_unread?: number; total?: number }>(response);
+      const result = await handleResponse<{
+        total_unread_count?: number;
+        total_unread?: number;
+        total?: number;
+      }>(response);
 
       // Backend returns { total_unread_count: number }
       const count = result.total_unread_count || result.total_unread || result.total || 0;

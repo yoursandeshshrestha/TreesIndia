@@ -51,12 +51,7 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
   const serviceDisplay = getDisplayServices();
 
   return (
-    <TouchableOpacity
-      className="mb-6"
-      activeOpacity={0.7}
-      disabled={isDeleting}
-      onPress={onPress}
-    >
+    <TouchableOpacity className="mb-6" activeOpacity={0.7} disabled={isDeleting} onPress={onPress}>
       {/* Image Section */}
       <View
         className="relative mb-3"
@@ -75,21 +70,13 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
               elevation: 10,
             },
           }),
-        }}
-      >
+        }}>
         {primaryImage ? (
-          <Image
-            source={{ uri: primaryImage }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
+          <Image source={{ uri: primaryImage }} className="h-full w-full" resizeMode="cover" />
         ) : (
-          <View className="w-full h-full bg-[#F3F4F6] items-center justify-center">
+          <View className="h-full w-full items-center justify-center bg-[#F3F4F6]">
             <VendorIcon size={64} color="#9CA3AF" />
-            <Text
-              className="text-sm text-[#9CA3AF] mt-2"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="mt-2 text-sm text-[#9CA3AF]" style={{ fontFamily: 'Inter-Regular' }}>
               No Profile Picture
             </Text>
           </View>
@@ -97,8 +84,8 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
 
         {/* Gallery Count Badge */}
         {galleryCount > 1 && (
-          <View className="absolute top-4 right-4 px-2.5 py-1.5 rounded-lg bg-black/70 flex-row items-center">
-            <Text className="text-white text-xs font-medium" style={{ fontFamily: 'Inter-Medium' }}>
+          <View className="absolute right-4 top-4 flex-row items-center rounded-lg bg-black/70 px-2.5 py-1.5">
+            <Text className="font-medium text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
               {`${galleryCount} photos`}
             </Text>
           </View>
@@ -109,32 +96,27 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
       <View>
         {/* Vendor Name */}
         <Text
-          className="text-base font-semibold text-[#111928] mb-2"
+          className="mb-2 font-semibold text-base text-[#111928]"
           style={{ fontFamily: 'Inter-SemiBold' }}
-          numberOfLines={2}
-        >
+          numberOfLines={2}>
           {vendor.vendor_name || 'Unknown Vendor'}
         </Text>
 
         {/* Business Type */}
-        <View className="flex-row items-center mb-2">
+        <View className="mb-2 flex-row items-center">
           <TypeIcon size={14} color="#6B7280" />
-          <Text
-            className="text-sm text-[#6B7280] ml-1"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="ml-1 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             {getBusinessTypeLabel()}
           </Text>
         </View>
 
         {/* Location */}
-        <View className="flex-row items-center mb-3">
+        <View className="mb-3 flex-row items-center">
           <LocationIcon size={14} color="#6B7280" />
           <Text
-            className="text-sm text-[#6B7280] ml-1 underline"
+            className="ml-1 text-sm text-[#6B7280] underline"
             style={{ fontFamily: 'Inter-Regular' }}
-            numberOfLines={1}
-          >
+            numberOfLines={1}>
             {getDisplayLocation()}
           </Text>
         </View>
@@ -142,36 +124,25 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
         {/* Services Offered */}
         {serviceDisplay.displayed.length > 0 && (
           <View className="mb-3">
-            <Text
-              className="text-xs text-[#6B7280] mb-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+            <Text className="mb-2 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Medium' }}>
               Services Offered:
             </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
-            >
+              contentContainerStyle={{ gap: 8 }}>
               {serviceDisplay.displayed.map((service, index) => (
                 <View
                   key={index}
-                  className="px-3 py-1.5 rounded-full bg-[#F3F4F6] border border-[#E5E7EB]"
-                >
-                  <Text
-                    className="text-xs text-[#111928]"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                  className="rounded-full border border-[#E5E7EB] bg-[#F3F4F6] px-3 py-1.5">
+                  <Text className="text-xs text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                     {service}
                   </Text>
                 </View>
               ))}
               {serviceDisplay.remaining > 0 && (
-                <View className="px-3 py-1.5 rounded-full bg-[#055c3a]">
-                  <Text
-                    className="text-xs text-white"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                <View className="rounded-full bg-[#055c3a] px-3 py-1.5">
+                  <Text className="text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
                     +{serviceDisplay.remaining} more
                   </Text>
                 </View>
@@ -185,20 +156,16 @@ export default function VendorCard({ vendor, onPress, onDelete, isDeleting }: Ve
           <View className="flex-row items-center">
             <ProfileIcon size={16} color="#6B7280" />
             <Text
-              className="text-sm text-[#111928] ml-1"
+              className="ml-1 text-sm text-[#111928]"
               style={{ fontFamily: 'Inter-Regular' }}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {vendor.contact_person_name || 'N/A'}
             </Text>
           </View>
           {vendor.contact_person_phone && (
             <View className="flex-row items-center">
               <PhoneIcon size={16} color="#6B7280" />
-              <Text
-                className="text-sm text-[#111928] ml-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="ml-1 text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                 {vendor.contact_person_phone}
               </Text>
             </View>

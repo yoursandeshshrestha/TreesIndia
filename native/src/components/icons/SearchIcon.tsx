@@ -26,4 +26,3 @@ export default function SearchIcon({ size = 24, color = 'currentColor' }: Search
     </Svg>
   );
 }
-

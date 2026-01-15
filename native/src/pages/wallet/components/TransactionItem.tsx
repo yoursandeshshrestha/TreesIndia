@@ -8,17 +8,10 @@ interface TransactionItemProps {
   onCompletePayment?: (transaction: WalletTransaction) => void;
 }
 
-export default function TransactionItem({
-  transaction,
-  onCompletePayment,
-}: TransactionItemProps) {
+export default function TransactionItem({ transaction, onCompletePayment }: TransactionItemProps) {
   const isCredit = () => {
     const type = transaction.type.toLowerCase();
-    return (
-      type.includes('recharge') ||
-      type.includes('refund') ||
-      type.includes('credit')
-    );
+    return type.includes('recharge') || type.includes('refund') || type.includes('credit');
   };
 
   const getTransactionTitle = () => {
@@ -99,15 +92,15 @@ export default function TransactionItem({
     if (!dateString) {
       return 'Date not available';
     }
-    
+
     try {
       const date = new Date(dateString);
-      
+
       // Check if date is valid
       if (isNaN(date.getTime())) {
         return 'Invalid date';
       }
-      
+
       const now = new Date();
       const difference = now.getTime() - date.getTime();
       const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -158,60 +151,52 @@ export default function TransactionItem({
       <View className="flex-row items-start">
         <View className="flex-1">
           <Text
-            className="text-sm font-medium text-[#111928] mb-1"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="mb-1 font-medium text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             {getTransactionTitle()}
           </Text>
-          <View className="flex-row items-center flex-wrap">
+          <View className="flex-row flex-wrap items-center">
             <Text
               className="text-xs text-[#6B7280]"
               style={{
                 fontFamily: 'Inter-Regular',
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               {formatDate(
-                (transaction as any).CreatedAt || 
-                transaction.created_at || 
-                (transaction as any).initiated_at
+                (transaction as any).CreatedAt ||
+                  transaction.created_at ||
+                  (transaction as any).initiated_at
               )}
             </Text>
-            <View className="w-1 h-1 rounded-full bg-[#9CA3AF] mx-2" />
-            <View
-              className="px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: statusBgColor }}
-            >
+            <View className="mx-2 h-1 w-1 rounded-full bg-[#9CA3AF]" />
+            <View className="rounded px-1.5 py-0.5" style={{ backgroundColor: statusBgColor }}>
               <Text
                 className="text-xs"
                 style={{
                   color: statusTextColor,
                   fontFamily: 'Inter-Regular',
                   ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                }}
-              >
+                }}>
                 {getStatusText()}
               </Text>
             </View>
           </View>
         </View>
-        <View className="items-end ml-3">
+        <View className="ml-3 items-end">
           <Text
-            className="text-sm font-medium"
+            className="font-medium text-sm"
             style={{
               color: amountColor,
               fontFamily: 'Inter-Medium',
-            }}
-          >
+            }}>
             {credit ? '+' : '-'}₹{transaction.amount.toFixed(2)}
           </Text>
           <Text
-            className="text-xs text-[#6B7280] mt-1"
+            className="mt-1 text-xs text-[#6B7280]"
             style={{
               fontFamily: 'Inter-Regular',
               ...(Platform.OS === 'android' && { includeFontPadding: false }),
-            }}
-          >
+            }}>
             {transaction.method.toUpperCase()}
           </Text>
         </View>
@@ -221,14 +206,12 @@ export default function TransactionItem({
         <View className="mt-4 flex-row justify-end">
           <TouchableOpacity
             onPress={() => onCompletePayment(transaction)}
-            className="px-3 py-1.5 rounded-md"
+            className="rounded-md px-3 py-1.5"
             style={{ backgroundColor: '#059669' }}
-            activeOpacity={0.8}
-          >
+            activeOpacity={0.8}>
             <Text
-              className="text-xs font-semibold text-white"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-xs text-white"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Complete Payment
             </Text>
           </TouchableOpacity>
@@ -237,4 +220,3 @@ export default function TransactionItem({
     </View>
   );
 }
-

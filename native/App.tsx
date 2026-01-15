@@ -6,8 +6,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { store } from './src/store/store';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
-import { initializeAuth, updateSubscriptionStatus, getCurrentUser } from './src/store/slices/authSlice';
-import { fetchTotalUnreadCount, updateTotalUnreadCount, updateConversationUnreadCount } from './src/store/slices/chatSlice';
+import {
+  initializeAuth,
+  updateSubscriptionStatus,
+  getCurrentUser,
+} from './src/store/slices/authSlice';
+import {
+  fetchTotalUnreadCount,
+  updateTotalUnreadCount,
+  updateConversationUnreadCount,
+} from './src/store/slices/chatSlice';
 import { conversationMonitorWebSocket } from './src/services/websocket/conversationMonitor.websocket';
 import { useAppFonts } from './src/utils/fonts';
 import SplashScreen from './src/components/SplashScreen';
@@ -87,7 +95,36 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const dispatch = useAppDispatch();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'otp' | 'home' | 'editProfile' | 'wallet' | 'addresses' | 'subscription' | 'subscriptionPlans' | 'settings' | 'about' | 'applyWorker' | 'applyBroker' | 'properties' | 'addProperty' | 'vendorProfiles' | 'addVendor' | 'addressSelection' | 'serviceSearch' | 'bookingFlow' | 'browseProperties' | 'browseServices' | 'browseProjects' | 'browseWorkers' | 'browseVendors' | 'categoryServices' | 'chatConversation' | 'editWorkerProfile' | 'editBrokerProfile'>('login');
+  const [currentScreen, setCurrentScreen] = useState<
+    | 'login'
+    | 'otp'
+    | 'home'
+    | 'editProfile'
+    | 'wallet'
+    | 'addresses'
+    | 'subscription'
+    | 'subscriptionPlans'
+    | 'settings'
+    | 'about'
+    | 'applyWorker'
+    | 'applyBroker'
+    | 'properties'
+    | 'addProperty'
+    | 'vendorProfiles'
+    | 'addVendor'
+    | 'addressSelection'
+    | 'serviceSearch'
+    | 'bookingFlow'
+    | 'browseProperties'
+    | 'browseServices'
+    | 'browseProjects'
+    | 'browseWorkers'
+    | 'browseVendors'
+    | 'categoryServices'
+    | 'chatConversation'
+    | 'editWorkerProfile'
+    | 'editBrokerProfile'
+  >('login');
   const [propertyToEdit, setPropertyToEdit] = useState<any>(null);
   const [vendorToEdit, setVendorToEdit] = useState<any>(null);
   const [serviceForBooking, setServiceForBooking] = useState<any>(null);
@@ -138,19 +175,27 @@ function AppContent() {
     conversationMonitorWebSocket.connect();
 
     // Listen for total unread count updates from server
-    const handleTotalUnreadCount = (message: { event: string; data?: { total_unread_count?: number } }) => {
+    const handleTotalUnreadCount = (message: {
+      event: string;
+      data?: { total_unread_count?: number };
+    }) => {
       if (message.data?.total_unread_count !== undefined) {
         dispatch(updateTotalUnreadCount(message.data.total_unread_count));
       }
     };
 
     // Listen for individual conversation unread count updates
-    const handleConversationUnreadCount = (message: { event: string; data?: { conversation_id?: number; unread_count?: number } }) => {
+    const handleConversationUnreadCount = (message: {
+      event: string;
+      data?: { conversation_id?: number; unread_count?: number };
+    }) => {
       if (message.data?.conversation_id && message.data?.unread_count !== undefined) {
-        dispatch(updateConversationUnreadCount({
-          conversationId: message.data.conversation_id,
-          count: message.data.unread_count,
-        }));
+        dispatch(
+          updateConversationUnreadCount({
+            conversationId: message.data.conversation_id,
+            count: message.data.unread_count,
+          })
+        );
       }
     };
 
@@ -259,7 +304,8 @@ function AppContent() {
   // Set default tab based on user type
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      const isTreesIndiaWorker = user.user_type === 'worker' && user.worker_type === 'treesindia_worker';
+      const isTreesIndiaWorker =
+        user.user_type === 'worker' && user.worker_type === 'treesindia_worker';
       if (isTreesIndiaWorker && activeTab === 'home') {
         setActiveTab('work');
       } else if (!isTreesIndiaWorker && activeTab === 'work') {
@@ -319,29 +365,33 @@ function AppContent() {
       }
 
       // For all other sub-screens, go back to home with profile tab
-      if (currentScreen === 'editProfile' ||
-          currentScreen === 'wallet' ||
-          currentScreen === 'addresses' ||
-          currentScreen === 'subscription' ||
-          currentScreen === 'settings' ||
-          currentScreen === 'about' ||
-          currentScreen === 'applyWorker' ||
-          currentScreen === 'applyBroker' ||
-          currentScreen === 'properties' ||
-          currentScreen === 'vendorProfiles') {
+      if (
+        currentScreen === 'editProfile' ||
+        currentScreen === 'wallet' ||
+        currentScreen === 'addresses' ||
+        currentScreen === 'subscription' ||
+        currentScreen === 'settings' ||
+        currentScreen === 'about' ||
+        currentScreen === 'applyWorker' ||
+        currentScreen === 'applyBroker' ||
+        currentScreen === 'properties' ||
+        currentScreen === 'vendorProfiles'
+      ) {
         setCurrentScreen('home');
         setActiveTab('profile');
         return true;
       }
 
       // For browse screens, go back to home tab
-      if (currentScreen === 'addressSelection' ||
-          currentScreen === 'serviceSearch' ||
-          currentScreen === 'browseProperties' ||
-          currentScreen === 'browseServices' ||
-          currentScreen === 'browseProjects' ||
-          currentScreen === 'browseWorkers' ||
-          currentScreen === 'browseVendors') {
+      if (
+        currentScreen === 'addressSelection' ||
+        currentScreen === 'serviceSearch' ||
+        currentScreen === 'browseProperties' ||
+        currentScreen === 'browseServices' ||
+        currentScreen === 'browseProjects' ||
+        currentScreen === 'browseWorkers' ||
+        currentScreen === 'browseVendors'
+      ) {
         setCurrentScreen('home');
         setActiveTab('home');
         setPropertiesInitialFilters(null);
@@ -354,7 +404,8 @@ function AppContent() {
 
       // If on main home screen with tabs
       if (currentScreen === 'home') {
-        const isTreesIndiaWorker = user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
+        const isTreesIndiaWorker =
+          user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker';
         const defaultTab = isTreesIndiaWorker ? 'work' : 'home';
 
         // If already on default tab, allow app to exit
@@ -749,7 +800,10 @@ function AppContent() {
         if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
           return (
             <WorkScreen
-              onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+              onNavigateToChat={(
+                conversationId: number,
+                customerInfo: { id: number; name: string; phone?: string; profileImage?: string }
+              ) => {
                 setSelectedConversationId(conversationId);
                 setChatWorkerInfo(customerInfo);
                 setChatPreviousTab('work');
@@ -798,7 +852,10 @@ function AppContent() {
       case 'booking':
         return (
           <BookingScreen
-            onNavigateToChat={(conversationId: number, workerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+            onNavigateToChat={(
+              conversationId: number,
+              workerInfo: { id: number; name: string; phone?: string; profileImage?: string }
+            ) => {
               setSelectedConversationId(conversationId);
               setChatWorkerInfo(workerInfo);
               setChatPreviousTab('booking');
@@ -809,7 +866,10 @@ function AppContent() {
       case 'work':
         return (
           <WorkScreen
-            onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+            onNavigateToChat={(
+              conversationId: number,
+              customerInfo: { id: number; name: string; phone?: string; profileImage?: string }
+            ) => {
               setSelectedConversationId(conversationId);
               setChatWorkerInfo(customerInfo);
               setChatPreviousTab('work');
@@ -822,7 +882,10 @@ function AppContent() {
       case 'chat':
         return (
           <ChatScreen
-            onNavigateToConversation={(conversationId: number, workerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+            onNavigateToConversation={(
+              conversationId: number,
+              workerInfo: { id: number; name: string; phone?: string; profileImage?: string }
+            ) => {
               setSelectedConversationId(conversationId);
               setChatWorkerInfo(workerInfo);
               setChatPreviousTab('chat');
@@ -855,7 +918,10 @@ function AppContent() {
         if (user?.user_type === 'worker' && user?.worker_type === 'treesindia_worker') {
           return (
             <WorkScreen
-              onNavigateToChat={(conversationId: number, customerInfo: { id: number; name: string; phone?: string; profileImage?: string }) => {
+              onNavigateToChat={(
+                conversationId: number,
+                customerInfo: { id: number; name: string; phone?: string; profileImage?: string }
+              ) => {
                 setSelectedConversationId(conversationId);
                 setChatWorkerInfo(customerInfo);
                 setChatPreviousTab('work');
@@ -874,12 +940,7 @@ function AppContent() {
 
   // Show OTP screen if OTP was sent
   if (currentScreen === 'otp' && otpPhoneNumber) {
-    return (
-      <OtpVerificationScreen
-        phoneNumber={otpPhoneNumber}
-        onBack={handleBackToLogin}
-      />
-    );
+    return <OtpVerificationScreen phoneNumber={otpPhoneNumber} onBack={handleBackToLogin} />;
   }
 
   // Show login screen if not authenticated
@@ -890,18 +951,38 @@ function AppContent() {
   // Main app content (authenticated) with bottom navigation
   return (
     <View className="flex-1 bg-white">
-      <View className="flex-1">
-        {renderScreen()}
-      </View>
-      {currentScreen !== 'editProfile' && currentScreen !== 'wallet' && currentScreen !== 'addresses' && currentScreen !== 'subscription' && currentScreen !== 'subscriptionPlans' && currentScreen !== 'settings' && currentScreen !== 'about' && currentScreen !== 'applyWorker' && currentScreen !== 'applyBroker' && currentScreen !== 'properties' && currentScreen !== 'addProperty' && currentScreen !== 'vendorProfiles' && currentScreen !== 'addVendor' && currentScreen !== 'addressSelection' && currentScreen !== 'serviceSearch' && currentScreen !== 'bookingFlow' && currentScreen !== 'browseProperties' && currentScreen !== 'browseServices' && currentScreen !== 'categoryServices' && currentScreen !== 'chatConversation' && currentScreen !== 'browseProjects' && currentScreen !== 'browseWorkers' && currentScreen !== 'browseVendors' && (
-        <BottomNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          chatUnreadCount={totalUnreadCount}
-          userType={user?.user_type}
-          workerType={user?.worker_type}
-        />
-      )}
+      <View className="flex-1">{renderScreen()}</View>
+      {currentScreen !== 'editProfile' &&
+        currentScreen !== 'wallet' &&
+        currentScreen !== 'addresses' &&
+        currentScreen !== 'subscription' &&
+        currentScreen !== 'subscriptionPlans' &&
+        currentScreen !== 'settings' &&
+        currentScreen !== 'about' &&
+        currentScreen !== 'applyWorker' &&
+        currentScreen !== 'applyBroker' &&
+        currentScreen !== 'properties' &&
+        currentScreen !== 'addProperty' &&
+        currentScreen !== 'vendorProfiles' &&
+        currentScreen !== 'addVendor' &&
+        currentScreen !== 'addressSelection' &&
+        currentScreen !== 'serviceSearch' &&
+        currentScreen !== 'bookingFlow' &&
+        currentScreen !== 'browseProperties' &&
+        currentScreen !== 'browseServices' &&
+        currentScreen !== 'categoryServices' &&
+        currentScreen !== 'chatConversation' &&
+        currentScreen !== 'browseProjects' &&
+        currentScreen !== 'browseWorkers' &&
+        currentScreen !== 'browseVendors' && (
+          <BottomNavigation
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            chatUnreadCount={totalUnreadCount}
+            userType={user?.user_type}
+            workerType={user?.worker_type}
+          />
+        )}
     </View>
   );
 }

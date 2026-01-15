@@ -19,8 +19,7 @@ export const fetchBookingConfig = createAsyncThunk(
       const config = await bookingService.getBookingConfig();
       return config;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch booking config';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch booking config';
       return rejectWithValue(errorMessage);
     }
   }
@@ -28,16 +27,12 @@ export const fetchBookingConfig = createAsyncThunk(
 
 export const fetchMyBookings = createAsyncThunk(
   'booking/fetchMyBookings',
-  async (
-    { page, limit }: { page: number; limit: number },
-    { rejectWithValue }
-  ) => {
+  async ({ page, limit }: { page: number; limit: number }, { rejectWithValue }) => {
     try {
       const response = await bookingService.getMyBookings(page, limit);
       return response;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch bookings';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bookings';
       return rejectWithValue(errorMessage);
     }
   }
@@ -50,8 +45,7 @@ export const fetchBookingById = createAsyncThunk(
       const booking = await bookingService.getBookingById(bookingId);
       return booking;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch booking details';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch booking details';
       return rejectWithValue(errorMessage);
     }
   }
@@ -59,16 +53,12 @@ export const fetchBookingById = createAsyncThunk(
 
 export const cancelBooking = createAsyncThunk(
   'booking/cancelBooking',
-  async (
-    { bookingId, reason }: { bookingId: number; reason?: string },
-    { rejectWithValue }
-  ) => {
+  async ({ bookingId, reason }: { bookingId: number; reason?: string }, { rejectWithValue }) => {
     try {
       const response = await bookingService.cancelBooking(bookingId, reason);
       return { bookingId, ...response };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to cancel booking';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel booking';
       return rejectWithValue(errorMessage);
     }
   }

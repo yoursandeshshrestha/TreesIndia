@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Linking,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { Svg, Path, Circle } from 'react-native-svg';
 
 interface MessageBubbleProps {
@@ -35,8 +43,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [imageLoadError, setImageLoadError] = useState(false);
 
   // Use local file URI if pending and the message has that type, otherwise use server URL
-  const displayImageUrl = (isPending && imageUrl) ? localFileUri : imageUrl;
-  const displayVideoUrl = (isPending && videoUrl) ? localFileUri : videoUrl;
+  const displayImageUrl = isPending && imageUrl ? localFileUri : imageUrl;
+  const displayVideoUrl = isPending && videoUrl ? localFileUri : videoUrl;
 
   /**
    * Format timestamp to show time in HH:MM format or relative date
@@ -110,36 +118,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   return (
-    <View
-      className={`flex-row mb-3 ${isSent ? 'justify-end' : 'justify-start'}`}
-    >
+    <View className={`mb-3 flex-row ${isSent ? 'justify-end' : 'justify-start'}`}>
       <View className={`max-w-[80%] ${isSent ? 'items-end' : 'items-start'}`}>
         {/* Sender name for received messages */}
         {!isSent && senderName && (
-          <Text
-            className="text-xs text-[#6B7280] mb-1 px-1"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="mb-1 px-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Medium' }}>
             {senderName}
           </Text>
         )}
 
         {/* Message bubble */}
         <View
-          className={`rounded-2xl ${(displayImageUrl || displayVideoUrl) ? 'p-2' : 'px-4 py-3'} ${
-            isSent
-              ? 'bg-[#00a871] rounded-tr-sm'
-              : 'bg-[#F3F4F6] rounded-tl-sm'
-          }`}
-        >
+          className={`rounded-2xl ${displayImageUrl || displayVideoUrl ? 'p-2' : 'px-4 py-3'} ${
+            isSent ? 'rounded-tr-sm bg-[#00a871]' : 'rounded-tl-sm bg-[#F3F4F6]'
+          }`}>
           {/* Image attachment */}
           {displayImageUrl && !imageLoadError && (
             <View className="relative" style={{ maxWidth: 280 }}>
               <TouchableOpacity
                 onPress={() => !isPending && handleOpenImage(displayImageUrl)}
                 activeOpacity={isPending ? 1 : 0.9}
-                disabled={isPending}
-              >
+                disabled={isPending}>
                 <Image
                   source={{ uri: displayImageUrl }}
                   className="w-full rounded-lg"
@@ -151,12 +150,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Loading overlay for pending upload */}
               {isPending && !uploadError && (
-                <View className="absolute inset-0 bg-black/40 rounded-lg items-center justify-center">
+                <View className="absolute inset-0 items-center justify-center rounded-lg bg-black/40">
                   <ActivityIndicator size="large" color="#FFFFFF" />
-                  <Text
-                    className="text-white text-xs mt-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                  <Text className="mt-2 text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
                     Uploading...
                   </Text>
                 </View>
@@ -164,11 +160,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Error overlay for failed upload */}
               {uploadError && (
-                <View className="absolute inset-0 bg-red-900/60 rounded-lg items-center justify-center">
+                <View className="absolute inset-0 items-center justify-center rounded-lg bg-red-900/60">
                   <Text
-                    className="text-white text-xs text-center px-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="px-2 text-center text-xs text-white"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Upload failed
                   </Text>
                 </View>
@@ -178,12 +173,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
           {/* Image load error fallback */}
           {displayImageUrl && imageLoadError && (
-            <View className="w-full rounded-lg bg-[#E5E7EB] items-center justify-center" style={{ aspectRatio: 1, minHeight: 200, maxWidth: 280 }}>
+            <View
+              className="w-full items-center justify-center rounded-lg bg-[#E5E7EB]"
+              style={{ aspectRatio: 1, minHeight: 200, maxWidth: 280 }}>
               <ImageIcon size={48} color="#9CA3AF" />
-              <Text
-                className="text-[#6B7280] text-xs mt-2"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="mt-2 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 Image unavailable
               </Text>
             </View>
@@ -196,24 +190,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onPress={() => !isPending && handleOpenVideo(displayVideoUrl)}
                 activeOpacity={isPending ? 1 : 0.9}
                 disabled={isPending}
-                className="w-full rounded-lg bg-[#1F2937] items-center justify-center overflow-hidden"
-                style={{ aspectRatio: 1, minHeight: 200 }}
-              >
+                className="w-full items-center justify-center overflow-hidden rounded-lg bg-[#1F2937]"
+                style={{ aspectRatio: 1, minHeight: 200 }}>
                 {/* Play button overlay */}
                 {!isPending && !uploadError && (
                   <View className="absolute inset-0 items-center justify-center bg-black/30">
-                    <View className="w-16 h-16 rounded-full bg-white/90 items-center justify-center">
+                    <View className="h-16 w-16 items-center justify-center rounded-full bg-white/90">
                       <PlayIcon size={32} color="#00a871" />
                     </View>
                   </View>
                 )}
 
                 {/* Video label */}
-                <View className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded">
-                  <Text
-                    className="text-white text-xs"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                <View className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1">
+                  <Text className="text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
                     Video
                   </Text>
                 </View>
@@ -221,12 +211,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Loading overlay for pending upload */}
               {isPending && !uploadError && (
-                <View className="absolute inset-0 bg-black/40 rounded-lg items-center justify-center">
+                <View className="absolute inset-0 items-center justify-center rounded-lg bg-black/40">
                   <ActivityIndicator size="large" color="#FFFFFF" />
-                  <Text
-                    className="text-white text-xs mt-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                  <Text className="mt-2 text-xs text-white" style={{ fontFamily: 'Inter-Medium' }}>
                     Uploading...
                   </Text>
                 </View>
@@ -234,11 +221,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Error overlay for failed upload */}
               {uploadError && (
-                <View className="absolute inset-0 bg-red-900/60 rounded-lg items-center justify-center">
+                <View className="absolute inset-0 items-center justify-center rounded-lg bg-red-900/60">
                   <Text
-                    className="text-white text-xs text-center px-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="px-2 text-center text-xs text-white"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Upload failed
                   </Text>
                 </View>
@@ -249,22 +235,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Message text */}
           {message && (
             <Text
-              className={`text-base ${(displayImageUrl || displayVideoUrl) ? 'mt-2' : ''} ${
+              className={`text-base ${displayImageUrl || displayVideoUrl ? 'mt-2' : ''} ${
                 isSent ? 'text-white' : 'text-[#111928]'
-              } ${(displayImageUrl || displayVideoUrl) ? 'px-2 pb-1' : ''}`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              } ${displayImageUrl || displayVideoUrl ? 'px-2 pb-1' : ''}`}
+              style={{ fontFamily: 'Inter-Regular' }}>
               {message}
             </Text>
           )}
         </View>
 
         {/* Timestamp and read status */}
-        <View className="flex-row items-center mt-1 px-1">
-          <Text
-            className="text-xs text-[#9CA3AF]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+        <View className="mt-1 flex-row items-center px-1">
+          <Text className="text-xs text-[#9CA3AF]" style={{ fontFamily: 'Inter-Regular' }}>
             {formatTimestamp(timestamp)}
           </Text>
 
@@ -275,7 +257,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 // Double checkmark (read)
                 <View className="flex-row">
                   <Text className="text-xs text-[#00a871]">✓</Text>
-                  <Text className="text-xs text-[#00a871] -ml-1">✓</Text>
+                  <Text className="-ml-1 text-xs text-[#00a871]">✓</Text>
                 </View>
               ) : (
                 // Single checkmark (sent but not read)

@@ -24,19 +24,16 @@ export default function ServicesSection({
       title={title}
       onSeeAll={onSeeAll}
       isLoading={isLoading}
-      isEmpty={services.length === 0}
-    >
+      isEmpty={services.length === 0}>
       <View style={{ height: 240 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 24 }}
-        >
+          contentContainerStyle={{ paddingRight: 24 }}>
           {services.map((service, index) => (
             <View
               key={service.id || service.ID || index}
-              style={{ marginLeft: index === 0 ? 24 : 16 }}
-            >
+              style={{ marginLeft: index === 0 ? 24 : 16 }}>
               <ServiceCard
                 service={service}
                 onPress={() => onServicePress(service)}

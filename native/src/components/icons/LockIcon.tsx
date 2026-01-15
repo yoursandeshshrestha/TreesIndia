@@ -33,4 +33,3 @@ export default function LockIcon({ size = 24, color = '#FFFFFF' }: LockIconProps
     </Svg>
   );
 }
-

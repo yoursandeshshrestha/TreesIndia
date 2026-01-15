@@ -33,5 +33,3 @@ export default function WalletIcon({ size = 24, color = 'currentColor' }: Wallet
     </Svg>
   );
 }
-
-

@@ -40,5 +40,3 @@ export default function BedIcon({ size = 24, color = '#6B7280' }: BedIconProps) 
     </Svg>
   );
 }
-
-

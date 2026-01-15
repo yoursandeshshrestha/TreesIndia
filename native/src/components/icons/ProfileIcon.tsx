@@ -26,5 +26,3 @@ export default function ProfileIcon({ size = 24, color = 'currentColor' }: Profi
     </Svg>
   );
 }
-
-

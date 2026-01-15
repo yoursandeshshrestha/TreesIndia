@@ -14,11 +14,7 @@ interface BannerCarouselProps {
   onBannerPress: (banner: PromotionBanner) => void;
 }
 
-export default function BannerCarousel({
-  banners,
-  isLoading,
-  onBannerPress,
-}: BannerCarouselProps) {
+export default function BannerCarousel({ banners, isLoading, onBannerPress }: BannerCarouselProps) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const autoSlideTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,15 +69,14 @@ export default function BannerCarousel({
   }
 
   return (
-    <View className="pt-4 pb-4" style={{ backgroundColor: 'white' }}>
+    <View className="pb-4 pt-4" style={{ backgroundColor: 'white' }}>
       <View>
         <View
           style={{
             height: BANNER_HEIGHT,
             borderRadius: 0,
             overflow: 'hidden',
-          }}
-        >
+          }}>
           <ScrollView
             ref={scrollViewRef}
             horizontal
@@ -89,15 +84,13 @@ export default function BannerCarousel({
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={handleScroll}
             scrollEventThrottle={16}
-            decelerationRate="fast"
-          >
+            decelerationRate="fast">
             {banners.map((banner, index) => (
               <TouchableOpacity
                 key={banner.id || banner.ID || index}
                 activeOpacity={0.9}
                 onPress={() => onBannerPress(banner)}
-                style={{ width: SCREEN_WIDTH }}
-              >
+                style={{ width: SCREEN_WIDTH }}>
                 <ImageWithSkeleton
                   source={{ uri: banner.image }}
                   style={{
@@ -112,7 +105,7 @@ export default function BannerCarousel({
         </View>
         {/* Page Indicators */}
         {banners.length > 1 && (
-          <View className="flex-row justify-center mt-3" style={{ gap: 6 }}>
+          <View className="mt-3 flex-row justify-center" style={{ gap: 6 }}>
             {banners.map((_, index) => (
               <View
                 key={index}

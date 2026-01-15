@@ -17,25 +17,21 @@ export default function TextField({
     <View className={containerClassName}>
       {label && (
         <Text
-          className="text-sm font-medium text-[#111928] mb-2"
+          className="mb-2 font-medium text-sm text-[#111928]"
           style={{
             fontFamily: 'Inter-Medium',
             lineHeight: 18,
             ...(Platform.OS === 'android' && { includeFontPadding: false }),
-          }}
-        >
+          }}>
           {label}
         </Text>
       )}
       <View
-        className={`border rounded-lg ${
-          error ? 'border-[#B3261E]' : 'border-[#E5E7EB]'
-        }`}
+        className={`rounded-lg border ${error ? 'border-[#B3261E]' : 'border-[#E5E7EB]'}`}
         style={{
           minHeight: 48,
           justifyContent: 'center',
-        }}
-      >
+        }}>
         <TextInput
           className="text-base text-[#111928]"
           placeholderTextColor="#9CA3AF"
@@ -57,17 +53,15 @@ export default function TextField({
       </View>
       {error && (
         <Text
-          className="text-sm text-[#B3261E] mt-2"
+          className="mt-2 text-sm text-[#B3261E]"
           style={{
             fontFamily: 'Inter-Regular',
             lineHeight: 18,
             ...(Platform.OS === 'android' && { includeFontPadding: false }),
-          }}
-        >
+          }}>
           {error}
         </Text>
       )}
     </View>
   );
 }
-

@@ -1,5 +1,15 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, StatusBar, TouchableOpacity, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  StatusBar,
+  TouchableOpacity,
+  RefreshControl,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -20,7 +30,16 @@ import ProjectsSection from './components/ProjectsSection';
 import WorkersSection from './components/WorkersSection';
 import VendorsSection from './components/VendorsSection';
 import { useHomeData, type SectionType } from './hooks/useHomeData';
-import { PromotionBanner, Category, Service, Property, Project, Worker, Vendor, VendorFilters } from '../../services';
+import {
+  PromotionBanner,
+  Category,
+  Service,
+  Property,
+  Project,
+  Worker,
+  Vendor,
+  VendorFilters,
+} from '../../services';
 import { PropertyFilters } from '../properties/components/FilterBottomSheet';
 import { ServiceFilters } from '../services/components/ServiceFilterBottomSheet';
 import { type WorkerFilters } from '../../services';
@@ -91,26 +110,29 @@ export default function HomeScreen({
   }, []);
 
   // Handle scroll to trigger lazy loading
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
-    const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
-    lastScrollY.current = currentScrollY;
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
+      lastScrollY.current = currentScrollY;
 
-    // Only trigger loading when scrolling down
-    if (scrollDirection !== 'down') return;
+      // Only trigger loading when scrolling down
+      if (scrollDirection !== 'down') return;
 
-    // Measure sections and trigger loading when they're about to become visible
-    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
-    const triggerOffset = viewportHeight * 0.8; // Trigger when section is 80% of viewport away
+      // Measure sections and trigger loading when they're about to become visible
+      const viewportHeight = event.nativeEvent.layoutMeasurement.height;
+      const triggerOffset = viewportHeight * 0.8; // Trigger when section is 80% of viewport away
 
-    // Check each section
-    Object.entries(sectionPositions.current).forEach(([sectionKey, sectionY]) => {
-      // If section is approaching viewport, load it
-      if (sectionY - currentScrollY < viewportHeight + triggerOffset) {
-        homeData.loadSection(sectionKey as SectionType);
-      }
-    });
-  }, [homeData]);
+      // Check each section
+      Object.entries(sectionPositions.current).forEach(([sectionKey, sectionY]) => {
+        // If section is approaching viewport, load it
+        if (sectionY - currentScrollY < viewportHeight + triggerOffset) {
+          homeData.loadSection(sectionKey as SectionType);
+        }
+      });
+    },
+    [homeData]
+  );
 
   // Event Handlers
   const handleAddressPress = () => {
@@ -210,24 +232,20 @@ export default function HomeScreen({
 
       {/* Header with Address - Fixed at top with safe area */}
       <View style={{ paddingTop: insets.top }}>
-        <HomeHeader
-          onAddressPress={handleAddressPress}
-          refreshTrigger={addressRefreshTrigger}
-        />
+        <HomeHeader onAddressPress={handleAddressPress} refreshTrigger={addressRefreshTrigger} />
       </View>
 
       {/* Search Bar - Fixed at top */}
       <View className="px-6 pb-3">
         <TouchableOpacity
-          className="flex-row items-center bg-[#F3F4F6] rounded-lg px-4"
+          className="flex-row items-center rounded-lg bg-[#F3F4F6] px-4"
           style={{ height: 48 }}
           activeOpacity={0.7}
           onPress={() => {
             if (onNavigateToServiceSearch) {
               onNavigateToServiceSearch();
             }
-          }}
-        >
+          }}>
           <SearchIcon size={20} color="#6B7280" />
           <Text className="ml-3 text-sm text-[#9CA3AF]" style={{ fontFamily: 'Inter-Regular' }}>
             Search for services
@@ -249,8 +267,7 @@ export default function HomeScreen({
             colors={['#34A853']}
             tintColor="#34A853"
           />
-        }
-      >
+        }>
         {/* Banner Carousel */}
         <BannerCarousel
           banners={homeData.banners}
@@ -387,8 +404,6 @@ export default function HomeScreen({
           />
         </View> */}
 
-
-
         {/* Inquiry Services */}
         {/* <View onLayout={(e) => handleSectionLayout('inquiryServices', e.nativeEvent.layout.y)}>
           <ServicesSection
@@ -460,8 +475,9 @@ export default function HomeScreen({
             }
           } else {
             // For Home Services and Construction Services, navigate to CategoryServicesScreen
-            const isHomeOrConstruction = selectedCategory?.name.toLowerCase().includes('home service') ||
-                                        selectedCategory?.name.toLowerCase().includes('construction service');
+            const isHomeOrConstruction =
+              selectedCategory?.name.toLowerCase().includes('home service') ||
+              selectedCategory?.name.toLowerCase().includes('construction service');
 
             if (isHomeOrConstruction && onNavigateToCategoryServices) {
               onNavigateToCategoryServices(subcategory);

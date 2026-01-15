@@ -41,11 +41,7 @@ class BookingService {
   /**
    * Get available time slots for a service
    */
-  async getAvailableSlots(
-    serviceId: number,
-    date: string,
-    duration?: string
-  ): Promise<TimeSlot[]> {
+  async getAvailableSlots(serviceId: number, date: string, duration?: string): Promise<TimeSlot[]> {
     let url = `${API_BASE_URL}/bookings/available-slots?service_id=${serviceId}&date=${date}`;
     if (duration) {
       const encodedDuration = encodeURIComponent(duration);
@@ -62,13 +58,15 @@ class BookingService {
 
       const rawData = await response.json();
 
-      const data = rawData as {
-        data?: {
-          available_slots?: TimeSlot[];
-        };
-        available_slots?: TimeSlot[];
-        slots?: TimeSlot[];
-      } | TimeSlot[];
+      const data = rawData as
+        | {
+            data?: {
+              available_slots?: TimeSlot[];
+            };
+            available_slots?: TimeSlot[];
+            slots?: TimeSlot[];
+          }
+        | TimeSlot[];
 
       // Handle different response formats (matching web app)
       let slots: any[] = [];
@@ -88,13 +86,13 @@ class BookingService {
           slots = data.slots;
         }
       }
-      
+
       // Map slots to TimeSlot format - handle both 'time' and 'start_time' properties
       const mappedSlots: TimeSlot[] = slots.map((slot: any, index: number) => {
         // Handle API response format where 'time' is used instead of 'start_time'
         const startTime = slot.start_time || slot.time;
         const endTime = slot.end_time;
-        
+
         // If we have start_time but no end_time, calculate it from duration
         let calculatedEndTime = endTime;
         if (startTime && !endTime && duration) {
@@ -115,7 +113,7 @@ class BookingService {
               }
             }
           }
-          
+
           // Calculate end time
           const [hours, minutes] = startTime.split(':').map(Number);
           const startDate = new Date();
@@ -123,7 +121,7 @@ class BookingService {
           startDate.setMinutes(startDate.getMinutes() + durationMinutes);
           calculatedEndTime = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
         }
-        
+
         return {
           id: slot.id || `slot-${index}`,
           start_time: startTime || '',
@@ -212,10 +210,26 @@ class BookingService {
       bookingLogger.debug('Booking Razorpay response structure', {
         result_type: typeof result,
         has_booking: result && typeof result === 'object' ? 'booking' in result : false,
-        booking_type: result && typeof result === 'object' && 'booking' in result ? typeof result.booking : 'N/A',
-        booking_keys: result && typeof result === 'object' && 'booking' in result && result.booking && typeof result.booking === 'object' ? Object.keys(result.booking).join(', ') : 'N/A',
-        booking_id: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.id : undefined,
-        booking_ID: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.ID : undefined,
+        booking_type:
+          result && typeof result === 'object' && 'booking' in result
+            ? typeof result.booking
+            : 'N/A',
+        booking_keys:
+          result &&
+          typeof result === 'object' &&
+          'booking' in result &&
+          result.booking &&
+          typeof result.booking === 'object'
+            ? Object.keys(result.booking).join(', ')
+            : 'N/A',
+        booking_id:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.id
+            : undefined,
+        booking_ID:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.ID
+            : undefined,
         has_payment_order: result && typeof result === 'object' ? 'payment_order' in result : false,
         result_keys: result && typeof result === 'object' ? Object.keys(result).join(', ') : 'N/A',
       });
@@ -255,10 +269,26 @@ class BookingService {
       bookingLogger.debug('Booking wallet response structure', {
         result_type: typeof result,
         has_booking: result && typeof result === 'object' ? 'booking' in result : false,
-        booking_type: result && typeof result === 'object' && 'booking' in result ? typeof result.booking : 'N/A',
-        booking_keys: result && typeof result === 'object' && 'booking' in result && result.booking && typeof result.booking === 'object' ? Object.keys(result.booking).join(', ') : 'N/A',
-        booking_id: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.id : undefined,
-        booking_ID: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.ID : undefined,
+        booking_type:
+          result && typeof result === 'object' && 'booking' in result
+            ? typeof result.booking
+            : 'N/A',
+        booking_keys:
+          result &&
+          typeof result === 'object' &&
+          'booking' in result &&
+          result.booking &&
+          typeof result.booking === 'object'
+            ? Object.keys(result.booking).join(', ')
+            : 'N/A',
+        booking_id:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.id
+            : undefined,
+        booking_ID:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.ID
+            : undefined,
         result_keys: result && typeof result === 'object' ? Object.keys(result).join(', ') : 'N/A',
       });
 
@@ -335,10 +365,26 @@ class BookingService {
       bookingLogger.debug('Inquiry Razorpay response structure', {
         result_type: typeof result,
         has_booking: result && typeof result === 'object' ? 'booking' in result : false,
-        booking_type: result && typeof result === 'object' && 'booking' in result ? typeof result.booking : 'N/A',
-        booking_keys: result && typeof result === 'object' && 'booking' in result && result.booking && typeof result.booking === 'object' ? Object.keys(result.booking).join(', ') : 'N/A',
-        booking_id: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.id : undefined,
-        booking_ID: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.ID : undefined,
+        booking_type:
+          result && typeof result === 'object' && 'booking' in result
+            ? typeof result.booking
+            : 'N/A',
+        booking_keys:
+          result &&
+          typeof result === 'object' &&
+          'booking' in result &&
+          result.booking &&
+          typeof result.booking === 'object'
+            ? Object.keys(result.booking).join(', ')
+            : 'N/A',
+        booking_id:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.id
+            : undefined,
+        booking_ID:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.ID
+            : undefined,
         has_payment_order: result && typeof result === 'object' ? 'payment_order' in result : false,
         result_keys: result && typeof result === 'object' ? Object.keys(result).join(', ') : 'N/A',
       });
@@ -377,10 +423,26 @@ class BookingService {
       bookingLogger.debug('Inquiry wallet response structure', {
         result_type: typeof result,
         has_booking: result && typeof result === 'object' ? 'booking' in result : false,
-        booking_type: result && typeof result === 'object' && 'booking' in result ? typeof result.booking : 'N/A',
-        booking_keys: result && typeof result === 'object' && 'booking' in result && result.booking && typeof result.booking === 'object' ? Object.keys(result.booking).join(', ') : 'N/A',
-        booking_id: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.id : undefined,
-        booking_ID: result && typeof result === 'object' && 'booking' in result && result.booking ? result.booking.ID : undefined,
+        booking_type:
+          result && typeof result === 'object' && 'booking' in result
+            ? typeof result.booking
+            : 'N/A',
+        booking_keys:
+          result &&
+          typeof result === 'object' &&
+          'booking' in result &&
+          result.booking &&
+          typeof result.booking === 'object'
+            ? Object.keys(result.booking).join(', ')
+            : 'N/A',
+        booking_id:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.id
+            : undefined,
+        booking_ID:
+          result && typeof result === 'object' && 'booking' in result && result.booking
+            ? result.booking.ID
+            : undefined,
         result_keys: result && typeof result === 'object' ? Object.keys(result).join(', ') : 'N/A',
       });
 
@@ -415,19 +477,16 @@ class BookingService {
     });
 
     try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/bookings/inquiry/verify-payment`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            service_id: serviceId,
-            ...razorpayData,
-          }),
-        }
-      );
+      const response = await authenticatedFetch(`${API_BASE_URL}/bookings/inquiry/verify-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          service_id: serviceId,
+          ...razorpayData,
+        }),
+      });
 
       const result = await handleResponse<PaymentVerificationResponse>(response);
       bookingLogger.api('POST', '/bookings/inquiry/verify-payment', 'success', {
@@ -456,12 +515,24 @@ class BookingService {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/bookings?${params.toString()}`);
 
-      const rawData = await handleResponse<BookingsListResponse | { data: Booking[] } | { bookings: Booking[] }>(response);
+      const rawData = await handleResponse<
+        BookingsListResponse | { data: Booking[] } | { bookings: Booking[] }
+      >(response);
 
       // Handle format with 'bookings' field (actual API response)
       if ('bookings' in rawData && Array.isArray((rawData as { bookings: unknown }).bookings)) {
-        const bookingsData = (rawData as { bookings: Booking[]; pagination?: { page: number; limit: number; total: number; total_pages: number } }).bookings;
-        const paginationData = (rawData as { bookings: Booking[]; pagination?: { page: number; limit: number; total: number; total_pages: number } }).pagination;
+        const bookingsData = (
+          rawData as {
+            bookings: Booking[];
+            pagination?: { page: number; limit: number; total: number; total_pages: number };
+          }
+        ).bookings;
+        const paginationData = (
+          rawData as {
+            bookings: Booking[];
+            pagination?: { page: number; limit: number; total: number; total_pages: number };
+          }
+        ).pagination;
         const normalizedResponse = {
           success: true,
           data: bookingsData,
@@ -527,7 +598,10 @@ class BookingService {
   /**
    * Cancel a booking
    */
-  async cancelBooking(bookingId: number, reason?: string): Promise<{ success: boolean; message?: string }> {
+  async cancelBooking(
+    bookingId: number,
+    reason?: string
+  ): Promise<{ success: boolean; message?: string }> {
     const response = await authenticatedFetch(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
       method: 'POST',
       headers: {
@@ -588,10 +662,7 @@ class BookingService {
   /**
    * Verify quote payment (for Razorpay)
    */
-  async verifyQuotePayment(
-    bookingId: number,
-    razorpayData: RazorpayData
-  ): Promise<Booking> {
+  async verifyQuotePayment(bookingId: number, razorpayData: RazorpayData): Promise<Booking> {
     const response = await authenticatedFetch(
       `${API_BASE_URL}/bookings/${bookingId}/verify-quote-payment`,
       {

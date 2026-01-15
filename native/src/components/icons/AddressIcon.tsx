@@ -27,5 +27,3 @@ export default function AddressIcon({ size = 24, color = 'currentColor' }: Addre
     </Svg>
   );
 }
-
-

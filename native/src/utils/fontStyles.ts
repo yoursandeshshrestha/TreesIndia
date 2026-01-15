@@ -6,5 +6,3 @@ export const fontStyles = {
   semibold: { fontFamily: 'OpenSans-SemiBold' } as TextStyle,
   bold: { fontFamily: 'OpenSans-Bold' } as TextStyle,
 };
-
-

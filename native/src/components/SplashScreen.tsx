@@ -12,10 +12,7 @@ interface SplashScreenProps {
   duration?: number;
 }
 
-export default function SplashScreen({
-  onFinish,
-  duration = 2000,
-}: SplashScreenProps) {
+export default function SplashScreen({ onFinish, duration = 2000 }: SplashScreenProps) {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -40,16 +37,12 @@ export default function SplashScreen({
   }));
 
   return (
-    <Animated.View
-      className="flex-1 bg-white justify-center items-center"
-      style={containerStyle}
-    >
+    <Animated.View className="flex-1 items-center justify-center bg-white" style={containerStyle}>
       <Image
         source={require('../../assets/logo/main_logo_with_name.png')}
-        className="w-[200px] h-[200px]"
+        className="h-[200px] w-[200px]"
         resizeMode="contain"
       />
     </Animated.View>
   );
 }
-

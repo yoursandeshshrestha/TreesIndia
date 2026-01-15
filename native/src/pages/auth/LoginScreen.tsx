@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { requestOTP, clearError } from '../../store/slices/authSlice';
@@ -58,71 +66,64 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+        className="flex-1">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View className="flex-1 px-6">
             {/* Logo */}
-            <View className="items-center pt-16 pb-12">
+            <View className="items-center pb-12 pt-16">
               <Image
                 source={require('../../../assets/logo/main_logo_with_name.png')}
-                className="w-64 h-16"
+                className="h-16 w-64"
                 resizeMode="contain"
               />
             </View>
 
             {/* Title */}
             <Text
-              className="text-2xl font-bold text-[#1C1C1C] mb-2"
+              className="mb-2 font-bold text-2xl text-[#1C1C1C]"
               style={{
                 lineHeight: 32,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               Login
             </Text>
 
             {/* Subtitle */}
             <Text
-              className="text-base text-[#6B7280] mb-8"
+              className="mb-8 text-base text-[#6B7280]"
               style={{
                 lineHeight: 24,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               Enter your phone number to continue
             </Text>
 
             {/* Phone Number Input */}
             <View className="mb-6">
               <Text
-                className="text-sm text-[#1C1C1C] mb-2"
+                className="mb-2 text-sm text-[#1C1C1C]"
                 style={{
                   lineHeight: 20,
                   ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                }}
-              >
+                }}>
                 Phone Number
               </Text>
 
               <View
-                className={`flex-row items-center bg-white border rounded-lg ${
+                className={`flex-row items-center rounded-lg border bg-white ${
                   error ? 'border-[#DC2626]' : 'border-[#D1D5DB]'
                 }`}
-                style={{ height: 52 }}
-              >
+                style={{ height: 52 }}>
                 {/* Country Code */}
-                <View className="h-full justify-center px-4 border-r border-[#D1D5DB]">
+                <View className="h-full justify-center border-r border-[#D1D5DB] px-4">
                   <Text
                     className="text-base text-[#1C1C1C]"
                     style={{
                       ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                    }}
-                  >
+                    }}>
                     +91
                   </Text>
                 </View>
@@ -154,12 +155,11 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
               {/* Error Message */}
               {error && (
                 <Text
-                  className="text-sm text-[#DC2626] mt-2"
+                  className="mt-2 text-sm text-[#DC2626]"
                   style={{
                     lineHeight: 20,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                  }}
-                >
+                  }}>
                   {error}
                 </Text>
               )}
@@ -180,12 +180,11 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
 
             {/* Terms */}
             <Text
-              className="text-xs text-[#9CA3AF] text-center mb-8"
+              className="mb-8 text-center text-xs text-[#9CA3AF]"
               style={{
                 lineHeight: 18,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               By continuing, you agree to our Terms of Service and Privacy Policy
             </Text>
           </View>
@@ -194,4 +193,3 @@ export default function LoginScreen({ onOTPSent }: LoginScreenProps) {
     </SafeAreaView>
   );
 }
-

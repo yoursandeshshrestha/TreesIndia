@@ -58,21 +58,19 @@ export default function PropertyDetailBottomSheet({
     }
   }, [visible]);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    if (index === -1) {
-      setCurrentImageIndex(0);
-      onClose();
-    }
-  }, [onClose]);
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        setCurrentImageIndex(0);
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const renderBackdrop = useCallback(
     (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
   );
@@ -143,244 +141,240 @@ export default function PropertyDetailBottomSheet({
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-      }}
-    >
+      }}>
       <View className="flex-1">
-            {/* Header */}
-            <View className="border-b border-[#E5E7EB]">
-              <View className="px-4 py-4 flex-row items-center justify-end">
-                {onEdit && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      handleClose();
-                      onEdit();
-                    }}
-                    className="p-2 mr-2"
-                    activeOpacity={0.7}
-                  >
-                    <EditIcon size={24} color="#055c3a" />
-                  </TouchableOpacity>
+        {/* Header */}
+        <View className="border-b border-[#E5E7EB]">
+          <View className="flex-row items-center justify-end px-4 py-4">
+            {onEdit && (
+              <TouchableOpacity
+                onPress={() => {
+                  handleClose();
+                  onEdit();
+                }}
+                className="mr-2 p-2"
+                activeOpacity={0.7}>
+                <EditIcon size={24} color="#055c3a" />
+              </TouchableOpacity>
+            )}
+            {isDeleting ? (
+              <ActivityIndicator size="small" color="#DC2626" />
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  handleClose();
+                  onDelete();
+                }}
+                className="p-2"
+                activeOpacity={0.7}>
+                <DeleteIcon size={24} color="#DC2626" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Content */}
+        <BottomSheetScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}>
+          {/* Image Carousel */}
+          {images.length > 0 ? (
+            <View className="mb-6">
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const imageWidth = SCREEN_WIDTH;
+                  const index = Math.round(event.nativeEvent.contentOffset.x / imageWidth);
+                  setCurrentImageIndex(index);
+                }}>
+                {images.map((imageUri, index) => (
+                  <ImageWithSkeleton
+                    key={index}
+                    source={{ uri: imageUri }}
+                    style={{ width: SCREEN_WIDTH, height: 250 }}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
+              {images.length > 1 && (
+                <View className="mt-2 flex-row justify-center" style={{ gap: 6 }}>
+                  {images.map((_, index) => (
+                    <View
+                      key={index}
+                      className={`h-1.5 rounded-full ${
+                        index === currentImageIndex ? 'bg-[#055c3a]' : 'bg-[#D1D5DB]'
+                      }`}
+                      style={{ width: index === currentImageIndex ? 24 : 8 }}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : (
+            <View className="mb-6 h-[250px] items-center justify-center rounded-xl bg-[#F3F4F6]">
+              <NotFoundIcon size={64} color="#9CA3AF" />
+              <Text
+                className="mt-4 text-base text-[#9CA3AF]"
+                style={{ fontFamily: 'Inter-Regular' }}>
+                No Images Available
+              </Text>
+            </View>
+          )}
+
+          <View className="px-6">
+            {/* Title and Location */}
+            <View className="mb-6">
+              <Text
+                className="mb-2 font-semibold text-2xl text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
+                {property.title}
+              </Text>
+              {property.address && property.address.trim() !== '' && (
+                <View className="flex-row items-center">
+                  <LocationIcon size={18} color="#6B7280" />
+                  <Text
+                    className="ml-1 flex-1 text-base text-[#6B7280] underline"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    {property.address}, {property.city}, {property.state}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Property Info Row - Container style */}
+            <View className="mb-6 rounded-xl border border-[#E5E7EB] bg-white p-4">
+              <View className="flex-row items-center">
+                {property.bedrooms && (
+                  <View className="flex-1 items-center border-r border-[#E5E7EB] pr-4">
+                    <View className="mb-1 flex-row items-center">
+                      <BedIcon size={20} color="#111928" />
+                    </View>
+                    <Text
+                      className="text-sm text-[#111928]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
+                      {property.bedrooms} {property.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
+                    </Text>
+                  </View>
                 )}
-                {isDeleting ? (
-                  <ActivityIndicator size="small" color="#DC2626" />
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => {
-                      handleClose();
-                      onDelete();
-                    }}
-                    className="p-2"
-                    activeOpacity={0.7}
-                  >
-                    <DeleteIcon size={24} color="#DC2626" />
-                  </TouchableOpacity>
+                {property.bathrooms && (
+                  <View
+                    className={`flex-1 items-center ${property.bedrooms ? 'border-r border-[#E5E7EB] px-4' : 'pr-4'}`}>
+                    <View className="mb-1 flex-row items-center">
+                      <BathIcon size={20} color="#111928" />
+                    </View>
+                    <Text
+                      className="text-sm text-[#111928]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
+                      {property.bathrooms} {property.bathrooms === 1 ? 'bathroom' : 'bathrooms'}
+                    </Text>
+                  </View>
+                )}
+                {getDisplayArea() && (
+                  <View
+                    className={`flex-1 items-center ${property.bedrooms || property.bathrooms ? 'pl-4' : ''}`}>
+                    <View className="mb-1 flex-row items-center">
+                      <SqftIcon size={20} color="#111928" />
+                    </View>
+                    <Text
+                      className="text-sm text-[#111928]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
+                      {getDisplayArea()}
+                    </Text>
+                  </View>
                 )}
               </View>
             </View>
 
-            {/* Content */}
-            <BottomSheetScrollView
-              className="flex-1"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 24 }}
-            >
-              {/* Image Carousel */}
-              {images.length > 0 ? (
-                <View className="mb-6">
-                    <ScrollView
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      onMomentumScrollEnd={(event) => {
-                        const imageWidth = SCREEN_WIDTH;
-                        const index = Math.round(event.nativeEvent.contentOffset.x / imageWidth);
-                        setCurrentImageIndex(index);
-                      }}
-                    >
-                      {images.map((imageUri, index) => (
-                        <ImageWithSkeleton
-                          key={index}
-                          source={{ uri: imageUri }}
-                          style={{ width: SCREEN_WIDTH, height: 250 }}
-                          resizeMode="cover"
-                        />
-                      ))}
-                    </ScrollView>
-                    {images.length > 1 && (
-                      <View className="flex-row justify-center mt-2" style={{ gap: 6 }}>
-                        {images.map((_, index) => (
-                          <View
-                            key={index}
-                            className={`h-1.5 rounded-full ${
-                              index === currentImageIndex ? 'bg-[#055c3a]' : 'bg-[#D1D5DB]'
-                            }`}
-                            style={{ width: index === currentImageIndex ? 24 : 8 }}
-                          />
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                ) : (
-                  <View className="h-[250px] bg-[#F3F4F6] rounded-xl items-center justify-center mb-6">
-                    <NotFoundIcon size={64} color="#9CA3AF" />
-                    <Text
-                      className="text-base text-[#9CA3AF] mt-4"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      No Images Available
-                    </Text>
-                  </View>
-                )}
-
-              <View className="px-6">
-                {/* Title and Location */}
-                <View className="mb-6">
+            {/* Price Section - Clean Airbnb style */}
+            <View className="mb-6 border-b border-[#E5E7EB] pb-6">
+              <View className="mb-2 flex-row items-baseline" style={{ gap: 8 }}>
+                <Text
+                  className="font-bold text-3xl text-[#111928]"
+                  style={{ fontFamily: 'Inter-Bold' }}>
+                  {getDisplayPrice()}
+                </Text>
+                {property.listing_type === 'rent' && (
                   <Text
-                    className="text-2xl font-semibold text-[#111928] mb-2"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                    {property.title}
+                    className="text-base text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    month
                   </Text>
-                  {property.address && property.address.trim() !== '' && (
-                    <View className="flex-row items-center">
-                      <LocationIcon size={18} color="#6B7280" />
-                      <Text
-                        className="flex-1 text-base text-[#6B7280] underline ml-1"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {property.address}, {property.city}, {property.state}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Property Info Row - Container style */}
-                <View className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-6">
-                  <View className="flex-row items-center">
-                    {property.bedrooms && (
-                      <View className="flex-1 items-center border-r border-[#E5E7EB] pr-4">
-                        <View className="flex-row items-center mb-1">
-                          <BedIcon size={20} color="#111928" />
-                        </View>
-                        <Text
-                          className="text-sm text-[#111928]"
-                          style={{ fontFamily: 'Inter-Regular' }}
-                        >
-                          {property.bedrooms} {property.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
-                        </Text>
-                      </View>
-                    )}
-                    {property.bathrooms && (
-                      <View className={`flex-1 items-center ${property.bedrooms ? 'border-r border-[#E5E7EB] px-4' : 'pr-4'}`}>
-                        <View className="flex-row items-center mb-1">
-                          <BathIcon size={20} color="#111928" />
-                        </View>
-                        <Text
-                          className="text-sm text-[#111928]"
-                          style={{ fontFamily: 'Inter-Regular' }}
-                        >
-                          {property.bathrooms} {property.bathrooms === 1 ? 'bathroom' : 'bathrooms'}
-                        </Text>
-                      </View>
-                    )}
-                    {getDisplayArea() && (
-                      <View className={`flex-1 items-center ${(property.bedrooms || property.bathrooms) ? 'pl-4' : ''}`}>
-                        <View className="flex-row items-center mb-1">
-                          <SqftIcon size={20} color="#111928" />
-                        </View>
-                        <Text
-                          className="text-sm text-[#111928]"
-                          style={{ fontFamily: 'Inter-Regular' }}
-                        >
-                          {getDisplayArea()}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Price Section - Clean Airbnb style */}
-                <View className="mb-6 pb-6 border-b border-[#E5E7EB]">
-                  <View className="flex-row items-baseline mb-2" style={{ gap: 8 }}>
-                    <Text
-                      className="text-3xl font-bold text-[#111928]"
-                      style={{ fontFamily: 'Inter-Bold' }}
-                    >
-                      {getDisplayPrice()}
-                    </Text>
-                    {property.listing_type === 'rent' && (
-                      <Text
-                        className="text-base text-[#6B7280]"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        month
-                      </Text>
-                    )}
-                  </View>
-                  {property.price_negotiable && (
-                    <Text
-                      className="text-sm text-[#6B7280]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Price is negotiable
-                    </Text>
-                  )}
-                </View>
-
-                {/* Description */}
-                {property.description && property.description.trim() !== '' && (
-                  <View className="mb-6 pb-6 border-b border-[#E5E7EB]">
-                    <Text
-                      className="text-xl font-semibold text-[#111928] mb-3"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
-                      About this place
-                    </Text>
-                    <Text
-                      className="text-base text-[#374151]"
-                      style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
-                    >
-                      {property.description}
-                    </Text>
-                  </View>
                 )}
+              </View>
+              {property.price_negotiable && (
+                <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                  Price is negotiable
+                </Text>
+              )}
+            </View>
 
-                {/* Property Details - Container style */}
-                <View className="mb-6">
-                  <Text
-                    className="text-xl font-semibold text-[#111928] mb-4"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                  What this place offers
-                  </Text>
-                  <View className="bg-white border border-[#E5E7EB] rounded-xl p-4">
-                    {[
-                      { label: 'Status', value: getDisplayStatus(), icon: TimeIcon },
-                      getDisplayArea() ? { label: 'Area', value: getDisplayArea()!, icon: SqftIcon } : null,
-                      property.bedrooms ? {
+            {/* Description */}
+            {property.description && property.description.trim() !== '' && (
+              <View className="mb-6 border-b border-[#E5E7EB] pb-6">
+                <Text
+                  className="mb-3 font-semibold text-xl text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
+                  About this place
+                </Text>
+                <Text
+                  className="text-base text-[#374151]"
+                  style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}>
+                  {property.description}
+                </Text>
+              </View>
+            )}
+
+            {/* Property Details - Container style */}
+            <View className="mb-6">
+              <Text
+                className="mb-4 font-semibold text-xl text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
+                What this place offers
+              </Text>
+              <View className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+                {[
+                  { label: 'Status', value: getDisplayStatus(), icon: TimeIcon },
+                  getDisplayArea()
+                    ? { label: 'Area', value: getDisplayArea()!, icon: SqftIcon }
+                    : null,
+                  property.bedrooms
+                    ? {
                         label: 'Bedrooms',
                         value: `${property.bedrooms}`,
                         icon: BedIcon,
-                      } : null,
-                      property.bathrooms ? {
+                      }
+                    : null,
+                  property.bathrooms
+                    ? {
                         label: 'Bathrooms',
                         value: `${property.bathrooms}`,
                         icon: BathIcon,
-                      } : null,
-                      property.property_type ? {
+                      }
+                    : null,
+                  property.property_type
+                    ? {
                         label: 'Type',
                         value:
                           property.property_type.charAt(0).toUpperCase() +
                           property.property_type.slice(1),
                         icon: TypeIcon,
-                      } : null,
-                      property.floor_number ? {
+                      }
+                    : null,
+                  property.floor_number
+                    ? {
                         label: 'Floor',
                         value: `${property.floor_number}`,
                         icon: FloorIcon,
-                      } : null,
-                      getDisplayAge() ? { label: 'Age', value: getDisplayAge()!, icon: CalendarIcon } : null,
-                      property.furnishing_status ? {
+                      }
+                    : null,
+                  getDisplayAge()
+                    ? { label: 'Age', value: getDisplayAge()!, icon: CalendarIcon }
+                    : null,
+                  property.furnishing_status
+                    ? {
                         label: 'Furnishing',
                         value:
                           property.furnishing_status
@@ -388,80 +382,74 @@ export default function PropertyDetailBottomSheet({
                             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                             .join(' ') || property.furnishing_status,
                         icon: FurnishingIcon,
-                      } : null,
-                    ]
-                      .filter((detail): detail is NonNullable<typeof detail> => detail !== null)
-                      .reduce((rows: typeof detail[][], detail, index) => {
-                        const rowIndex = Math.floor(index / 2);
-                        if (!rows[rowIndex]) {
-                          rows[rowIndex] = [];
-                        }
-                        rows[rowIndex].push(detail);
-                        return rows;
-                      }, [])
-                      .map((row, rowIndex, allRows) => (
-                        <View
-                          key={rowIndex}
-                          className="flex-row"
-                          style={{ marginBottom: rowIndex < allRows.length - 1 ? 16 : 0 }}
-                        >
-                          {row.map((detail, colIndex) => {
-                            const IconComponent = detail.icon;
-                            const isLastInRow = colIndex === row.length - 1;
-                            return (
-                              <View
-                                key={colIndex}
-                                className={`flex-1 items-center ${!isLastInRow ? 'border-r border-[#E5E7EB] pr-4' : ''} ${colIndex === 1 ? 'pl-4' : ''}`}
-                              >
-                                <View className="mb-2">
-                                  <IconComponent size={20} color="#111928" />
-                                </View>
-                                <Text
-                                  className="text-sm font-semibold text-[#111928] mb-1"
-                                  style={{ fontFamily: 'Inter-SemiBold' }}
-                                >
-                                  {detail.value}
-                                </Text>
-                                <Text
-                                  className="text-xs text-[#6B7280]"
-                                  style={{ fontFamily: 'Inter-Regular' }}
-                                >
-                                  {detail.label}
-                                </Text>
-                              </View>
-                            );
-                          })}
-                        </View>
-                      ))}
-                  </View>
-                </View>
-
-                {/* Location Section - Simple */}
-                <View className="mb-8">
-                  <View className="flex-row items-center mb-3">
-                    <Text
-                      className="text-xl font-semibold text-[#111928] ml-2"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
-                      Address
-                    </Text>
-                  </View>
-                  <View className="flex-row items-start">
-                    <LocationIcon size={18} color="#6B7280" />
-                    <Text
-                      className="text-base text-[#374151] ml-2 flex-1"
-                      style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}
-                    >
-                      {property.address && property.address.trim() !== ''
-                        ? `${property.address}, ${property.city}, ${property.state}${property.pincode ? ` ${property.pincode}` : ''}`
-                        : `${property.city}, ${property.state}${property.pincode ? ` ${property.pincode}` : ''}`}
-                    </Text>
-                  </View>
-                </View>
+                      }
+                    : null,
+                ]
+                  .filter((detail): detail is NonNullable<typeof detail> => detail !== null)
+                  .reduce((rows: (typeof detail)[][], detail, index) => {
+                    const rowIndex = Math.floor(index / 2);
+                    if (!rows[rowIndex]) {
+                      rows[rowIndex] = [];
+                    }
+                    rows[rowIndex].push(detail);
+                    return rows;
+                  }, [])
+                  .map((row, rowIndex, allRows) => (
+                    <View
+                      key={rowIndex}
+                      className="flex-row"
+                      style={{ marginBottom: rowIndex < allRows.length - 1 ? 16 : 0 }}>
+                      {row.map((detail, colIndex) => {
+                        const IconComponent = detail.icon;
+                        const isLastInRow = colIndex === row.length - 1;
+                        return (
+                          <View
+                            key={colIndex}
+                            className={`flex-1 items-center ${!isLastInRow ? 'border-r border-[#E5E7EB] pr-4' : ''} ${colIndex === 1 ? 'pl-4' : ''}`}>
+                            <View className="mb-2">
+                              <IconComponent size={20} color="#111928" />
+                            </View>
+                            <Text
+                              className="mb-1 font-semibold text-sm text-[#111928]"
+                              style={{ fontFamily: 'Inter-SemiBold' }}>
+                              {detail.value}
+                            </Text>
+                            <Text
+                              className="text-xs text-[#6B7280]"
+                              style={{ fontFamily: 'Inter-Regular' }}>
+                              {detail.label}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ))}
               </View>
-            </BottomSheetScrollView>
+            </View>
+
+            {/* Location Section - Simple */}
+            <View className="mb-8">
+              <View className="mb-3 flex-row items-center">
+                <Text
+                  className="ml-2 font-semibold text-xl text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
+                  Address
+                </Text>
+              </View>
+              <View className="flex-row items-start">
+                <LocationIcon size={18} color="#6B7280" />
+                <Text
+                  className="ml-2 flex-1 text-base text-[#374151]"
+                  style={{ fontFamily: 'Inter-Regular', lineHeight: 24 }}>
+                  {property.address && property.address.trim() !== ''
+                    ? `${property.address}, ${property.city}, ${property.state}${property.pincode ? ` ${property.pincode}` : ''}`
+                    : `${property.city}, ${property.state}${property.pincode ? ` ${property.pincode}` : ''}`}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </BottomSheetScrollView>
       </View>
     </BottomSheetModal>
   );
 }
-

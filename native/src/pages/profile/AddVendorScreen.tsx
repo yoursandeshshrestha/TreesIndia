@@ -43,12 +43,22 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   // Step 1: Basic Details
   const [vendorName, setVendorName] = useState(vendorToEdit?.vendor_name || '');
-  const [businessDescription, setBusinessDescription] = useState(vendorToEdit?.business_description || '');
+  const [businessDescription, setBusinessDescription] = useState(
+    vendorToEdit?.business_description || ''
+  );
   const [businessType, setBusinessType] = useState<string>(vendorToEdit?.business_type || '');
-  const [contactPersonName, setContactPersonName] = useState(vendorToEdit?.contact_person_name || '');
-  const [contactPersonPhone, setContactPersonPhone] = useState(vendorToEdit?.contact_person_phone || '');
-  const [contactPersonEmail, setContactPersonEmail] = useState(vendorToEdit?.contact_person_email || '');
-  const [yearsInBusiness, setYearsInBusiness] = useState(vendorToEdit?.years_in_business?.toString() || '');
+  const [contactPersonName, setContactPersonName] = useState(
+    vendorToEdit?.contact_person_name || ''
+  );
+  const [contactPersonPhone, setContactPersonPhone] = useState(
+    vendorToEdit?.contact_person_phone || ''
+  );
+  const [contactPersonEmail, setContactPersonEmail] = useState(
+    vendorToEdit?.contact_person_email || ''
+  );
+  const [yearsInBusiness, setYearsInBusiness] = useState(
+    vendorToEdit?.years_in_business?.toString() || ''
+  );
 
   // Step 2: Business Address - Initialize with existing vendor address if editing
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(() => {
@@ -81,12 +91,16 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
   const [showAddressSheet, setShowAddressSheet] = useState(false);
 
   // Step 3: Services/Products Offered
-  const [servicesOffered, setServicesOffered] = useState<string[]>(vendorToEdit?.services_offered || []);
+  const [servicesOffered, setServicesOffered] = useState<string[]>(
+    vendorToEdit?.services_offered || []
+  );
   const [serviceInput, setServiceInput] = useState('');
 
   // Step 4: Photos
   const [profilePicture, setProfilePicture] = useState<FileInfo | null>(
-    vendorToEdit?.profile_picture ? { uri: vendorToEdit.profile_picture, type: 'image/jpeg', name: 'profile.jpg' } : null
+    vendorToEdit?.profile_picture
+      ? { uri: vendorToEdit.profile_picture, type: 'image/jpeg', name: 'profile.jpg' }
+      : null
   );
   const [businessGallery, setBusinessGallery] = useState<FileInfo[]>(
     vendorToEdit?.business_gallery?.map((img, idx) => ({
@@ -123,7 +137,6 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
       keyboardWillHide.remove();
     };
   }, []);
-
 
   const handleAddressSave = async (addressData: CreateAddressRequest) => {
     // Convert CreateAddressRequest to Address format
@@ -165,7 +178,11 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
         // Check file size (5MB limit)
         if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-          Alert.alert('File Too Large', 'Profile picture must be less than 5MB. Please select a smaller image or compress it.', [{ text: 'OK' }]);
+          Alert.alert(
+            'File Too Large',
+            'Profile picture must be less than 5MB. Please select a smaller image or compress it.',
+            [{ text: 'OK' }]
+          );
           return;
         }
 
@@ -218,7 +235,9 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         }));
         const combined = [...businessGallery, ...newImages];
         if (combined.length > 7) {
-          Alert.alert('Limit Reached', 'You can only upload up to 7 gallery images.', [{ text: 'OK' }]);
+          Alert.alert('Limit Reached', 'You can only upload up to 7 gallery images.', [
+            { text: 'OK' },
+          ]);
           setBusinessGallery(combined.slice(0, 7));
         } else {
           setBusinessGallery(combined);
@@ -257,7 +276,8 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         if (!vendorName.trim()) newErrors.vendorName = 'Vendor name is required';
         if (vendorName.trim().length < 2 || vendorName.trim().length > 100)
           newErrors.vendorName = 'Vendor name must be 2-100 characters';
-        if (!contactPersonName.trim()) newErrors.contactPersonName = 'Contact person name is required';
+        if (!contactPersonName.trim())
+          newErrors.contactPersonName = 'Contact person name is required';
         if (!contactPersonPhone.trim()) newErrors.contactPersonPhone = 'Contact phone is required';
         if (!businessType) newErrors.businessType = 'Business type is required';
         if (yearsInBusiness && (parseInt(yearsInBusiness) < 0 || parseInt(yearsInBusiness) > 100)) {
@@ -276,7 +296,8 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         break;
 
       case 'photos':
-        if (businessGallery.length < 2) newErrors.gallery = 'At least 2 gallery images are required';
+        if (businessGallery.length < 2)
+          newErrors.gallery = 'At least 2 gallery images are required';
         if (businessGallery.length > 7) newErrors.gallery = 'Maximum 7 gallery images allowed';
         break;
     }
@@ -313,7 +334,10 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
     const photosValid = validateStep('photos');
 
     if (!basicValid || !addressValid || !servicesValid || !photosValid) {
-      Alert.alert('Validation Error', 'Please fill in all required fields correctly before submitting.');
+      Alert.alert(
+        'Validation Error',
+        'Please fill in all required fields correctly before submitting.'
+      );
       return;
     }
 
@@ -406,7 +430,8 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         ]);
       }
     } catch (error: any) {
-      let errorMessage = error?.message || `Failed to ${isEditing ? 'update' : 'create'} vendor profile.`;
+      let errorMessage =
+        error?.message || `Failed to ${isEditing ? 'update' : 'create'} vendor profile.`;
 
       // Extract more specific error messages from backend
       if (error?.message) {
@@ -435,9 +460,9 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
     const currentStepData = steps[currentIndex];
 
     return (
-      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         {/* Progress bar */}
-        <View className="flex-row mb-4" style={{ gap: 4 }}>
+        <View className="mb-4 flex-row" style={{ gap: 4 }}>
           {steps.map((_, index) => {
             const isCompleted = index < currentIndex;
             const isActive = index === currentIndex;
@@ -458,10 +483,10 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
         {/* Step info */}
         <View>
-          <Text className="text-xs text-[#6B7280] mb-1" style={{ fontFamily: 'Inter-Regular' }}>
+          <Text className="mb-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Step {currentIndex + 1} of {steps.length}
           </Text>
-          <Text className="text-sm font-bold text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
+          <Text className="font-bold text-sm text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
             {currentStepData.title}
           </Text>
         </View>
@@ -471,10 +496,12 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   const renderBasicDetails = () => (
     <View className="px-6 pt-6">
-      <Text className="text-2xl font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <Text
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Basic Details
       </Text>
-      <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Provide basic information about your vendor business
       </Text>
 
@@ -503,7 +530,9 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
       </View>
 
       <View className="mb-4">
-        <Text className="text-sm font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+        <Text
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Business Type{errors.businessType ? ' *' : ''}
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
@@ -512,22 +541,24 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
               <TouchableOpacity
                 key={type.value}
                 onPress={() => setBusinessType(type.value)}
-                className={`border rounded-lg px-4 py-2 ${
-                  businessType === type.value ? 'bg-[#055c3a] border-[#055c3a]' : 'bg-white border-[#E5E7EB]'
+                className={`rounded-lg border px-4 py-2 ${
+                  businessType === type.value
+                    ? 'border-[#055c3a] bg-[#055c3a]'
+                    : 'border-[#E5E7EB] bg-white'
                 }`}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Text
                   className={`text-sm ${businessType === type.value ? 'text-white' : 'text-[#111928]'}`}
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {type.label}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
-        {errors.businessType && <Text className="text-xs text-[#DC2626] mt-1">{errors.businessType}</Text>}
+        {errors.businessType && (
+          <Text className="mt-1 text-xs text-[#DC2626]">{errors.businessType}</Text>
+        )}
       </View>
 
       <View className="mb-4">
@@ -580,22 +611,26 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   const renderBusinessAddress = () => (
     <View className="px-6 pt-6">
-      <Text className="text-2xl font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <Text
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Business Address
       </Text>
-      <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Select address for your business
       </Text>
 
       {selectedAddress ? (
         <View className="mb-4">
-          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <View className="flex-row justify-between items-start mb-2">
+          <View className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+            <View className="mb-2 flex-row items-start justify-between">
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-[#111928] mb-1" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="mb-1 font-semibold text-sm text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {selectedAddress.name}
                 </Text>
-                <Text className="text-sm text-[#374151] mb-1">
+                <Text className="mb-1 text-sm text-[#374151]">
                   {selectedAddress.house_number && `${selectedAddress.house_number}, `}
                   {selectedAddress.address}
                 </Text>
@@ -603,7 +638,7 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
                   {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
                 </Text>
                 {selectedAddress.landmark && (
-                  <Text className="text-xs text-[#6B7280] mt-1">
+                  <Text className="mt-1 text-xs text-[#6B7280]">
                     Landmark: {selectedAddress.landmark}
                   </Text>
                 )}
@@ -611,8 +646,7 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
               <TouchableOpacity
                 onPress={() => setShowAddressSheet(true)}
                 className="ml-2 p-2"
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <EditIcon size={20} color="#055c3a" />
               </TouchableOpacity>
             </View>
@@ -621,55 +655,52 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
       ) : (
         <TouchableOpacity
           onPress={() => setShowAddressSheet(true)}
-          className="flex-row items-center justify-center border-2 border-dashed border-[#D1D5DB] rounded-xl py-6 mb-4"
-          activeOpacity={0.7}
-        >
+          className="mb-4 flex-row items-center justify-center rounded-xl border-2 border-dashed border-[#D1D5DB] py-6"
+          activeOpacity={0.7}>
           <AddressIcon size={24} color="#6B7280" />
           <Text
-            className="text-base font-medium text-[#6B7280] ml-2"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="ml-2 font-medium text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Add Business Address
           </Text>
         </TouchableOpacity>
       )}
 
-      {errors.address && (
-        <Text className="text-xs text-[#DC2626] mt-1 mb-4">{errors.address}</Text>
-      )}
+      {errors.address && <Text className="mb-4 mt-1 text-xs text-[#DC2626]">{errors.address}</Text>}
     </View>
   );
 
   const renderServicesSelection = () => {
     return (
       <View className="px-6 pt-6">
-        <Text className="text-2xl font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+        <Text
+          className="mb-2 font-semibold text-2xl text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Products/Services Offered
         </Text>
-        <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
-          Add the products or services you offer (e.g., Cement, Paint, Steel, etc.){errors.services ? ' *' : ''}
+        <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+          Add the products or services you offer (e.g., Cement, Paint, Steel, etc.)
+          {errors.services ? ' *' : ''}
         </Text>
 
-        {errors.services && <Text className="text-xs text-[#DC2626] mb-4">{errors.services}</Text>}
+        {errors.services && <Text className="mb-4 text-xs text-[#DC2626]">{errors.services}</Text>}
 
         {/* Display added services */}
         {servicesOffered.length > 0 && (
-          <View className="flex-row flex-wrap mb-6" style={{ gap: 8 }}>
+          <View className="mb-6 flex-row flex-wrap" style={{ gap: 8 }}>
             {servicesOffered.map((service, index) => (
               <View
                 key={`service-${index}`}
-                className="bg-[#F3F4F6] border border-[#E5E7EB] rounded-lg px-4 py-2 flex-row items-center"
-                style={{ gap: 8 }}
-              >
+                className="flex-row items-center rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 py-2"
+                style={{ gap: 8 }}>
                 <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
                   {service}
                 </Text>
                 <TouchableOpacity
                   onPress={() => removeService(service)}
                   className="ml-2"
-                  activeOpacity={0.7}
-                >
-                  <Text className="text-[#DC2626] text-sm font-bold">×</Text>
+                  activeOpacity={0.7}>
+                  <Text className="font-bold text-sm text-[#DC2626]">×</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -677,7 +708,7 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         )}
 
         {/* Add Service Input */}
-        <View className="flex-row mb-4" style={{ gap: 8, alignItems: 'center' }}>
+        <View className="mb-4 flex-row" style={{ gap: 8, alignItems: 'center' }}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Input
               placeholder="Add product/service (e.g., Cement)"
@@ -688,12 +719,11 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
           </View>
           <TouchableOpacity
             onPress={addService}
-            className="bg-[#055c3a] rounded-lg px-4 py-3 justify-center items-center"
+            className="items-center justify-center rounded-lg bg-[#055c3a] px-4 py-3"
             style={{ minWidth: 70 }}
             activeOpacity={0.7}
-            disabled={!serviceInput.trim()}
-          >
-            <Text className="text-white font-medium" style={{ fontFamily: 'Inter-Medium' }}>
+            disabled={!serviceInput.trim()}>
+            <Text className="font-medium text-white" style={{ fontFamily: 'Inter-Medium' }}>
               Add
             </Text>
           </TouchableOpacity>
@@ -702,7 +732,8 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         {/* Summary */}
         {servicesOffered.length > 0 && (
           <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
-            {servicesOffered.length} product{servicesOffered.length === 1 ? '' : 's'}/service{servicesOffered.length === 1 ? '' : 's'} added
+            {servicesOffered.length} product{servicesOffered.length === 1 ? '' : 's'}/service
+            {servicesOffered.length === 1 ? '' : 's'} added
           </Text>
         )}
       </View>
@@ -711,36 +742,44 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   const renderPhotos = () => (
     <View className="px-6 pt-6">
-      <Text className="text-2xl font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <Text
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Photos
       </Text>
-      <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Add photos of your business (minimum 2 gallery images required){errors.gallery ? ' *' : ''}
       </Text>
 
       {/* Profile Picture Section */}
       <View className="mb-6">
-        <Text className="text-sm font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+        <Text
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Profile Picture (Optional)
         </Text>
         {profilePicture ? (
           <View className="relative">
-            <Image source={{ uri: profilePicture.uri }} className="w-24 h-24 rounded-lg" resizeMode="cover" />
+            <Image
+              source={{ uri: profilePicture.uri }}
+              className="h-24 w-24 rounded-lg"
+              resizeMode="cover"
+            />
             <TouchableOpacity
               onPress={removeProfilePicture}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-[#DC2626] rounded-full items-center justify-center"
-              activeOpacity={0.7}
-            >
-              <Text className="text-white text-xs">×</Text>
+              className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-[#DC2626]"
+              activeOpacity={0.7}>
+              <Text className="text-xs text-white">×</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity
             onPress={pickProfilePicture}
-            className="border border-[#E5E7EB] rounded-lg p-4 items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-sm text-[#055c3a] font-medium" style={{ fontFamily: 'Inter-Medium' }}>
+            className="items-center rounded-lg border border-[#E5E7EB] p-4"
+            activeOpacity={0.7}>
+            <Text
+              className="font-medium text-sm text-[#055c3a]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               + Add Profile Picture
             </Text>
           </TouchableOpacity>
@@ -749,36 +788,39 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
       {/* Business Gallery Section */}
       <View className="mb-4">
-        <Text className="text-sm font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+        <Text
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Business Gallery (2-7 images)
         </Text>
         <TouchableOpacity
           onPress={pickGalleryImages}
           disabled={businessGallery.length >= 7}
-          className="border border-[#E5E7EB] rounded-lg p-4 items-center mb-4"
-          activeOpacity={0.7}
-        >
+          className="mb-4 items-center rounded-lg border border-[#E5E7EB] p-4"
+          activeOpacity={0.7}>
           <Text
-            className={`text-sm font-medium ${businessGallery.length >= 7 ? 'text-[#9CA3AF]' : 'text-[#055c3a]'}`}
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className={`font-medium text-sm ${businessGallery.length >= 7 ? 'text-[#9CA3AF]' : 'text-[#055c3a]'}`}
+            style={{ fontFamily: 'Inter-Medium' }}>
             {businessGallery.length >= 7 ? 'Maximum Reached' : '+ Add Gallery Photos'}
           </Text>
         </TouchableOpacity>
 
-        {errors.gallery && <Text className="text-xs text-[#DC2626] mb-4">{errors.gallery}</Text>}
+        {errors.gallery && <Text className="mb-4 text-xs text-[#DC2626]">{errors.gallery}</Text>}
 
         {businessGallery.length > 0 && (
           <View className="flex-row flex-wrap" style={{ gap: 12 }}>
             {businessGallery.map((image, index) => (
               <View key={index} className="relative">
-                <Image source={{ uri: image.uri }} className="w-24 h-24 rounded-lg" resizeMode="cover" />
+                <Image
+                  source={{ uri: image.uri }}
+                  className="h-24 w-24 rounded-lg"
+                  resizeMode="cover"
+                />
                 <TouchableOpacity
                   onPress={() => removeGalleryImage(index)}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-[#DC2626] rounded-full items-center justify-center"
-                  activeOpacity={0.7}
-                >
-                  <Text className="text-white text-xs">×</Text>
+                  className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-[#DC2626]"
+                  activeOpacity={0.7}>
+                  <Text className="text-xs text-white">×</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -790,37 +832,47 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   const renderReview = () => (
     <View className="px-6 pt-6">
-      <Text className="text-2xl font-semibold text-[#111928] mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <Text
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Review Your Information
       </Text>
-      <Text className="text-sm text-[#6B7280] mb-6" style={{ fontFamily: 'Inter-Regular' }}>
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please review all information before submitting
       </Text>
 
       {/* Basic Details Card */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
-        <Text className="text-base font-semibold text-[#111928] mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+        <Text
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Basic Details
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">Vendor: {vendorName}</Text>
-        <Text className="text-sm text-[#374151] mb-1">
+        <Text className="mb-1 text-sm text-[#374151]">Vendor: {vendorName}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">
           Business Type: {BUSINESS_TYPES.find((t) => t.value === businessType)?.label}
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">
+        <Text className="mb-1 text-sm text-[#374151]">
           Contact: {contactPersonName} ({contactPersonPhone})
         </Text>
-        {yearsInBusiness && <Text className="text-sm text-[#374151]">Experience: {yearsInBusiness} years</Text>}
+        {yearsInBusiness && (
+          <Text className="text-sm text-[#374151]">Experience: {yearsInBusiness} years</Text>
+        )}
       </View>
 
       {/* Address Card */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
-        <Text className="text-base font-semibold text-[#111928] mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+        <Text
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Business Address
         </Text>
         {selectedAddress ? (
           <>
-            <Text className="text-sm text-[#374151] font-semibold mb-1">{selectedAddress.name}</Text>
-            <Text className="text-sm text-[#374151] mb-1">
+            <Text className="mb-1 font-semibold text-sm text-[#374151]">
+              {selectedAddress.name}
+            </Text>
+            <Text className="mb-1 text-sm text-[#374151]">
               {selectedAddress.house_number && `${selectedAddress.house_number}, `}
               {selectedAddress.address}
             </Text>
@@ -828,7 +880,9 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
               {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
             </Text>
             {selectedAddress.landmark && (
-              <Text className="text-xs text-[#6B7280] mt-1">Landmark: {selectedAddress.landmark}</Text>
+              <Text className="mt-1 text-xs text-[#6B7280]">
+                Landmark: {selectedAddress.landmark}
+              </Text>
             )}
           </>
         ) : (
@@ -837,21 +891,23 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
       </View>
 
       {/* Services Card */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
-        <Text className="text-base font-semibold text-[#111928] mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+        <Text
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Products/Services ({servicesOffered.length})
         </Text>
-        <Text className="text-sm text-[#374151]">
-          {servicesOffered.join(', ') || 'None added'}
-        </Text>
+        <Text className="text-sm text-[#374151]">{servicesOffered.join(', ') || 'None added'}</Text>
       </View>
 
       {/* Photos Card */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
-        <Text className="text-base font-semibold text-[#111928] mb-3" style={{ fontFamily: 'Inter-SemiBold' }}>
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+        <Text
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Photos
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">
+        <Text className="mb-1 text-sm text-[#374151]">
           {profilePicture ? '✓ Profile picture added' : '○ No profile picture'}
         </Text>
         <Text className="text-sm text-[#374151]">
@@ -883,13 +939,18 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <KeyboardAvoidingView behavior="padding" className="flex-1" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      <KeyboardAvoidingView
+        behavior="padding"
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
-          <Text className="text-xl font-semibold text-[#111928] ml-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+          <Text
+            className="ml-2 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {isEditing ? 'Edit Vendor Profile' : 'Add Vendor Profile'}
           </Text>
         </View>
@@ -898,16 +959,25 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
         {renderStepIndicator()}
 
         {/* Content */}
-        <ScrollView className="flex-1 bg-[#F9FAFB]" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1 bg-[#F9FAFB]"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           {renderCurrentStep()}
         </ScrollView>
 
         {/* Navigation Buttons */}
-        <View className={`px-6 pt-4 bg-white border-t border-[#E5E7EB] ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
+        <View
+          className={`border-t border-[#E5E7EB] bg-white px-6 pt-4 ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
           <View className="flex-row" style={{ gap: 12 }}>
             {currentStep !== 'basic' && (
               <View className="flex-1">
-                <Button label="Previous" onPress={handlePrevious} variant="outline" disabled={isSubmitting} />
+                <Button
+                  label="Previous"
+                  onPress={handlePrevious}
+                  variant="outline"
+                  disabled={isSubmitting}
+                />
               </View>
             )}
             <View className="flex-1">
@@ -919,8 +989,8 @@ export default function AddVendorScreen({ onBack, onSuccess, vendorToEdit }: Add
                         ? 'Updating...'
                         : 'Submitting...'
                       : isEditing
-                      ? 'Update Vendor'
-                      : 'Submit Vendor'
+                        ? 'Update Vendor'
+                        : 'Submit Vendor'
                   }
                   onPress={handleSubmit}
                   isLoading={isSubmitting}

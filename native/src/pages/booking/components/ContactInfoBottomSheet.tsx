@@ -34,7 +34,9 @@ export default function ContactInfoBottomSheet({
   const [contactPerson, setContactPerson] = useState(initialData?.contactPerson || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [specialInstructions, setSpecialInstructions] = useState(initialData?.specialInstructions || '');
+  const [specialInstructions, setSpecialInstructions] = useState(
+    initialData?.specialInstructions || ''
+  );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const [errors, setErrors] = useState<{
@@ -93,7 +95,8 @@ export default function ContactInfoBottomSheet({
       } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
         // Valid: country code + 10-digit phone number
       } else {
-        newErrors.phone = 'Please enter a valid phone number (10 digits or +91 followed by 10 digits)';
+        newErrors.phone =
+          'Please enter a valid phone number (10 digits or +91 followed by 10 digits)';
       }
     }
 
@@ -127,33 +130,24 @@ export default function ContactInfoBottomSheet({
     }
   };
 
-  const maxSheetHeight = keyboardHeight > 0
-    ? SCREEN_HEIGHT - keyboardHeight - 150
-    : SCREEN_HEIGHT * 0.75;
+  const maxSheetHeight =
+    keyboardHeight > 0 ? SCREEN_HEIGHT - keyboardHeight - 150 : SCREEN_HEIGHT * 0.75;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <TouchableOpacity
           activeOpacity={1}
           onPress={handleClose}
-          className="flex-1 bg-black/50 justify-end"
-        >
+          className="flex-1 justify-end bg-black/50">
           <TouchableOpacity
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
             style={{ maxHeight: maxSheetHeight }}
-            className="bg-white rounded-t-3xl"
-          >
+            className="rounded-t-3xl bg-white">
             {/* Floating Close Button */}
             <View
               style={{
@@ -161,35 +155,32 @@ export default function ContactInfoBottomSheet({
                 top: -56,
                 right: 16,
                 zIndex: 30,
-              }}
-            >
+              }}>
               <TouchableOpacity
                 onPress={handleClose}
-                className="w-12 h-12 bg-white rounded-full items-center justify-center"
+                className="h-12 w-12 items-center justify-center rounded-full bg-white"
                 style={{
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
                   shadowRadius: 4,
                   elevation: 4,
-                }}
-              >
+                }}>
                 <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
               </TouchableOpacity>
             </View>
 
             {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-              <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
+              <Text
+                className="font-semibold text-xl text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 Contact Information
               </Text>
             </View>
 
             {/* Content */}
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View className="px-6 pt-4">
                 <View className="mb-4">
                   <Input
@@ -250,12 +241,12 @@ export default function ContactInfoBottomSheet({
             </ScrollView>
 
             {/* Footer - Fixed at bottom */}
-            <SafeAreaView edges={['bottom']} className="bg-white border-t border-[#E5E7EB]">
+            <SafeAreaView edges={['bottom']} className="border-t border-[#E5E7EB] bg-white">
               <View className={`px-6 pt-4 ${keyboardHeight > 0 ? 'pb-4' : 'pb-16'}`}>
                 <Button label="Save" onPress={handleSave} />
               </View>
             </SafeAreaView>
-            </TouchableOpacity>
+          </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </Modal>

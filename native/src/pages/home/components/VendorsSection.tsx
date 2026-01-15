@@ -24,19 +24,14 @@ export default function VendorsSection({
       title="Top Vendors"
       onSeeAll={onSeeAll}
       isLoading={isLoading}
-      isEmpty={vendors.length === 0}
-    >
+      isEmpty={vendors.length === 0}>
       <View style={{ height: 240 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 24 }}
-        >
+          contentContainerStyle={{ paddingRight: 24 }}>
           {vendors.map((vendor, index) => (
-            <View
-              key={vendor.id}
-              style={{ marginLeft: index === 0 ? 24 : 16 }}
-            >
+            <View key={vendor.id} style={{ marginLeft: index === 0 ? 24 : 16 }}>
               <VendorCard
                 vendor={vendor}
                 onPress={() => onVendorPress(vendor)}

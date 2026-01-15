@@ -33,5 +33,3 @@ export default function TimeIcon({ size = 24, color = '#6B7280' }: TimeIconProps
     </Svg>
   );
 }
-
-

@@ -3,7 +3,11 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { logger } from '../utils/logger';
-import type { NotificationHandler, NotificationResponseHandler, PushNotification } from '../types/notification';
+import type {
+  NotificationHandler,
+  NotificationResponseHandler,
+  PushNotification,
+} from '../types/notification';
 
 class NotificationService {
   private expoPushToken: string | null = null;

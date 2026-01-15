@@ -120,15 +120,13 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
     <View className="flex-1 items-center justify-center px-6">
       <PropertyIcon size={64} color="#D1D5DB" />
       <Text
-        className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         No Properties Found
       </Text>
       <Text
-        className="text-sm text-[#6B7280] text-center mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+        className="mb-6 text-center text-sm text-[#6B7280]"
+        style={{ fontFamily: 'Inter-Regular' }}>
         {getActiveFilterCount() > 0
           ? 'Try adjusting your filters to see more results'
           : 'Check back later for new property listings'}
@@ -136,13 +134,11 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
       {getActiveFilterCount() > 0 && (
         <TouchableOpacity
           onPress={() => setFilters({})}
-          className="bg-[#00a871] px-6 py-3 rounded-lg"
-          activeOpacity={0.7}
-        >
+          className="rounded-lg bg-[#00a871] px-6 py-3"
+          activeOpacity={0.7}>
           <Text
-            className="text-base font-semibold text-white"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-base text-white"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Clear Filters
           </Text>
         </TouchableOpacity>
@@ -162,39 +158,31 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4"
-            activeOpacity={0.7}
-          >
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
+        <View className="mb-4 flex-row items-center justify-between">
+          <TouchableOpacity onPress={onBack} className="mr-4" activeOpacity={0.7}>
             <Text className="text-2xl">←</Text>
           </TouchableOpacity>
           <Text
-            className="flex-1 text-xl font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="flex-1 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Properties
           </Text>
           <TouchableOpacity
             onPress={() => setShowFilterSheet(true)}
-            className="flex-row items-center bg-[#F3F4F6] px-4 py-2 rounded-lg"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg bg-[#F3F4F6] px-4 py-2"
+            activeOpacity={0.7}>
             <SearchIcon size={18} color="#4B5563" />
             <Text
-              className="text-sm font-medium text-[#4B5563] ml-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="ml-2 font-medium text-sm text-[#4B5563]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Filters
             </Text>
             {getActiveFilterCount() > 0 && (
-              <View className="ml-2 w-5 h-5 bg-[#00a871] rounded-full items-center justify-center">
+              <View className="ml-2 h-5 w-5 items-center justify-center rounded-full bg-[#00a871]">
                 <Text
-                  className="text-xs font-semibold text-white"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-xs text-white"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {getActiveFilterCount()}
                 </Text>
               </View>
@@ -203,14 +191,14 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
         </View>
 
         {/* Search Bar */}
-        <View className="bg-white rounded-xl border border-[#E5E7EB] flex-row items-center px-4 mb-3">
+        <View className="mb-3 flex-row items-center rounded-xl border border-[#E5E7EB] bg-white px-4">
           <SearchIcon size={20} color="#6B7280" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search properties..."
             placeholderTextColor="#9CA3AF"
-            className="flex-1 ml-3 text-base text-[#111928]"
+            className="ml-3 flex-1 text-base text-[#111928]"
             style={{
               fontFamily: 'Inter-Regular',
               paddingVertical: Platform.OS === 'ios' ? 12 : 10,
@@ -225,10 +213,7 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
             }}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery('')}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
               <Text className="text-xl text-[#6B7280]">×</Text>
             </TouchableOpacity>
           )}
@@ -239,66 +224,63 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
+            contentContainerStyle={{ gap: 8 }}>
             {filters.listing_type && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
                 </Text>
               </View>
             )}
             {filters.property_type && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.property_type.charAt(0).toUpperCase() + filters.property_type.slice(1)}
                 </Text>
               </View>
             )}
             {filters.bedrooms && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.bedrooms}+ BHK
                 </Text>
               </View>
             )}
             {filters.bathrooms && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.bathrooms}+ Bath
                 </Text>
               </View>
             )}
             {filters.max_price && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
-                  Up to ₹{(filters.max_price / (filters.listing_type === 'rent' ? 1000 : 100000)).toFixed(0)}
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
+                  Up to ₹
+                  {(filters.max_price / (filters.listing_type === 'rent' ? 1000 : 100000)).toFixed(
+                    0
+                  )}
                   {filters.listing_type === 'rent' ? 'K' : 'L'}
                 </Text>
               </View>
             )}
             {filters.furnishing_status && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
-                  {filters.furnishing_status.charAt(0).toUpperCase() + filters.furnishing_status.slice(1).replace('-', ' ')}
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
+                  {filters.furnishing_status.charAt(0).toUpperCase() +
+                    filters.furnishing_status.slice(1).replace('-', ' ')}
                 </Text>
               </View>
             )}
@@ -310,10 +292,7 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading properties...
           </Text>
         </View>
@@ -339,11 +318,7 @@ export default function PropertiesScreen({ onBack, initialFilters }: PropertiesS
             />
           )}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#00a871"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#00a871" />
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}

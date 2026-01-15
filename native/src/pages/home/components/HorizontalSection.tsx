@@ -23,20 +23,16 @@ export default function HorizontalSection({
   }
 
   return (
-    <View className="pt-4 pb-4">
-      <View className="flex-row justify-between items-center mb-4 px-6">
-        <Text
-          className="text-xl font-bold text-[#111928]"
-          style={{ fontFamily: 'Inter-Bold' }}
-        >
+    <View className="pb-4 pt-4">
+      <View className="mb-4 flex-row items-center justify-between px-6">
+        <Text className="font-bold text-xl text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
           {title}
         </Text>
         {onSeeAll && !isLoading && (
           <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7}>
             <Text
-              className="text-sm font-medium text-[#00a871]"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="font-medium text-sm text-[#00a871]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               See all
             </Text>
           </TouchableOpacity>
@@ -48,13 +44,9 @@ export default function HorizontalSection({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 24 }}
-          >
+            contentContainerStyle={{ paddingRight: 24 }}>
             {[1, 2].map((index) => (
-              <View
-                key={index}
-                style={{ marginLeft: index === 1 ? 24 : 16 }}
-              >
+              <View key={index} style={{ marginLeft: index === 1 ? 24 : 16 }}>
                 <CardSkeleton width={200} height={240} />
               </View>
             ))}

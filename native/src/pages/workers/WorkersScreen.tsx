@@ -31,7 +31,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Calculate card width: screen width - padding (24*2) - gap between cards (16) / 2 columns
 const CARD_WIDTH = (SCREEN_WIDTH - 48 - 16) / 2; // 2 columns with padding
 
-export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubscription }: WorkersScreenProps) {
+export default function WorkersScreen({
+  onBack,
+  initialFilters,
+  onNavigateToSubscription,
+}: WorkersScreenProps) {
   const { hasActiveSubscription } = useSubscriptionStatus();
 
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -147,15 +151,13 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
       <View className="flex-1 items-center justify-center px-6">
         <WorkerIcon size={64} color="#D1D5DB" />
         <Text
-          className="text-lg font-semibold text-[#111928] mt-4 mb-2 text-center"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 mt-4 text-center font-semibold text-lg text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           No Workers Found
         </Text>
         <Text
-          className="text-sm text-[#6B7280] text-center mb-6"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+          className="mb-6 text-center text-sm text-[#6B7280]"
+          style={{ fontFamily: 'Inter-Regular' }}>
           {getActiveFilterCount() > 0
             ? 'Try adjusting your filters to see more results'
             : 'Check back later for new worker listings'}
@@ -163,13 +165,11 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
         {getActiveFilterCount() > 0 && (
           <TouchableOpacity
             onPress={() => setFilters({})}
-            className="bg-[#00a871] px-6 py-3 rounded-lg"
-            activeOpacity={0.7}
-          >
+            className="rounded-lg bg-[#00a871] px-6 py-3"
+            activeOpacity={0.7}>
             <Text
-              className="text-base font-semibold text-white"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-base text-white"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Clear Filters
             </Text>
           </TouchableOpacity>
@@ -190,39 +190,31 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4"
-            activeOpacity={0.7}
-          >
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
+        <View className="mb-4 flex-row items-center justify-between">
+          <TouchableOpacity onPress={onBack} className="mr-4" activeOpacity={0.7}>
             <Text className="text-2xl">←</Text>
           </TouchableOpacity>
           <Text
-            className="flex-1 text-xl font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="flex-1 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Workers
           </Text>
           <TouchableOpacity
             onPress={() => setShowFilterSheet(true)}
-            className="flex-row items-center bg-[#F3F4F6] px-4 py-2 rounded-lg"
-            activeOpacity={0.7}
-          >
+            className="flex-row items-center rounded-lg bg-[#F3F4F6] px-4 py-2"
+            activeOpacity={0.7}>
             <SearchIcon size={18} color="#4B5563" />
             <Text
-              className="text-sm font-medium text-[#4B5563] ml-2"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="ml-2 font-medium text-sm text-[#4B5563]"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Filters
             </Text>
             {getActiveFilterCount() > 0 && (
-              <View className="ml-2 w-5 h-5 bg-[#00a871] rounded-full items-center justify-center">
+              <View className="ml-2 h-5 w-5 items-center justify-center rounded-full bg-[#00a871]">
                 <Text
-                  className="text-xs font-semibold text-white"
-                  style={{ fontFamily: 'Inter-SemiBold' }}
-                >
+                  className="font-semibold text-xs text-white"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {getActiveFilterCount()}
                 </Text>
               </View>
@@ -231,14 +223,14 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
         </View>
 
         {/* Search Bar */}
-        <View className="bg-white rounded-xl border border-[#E5E7EB] flex-row items-center px-4 mb-3">
+        <View className="mb-3 flex-row items-center rounded-xl border border-[#E5E7EB] bg-white px-4">
           <SearchIcon size={20} color="#6B7280" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search workers..."
             placeholderTextColor="#9CA3AF"
-            className="flex-1 ml-3 text-base text-[#111928]"
+            className="ml-3 flex-1 text-base text-[#111928]"
             style={{
               fontFamily: 'Inter-Regular',
               paddingVertical: Platform.OS === 'ios' ? 12 : 10,
@@ -253,10 +245,7 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
             }}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery('')}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
               <Text className="text-xl text-[#6B7280]">×</Text>
             </TouchableOpacity>
           )}
@@ -267,19 +256,17 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
+            contentContainerStyle={{ gap: 8 }}>
             {(filters.experience_min !== undefined || filters.experience_max !== undefined) && (
-              <View className="bg-[#00a871] px-3 py-1.5 rounded-full">
+              <View className="rounded-full bg-[#00a871] px-3 py-1.5">
                 <Text
-                  className="text-xs font-medium text-white"
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className="font-medium text-xs text-white"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {filters.experience_min !== undefined && filters.experience_max !== undefined
                     ? `${filters.experience_min}-${filters.experience_max} years`
                     : filters.experience_min !== undefined
-                    ? `${filters.experience_min}+ years`
-                    : `Up to ${filters.experience_max} years`}
+                      ? `${filters.experience_min}+ years`
+                      : `Up to ${filters.experience_max} years`}
                 </Text>
               </View>
             )}
@@ -291,10 +278,7 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00a871" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading workers...
           </Text>
         </View>
@@ -321,11 +305,7 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
             />
           )}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#00a871"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#00a871" />
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}

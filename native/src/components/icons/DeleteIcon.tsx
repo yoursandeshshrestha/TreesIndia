@@ -21,19 +21,8 @@ export default function DeleteIcon({ size = 24, color = 'currentColor' }: Delete
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <Path
-        d="M9.5 16.5L9.5 10.5"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <Path
-        d="M14.5 16.5L14.5 10.5"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+      <Path d="M9.5 16.5L9.5 10.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M14.5 16.5L14.5 10.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     </Svg>
   );
 }
-

@@ -49,7 +49,15 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
 
       // Add timeout to prevent hanging (reduced to 10 seconds)
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout - please check your network connection and ensure the backend is running')), 10000)
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                'Request timeout - please check your network connection and ensure the backend is running'
+              )
+            ),
+          10000
+        )
       );
 
       const dataPromise = Promise.all([
@@ -57,15 +65,12 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         walletService.getWalletTransactions(1, 10),
       ]);
 
-      const [summaryData, transactionsData] = await Promise.race([
-        dataPromise,
-        timeoutPromise,
-      ]);
+      const [summaryData, transactionsData] = await Promise.race([dataPromise, timeoutPromise]);
 
       setWalletSummary(summaryData);
       setTransactions(transactionsData.transactions);
       setHasMore(transactionsData.pagination.page < transactionsData.pagination.total_pages);
-      
+
       // Clear loading states immediately after setting data
       if (refresh) {
         setIsRefreshing(false);
@@ -73,8 +78,7 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         setIsLoading(false);
       }
     } catch (err: any) {
-      const errorMessage =
-        err?.message || 'Failed to load wallet data. Please try again.';
+      const errorMessage = err?.message || 'Failed to load wallet data. Please try again.';
       setError(errorMessage);
       // Only show alert if not refreshing (to avoid spam)
       if (!refresh) {
@@ -93,19 +97,13 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
     try {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
-      const transactionsData = await walletService.getWalletTransactions(
-        nextPage,
-        10
-      );
+      const transactionsData = await walletService.getWalletTransactions(nextPage, 10);
 
       setTransactions((prev) => [...prev, ...transactionsData.transactions]);
       setCurrentPage(nextPage);
-      setHasMore(
-        transactionsData.pagination.page < transactionsData.pagination.total_pages
-      );
+      setHasMore(transactionsData.pagination.page < transactionsData.pagination.total_pages);
     } catch (err: any) {
-      const errorMessage =
-        err?.message || 'Failed to load more transactions. Please try again.';
+      const errorMessage = err?.message || 'Failed to load more transactions. Please try again.';
       Alert.alert('Error', errorMessage);
     } finally {
       setIsLoadingMore(false);
@@ -133,14 +131,14 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         amount,
         payment_method: 'razorpay',
       });
-      
+
       // Close the bottom sheet first
       setShowRechargeSheet(false);
-      
+
       // Add a small delay to ensure the bottom sheet is fully closed
       // This prevents view hierarchy issues on iOS
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       // Check if Razorpay is available
       if (!razorpayService.isAvailable()) {
         Alert.alert(
@@ -194,11 +192,11 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
             // Use the payment ID from the backend response
             // Ensure it's a valid number
             const paymentId = Number(paymentIdValue);
-            
+
             if (!paymentId || isNaN(paymentId) || paymentId <= 0) {
               throw new Error(`Invalid payment ID: ${paymentIdValue}`);
             }
-            
+
             await walletService.completeRecharge(
               paymentId,
               response.razorpay_order_id,
@@ -235,25 +233,22 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           const isCancelled =
             error.code === 'PAYMENT_CANCELLED' ||
             error.code === '2' ||
-            (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+            (error.code === 'UNKNOWN_ERROR' &&
+              error.description?.toLowerCase().includes('cancel')) ||
             // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
             (error.code === 'BAD_REQUEST_ERROR' &&
-             (error.description === 'undefined' || error.reason === 'payment_error'));
+              (error.description === 'undefined' || error.reason === 'payment_error'));
 
           // Handle different error cases
           if (isCancelled) {
             // User cancelled payment
-            Alert.alert(
-              'Payment Cancelled',
-              'You cancelled the payment. No amount was charged.',
-              [{ text: 'OK' }]
-            );
+            Alert.alert('Payment Cancelled', 'You cancelled the payment. No amount was charged.', [
+              { text: 'OK' },
+            ]);
           } else if (error.code === 'NETWORK_ERROR') {
-            Alert.alert(
-              'Network Error',
-              'Please check your internet connection and try again.',
-              [{ text: 'OK' }]
-            );
+            Alert.alert('Network Error', 'Please check your internet connection and try again.', [
+              { text: 'OK' },
+            ]);
           } else {
             Alert.alert(
               'Payment Failed',
@@ -263,10 +258,8 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           }
         }
       );
-      
     } catch (err: any) {
-      const errorMessage =
-        err?.message || 'Failed to initiate recharge. Please try again.';
+      const errorMessage = err?.message || 'Failed to initiate recharge. Please try again.';
       Alert.alert('Error', errorMessage);
       setIsRecharging(false);
     }
@@ -289,11 +282,7 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
 
     const razorpayKey = razorpayService.getRazorpayKey();
     if (!razorpayKey) {
-      Alert.alert(
-        'Configuration Error',
-        'Razorpay key is not configured.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Configuration Error', 'Razorpay key is not configured.', [{ text: 'OK' }]);
       return;
     }
 
@@ -352,7 +341,7 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
           // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
           (error.code === 'BAD_REQUEST_ERROR' &&
-           (error.description === 'undefined' || error.reason === 'payment_error'));
+            (error.description === 'undefined' || error.reason === 'payment_error'));
 
         if (!isCancelled) {
           Alert.alert(
@@ -381,10 +370,7 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         <View style={{ paddingTop: insets.top, backgroundColor: 'white' }} />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-base text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-base text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading wallet...
           </Text>
         </View>
@@ -398,18 +384,13 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         <StatusBar barStyle="dark-content" backgroundColor="white" />
         <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
           {/* Header */}
-          <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-            <TouchableOpacity
-              onPress={onBack}
-              className="mr-4 p-2 -ml-2"
-              activeOpacity={0.7}
-            >
+          <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+            <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
               <BackIcon size={24} color="#111928" />
             </TouchableOpacity>
             <Text
-              className="text-xl font-semibold text-[#111928] flex-1"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="flex-1 font-semibold text-xl text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               My Wallet
             </Text>
           </View>
@@ -417,26 +398,22 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
 
         <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="text-lg font-semibold text-[#111928] mb-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="mb-2 font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Something went wrong
           </Text>
           <Text
-            className="text-sm text-[#6B7280] text-center mb-6"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="mb-6 text-center text-sm text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             {error}
           </Text>
           <TouchableOpacity
             onPress={handleRetry}
-            className="px-6 py-3 rounded-lg bg-[#055c3a]"
-            activeOpacity={0.8}
-          >
+            className="rounded-lg bg-[#055c3a] px-6 py-3"
+            activeOpacity={0.8}>
             <Text
-              className="text-base font-medium text-white"
-              style={{ fontFamily: 'Inter-Medium' }}
-            >
+              className="font-medium text-base text-white"
+              style={{ fontFamily: 'Inter-Medium' }}>
               Try Again
             </Text>
           </TouchableOpacity>
@@ -450,18 +427,13 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={{ paddingTop: insets.top, backgroundColor: 'white' }}>
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity
-            onPress={onBack}
-            className="mr-4 p-2 -ml-2"
-            activeOpacity={0.7}
-          >
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 mr-4 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] flex-1"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="flex-1 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             My Wallet
           </Text>
         </View>
@@ -481,22 +453,15 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           const paddingToBottom = 20;
-          if (
-            layoutMeasurement.height + contentOffset.y >=
-            contentSize.height - paddingToBottom
-          ) {
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
             loadMoreTransactions();
           }
         }}
-        scrollEventThrottle={400}
-      >
+        scrollEventThrottle={400}>
         {/* Wallet Balance Section */}
         {walletSummary && (
           <View className="px-6 py-4">
-            <WalletBalanceCard
-              walletSummary={walletSummary}
-              onRecharge={handleRecharge}
-            />
+            <WalletBalanceCard walletSummary={walletSummary} onRecharge={handleRecharge} />
           </View>
         )}
 
@@ -506,26 +471,23 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
         {/* Transactions Header */}
         <View className="px-6 py-4">
           <Text
-            className="text-base font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-base text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Recent Transactions
           </Text>
         </View>
 
         {/* Transactions List */}
         {transactions.length === 0 ? (
-          <View className="items-center justify-center py-12 px-6">
+          <View className="items-center justify-center px-6 py-12">
             <Text
-              className="text-lg font-semibold text-[#4B5563] mb-2"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mb-2 font-semibold text-lg text-[#4B5563]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               No Transactions Yet
             </Text>
             <Text
-              className="text-sm text-[#6B7280] text-center"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className="text-center text-sm text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Regular' }}>
               Your transaction history will appear here
             </Text>
           </View>
@@ -533,21 +495,20 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
           <View className="px-6 pb-6">
             {transactions.map((transaction, index) => {
               // Use ID (capital) or id (lowercase) or index as fallback
-              const transactionKey = (transaction as any).ID || transaction.id || `transaction-${index}`;
+              const transactionKey =
+                (transaction as any).ID || transaction.id || `transaction-${index}`;
               return (
                 <View key={transactionKey}>
                   <TransactionItem
                     transaction={transaction}
                     onCompletePayment={handleCompletePayment}
                   />
-                  {index < transactions.length - 1 && (
-                    <View className="h-px bg-[#F3F4F6]" />
-                  )}
+                  {index < transactions.length - 1 && <View className="h-px bg-[#F3F4F6]" />}
                 </View>
               );
             })}
             {isLoadingMore && (
-              <View className="py-4 items-center">
+              <View className="items-center py-4">
                 <ActivityIndicator size="small" color="#055c3a" />
               </View>
             )}
@@ -569,4 +530,3 @@ export default function WalletScreen({ onBack }: WalletScreenProps) {
     </View>
   );
 }
-

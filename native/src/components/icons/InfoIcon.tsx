@@ -31,5 +31,3 @@ export default function InfoIcon({ size = 24, color = 'currentColor' }: InfoIcon
     </Svg>
   );
 }
-
-

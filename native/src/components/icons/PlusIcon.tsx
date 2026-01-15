@@ -19,5 +19,3 @@ export default function PlusIcon({ size = 24, color = 'currentColor' }: PlusIcon
     </Svg>
   );
 }
-
-

@@ -13,7 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { propertyService, type Property, type Address, type CreateAddressRequest } from '../../services';
+import {
+  propertyService,
+  type Property,
+  type Address,
+  type CreateAddressRequest,
+} from '../../services';
 import Button from '../../components/ui/Button';
 import Input from '../../components/common/Input';
 import BackIcon from '../../components/icons/BackIcon';
@@ -35,7 +40,11 @@ interface FileInfo {
   name: string;
 }
 
-export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }: AddPropertyScreenProps) {
+export default function AddPropertyScreen({
+  onBack,
+  onSuccess,
+  propertyToEdit,
+}: AddPropertyScreenProps) {
   const isEditing = !!propertyToEdit;
   const [currentStep, setCurrentStep] = useState<Step>('basic');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,7 +94,9 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const [area, setArea] = useState(propertyToEdit?.area?.toString() || '');
   const [floorNumber, setFloorNumber] = useState(propertyToEdit?.floor_number?.toString() || '');
   const [age, setAge] = useState<string>(propertyToEdit?.age || '');
-  const [furnishingStatus, setFurnishingStatus] = useState<string>(propertyToEdit?.furnishing_status || '');
+  const [furnishingStatus, setFurnishingStatus] = useState<string>(
+    propertyToEdit?.furnishing_status || ''
+  );
 
   // Step 4: Photos
   const [images, setImages] = useState<FileInfo[]>(
@@ -316,22 +327,18 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
           return;
         }
         await propertyService.updateProperty(propertyId, formData);
-        Alert.alert(
-          'Success',
-          'Property updated successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (onSuccess) {
-                  onSuccess();
-                } else {
-                  onBack();
-                }
-              },
+        Alert.alert('Success', 'Property updated successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (onSuccess) {
+                onSuccess();
+              } else {
+                onBack();
+              }
             },
-          ]
-        );
+          },
+        ]);
       } else {
         await propertyService.createProperty(formData);
         Alert.alert(
@@ -352,7 +359,10 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         );
       }
     } catch (error: any) {
-      Alert.alert('Error', error?.message || `Failed to ${isEditing ? 'update' : 'create'} property. Please try again.`);
+      Alert.alert(
+        'Error',
+        error?.message || `Failed to ${isEditing ? 'update' : 'create'} property. Please try again.`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -361,27 +371,22 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderStepIndicator = () => {
     const currentIndex = steps.findIndex((s) => s.id === currentStep);
     const currentStepData = steps[currentIndex];
-    
+
     return (
-      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         {/* Progress bar */}
-        <View className="flex-row mb-4" style={{ gap: 4 }}>
+        <View className="mb-4 flex-row" style={{ gap: 4 }}>
           {steps.map((_, index) => {
             const isCompleted = index < currentIndex;
             const isActive = index === currentIndex;
-            
+
             return (
               <View
                 key={index}
                 className="flex-1"
                 style={{
                   height: 4,
-                  backgroundColor:
-                    isCompleted
-                      ? '#055c3a'
-                      : isActive
-                      ? '#055c3a'
-                      : '#E5E7EB',
+                  backgroundColor: isCompleted ? '#055c3a' : isActive ? '#055c3a' : '#E5E7EB',
                   borderRadius: 2,
                 }}
               />
@@ -391,16 +396,10 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
 
         {/* Step info */}
         <View>
-          <Text
-            className="text-xs text-[#6B7280] mb-1"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Step {currentIndex + 1} of {steps.length}
           </Text>
-          <Text
-            className="text-sm font-bold text-[#111928]"
-            style={{ fontFamily: 'Inter-Bold' }}
-          >
+          <Text className="font-bold text-sm text-[#111928]" style={{ fontFamily: 'Inter-Bold' }}>
             {currentStepData.title}
           </Text>
         </View>
@@ -411,15 +410,11 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderBasicDetails = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Basic Details
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Provide basic information about your property
       </Text>
 
@@ -451,59 +446,53 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
 
       <View className="mb-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Property Type {errors.propertyType && <Text className="text-[#DC2626]">*</Text>}
         </Text>
         <View className="flex-row" style={{ gap: 8 }}>
           <TouchableOpacity
             onPress={() => setPropertyType('residential')}
-            className={`flex-1 border rounded-lg py-2.5 px-3 items-center ${
+            className={`flex-1 items-center rounded-lg border px-3 py-2.5 ${
               propertyType === 'residential'
                 ? 'border-[#055c3a] bg-[#F0FDF4]'
                 : 'border-[#E5E7EB] bg-white'
             }`}
-            activeOpacity={0.5}
-          >
+            activeOpacity={0.5}>
             <Text
               className={`text-sm ${
                 propertyType === 'residential' ? 'text-[#055c3a]' : 'text-[#111928]'
               }`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              style={{ fontFamily: 'Inter-Regular' }}>
               Residential
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setPropertyType('commercial')}
-            className={`flex-1 border rounded-lg py-2.5 px-3 items-center ${
+            className={`flex-1 items-center rounded-lg border px-3 py-2.5 ${
               propertyType === 'commercial'
                 ? 'border-[#055c3a] bg-[#F0FDF4]'
                 : 'border-[#E5E7EB] bg-white'
             }`}
-            activeOpacity={0.5}
-          >
+            activeOpacity={0.5}>
             <Text
               className={`text-sm ${
                 propertyType === 'commercial' ? 'text-[#055c3a]' : 'text-[#111928]'
               }`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              style={{ fontFamily: 'Inter-Regular' }}>
               Commercial
             </Text>
           </TouchableOpacity>
         </View>
         {errors.propertyType && (
-          <Text className="text-xs text-[#DC2626] mt-1">{errors.propertyType}</Text>
+          <Text className="mt-1 text-xs text-[#DC2626]">{errors.propertyType}</Text>
         )}
       </View>
 
       <View className="mb-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Listing Type {errors.listingType && <Text className="text-[#DC2626]">*</Text>}
         </Text>
         <View className="flex-row" style={{ gap: 8 }}>
@@ -513,19 +502,13 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
               setSalePrice('');
               setMonthlyRent('');
             }}
-            className={`flex-1 border rounded-lg py-2.5 px-3 items-center ${
-              listingType === 'sale'
-                ? 'border-[#055c3a] bg-[#F0FDF4]'
-                : 'border-[#E5E7EB] bg-white'
+            className={`flex-1 items-center rounded-lg border px-3 py-2.5 ${
+              listingType === 'sale' ? 'border-[#055c3a] bg-[#F0FDF4]' : 'border-[#E5E7EB] bg-white'
             }`}
-            activeOpacity={0.5}
-          >
+            activeOpacity={0.5}>
             <Text
-              className={`text-sm ${
-                listingType === 'sale' ? 'text-[#055c3a]' : 'text-[#111928]'
-              }`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className={`text-sm ${listingType === 'sale' ? 'text-[#055c3a]' : 'text-[#111928]'}`}
+              style={{ fontFamily: 'Inter-Regular' }}>
               For Sale
             </Text>
           </TouchableOpacity>
@@ -535,25 +518,19 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
               setSalePrice('');
               setMonthlyRent('');
             }}
-            className={`flex-1 border rounded-lg py-2.5 px-3 items-center ${
-              listingType === 'rent'
-                ? 'border-[#055c3a] bg-[#F0FDF4]'
-                : 'border-[#E5E7EB] bg-white'
+            className={`flex-1 items-center rounded-lg border px-3 py-2.5 ${
+              listingType === 'rent' ? 'border-[#055c3a] bg-[#F0FDF4]' : 'border-[#E5E7EB] bg-white'
             }`}
-            activeOpacity={0.5}
-          >
+            activeOpacity={0.5}>
             <Text
-              className={`text-sm ${
-                listingType === 'rent' ? 'text-[#055c3a]' : 'text-[#111928]'
-              }`}
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className={`text-sm ${listingType === 'rent' ? 'text-[#055c3a]' : 'text-[#111928]'}`}
+              style={{ fontFamily: 'Inter-Regular' }}>
               For Rent
             </Text>
           </TouchableOpacity>
         </View>
         {errors.listingType && (
-          <Text className="text-xs text-[#DC2626] mt-1">{errors.listingType}</Text>
+          <Text className="mt-1 text-xs text-[#DC2626]">{errors.listingType}</Text>
         )}
       </View>
     </View>
@@ -562,27 +539,25 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderLocationDetails = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Location Details
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Select address for your property
       </Text>
 
       {selectedAddress ? (
         <View className="mb-4">
-          <View className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <View className="flex-row justify-between items-start mb-2">
+          <View className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+            <View className="mb-2 flex-row items-start justify-between">
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-[#111928] mb-1" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="mb-1 font-semibold text-sm text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {selectedAddress.name}
                 </Text>
-                <Text className="text-sm text-[#374151] mb-1">
+                <Text className="mb-1 text-sm text-[#374151]">
                   {selectedAddress.house_number && `${selectedAddress.house_number}, `}
                   {selectedAddress.address}
                 </Text>
@@ -590,7 +565,7 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
                   {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
                 </Text>
                 {selectedAddress.landmark && (
-                  <Text className="text-xs text-[#6B7280] mt-1">
+                  <Text className="mt-1 text-xs text-[#6B7280]">
                     Landmark: {selectedAddress.landmark}
                   </Text>
                 )}
@@ -598,8 +573,7 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
               <TouchableOpacity
                 onPress={() => setShowAddressSheet(true)}
                 className="ml-2 p-2"
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <EditIcon size={20} color="#055c3a" />
               </TouchableOpacity>
             </View>
@@ -608,21 +582,19 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
       ) : (
         <TouchableOpacity
           onPress={() => setShowAddressSheet(true)}
-          className="flex-row items-center justify-center border-2 border-dashed border-[#D1D5DB] rounded-xl py-6 mb-4"
-          activeOpacity={0.7}
-        >
+          className="mb-4 flex-row items-center justify-center rounded-xl border-2 border-dashed border-[#D1D5DB] py-6"
+          activeOpacity={0.7}>
           <AddressIcon size={24} color="#6B7280" />
           <Text
-            className="text-base font-medium text-[#6B7280] ml-2"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="ml-2 font-medium text-base text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Add Property Address
           </Text>
         </TouchableOpacity>
       )}
 
       {errors.location && (
-        <Text className="text-xs text-[#DC2626] mt-1 mb-4">{errors.location}</Text>
+        <Text className="mb-4 mt-1 text-xs text-[#DC2626]">{errors.location}</Text>
       )}
     </View>
   );
@@ -630,15 +602,11 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderPropertyProfile = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Property Profile
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Provide additional details about your property (all optional)
       </Text>
 
@@ -684,9 +652,8 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
 
       <View className="mb-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Age
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
@@ -695,19 +662,15 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
               <TouchableOpacity
                 key={option.value}
                 onPress={() => setAge(age === option.value ? '' : option.value)}
-                className={`border rounded-lg px-4 py-2 ${
+                className={`rounded-lg border px-4 py-2 ${
                   age === option.value
-                    ? 'bg-[#055c3a] border-[#055c3a]'
-                    : 'bg-white border-[#E5E7EB]'
+                    ? 'border-[#055c3a] bg-[#055c3a]'
+                    : 'border-[#E5E7EB] bg-white'
                 }`}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Text
-                  className={`text-sm ${
-                    age === option.value ? 'text-white' : 'text-[#111928]'
-                  }`}
-                  style={{ fontFamily: 'Inter-Medium' }}
-                >
+                  className={`text-sm ${age === option.value ? 'text-white' : 'text-[#111928]'}`}
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   {option.label}
                 </Text>
               </TouchableOpacity>
@@ -718,9 +681,8 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
 
       <View className="mb-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Furnishing Status
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
@@ -728,21 +690,21 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
             {furnishingOptions.map((option) => (
               <TouchableOpacity
                 key={option.value}
-                onPress={() => setFurnishingStatus(furnishingStatus === option.value ? '' : option.value)}
-                className={`border rounded-lg px-4 py-2 ${
+                onPress={() =>
+                  setFurnishingStatus(furnishingStatus === option.value ? '' : option.value)
+                }
+                className={`rounded-lg border px-4 py-2 ${
                   furnishingStatus === option.value
-                    ? 'bg-[#055c3a] border-[#055c3a]'
-                    : 'bg-white border-[#E5E7EB]'
+                    ? 'border-[#055c3a] bg-[#055c3a]'
+                    : 'border-[#E5E7EB] bg-white'
                 }`}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Text
                   className={`text-sm ${
                     furnishingStatus === option.value ? 'text-white' : 'text-[#111928]'
                   }`}
                   style={{ fontFamily: 'Inter-Medium' }}
-                  numberOfLines={1}
-                >
+                  numberOfLines={1}>
                   {option.label}
                 </Text>
               </TouchableOpacity>
@@ -756,34 +718,25 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderPhotos = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Photos
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
-        Add photos of your property (minimum 2 required) {errors.images && <Text className="text-[#DC2626]">*</Text>}
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+        Add photos of your property (minimum 2 required){' '}
+        {errors.images && <Text className="text-[#DC2626]">*</Text>}
       </Text>
 
       <TouchableOpacity
         onPress={pickImage}
-        className="border border-[#E5E7EB] rounded-lg p-4 items-center mb-4"
-        activeOpacity={0.7}
-      >
-        <Text
-          className="text-sm text-[#055c3a] font-medium"
-          style={{ fontFamily: 'Inter-Medium' }}
-        >
+        className="mb-4 items-center rounded-lg border border-[#E5E7EB] p-4"
+        activeOpacity={0.7}>
+        <Text className="font-medium text-sm text-[#055c3a]" style={{ fontFamily: 'Inter-Medium' }}>
           + Add Photos
         </Text>
       </TouchableOpacity>
 
-      {errors.images && (
-        <Text className="text-xs text-[#DC2626] mb-4">{errors.images}</Text>
-      )}
+      {errors.images && <Text className="mb-4 text-xs text-[#DC2626]">{errors.images}</Text>}
 
       {images.length > 0 && (
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
@@ -791,15 +744,14 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
             <View key={index} className="relative">
               <Image
                 source={{ uri: image.uri }}
-                className="w-24 h-24 rounded-lg"
+                className="h-24 w-24 rounded-lg"
                 resizeMode="cover"
               />
               <TouchableOpacity
                 onPress={() => removeImage(index)}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-[#DC2626] rounded-full items-center justify-center"
-                activeOpacity={0.7}
-              >
-                <Text className="text-white text-xs">×</Text>
+                className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-[#DC2626]"
+                activeOpacity={0.7}>
+                <Text className="text-xs text-white">×</Text>
               </TouchableOpacity>
             </View>
           ))}
@@ -811,15 +763,11 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderPricing = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Pricing
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Set the price for your property
       </Text>
 
@@ -849,11 +797,10 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         </View>
       )}
 
-      <View className="flex-row items-center justify-between mb-4">
+      <View className="mb-4 flex-row items-center justify-between">
         <Text
-          className="text-sm font-semibold text-[#111928]"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Price Negotiable
         </Text>
         <Switch
@@ -869,41 +816,39 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
   const renderReview = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Review Your Property
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please review all information before submitting
       </Text>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Basic Details
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">Title: {title}</Text>
-        <Text className="text-sm text-[#374151] mb-1">Type: {propertyType}</Text>
-        <Text className="text-sm text-[#374151]">Listing: {listingType === 'sale' ? 'For Sale' : 'For Rent'}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">Title: {title}</Text>
+        <Text className="mb-1 text-sm text-[#374151]">Type: {propertyType}</Text>
+        <Text className="text-sm text-[#374151]">
+          Listing: {listingType === 'sale' ? 'For Sale' : 'For Rent'}
+        </Text>
       </View>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Location
         </Text>
         {selectedAddress ? (
           <>
-            <Text className="text-sm text-[#374151] font-semibold mb-1">{selectedAddress.name}</Text>
-            <Text className="text-sm text-[#374151] mb-1">
+            <Text className="mb-1 font-semibold text-sm text-[#374151]">
+              {selectedAddress.name}
+            </Text>
+            <Text className="mb-1 text-sm text-[#374151]">
               {selectedAddress.house_number && `${selectedAddress.house_number}, `}
               {selectedAddress.address}
             </Text>
@@ -911,7 +856,9 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
               {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
             </Text>
             {selectedAddress.landmark && (
-              <Text className="text-xs text-[#6B7280] mt-1">Landmark: {selectedAddress.landmark}</Text>
+              <Text className="mt-1 text-xs text-[#6B7280]">
+                Landmark: {selectedAddress.landmark}
+              </Text>
             )}
           </>
         ) : (
@@ -919,30 +866,27 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         )}
       </View>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Pricing
         </Text>
-        <Text className="text-sm text-[#374151] mb-1">
+        <Text className="mb-1 text-sm text-[#374151]">
           {listingType === 'sale' ? `Sale Price: ₹${salePrice}` : `Monthly Rent: ₹${monthlyRent}`}
         </Text>
         <Text className="text-sm text-[#374151]">Negotiable: {priceNegotiable ? 'Yes' : 'No'}</Text>
       </View>
 
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-base font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-base text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Photos
         </Text>
         <Text className="text-sm text-[#374151]">
-          {images.length} image(s) uploaded {images.length < 2 && (
-            <Text className="text-[#DC2626]">(minimum 2 required)</Text>
-          )}
+          {images.length} image(s) uploaded{' '}
+          {images.length < 2 && <Text className="text-[#DC2626]">(minimum 2 required)</Text>}
         </Text>
       </View>
       <View className="pb-8" />
@@ -971,17 +915,15 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
       <KeyboardAvoidingView
         behavior="padding"
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] ml-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="ml-2 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {isEditing ? 'Edit Property' : 'Add Property'}
           </Text>
         </View>
@@ -993,13 +935,13 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
         <ScrollView
           className="flex-1 bg-[#F9FAFB]"
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {renderCurrentStep()}
         </ScrollView>
 
         {/* Navigation Buttons */}
-        <View className={`px-6 pt-4 bg-white border-t border-[#E5E7EB] ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
+        <View
+          className={`border-t border-[#E5E7EB] bg-white px-6 pt-4 ${isKeyboardVisible ? 'pb-4' : 'pb-12'}`}>
           <View className="flex-row" style={{ gap: 12 }}>
             {currentStep !== 'basic' && (
               <View className="flex-1">
@@ -1014,17 +956,21 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
             <View className="flex-1">
               {currentStep === 'review' ? (
                 <Button
-                  label={isSubmitting ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update Property' : 'Submit Property')}
+                  label={
+                    isSubmitting
+                      ? isEditing
+                        ? 'Updating...'
+                        : 'Submitting...'
+                      : isEditing
+                        ? 'Update Property'
+                        : 'Submit Property'
+                  }
                   onPress={handleSubmit}
                   isLoading={isSubmitting}
                   disabled={isSubmitting}
                 />
               ) : (
-                <Button
-                  label="Next"
-                  onPress={handleNext}
-                  disabled={isSubmitting}
-                />
+                <Button label="Next" onPress={handleNext} disabled={isSubmitting} />
               )}
             </View>
           </View>
@@ -1045,4 +991,3 @@ export default function AddPropertyScreen({ onBack, onSuccess, propertyToEdit }:
     </SafeAreaView>
   );
 }
-

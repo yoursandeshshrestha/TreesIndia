@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, Animated, Easing, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  Animated,
+  Easing,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Booking } from '../../../types/booking';
 import Button from '../../../components/ui/Button';
@@ -168,7 +178,7 @@ export default function QuoteAcceptanceBottomSheet({
             setIsProcessingPayment(false);
             return;
           }
-          
+
           await bookingService.processQuoteWalletPayment(
             bookingId,
             remainingAmount,
@@ -180,7 +190,7 @@ export default function QuoteAcceptanceBottomSheet({
           if (!nextPendingSegment) {
             throw new Error('No pending payment segment found');
           }
-          
+
           await bookingService.paySegment(
             bookingId,
             nextPendingSegment.segment_number || 1,
@@ -188,20 +198,16 @@ export default function QuoteAcceptanceBottomSheet({
             'wallet'
           );
         }
-        
+
         setIsRedirecting(true);
-        Alert.alert(
-          'Payment Successful',
-          'Your payment has been processed successfully.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                onSuccess();
-              },
+        Alert.alert('Payment Successful', 'Your payment has been processed successfully.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              onSuccess();
             },
-          ]
-        );
+          },
+        ]);
       } else {
         // Razorpay payment
         if (isSegmentedPayment) {
@@ -230,7 +236,7 @@ export default function QuoteAcceptanceBottomSheet({
           onClose();
 
           // Wait for modals to close before opening Razorpay
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
           // Open Razorpay checkout
           const options = {
@@ -260,18 +266,14 @@ export default function QuoteAcceptanceBottomSheet({
                 );
 
                 setIsRedirecting(true);
-                Alert.alert(
-                  'Payment Successful',
-                  'Your payment has been processed successfully.',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        onSuccess();
-                      },
+                Alert.alert('Payment Successful', 'Your payment has been processed successfully.', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onSuccess();
                     },
-                  ]
-                );
+                  },
+                ]);
               } catch (error: any) {
                 Alert.alert(
                   'Payment Error',
@@ -289,26 +291,23 @@ export default function QuoteAcceptanceBottomSheet({
               const isCancelled =
                 error.code === 'PAYMENT_CANCELLED' ||
                 error.code === '2' ||
-                (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+                (error.code === 'UNKNOWN_ERROR' &&
+                  error.description?.toLowerCase().includes('cancel')) ||
                 // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
                 (error.code === 'BAD_REQUEST_ERROR' &&
-                 (error.description === 'undefined' || error.reason === 'payment_error'));
+                  (error.description === 'undefined' || error.reason === 'payment_error'));
 
               // Handle different error cases
               if (isCancelled) {
                 // User cancelled payment - close sheet
-                Alert.alert(
-                  'Payment Cancelled',
-                  'You cancelled the payment.',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        onClose(); // Close the bottom sheet
-                      },
+                Alert.alert('Payment Cancelled', 'You cancelled the payment.', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onClose(); // Close the bottom sheet
                     },
-                  ]
-                );
+                  },
+                ]);
               } else {
                 Alert.alert(
                   'Payment Error',
@@ -351,7 +350,7 @@ export default function QuoteAcceptanceBottomSheet({
           onClose();
 
           // Wait for modals to close before opening Razorpay
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
           // Open Razorpay checkout
           const options = {
@@ -376,18 +375,14 @@ export default function QuoteAcceptanceBottomSheet({
                 await bookingService.verifyQuotePayment(bookingId, razorpayData);
 
                 setIsRedirecting(true);
-                Alert.alert(
-                  'Payment Successful',
-                  'Your payment has been processed successfully.',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        onSuccess();
-                      },
+                Alert.alert('Payment Successful', 'Your payment has been processed successfully.', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onSuccess();
                     },
-                  ]
-                );
+                  },
+                ]);
               } catch (error: any) {
                 Alert.alert(
                   'Payment Error',
@@ -405,26 +400,23 @@ export default function QuoteAcceptanceBottomSheet({
               const isCancelled =
                 error.code === 'PAYMENT_CANCELLED' ||
                 error.code === '2' ||
-                (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+                (error.code === 'UNKNOWN_ERROR' &&
+                  error.description?.toLowerCase().includes('cancel')) ||
                 // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
                 (error.code === 'BAD_REQUEST_ERROR' &&
-                 (error.description === 'undefined' || error.reason === 'payment_error'));
+                  (error.description === 'undefined' || error.reason === 'payment_error'));
 
               // Handle different error cases
               if (isCancelled) {
                 // User cancelled payment - close sheet
-                Alert.alert(
-                  'Payment Cancelled',
-                  'You cancelled the payment.',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        onClose(); // Close the bottom sheet
-                      },
+                Alert.alert('Payment Cancelled', 'You cancelled the payment.', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onClose(); // Close the bottom sheet
                     },
-                  ]
-                );
+                  },
+                ]);
               } else {
                 Alert.alert(
                   'Payment Error',
@@ -463,10 +455,9 @@ export default function QuoteAcceptanceBottomSheet({
   const nextPendingSegment = isSegmentedPayment
     ? paymentSegments.find((seg: any) => seg.status === 'pending')
     : null;
-  const amountToPay = isSegmentedPayment && nextPendingSegment
-    ? nextPendingSegment.amount
-    : remainingAmount;
-  
+  const amountToPay =
+    isSegmentedPayment && nextPendingSegment ? nextPendingSegment.amount : remainingAmount;
+
   const canPay = remainingAmount > 0;
 
   // Get contact and address info
@@ -535,21 +526,15 @@ export default function QuoteAcceptanceBottomSheet({
       transparent
       animationType="none"
       onRequestClose={handleClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <View className="flex-1">
         {/* Overlay */}
         <Animated.View
           style={{
             opacity: overlayOpacity,
           }}
-          className="absolute inset-0 bg-black/50"
-        >
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={handleClose}
-          />
+          className="absolute inset-0 bg-black/50">
+          <TouchableOpacity className="flex-1" activeOpacity={1} onPress={handleClose} />
         </Animated.View>
 
         {/* Floating Close Button */}
@@ -560,11 +545,10 @@ export default function QuoteAcceptanceBottomSheet({
             right: 16,
             transform: [{ translateY }],
             zIndex: 30,
-          }}
-        >
+          }}>
           <TouchableOpacity
             onPress={handleClose}
-            className="w-12 h-12 bg-white rounded-full items-center justify-center"
+            className="h-12 w-12 items-center justify-center rounded-full bg-white"
             style={{
               marginTop: -56,
               shadowColor: '#000',
@@ -572,8 +556,7 @@ export default function QuoteAcceptanceBottomSheet({
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 4,
-            }}
-          >
+            }}>
             <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
           </TouchableOpacity>
         </Animated.View>
@@ -586,14 +569,12 @@ export default function QuoteAcceptanceBottomSheet({
             display: 'flex',
             flexDirection: 'column',
           }}
-          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl min-h-[70%] max-h-[70%]"
-        >
+          className="absolute bottom-0 left-0 right-0 max-h-[70%] min-h-[70%] rounded-t-3xl bg-white">
           {/* Header - Fixed */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+          <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
             <Text
-              className="text-lg font-semibold text-[#111928]"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Accept Quote
             </Text>
           </View>
@@ -604,266 +585,234 @@ export default function QuoteAcceptanceBottomSheet({
             contentContainerStyle={{
               paddingHorizontal: 24,
               paddingTop: 16,
-              paddingBottom: 16
+              paddingBottom: 16,
             }}
-            showsVerticalScrollIndicator={false}
-          >
-              <View>
-                {/* Contact Details - Read Only */}
-                <View className="mb-4 pb-4 -mx-6 px-6 border-b border-[#E5E7EB]">
-                  <View className="flex-row items-start gap-3">
-                    <View className="w-8 h-8 bg-[#F3F4F6] rounded-full items-center justify-center mt-1">
-                      <PhoneIcon size={16} color="#6B7280" />
-                    </View>
-                    <View className="flex-1">
-                      <Text
-                        className="text-xs font-semibold text-[#6B7280] mb-1"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
-                        Send booking details to
-                      </Text>
-                      <Text
-                        className="text-sm text-[#111928]"
-                        style={{ fontFamily: 'Inter-Medium' }}
-                      >
-                        {contactPerson || 'N/A'}
-                      </Text>
-                      {contactPhone && (
-                        <Text
-                          className="text-sm text-[#6B7280] mt-1"
-                          style={{ fontFamily: 'Inter-Regular' }}
-                        >
-                          {contactPhone}
-                        </Text>
-                      )}
-                    </View>
+            showsVerticalScrollIndicator={false}>
+            <View>
+              {/* Contact Details - Read Only */}
+              <View className="-mx-6 mb-4 border-b border-[#E5E7EB] px-6 pb-4">
+                <View className="flex-row items-start gap-3">
+                  <View className="mt-1 h-8 w-8 items-center justify-center rounded-full bg-[#F3F4F6]">
+                    <PhoneIcon size={16} color="#6B7280" />
                   </View>
-                </View>
-
-                {/* Address - Read Only */}
-                <View className="mb-4 pb-4 -mx-6 px-6 border-b border-[#E5E7EB]">
-                  <View className="flex-row items-start gap-3">
-                    <View className="w-8 h-8 bg-[#F3F4F6] rounded-full items-center justify-center mt-1">
-                      <LocationIcon size={16} color="#6B7280" />
-                    </View>
-                    <View className="flex-1">
+                  <View className="flex-1">
+                    <Text
+                      className="mb-1 font-semibold text-xs text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
+                      Send booking details to
+                    </Text>
+                    <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
+                      {contactPerson || 'N/A'}
+                    </Text>
+                    {contactPhone && (
                       <Text
-                        className="text-xs font-semibold text-[#6B7280] mb-1"
-                        style={{ fontFamily: 'Inter-SemiBold' }}
-                      >
-                        Address
+                        className="mt-1 text-sm text-[#6B7280]"
+                        style={{ fontFamily: 'Inter-Regular' }}>
+                        {contactPhone}
                       </Text>
-                      <Text
-                        className="text-sm text-[#111928]"
-                        style={{ fontFamily: 'Inter-Medium' }}
-                      >
-                        {addressName}
-                      </Text>
-                      <Text
-                        className="text-xs text-[#6B7280] mt-1"
-                        style={{ fontFamily: 'Inter-Regular' }}
-                      >
-                        {addressDetails}
-                        {addressCity && `, ${addressCity}`}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Quote Information */}
-                <View className="mb-4">
-                  <Text
-                    className="text-xs font-semibold text-[#6B7280] mb-2"
-                    style={{ fontFamily: 'Inter-SemiBold' }}
-                  >
-                    QUOTE AMOUNT
-                  </Text>
-                  <Text
-                    className="text-2xl font-bold text-[#00a871] mb-1"
-                    style={{ fontFamily: 'Inter-Bold' }}
-                  >
-                    ₹{quoteAmount.toLocaleString('en-IN')}
-                  </Text>
-                  {paidAmount > 0 && (
-                    <Text
-                      className="text-sm text-[#6B7280]"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Paid: ₹{paidAmount.toLocaleString('en-IN')}
-                    </Text>
-                  )}
-                  {remainingAmount > 0 && isSegmentedPayment && (
-                    <Text
-                      className="text-sm text-[#6B7280] mt-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Remaining: ₹{remainingAmount.toLocaleString('en-IN')}
-                    </Text>
-                  )}
-                  {isSegmentedPayment && (
-                    <Text
-                      className="text-xs text-[#6B7280] mt-2"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Payment Type: Segmented Payment ({paymentSegments.length} segments)
-                    </Text>
-                  )}
-                  {isSinglePayment && (
-                    <Text
-                      className="text-xs text-[#6B7280] mt-2"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
-                      Payment Type: Single Payment
-                    </Text>
-                  )}
-                </View>
-
-                {/* Segment Breakdown - Only for segmented payments */}
-                {isSegmentedPayment && paymentSegments.length > 0 && (
-                  <View className="mb-4">
-                    <Text
-                      className="text-xs font-semibold text-[#6B7280] mb-3"
-                      style={{ fontFamily: 'Inter-SemiBold' }}
-                    >
-                      PAYMENT SEGMENTS
-                    </Text>
-                    <View>
-                      {paymentSegments.map((segment: any, index: number) => {
-                        const isPaid = segment.status === 'paid';
-                        const isPending = segment.status === 'pending';
-                        return (
-                          <View
-                            key={segment.id || segment.segment_number || index}
-                            className={`bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-3 ${index < paymentSegments.length - 1 ? 'mb-2' : ''}`}
-                          >
-                            <View className="flex-row items-center justify-between">
-                              <View className="flex-1">
-                                <Text
-                                  className="text-sm font-semibold text-[#111928] mb-1"
-                                  style={{ fontFamily: 'Inter-SemiBold' }}
-                                >
-                                  Segment {segment.segment_number || index + 1}
-                                </Text>
-                                <Text
-                                  className="text-lg font-bold text-[#00a871]"
-                                  style={{ fontFamily: 'Inter-Bold' }}
-                                >
-                                  ₹{segment.amount?.toLocaleString('en-IN') || '0'}
-                                </Text>
-                              </View>
-                              <View
-                                className={`px-3 py-1.5 rounded-lg ${
-                                  isPaid
-                                    ? 'bg-[#D1FAE5]'
-                                    : isPending
-                                    ? 'bg-[#FEF3C7]'
-                                    : 'bg-[#FEE2E2]'
-                                }`}
-                              >
-                                <Text
-                                  className={`text-xs font-semibold ${
-                                    isPaid
-                                      ? 'text-[#065F46]'
-                                      : isPending
-                                      ? 'text-[#92400E]'
-                                      : 'text-[#991B1B]'
-                                  }`}
-                                  style={{ fontFamily: 'Inter-SemiBold' }}
-                                >
-                                  {isPaid ? 'PAID' : isPending ? 'PENDING' : 'OVERDUE'}
-                                </Text>
-                              </View>
-                            </View>
-                            {segment.paid_at && (
-                              <Text
-                                className="text-xs text-[#6B7280] mt-2"
-                                style={{ fontFamily: 'Inter-Regular' }}
-                              >
-                                Paid on {formatDate(String(segment.paid_at))}
-                              </Text>
-                            )}
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                )}
-
-                {/* Date/Time Selection - Only for single payment */}
-                {isSinglePayment && (
-                  <View className="mb-4">
-                    {!selectedDate ? (
-                      <>
-                        <Text
-                          className="text-sm font-semibold text-[#111928] mb-3"
-                          style={{ fontFamily: 'Inter-SemiBold' }}
-                        >
-                          Select Date & Time
-                        </Text>
-                        <Button
-                          label="Select Date & Time"
-                          onPress={() => {
-                            if (booking.service) {
-                              setShowSlotSheet(true);
-                            }
-                          }}
-                          variant="outline"
-                          className="mb-2"
-                        />
-                      </>
-                    ) : (
-                      <View className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4 mb-2">
-                        <View className="flex-row items-center justify-between">
-                          <View className="flex-1">
-                            <Text
-                              className="text-sm font-semibold text-[#111928] mb-1"
-                              style={{ fontFamily: 'Inter-SemiBold' }}
-                            >
-                              {formatDate(selectedDate)}
-                            </Text>
-                            <Text
-                              className="text-sm text-[#6B7280]"
-                              style={{ fontFamily: 'Inter-Medium' }}
-                            >
-                              {selectedSlot?.start_time 
-                                ? formatTime(selectedSlot.start_time) 
-                                : selectedSlot?.time 
-                                  ? formatTime(selectedSlot.time) 
-                                  : 'N/A'}
-                            </Text>
-                          </View>
-                          <TouchableOpacity
-                            onPress={() => {
-                              setSelectedDate(null);
-                              setSelectedSlot(null);
-                              setCurrentStep('date');
-                            }}
-                            className="ml-4"
-                          >
-                            <Text
-                              className="text-sm text-[#055c3a] font-semibold"
-                              style={{ fontFamily: 'Inter-SemiBold' }}
-                            >
-                              Change
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
                     )}
                   </View>
+                </View>
+              </View>
+
+              {/* Address - Read Only */}
+              <View className="-mx-6 mb-4 border-b border-[#E5E7EB] px-6 pb-4">
+                <View className="flex-row items-start gap-3">
+                  <View className="mt-1 h-8 w-8 items-center justify-center rounded-full bg-[#F3F4F6]">
+                    <LocationIcon size={16} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="mb-1 font-semibold text-xs text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-SemiBold' }}>
+                      Address
+                    </Text>
+                    <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
+                      {addressName}
+                    </Text>
+                    <Text
+                      className="mt-1 text-xs text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
+                      {addressDetails}
+                      {addressCity && `, ${addressCity}`}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Quote Information */}
+              <View className="mb-4">
+                <Text
+                  className="mb-2 font-semibold text-xs text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
+                  QUOTE AMOUNT
+                </Text>
+                <Text
+                  className="mb-1 font-bold text-2xl text-[#00a871]"
+                  style={{ fontFamily: 'Inter-Bold' }}>
+                  ₹{quoteAmount.toLocaleString('en-IN')}
+                </Text>
+                {paidAmount > 0 && (
+                  <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+                    Paid: ₹{paidAmount.toLocaleString('en-IN')}
+                  </Text>
+                )}
+                {remainingAmount > 0 && isSegmentedPayment && (
+                  <Text
+                    className="mt-1 text-sm text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    Remaining: ₹{remainingAmount.toLocaleString('en-IN')}
+                  </Text>
+                )}
+                {isSegmentedPayment && (
+                  <Text
+                    className="mt-2 text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    Payment Type: Segmented Payment ({paymentSegments.length} segments)
+                  </Text>
+                )}
+                {isSinglePayment && (
+                  <Text
+                    className="mt-2 text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
+                    Payment Type: Single Payment
+                  </Text>
                 )}
               </View>
+
+              {/* Segment Breakdown - Only for segmented payments */}
+              {isSegmentedPayment && paymentSegments.length > 0 && (
+                <View className="mb-4">
+                  <Text
+                    className="mb-3 font-semibold text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-SemiBold' }}>
+                    PAYMENT SEGMENTS
+                  </Text>
+                  <View>
+                    {paymentSegments.map((segment: any, index: number) => {
+                      const isPaid = segment.status === 'paid';
+                      const isPending = segment.status === 'pending';
+                      return (
+                        <View
+                          key={segment.id || segment.segment_number || index}
+                          className={`rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3 ${index < paymentSegments.length - 1 ? 'mb-2' : ''}`}>
+                          <View className="flex-row items-center justify-between">
+                            <View className="flex-1">
+                              <Text
+                                className="mb-1 font-semibold text-sm text-[#111928]"
+                                style={{ fontFamily: 'Inter-SemiBold' }}>
+                                Segment {segment.segment_number || index + 1}
+                              </Text>
+                              <Text
+                                className="font-bold text-lg text-[#00a871]"
+                                style={{ fontFamily: 'Inter-Bold' }}>
+                                ₹{segment.amount?.toLocaleString('en-IN') || '0'}
+                              </Text>
+                            </View>
+                            <View
+                              className={`rounded-lg px-3 py-1.5 ${
+                                isPaid
+                                  ? 'bg-[#D1FAE5]'
+                                  : isPending
+                                    ? 'bg-[#FEF3C7]'
+                                    : 'bg-[#FEE2E2]'
+                              }`}>
+                              <Text
+                                className={`font-semibold text-xs ${
+                                  isPaid
+                                    ? 'text-[#065F46]'
+                                    : isPending
+                                      ? 'text-[#92400E]'
+                                      : 'text-[#991B1B]'
+                                }`}
+                                style={{ fontFamily: 'Inter-SemiBold' }}>
+                                {isPaid ? 'PAID' : isPending ? 'PENDING' : 'OVERDUE'}
+                              </Text>
+                            </View>
+                          </View>
+                          {segment.paid_at && (
+                            <Text
+                              className="mt-2 text-xs text-[#6B7280]"
+                              style={{ fontFamily: 'Inter-Regular' }}>
+                              Paid on {formatDate(String(segment.paid_at))}
+                            </Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Date/Time Selection - Only for single payment */}
+              {isSinglePayment && (
+                <View className="mb-4">
+                  {!selectedDate ? (
+                    <>
+                      <Text
+                        className="mb-3 font-semibold text-sm text-[#111928]"
+                        style={{ fontFamily: 'Inter-SemiBold' }}>
+                        Select Date & Time
+                      </Text>
+                      <Button
+                        label="Select Date & Time"
+                        onPress={() => {
+                          if (booking.service) {
+                            setShowSlotSheet(true);
+                          }
+                        }}
+                        variant="outline"
+                        className="mb-2"
+                      />
+                    </>
+                  ) : (
+                    <View className="mb-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <Text
+                            className="mb-1 font-semibold text-sm text-[#111928]"
+                            style={{ fontFamily: 'Inter-SemiBold' }}>
+                            {formatDate(selectedDate)}
+                          </Text>
+                          <Text
+                            className="text-sm text-[#6B7280]"
+                            style={{ fontFamily: 'Inter-Medium' }}>
+                            {selectedSlot?.start_time
+                              ? formatTime(selectedSlot.start_time)
+                              : selectedSlot?.time
+                                ? formatTime(selectedSlot.time)
+                                : 'N/A'}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedDate(null);
+                            setSelectedSlot(null);
+                            setCurrentStep('date');
+                          }}
+                          className="ml-4">
+                          <Text
+                            className="font-semibold text-sm text-[#055c3a]"
+                            style={{ fontFamily: 'Inter-SemiBold' }}>
+                            Change
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
           </ScrollView>
 
           {/* Action Buttons - Fixed at bottom */}
           {canPay && (
             <SafeAreaView edges={['bottom']} style={{ backgroundColor: 'white' }}>
-              <View className="px-6 pt-4 pb-12 border-t border-[#E5E7EB]">
+              <View className="border-t border-[#E5E7EB] px-6 pb-12 pt-4">
                 {isSinglePayment && !selectedDate && (
                   <Text
-                    className="text-xs text-[#B3261E] mb-2 text-center"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mb-2 text-center text-xs text-[#B3261E]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     Please select date and time before proceeding
                   </Text>
                 )}
@@ -923,27 +872,23 @@ export default function QuoteAcceptanceBottomSheet({
             backgroundColor: 'rgba(0, 0, 0, 0.6)',
             justifyContent: 'center',
             alignItems: 'center',
-          }}
-        >
+          }}>
           <View
             style={{
               backgroundColor: 'white',
               padding: 32,
               borderRadius: 16,
               alignItems: 'center',
-            }}
-          >
+            }}>
             <ActivityIndicator size="large" color="#055c3a" />
             <Text
-              className="text-[#111928] mt-4 text-lg font-semibold"
-              style={{ fontFamily: 'Inter-SemiBold' }}
-            >
+              className="mt-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Payment Successful!
             </Text>
             <Text
-              className="text-[#6B7280] mt-2 text-center"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+              className="mt-2 text-center text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Regular' }}>
               Loading your bookings...
             </Text>
           </View>
@@ -952,4 +897,3 @@ export default function QuoteAcceptanceBottomSheet({
     </Modal>
   );
 }
-

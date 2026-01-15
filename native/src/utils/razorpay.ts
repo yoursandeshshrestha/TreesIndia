@@ -47,8 +47,8 @@ export interface RazorpayError {
 }
 
 // Detect if we're in Expo Go by checking for __expo module
-const isExpoGo = typeof (global as any).__expo !== 'undefined' &&
-                 !(global as any).__DEV__ === false;
+const isExpoGo =
+  typeof (global as any).__expo !== 'undefined' && !(global as any).__DEV__ === false;
 
 // Function to safely load Razorpay module
 function loadRazorpayModule(): any {
@@ -105,7 +105,9 @@ class RazorpayService {
     }
 
     if (!this.razorpayModule) {
-      throw new Error('Failed to load Razorpay module. Please ensure react-native-razorpay is installed.');
+      throw new Error(
+        'Failed to load Razorpay module. Please ensure react-native-razorpay is installed.'
+      );
     }
 
     try {
@@ -174,7 +176,8 @@ class RazorpayService {
       await this.initialize();
       paymentLogger.debug('Razorpay SDK initialized successfully');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize payment gateway';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to initialize payment gateway';
       paymentLogger.error('Failed to initialize Razorpay SDK', error);
       Alert.alert('Payment Error', errorMessage, [{ text: 'OK' }]);
       onError({
@@ -279,7 +282,11 @@ class RazorpayService {
 
       const razorpayError: RazorpayError = {
         code: errorObj.code || errorObj.error?.code || 'UNKNOWN_ERROR',
-        description: errorObj.description || errorObj.error?.description || errorObj.message || 'Payment failed',
+        description:
+          errorObj.description ||
+          errorObj.error?.description ||
+          errorObj.message ||
+          'Payment failed',
         source: errorObj.source || errorObj.error?.source || 'user',
         step: errorObj.step || errorObj.error?.step || 'payment',
         reason: errorObj.reason || errorObj.error?.reason || 'unknown',
@@ -290,10 +297,11 @@ class RazorpayService {
       const isCancelled =
         razorpayError.code === 'PAYMENT_CANCELLED' ||
         razorpayError.code === '2' ||
-        (razorpayError.code === 'UNKNOWN_ERROR' && razorpayError.description?.toLowerCase().includes('cancel')) ||
+        (razorpayError.code === 'UNKNOWN_ERROR' &&
+          razorpayError.description?.toLowerCase().includes('cancel')) ||
         // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
         (razorpayError.code === 'BAD_REQUEST_ERROR' &&
-         (razorpayError.description === 'undefined' || razorpayError.reason === 'payment_error'));
+          (razorpayError.description === 'undefined' || razorpayError.reason === 'payment_error'));
 
       // Log appropriately based on error type
       if (isCancelled) {

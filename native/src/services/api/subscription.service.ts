@@ -191,7 +191,10 @@ class SubscriptionService {
   /**
    * Create payment order for Razorpay
    */
-  async createPaymentOrder(planId: number, durationType?: 'monthly' | 'yearly'): Promise<{
+  async createPaymentOrder(
+    planId: number,
+    durationType?: 'monthly' | 'yearly'
+  ): Promise<{
     payment: {
       ID: number;
       id?: number;
@@ -210,16 +213,19 @@ class SubscriptionService {
       key_id?: string;
     };
   }> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/subscriptions/create-payment-order`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        plan_id: planId,
-        ...(durationType && { duration_type: durationType }),
-      }),
-    });
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/subscriptions/create-payment-order`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan_id: planId,
+          ...(durationType && { duration_type: durationType }),
+        }),
+      }
+    );
 
     const data = await handleResponse<any>(response);
     return data;
@@ -282,4 +288,3 @@ class SubscriptionService {
 }
 
 export const subscriptionService = new SubscriptionService();
-

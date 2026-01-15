@@ -16,10 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../../components/ui/Button';
 import CancelIcon from '../../../components/icons/CancelIcon';
-import {
-  workerWithdrawalService,
-  WorkerWithdrawalRequest,
-} from '../../../services';
+import { workerWithdrawalService, WorkerWithdrawalRequest } from '../../../services';
 
 interface WithdrawalRequestBottomSheetProps {
   visible: boolean;
@@ -148,13 +145,11 @@ export default function WithdrawalRequestBottomSheet({
       transparent
       animationType="none"
       onRequestClose={handleClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <View className="flex-1">
           {/* Overlay */}
           <Animated.View
@@ -162,8 +157,7 @@ export default function WithdrawalRequestBottomSheet({
               flex: 1,
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               opacity: overlayOpacity,
-            }}
-          >
+            }}>
             <TouchableOpacity
               className="flex-1"
               activeOpacity={1}
@@ -180,12 +174,11 @@ export default function WithdrawalRequestBottomSheet({
               right: 16,
               transform: [{ translateY }],
               zIndex: 30,
-            }}
-          >
+            }}>
             <TouchableOpacity
               onPress={handleClose}
               disabled={isProcessing}
-              className="w-12 h-12 bg-white rounded-full items-center justify-center"
+              className="h-12 w-12 items-center justify-center rounded-full bg-white"
               style={{
                 marginTop: -56,
                 shadowColor: '#000',
@@ -193,8 +186,7 @@ export default function WithdrawalRequestBottomSheet({
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
                 elevation: 4,
-              }}
-            >
+              }}>
               <CancelIcon size={24} color="#6B7280" strokeWidth={2} />
             </TouchableOpacity>
           </Animated.View>
@@ -217,25 +209,22 @@ export default function WithdrawalRequestBottomSheet({
               shadowRadius: 12,
               elevation: 8,
               overflow: 'hidden',
-            }}
-          >
+            }}>
             <View className="flex-1 bg-white">
               {/* Header */}
-              <View className="flex-row items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+              <View className="flex-row items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
                 <View className="flex-1">
                   <Text
-                    className="text-lg font-bold text-[#111928]"
-                    style={{ fontFamily: 'Inter-Bold' }}
-                  >
+                    className="font-bold text-lg text-[#111928]"
+                    style={{ fontFamily: 'Inter-Bold' }}>
                     Request Withdrawal
                   </Text>
                   <Text
-                    className="text-sm text-[#6B7280] mt-1"
+                    className="mt-1 text-sm text-[#6B7280]"
                     style={{
                       fontFamily: 'Inter-Regular',
                       ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                    }}
-                  >
+                    }}>
                     Funds will be transferred to your bank account
                   </Text>
                 </View>
@@ -243,23 +232,23 @@ export default function WithdrawalRequestBottomSheet({
 
               {/* Content - Scrollable */}
               <ScrollView
-                contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16, paddingBottom: 20 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 16,
+                  paddingBottom: 20,
+                }}
                 showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-
+                keyboardShouldPersistTaps="handled">
                 {/* Available Balance Info */}
-                <View className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+                <View className="mb-6 rounded-xl bg-[#F9FAFB] p-4">
                   <Text
-                    className="text-xs text-[#6B7280] mb-1"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-1 text-xs text-[#6B7280]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Available Balance
                   </Text>
                   <Text
-                    className="text-2xl font-bold text-[#111928]"
-                    style={{ fontFamily: 'Inter-Bold' }}
-                  >
+                    className="font-bold text-2xl text-[#111928]"
+                    style={{ fontFamily: 'Inter-Bold' }}>
                     ₹{availableBalance.toLocaleString('en-IN')}
                   </Text>
                 </View>
@@ -267,26 +256,23 @@ export default function WithdrawalRequestBottomSheet({
                 {/* Amount Input */}
                 <View className="mb-4">
                   <Text
-                    className="text-sm font-medium text-[#374151] mb-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-2 font-medium text-sm text-[#374151]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Withdrawal Amount
                   </Text>
                   <View
-                    className={`border rounded-xl ${
+                    className={`rounded-xl border ${
                       amountError ? 'border-[#DC2626]' : 'border-[#E5E7EB]'
                     }`}
-                    style={{ minHeight: 48 }}
-                  >
+                    style={{ minHeight: 48 }}>
                     <View className="flex-row items-center px-4" style={{ minHeight: 48 }}>
                       <Text
-                        className="text-base text-[#111928] mr-2"
+                        className="mr-2 text-base text-[#111928]"
                         style={{
                           fontFamily: 'Inter-Regular',
                           lineHeight: Platform.OS === 'ios' ? 20 : 22,
                           ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                        }}
-                      >
+                        }}>
                         ₹
                       </Text>
                       <TextInput
@@ -317,9 +303,8 @@ export default function WithdrawalRequestBottomSheet({
                   </View>
                   {amountError && (
                     <Text
-                      className="text-xs text-[#DC2626] mt-1"
-                      style={{ fontFamily: 'Inter-Regular' }}
-                    >
+                      className="mt-1 text-xs text-[#DC2626]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {amountError}
                     </Text>
                   )}
@@ -328,15 +313,11 @@ export default function WithdrawalRequestBottomSheet({
                 {/* Notes (Optional) */}
                 <View className="mb-4">
                   <Text
-                    className="text-sm font-medium text-[#374151] mb-2"
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className="mb-2 font-medium text-sm text-[#374151]"
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     Notes (Optional)
                   </Text>
-                  <View
-                    className="border border-[#E5E7EB] rounded-xl"
-                    style={{ minHeight: 80 }}
-                  >
+                  <View className="rounded-xl border border-[#E5E7EB]" style={{ minHeight: 80 }}>
                     <TextInput
                       value={notes}
                       onChangeText={setNotes}
@@ -359,15 +340,15 @@ export default function WithdrawalRequestBottomSheet({
                 </View>
 
                 {/* Info Note */}
-                <View className="bg-[#F9FAFB] rounded-xl p-4">
+                <View className="rounded-xl bg-[#F9FAFB] p-4">
                   <Text
                     className="text-xs text-[#6B7280]"
                     style={{
                       fontFamily: 'Inter-Regular',
                       lineHeight: 16,
-                    }}
-                  >
-                    Funds will be transferred to your registered bank account after admin approval. Make sure your bank details are up to date in your profile.
+                    }}>
+                    Funds will be transferred to your registered bank account after admin approval.
+                    Make sure your bank details are up to date in your profile.
                   </Text>
                 </View>
               </ScrollView>
@@ -382,8 +363,7 @@ export default function WithdrawalRequestBottomSheet({
                     shadowOpacity: 0.05,
                     shadowRadius: 8,
                     elevation: 8,
-                  }}
-                >
+                  }}>
                   <View className="px-5">
                     <Button
                       label="Submit Request"

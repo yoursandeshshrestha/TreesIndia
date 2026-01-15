@@ -40,5 +40,3 @@ export default function PropertyIcon({ size = 24, color = 'currentColor' }: Prop
     </Svg>
   );
 }
-
-

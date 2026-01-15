@@ -13,12 +13,7 @@ const fontFamilyMap = {
   bold: 'Inter-Bold',
 };
 
-export default function Text({
-  className = '',
-  variant = 'regular',
-  style,
-  ...props
-}: TextProps) {
+export default function Text({ className = '', variant = 'regular', style, ...props }: TextProps) {
   return (
     <RNText
       className={className}
@@ -27,4 +22,3 @@ export default function Text({
     />
   );
 }
-

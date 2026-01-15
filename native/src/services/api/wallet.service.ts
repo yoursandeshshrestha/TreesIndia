@@ -81,16 +81,11 @@ class WalletService {
     return handleResponse<WalletTransactionsResponse>(response);
   }
 
-  async initiateRecharge(
-    data: InitiateRechargeRequest
-  ): Promise<InitiateRechargeResponse> {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/wallet/recharge`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    );
+  async initiateRecharge(data: InitiateRechargeRequest): Promise<InitiateRechargeResponse> {
+    const response = await authenticatedFetch(`${API_BASE_URL}/wallet/recharge`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
     return handleResponse<InitiateRechargeResponse>(response);
   }
 
@@ -126,4 +121,3 @@ class WalletService {
 }
 
 export const walletService = new WalletService();
-

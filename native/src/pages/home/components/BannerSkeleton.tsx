@@ -27,7 +27,7 @@ export default function BannerSkeleton() {
   });
 
   return (
-    <View className="pt-4 pb-4" style={{ backgroundColor: 'white' }}>
+    <View className="pb-4 pt-4" style={{ backgroundColor: 'white' }}>
       <Animated.View
         style={{
           height: BANNER_HEIGHT,
@@ -38,7 +38,7 @@ export default function BannerSkeleton() {
       />
 
       {/* Page Indicators skeleton */}
-      <View className="flex-row justify-center mt-3" style={{ gap: 6 }}>
+      <View className="mt-3 flex-row justify-center" style={{ gap: 6 }}>
         {[1, 2, 3].map((index) => (
           <Animated.View
             key={index}

@@ -129,33 +129,38 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
       if (profile) {
         const newFormData = {
           contactInfo: {
-            alternative_number: profile.alternative_number || profile.contact_info?.alternative_number || '',
+            alternative_number:
+              profile.alternative_number || profile.contact_info?.alternative_number || '',
           },
-          address: profile.address ? {
-            id: 0,
-            name: '',
-            house_number: '',
-            street: profile.address.street || '',
-            city: profile.address.city || '',
-            state: profile.address.state || '',
-            pincode: profile.address.pincode || '',
-            landmark: profile.address.landmark || '',
-            lat: profile.address.lat,
-            lng: profile.address.lng,
-          } : null,
+          address: profile.address
+            ? {
+                id: 0,
+                name: '',
+                house_number: '',
+                street: profile.address.street || '',
+                city: profile.address.city || '',
+                state: profile.address.state || '',
+                pincode: profile.address.pincode || '',
+                landmark: profile.address.landmark || '',
+                lat: profile.address.lat,
+                lng: profile.address.lng,
+              }
+            : null,
           skills: Array.isArray(profile.skills) ? profile.skills : [],
           experienceYears: profile.experience_years?.toString() || '0',
-          bankingInfo: profile.banking_info ? {
-            account_holder_name: profile.banking_info.account_holder_name || '',
-            account_number: profile.banking_info.account_number || '',
-            ifsc_code: profile.banking_info.ifsc_code || '',
-            bank_name: profile.banking_info.bank_name || '',
-          } : {
-            account_holder_name: '',
-            account_number: '',
-            ifsc_code: '',
-            bank_name: '',
-          },
+          bankingInfo: profile.banking_info
+            ? {
+                account_holder_name: profile.banking_info.account_holder_name || '',
+                account_number: profile.banking_info.account_number || '',
+                ifsc_code: profile.banking_info.ifsc_code || '',
+                bank_name: profile.banking_info.bank_name || '',
+              }
+            : {
+                account_holder_name: '',
+                account_number: '',
+                ifsc_code: '',
+                bank_name: '',
+              },
         };
 
         setFormData(newFormData);
@@ -173,7 +178,10 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
 
     switch (currentStep) {
       case 'contact':
-        if (formData.contactInfo.alternative_number && formData.contactInfo.alternative_number.length < 10) {
+        if (
+          formData.contactInfo.alternative_number &&
+          formData.contactInfo.alternative_number.length < 10
+        ) {
           newErrors.alternative_number = 'Alternative number must be at least 10 digits';
         }
         break;
@@ -190,7 +198,10 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         }
         if (!formData.experienceYears) {
           newErrors.experience_years = 'Experience years is required';
-        } else if (parseInt(formData.experienceYears) < 0 || parseInt(formData.experienceYears) > 70) {
+        } else if (
+          parseInt(formData.experienceYears) < 0 ||
+          parseInt(formData.experienceYears) > 70
+        ) {
           newErrors.experience_years = 'Experience must be between 0 and 70 years';
         }
         break;
@@ -336,9 +347,9 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
     const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
     return (
-      <View className="px-6 py-4 bg-white border-b border-[#E5E7EB]">
+      <View className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         {/* Progress bar */}
-        <View className="flex-row mb-4" style={{ gap: 4 }}>
+        <View className="mb-4 flex-row" style={{ gap: 4 }}>
           {steps.map((_, index) => {
             const isCompleted = index < currentIndex;
             const isActive = index === currentIndex;
@@ -349,12 +360,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
                 className="flex-1"
                 style={{
                   height: 4,
-                  backgroundColor:
-                    isCompleted
-                      ? '#055c3a'
-                      : isActive
-                      ? '#055c3a'
-                      : '#E5E7EB',
+                  backgroundColor: isCompleted ? '#055c3a' : isActive ? '#055c3a' : '#E5E7EB',
                   borderRadius: 2,
                 }}
               />
@@ -364,16 +370,12 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
 
         {/* Step info */}
         <View>
-          <Text
-            className="text-xs text-[#6B7280] mb-1"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Step {currentIndex + 1} of {steps.length}
           </Text>
           <Text
-            className="text-lg font-semibold text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="font-semibold text-lg text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             {steps[currentIndex].title}
           </Text>
         </View>
@@ -384,15 +386,11 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
   const renderContactInfo = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Contact Information
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Update your contact details
       </Text>
 
@@ -411,10 +409,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
           maxLength={10}
           error={errors.alternative_number}
         />
-        <Text
-          className="text-xs text-[#6B7280] mt-1"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+        <Text className="mt-1 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
           Optional - Provide an alternative contact number
         </Text>
       </View>
@@ -424,39 +419,30 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
   const renderAddress = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Address Information
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Update your residential address
       </Text>
 
       {formData.address ? (
-        <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
-          <View className="flex-row justify-between items-start mb-3">
+        <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <View className="mb-3 flex-row items-start justify-between">
             <View className="flex-1">
               <Text
-                className="text-sm font-semibold text-[#111928]"
-                style={{ fontFamily: 'Inter-SemiBold' }}
-              >
+                className="font-semibold text-sm text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 {formData.address.street}
               </Text>
-              <Text
-                className="text-sm text-[#6B7280] mt-1"
-                style={{ fontFamily: 'Inter-Regular' }}
-              >
+              <Text className="mt-1 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 {formData.address.city}, {formData.address.state} - {formData.address.pincode}
               </Text>
               {formData.address.landmark && (
                 <Text
-                  className="text-xs text-[#6B7280] mt-1"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+                  className="mt-1 text-xs text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Landmark: {formData.address.landmark}
                 </Text>
               )}
@@ -464,8 +450,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
             <TouchableOpacity
               onPress={() => setShowAddressSheet(true)}
               className="p-2"
-              activeOpacity={0.7}
-            >
+              activeOpacity={0.7}>
               <EditIcon size={20} color="#055c3a" />
             </TouchableOpacity>
           </View>
@@ -473,32 +458,26 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
       ) : (
         <TouchableOpacity
           onPress={() => setShowAddressSheet(true)}
-          className="bg-white rounded-xl border-2 border-dashed border-[#E5E7EB] p-6 items-center justify-center mb-4"
-          activeOpacity={0.7}
-        >
-          <View className="w-12 h-12 rounded-full bg-[#F3F4F6] items-center justify-center mb-3">
+          className="mb-4 items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white p-6"
+          activeOpacity={0.7}>
+          <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6]">
             <AddressIcon size={24} color="#6B7280" />
           </View>
           <Text
-            className="text-sm font-medium text-[#111928] mb-1"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+            className="mb-1 font-medium text-sm text-[#111928]"
+            style={{ fontFamily: 'Inter-Medium' }}>
             Add Address
           </Text>
           <Text
-            className="text-xs text-[#6B7280] text-center"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+            className="text-center text-xs text-[#6B7280]"
+            style={{ fontFamily: 'Inter-Regular' }}>
             Tap to add your residential address
           </Text>
         </TouchableOpacity>
       )}
 
       {errors.address && (
-        <Text
-          className="text-sm text-[#DC2626] mt-2"
-          style={{ fontFamily: 'Inter-Regular' }}
-        >
+        <Text className="mt-2 text-sm text-[#DC2626]" style={{ fontFamily: 'Inter-Regular' }}>
           {errors.address}
         </Text>
       )}
@@ -508,15 +487,11 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
   const renderSkills = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Skills & Experience
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Update your experience and skills
       </Text>
 
@@ -524,9 +499,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         <Input
           label="Years of Experience"
           value={formData.experienceYears}
-          onChangeText={(text) =>
-            setFormData((prev) => ({ ...prev, experienceYears: text }))
-          }
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, experienceYears: text }))}
           placeholder="Enter years of experience"
           keyboardType="number-pad"
           error={errors.experience_years}
@@ -536,18 +509,14 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
 
       <View className="mt-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-2"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-2 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Skills {errors.skills && <Text className="text-[#DC2626]">*</Text>}
         </Text>
 
         {/* Predefined Skills */}
         <View className="mb-4">
-          <Text
-            className="text-xs text-[#6B7280] mb-3"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-3 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Select from available skills:
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -557,19 +526,13 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
                 <TouchableOpacity
                   key={skill}
                   onPress={() => handleToggleSkill(skill)}
-                  className={`border rounded-lg px-3 py-2 ${
-                    isSelected
-                      ? 'bg-[#055c3a] border-[#055c3a]'
-                      : 'bg-white border-[#E5E7EB]'
+                  className={`rounded-lg border px-3 py-2 ${
+                    isSelected ? 'border-[#055c3a] bg-[#055c3a]' : 'border-[#E5E7EB] bg-white'
                   }`}
-                  activeOpacity={0.7}
-                >
+                  activeOpacity={0.7}>
                   <Text
-                    className={`text-sm ${
-                      isSelected ? 'text-white' : 'text-[#111928]'
-                    }`}
-                    style={{ fontFamily: 'Inter-Medium' }}
-                  >
+                    className={`text-sm ${isSelected ? 'text-white' : 'text-[#111928]'}`}
+                    style={{ fontFamily: 'Inter-Medium' }}>
                     {skill}
                   </Text>
                 </TouchableOpacity>
@@ -581,26 +544,21 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         {/* Selected Skills */}
         {formData.skills.length > 0 && (
           <View className="mb-4">
-            <Text
-              className="text-xs text-[#6B7280] mb-2"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="mb-2 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
               Selected skills:
             </Text>
             <View className="flex-row flex-wrap" style={{ gap: 8 }}>
               {formData.skills.map((skill) => (
                 <View
                   key={skill}
-                  className="flex-row items-center bg-[#F3F4F6] rounded-lg px-3 py-2"
-                >
+                  className="flex-row items-center rounded-lg bg-[#F3F4F6] px-3 py-2">
                   <Text
-                    className="text-sm text-[#111928] mr-2"
-                    style={{ fontFamily: 'Inter-Regular' }}
-                  >
+                    className="mr-2 text-sm text-[#111928]"
+                    style={{ fontFamily: 'Inter-Regular' }}>
                     {skill}
                   </Text>
                   <TouchableOpacity onPress={() => handleRemoveSkill(skill)}>
-                    <Text className="text-[#DC2626] text-sm">×</Text>
+                    <Text className="text-sm text-[#DC2626]">×</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -609,11 +567,8 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         )}
 
         {/* Custom Skill Input */}
-        <View className="mt-4 mb-8">
-          <Text
-            className="text-xs text-[#6B7280] mb-2"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+        <View className="mb-8 mt-4">
+          <Text className="mb-2 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Or add a custom skill:
           </Text>
           <View className="flex-row" style={{ gap: 8 }}>
@@ -634,10 +589,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         </View>
 
         {errors.skills && (
-          <Text
-            className="text-sm text-[#DC2626] mt-2"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-2 text-sm text-[#DC2626]" style={{ fontFamily: 'Inter-Regular' }}>
             {errors.skills}
           </Text>
         )}
@@ -648,15 +600,11 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
   const renderBanking = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Banking Information
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Update your banking details for payments
       </Text>
 
@@ -735,108 +683,73 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
   const renderReview = () => (
     <View className="px-6 pt-6">
       <Text
-        className="text-2xl font-semibold text-[#111928] mb-2"
-        style={{ fontFamily: 'Inter-SemiBold' }}
-      >
+        className="mb-2 font-semibold text-2xl text-[#111928]"
+        style={{ fontFamily: 'Inter-SemiBold' }}>
         Review Your Changes
       </Text>
-      <Text
-        className="text-sm text-[#6B7280] mb-6"
-        style={{ fontFamily: 'Inter-Regular' }}
-      >
+      <Text className="mb-6 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
         Please review your information before updating
       </Text>
 
       {/* Contact Info */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Contact Information
         </Text>
         <View className="mb-2">
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Alternative Number
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.contactInfo.alternative_number || 'Not provided'}
           </Text>
         </View>
       </View>
 
       {/* Address */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Address
         </Text>
         {formData.address && (
           <>
-            <Text
-              className="text-sm text-[#111928]"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
+            <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
               {formData.address.street}
             </Text>
-            <Text
-              className="text-sm text-[#6B7280]"
-              style={{ fontFamily: 'Inter-Regular' }}
-            >
-              {formData.address.city}, {formData.address.state} -{' '}
-              {formData.address.pincode}
+            <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+              {formData.address.city}, {formData.address.state} - {formData.address.pincode}
             </Text>
           </>
         )}
       </View>
 
       {/* Skills & Experience */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Skills & Experience
         </Text>
         <View className="mb-3">
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Experience
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.experienceYears} years
           </Text>
         </View>
         <View>
-          <Text
-            className="text-xs text-[#6B7280] mb-2"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mb-2 text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Skills
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
             {formData.skills.map((skill) => (
-              <View
-                key={skill}
-                className="bg-[#F3F4F6] rounded-lg px-3 py-1"
-              >
-                <Text
-                  className="text-sm text-[#111928]"
-                  style={{ fontFamily: 'Inter-Regular' }}
-                >
+              <View key={skill} className="rounded-lg bg-[#F3F4F6] px-3 py-1">
+                <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
                   {skill}
                 </Text>
               </View>
@@ -846,66 +759,41 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
       </View>
 
       {/* Banking Info */}
-      <View className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+      <View className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
         <Text
-          className="text-sm font-semibold text-[#111928] mb-3"
-          style={{ fontFamily: 'Inter-SemiBold' }}
-        >
+          className="mb-3 font-semibold text-sm text-[#111928]"
+          style={{ fontFamily: 'Inter-SemiBold' }}>
           Banking Information
         </Text>
         <View className="mb-2">
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Account Holder
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.bankingInfo.account_holder_name}
           </Text>
         </View>
         <View className="mb-2">
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Account Number
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.bankingInfo.account_number}
           </Text>
         </View>
         <View className="mb-2">
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             IFSC Code
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.bankingInfo.ifsc_code}
           </Text>
         </View>
         <View>
-          <Text
-            className="text-xs text-[#6B7280]"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="text-xs text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Bank Name
           </Text>
-          <Text
-            className="text-sm text-[#111928]"
-            style={{ fontFamily: 'Inter-Medium' }}
-          >
+          <Text className="text-sm text-[#111928]" style={{ fontFamily: 'Inter-Medium' }}>
             {formData.bankingInfo.bank_name}
           </Text>
         </View>
@@ -935,10 +823,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
       <SafeAreaView className="flex-1 bg-white" edges={['top']}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#055c3a" />
-          <Text
-            className="text-sm text-[#6B7280] mt-4"
-            style={{ fontFamily: 'Inter-Regular' }}
-          >
+          <Text className="mt-4 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
             Loading profile...
           </Text>
         </View>
@@ -951,17 +836,15 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
       <KeyboardAvoidingView
         behavior="padding"
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
-          <TouchableOpacity onPress={onBack} className="p-2 -ml-2" activeOpacity={0.7}>
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
+          <TouchableOpacity onPress={onBack} className="-ml-2 p-2" activeOpacity={0.7}>
             <BackIcon size={24} color="#111928" />
           </TouchableOpacity>
           <Text
-            className="text-xl font-semibold text-[#111928] ml-2"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-          >
+            className="ml-2 font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Edit Worker Profile
           </Text>
         </View>
@@ -973,17 +856,15 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
         <ScrollView
           className="flex-1 bg-[#F9FAFB]"
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {renderCurrentStep()}
         </ScrollView>
 
         {/* Navigation Buttons */}
         <View
-          className={`px-6 pt-4 bg-white border-t border-[#E5E7EB] ${
+          className={`border-t border-[#E5E7EB] bg-white px-6 pt-4 ${
             isKeyboardVisible ? 'pb-4' : 'pb-12'
-          }`}
-        >
+          }`}>
           <View className="flex-row" style={{ gap: 12 }}>
             {currentStep !== 'contact' && (
               <View className="flex-1">
@@ -1004,11 +885,7 @@ export default function EditWorkerProfileScreen({ onBack }: EditWorkerProfileScr
                   disabled={isSubmitting}
                 />
               ) : (
-                <Button
-                  label="Next"
-                  onPress={handleNext}
-                  disabled={isSubmitting}
-                />
+                <Button label="Next" onPress={handleNext} disabled={isSubmitting} />
               )}
             </View>
           </View>

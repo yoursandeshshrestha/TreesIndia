@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { verifyOTP } from '../../store/slices/authSlice';
@@ -10,10 +18,7 @@ interface OtpVerificationScreenProps {
   onBack?: () => void;
 }
 
-export default function OtpVerificationScreen({
-  phoneNumber,
-  onBack,
-}: OtpVerificationScreenProps) {
+export default function OtpVerificationScreen({ phoneNumber, onBack }: OtpVerificationScreenProps) {
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
 
@@ -72,7 +77,8 @@ export default function OtpVerificationScreen({
 
       // Focus the next empty input after pasted content, or last input if all filled
       const nextEmptyIndex = newInputs.findIndex((val, idx) => idx >= index && val === '');
-      const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pastedOtp.length - 1, 5);
+      const focusIndex =
+        nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pastedOtp.length - 1, 5);
       if (focusIndex < 6 && focusIndex >= 0) {
         setTimeout(() => {
           inputRefs.current[focusIndex]?.focus();
@@ -132,28 +138,21 @@ export default function OtpVerificationScreen({
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+        className="flex-1">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View className="flex-1 px-6 pt-8">
             {/* Back Button */}
             {onBack && (
-              <TouchableOpacity
-                onPress={onBack}
-                className="mb-8"
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity onPress={onBack} className="mb-8" activeOpacity={0.7}>
                 <Text
                   className="text-base text-[#1C1C1C]"
                   style={{
                     lineHeight: 24,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                  }}
-                >
+                  }}>
                   ← Back
                 </Text>
               </TouchableOpacity>
@@ -161,28 +160,26 @@ export default function OtpVerificationScreen({
 
             {/* Title */}
             <Text
-              className="text-2xl font-bold text-[#1C1C1C] mb-2"
+              className="mb-2 font-bold text-2xl text-[#1C1C1C]"
               style={{
                 lineHeight: 32,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               Verify OTP
             </Text>
 
             {/* Subtitle */}
             <Text
-              className="text-base text-[#6B7280] mb-8"
+              className="mb-8 text-base text-[#6B7280]"
               style={{
                 lineHeight: 24,
                 ...(Platform.OS === 'android' && { includeFontPadding: false }),
-              }}
-            >
+              }}>
               Enter the code sent to {formatPhoneNumber(phoneNumber)}
             </Text>
 
             {/* OTP Input Fields */}
-            <View className="flex-row justify-between mb-4 px-2">
+            <View className="mb-4 flex-row justify-between px-2">
               {otpInputs.map((value, index) => (
                 <TextInput
                   key={index}
@@ -196,7 +193,7 @@ export default function OtpVerificationScreen({
                   maxLength={1}
                   editable={!isLoading}
                   selectTextOnFocus
-                  className={`text-center border border-[#E5E7EB] rounded-md ${
+                  className={`rounded-md border border-[#E5E7EB] text-center ${
                     value ? 'bg-[#F3F4F6]' : 'bg-white'
                   }`}
                   style={{
@@ -217,26 +214,24 @@ export default function OtpVerificationScreen({
             {/* Error Message */}
             {error && (
               <Text
-                className="text-sm text-[#DC2626] mb-4"
+                className="mb-4 text-sm text-[#DC2626]"
                 style={{
                   lineHeight: 20,
                   ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                }}
-              >
+                }}>
                 {error}
               </Text>
             )}
 
             {/* Resend Code */}
-            <View className="flex-row items-center mb-8">
+            <View className="mb-8 flex-row items-center">
               <Text
-                className="text-sm text-[#6B7280] mr-1"
+                className="mr-1 text-sm text-[#6B7280]"
                 style={{
                   lineHeight: 20,
                   ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                }}
-              >
-                Didn't receive?
+                }}>
+                Didn&apos;t receive?
               </Text>
               <TouchableOpacity activeOpacity={0.7}>
                 <Text
@@ -244,8 +239,7 @@ export default function OtpVerificationScreen({
                   style={{
                     lineHeight: 20,
                     ...(Platform.OS === 'android' && { includeFontPadding: false }),
-                  }}
-                >
+                  }}>
                   Resend OTP
                 </Text>
               </TouchableOpacity>

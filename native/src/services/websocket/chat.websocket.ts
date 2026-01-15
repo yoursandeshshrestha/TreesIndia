@@ -347,9 +347,7 @@ class ChatWebSocketService {
       return;
     }
 
-    this.eventListeners[event] = this.eventListeners[event].filter(
-      (cb) => cb !== callback
-    );
+    this.eventListeners[event] = this.eventListeners[event].filter((cb) => cb !== callback);
   }
 
   /**

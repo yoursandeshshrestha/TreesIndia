@@ -39,19 +39,19 @@ class UserLocationService {
   async getUserLocation(): Promise<UserLocation | null> {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/locations/user/me`);
-      
+
       if (!response.ok) {
         // Location doesn't exist yet or other error - handle gracefully
         return null;
       }
 
       const rawData = await response.json();
-      
+
       // Backend returns: { success: true, message: "...", data: {...} }
       if (rawData && rawData.success && rawData.data) {
         return rawData.data;
       }
-      
+
       return null;
     } catch (error) {
       // Handle gracefully - location is optional
@@ -59,7 +59,9 @@ class UserLocationService {
     }
   }
 
-  async createOrUpdateLocation(data: CreateLocationRequest | UpdateLocationRequest): Promise<UserLocation> {
+  async createOrUpdateLocation(
+    data: CreateLocationRequest | UpdateLocationRequest
+  ): Promise<UserLocation> {
     // Use PUT /locations/user/me which creates if doesn't exist, updates if exists
     const response = await authenticatedFetch(`${API_BASE_URL}/locations/user/me`, {
       method: 'PUT',
@@ -80,15 +82,14 @@ class UserLocationService {
     }
 
     const rawData = await response.json();
-    
+
     // Backend returns: { success: true, message: "...", data: {...} }
     if (rawData && rawData.success && rawData.data) {
       return rawData.data;
     }
-    
+
     throw new Error('Invalid response format');
   }
 }
 
 export const userLocationService = new UserLocationService();
-

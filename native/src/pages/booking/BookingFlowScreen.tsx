@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { razorpayService } from '../../utils/razorpay';
 import { Service } from '../../services/api/service.service';
@@ -31,11 +24,7 @@ interface BookingFlowScreenProps {
 
 type Step = 'address' | 'slot' | 'contact' | 'payment' | 'review';
 
-export default function BookingFlowScreen({
-  service,
-  onBack,
-  onComplete,
-}: BookingFlowScreenProps) {
+export default function BookingFlowScreen({ service, onBack, onComplete }: BookingFlowScreenProps) {
   const user = useAppSelector((state) => state.auth.user);
   const isInquiryService = service.price_type === 'inquiry';
 
@@ -141,7 +130,14 @@ export default function BookingFlowScreen({
       has_slot: !!selectedSlot,
       has_contact: !!contactInfo,
     });
-  }, [currentStepIndex, currentStep.id, currentStep.title, selectedAddress, selectedSlot, contactInfo]);
+  }, [
+    currentStepIndex,
+    currentStep.id,
+    currentStep.title,
+    selectedAddress,
+    selectedSlot,
+    contactInfo,
+  ]);
 
   const fetchWalletBalance = async () => {
     bookingLogger.debug('Fetching wallet balance');
@@ -393,7 +389,9 @@ export default function BookingFlowScreen({
         }
 
         // For Razorpay bookings, booking might be null until payment is verified
-        const bookingIdFromResponse = response.booking ? (response.booking.ID || response.booking.id) : null;
+        const bookingIdFromResponse = response.booking
+          ? response.booking.ID || response.booking.id
+          : null;
         if (bookingIdFromResponse) {
           safeSetState(() => setBookingId(bookingIdFromResponse));
         }
@@ -446,7 +444,10 @@ export default function BookingFlowScreen({
               bookingLogger.flow('Razorpay payment verification', 'success');
 
               // Extract booking ID from verification response
-              const verifiedBookingId = verificationResult.data?.booking?.ID || verificationResult.data?.booking?.id || bookingIdFromResponse;
+              const verifiedBookingId =
+                verificationResult.data?.booking?.ID ||
+                verificationResult.data?.booking?.id ||
+                bookingIdFromResponse;
 
               safeSetState(() => {
                 if (verifiedBookingId) {
@@ -486,10 +487,11 @@ export default function BookingFlowScreen({
             const isCancelled =
               error.code === 'PAYMENT_CANCELLED' ||
               error.code === '2' ||
-              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+              (error.code === 'UNKNOWN_ERROR' &&
+                error.description?.toLowerCase().includes('cancel')) ||
               // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
               (error.code === 'BAD_REQUEST_ERROR' &&
-               (error.description === 'undefined' || error.reason === 'payment_error'));
+                (error.description === 'undefined' || error.reason === 'payment_error'));
 
             // Log appropriately based on error type
             if (isCancelled) {
@@ -521,7 +523,8 @@ export default function BookingFlowScreen({
                 description: error.description,
               });
               // Other errors - show error message
-              const errorMessage = error.description || error.reason || 'Payment failed. Please try again.';
+              const errorMessage =
+                error.description || error.reason || 'Payment failed. Please try again.';
               Alert.alert('Payment Failed', errorMessage, [{ text: 'OK' }]);
             }
           }
@@ -546,13 +549,11 @@ export default function BookingFlowScreen({
       }
 
       // Check if it's insufficient balance error
-      if (errorMessage.toLowerCase().includes('insufficient') ||
-          errorMessage.toLowerCase().includes('balance')) {
-        Alert.alert(
-          'Insufficient Balance',
-          errorMessage,
-          [{ text: 'OK' }]
-        );
+      if (
+        errorMessage.toLowerCase().includes('insufficient') ||
+        errorMessage.toLowerCase().includes('balance')
+      ) {
+        Alert.alert('Insufficient Balance', errorMessage, [{ text: 'OK' }]);
       } else {
         Alert.alert('Booking Failed', errorMessage, [{ text: 'OK' }]);
       }
@@ -648,7 +649,9 @@ export default function BookingFlowScreen({
         }
 
         // For Razorpay inquiries, booking might be null until payment is verified
-        const bookingIdFromResponse = response.booking ? (response.booking.ID || response.booking.id) : null;
+        const bookingIdFromResponse = response.booking
+          ? response.booking.ID || response.booking.id
+          : null;
         if (bookingIdFromResponse) {
           safeSetState(() => setBookingId(bookingIdFromResponse));
         }
@@ -701,7 +704,10 @@ export default function BookingFlowScreen({
               bookingLogger.flow('Inquiry payment verification', 'success');
 
               // Extract booking ID from verification response
-              const verifiedBookingId = verificationResult.data?.booking?.ID || verificationResult.data?.booking?.id || bookingIdFromResponse;
+              const verifiedBookingId =
+                verificationResult.data?.booking?.ID ||
+                verificationResult.data?.booking?.id ||
+                bookingIdFromResponse;
 
               safeSetState(() => {
                 if (verifiedBookingId) {
@@ -741,10 +747,11 @@ export default function BookingFlowScreen({
             const isCancelled =
               error.code === 'PAYMENT_CANCELLED' ||
               error.code === '2' ||
-              (error.code === 'UNKNOWN_ERROR' && error.description?.toLowerCase().includes('cancel')) ||
+              (error.code === 'UNKNOWN_ERROR' &&
+                error.description?.toLowerCase().includes('cancel')) ||
               // Android-specific cancellation: BAD_REQUEST_ERROR with undefined description or payment_error reason
               (error.code === 'BAD_REQUEST_ERROR' &&
-               (error.description === 'undefined' || error.reason === 'payment_error'));
+                (error.description === 'undefined' || error.reason === 'payment_error'));
 
             // Log appropriately based on error type
             if (isCancelled) {
@@ -776,7 +783,8 @@ export default function BookingFlowScreen({
                 description: error.description,
               });
               // Other errors - show error message
-              const errorMessage = error.description || error.reason || 'Payment failed. Please try again.';
+              const errorMessage =
+                error.description || error.reason || 'Payment failed. Please try again.';
               Alert.alert('Payment Failed', errorMessage, [{ text: 'OK' }]);
             }
           }
@@ -802,13 +810,11 @@ export default function BookingFlowScreen({
       }
 
       // Check if it's insufficient balance error
-      if (errorMessage.toLowerCase().includes('insufficient') ||
-          errorMessage.toLowerCase().includes('balance')) {
-        Alert.alert(
-          'Insufficient Balance',
-          errorMessage,
-          [{ text: 'OK' }]
-        );
+      if (
+        errorMessage.toLowerCase().includes('insufficient') ||
+        errorMessage.toLowerCase().includes('balance')
+      ) {
+        Alert.alert('Insufficient Balance', errorMessage, [{ text: 'OK' }]);
       } else {
         Alert.alert('Booking Failed', errorMessage, [{ text: 'OK' }]);
       }
@@ -855,12 +861,14 @@ export default function BookingFlowScreen({
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4 border-b border-[#E5E7EB]">
+      <View className="flex-row items-center border-b border-[#E5E7EB] px-6 py-4">
         <TouchableOpacity onPress={handleBack} className="mr-3">
           <BackIcon size={24} color="#111928" />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="text-xl font-semibold text-[#111928]" style={{ fontFamily: 'Inter-SemiBold' }}>
+          <Text
+            className="font-semibold text-xl text-[#111928]"
+            style={{ fontFamily: 'Inter-SemiBold' }}>
             Book Service
           </Text>
           <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
@@ -870,12 +878,12 @@ export default function BookingFlowScreen({
       </View>
 
       {/* Progress Indicator */}
-      <View className="px-6 py-4 border-b border-[#E5E7EB]">
-        <View className="flex-row items-center mb-2">
+      <View className="border-b border-[#E5E7EB] px-6 py-4">
+        <View className="mb-2 flex-row items-center">
           {steps.map((step, index) => (
             <React.Fragment key={step.id}>
               <View
-                className={`flex-1 h-1 rounded ${
+                className={`h-1 flex-1 rounded ${
                   index <= currentStepIndex ? 'bg-[#055c3a]' : 'bg-[#E5E7EB]'
                 }`}
               />
@@ -893,15 +901,18 @@ export default function BookingFlowScreen({
         {/* Address Step */}
         {currentStep.id === 'address' && (
           <View>
-            <Text className="text-lg font-semibold text-[#111928] mb-4" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text
+              className="mb-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Select Service Address
             </Text>
             {selectedAddress ? (
               <TouchableOpacity
-                className="p-4 bg-[#F0FDF4] border border-[#055c3a] rounded-xl mb-4"
-                onPress={() => setShowAddressSheet(true)}
-              >
-                <Text className="text-sm text-[#055c3a] font-semibold mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+                className="mb-4 rounded-xl border border-[#055c3a] bg-[#F0FDF4] p-4"
+                onPress={() => setShowAddressSheet(true)}>
+                <Text
+                  className="mb-2 font-semibold text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {selectedAddress.name}
                 </Text>
                 <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
@@ -911,16 +922,19 @@ export default function BookingFlowScreen({
                 <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                   {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
                 </Text>
-                <Text className="text-sm text-[#055c3a] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
+                <Text
+                  className="mt-2 text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   Tap to change
                 </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="p-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl items-center"
-                onPress={() => setShowAddressSheet(true)}
-              >
-                <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                className="items-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-6"
+                onPress={() => setShowAddressSheet(true)}>
+                <Text
+                  className="font-semibold text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   + Select Address
                 </Text>
               </TouchableOpacity>
@@ -931,30 +945,38 @@ export default function BookingFlowScreen({
         {/* Slot Step (Fixed-price only) */}
         {currentStep.id === 'slot' && (
           <View>
-            <Text className="text-lg font-semibold text-[#111928] mb-4" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text
+              className="mb-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Select Date & Time
             </Text>
             {selectedDate && selectedSlot ? (
               <TouchableOpacity
-                className="p-4 bg-[#F0FDF4] border border-[#055c3a] rounded-xl mb-4"
-                onPress={() => setShowSlotSheet(true)}
-              >
-                <Text className="text-sm text-[#055c3a] font-semibold mb-2" style={{ fontFamily: 'Inter-SemiBold' }}>
+                className="mb-4 rounded-xl border border-[#055c3a] bg-[#F0FDF4] p-4"
+                onPress={() => setShowSlotSheet(true)}>
+                <Text
+                  className="mb-2 font-semibold text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {formatDate(selectedDate)}
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
                 </Text>
-                <Text className="text-sm text-[#055c3a] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
+                <Text
+                  className="mt-2 text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   Tap to change
                 </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="p-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl items-center"
-                onPress={() => setShowSlotSheet(true)}
-              >
-                <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                className="items-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-6"
+                onPress={() => setShowSlotSheet(true)}>
+                <Text
+                  className="font-semibold text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   + Select Date & Time
                 </Text>
               </TouchableOpacity>
@@ -965,27 +987,36 @@ export default function BookingFlowScreen({
         {/* Contact Step (Inquiry only) */}
         {currentStep.id === 'contact' && (
           <View>
-            <Text className="text-lg font-semibold text-[#111928] mb-4" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text
+              className="mb-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Contact Information
             </Text>
             {contactInfo ? (
               <TouchableOpacity
-                className="p-4 bg-[#F0FDF4] border border-[#055c3a] rounded-xl mb-4"
-                onPress={() => setShowContactSheet(true)}
-              >
+                className="mb-4 rounded-xl border border-[#055c3a] bg-[#F0FDF4] p-4"
+                onPress={() => setShowContactSheet(true)}>
                 <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                   Contact Person
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {contactInfo.contactPerson}
                 </Text>
-                <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
+                <Text
+                  className="mt-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Phone
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {contactInfo.phone}
                 </Text>
-                <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
+                <Text
+                  className="mt-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Description
                 </Text>
                 <Text className="text-base text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
@@ -993,24 +1024,31 @@ export default function BookingFlowScreen({
                 </Text>
                 {contactInfo.specialInstructions && (
                   <>
-                    <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
+                    <Text
+                      className="mt-2 text-sm text-[#6B7280]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       Special Instructions
                     </Text>
-                    <Text className="text-base text-[#111928]" style={{ fontFamily: 'Inter-Regular' }}>
+                    <Text
+                      className="text-base text-[#111928]"
+                      style={{ fontFamily: 'Inter-Regular' }}>
                       {contactInfo.specialInstructions}
                     </Text>
                   </>
                 )}
-                <Text className="text-sm text-[#055c3a] mt-2" style={{ fontFamily: 'Inter-Medium' }}>
+                <Text
+                  className="mt-2 text-sm text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-Medium' }}>
                   Tap to change
                 </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="p-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl items-center"
-                onPress={() => setShowContactSheet(true)}
-              >
-                <Text className="text-[#055c3a] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                className="items-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-6"
+                onPress={() => setShowContactSheet(true)}>
+                <Text
+                  className="font-semibold text-[#055c3a]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   + Add Contact Info
                 </Text>
               </TouchableOpacity>
@@ -1021,49 +1059,66 @@ export default function BookingFlowScreen({
         {/* Review Step */}
         {currentStep.id === 'review' && (
           <View>
-            <Text className="text-lg font-semibold text-[#111928] mb-4" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text
+              className="mb-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               Review Booking
             </Text>
 
             {/* Service Details */}
-            <View className="mb-4 p-4 bg-[#F9FAFB] rounded-xl">
-              <Text className="text-sm text-[#6B7280] mb-2" style={{ fontFamily: 'Inter-Regular' }}>
+            <View className="mb-4 rounded-xl bg-[#F9FAFB] p-4">
+              <Text className="mb-2 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 Service
               </Text>
-              <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+              <Text
+                className="font-semibold text-base text-[#111928]"
+                style={{ fontFamily: 'Inter-SemiBold' }}>
                 {service.name}
               </Text>
-              <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
+              <Text className="mt-2 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 {service.description}
               </Text>
             </View>
 
             {/* Address */}
             {selectedAddress && (
-              <View className="mb-4 p-4 bg-[#F9FAFB] rounded-xl">
-                <Text className="text-sm text-[#6B7280] mb-2" style={{ fontFamily: 'Inter-Regular' }}>
+              <View className="mb-4 rounded-xl bg-[#F9FAFB] p-4">
+                <Text
+                  className="mb-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Service Address
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {selectedAddress.name}
                 </Text>
-                <Text className="text-sm text-[#6B7280] mt-1" style={{ fontFamily: 'Inter-Regular' }}>
+                <Text
+                  className="mt-1 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   {selectedAddress.house_number ? `${selectedAddress.house_number}, ` : ''}
-                  {selectedAddress.address}, {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+                  {selectedAddress.address}, {selectedAddress.city}, {selectedAddress.state} -{' '}
+                  {selectedAddress.postal_code}
                 </Text>
               </View>
             )}
 
             {/* Date & Time (Fixed-price only) */}
             {!isInquiryService && selectedDate && selectedSlot && (
-              <View className="mb-4 p-4 bg-[#F9FAFB] rounded-xl">
-                <Text className="text-sm text-[#6B7280] mb-2" style={{ fontFamily: 'Inter-Regular' }}>
+              <View className="mb-4 rounded-xl bg-[#F9FAFB] p-4">
+                <Text
+                  className="mb-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Scheduled Date & Time
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {formatDate(selectedDate)}
                 </Text>
-                <Text className="text-sm text-[#6B7280] mt-1" style={{ fontFamily: 'Inter-Regular' }}>
+                <Text
+                  className="mt-1 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
                 </Text>
               </View>
@@ -1071,25 +1126,33 @@ export default function BookingFlowScreen({
 
             {/* Contact Info (Inquiry only) */}
             {isInquiryService && contactInfo && (
-              <View className="mb-4 p-4 bg-[#F9FAFB] rounded-xl">
-                <Text className="text-sm text-[#6B7280] mb-2" style={{ fontFamily: 'Inter-Regular' }}>
+              <View className="mb-4 rounded-xl bg-[#F9FAFB] p-4">
+                <Text
+                  className="mb-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   Contact Information
                 </Text>
-                <Text className="text-base text-[#111928] font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+                <Text
+                  className="font-semibold text-base text-[#111928]"
+                  style={{ fontFamily: 'Inter-SemiBold' }}>
                   {contactInfo.contactPerson} - {contactInfo.phone}
                 </Text>
-                <Text className="text-sm text-[#6B7280] mt-2" style={{ fontFamily: 'Inter-Regular' }}>
+                <Text
+                  className="mt-2 text-sm text-[#6B7280]"
+                  style={{ fontFamily: 'Inter-Regular' }}>
                   {contactInfo.description}
                 </Text>
               </View>
             )}
 
             {/* Price */}
-            <View className="mb-4 p-4 bg-[#F0FDF4] border border-[#055c3a] rounded-xl">
-              <Text className="text-sm text-[#6B7280] mb-2" style={{ fontFamily: 'Inter-Regular' }}>
+            <View className="mb-4 rounded-xl border border-[#055c3a] bg-[#F0FDF4] p-4">
+              <Text className="mb-2 text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
                 {isInquiryService ? 'Inquiry Fee' : 'Total Amount'}
               </Text>
-              <Text className="text-2xl text-[#055c3a] font-bold" style={{ fontFamily: 'Inter-Bold' }}>
+              <Text
+                className="font-bold text-2xl text-[#055c3a]"
+                style={{ fontFamily: 'Inter-Bold' }}>
                 ₹{getAmount().toLocaleString('en-IN')}
               </Text>
             </View>
@@ -1098,7 +1161,7 @@ export default function BookingFlowScreen({
       </ScrollView>
 
       {/* Footer */}
-      <View className="px-6 pb-6 pt-4 border-t border-[#E5E7EB]">
+      <View className="border-t border-[#E5E7EB] px-6 pb-6 pt-4">
         <Button
           label={currentStepIndex === steps.length - 1 ? 'Proceed to Payment' : 'Next'}
           onPress={handleNext}
@@ -1133,12 +1196,14 @@ export default function BookingFlowScreen({
           visible={showContactSheet}
           onClose={() => setShowContactSheet(false)}
           onSave={handleSaveContactInfo}
-          initialData={contactInfo || {
-            contactPerson: user?.name || '',
-            phone: user?.phone || '',
-            description: '',
-            specialInstructions: '',
-          }}
+          initialData={
+            contactInfo || {
+              contactPerson: user?.name || '',
+              phone: user?.phone || '',
+              description: '',
+              specialInstructions: '',
+            }
+          }
         />
       )}
 
@@ -1164,13 +1229,17 @@ export default function BookingFlowScreen({
 
       {/* Processing Overlay */}
       {(isSubmitting || isRedirecting) && (
-        <View className="absolute inset-0 bg-black/60 items-center justify-center">
-          <View className="bg-white p-8 rounded-2xl items-center">
+        <View className="absolute inset-0 items-center justify-center bg-black/60">
+          <View className="items-center rounded-2xl bg-white p-8">
             <ActivityIndicator size="large" color="#055c3a" />
-            <Text className="text-[#111928] mt-4 text-lg font-semibold" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text
+              className="mt-4 font-semibold text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}>
               {isRedirecting ? 'Payment Successful!' : 'Processing'}
             </Text>
-            <Text className="text-[#6B7280] mt-2 text-center" style={{ fontFamily: 'Inter-Regular' }}>
+            <Text
+              className="mt-2 text-center text-[#6B7280]"
+              style={{ fontFamily: 'Inter-Regular' }}>
               {isRedirecting ? 'Loading your bookings...' : 'Please wait...'}
             </Text>
           </View>

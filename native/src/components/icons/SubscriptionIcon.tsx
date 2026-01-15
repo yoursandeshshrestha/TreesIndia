@@ -6,7 +6,10 @@ interface SubscriptionIconProps {
   color?: string;
 }
 
-export default function SubscriptionIcon({ size = 24, color = 'currentColor' }: SubscriptionIconProps) {
+export default function SubscriptionIcon({
+  size = 24,
+  color = 'currentColor',
+}: SubscriptionIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -40,5 +43,3 @@ export default function SubscriptionIcon({ size = 24, color = 'currentColor' }: 
     </Svg>
   );
 }
-
-

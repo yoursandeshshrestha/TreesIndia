@@ -62,38 +62,32 @@ export default function HomeHeader({ onAddressPress, refreshTrigger }: HomeHeade
   };
 
   return (
-    <View className="flex-row items-center px-6 pt-4 pb-4 bg-white">
+    <View className="flex-row items-center bg-white px-6 pb-4 pt-4">
       {/* Address Section */}
-      <TouchableOpacity
-        onPress={onAddressPress}
-        activeOpacity={0.7}
-        className="flex-1"
-      >
+      <TouchableOpacity onPress={onAddressPress} activeOpacity={0.7} className="flex-1">
         {isLoading ? (
           <>
-            <View className="flex-row items-center mb-0.5">
+            <View className="mb-0.5 flex-row items-center">
               <LocationIcon size={16} color="#111928" />
-              <View className="h-4 w-32 bg-gray-200 rounded ml-2" />
+              <View className="ml-2 h-4 w-32 rounded bg-gray-200" />
             </View>
-            <View className="h-3 w-40 bg-gray-200 rounded" />
+            <View className="h-3 w-40 rounded bg-gray-200" />
           </>
         ) : (
           <>
-            <View className="flex-row items-center mb-0.5">
+            <View className="mb-0.5 flex-row items-center">
               <LocationIcon size={16} color="#111928" />
               <Text
-                className="text-base font-semibold text-[#111928] ml-2"
+                className="ml-2 font-semibold text-base text-[#111928]"
                 style={{ fontFamily: 'Inter-SemiBold' }}
-                numberOfLines={1}
-              >
+                numberOfLines={1}>
                 {getLocationText()}
               </Text>
             </View>
             <Text
               className="text-xs text-[#6B7280]"
               style={{ fontFamily: 'Inter-Regular' }}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {getDisplayAddress()}
             </Text>
           </>
@@ -102,4 +96,3 @@ export default function HomeHeader({ onAddressPress, refreshTrigger }: HomeHeade
     </View>
   );
 }
-
