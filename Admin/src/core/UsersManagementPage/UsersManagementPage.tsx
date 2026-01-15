@@ -378,7 +378,7 @@ function UsersManagementPage() {
         selectedUser={
           selectedUser
             ? {
-                id: selectedUser.ID,
+                id: (selectedUser as { id?: number }).id || selectedUser.ID,
                 name: selectedUser.name,
                 email: selectedUser.email,
                 phone: selectedUser.phone,

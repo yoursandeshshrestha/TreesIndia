@@ -159,11 +159,12 @@ export const AvailableWorkersSelector: React.FC<
       <div className="grid gap-4">
         {workers.map((worker) => {
           const workerUser = worker as WorkerUser;
+          const workerId = (worker as { id?: number }).id || worker.ID;
           return (
             <div
-              key={worker.ID}
+              key={workerId}
               className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                selectedWorkerId === worker.ID
+                selectedWorkerId === workerId
                   ? "border-blue-500 bg-blue-50"
                   : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
@@ -230,7 +231,7 @@ export const AvailableWorkersSelector: React.FC<
                 </div>
               </div>
 
-              {selectedWorkerId === worker.ID && (
+              {selectedWorkerId === workerId && (
                 <div className="mt-3 p-2 bg-blue-100 border border-blue-200 rounded">
                   <div className="text-sm text-blue-800 font-medium">
                     ✓ Selected for assignment

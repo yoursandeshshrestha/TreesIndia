@@ -69,7 +69,7 @@ export const BookingWorkerAssignment: React.FC<
       // For demo purposes, we'll just call the callback
       onAssignmentComplete?.({
         bookingId,
-        workerId: selectedWorker.ID,
+        workerId: (selectedWorker as { id?: number }).id || selectedWorker.ID,
         notes: assignmentNotes,
       });
 
@@ -136,7 +136,7 @@ export const BookingWorkerAssignment: React.FC<
             scheduledTime={scheduledTime}
             serviceDuration={serviceDuration}
             onWorkerSelect={handleWorkerSelect}
-            selectedWorkerId={selectedWorker?.ID}
+            selectedWorkerId={(selectedWorker as { id?: number })?.id || selectedWorker?.ID}
           />
         </div>
 

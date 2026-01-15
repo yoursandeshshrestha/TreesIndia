@@ -46,7 +46,6 @@ export default function ManualWalletAdditionForm({
   // Update formData when selectedUser changes
   useEffect(() => {
     if (selectedUser) {
-      console.log("Selected user:", selectedUser);
       setFormData((prev) => ({
         ...prev,
         user_id: selectedUser.id,
@@ -75,6 +74,10 @@ export default function ManualWalletAdditionForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.user_id || formData.user_id === 0) {
+      newErrors.user_id = "Please select a user";
+    }
+
     if (!formData.amount || formData.amount <= 0) {
       newErrors.amount = "Amount is required and must be greater than 0";
     }
@@ -91,12 +94,17 @@ export default function ManualWalletAdditionForm({
     e.preventDefault();
 
     if (!validateForm()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Additional safety check for user_id
+    if (!formData.user_id || formData.user_id === 0) {
+      toast.error("Invalid user selected. Please close and try again.");
       return;
     }
 
     setIsLoading(true);
-
-    console.log("Submitting form data:", formData);
 
     try {
       await api.post("/admin/wallet/adjust", {
@@ -153,7 +161,7 @@ export default function ManualWalletAdditionForm({
           className="p-6 space-y-6 overflow-y-auto flex-1"
         >
           {/* Selected User Info */}
-          {selectedUser && (
+          {selectedUser ? (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
@@ -177,6 +185,17 @@ export default function ManualWalletAdditionForm({
                   </p>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-sm text-red-600">
+                No user selected. Please close this form and select a user first.
+              </p>
+            </div>
+          )}
+          {errors.user_id && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <p className="text-sm text-red-600">{errors.user_id}</p>
             </div>
           )}
 
