@@ -13,7 +13,7 @@ import { Service } from '../../services/api/service.service';
 import { Address } from '../../services/api/address.service';
 import { bookingService, walletService } from '../../services';
 import { useAppSelector } from '../../store/hooks';
-import { TimeSlot, ContactInfoData } from '../../types/booking';
+import { TimeSlot, ContactInfoData, BookingConfig } from '../../types/booking';
 import BackIcon from '../../components/icons/BackIcon';
 import Button from '../../components/ui/Button';
 import AddressSelectionBottomSheet from './components/AddressSelectionBottomSheet';
@@ -72,6 +72,7 @@ export default function BookingFlowScreen({
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [bookingId, setBookingId] = useState<number | null>(null);
+  const [bookingConfig, setBookingConfig] = useState<BookingConfig | null>(null);
 
   // Use ref to track if component is mounted (prevent state updates on unmounted component)
   const isMountedRef = useRef(true);
@@ -99,6 +100,7 @@ export default function BookingFlowScreen({
     });
 
     fetchWalletBalance();
+    fetchBookingConfig();
 
     // Cleanup on unmount
     return () => {
@@ -150,6 +152,17 @@ export default function BookingFlowScreen({
     } catch (error) {
       bookingLogger.error('Failed to fetch wallet balance', error);
       safeSetState(() => setWalletBalance(0));
+    }
+  };
+
+  const fetchBookingConfig = async () => {
+    bookingLogger.debug('Fetching booking config');
+    try {
+      const config = await bookingService.getBookingConfig();
+      safeSetState(() => setBookingConfig(config));
+      bookingLogger.debug('Booking config fetched', { inquiry_fee: config.inquiry_fee });
+    } catch (error) {
+      bookingLogger.error('Failed to fetch booking config', error);
     }
   };
 
@@ -810,8 +823,8 @@ export default function BookingFlowScreen({
 
   const getAmount = (): number => {
     if (isInquiryService) {
-      // Inquiry fee - you might want to fetch this from config
-      return 100; // Default inquiry fee
+      // Use inquiry fee from config, fallback to 100 if not loaded yet
+      return bookingConfig?.inquiry_fee ?? 100;
     }
     return service.price || 0;
   };

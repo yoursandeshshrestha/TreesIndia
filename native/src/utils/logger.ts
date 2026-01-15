@@ -11,7 +11,7 @@ interface LogContext {
 
 class Logger {
   private isDevelopment = __DEV__;
-  private enabledModules: Set<string> = new Set(['all']);
+  private enabledModules: Set<string> = new Set([]); // Disabled all logging
 
   /**
    * Configure which modules should log

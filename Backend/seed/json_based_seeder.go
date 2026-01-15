@@ -1186,19 +1186,16 @@ func (js *JSONBasedSeeder) SeedAdminConfigurations() error {
 		existingMap[config.Key] = config
 	}
 
-	// Separate configurations into create and update lists
+	// Only create new configurations, never update existing ones
+	// This preserves user changes made through the admin panel
 	var configsToCreate []models.AdminConfig
-	var configsToUpdate []models.AdminConfig
+	skippedCount := 0
 
 	for _, config := range configs {
-		if existingConfig, exists := existingMap[config.Key]; exists {
-			// Update existing config
-			existingConfig.Value = config.Value
-			existingConfig.Type = config.Type
-			existingConfig.Category = config.Category
-			existingConfig.Description = config.Description
-			existingConfig.IsActive = config.IsActive
-			configsToUpdate = append(configsToUpdate, existingConfig)
+		if _, exists := existingMap[config.Key]; exists {
+			// Skip existing config - preserve user changes
+			skippedCount++
+			logrus.Debugf("Skipping existing admin config: %s", config.Key)
 		} else {
 			// Create new config
 			configsToCreate = append(configsToCreate, config)
@@ -1214,17 +1211,8 @@ func (js *JSONBasedSeeder) SeedAdminConfigurations() error {
 		logrus.Infof("Created %d new admin configurations", len(configsToCreate))
 	}
 
-	// Bulk update existing configurations
-	if len(configsToUpdate) > 0 {
-		if err := js.sm.db.Save(&configsToUpdate).Error; err != nil {
-			logrus.Errorf("Failed to update admin configs: %v", err)
-			return err
-		}
-		logrus.Infof("Updated %d existing admin configurations", len(configsToUpdate))
-	}
-
-	if len(configsToCreate) == 0 && len(configsToUpdate) == 0 {
-		logrus.Info("All admin configurations are up to date")
+	if len(configsToCreate) == 0 {
+		logrus.Infof("All admin configurations already exist (%d skipped)", skippedCount)
 	}
 
 	logrus.Info("Admin configurations seeded successfully")

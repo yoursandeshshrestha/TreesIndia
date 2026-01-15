@@ -228,10 +228,44 @@ func (bc *BookingController) GetBookingConfig(c *gin.Context) {
 		}
 	}
 
+	// Transform the flat config map into structured format for native app
+	response := gin.H{}
+
+	// Convert inquiry_booking_fee to inquiry_fee (as integer)
+	if inquiryFee, exists := configs["inquiry_booking_fee"]; exists {
+		if fee, err := strconv.Atoi(inquiryFee); err == nil {
+			response["inquiry_fee"] = fee
+		} else {
+			response["inquiry_fee"] = 100 // default fallback
+		}
+	} else {
+		response["inquiry_fee"] = 100 // default fallback
+	}
+
+	// Structure working_hours as nested object
+	if startTime, startExists := configs["working_hours_start"]; startExists {
+		if endTime, endExists := configs["working_hours_end"]; endExists {
+			response["working_hours"] = gin.H{
+				"start": startTime,
+				"end":   endTime,
+			}
+		}
+	}
+
+	// Add booking_advance_days if exists
+	if advanceDays, exists := configs["booking_advance_days"]; exists {
+		response["booking_advance_days"] = advanceDays
+	}
+
+	// Add cancellation_policy if exists
+	if policy, exists := configs["cancellation_policy"]; exists {
+		response["cancellation_policy"] = policy
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Booking config retrieved successfully",
-		"data":    configs,
+		"data":    response,
 	})
 }
 

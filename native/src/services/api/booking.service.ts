@@ -17,8 +17,25 @@ class BookingService {
    * Get booking configuration (inquiry fee, working hours, etc.)
    */
   async getBookingConfig(): Promise<BookingConfig> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/bookings/config`);
-    return handleResponse<BookingConfig>(response);
+    bookingLogger.api('GET', '/bookings/config', 'start');
+
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/bookings/config`);
+      const config = await handleResponse<BookingConfig>(response);
+
+      bookingLogger.api('GET', '/bookings/config', 'success', {
+        inquiry_fee: config.inquiry_fee,
+        booking_advance_days: config.booking_advance_days,
+        working_hours: config.working_hours,
+      });
+
+      return config;
+    } catch (error) {
+      bookingLogger.api('GET', '/bookings/config', 'error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   /**
