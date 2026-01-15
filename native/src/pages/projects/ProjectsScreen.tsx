@@ -18,6 +18,7 @@ import ProjectDetailBottomSheet from '../home/components/ProjectDetailBottomShee
 import ProjectFilterBottomSheet, { type ProjectFilters } from './components/ProjectFilterBottomSheet';
 import SubscriptionRequiredBottomSheet from '../../components/SubscriptionRequiredBottomSheet';
 import SearchIcon from '../../components/icons/SearchIcon';
+import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
 
 interface ProjectsScreenProps {
   onBack: () => void;
@@ -29,6 +30,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 columns with padding
 
 export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSubscription }: ProjectsScreenProps) {
+  const { hasActiveSubscription } = useSubscriptionStatus();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -38,7 +41,6 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [showSubscriptionSheet, setShowSubscriptionSheet] = useState(false);
 
   const [filters, setFilters] = useState<ProjectFilters>(initialFilters || {});
@@ -67,13 +69,6 @@ export default function ProjectsScreen({ onBack, initialFilters, onNavigateToSub
           setProjects(projectsArray);
         } else {
           setProjects((prev) => [...prev, ...projectsArray]);
-        }
-
-        // Parse subscription status
-        if (response.data.user_subscription) {
-          setHasActiveSubscription(
-            response.data.user_subscription.has_active_subscription
-          );
         }
 
         // Check if there are more pages

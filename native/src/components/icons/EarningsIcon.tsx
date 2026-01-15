@@ -21,15 +21,23 @@ export default function EarningsIcon({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* Rupee symbol (₹) from @native/assets/icons/common/rupee.svg */}
       <Path
-        d="M9 9H13.5C14.3284 9 15 9.67157 15 10.5C15 11.3284 14.3284 12 13.5 12H10.5C9.67157 12 9 12.6716 9 13.5C9 14.3284 9.67157 15 10.5 15H15"
+        d="M9 7.5H10.5C11.8807 7.5 13 8.61929 13 10C13 11.3807 11.8807 12.5 10.5 12.5H9L14.25 17.25"
         stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
-        d="M12 7V9M12 15V17"
+        d="M9 7.5H15"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M9 10H15"
         stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"

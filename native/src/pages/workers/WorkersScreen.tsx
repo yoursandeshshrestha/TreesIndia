@@ -19,6 +19,7 @@ import WorkerDetailBottomSheet from './components/WorkerDetailBottomSheet';
 import SubscriptionRequiredBottomSheet from '../../components/SubscriptionRequiredBottomSheet';
 import SearchIcon from '../../components/icons/SearchIcon';
 import WorkerIcon from '../../components/icons/WorkerIcon';
+import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
 
 interface WorkersScreenProps {
   onBack: () => void;
@@ -31,6 +32,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48 - 16) / 2; // 2 columns with padding
 
 export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubscription }: WorkersScreenProps) {
+  const { hasActiveSubscription } = useSubscriptionStatus();
+
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +43,6 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [showSubscriptionSheet, setShowSubscriptionSheet] = useState(false);
 
   const [filters, setFilters] = useState<WorkerFilters>(initialFilters || {});
@@ -66,13 +68,6 @@ export default function WorkersScreen({ onBack, initialFilters, onNavigateToSubs
           setWorkers(response.data.workers);
         } else {
           setWorkers((prev) => [...prev, ...response.data!.workers]);
-        }
-
-        // Parse subscription status
-        if (response.data.user_subscription) {
-          setHasActiveSubscription(
-            response.data.user_subscription.has_active_subscription
-          );
         }
 
         // Check if there are more pages

@@ -18,6 +18,7 @@ import {
   Vendor,
 } from '../../../services';
 import { cache, CACHE_TTL, CACHE_KEYS } from '../../../utils/cache';
+import { useSubscriptionStatus } from '../../../hooks/useSubscriptionStatus';
 
 export type SectionType =
   | 'properties'
@@ -90,6 +91,9 @@ interface HomeData {
 }
 
 export function useHomeData(isAuthenticated: boolean): HomeData {
+  // Get subscription status from Redux
+  const { hasActiveSubscription } = useSubscriptionStatus();
+
   // Banners
   const [banners, setBanners] = useState<PromotionBanner[]>([]);
   const [isLoadingBanners, setIsLoadingBanners] = useState(true);
@@ -133,9 +137,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
   // Vendors
   const [topVendors, setTopVendors] = useState<Vendor[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(true);
-
-  // Subscription
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -553,12 +554,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
 
       if (response.success && response.data) {
-        if (response.data.user_subscription) {
-          setHasActiveSubscription(
-            response.data.user_subscription.has_active_subscription
-          );
-        }
-
         setProjects(response.data.projects);
         await cache.set(CACHE_KEYS.PROJECTS, response.data.projects, { ttl: CACHE_TTL.PROJECTS });
       } else {
@@ -598,12 +593,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
 
       if (response.success && response.data) {
-        if (response.data.user_subscription) {
-          setHasActiveSubscription(
-            response.data.user_subscription.has_active_subscription
-          );
-        }
-
         setTopWorkers(response.data.workers);
         await cache.set(CACHE_KEYS.TOP_WORKERS, response.data.workers, { ttl: CACHE_TTL.WORKERS });
       } else {
@@ -640,12 +629,6 @@ export function useHomeData(isAuthenticated: boolean): HomeData {
       });
 
       if (response.success && response.data) {
-        if (response.data.user_subscription) {
-          setHasActiveSubscription(
-            response.data.user_subscription.has_active_subscription
-          );
-        }
-
         setTopVendors(response.data.vendors);
         await cache.set(CACHE_KEYS.TOP_VENDORS, response.data.vendors, { ttl: CACHE_TTL.VENDORS });
       } else {
