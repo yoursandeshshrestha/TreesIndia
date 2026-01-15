@@ -11,7 +11,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { useAppDispatch } from '../../store/hooks';
 import { getBrokerProfile, updateBrokerProfile } from '../../store/slices/authSlice';
 import type { Address, CreateAddressRequest } from '../../services';
 import Button from '../../components/ui/Button';
@@ -38,7 +38,6 @@ interface FormData {
 
 export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScreenProps) {
   const dispatch = useAppDispatch();
-  const { brokerProfile } = useAppSelector((state) => state.auth);
   const [currentStep, setCurrentStep] = useState<Step>('contact');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,19 +90,50 @@ export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScr
       const profile = await dispatch(getBrokerProfile()).unwrap();
 
       if (profile) {
+        // Parse JSON strings from backend
+        let parsedAddress = null;
+        let parsedContactInfo = null;
+
+        try {
+          if (typeof profile.address === 'string') {
+            parsedAddress = JSON.parse(profile.address);
+          } else {
+            parsedAddress = profile.address;
+          }
+        } catch (e) {
+          // Error parsing address
+        }
+
+        try {
+          if (typeof profile.contact_info === 'string') {
+            parsedContactInfo = JSON.parse(profile.contact_info);
+          } else {
+            parsedContactInfo = profile.contact_info;
+          }
+        } catch (e) {
+          // Error parsing contact_info
+        }
+
         const newFormData = {
           contactInfo: {
-            alternative_number: profile.contact_info?.alternative_number || '',
+            alternative_number: parsedContactInfo?.alternative_number || '',
           },
-          address: profile.address ? {
+          address: parsedAddress ? {
             id: 0,
-            name: '',
+            name: 'Work',
+            address: parsedAddress.street || '',
+            city: parsedAddress.city || '',
+            state: parsedAddress.state || '',
+            country: 'India',
+            postal_code: parsedAddress.pincode || '',
+            postalCode: parsedAddress.pincode || '',
+            latitude: 0,
+            longitude: 0,
             house_number: '',
-            street: profile.address.street || '',
-            city: profile.address.city || '',
-            state: profile.address.state || '',
-            pincode: profile.address.pincode || '',
-            landmark: profile.address.landmark || '',
+            houseNumber: '',
+            landmark: parsedAddress.landmark || '',
+            is_default: false,
+            isDefault: false,
           } : null,
           license: profile.license || '',
           agency: profile.agency || '',
@@ -185,11 +215,11 @@ export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScr
           alternative_number: formData.contactInfo.alternative_number,
         },
         address: {
-          street: formData.address.street,
+          street: formData.address.address,
           city: formData.address.city,
           state: formData.address.state,
-          pincode: formData.address.pincode,
-          landmark: formData.address.landmark,
+          pincode: formData.address.postal_code || formData.address.postalCode || '',
+          landmark: formData.address.landmark || '',
         },
         license: formData.license,
         agency: formData.agency,
@@ -210,20 +240,25 @@ export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScr
     }
   };
 
-  const handleAddressSave = (address: CreateAddressRequest) => {
+  const handleAddressSave = async (address: CreateAddressRequest) => {
     setFormData((prev) => ({
       ...prev,
       address: {
         id: 0,
         name: address.name || '',
-        house_number: address.house_number || '',
-        street: address.street,
+        address: address.address,
         city: address.city,
         state: address.state,
-        pincode: address.pincode,
-        landmark: address.landmark,
-        lat: address.lat,
-        lng: address.lng,
+        country: address.country || 'India',
+        postal_code: address.postal_code,
+        postalCode: address.postal_code,
+        latitude: address.latitude || 0,
+        longitude: address.longitude || 0,
+        house_number: address.house_number || '',
+        houseNumber: address.house_number || '',
+        landmark: address.landmark || '',
+        is_default: address.is_default || false,
+        isDefault: address.is_default || false,
       },
     }));
     setShowAddressSheet(false);
@@ -342,13 +377,13 @@ export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScr
                 className="text-sm font-semibold text-[#111928]"
                 style={{ fontFamily: 'Inter-SemiBold' }}
               >
-                {formData.address.street}
+                {formData.address.address}
               </Text>
               <Text
                 className="text-sm text-[#6B7280] mt-1"
                 style={{ fontFamily: 'Inter-Regular' }}
               >
-                {formData.address.city}, {formData.address.state} - {formData.address.pincode}
+                {formData.address.city}, {formData.address.state} - {formData.address.postal_code || formData.address.postalCode}
               </Text>
               {formData.address.landmark && (
                 <Text
@@ -499,14 +534,14 @@ export default function EditBrokerProfileScreen({ onBack }: EditBrokerProfileScr
               className="text-sm text-[#111928]"
               style={{ fontFamily: 'Inter-Regular' }}
             >
-              {formData.address.street}
+              {formData.address.address}
             </Text>
             <Text
               className="text-sm text-[#6B7280]"
               style={{ fontFamily: 'Inter-Regular' }}
             >
               {formData.address.city}, {formData.address.state} -{' '}
-              {formData.address.pincode}
+              {formData.address.postal_code || formData.address.postalCode}
             </Text>
           </>
         )}
