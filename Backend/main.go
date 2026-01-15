@@ -182,6 +182,22 @@ func main() {
 		r.Use(middleware.CORSMiddleware(appConfig))
 	}
 
+	// Add global debug middleware FIRST
+	r.Use(func(c *gin.Context) {
+		if c.Request.Method == "DELETE" && strings.Contains(c.Request.URL.Path, "/users/account") {
+			println("=== GLOBAL MIDDLEWARE: Request received ===")
+			println("Path:", c.Request.URL.Path)
+			println("Method:", c.Request.Method)
+			println("Content-Type:", c.GetHeader("Content-Type"))
+			println("Content-Length:", c.Request.ContentLength)
+			println("Authorization present:", c.GetHeader("Authorization") != "")
+		}
+		c.Next()
+		if c.Request.Method == "DELETE" && strings.Contains(c.Request.URL.Path, "/users/account") {
+			println("=== GLOBAL MIDDLEWARE: Response Status:", c.Writer.Status(), "===")
+		}
+	})
+
 	// Add middleware
 	r.Use(middleware.ResponseMiddleware())
 
@@ -210,8 +226,12 @@ func main() {
 	// Initialize Simple Conversation WebSocket service
 	simpleConversationWsService := services.NewSimpleConversationWebSocketService()
 
-	// Initialize services with WebSocket service
-	chatService := services.NewChatService(wsService)
+	// Initialize notification services (moved before chat service)
+	deviceManagementService := services.NewDeviceManagementService(fcmService)
+	enhancedNotificationService := services.NewEnhancedNotificationService(fcmService, deviceManagementService, nil) // Pass nil for email service for now
+
+	// Initialize services with WebSocket service and notification service
+	chatService := services.NewChatService(wsService, enhancedNotificationService)
 	workerAssignmentService := services.NewWorkerAssignmentService(chatService)
 
 	// Initialize Simple Conversation services
@@ -235,10 +255,6 @@ func main() {
 		simpleConversationWsService,
 		cloudinaryService,
 	)
-
-	// Initialize notification services
-	deviceManagementService := services.NewDeviceManagementService(fcmService)
-	enhancedNotificationService := services.NewEnhancedNotificationService(fcmService, deviceManagementService, nil) // Pass nil for email service for now
 
 	// Start cleanup service
 	cleanupService := services.NewCleanupService()

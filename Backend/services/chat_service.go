@@ -12,23 +12,25 @@ import (
 
 // ChatService handles chat room and message business logic
 type ChatService struct {
-	chatRoomRepo           *repositories.ChatRoomRepository
-	chatMessageRepo        *repositories.ChatMessageRepository
-	userRepo               *repositories.UserRepository
-	bookingRepo            *repositories.BookingRepository
-	workerAssignmentRepo   *repositories.WorkerAssignmentRepository
-	wsService              *WebSocketService
+	chatRoomRepo                *repositories.ChatRoomRepository
+	chatMessageRepo             *repositories.ChatMessageRepository
+	userRepo                    *repositories.UserRepository
+	bookingRepo                 *repositories.BookingRepository
+	workerAssignmentRepo        *repositories.WorkerAssignmentRepository
+	wsService                   *WebSocketService
+	enhancedNotificationService *EnhancedNotificationService
 }
 
 // NewChatService creates a new chat service
-func NewChatService(wsService *WebSocketService) *ChatService {
+func NewChatService(wsService *WebSocketService, enhancedNotificationService *EnhancedNotificationService) *ChatService {
 	return &ChatService{
-		chatRoomRepo:         repositories.NewChatRoomRepository(),
-		chatMessageRepo:      repositories.NewChatMessageRepository(),
-		userRepo:             repositories.NewUserRepository(),
-		bookingRepo:          repositories.NewBookingRepository(),
-		workerAssignmentRepo: repositories.NewWorkerAssignmentRepository(),
-		wsService:            wsService,
+		chatRoomRepo:                repositories.NewChatRoomRepository(),
+		chatMessageRepo:             repositories.NewChatMessageRepository(),
+		userRepo:                    repositories.NewUserRepository(),
+		bookingRepo:                 repositories.NewBookingRepository(),
+		workerAssignmentRepo:        repositories.NewWorkerAssignmentRepository(),
+		wsService:                   wsService,
+		enhancedNotificationService: enhancedNotificationService,
 	}
 }
 
@@ -148,6 +150,11 @@ func (cs *ChatService) SendMessage(senderID uint, req *models.SendMessageRequest
 			}
 			cs.wsService.BroadcastChatMessage(req.RoomID, messageData)
 		}()
+	}
+
+	// Send FCM notification if sender is admin
+	if user.UserType == models.UserTypeAdmin {
+		cs.sendChatNotification(chatRoom, message, &user)
 	}
 
 	logrus.Infof("ChatService.SendMessage successfully sent message ID: %d", message.ID)
@@ -392,4 +399,82 @@ func (cs *ChatService) markMessagesAsRead(roomID uint, userID uint, messages []m
 			}
 		}
 	}
+}
+
+// sendChatNotification sends FCM notification when admin sends a chat message
+func (cs *ChatService) sendChatNotification(chatRoom *models.ChatRoom, message *models.ChatMessage, sender *models.User) {
+	// Run in goroutine to not block message sending
+	go func() {
+		// Skip if notification service is not available
+		if cs.enhancedNotificationService == nil {
+			logrus.Warn("Notification service not available, skipping chat notification")
+			return
+		}
+
+		// Get the recipient user ID based on chat room type
+		var recipientID uint
+		var booking *models.Booking
+		var err error
+
+		// For booking chat rooms, determine the recipient
+		if chatRoom.BookingID != nil {
+			booking, err = cs.bookingRepo.GetByID(*chatRoom.BookingID)
+			if err != nil {
+				logrus.Errorf("Failed to get booking for chat notification: %v", err)
+				return
+			}
+
+			// If admin sent the message, notify the user who owns the booking
+			recipientID = booking.UserID
+		} else {
+			logrus.Warn("Chat notification not sent: unsupported chat room type")
+			return
+		}
+
+		// Don't send notification to the sender
+		if recipientID == sender.ID {
+			return
+		}
+
+		// Prepare notification content
+		title := "New Message"
+		body := message.Message
+
+		// Truncate long messages
+		if len(body) > 100 {
+			body = body[:97] + "..."
+		}
+
+		// Add sender name to title for context
+		if sender.Name != "" {
+			title = fmt.Sprintf("Message from %s", sender.Name)
+		}
+
+		notificationReq := &NotificationRequest{
+			UserID:   recipientID,
+			Type:     models.NotificationTypeChat,
+			Title:    title,
+			Body:     body,
+			Data: map[string]string{
+				"type":      "chat",
+				"roomId":    fmt.Sprintf("%d", chatRoom.ID),
+				"messageId": fmt.Sprintf("%d", message.ID),
+				"senderId":  fmt.Sprintf("%d", sender.ID),
+			},
+			Priority: "high",
+		}
+
+		// Add booking context if available
+		if booking != nil {
+			notificationReq.Data["bookingId"] = fmt.Sprintf("%d", booking.ID)
+			notificationReq.Data["bookingReference"] = booking.BookingReference
+		}
+
+		_, err = cs.enhancedNotificationService.SendNotification(notificationReq)
+		if err != nil {
+			logrus.Errorf("Failed to send chat notification for message %d: %v", message.ID, err)
+		} else {
+			logrus.Infof("Sent chat notification for message %d to user %d", message.ID, recipientID)
+		}
+	}()
 }
