@@ -128,6 +128,7 @@ export const updateSubscriptionStatus = createAsyncThunk(
       return {
         hasActiveSubscription: user.has_active_subscription || false,
         subscriptionExpiryDate: user.subscription_expiry_date || null,
+        user,
       };
     } catch (err) {
       return rejectWithValue('Failed to update subscription status');
@@ -327,6 +328,9 @@ const authSlice = createSlice({
     builder.addCase(updateSubscriptionStatus.fulfilled, (state, action) => {
       state.hasActiveSubscription = action.payload.hasActiveSubscription;
       state.subscriptionExpiryDate = action.payload.subscriptionExpiryDate;
+      if (action.payload.user) {
+        state.user = action.payload.user;
+      }
     });
 
     // Get worker profile

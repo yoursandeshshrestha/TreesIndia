@@ -157,13 +157,25 @@ class NotificationService {
    * Remove notification listeners
    */
   removeNotificationListeners(): void {
-    if (this.notificationListener) {
-      Notifications.removeNotificationSubscription(this.notificationListener);
+    try {
+      if (this.notificationListener) {
+        // Use the remove method on the subscription object directly
+        this.notificationListener.remove();
+        this.notificationListener = null;
+      }
+    } catch (error) {
+      logger.warn('Error removing notification listener:', error);
       this.notificationListener = null;
     }
 
-    if (this.responseListener) {
-      Notifications.removeNotificationSubscription(this.responseListener);
+    try {
+      if (this.responseListener) {
+        // Use the remove method on the subscription object directly
+        this.responseListener.remove();
+        this.responseListener = null;
+      }
+    } catch (error) {
+      logger.warn('Error removing response listener:', error);
       this.responseListener = null;
     }
   }

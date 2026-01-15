@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { store } from './src/store/store';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
-import { initializeAuth, updateSubscriptionStatus } from './src/store/slices/authSlice';
+import { initializeAuth, updateSubscriptionStatus, getCurrentUser } from './src/store/slices/authSlice';
 import { fetchTotalUnreadCount, updateTotalUnreadCount, updateConversationUnreadCount } from './src/store/slices/chatSlice';
 import { conversationMonitorWebSocket } from './src/services/websocket/conversationMonitor.websocket';
 import { useAppFonts } from './src/utils/fonts';
@@ -429,11 +429,12 @@ function AppContent() {
       return (
         <SubscriptionPlansScreen
           onBack={() => setCurrentScreen('subscription')}
-          onPurchaseSuccess={() => {
-            // Refresh subscription status in Redux
-            dispatch(updateSubscriptionStatus());
-            // Navigate back to subscription screen
-            setCurrentScreen('subscription');
+          onPurchaseSuccess={async () => {
+            // Refresh subscription status in Redux and wait for it to complete
+            await dispatch(updateSubscriptionStatus());
+            // Navigate back to home screen to immediately show updated state
+            setCurrentScreen('home');
+            setActiveTab('home');
           }}
         />
       );
@@ -468,6 +469,10 @@ function AppContent() {
             setCurrentScreen('home');
             setActiveTab('profile');
           }}
+          onSubmitSuccess={async () => {
+            // Refresh user data in Redux after successful application submission
+            await dispatch(getCurrentUser());
+          }}
         />
       );
     }
@@ -478,6 +483,10 @@ function AppContent() {
           onBack={() => {
             setCurrentScreen('home');
             setActiveTab('profile');
+          }}
+          onSubmitSuccess={async () => {
+            // Refresh user data in Redux after successful application submission
+            await dispatch(getCurrentUser());
           }}
         />
       );
