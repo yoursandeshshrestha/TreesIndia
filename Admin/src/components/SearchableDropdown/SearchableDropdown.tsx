@@ -30,6 +30,7 @@ const SearchableDropdown = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const optionsListRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -42,10 +43,11 @@ const SearchableDropdown = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const isOutsideTrigger = dropdownRef.current && !dropdownRef.current.contains(target);
+      const isOutsideMenu = dropdownMenuRef.current && !dropdownMenuRef.current.contains(target);
+
+      if (isOutsideTrigger && isOutsideMenu) {
         setIsOpen(false);
         setSelectedIndex(-1);
       }
@@ -356,7 +358,8 @@ const SearchableDropdown = ({
             ? "bg-gray-100 cursor-not-allowed"
             : "hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
         } ${error ? "border-red-500" : "border-gray-300"}`}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           if (!disabled) {
             if (!isOpen && onOpen) {
               onOpen();
@@ -370,6 +373,7 @@ const SearchableDropdown = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls="dropdown-options"
+        data-dropdown-trigger="true"
       >
         <span className="block truncate">
           {selectedOption ? (
@@ -395,6 +399,7 @@ const SearchableDropdown = ({
       {isOpen && (() => {
         const dropdownMenu = (
           <div
+            ref={dropdownMenuRef}
             className={usePortal ? "fixed z-[9999] mt-1 bg-white border border-gray-300 rounded-md shadow-lg" : "absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"}
             style={usePortal ? {
               top: `${dropdownPosition.top}px`,
@@ -402,6 +407,7 @@ const SearchableDropdown = ({
               width: `${dropdownPosition.width}px`,
               maxHeight
             } : { maxHeight }}
+            data-dropdown-menu="true"
           >
             <div className="p-2 border-b border-gray-200">
               <div className="relative">
@@ -451,7 +457,10 @@ const SearchableDropdown = ({
                     } ${selectedIndex === index ? "bg-blue-100" : ""} ${
                       option.value === value ? "bg-blue-50" : ""
                     }`}
-                    onClick={() => handleOptionClick(option)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOptionClick(option);
+                    }}
                     role="option"
                     aria-selected={
                       option.value === value || selectedIndex === index

@@ -139,8 +139,13 @@ const Table = <T extends object>({
               <tr
                 key={String(row[keyField])}
                 onClick={(e) => {
-                  if ((e.target as HTMLElement).closest("button, input"))
+                  const target = e.target as HTMLElement;
+                  // Prevent row click if clicking on interactive elements or dropdowns
+                  if (
+                    target.closest("button, input, [role='combobox'], [role='listbox'], [data-dropdown-trigger], [data-dropdown-menu]")
+                  ) {
                     return;
+                  }
                   if (selectable && onSelectionChange) {
                     handleSelectRow(row);
                   } else if (onRowClick) {
