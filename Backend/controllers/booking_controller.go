@@ -20,10 +20,10 @@ type BookingController struct {
 }
 
 // NewBookingController creates a new instance of BookingController
-func NewBookingController() *BookingController {
+func NewBookingController(enhancedNotificationService *services.EnhancedNotificationService) *BookingController {
 	return &BookingController{
 		BaseController: *NewBaseController(),
-		bookingService: services.NewBookingService(),
+		bookingService: services.NewBookingService(enhancedNotificationService),
 	}
 }
 

@@ -30,9 +30,10 @@ type BookingService struct {
 	paymentService   *PaymentService
 	razorpayService  *RazorpayService
 	notificationService *NotificationService
+	enhancedNotificationService *EnhancedNotificationService
 }
 
-func NewBookingService() *BookingService {
+func NewBookingService(enhancedNotificationService *EnhancedNotificationService) *BookingService {
 	return &BookingService{
 		bookingRepo:      repositories.NewBookingRepository(),
 		serviceRepo:      repositories.NewServiceRepository(),
@@ -43,6 +44,7 @@ func NewBookingService() *BookingService {
 		paymentService:   NewPaymentService(),
 		razorpayService:  NewRazorpayService(),
 		notificationService: NewNotificationService(),
+		enhancedNotificationService: enhancedNotificationService,
 	}
 }
 
@@ -1118,7 +1120,8 @@ func (bs *BookingService) AssignWorkerToBooking(bookingID uint, workerID uint, a
 			}
 			
 			// Send notification to new worker
-			
+			bs.sendWorkerAssignmentNotification(existingAssignment, booking)
+
 			return existingAssignment, nil
 		}
 	}
@@ -1146,8 +1149,82 @@ func (bs *BookingService) AssignWorkerToBooking(bookingID uint, workerID uint, a
 	}
 
 	// 7. Send notification to worker
+	bs.sendWorkerAssignmentNotification(assignment, booking)
 
 	return assignment, nil
+}
+
+// sendWorkerAssignmentNotification sends FCM notification to worker when assigned
+func (bs *BookingService) sendWorkerAssignmentNotification(assignment *models.WorkerAssignment, booking *models.Booking) {
+	// Return early if enhanced notification service is not available
+	if bs.enhancedNotificationService == nil {
+		logrus.Warn("EnhancedNotificationService not available, skipping worker assignment notification")
+		return
+	}
+
+	// Build notification body with booking details
+	location := "Unknown location"
+	if booking.Address != nil && *booking.Address != "" {
+		// Parse the address JSON
+		var bookingAddress models.BookingAddress
+		if err := json.Unmarshal([]byte(*booking.Address), &bookingAddress); err == nil {
+			if bookingAddress.City != "" && bookingAddress.State != "" {
+				location = fmt.Sprintf("%s, %s", bookingAddress.City, bookingAddress.State)
+			} else if bookingAddress.Address != "" {
+				location = bookingAddress.Address
+			}
+		}
+	}
+
+	serviceName := "Service"
+	if booking.Service.Name != "" {
+		serviceName = booking.Service.Name
+	}
+
+	body := fmt.Sprintf("You have been assigned to %s at %s", serviceName, location)
+
+	// Add scheduled time if available
+	if booking.ScheduledTime != nil {
+		body += fmt.Sprintf(" scheduled for %s", booking.ScheduledTime.Format("Jan 2, 2006 at 3:04 PM"))
+	}
+
+	// Prepare notification data payload (must be map[string]string)
+	data := map[string]string{
+		"type":          "worker_assignment",
+		"assignment_id": fmt.Sprintf("%d", assignment.ID),
+		"booking_id":    fmt.Sprintf("%d", booking.ID),
+		"worker_id":     fmt.Sprintf("%d", assignment.WorkerID),
+		"status":        string(assignment.Status),
+		"service_name":  serviceName,
+		"location":      location,
+	}
+
+	// Add optional fields
+	if booking.ScheduledTime != nil {
+		data["scheduled_at"] = booking.ScheduledTime.Format(time.RFC3339)
+	}
+	if booking.User.Name != "" {
+		data["customer_name"] = booking.User.Name
+	}
+
+	// Send notification via EnhancedNotificationService
+	notificationReq := &NotificationRequest{
+		UserID: assignment.WorkerID,
+		Type:   models.NotificationTypeWorkerAssignment,
+		Title:  "New Assignment",
+		Body:   body,
+		Data:   data,
+	}
+
+	result, err := bs.enhancedNotificationService.SendNotification(notificationReq)
+	if err != nil {
+		logrus.Errorf("Failed to send worker assignment notification: %v", err)
+		// Don't return error - notification failure should not block assignment
+	} else if result != nil && result.PushSuccess {
+		logrus.Infof("Successfully sent assignment notification to worker %d for booking %d", assignment.WorkerID, booking.ID)
+	} else if result != nil {
+		logrus.Warnf("Notification sent but not successful for worker %d: PushError=%s", assignment.WorkerID, result.PushError)
+	}
 }
 
 // GetBookingStats gets booking statistics (admin only)

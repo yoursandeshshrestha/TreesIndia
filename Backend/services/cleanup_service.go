@@ -20,7 +20,7 @@ type CleanupService struct {
 // NewCleanupService creates a new cleanup service
 func NewCleanupService() *CleanupService {
 	return &CleanupService{
-		bookingService:     NewBookingService(),
+		bookingService:     NewBookingService(nil), // No notification service needed for cleanup
 		paymentService:     NewPaymentService(),
 		adminConfigService: NewAdminConfigService(),
 	}

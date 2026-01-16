@@ -10,7 +10,7 @@ import (
 
 // SetupBookingRoutes sets up booking-related routes
 func SetupBookingRoutes(router *gin.RouterGroup, enhancedNotificationService *services.EnhancedNotificationService) {
-	bookingController := controllers.NewBookingController()
+	bookingController := controllers.NewBookingController(enhancedNotificationService)
 
 	// Public booking routes (no authentication required)
 	bookings := router.Group("/bookings")
