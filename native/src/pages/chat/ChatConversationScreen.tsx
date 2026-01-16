@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Svg, Path } from 'react-native-svg';
@@ -50,6 +51,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
   const dispatch = useAppDispatch();
   const flatListRef = useRef<FlatList>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Get current user from auth state
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -141,6 +143,28 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
       chatWebSocketService.disconnect();
     };
   }, [conversationId, dispatch]);
+
+  /**
+   * Handle keyboard show/hide for Android
+   */
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+
+    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardDidShow.remove();
+      keyboardDidHide.remove();
+    };
+  }, []);
 
   /**
    * Auto-scroll to bottom when messages load or new messages arrive
@@ -346,41 +370,40 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
+    <View className="flex-1 bg-white">
+      <SafeAreaView edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
 
-      {/* Header */}
-      <View className="flex-row items-center border-b border-[#E5E7EB] px-4 py-4">
-        {/* Back Button */}
-        <TouchableOpacity onPress={onBack} className="-ml-2 mr-3 p-2" activeOpacity={0.7}>
-          <BackIcon />
-        </TouchableOpacity>
+        {/* Header */}
+        <View className="flex-row items-center border-b border-[#E5E7EB] px-4 py-4">
+          {/* Back Button */}
+          <TouchableOpacity onPress={onBack} className="-ml-2 mr-3 p-2" activeOpacity={0.7}>
+            <BackIcon />
+          </TouchableOpacity>
 
-        {/* Worker Name */}
-        <View className="flex-1">
-          <Text
-            className="text-lg text-[#111928]"
-            style={{ fontFamily: 'Inter-SemiBold' }}
-            numberOfLines={1}>
-            {workerName}
-          </Text>
-          <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
-            Worker
-          </Text>
+          {/* Worker Name */}
+          <View className="flex-1">
+            <Text
+              className="text-lg text-[#111928]"
+              style={{ fontFamily: 'Inter-SemiBold' }}
+              numberOfLines={1}>
+              {workerName}
+            </Text>
+            <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'Inter-Regular' }}>
+              Worker
+            </Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       {/* Messages List */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <View className="flex-1" style={{ marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
         <FlatList
           ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item, index) => item?.id?.toString() || `message-${index}`}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, flexGrow: 1 }}
           ListHeaderComponent={renderListHeader}
           ListEmptyComponent={renderEmpty}
           onEndReached={handleLoadMore}
@@ -392,19 +415,25 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({
             autoscrollToTopThreshold: 10,
           }}
         />
+      </View>
 
-        {/* Chat Input */}
-        <SafeAreaView edges={['bottom']} className="bg-white">
-          <ChatInput
-            onSend={handleSendMessage}
-            onSendWithFile={handleSendMessageWithFile}
-            placeholder="Type a message..."
-            disabled={isLoading && messages.length === 0}
-            isSending={isSendingMessage}
-          />
-        </SafeAreaView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      {/* Chat Input */}
+      <View style={{ position: 'absolute', bottom: Platform.OS === 'android' ? keyboardHeight : 0, left: 0, right: 0 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+          <SafeAreaView edges={['bottom']} className="bg-white">
+            <ChatInput
+              onSend={handleSendMessage}
+              onSendWithFile={handleSendMessageWithFile}
+              placeholder="Type a message..."
+              disabled={isLoading && messages.length === 0}
+              isSending={isSendingMessage}
+            />
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </View>
+    </View>
   );
 };
 
